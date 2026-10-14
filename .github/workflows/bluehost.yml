@@ -48,8 +48,31 @@ jobs:
                   elif "public_html" in names:
                       sys.exit("Root contains public_html; verify account scope before deployment.")
                   print("Connection test passed. No files were uploaded, created, or deleted.")
+          except ssl.SSLCertVerificationError as exc:
+              print("FTPS test failed: SSLCertVerificationError")
+              print("Reason: " + str(exc.verify_message))
+              print("The certificate step below lists the names the server certificate covers.")
+              print("Set BLUEHOST_HOST to one of those names; do not disable verification.")
+              sys.exit(1)
           except Exception as exc:
               print("FTPS test failed: " + type(exc).__name__)
+              print("Detail: " + str(exc))
               print("Check hostname/certificate, account password, and FTP access in Bluehost.")
               sys.exit(1)
           PY
+      - name: Show server certificate names (diagnostic, no login)
+        if: failure()
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+        shell: bash
+        run: |
+          if [ -z "$BLUEHOST_HOST" ]; then
+            echo "BLUEHOST_HOST is not set; skipping certificate inspection."
+            exit 0
+          fi
+          cert="$(timeout 20 openssl s_client -starttls ftp -connect "$BLUEHOST_HOST:21" -servername "$BLUEHOST_HOST" </dev/null 2>/dev/null)" || true
+          if ! printf '%s\n' "$cert" | grep -q 'BEGIN CERTIFICATE'; then
+            echo "Could not retrieve the server certificate."
+            exit 0
+          fi
+          printf '%s\n' "$cert" | openssl x509 -noout -subject -issuer -enddate -ext subjectAltName
