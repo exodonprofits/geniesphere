@@ -1,0 +1,164 @@
+{
+  "name": "Meal Planner (Fixed) - Webhook -> OpenAI -> JSON",
+  "nodes": [
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=const system = `\nYou are a meal planning assistant.\nReturn ONLY valid JSON.\nDo NOT include markdown.\nDo NOT include explanations.\nDo NOT include code fences.\nThe first character must be { and the last character must be }.\n`;\n"
+            },
+            {
+              "content": "=={{ $json.userPrompt }}\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 2500,
+          "temperature": 0.6
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        416,
+        -32
+      ],
+      "id": "6c7bc6e0-c6dc-45fd-87fe-21522e2f283e",
+      "name": "Meal Plan",
+      "alwaysOutputData": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage-Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        -32
+      ],
+      "id": "3922d64a-84aa-48be-a328-eb10fba4793f"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json;\n\nconst content =\n  raw.output_text ||\n  raw.message?.content ||\n  raw.choices?.[0]?.message?.content ||\n  raw.text ||\n  \"\";\n\ntry {\n  const parsed = JSON.parse(content);\n  return [{ ok: true, result: parsed }];\n} catch (e) {}\n\nconst stripped = content.replace(/```json|```/gi, \"\").trim();\ntry {\n  const parsed = JSON.parse(stripped);\n  return [{ ok: true, result: parsed }];\n} catch (e) {}\n\nconst match = stripped.match(/\\{[\\s\\S]*\\}$/);\nif (match) {\n  try {\n    const parsed = JSON.parse(match[0]);\n    return [{ ok: true, result: parsed }];\n  } catch (e) {}\n}\n\nreturn [{\n  ok: false,\n  result: {\n    error: \"Model output was not valid JSON\",\n    raw: content\n  }\n}];\n"
+      },
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        -32
+      ],
+      "id": "40c43335-61d0-4697-acb2-cc131ee027b4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json;\n\n// Defaults / normalization\nconst planDays = Number(b.planDays || 7);\nconst people = Number(b.people || 1);\nconst mealsPerDay = Array.isArray(b.mealsPerDay) ? b.mealsPerDay : (b.mealsPerDay ? [b.mealsPerDay] : [\"breakfast\",\"lunch\",\"dinner\"]);\nconst cuisine = Array.isArray(b.cuisine) ? b.cuisine : (b.cuisine ? [b.cuisine] : []);\nconst allergies = Array.isArray(b.allergies) ? b.allergies : (b.allergies ? [b.allergies] : []);\nconst avoidIngredients = Array.isArray(b.avoidIngredients) ? b.avoidIngredients : (b.avoidIngredients ? [b.avoidIngredients] : []);\n\nconst goal = b.goal || \"balanced\";\nconst dietStyle = b.dietStyle || \"\";\nconst budgetLevel = b.budgetLevel || \"medium\";\nconst timePerMeal = Number(b.timePerMeal || 30);\nconst calorieTarget = b.calorieTarget ? String(b.calorieTarget) : \"\";\nconst notes = b.notes || \"\";\n\nconst system = `You are a meal planning assistant. Output ONLY valid JSON. No markdown.`;\n\nconst schema = {\n  planMeta: {\n    days: planDays,\n    people,\n    goal,\n    dietStyle,\n    mealsPerDay,\n    cuisine,\n    allergies,\n    avoidIngredients,\n    budgetLevel,\n    timePerMealMinutes: timePerMeal,\n    calorieTarget,\n    notes\n  },\n  groceryList: [\n    { item: \"string\", quantity: \"string\", category: \"Produce|Meat|Seafood|Dairy|Pantry|Frozen|Spices|Other\" }\n  ],\n  days: [\n    {\n      day: 1,\n      meals: [\n        {\n          mealType: \"breakfast|lunch|dinner|snack\",\n          title: \"string\",\n          cuisine: \"string\",\n          prepTimeMinutes: 10,\n          cookTimeMinutes: 15,\n          servings: people,\n          ingredients: [{ name: \"string\", amount: \"string\" }],\n          steps: [\"string\"],\n          nutrition: {\n            calories: 0,\n            protein_g: 0,\n            carbs_g: 0,\n            fat_g: 0,\n            fiber_g: 0,\n            sugar_g: 0\n          },\n          diabeticNotes: \"string\"\n        }\n      ]\n    }\n  ]\n};\n\nconst userPrompt = `Create a ${planDays}-day meal plan for ${people} people.\n\nConstraints:\n- Goal: ${goal}\n- Diet style: ${dietStyle || \"none specified\"}\n- Meals per day: ${mealsPerDay.join(\", \")}\n- Cuisine preferences: ${cuisine.length ? cuisine.join(\", \") : \"no preference\"}\n- Allergies: ${allergies.length ? allergies.join(\", \") : \"none\"}\n- Avoid ingredients: ${avoidIngredients.length ? avoidIngredients.join(\", \") : \"none\"}\n- Budget level: ${budgetLevel}\n- Time per meal: <= ${timePerMeal} minutes\n- Calorie target (optional): ${calorieTarget || \"none\"}\n- Notes: ${notes || \"none\"}\n\nOutput requirements:\n- Return ONLY JSON.\n- Match this JSON structure exactly (fill with real values): ${JSON.stringify(schema)}\n- Make meals practical and repeat ingredients to reduce grocery cost.\n- Ensure diabetic-friendly choices when goal mentions diabetes.\n`;\n\nreturn [{\n  system,\n  userPrompt,\n  planDays,\n  people\n}];"
+      },
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -32
+      ],
+      "id": "80f56e3d-2a35-4a68-b18e-f1132fce7f59"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "meal-plan-generate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        -32
+      ],
+      "id": "9de4815d-f2a9-491d-895b-fafdbaadd51d",
+      "webhookId": "f9dfa799-8c94-48e2-89e4-38368f2ee4af"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Meal Plan": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Meal Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2af51012-3846-42fa-9106-92638927aaaa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "Nrpfhf4UcaQOWMO4",
+  "tags": []
+}

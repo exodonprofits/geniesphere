@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Time Zone Helper – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ocean:#0077b6;--ocean-deep:#023e8a;--teal:#00b4d8;
+  --coral:#e76f51;--green:#16a34a;--amber:#d97706;
+  --night:#0f172a;--off-white:#f8fafc;--gray-light:#f1f5f9;--gray-border:#e2e8f0;
+  --text:#1e293b;--text-muted:#64748b;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 2px 16px rgba(0,0,0,.07);--shadow-hover:0 10px 28px rgba(0,0,0,.12);
+  --t:.22s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+main{flex:1}
+.hidden{display:none!important}
+
+/* HEADER */
+.vg-header{position:sticky;top:0;z-index:40;background:linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%);box-shadow:0 2px 20px rgba(2,62,138,.25)}
+.vg-nav{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.vg-brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none}
+.vg-brand img{width:46px;height:46px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2)}
+.vg-title-brand{font-family:'Playfair Display',serif;font-weight:700;font-size:1.4rem;color:#fff}
+.vg-right{display:flex;align-items:center;gap:12px}
+.nav-chip{display:inline-flex;align-items:center;gap:8px;padding:0 14px;height:38px;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.22);font-size:.88rem;font-weight:500;transition:background var(--t);white-space:nowrap}
+.nav-chip:hover{background:rgba(255,255,255,.24)}
+.menu-group{position:relative}
+.menu{position:absolute;top:calc(100% + 8px);right:0;min-width:200px;padding:6px;background:#fff;border-radius:var(--radius);box-shadow:0 16px 40px rgba(0,0,0,.18);display:none;z-index:60;border:1px solid rgba(0,0,0,.06)}
+.menu a{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:.9rem}
+.menu a:hover{background:var(--gray-light);color:var(--ocean)}
+.menu-divider{height:1px;background:var(--gray-border);margin:6px 4px}
+.account-chip{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.22);font-size:.88rem;cursor:pointer}
+.account-chip:hover{background:rgba(255,255,255,.24)}
+
+/* BANNER */
+.page-banner{background:linear-gradient(135deg,#eaf4fb,#f0f9ff);border-bottom:1px solid #c9e4f5;padding:1.5rem 1.5rem 1.25rem}
+.page-banner-inner{max-width:1200px;margin:0 auto}
+.page-banner h1{font-family:'Playfair Display',serif;font-size:clamp(1.3rem,2.5vw,1.7rem);font-weight:700;color:var(--ocean-deep);margin-bottom:.3rem}
+.page-banner p{font-size:.88rem;color:var(--text-muted)}
+
+/* LAYOUT */
+.page-body{max-width:1200px;margin:0 auto;padding:1.75rem 1.25rem 3rem;display:flex;flex-direction:column;gap:1.25rem}
+
+/* CARDS */
+.vg-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+.card-hd{padding:1rem 1.25rem;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.card-title{font-size:1rem;font-weight:600}
+.card-bd{padding:1.25rem}
+
+/* INPUTS */
+.vg-input,.vg-select{width:100%;border:1px solid var(--gray-border);border-radius:var(--radius);padding:.6rem .9rem;background:var(--gray-light);font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;transition:border-color var(--t),background var(--t)}
+.vg-input:focus,.vg-select:focus{border-color:var(--ocean);background:#fff;box-shadow:0 0 0 3px rgba(0,119,182,.1)}
+.field-label{font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
+
+/* BUTTONS */
+.vg-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gray-border);border-radius:8px;padding:.5rem .9rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;color:var(--text);cursor:pointer;transition:all var(--t);white-space:nowrap;text-decoration:none}
+.vg-btn:hover{background:var(--gray-light);transform:translateY(-1px)}
+.vg-btn-ocean{background:var(--ocean);color:#fff;border-color:var(--ocean)}
+.vg-btn-ocean:hover{background:var(--ocean-deep)}
+.vg-btn-sm{padding:.3rem .65rem;font-size:.78rem}
+.pill-btn{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--gray-border);border-radius:999px;padding:.3rem .75rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;transition:all var(--t)}
+.pill-btn:hover{background:#eaf4fb;border-color:var(--teal);color:var(--ocean)}
+
+/* CONTROLS ROW */
+.controls-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.75rem;align-items:end}
+@media(max-width:700px){.controls-grid{grid-template-columns:1fr 1fr}}
+
+/* LIVE CLOCKS */
+.clocks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem}
+.clock-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);padding:1rem;display:flex;flex-direction:column;align-items:center;gap:.6rem;transition:all var(--t);position:relative}
+.clock-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+.clock-card.is-base{border-color:var(--ocean);background:linear-gradient(180deg,#eaf4fb,#fff)}
+.clock-city{font-size:.88rem;font-weight:600;text-align:center;line-height:1.3}
+.clock-time{font-family:'DM Sans',sans-serif;font-size:1.4rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ocean-deep)}
+.clock-date{font-size:.72rem;color:var(--text-muted);text-align:center}
+.clock-offset{font-size:.7rem;background:var(--gray-light);border:1px solid var(--gray-border);border-radius:999px;padding:2px 8px;color:var(--text-muted)}
+.clock-dst{font-size:.68rem;background:#fef9c3;border:1px solid #fde047;border-radius:999px;padding:2px 7px;color:#92400e}
+.clock-remove{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--gray-border);background:#fff;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.7rem;opacity:0;transition:opacity var(--t)}
+.clock-card:hover .clock-remove{opacity:1}
+.clock-remove:hover{background:#fee2e2;border-color:#fca5a5;color:#dc2626}
+.clock-period{font-size:.65rem;font-weight:700;border-radius:4px;padding:2px 5px}
+.clock-period.day{background:#dcfce7;color:#166534}
+.clock-period.night{background:#1e3a5f;color:#90caf9}
+.clock-period.eve{background:#fef9c3;color:#92400e}
+.base-badge{position:absolute;top:6px;left:6px;font-size:.62rem;font-weight:700;background:var(--ocean);color:#fff;border-radius:999px;padding:2px 7px}
+
+/* TIMELINE BAR */
+.timeline-wrap{overflow-x:auto;padding-bottom:.5rem}
+.timeline{min-width:700px;display:flex;flex-direction:column;gap:2px;position:relative}
+.timeline-header{display:grid;align-items:center;margin-bottom:4px}
+.tl-hour{text-align:center;font-size:.65rem;color:var(--text-muted);font-weight:500}
+.tl-row{display:grid;align-items:center;height:36px}
+.tl-label{font-size:.75rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px}
+.tl-cell{border-radius:4px;height:28px;cursor:pointer;transition:all var(--t);position:relative;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600}
+.tl-cell:hover{filter:brightness(1.1);transform:scaleY(1.08)}
+.tl-cell.work{background:#dbeafe;color:#1e40af}
+.tl-cell.morning{background:#fef9c3;color:#92400e}
+.tl-cell.evening{background:#fce7f3;color:#9d174d}
+.tl-cell.sleep{background:#f1f5f9;color:#94a3b8}
+.tl-cell.selected{outline:2px solid var(--ocean);outline-offset:1px;background:#bfdbfe!important;color:#1e3a8a!important}
+.tl-now-line{position:absolute;top:0;bottom:0;width:2px;background:var(--coral);border-radius:2px;pointer-events:none;z-index:5}
+.tl-tooltip{position:fixed;background:#1e293b;color:#fff;font-size:.75rem;padding:6px 10px;border-radius:8px;pointer-events:none;z-index:9999;display:none;box-shadow:0 4px 12px rgba(0,0,0,.3);line-height:1.5}
+
+/* BEST TIMES */
+.best-times-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.6rem;margin-top:.75rem}
+.best-slot{border:1px solid var(--gray-border);border-radius:10px;padding:.6rem .75rem;text-align:center;cursor:pointer;transition:all var(--t);background:#fff}
+.best-slot:hover{border-color:var(--ocean);background:#eaf4fb;transform:translateY(-2px)}
+.best-slot.good{border-color:#86efac;background:#f0fdf4}
+.best-slot.ok{border-color:#fde047;background:#fefce8}
+.best-slot.bad{border-color:#fca5a5;background:#fef2f2;opacity:.6}
+.best-slot .bs-time{font-size:1rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ocean-deep)}
+.best-slot .bs-label{font-size:.68rem;color:var(--text-muted);margin-top:2px}
+.best-slot .bs-zones{font-size:.65rem;color:var(--text-muted);margin-top:3px}
+
+/* CITY CARDS GRID */
+.cities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
+.city-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;transition:all var(--t)}
+.city-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+.city-header{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.65rem}
+.city-name{font-weight:600;font-size:.92rem;line-height:1.3}
+.city-zone{font-size:.72rem;color:var(--text-muted);margin-top:1px}
+.city-badges{display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.3rem}
+.city-time-big{font-family:'DM Sans',sans-serif;font-size:1.8rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ocean-deep);line-height:1}
+.city-date{font-size:.78rem;color:var(--text-muted);margin-top:.25rem}
+.city-diff{font-size:.75rem;padding:2px 8px;border-radius:999px;display:inline-block;margin-top:.4rem}
+.city-diff.ahead{background:#f0fdf4;color:#166534;border:1px solid #86efac}
+.city-diff.behind{background:#fff1f2;color:#9f1239;border:1px solid #fda4af}
+.city-diff.same{background:var(--gray-light);color:var(--text-muted);border:1px solid var(--gray-border)}
+.city-actions{display:flex;gap:.35rem;margin-top:.75rem;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;border-radius:999px;padding:2px 8px;font-size:.7rem;background:var(--gray-light);border:1px solid var(--gray-border);color:var(--text-muted)}
+.badge.dst{background:#fef9c3;border-color:#fde047;color:#92400e}
+.badge.base{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
+
+/* ADD CITY */
+.add-city-form{display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end}
+@media(max-width:600px){.add-city-form{grid-template-columns:1fr}}
+
+/* FAVORITES */
+.fav-list{display:flex;flex-wrap:wrap;gap:.4rem}
+.fav-pill{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--gray-border);border-radius:999px;padding:.28rem .75rem;background:#fff;font-size:.8rem;cursor:pointer;transition:all var(--t)}
+.fav-pill:hover{background:#eaf4fb;border-color:var(--teal);color:var(--ocean)}
+.fav-pill .rm{color:var(--text-muted);margin-left:2px;font-size:.85rem}
+.fav-pill .rm:hover{color:#dc2626}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,.96);color:#fff;padding:10px 18px;border-radius:9px;font-size:.85rem;font-weight:500;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* FOOTER */
+footer{background:linear-gradient(105deg,#023e8a 0%,#0077b6 100%);color:rgba(255,255,255,.85);padding:2.5rem 1.5rem 2rem}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-brand{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:.3rem}
+.footer-copy{font-size:.78rem;opacity:.55;margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.12)}
+.footer-links{display:flex;gap:1rem;margin-top:.9rem;flex-wrap:wrap}
+.footer-links a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+.footer-links a:hover{color:#fff}
+
+@media print{
+  .vg-header,.page-banner,footer,.no-print{display:none!important}
+  body{background:#fff}
+  .vg-card{box-shadow:none;border:1px solid #ddd}
+}
+</style>
+</head>
+<body>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if(!window.supabase){window.supabase=createClient('https://pbojacnagutipfhcxltj.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');}
+</script>
+
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html"><img src="images/nav-icon.png" alt="Voyage Genie"/><span class="vg-title-brand">Voyage Genie</span></a>
+    <div class="vg-right">
+      <a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a>
+      <div id="authSlot"><a class="nav-chip" href="login.html?next=timezone-converter.html">🔑 Sign in</a></div>
+    </div>
+  </div>
+</header>
+
+<div class="page-banner">
+  <div class="page-banner-inner">
+    <h1>🕒 Time Zone Helper</h1>
+    <p>Live analog clocks · Visual 24-hour timeline · Best meeting time finder · Travel flight planning</p>
+  </div>
+</div>
+
+<main>
+<div class="page-body">
+
+  <!-- CONTROLS -->
+  <div class="vg-card">
+    <div class="card-hd">
+      <div class="card-title">⏰ Base Date &amp; Time</div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button class="pill-btn" onclick="setNow()">⏱️ Now</button>
+        <button class="pill-btn" onclick="swapBase()">⇄ Swap with First City</button>
+        <button class="pill-btn" onclick="shareLink()">🔗 Share</button>
+        <button class="pill-btn" onclick="window.print()">🖨️ Print</button>
+      </div>
+    </div>
+    <div class="card-bd">
+      <div class="controls-grid">
+        <div>
+          <label class="field-label">Date</label>
+          <input id="baseDate" type="date" class="vg-input" oninput="convertAll()"/>
+        </div>
+        <div>
+          <label class="field-label">Time</label>
+          <input id="baseTime" type="time" step="60" class="vg-input" oninput="convertAll()"/>
+        </div>
+        <div>
+          <label class="field-label">Your Time Zone</label>
+          <select id="baseZone" class="vg-select" onchange="convertAll();renderLive()"></select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;white-space:nowrap">
+            <input id="fmt24" type="checkbox" onchange="saveFmt();convertAll();renderLive()" style="width:16px;height:16px;accent-color:var(--ocean)"/>
+            24h clock
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE CLOCKS -->
+  <div class="vg-card">
+    <div class="card-hd">
+      <div class="card-title">🕐 Live Clocks</div>
+      <span style="font-size:.75rem;color:var(--text-muted)" id="liveTick">Ticking…</span>
+    </div>
+    <div class="card-bd">
+      <div class="clocks-grid" id="liveBar"></div>
+    </div>
+  </div>
+
+  <!-- VISUAL TIMELINE -->
+  <div class="vg-card">
+    <div class="card-hd">
+      <div class="card-title">📊 24-Hour Timeline</div>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:.4rem;font-size:.72rem;align-items:center">
+          <span style="width:12px;height:12px;border-radius:3px;background:#dbeafe;display:inline-block"></span>Work
+          <span style="width:12px;height:12px;border-radius:3px;background:#fef9c3;display:inline-block;margin-left:4px"></span>Morning/Eve
+          <span style="width:12px;height:12px;border-radius:3px;background:#f1f5f9;display:inline-block;margin-left:4px"></span>Sleep
+        </div>
+      </div>
+    </div>
+    <div class="card-bd">
+      <div class="timeline-wrap">
+        <div id="timelineWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BEST MEETING TIMES -->
+  <div class="vg-card">
+    <div class="card-hd"><div class="card-title">🤝 Best Meeting Times</div>
+      <span style="font-size:.78rem;color:var(--text-muted)">Green = all cities in working hours (9–18)</span>
+    </div>
+    <div class="card-bd">
+      <div id="bestTimesWrap">
+        <span style="font-size:.85rem;color:var(--text-muted)">Add cities below to find overlapping working hours</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD CITY -->
+  <div class="vg-card">
+    <div class="card-hd"><div class="card-title">➕ Add Cities</div></div>
+    <div class="card-bd" style="display:flex;flex-direction:column;gap:.85rem">
+      <div class="add-city-form">
+        <div>
+          <label class="field-label">City / Region</label>
+          <select id="citySelect" class="vg-select"></select>
+        </div>
+        <div>
+          <label class="field-label">Or IANA Zone</label>
+          <input id="customTZ" class="vg-input" placeholder="e.g. America/Chicago"/>
+        </div>
+        <button class="vg-btn vg-btn-ocean" onclick="addZone()" style="height:42px">➕ Add</button>
+      </div>
+      <!-- Quick-add travel hubs -->
+      <div>
+        <div class="field-label" style="margin-bottom:.4rem">Quick Add Popular Destinations</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem" id="quickAddWrap"></div>
+      </div>
+      <!-- Favorites -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
+          <span class="field-label" style="margin:0">Favorites</span>
+          <button class="vg-btn vg-btn-sm" onclick="addFavoriteFromBase()">⭐ Star Base Zone</button>
+        </div>
+        <div class="fav-list" id="favWrap">
+          <span style="font-size:.82rem;color:var(--text-muted)">No favorites yet</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CITY CARDS -->
+  <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <div style="font-weight:600;font-size:1rem">🌍 Converted Times</div>
+      <button class="vg-btn vg-btn-sm" onclick="clearAll()">🗑️ Clear All</button>
+    </div>
+    <div class="cities-grid" id="tzGrid"></div>
+  </div>
+
+</div>
+</main>
+
+<div id="toast"></div>
+<div id="tlTooltip" class="tl-tooltip"></div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="trip-dashboard.html">My Trips</a>
+      <a href="currency-converter.html">Currency</a>
+      <a href="tip-calculator.html">Tip Calculator</a>
+    </div>
+    <div class="footer-copy">© 2025 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- Auth -->
+<script type="module">
+  const sb=window.supabase,authSlot=document.getElementById('authSlot');
+  function toggle(el,show){if(el)el.style.display=show?'block':'none';}
+  async function renderAuth(){
+    try{
+      const{data:{user}}=await sb.auth.getUser();
+      authSlot.innerHTML='';
+      if(user){
+        const name=(user.email||'Account').split('@')[0];
+        const wrap=document.createElement('div');wrap.className='menu-group';
+        wrap.innerHTML=`<a href="#" class="account-chip" id="acctBtn"><span>🪪</span><span>${name}</span><span style="font-size:.65rem;opacity:.8">▾</span></a>
+          <div class="menu" id="acctMenu"><a href="account.html">👤 Account</a><div class="menu-divider"></div><a href="#" id="signOutBtn">🚪 Sign out</a></div>`;
+        authSlot.appendChild(wrap);
+        const btn=wrap.querySelector('#acctBtn'),menu=wrap.querySelector('#acctMenu');
+        btn.addEventListener('click',e=>{e.preventDefault();const o=menu.style.display==='block';toggle(menu,!o);});
+        document.addEventListener('click',e=>{if(!menu.contains(e.target)&&e.target!==btn)toggle(menu,false);});
+        wrap.querySelector('#signOutBtn').addEventListener('click',async e=>{e.preventDefault();await sb.auth.signOut();location.href='login.html';});
+      }else{
+        const a=document.createElement('a');a.className='nav-chip';a.href='login.html?next=timezone-converter.html';a.textContent='🔑 Sign in';
+        authSlot.appendChild(a);
+      }
+    }catch{}
+  }
+  renderAuth();
+</script>
+
+<!-- TIMEZONE LOGIC -->
+<script>
+const $ = id => document.getElementById(id);
+const STORAGE = { zones:'vg_tz_zones_v2', favs:'vg_tz_favs_v2', fmt24:'vg_tz_fmt24_v2' };
+
+// ── City database ──────────────────────────────────────────────────────────────
+const CITIES = [
+  // Americas
+  ['New York, USA',             'America/New_York'],
+  ['Chicago, USA',              'America/Chicago'],
+  ['Denver, USA',               'America/Denver'],
+  ['Los Angeles, USA',          'America/Los_Angeles'],
+  ['Miami, USA',                'America/New_York'],
+  ['San Francisco, USA',        'America/Los_Angeles'],
+  ['Seattle, USA',              'America/Los_Angeles'],
+  ['Dallas, USA',               'America/Chicago'],
+  ['Phoenix, USA',              'America/Phoenix'],
+  ['Honolulu, USA',             'Pacific/Honolulu'],
+  ['Anchorage, USA',            'America/Anchorage'],
+  ['Toronto, Canada',           'America/Toronto'],
+  ['Vancouver, Canada',         'America/Vancouver'],
+  ['Mexico City, Mexico',       'America/Mexico_City'],
+  ['Cancún, Mexico',            'America/Cancun'],
+  ['São Paulo, Brazil',         'America/Sao_Paulo'],
+  ['Buenos Aires, Argentina',   'America/Argentina/Buenos_Aires'],
+  ['Lima, Peru',                'America/Lima'],
+  ['Bogotá, Colombia',          'America/Bogota'],
+  ['Santiago, Chile',           'America/Santiago'],
+  // Europe
+  ['London, UK',                'Europe/London'],
+  ['Paris, France',             'Europe/Paris'],
+  ['Berlin, Germany',           'Europe/Berlin'],
+  ['Madrid, Spain',             'Europe/Madrid'],
+  ['Rome, Italy',               'Europe/Rome'],
+  ['Amsterdam, Netherlands',    'Europe/Amsterdam'],
+  ['Zurich, Switzerland',       'Europe/Zurich'],
+  ['Vienna, Austria',           'Europe/Vienna'],
+  ['Athens, Greece',            'Europe/Athens'],
+  ['Lisbon, Portugal',          'Europe/Lisbon'],
+  ['Stockholm, Sweden',         'Europe/Stockholm'],
+  ['Oslo, Norway',              'Europe/Oslo'],
+  ['Copenhagen, Denmark',       'Europe/Copenhagen'],
+  ['Helsinki, Finland',         'Europe/Helsinki'],
+  ['Warsaw, Poland',            'Europe/Warsaw'],
+  ['Prague, Czech Republic',    'Europe/Prague'],
+  ['Budapest, Hungary',         'Europe/Budapest'],
+  ['Bucharest, Romania',        'Europe/Bucharest'],
+  ['Istanbul, Türkiye',         'Europe/Istanbul'],
+  ['Moscow, Russia',            'Europe/Moscow'],
+  // Africa / Middle East
+  ['Dubai, UAE',                'Asia/Dubai'],
+  ['Riyadh, Saudi Arabia',      'Asia/Riyadh'],
+  ['Tel Aviv, Israel',          'Asia/Jerusalem'],
+  ['Cairo, Egypt',              'Africa/Cairo'],
+  ['Nairobi, Kenya',            'Africa/Nairobi'],
+  ['Johannesburg, South Africa','Africa/Johannesburg'],
+  ['Lagos, Nigeria',            'Africa/Lagos'],
+  ['Casablanca, Morocco',       'Africa/Casablanca'],
+  // Asia
+  ['Mumbai, India',             'Asia/Kolkata'],
+  ['Delhi, India',              'Asia/Kolkata'],
+  ['Bangalore, India',          'Asia/Kolkata'],
+  ['Colombo, Sri Lanka',        'Asia/Colombo'],
+  ['Karachi, Pakistan',         'Asia/Karachi'],
+  ['Dhaka, Bangladesh',         'Asia/Dhaka'],
+  ['Kathmandu, Nepal',          'Asia/Kathmandu'],
+  ['Bangkok, Thailand',         'Asia/Bangkok'],
+  ['Ho Chi Minh City, Vietnam', 'Asia/Ho_Chi_Minh'],
+  ['Hanoi, Vietnam',            'Asia/Bangkok'],
+  ['Kuala Lumpur, Malaysia',    'Asia/Kuala_Lumpur'],
+  ['Singapore',                 'Asia/Singapore'],
+  ['Jakarta, Indonesia',        'Asia/Jakarta'],
+  ['Bali, Indonesia',           'Asia/Makassar'],
+  ['Manila, Philippines',       'Asia/Manila'],
+  ['Hong Kong',                 'Asia/Hong_Kong'],
+  ['Taipei, Taiwan',            'Asia/Taipei'],
+  ['Shanghai, China',           'Asia/Shanghai'],
+  ['Beijing, China',            'Asia/Shanghai'],
+  ['Seoul, South Korea',        'Asia/Seoul'],
+  ['Tokyo, Japan',              'Asia/Tokyo'],
+  ['Osaka, Japan',              'Asia/Tokyo'],
+  // Pacific
+  ['Sydney, Australia',         'Australia/Sydney'],
+  ['Melbourne, Australia',      'Australia/Melbourne'],
+  ['Brisbane, Australia',       'Australia/Brisbane'],
+  ['Perth, Australia',          'Australia/Perth'],
+  ['Auckland, New Zealand',     'Pacific/Auckland'],
+  ['Fiji',                      'Pacific/Fiji'],
+  ['Honolulu, Hawaii',          'Pacific/Honolulu'],
+];
+
+// Quick-add travel hubs (subset for top bar)
+const QUICK_ADD = [
+  ['🗽 New York','America/New_York'],
+  ['🇬🇧 London','Europe/London'],
+  ['🗼 Paris','Europe/Paris'],
+  ['🇯🇵 Tokyo','Asia/Tokyo'],
+  ['🇸🇬 Singapore','Asia/Singapore'],
+  ['🇦🇪 Dubai','Asia/Dubai'],
+  ['🇦🇺 Sydney','Australia/Sydney'],
+  ['🇮🇳 Mumbai','Asia/Kolkata'],
+  ['🇧🇷 São Paulo','America/Sao_Paulo'],
+  ['🌴 Bali','Asia/Makassar'],
+];
+
+let zones = [];   // [{label, zone}]
+let fmt24 = false;
+let _toastTimer;
+
+function toast(msg, ms=1800){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+// ── Storage ───────────────────────────────────────────────────────────────────
+function loadState(){
+  try{ zones=JSON.parse(localStorage.getItem(STORAGE.zones)||'[]')||[]; }catch{}
+  try{ fmt24=JSON.parse(localStorage.getItem(STORAGE.fmt24)||'false'); }catch{}
+  $('fmt24').checked=!!fmt24;
+}
+function saveZones(){ try{localStorage.setItem(STORAGE.zones,JSON.stringify(zones));}catch{} }
+window.saveFmt=function(){ try{localStorage.setItem(STORAGE.fmt24,JSON.stringify(!!$('fmt24').checked));}catch{} };
+
+// ── Favorites ─────────────────────────────────────────────────────────────────
+function getFavs(){ try{return JSON.parse(localStorage.getItem(STORAGE.favs)||'[]');}catch{return[]} }
+function setFavs(arr){ try{localStorage.setItem(STORAGE.favs,JSON.stringify(arr));}catch{} renderFavs(); }
+window.addFavoriteFromBase=function(){
+  const z=$('baseZone').value; const s=new Set(getFavs()); s.add(z); setFavs([...s]); toast('⭐ Starred');
+};
+function renderFavs(){
+  const w=$('favWrap'); const favs=getFavs();
+  if(!favs.length){ w.innerHTML='<span style="font-size:.82rem;color:var(--text-muted)">No favorites yet</span>'; return; }
+  w.innerHTML=favs.map(z=>{
+    const label=CITIES.find(c=>c[1]===z)?.[0]||z;
+    return `<button class="fav-pill" onclick="addZoneById('${z}')">⭐ ${label.split(',')[0]}<span class="rm" onclick="event.stopPropagation();removeFav('${z}')">×</span></button>`;
+  }).join('');
+}
+function removeFav(z){ const s=new Set(getFavs()); s.delete(z); setFavs([...s]); }
+
+// ── Timezone utilities ────────────────────────────────────────────────────────
+function offsetStr(zone, d=new Date()){
+  const f=new Intl.DateTimeFormat('en-US',{timeZone:zone,timeZoneName:'shortOffset',hour:'2-digit'});
+  const p=f.formatToParts(d);
+  return (p.find(x=>x.type==='timeZoneName')?.value||'').replace('GMT','UTC');
+}
+function offsetMinutes(zone, d=new Date()){
+  const s=offsetStr(zone,d);
+  const m=s.match(/UTC([+-]?\d{1,2})(?::(\d{2}))?/);
+  if(!m) return 0;
+  const h=parseInt(m[1],10), min=m[2]?parseInt(m[2],10):0;
+  return h*60+(h>=0?min:-min);
+}
+function isDST(zone, d=new Date()){
+  const jan=new Date(d.getFullYear(),0,1), jul=new Date(d.getFullYear(),6,1);
+  const off=z=>{
+    const f=new Intl.DateTimeFormat('en-US',{timeZone:z,timeZoneName:'shortOffset',hour:'2-digit'}).formatToParts(new Date());
+    const s=f.find(p=>p.type==='timeZoneName')?.value||'UTC';
+    const m=s.match(/UTC([+-]\d{1,2})(?::(\d{2}))?/);
+    const h=m?parseInt(m[1],10):0,min=m&&m[2]?parseInt(m[2],10):0;
+    return h*60+(h>=0?min:-min);
+  };
+  return off(zone)!==Math.max(offsetMinutes(zone,jan),offsetMinutes(zone,jul));
+}
+function fmtTime(d, zone, withSec=false){
+  const opts={hour:'2-digit',minute:'2-digit',hour12:!$('fmt24').checked,timeZone:zone};
+  if(withSec) opts.second='2-digit';
+  return new Intl.DateTimeFormat(undefined,opts).format(d);
+}
+function fmtDate(d, zone){
+  return new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric',timeZone:zone}).format(d);
+}
+function zonedHour(zone, d=new Date()){
+  return +new Intl.DateTimeFormat('en-US',{timeZone:zone,hour:'2-digit',hour12:false}).formatToParts(d).find(p=>p.type==='hour')?.value;
+}
+function getPeriod(h){ // 0-23 hour
+  if(h>=22||h<6)  return {label:'Sleep', cls:'sleep', icon:'😴'};
+  if(h>=6&&h<9)   return {label:'Morning', cls:'morning', icon:'🌅'};
+  if(h>=9&&h<18)  return {label:'Work', cls:'work', icon:'💼'};
+  if(h>=18&&h<22) return {label:'Evening', cls:'evening', icon:'🌆'};
+  return {label:'', cls:'sleep', icon:''};
+}
+
+// ── Build selects ─────────────────────────────────────────────────────────────
+function buildSelects(){
+  const cityOpts = CITIES.map(([l,z])=>`<option value="${z}">${l}</option>`).join('');
+  $('citySelect').innerHTML = cityOpts;
+
+  // Base zone: full IANA sorted list from Intl
+  const allZones = Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : CITIES.map(c=>c[1]);
+  const cityZones = CITIES.map(c=>c[1]);
+  const all = [...new Set([...cityZones, ...allZones])].sort();
+  $('baseZone').innerHTML = all.map(z=>`<option value="${z}">${z}</option>`).join('');
+  try{ const g=Intl.DateTimeFormat().resolvedOptions().timeZone; if(g)$('baseZone').value=g; }catch{}
+}
+
+function buildQuickAdd(){
+  const wrap=$('quickAddWrap'); wrap.innerHTML='';
+  QUICK_ADD.forEach(([label,zone])=>{
+    const btn=document.createElement('button');
+    btn.className='pill-btn'; btn.textContent=label;
+    btn.onclick=()=>addZoneById(zone);
+    wrap.appendChild(btn);
+  });
+}
+
+// ── getBaseDateTime ──────────────────────────────────────────────────────────
+function getBaseDateTime(){
+  const ds=$('baseDate').value, ts=$('baseTime').value, zone=$('baseZone').value;
+  if(!ds||!ts||!zone) return null;
+  const [y,m,dr]=ds.split('-').map(Number);
+  const [hh,mm]=ts.split(':').map(Number);
+  const offMin=(()=>{
+    const f=new Intl.DateTimeFormat('en-US',{timeZone:zone,timeZoneName:'shortOffset',hour:'2-digit'}).formatToParts(new Date(Date.UTC(y,m-1,dr,hh,mm,0)));
+    const s=f.find(p=>p.type==='timeZoneName')?.value||'UTC';
+    const mx=s.match(/UTC([+-]\d{1,2})(?::(\d{2}))?/);
+    const h=mx?parseInt(mx[1],10):0,min=mx&&mx[2]?parseInt(mx[2],10):0;
+    return h*60+(h>=0?min:-min);
+  })();
+  return new Date(Date.UTC(y,m-1,dr,hh,mm,0)-offMin*60000);
+}
+
+window.setNow=function(){
+  const now=new Date(), pad=n=>String(n).padStart(2,'0');
+  $('baseDate').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  $('baseTime').value=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  convertAll();
+};
+
+window.shareLink=function(){
+  const u=new URL(location.href);
+  u.searchParams.set('zones',zones.map(z=>encodeURIComponent(z.zone)).join(','));
+  u.searchParams.set('base',$('baseZone').value);
+  u.searchParams.set('fmt24',$('fmt24').checked?'1':'0');
+  const ds=$('baseDate').value,ts=$('baseTime').value;
+  if(ds&&ts) u.searchParams.set('dt',ds+'T'+ts);
+  navigator.clipboard?.writeText(u.toString()).then(()=>toast('🔗 Link copied!')).catch(()=>alert(u.toString()));
+};
+
+// ── Add / remove zones ────────────────────────────────────────────────────────
+window.addZone=function(){
+  const sel=$('citySelect').value, custom=$('customTZ').value.trim();
+  addZoneById(custom||sel);
+  $('customTZ').value='';
+};
+function addZoneById(z){
+  try{ new Intl.DateTimeFormat(undefined,{timeZone:z}); }catch{ toast('❌ Invalid IANA zone: '+z); return; }
+  if(zones.some(it=>it.zone===z)){ toast('Already added'); return; }
+  const label=CITIES.find(c=>c[1]===z)?.[0]||z;
+  zones.push({label,zone:z}); saveZones();
+  convertAll(); renderLive(); toast('✅ Added '+label.split(',')[0]);
+}
+window.removeZone=function(idx){ zones.splice(idx,1); saveZones(); convertAll(); renderLive(); };
+window.clearAll=function(){ if(zones.length&&confirm('Remove all cities?')){ zones=[]; saveZones(); convertAll(); renderLive(); } };
+window.moveZone=function(idx,dir){ const ni=idx+dir; if(ni<0||ni>=zones.length) return; [zones[idx],zones[ni]]=[zones[ni],zones[idx]]; saveZones(); convertAll(); };
+
+window.swapBase=function(){
+  if(!zones.length) return;
+  const first=zones[0].zone, cur=$('baseZone').value;
+  $('baseZone').value=first;
+  zones[0]={zone:cur,label:CITIES.find(c=>c[1]===cur)?.[0]||cur};
+  saveZones(); convertAll(); renderLive();
+};
+
+// ── LIVE CLOCKS ────────────────────────────────────────────────────────────────
+function renderLive(){
+  const bar=$('liveBar'); if(!bar) return;
+  const baseZone=$('baseZone').value;
+  const all=[{label:CITIES.find(c=>c[1]===baseZone)?.[0]||baseZone, zone:baseZone, isBase:true}, ...zones.filter(z=>z.zone!==baseZone)];
+
+  bar.innerHTML='';
+  const now=new Date();
+  all.forEach((it,i)=>{
+    const h=zonedHour(it.zone,now);
+    const period=getPeriod(h);
+    const off=offsetStr(it.zone,now);
+    const dst=isDST(it.zone,now);
+    const timeTxt=fmtTime(now,it.zone,true);
+    const dateTxt=fmtDate(now,it.zone);
+    const label=it.label.split(',')[0];
+
+    const card=document.createElement('div');
+    card.className='clock-card'+(it.isBase?' is-base':'');
+    card.id=`cc-${i}`;
+    card.innerHTML=`
+      ${it.isBase?'<span class="base-badge">Base</span>':''}
+      ${!it.isBase?`<button class="clock-remove" onclick="removeZone(${i-1})" title="Remove">×</button>`:''}
+      <canvas id="clk-${i}" width="100" height="100" style="width:90px;height:90px"></canvas>
+      <div class="clock-city">${label}</div>
+      <div class="clock-time" id="ctxt-${i}">${timeTxt}</div>
+      <div class="clock-date" id="cdat-${i}">${dateTxt}</div>
+      <div style="display:flex;gap:.3rem;flex-wrap:wrap;justify-content:center;margin-top:.2rem">
+        <span class="clock-offset">${off}</span>
+        ${dst?'<span class="clock-dst">DST</span>':''}
+        <span class="clock-period ${period.cls}">${period.icon} ${period.label}</span>
+      </div>`;
+    bar.appendChild(card);
+    drawClock(`clk-${i}`,it.zone,now);
+  });
+}
+
+function tickLive(){
+  const now=new Date();
+  const bar=$('liveBar'); if(!bar||!bar.children.length) return;
+  const baseZone=$('baseZone').value;
+  const all=[{zone:baseZone},...zones.filter(z=>z.zone!==baseZone)];
+  all.forEach((it,i)=>{
+    drawClock(`clk-${i}`,it.zone,now);
+    const t=$(`ctxt-${i}`); if(t) t.textContent=fmtTime(now,it.zone,true);
+    const d=$(`cdat-${i}`); if(d) d.textContent=fmtDate(now,it.zone);
+  });
+  const tick=$('liveTick'); if(tick) tick.textContent=fmtTime(now,baseZone,true);
+}
+
+// ── Analog clock drawing ──────────────────────────────────────────────────────
+function zonedParts(zone, d=new Date()){
+  const p=new Intl.DateTimeFormat(undefined,{timeZone:zone,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(d).reduce((a,x)=>{a[x.type]=x.value;return a;},{});
+  return{H:+p.hour,M:+p.minute,S:+p.second};
+}
+function drawClock(id, zone, now=new Date()){
+  const canvas=typeof id==='string'?$(id):id;
+  if(!canvas) return;
+  const scale=window.devicePixelRatio||1, css=90, pad=6;
+  const px=css*scale;
+  if(canvas.width!==px){canvas.width=px;canvas.height=px;}
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(scale,0,0,scale,0,0);
+  const cx=css/2,cy=css/2,r=cx-pad;
+  const{H,M,S}=zonedParts(zone,now);
+  const sec=S,min=M+sec/60,hr=(H%12)+min/60;
+  ctx.clearRect(0,0,css,css);
+
+  // Face
+  const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+  grad.addColorStop(0,'#ffffff'); grad.addColorStop(1,'#f8fafc');
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=grad;ctx.fill();
+  ctx.lineWidth=2;ctx.strokeStyle='#e2e8f0';ctx.stroke();
+
+  // Hour marks
+  ctx.save();ctx.translate(cx,cy);
+  for(let i=0;i<12;i++){
+    ctx.rotate(Math.PI/6);
+    ctx.beginPath();ctx.moveTo(0,-(r-2));ctx.lineTo(0,-(r-8));
+    ctx.lineWidth=i%3===0?2.5:1.5;ctx.strokeStyle=i%3===0?'#475569':'#94a3b8';ctx.stroke();
+  }
+  ctx.restore();
+
+  function hand(angle,len,width,color,cap='round'){
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);
+    ctx.beginPath();ctx.moveTo(0,5);ctx.lineTo(0,-len);
+    ctx.lineWidth=width;ctx.lineCap=cap;ctx.strokeStyle=color;ctx.stroke();
+    ctx.restore();
+  }
+  hand(hr*Math.PI/6,   r*.52, 4, '#0f172a');
+  hand(min*Math.PI/30, r*.72, 3, '#1e40af');
+  hand(sec*Math.PI/30, r*.8,  1.5, '#e76f51');
+  ctx.beginPath();ctx.arc(cx,cy,3.5,0,Math.PI*2);ctx.fillStyle='#0f172a';ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,1.5,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+}
+
+// ── VISUAL TIMELINE ────────────────────────────────────────────────────────────
+function renderTimeline(){
+  const wrap=$('timelineWrap'); if(!wrap) return;
+  if(!zones.length){
+    wrap.innerHTML='<span style="font-size:.85rem;color:var(--text-muted)">Add cities below to see the timeline</span>';
+    return;
+  }
+  const baseInst=getBaseDateTime()||new Date();
+  const baseZone=$('baseZone').value;
+  const allZones=[{label:CITIES.find(c=>c[1]===baseZone)?.[0]||baseZone, zone:baseZone, isBase:true},...zones];
+  const COLS=24, LABEL_W=140;
+  const cellPx=Math.max(28, Math.floor((Math.min(window.innerWidth,1200)-LABEL_W-40)/COLS));
+
+  // Find current hour in base zone
+  const nowHour=zonedHour(baseZone, new Date());
+  const baseHour=zonedHour(baseZone, baseInst);
+
+  // Grid template: label + 24 cells
+  const gridStyle=`grid-template-columns:${LABEL_W}px repeat(${COLS},${cellPx}px)`;
+
+  let html=`<div class="timeline">`;
+  // Header row — hours 0–23
+  html+=`<div class="timeline-header" style="${gridStyle}"><div></div>`;
+  for(let h=0;h<24;h++){
+    const hl=h%2===0?(h===0?'12am':h<12?h+'am':h===12?'12pm':(h-12)+'pm'):'';
+    html+=`<div class="tl-hour" style="width:${cellPx}px">${hl}</div>`;
+  }
+  html+=`</div>`;
+
+  allZones.forEach(it=>{
+    const cityLabel=(it.label||it.zone).split(',')[0];
+    const offMins=offsetMinutes(it.zone,baseInst);
+    const baseOffMins=offsetMinutes(baseZone,baseInst);
+    const shiftHours=(offMins-baseOffMins)/60;
+
+    html+=`<div class="tl-row" style="${gridStyle}">`;
+    html+=`<div class="tl-label" title="${it.zone}">${it.isBase?'📍 ':''}${cityLabel}</div>`;
+
+    for(let h=0;h<24;h++){
+      const localH=(h+shiftHours%24+24)%24|0;
+      const period=getPeriod(localH);
+      const isSelected=(h===baseHour&&it.isBase);
+      const isNow=(h===nowHour&&it.isBase);
+      const timeInZone=fmtTime(new Date(baseInst.getTime()+(h-baseHour)*3600000),it.zone);
+      html+=`<div class="tl-cell ${period.cls}${isSelected?' selected':''}"
+        style="width:${cellPx}px"
+        title="${cityLabel}: ${String(localH).padStart(2,'0')}:00 (${period.label})"
+        onmouseenter="showTLTooltip(event,'${cityLabel}',${localH},'${period.label}')"
+        onmouseleave="hideTLTooltip()"
+        onclick="setBaseHour(${h})">
+        ${h%6===0?String(localH).padStart(2,'0'):''}
+      </div>`;
+    }
+    html+=`</div>`;
+  });
+
+  // Now line
+  const lineLeft=LABEL_W+nowHour*cellPx+cellPx/2;
+  html+=`</div>`;
+
+  wrap.innerHTML=html;
+
+  // Draw now line overlay
+  const tl=wrap.querySelector('.timeline');
+  if(tl){
+    const line=document.createElement('div');
+    line.className='tl-now-line';
+    line.style.left=lineLeft+'px';
+    line.title='Current time';
+    tl.style.position='relative';
+    tl.appendChild(line);
+  }
+}
+
+window.showTLTooltip=function(e,city,h,period){
+  const t=$('tlTooltip');
+  t.innerHTML=`<strong>${city}</strong><br>${String(h).padStart(2,'0')}:00 · ${period}`;
+  t.style.display='block'; moveTLTip(e);
+};
+window.hideTLTooltip=function(){ $('tlTooltip').style.display='none'; };
+document.addEventListener('mousemove',e=>{ const t=$('tlTooltip'); if(t.style.display!=='none') moveTLTip(e); });
+function moveTLTip(e){ const t=$('tlTooltip'); t.style.left=(e.clientX+12)+'px'; t.style.top=(e.clientY-10)+'px'; }
+
+window.setBaseHour=function(h){
+  const d=$('baseDate').value||new Date().toISOString().slice(0,10);
+  $('baseTime').value=String(h).padStart(2,'0')+':00';
+  $('baseDate').value=d;
+  convertAll();
+};
+
+// ── BEST MEETING TIMES ─────────────────────────────────────────────────────────
+function renderBestTimes(){
+  const wrap=$('bestTimesWrap');
+  if(!zones.length){ wrap.innerHTML='<span style="font-size:.85rem;color:var(--text-muted)">Add cities below to find overlapping working hours</span>'; return; }
+
+  const baseZone=$('baseZone').value;
+  const allZones=[baseZone,...zones.map(z=>z.zone)];
+  const baseInst=getBaseDateTime()||new Date();
+
+  // Score each base hour 0-23
+  const slots=[];
+  for(let h=0;h<24;h++){
+    const testDate=new Date(baseInst);
+    testDate.setHours(h,0,0,0);
+    let score=0; let allWork=true; let localTimes=[];
+    allZones.forEach(zone=>{
+      const lh=zonedHour(zone,testDate);
+      localTimes.push({zone,h:lh});
+      if(lh>=9&&lh<18) score++;
+      else allWork=false;
+    });
+    const quality=score===allZones.length?'good':score>=allZones.length*0.6?'ok':'bad';
+    slots.push({h, score, quality, allWork, localTimes});
+  }
+
+  const good=slots.filter(s=>s.quality==='good').slice(0,6);
+  const ok=good.length<4?slots.filter(s=>s.quality==='ok').slice(0,4-good.length):[];
+  const show=[...good,...ok].sort((a,b)=>a.h-b.h);
+
+  if(!show.length){
+    wrap.innerHTML='<div style="font-size:.85rem;color:var(--text-muted);padding:.5rem 0">No overlapping working hours found across all zones. Consider splitting across two calls.</div>';
+    return;
+  }
+
+  const fmt24=()=>$('fmt24').checked;
+  wrap.innerHTML='<div class="best-times-grid">'+show.map(s=>{
+    const baseH=fmt24()?String(s.h).padStart(2,'0')+':00':(s.h===0?'12 AM':s.h<12?s.h+' AM':s.h===12?'12 PM':(s.h-12)+' PM');
+    const zonesDesc=s.localTimes.slice(0,3).map(({zone,h})=>{
+      const city=CITIES.find(c=>c[1]===zone)?.[0]?.split(',')[0]||zone.split('/').pop();
+      const ht=fmt24()?String(h).padStart(2,'0')+':00':(h===0?'12am':h<12?h+'am':h===12?'12pm':(h-12)+'pm');
+      return `${city} ${ht}`;
+    }).join(' · ');
+    return `<div class="best-slot ${s.quality}" onclick="setBaseHour(${s.h})" title="Click to set base time">
+      <div class="bs-time">${baseH}</div>
+      <div class="bs-label">${s.quality==='good'?'✅ All work hours':s.quality==='ok'?'⚠️ Most overlap':'❌ Poor overlap'}</div>
+      <div class="bs-zones">${zonesDesc}</div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+// ── CITY CARDS ─────────────────────────────────────────────────────────────────
+function renderGrid(){
+  const grid=$('tzGrid');
+  if(!zones.length){
+    grid.innerHTML='<div class="vg-card" style="padding:2rem;text-align:center;color:var(--text-muted);font-size:.88rem;grid-column:1/-1">No cities added yet — use the quick-add buttons or city selector above</div>';
+    return;
+  }
+  const baseInst=getBaseDateTime()||new Date();
+  const baseZone=$('baseZone').value;
+  const baseOffMins=offsetMinutes(baseZone,baseInst);
+
+  grid.innerHTML=zones.map((it,idx)=>{
+    const timeStr=fmtTime(baseInst,it.zone);
+    const dateStr=fmtDate(baseInst,it.zone);
+    const off=offsetStr(it.zone,baseInst);
+    const dst=isDST(it.zone,baseInst);
+    const offMins=offsetMinutes(it.zone,baseInst);
+    const diffMins=offMins-baseOffMins;
+    const diffH=diffMins/60;
+    let diffLabel='', diffCls='same';
+    if(diffH>0){ diffLabel=`+${diffH%1===0?diffH:diffH.toFixed(1)}h ahead`; diffCls='ahead'; }
+    else if(diffH<0){ diffLabel=`${diffH%1===0?diffH:diffH.toFixed(1)}h behind`; diffCls='behind'; }
+    else{ diffLabel='Same time'; }
+    const h=zonedHour(it.zone,baseInst);
+    const period=getPeriod(h);
+    const cityName=(it.label||it.zone).split(',')[0];
+    const cityRegion=it.label?.includes(',')?' '+it.label.split(',').slice(1).join(',').trim():'';
+
+    return `<div class="city-card">
+      <div class="city-header">
+        <div>
+          <div class="city-name">${cityName}</div>
+          <div class="city-zone">${it.zone}${cityRegion?` · ${cityRegion}`:''}</div>
+          <div class="city-badges">
+            <span class="badge">${off}</span>
+            ${dst?'<span class="badge dst">DST</span>':''}
+            <span class="badge">${period.icon} ${period.label}</span>
+          </div>
+        </div>
+      </div>
+      <div class="city-time-big">${timeStr}</div>
+      <div class="city-date">${dateStr}</div>
+      <div class="city-diff ${diffCls}">${diffLabel}</div>
+      <div class="city-actions">
+        <button class="vg-btn vg-btn-sm" onclick="moveZone(${idx},-1)" title="Move up">↑</button>
+        <button class="vg-btn vg-btn-sm" onclick="moveZone(${idx},1)" title="Move down">↓</button>
+        <button class="vg-btn vg-btn-sm" onclick="toggleFav('${it.zone}')" title="Favorite">⭐</button>
+        <button class="vg-btn vg-btn-sm" style="color:#dc2626;border-color:#fca5a5" onclick="removeZone(${idx})" title="Remove">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleFav(z){ const s=new Set(getFavs()); s.has(z)?s.delete(z):s.add(z); setFavs([...s]); }
+window.toggleFav=toggleFav;
+
+// ── convertAll ────────────────────────────────────────────────────────────────
+function convertAll(){ renderGrid(); renderTimeline(); renderBestTimes(); }
+window.convertAll=convertAll;
+
+// ── URL params ────────────────────────────────────────────────────────────────
+function applyFromURL(){
+  const p=new URLSearchParams(location.search);
+  const base=p.get('base'), fmt=p.get('fmt24')==='1', dt=p.get('dt'), zonesP=p.get('zones');
+  if(base) $('baseZone').value=base;
+  $('fmt24').checked=fmt;
+  if(dt&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dt)){
+    const[d,t]=dt.split('T'); $('baseDate').value=d; $('baseTime').value=t;
+  } else setNow();
+  if(zonesP){ zones=[]; zonesP.split(',').forEach(r=>{ const z=decodeURIComponent(r); if(z) addZoneById(z); }); }
+  else if(!zones.length){
+    ['America/New_York','Europe/London','Asia/Tokyo'].forEach(z=>addZoneById(z));
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init(){
+  buildSelects(); buildQuickAdd(); loadState(); renderFavs(); applyFromURL();
+  renderLive(); convertAll();
+}
+setInterval(()=>{ tickLive(); }, 1000);
+init();
+</script>
+</body>
+</html>

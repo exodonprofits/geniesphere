@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Voyage Genie – AI-Powered Travel Planning</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #0077b6;
+  --ocean-deep: #023e8a;
+  --teal: #00b4d8;
+  --teal-light: #90e0ef;
+  --coral: #e76f51;
+  --coral-dark: #c1551c;
+  --off-white: #f8fafc;
+  --gray-light: #f1f5f9;
+  --gray-mid: #94a3b8;
+  --gray-dark: #334155;
+  --text: #1e293b;
+  --radius: 14px;
+  --radius-lg: 22px;
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-hover: 0 16px 40px rgba(0,0,0,0.14);
+  --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--off-white);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+.vg-header {
+  position: sticky; top: 0; z-index: 40;
+  background: linear-gradient(105deg, #023e8a 0%, #0077b6 55%, #0096c7 100%);
+  box-shadow: 0 2px 20px rgba(2,62,138,0.25);
+}
+.vg-nav {
+  max-width: 1240px; margin: 0 auto; padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.vg-left { display: flex; align-items: center; gap: 18px; flex: 1; }
+.vg-brand {
+  display: flex; align-items: center; gap: 12px;
+  color: #fff; text-decoration: none; white-space: nowrap;
+}
+.vg-brand img {
+  width: 46px; height: 46px; border-radius: 10px;
+  object-fit: contain; background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.vg-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700; font-size: 1.4rem;
+  letter-spacing: -0.01em; color: #fff;
+}
+.vg-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.nav-link { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 0.93rem; font-weight: 500; padding: 0 4px; }
+.nav-link:hover { color: #fff; text-decoration: underline; }
+
+/* centre nav links */
+.vg-center { display: flex; align-items: center; gap: 4px; }
+@media (max-width: 860px) { .vg-center { display: none; } }
+
+/* sign-in text link — plain, no pill */
+.signin-text {
+  color: rgba(255,255,255,0.75); text-decoration: none;
+  font-size: 0.9rem; font-weight: 400;
+  transition: color var(--transition); white-space: nowrap;
+}
+.signin-text:hover { color: #fff; }
+
+/* sign-up CTA button */
+.signup-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 40px; padding: 0 16px; border-radius: 9px;
+  background: var(--coral); color: #fff; text-decoration: none;
+  border: 1px solid var(--coral-dark); white-space: nowrap;
+  transition: background var(--transition); font-size: 0.9rem; font-weight: 600;
+}
+.signup-chip:hover { background: var(--coral-dark); text-decoration: none; }
+
+/* Auth / menus */
+.menu-group { position: relative; }
+.menu {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  min-width: 230px; width: min(300px, calc(100vw - 24px));
+  padding: 6px; background: #fff; color: #1e293b;
+  border-radius: var(--radius); box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+  display: none; z-index: 60;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.menu a {
+  display: flex; align-items: center; gap: 9px; padding: 9px 12px;
+  border-radius: 9px; color: #1e293b; text-decoration: none; font-size: 0.9rem;
+  transition: background var(--transition);
+}
+.menu a:hover { background: #f1f5f9; color: var(--ocean); }
+.menu-divider { height: 1px; background: #e2e8f0; margin: 6px 4px; }
+.menu-label { padding: 6px 12px; color: #94a3b8; font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+.menu-header { padding: 12px 14px 10px; border-bottom: 1px solid #e2e8f0; margin-bottom: 6px; }
+.menu-user { font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+.menu-user-sub { font-size: 0.8rem; color: #64748b; margin-top: 2px; word-break: break-all; }
+.desktop-auth { display: flex; align-items: center; gap: 10px; }
+.mobile-auth { display: none; }
+.account-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 40px; padding: 0 16px; border-radius: 9px;
+  background: rgba(255,255,255,0.14); color: #fff; text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.22); white-space: nowrap;
+  transition: background var(--transition); font-size: 0.9rem;
+}
+.account-chip:hover { background: rgba(255,255,255,0.24); text-decoration: none; }
+.account-chip .caret { font-size: 0.68rem; opacity: 0.8; }
+.hamburger-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 9px;
+  background: rgba(255,255,255,0.14); color: #fff; text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.22); transition: background var(--transition);
+}
+.hamburger-btn:hover { background: rgba(255,255,255,0.26); text-decoration: none; }
+.hamburger-icon { font-size: 1.15rem; line-height: 1; }
+
+@media (max-width: 860px) {
+  .desktop-auth { display: none !important; }
+  .mobile-auth { display: block; }
+  .vg-title { font-size: 1.15rem; }
+  .vg-brand img { width: 38px; height: 38px; }
+}
+
+/* ── HERO ── */
+.hero-section {
+  position: relative; color: white;
+  padding: 5rem 1.25rem 4rem;
+  text-align: center;
+  background-size: cover;
+  background-position: center;
+  background-image: linear-gradient(rgba(2,62,138,0.62), rgba(0,20,50,0.72)), url('images/beachortropical.jpg');
+  overflow: hidden;
+}
+@media (min-width: 640px) {
+  .hero-section { padding: 7rem 1.5rem 5rem; }
+}
+.hero-section::after {
+  content: '';
+  position: absolute; bottom: -2px; left: 0; right: 0; height: 80px;
+  background: var(--off-white);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+.hero-section h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 900; line-height: 1.15;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+}
+.hero-section p {
+  font-size: 1.05rem; opacity: 0.9; margin-bottom: 2rem;
+  font-weight: 300; letter-spacing: 0.01em;
+}
+@media (min-width: 540px) {
+  .hero-section p { font-size: 1.1rem; margin-bottom: 2.5rem; }
+}
+.hero-search {
+  max-width: 600px; margin: 0 auto;
+  display: flex; flex-direction: column;
+  gap: 0.75rem; position: relative; z-index: 2;
+}
+@media (min-width: 540px) {
+  .hero-search { flex-direction: row; }
+}
+.hero-textbox {
+  flex: 1; padding: 0.9rem 1.3rem;
+  border-radius: var(--radius);
+  border: none; outline: none;
+  font-size: 1rem; font-family: 'DM Sans', sans-serif;
+  background: rgba(255,255,255,0.95);
+  color: #1e293b;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.hero-textbox::placeholder { color: #64748b; }
+.hero-textbox:focus { background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.25); }
+.hero-textbox-submit {
+  padding: 0.9rem 1.8rem;
+  background: var(--coral);
+  color: white; border: none; cursor: pointer;
+  border-radius: var(--radius);
+  font-size: 1rem; font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+  box-shadow: 0 4px 16px rgba(231,111,81,0.4);
+}
+.hero-textbox-submit:hover {
+  background: var(--coral-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(231,111,81,0.5);
+}
+.hero-badges {
+  display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap;
+  margin-top: 1.5rem; margin-bottom: 2rem; position: relative; z-index: 2;
+}
+@media (min-width: 540px) {
+  .hero-badges { gap: 1rem; margin-top: 2rem; margin-bottom: 2.5rem; }
+}
+.hero-badge {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.95);
+  padding: 0.3rem 0.85rem; border-radius: 999px;
+  font-size: 0.8rem; font-weight: 500; backdrop-filter: blur(4px);
+  text-decoration: none; cursor: pointer;
+  transition: background var(--transition);
+}
+@media (min-width: 540px) {
+  .hero-badge { padding: 0.35rem 1rem; font-size: 0.82rem; }
+}
+.hero-badge:hover { background: rgba(255,255,255,0.25); }
+
+/* Ask Genie error state */
+.hero-textbox.input-error {
+  border: 2px solid var(--coral);
+  animation: shake 0.35s ease;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+
+/* ── SECTIONS ── */
+section { padding: 3rem 1.25rem; }
+@media (min-width: 640px) { section { padding: 5rem 1.5rem; } }
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-weight: 700; text-align: center;
+  color: var(--text); margin-bottom: 0.6rem;
+}
+.section-subtitle {
+  text-align: center; color: var(--gray-mid);
+  font-size: 1rem; margin-bottom: 3rem;
+  max-width: 560px; margin-left: auto; margin-right: auto;
+}
+
+/* ── TRAVEL OPTIONS ── */
+.travel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.5rem; max-width: 1100px; margin: 0 auto;
+}
+.travel-card {
+  background: #fff; border-radius: var(--radius-lg);
+  overflow: hidden; box-shadow: var(--shadow-card);
+  transition: transform var(--transition), box-shadow var(--transition);
+  display: flex; flex-direction: column;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+.travel-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-hover);
+}
+.travel-card-img {
+  width: 100%; height: 150px; object-fit: cover;
+  display: block;
+}
+@media (min-width: 540px) {
+  .travel-card-img { height: 170px; }
+}
+.travel-card-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; }
+.travel-card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; }
+.travel-card-desc { color: #64748b; font-size: 0.9rem; line-height: 1.55; flex: 1; }
+.card-btn {
+  display: inline-block; margin-top: 1.2rem;
+  background: var(--ocean); color: white;
+  padding: 0.6rem 1.4rem; border-radius: 9px;
+  text-decoration: none; font-size: 0.9rem; font-weight: 600;
+  transition: background var(--transition), transform var(--transition);
+  text-align: center;
+}
+.card-btn:hover { background: var(--ocean-deep); transform: translateY(-1px); }
+
+/* ── TOOLS GRID ── */
+.tools-bg { background: #fff; }
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem; max-width: 1100px; margin: 0 auto;
+}
+@media (max-width: 900px) {
+  .tools-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 380px) {
+  .tools-grid { grid-template-columns: 1fr; }
+}
+.tool-card {
+  background: var(--gray-light); border-radius: var(--radius);
+  padding: 1.4rem 1.2rem; text-align: center;
+  text-decoration: none; color: var(--text);
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+  border: 1px solid rgba(0,0,0,0.04);
+  display: block;
+}
+.tool-card:hover {
+  background: #e8f4fd; transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,119,182,0.1);
+  color: var(--ocean);
+}
+.tool-card h3 { font-size: 0.97rem; font-weight: 600; margin-bottom: 0.35rem; }
+.tool-card p { font-size: 0.83rem; color: #64748b; line-height: 1.5; }
+.tool-card:hover p { color: #2563eb; opacity: 0.75; }
+
+/* ── FEATURES ── */
+.features-bg { background: linear-gradient(135deg, #023e8a 0%, #0077b6 60%, #00b4d8 100%); }
+.features-bg .section-title { color: #fff; }
+.features-bg .section-subtitle { color: rgba(255,255,255,0.7); }
+.features-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem; max-width: 960px; margin: 0 auto;
+}
+.feature-card {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem; text-align: center; color: #fff;
+}
+.feature-icon { font-size: 2.2rem; display: block; margin-bottom: 1rem; }
+.feature-card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+.feature-card p { font-size: 0.9rem; opacity: 0.82; line-height: 1.6; }
+
+/* ── FOOTER ── */
+footer {
+  background: linear-gradient(105deg, #023e8a 0%, #0077b6 100%);
+  color: rgba(255,255,255,0.85); padding: 3rem 1.5rem 2rem;
+}
+.footer-inner {
+  max-width: 1100px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: start;
+}
+.footer-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;
+}
+.footer-tagline { font-size: 0.85rem; opacity: 0.7; }
+.footer-subscribe { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-email {
+  padding: 0.65rem 1rem; border-radius: 9px;
+  border: none; outline: none;
+  font-size: 0.9rem; font-family: 'DM Sans', sans-serif;
+  background: rgba(255,255,255,0.12);
+  color: #fff; border: 1px solid rgba(255,255,255,0.2);
+  flex: 1; min-width: 180px;
+}
+.footer-email::placeholder { color: rgba(255,255,255,0.5); }
+.footer-email:focus { background: rgba(255,255,255,0.18); }
+.footer-sub-btn {
+  padding: 0.65rem 1.2rem; background: var(--coral); color: #fff;
+  border: none; cursor: pointer; border-radius: 9px;
+  font-size: 0.9rem; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  transition: background var(--transition);
+}
+.footer-sub-btn:hover { background: var(--coral-dark); }
+.footer-links { display: flex; gap: 1.2rem; margin-top: 1.5rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+.footer-copy { margin-top: 2rem; font-size: 0.8rem; opacity: 0.55; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12); }
+
+/* Genie chat widget styles injected by genie-chat.js */
+
+/* ── TOOLS CATEGORY LABEL ── */
+.tool-category-label {
+  font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--gray-mid);
+  margin-bottom: 0.9rem; line-height: 1.5;
+}
+.tool-category-label span { font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+/* Coming-soon tool cards — muted, no pointer */
+.tool-card.coming-soon {
+  opacity: 0.5; pointer-events: none; cursor: default;
+  position: relative;
+}
+.tool-card.coming-soon::after {
+  content: 'Coming soon';
+  position: absolute; top: 8px; right: 10px;
+  font-size: 0.68rem; font-weight: 600; color: var(--gray-mid);
+  background: var(--gray-light); border-radius: 999px;
+  padding: 2px 7px; border: 1px solid #e2e8f0;
+}
+
+/* ── FADE IN ANIMATION ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-anim { animation: fadeUp 0.8s ease both; }
+.hero-anim-2 { animation: fadeUp 0.8s 0.15s ease both; }
+.hero-anim-3 { animation: fadeUp 0.8s 0.3s ease both; }
+.hero-anim-4 { animation: fadeUp 0.8s 0.45s ease both; }
+</style>
+
+<!-- Supabase bootstrap -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+</script>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <div class="vg-left">
+      <a class="vg-brand" href="index.html" aria-label="Voyage Genie Home">
+        <img src="images/nav-icon.png?v=1" alt="Voyage Genie"/>
+        <span class="vg-title">Voyage Genie</span>
+      </a>
+    </div>
+
+    <!-- Centre nav links (desktop only) -->
+    <nav class="vg-center" aria-label="Main navigation">
+      <a class="nav-link" href="#travel-tools">🧰 Tools</a>
+      <a class="nav-link" href="features.html">✨ Features</a>
+      <a class="nav-link" href="contact.html">📩 Contact</a>
+    </nav>
+
+    <div class="vg-right">
+      <div id="authSlot">
+        <!-- Populated by renderAuth() — starts empty to avoid flash of wrong state -->
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="hero-section" id="home">
+  <h1 class="hero-anim">Let Genie Curate Your Dream Getaway</h1>
+  <p class="hero-anim-2">Plan less, explore more – your personalized AI adventure starts here.</p>
+  <div class="hero-search hero-anim-3">
+    <input class="hero-textbox" id="askGenieInput" placeholder="Try: Bali retreat, Alaskan cruise, Paris weekend…" type="text"/>
+    <button class="hero-textbox-submit" id="askGenieButton">✨ Ask Genie</button>
+  </div>
+  <div class="hero-badges hero-anim-4">
+    <a class="hero-badge" href="tropical-trip-planner.html">🏖️ Tropical</a>
+    <a class="hero-badge" href="cruise-trip-planner.html">🚢 Cruises</a>
+    <a class="hero-badge" href="airbnb-trip-planner.html">🏨 City & Stays</a>
+    <a class="hero-badge" href="adventure-trip-planner.html">🌄 Adventure</a>
+    <span class="hero-badge" style="cursor:default;">✈️ AI-Powered</span>
+  </div>
+</section>
+
+<!-- ===== TRAVEL OPTIONS ===== -->
+<section class="bg-white" id="plan-trip" style="background:#fff;">
+  <h2 class="section-title">Explore Travel Options</h2>
+  <p class="section-subtitle">Pick your style — Genie does the rest.</p>
+  <div class="travel-grid">
+    <div class="travel-card">
+      <img class="travel-card-img" src="images/beachortropical.jpg" alt="Tropical Resort"/>
+      <div class="travel-card-body">
+        <div class="travel-card-title">🏖️ Tropical Resort</div>
+        <p class="travel-card-desc">Sun, sand &amp; zero stress – all-inclusive paradise escapes.</p>
+        <a class="card-btn" href="tropical-trip-planner.html">Plan Now →</a>
+      </div>
+    </div>
+    <div class="travel-card">
+      <img class="travel-card-img" src="images/cruise1.jpg" alt="Cruise Adventure"/>
+      <div class="travel-card-body">
+        <div class="travel-card-title">🚢 Cruise Adventure</div>
+        <p class="travel-card-desc">Wake up to new horizons and ocean breezes every day.</p>
+        <a class="card-btn" href="cruise-trip-planner.html">Plan Now →</a>
+      </div>
+    </div>
+    <div class="travel-card">
+      <img class="travel-card-img" src="images/hotel.jpg" alt="City & Stays"/>
+      <div class="travel-card-body">
+        <div class="travel-card-title">🏨 City & Stays</div>
+        <p class="travel-card-desc">Hotels, Airbnbs &amp; apartments — city breaks, cultural trips &amp; more.</p>
+        <a class="card-btn" href="airbnb-trip-planner.html">Plan Now →</a>
+      </div>
+    </div>
+    <div class="travel-card">
+      <img class="travel-card-img" src="images/adventure1.jpg" alt="Adventure Trip"/>
+      <div class="travel-card-body">
+        <div class="travel-card-title">🌄 Adventure Trip</div>
+        <p class="travel-card-desc">Thrill-seeking journeys into the wild and unknown.</p>
+        <a class="card-btn" href="adventure-trip-planner.html">Plan Now →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TOOLS ===== -->
+<section class="tools-bg" id="travel-tools">
+  <h2 class="section-title">Travel Tools</h2>
+  <p class="section-subtitle">Every tool in the order you'll actually need it.</p>
+
+  <div style="max-width:1100px;margin:0 auto;">
+
+    <!-- 1. Planning -->
+    <p class="tool-category-label">📋 1 — Planning <span>— Before you book anything</span></p>
+    <div class="tools-grid" style="margin-bottom:2.5rem;">
+      <a href="trip-cost-tracker.html" class="tool-card">
+        <h3>💰 Trip Cost Tracker</h3>
+        <p>Budget your trip, split costs fairly, and track every expense.</p>
+      </a>
+      <a href="visa-check.html" class="tool-card">
+        <h3>🛂 Visa Check</h3>
+        <p>Entry requirements by passport &amp; destination — before you book.</p>
+      </a>
+      <a href="packing-checklist.html" class="tool-card">
+        <h3>🧳 Packing Checklist</h3>
+        <p>Smart, shareable lists tailored to your trip type and climate.</p>
+      </a>
+      <a href="currency-converter.html" class="tool-card">
+        <h3>💱 Currency Converter</h3>
+        <p>Live exchange rates to help you set a realistic daily budget.</p>
+      </a>
+    </div>
+
+    <!-- 2. Pre-Departure -->
+    <p class="tool-category-label">🛫 2 — Pre-Departure <span>— Day of travel, before you board</span></p>
+    <div class="tools-grid" style="margin-bottom:2.5rem;">
+      <a href="airport-departure-planner.html" class="tool-card">
+        <h3>🛫 Airport Departure Planner</h3>
+        <p>Live traffic to your airport, real-time delay status, and exactly when to leave.</p>
+      </a>
+      <a href="flight-status.html" class="tool-card">
+        <h3>✈️ Flight Status</h3>
+        <p>Live departures, gate changes, and delay alerts before you leave home.</p>
+      </a>
+      <a href="seat-finder.html" class="tool-card">
+        <h3>🪑 Seat Finder</h3>
+        <p>Interactive seat maps — find the best window, aisle, or legroom seat.</p>
+      </a>
+      <a href="airport-lounge-finder.html" class="tool-card">
+        <h3>🛋️ Lounge Finder</h3>
+        <p>Find airport lounges you can access — free with your card or for a fee.</p>
+      </a>
+      <a href="travel-insurance.html" class="tool-card">
+        <h3>🛡️ Travel Insurance</h3>
+        <p>Compare policies and get covered before you step on the plane.</p>
+      </a>
+    </div>
+
+    <!-- 3. In-Flight -->
+    <p class="tool-category-label">✈️ 3 — In-Flight <span>— On the plane</span></p>
+    <div class="tools-grid" style="margin-bottom:2.5rem;">
+      <a href="timezone-converter.html" class="tool-card">
+        <h3>🕒 Time Zone Helper</h3>
+        <p>Reset your watch, adjust sleep, and beat jet lag before landing.</p>
+      </a>
+      <a href="jet-lag-planner.html" class="tool-card">
+        <h3>😴 Jet Lag Planner</h3>
+        <p>Personalized sleep &amp; light exposure plan to recover faster on arrival.</p>
+      </a>
+      <a href="layover-guide.html" class="tool-card">
+        <h3>🔄 Layover Guide</h3>
+        <p>Make the most of a long layover — lounges, city escapes &amp; transit tips.</p>
+      </a>
+      <a href="customs-entry-guide.html" class="tool-card">
+        <h3>🛃 Customs &amp; Entry Guide</h3>
+        <p>What to declare, limits to know, and forms to fill before you land.</p>
+      </a>
+    </div>
+
+    <!-- 4. On Arrival -->
+    <p class="tool-category-label">🛬 4 — On Arrival <span>— Airport to your accommodation</span></p>
+    <div class="tools-grid" style="margin-bottom:2.5rem;">
+      <a href="airport-transfer-planner.html" class="tool-card coming-soon">
+        <h3>🚖 Airport Transfer</h3>
+        <p>Compare taxis, trains, shuttles &amp; rideshares. No surprises on arrival.</p>
+      </a>
+      <a href="esim-guide.html" class="tool-card">
+        <h3>📶 eSIM &amp; Internet</h3>
+        <p>Activate a travel SIM the moment you land. Skip roaming charges entirely.</p>
+      </a>
+      <a href="atm-cash-guide.html" class="tool-card coming-soon">
+        <h3>🏧 ATM &amp; Cash Guide</h3>
+        <p>Best ATMs at your airport, fee-free cards, and local cash tips.</p>
+      </a>
+      <a href="emergency-info.html" class="tool-card">
+        <h3>🏥 Emergency Info</h3>
+        <p>Local emergency numbers, hospitals &amp; embassy contacts. Save before landing.</p>
+      </a>
+    </div>
+
+    <!-- 5. At Your Destination -->
+    <p class="tool-category-label">📍 5 — At Your Destination <span>— Settled in and exploring</span></p>
+    <div class="tools-grid">
+      <a href="explore-this-destination.html" class="tool-card">
+        <h3>🧭 Explore Destination</h3>
+        <p>Discover attractions, restaurants, and hidden gems near you right now.</p>
+      </a>
+      <a href="tip-calculator.html" class="tool-card">
+        <h3>💵 Tip Calculator</h3>
+        <p>Local tipping customs + easy bill splits for every restaurant &amp; taxi.</p>
+      </a>
+      <a href="parking-tips.html" class="tool-card">
+        <h3>🚘 Parking &amp; Rental Cars</h3>
+        <p>Local driving rules, parking apps, and car hire tips for your destination.</p>
+      </a>
+      <a href="weather-packing.html" class="tool-card coming-soon">
+        <h3>🌤️ Weather &amp; What to Wear</h3>
+        <p>7-day forecast with packing suggestions so you're always dressed right.</p>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section class="features-bg" id="features">
+  <h2 class="section-title">Why Choose Voyage Genie?</h2>
+  <p class="section-subtitle">We handle the details. You focus on the memories.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-icon">✨</span>
+      <h3>Personalized Itineraries</h3>
+      <p>Tailored travel plans for your vibe, budget, and travel style.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🧠</span>
+      <h3>AI-Powered Suggestions</h3>
+      <p>Smart recommendations that learn and adapt to you over time.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🛫</span>
+      <h3>Stress-Free Planning</h3>
+      <p>Let Genie handle the logistics while you sit back and dream.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer id="contact">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">✈️ Voyage Genie</div>
+      <div class="footer-tagline">Your AI Travel Companion · Plan Smarter with Genie</div>
+      <div class="footer-subscribe">
+        <input class="footer-email" placeholder="Enter your email" type="email"/>
+        <button class="footer-sub-btn">Subscribe</button>
+      </div>
+      <div class="footer-links">
+        <a href="#home">Home</a>
+        <a href="#plan-trip">Plan</a>
+        <a href="#features">Features</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-copy" style="max-width:1100px;margin:0 auto;">
+    © 2026 VoyageGenie.com – All rights reserved.
+  </div>
+</footer>
+
+<!-- Floating Chatbot -->
+<!-- Genie Chat Widget: see genie-chat.js -->
+
+<!-- ===== SCRIPTS ===== -->
+<script>
+  // ── Hero "Ask Genie" — identical experience to floating chat ──────
+  const askGenieInput  = document.getElementById('askGenieInput');
+  const askGenieButton = document.getElementById('askGenieButton');
+
+  function showInputError(){
+    askGenieInput.classList.add('input-error');
+    askGenieInput.placeholder = 'Type something — e.g. "Bali retreat" or "Alaskan cruise"';
+    setTimeout(()=>{ askGenieInput.classList.remove('input-error'); }, 600);
+    askGenieInput.focus();
+  }
+
+  function handleAskGenie(){
+    const query = askGenieInput.value.trim();
+    if(!query){ showInputError(); return; }
+
+    // Open the floating Genie chat and send the query as the first message.
+    // window._gcOpen is exposed by the Genie chat widget below.
+    function send(){
+      if(typeof window._gcOpen === 'function'){
+        window._gcOpen(query);
+      } else {
+        // Fallback: inject directly into the chat input and fire send
+        const win    = document.getElementById('gc-window');
+        const inp    = document.getElementById('gc-inp');
+        const sendBtn= document.getElementById('gc-send');
+        if(win && inp && sendBtn){
+          if(!win.classList.contains('gc-open')) win.classList.add('gc-open');
+          inp.value = query;
+          inp.dispatchEvent(new Event('input'));
+          setTimeout(()=> sendBtn.click(), 150);
+        }
+      }
+      // On mobile, scroll the floating button into view so chat is visible
+      if(window.innerWidth < 640){
+        document.querySelector('.gc-btn')?.scrollIntoView({behavior:'smooth',block:'end'});
+      }
+    }
+
+    // Give the widget a moment to boot if the page just loaded
+    document.getElementById('gc-window') ? send() : setTimeout(send, 450);
+
+    // Clear the hero input immediately for a snappy feel
+    askGenieInput.value = '';
+    askGenieButton.textContent = '✨ Ask Genie';
+  }
+
+  askGenieButton.addEventListener('click', handleAskGenie);
+  askGenieInput.addEventListener('keypress', e=>{ if(e.key==='Enter') handleAskGenie(); });
+</script>
+
+<script type="module">
+  // ── Lazy Supabase getter — reads after bootstrap module has settled ──
+  function getSB(){ return window.supabase || null; }
+  const authSlot = document.getElementById('authSlot');
+  const nextParam = encodeURIComponent('index.html');
+
+  function toggle(el,show){ if(el) el.style.display=show?'block':'none'; }
+  function closeMenus(exceptEl){
+    document.querySelectorAll('.menu').forEach(el=>{ if(el!==exceptEl) el.style.display='none'; });
+    document.querySelectorAll('[aria-expanded="true"]').forEach(btn=>{ if(!exceptEl||btn.getAttribute('aria-controls')!==exceptEl.id) btn.setAttribute('aria-expanded','false'); });
+  }
+
+  // Build shared menu items once — used in both desktop and mobile menus
+  function buildMenuItems(name, email){
+    return `
+      <div class="menu-header">
+        <div class="menu-user">🪪 ${name}</div>
+        <div class="menu-user-sub">${email||''}</div>
+      </div>
+      <a href="trip-dashboard.html" role="menuitem">📋 My Trips</a>
+      <div class="menu-divider"></div>
+      <div class="menu-label">Start a New Trip</div>
+      <a href="tropical-trip-planner.html" role="menuitem">🏖️ Tropical Resort</a>
+      <a href="cruise-trip-planner.html" role="menuitem">🚢 Cruise Adventure</a>
+      <a href="airbnb-trip-planner.html" role="menuitem">🏨 City & Stays</a>
+      <a href="adventure-trip-planner.html" role="menuitem">🌄 Adventure Trip</a>
+      <div class="menu-divider"></div>
+      <a href="account.html" role="menuitem">👤 Account</a>
+      <a href="#" id="_signOutBtn" role="menuitem">🚪 Sign out</a>`;
+  }
+
+  function accountDOM(email){
+    const name=(email||'Account').split('@')[0];
+    const items = buildMenuItems(name, email);
+    const wrap=document.createElement('div');
+    wrap.className='auth-wrap';
+    wrap.innerHTML=`
+      <div class="desktop-auth">
+        <div class="menu-group">
+          <a href="#" class="account-chip" id="acctDesktopBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctDesktopMenu">
+            <span>🪪</span><span>${name}</span><span class="caret">▼</span>
+          </a>
+          <div class="menu" id="acctDesktopMenu" role="menu">${items}</div>
+        </div>
+      </div>
+      <div class="mobile-auth">
+        <div class="menu-group">
+          <a href="#" class="hamburger-btn" id="acctMobileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctMobileMenu">
+            <span class="hamburger-icon">☰</span>
+          </a>
+          <div class="menu" id="acctMobileMenu" role="menu">${items.replace('id="_signOutBtn"','id="_signOutMobileBtn"')}</div>
+        </div>
+      </div>`;
+    return wrap;
+  }
+
+  function signinDOM(){
+    const wrap=document.createElement('div');
+    wrap.className='auth-wrap';
+    wrap.innerHTML=`
+      <div class="desktop-auth" style="display:flex;align-items:center;gap:14px;">
+        <a href="login.html?next=${nextParam}" class="signin-text">Sign in</a>
+        <a href="register.html" class="signup-chip">Start for free →</a>
+      </div>
+      <div class="mobile-auth">
+        <div class="menu-group">
+          <a href="#" class="hamburger-btn" id="signinMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="signinMenu">
+            <span class="hamburger-icon">☰</span>
+          </a>
+          <div class="menu" id="signinMenu" role="menu">
+            <div class="menu-header"><div class="menu-user">Voyage Genie</div><div class="menu-user-sub">Travel menu</div></div>
+            <div class="menu-label">Navigation</div>
+            <a href="#plan-trip" role="menuitem">🗺️ Plan a Trip</a>
+            <a href="#travel-tools" role="menuitem">🧰 Travel Tools</a>
+            <a href="#features" role="menuitem">✨ Features</a>
+            <a href="contact.html" role="menuitem">📩 Contact</a>
+            <div class="menu-divider"></div>
+            <a href="login.html?next=${nextParam}" role="menuitem">🔑 Sign in</a>
+            <a href="register.html" role="menuitem">🚀 Start for free</a>
+          </div>
+        </div>
+      </div>`;
+    return wrap;
+  }
+
+  function bindMenu(buttonId,menuId){
+    const btn=document.getElementById(buttonId), menu=document.getElementById(menuId);
+    if(!btn||!menu) return;
+    btn.addEventListener('click',e=>{
+      e.preventDefault();
+      const open=menu.style.display==='block';
+      closeMenus(open?null:menu);
+      toggle(menu,!open);
+      btn.setAttribute('aria-expanded',String(!open));
+    });
+  }
+
+  async function renderAuth(session){
+    const sb = getSB();
+    if(!sb || !authSlot) return;
+    try {
+      let user;
+      if(session !== undefined){
+        user = session?.user ?? null;
+      } else {
+        const res = await sb.auth.getUser();
+        user = res.data?.user ?? null;
+      }
+      authSlot.innerHTML='';
+      if(user){
+        const node=accountDOM(user.email);
+        authSlot.appendChild(node);
+        bindMenu('acctDesktopBtn','acctDesktopMenu');
+        bindMenu('acctMobileBtn','acctMobileMenu');
+        // Both sign-out buttons share the same handler via shared id prefix
+        async function signOut(e){
+          e.preventDefault(); e.stopPropagation();
+          const sb = getSB(); if(!sb) return;
+          try { await sb.auth.signOut(); } catch {}
+          location.reload();
+        }
+        node.querySelector('#_signOutBtn')?.addEventListener('click', signOut);
+        node.querySelector('#_signOutMobileBtn')?.addEventListener('click', signOut);
+      } else {
+        authSlot.appendChild(signinDOM());
+        bindMenu('signinMenuBtn','signinMenu');
+      }
+    } catch {}
+  }
+
+  document.addEventListener('click',e=>{
+    const openMenus=Array.from(document.querySelectorAll('.menu')).filter(el=>el.style.display==='block');
+    if(!openMenus.length) return;
+    if(!e.target.closest('.menu,.hamburger-btn,.account-chip,.signin-text,.nav-link')) closeMenus(null);
+  });
+
+  document.querySelectorAll('a[href="trip-dashboard.html"]').forEach(link=>{
+    link.addEventListener('click',async e=>{
+      const sb=getSB();
+      if(!sb){ e.preventDefault(); location.href=`login.html?next=${nextParam}`; return; }
+      try{const{data:{user}}=await sb.auth.getUser();if(!user){e.preventDefault();location.href=`login.html?next=${nextParam}`;}}
+      catch{e.preventDefault();location.href=`login.html?next=${nextParam}`;}
+    });
+  });
+
+  const _sb = getSB();
+  if(_sb){
+    await _sb.auth.getSession();
+    await renderAuth();
+    _sb.auth.onAuthStateChange((_event, session) => renderAuth(session));
+  }
+
+  // ── Hero background rotation — pauses when tab is hidden ──
+  const hero = document.querySelector('.hero-section');
+  if(hero){
+    const FALLBACK = 'images/beachortropical.jpg';
+    const CANDIDATES = ['images/bg1.jpg','images/bg2.jpg','images/bg3.jpg','images/bg4.jpg','images/bg5.jpg','images/bg6.jpg','images/bg7.jpg','images/bg8.jpg','images/bg9.jpg'];
+    let i = Math.floor(Math.random() * CANDIDATES.length);
+    let timer = null;
+    function setBg(url,tried=false){
+      const img=new Image();
+      img.onload=()=>{ hero.style.backgroundImage=`linear-gradient(rgba(2,62,138,0.62),rgba(0,20,50,0.72)),url('${url}')`; };
+      img.onerror=()=>{ if(!tried) setBg(FALLBACK,true); };
+      img.src=url;
+    }
+    function rotate(){ setBg(CANDIDATES[i]); i=(i+1)%CANDIDATES.length; }
+    function startRotation(){ if(!timer){ rotate(); timer=setInterval(rotate,7000); } }
+    function stopRotation(){ clearInterval(timer); timer=null; }
+    document.addEventListener('visibilitychange', ()=>{
+      document.hidden ? stopRotation() : startRotation();
+    });
+    startRotation();
+  }
+</script>
+
+<!-- ===== GENIE CHAT WIDGET ===== -->
+<script src="js/genie-chat.js" defer></script>
+
+</body>
+</html>

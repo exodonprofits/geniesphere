@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Airport Lounge Finder – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #0077b6; --ocean-deep: #023e8a; --teal: #00b4d8;
+  --coral: #e76f51; --coral-dark: #c1551c;
+  --gold: #b8860b; --gold-light: #fef3c7; --gold-border: #fde68a;
+  --off-white: #f8fafc; --gray-light: #f1f5f9; --gray-border: #e2e8f0;
+  --text: #1e293b; --text-muted: #64748b;
+  --radius: 10px; --radius-lg: 16px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; padding: 2rem 1rem 3rem; }
+.hidden { display: none !important; }
+
+/* HEADER */
+.vg-header { position: sticky; top: 0; z-index: 40; background: linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%); box-shadow: 0 2px 20px rgba(2,62,138,0.25); }
+.vg-nav { max-width: 1240px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vg-brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.vg-brand img { width: 46px; height: 46px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+.vg-title { font-family: 'Playfair Display',serif; font-weight: 700; font-size: 1.4rem; color: #fff; }
+.vg-right { display: flex; align-items: center; gap: 12px; }
+.nav-chip { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; height: 38px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); font-size: 0.88rem; font-weight: 500; transition: background var(--transition); white-space: nowrap; }
+.nav-chip:hover { background: rgba(255,255,255,0.24); }
+
+/* PAGE BANNER */
+.page-banner { background: #eaf4fb; border-bottom: 1px solid #c9e4f5; padding: 1.4rem 1.5rem; }
+.page-banner-inner { max-width: 1100px; margin: 0 auto; }
+.page-banner h1 { font-family: 'Playfair Display',serif; font-size: clamp(1.2rem,2.5vw,1.55rem); font-weight: 700; color: var(--ocean-deep); margin-bottom: 0.2rem; }
+.page-banner p { font-size: 0.87rem; color: var(--text-muted); }
+
+/* LAYOUT */
+.planner-layout { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; }
+@media (max-width: 860px) { .planner-layout { grid-template-columns: 1fr; } }
+
+/* FORM CARD */
+.planning-card { background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 2rem; border: 1px solid var(--gray-border); }
+.planning-card h2 { font-family: 'Playfair Display',serif; font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+.step-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+/* FIELDS */
+.field { margin-bottom: 1.25rem; }
+.field label { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; }
+.required-star { color: var(--coral); }
+.opt-tag { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; background: var(--gray-light); border-radius: 999px; padding: 1px 8px; }
+.vg-input, .vg-select { width: 100%; padding: 0.65rem 1rem; border: 1px solid var(--gray-border); border-radius: var(--radius); font-family: 'DM Sans',sans-serif; font-size: 0.92rem; color: var(--text); background: var(--gray-light); outline: none; transition: border-color var(--transition), background var(--transition); }
+.vg-input:focus, .vg-select:focus { border-color: var(--ocean); background: #fff; box-shadow: 0 0 0 3px rgba(0,119,182,0.1); }
+.vg-select { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230077b6"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 2.5rem; }
+.section-label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; margin-top: 1.25rem; }
+
+/* ACCESS METHOD CARDS */
+.access-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.65rem; }
+.access-card { border: 2px solid var(--gray-border); border-radius: var(--radius-lg); padding: 0.9rem 0.75rem; cursor: pointer; text-align: center; transition: all var(--transition); background: #fff; position: relative; }
+.access-card:hover { border-color: var(--teal); background: #f0fdff; transform: translateY(-2px); }
+.access-card.selected { border-color: var(--ocean); background: #eaf4fb; box-shadow: 0 0 0 3px rgba(0,119,182,0.1); }
+.access-card input { position: absolute; opacity: 0; width: 0; height: 0; }
+.access-icon { font-size: 1.6rem; display: block; margin-bottom: 0.35rem; }
+.access-label { font-size: 0.82rem; font-weight: 600; color: var(--text); display: block; margin-bottom: 0.15rem; }
+.access-ex { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
+
+/* AGENT TIP */
+.agent-tip { display: flex; align-items: flex-start; gap: 10px; background: linear-gradient(105deg,#eaf4fb,#f0f9ff); border: 1px solid #bae6fd; border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--ocean-deep); line-height: 1.55; }
+.agent-tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* PREMIUM TIP */
+.premium-tip { display: flex; align-items: flex-start; gap: 10px; background: var(--gold-light); border: 1px solid var(--gold-border); border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.84rem; color: #78350f; line-height: 1.55; }
+.premium-tip strong { color: #92400e; }
+
+/* SUBMIT BTN */
+.btn-generate { display: inline-flex; align-items: center; gap: 8px; padding: 0.85rem 2rem; border-radius: var(--radius); border: none; background: linear-gradient(135deg,#10b981,#059669); color: #fff; font-family: 'DM Sans',sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1.5rem; width: 100%; justify-content: center; transition: all var(--transition); box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
+.btn-generate:hover { background: linear-gradient(135deg,#059669,#047857); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.45); }
+.btn-generate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* SPINNER */
+.spinner-overlay { position: fixed; inset: 0; background: rgba(2,62,138,0.55); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+.spinner-overlay.active { display: flex; }
+.spinner-box { background: #fff; border-radius: var(--radius-lg); padding: 2.5rem 3rem; text-align: center; }
+.spinner { width: 48px; height: 48px; border: 3px solid rgba(0,119,182,0.2); border-top: 3px solid var(--ocean); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.25rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* RESULTS */
+.results-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; display: none; margin-top: 1.5rem; }
+.results-card.visible { display: block; }
+.results-header { background: linear-gradient(105deg,#023e8a,#0077b6); padding: 1.25rem 1.5rem; color: #fff; }
+.results-header h3 { font-family: 'Playfair Display',serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.2rem; }
+.results-header p { font-size: 0.84rem; opacity: 0.8; }
+.results-body { padding: 1.5rem; font-size: 0.92rem; line-height: 1.75; color: var(--text); }
+.results-body strong { color: var(--ocean-deep); }
+.results-body a { color: var(--ocean); }
+.results-body a:hover { text-decoration: underline; }
+
+/* LOUNGE RESULT CARD */
+.lounge-card { border: 1px solid var(--gray-border); border-radius: var(--radius); margin-bottom: 1rem; overflow: hidden; transition: box-shadow var(--transition); }
+.lounge-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.lounge-card-header { background: var(--gray-light); padding: 0.85rem 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+.lounge-card-name { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; color: var(--text); }
+.lounge-card-body { padding: 0.9rem 1.1rem; font-size: 0.85rem; color: var(--text-muted); line-height: 1.65; }
+.lounge-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 0.5rem; }
+.lounge-badge { font-size: 0.72rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+.badge-free { background: #d1fae5; color: #065f46; }
+.badge-fee { background: #dbeafe; color: #1e40af; }
+.badge-priority { background: #fef3c7; color: #92400e; }
+.badge-card { background: #ede9fe; color: #5b21b6; }
+.badge-premium { background: #fee2e2; color: #991b1b; }
+
+/* SIDEBAR */
+.affiliate-sidebar { display: flex; flex-direction: column; gap: 1rem; }
+.deal-banner { background: linear-gradient(135deg,#023e8a,#0077b6); border-radius: var(--radius-lg); padding: 1.1rem; color: #fff; }
+.deal-banner h3 { font-size: 0.92rem; font-weight: 600; margin-bottom: 0.4rem; }
+.deal-banner p { font-size: 0.82rem; opacity: 0.85; margin-bottom: 0.75rem; line-height: 1.5; }
+.deal-btn { display: block; text-align: center; background: var(--coral); color: #fff; padding: 0.55rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: background var(--transition); }
+.deal-btn:hover { background: var(--coral-dark); }
+.affiliate-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 1.1rem; box-shadow: var(--shadow); }
+.affiliate-card-title { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+.affiliate-link { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--gray-light); border: 1px solid var(--gray-border); text-decoration: none; color: var(--text); margin-bottom: 0.5rem; font-size: 0.88rem; font-weight: 500; transition: all var(--transition); }
+.affiliate-link:last-child { margin-bottom: 0; }
+.affiliate-link:hover { background: #eaf4fb; border-color: var(--teal); transform: translateX(2px); }
+.affiliate-link .arr { font-size: 0.75rem; color: var(--text-muted); }
+.affiliate-link:hover .arr { color: var(--ocean); }
+.affiliate-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.6rem; font-style: italic; }
+
+/* FOOTER */
+footer { background: linear-gradient(105deg,#023e8a 0%,#0077b6 100%); color: rgba(255,255,255,0.85); padding: 3rem 1.5rem 2rem; }
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-brand { font-family: 'Playfair Display',serif; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+.footer-tagline { font-size: 0.85rem; opacity: 0.7; }
+.footer-subscribe { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-email { padding: 0.65rem 1rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.12); color: #fff; font-family: 'DM Sans',sans-serif; font-size: 0.9rem; flex: 1; min-width: 180px; outline: none; }
+.footer-email::placeholder { color: rgba(255,255,255,0.5); }
+.footer-sub-btn { padding: 0.65rem 1.2rem; background: var(--coral); color: #fff; border: none; cursor: pointer; border-radius: 9px; font-size: 0.9rem; font-weight: 600; font-family: 'DM Sans',sans-serif; transition: background var(--transition); }
+.footer-sub-btn:hover { background: var(--coral-dark); }
+.footer-links { display: flex; gap: 1.2rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+.footer-copy { margin-top: 2rem; font-size: 0.8rem; opacity: 0.55; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12); }
+.error-msg { color: #ef4444; font-size: 0.8rem; margin-top: 0.3rem; }
+</style>
+</head>
+<body>
+
+<!-- Supabase -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) window.supabase = createClient('https://pbojacnagutipfhcxltj.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+</script>
+
+<!-- HEADER -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html"><img src="images/nav-icon.png" alt="Voyage Genie"/><span class="vg-title">Voyage Genie</span></a>
+    <div class="vg-right">
+      <a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a>
+      <a class="nav-chip" href="index.html#travel-tools">🧰 Tools</a>
+    </div>
+  </div>
+</header>
+
+<!-- PAGE BANNER -->
+<div class="page-banner"><div class="page-banner-inner">
+  <h1>🛋️ Airport Lounge Finder</h1>
+  <p>Find every lounge you can access at your airport — free with your card, Priority Pass, or for a one-time fee.</p>
+</div></div>
+
+<!-- SPINNER -->
+<div class="spinner-overlay" id="spinnerOverlay">
+  <div class="spinner-box">
+    <div class="spinner"></div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1e293b;margin-bottom:0.3rem">Finding Your Lounges…</div>
+    <div style="font-size:0.85rem;color:#64748b">Checking access options at your airport</div>
+  </div>
+</div>
+
+<main>
+<div class="planner-layout">
+
+  <!-- FORM -->
+  <div class="planning-card">
+    <h2>Find Lounges at Your Airport</h2>
+    <p class="step-desc">Tell Genie your airport and what access you have — get a complete list of lounges you can walk into today, with directions and tips.</p>
+
+    <div class="agent-tip">
+      <span class="agent-tip-icon">🛋️</span>
+      <span>Many travellers don't realise they already have lounge access through their <strong>credit card, airline status, or travel insurance</strong>. Genie checks everything — free and paid — so you don't miss out.</span>
+    </div>
+
+    <!-- Airport -->
+    <div class="field">
+      <label for="airportSelect">✈️ Airport <span class="required-star">*</span></label>
+      <select id="airportSelect" class="vg-select">
+        <option value="">-- Select Your Airport --</option>
+        <optgroup label="🇺🇸 United States">
+          <option value="John F. Kennedy International (JFK), New York">New York JFK</option>
+          <option value="LaGuardia (LGA), New York">New York LaGuardia (LGA)</option>
+          <option value="Newark Liberty (EWR), New Jersey">New York Newark (EWR)</option>
+          <option value="Los Angeles International (LAX)">Los Angeles (LAX)</option>
+          <option value="Chicago O'Hare International (ORD)">Chicago O'Hare (ORD)</option>
+          <option value="San Francisco International (SFO)">San Francisco (SFO)</option>
+          <option value="Miami International (MIA)">Miami (MIA)</option>
+          <option value="Atlanta Hartsfield-Jackson (ATL)">Atlanta (ATL)</option>
+          <option value="Dallas/Fort Worth International (DFW)">Dallas/Fort Worth (DFW)</option>
+          <option value="Seattle-Tacoma International (SEA)">Seattle (SEA)</option>
+          <option value="Boston Logan International (BOS)">Boston (BOS)</option>
+          <option value="Denver International (DEN)">Denver (DEN)</option>
+          <option value="Las Vegas Harry Reid International (LAS)">Las Vegas (LAS)</option>
+          <option value="Orlando International (MCO)">Orlando (MCO)</option>
+          <option value="Honolulu International (HNL)">Honolulu (HNL)</option>
+        </optgroup>
+        <optgroup label="🇨🇦 Canada">
+          <option value="Toronto Pearson International (YYZ)">Toronto Pearson (YYZ)</option>
+          <option value="Vancouver International (YVR)">Vancouver (YVR)</option>
+          <option value="Montreal Pierre Elliott Trudeau (YUL)">Montreal (YUL)</option>
+        </optgroup>
+        <optgroup label="🇬🇧 United Kingdom">
+          <option value="London Heathrow (LHR)">London Heathrow (LHR)</option>
+          <option value="London Gatwick (LGW)">London Gatwick (LGW)</option>
+          <option value="London Stansted (STN)">London Stansted (STN)</option>
+          <option value="Manchester Airport (MAN)">Manchester (MAN)</option>
+          <option value="Edinburgh Airport (EDI)">Edinburgh (EDI)</option>
+        </optgroup>
+        <optgroup label="🇪🇺 Europe">
+          <option value="Paris Charles de Gaulle (CDG)">Paris CDG</option>
+          <option value="Paris Orly (ORY)">Paris Orly</option>
+          <option value="Amsterdam Schiphol (AMS)">Amsterdam (AMS)</option>
+          <option value="Frankfurt Airport (FRA)">Frankfurt (FRA)</option>
+          <option value="Munich Airport (MUC)">Munich (MUC)</option>
+          <option value="Madrid Barajas (MAD)">Madrid (MAD)</option>
+          <option value="Barcelona El Prat (BCN)">Barcelona (BCN)</option>
+          <option value="Rome Fiumicino (FCO)">Rome Fiumicino (FCO)</option>
+          <option value="Athens International (ATH)">Athens (ATH)</option>
+          <option value="Lisbon Humberto Delgado (LIS)">Lisbon (LIS)</option>
+          <option value="Prague Václav Havel (PRG)">Prague (PRG)</option>
+          <option value="Vienna International (VIE)">Vienna (VIE)</option>
+          <option value="Zurich Airport (ZRH)">Zurich (ZRH)</option>
+          <option value="Copenhagen Airport (CPH)">Copenhagen (CPH)</option>
+          <option value="Stockholm Arlanda (ARN)">Stockholm (ARN)</option>
+          <option value="Istanbul Airport (IST)">Istanbul (IST)</option>
+        </optgroup>
+        <optgroup label="🌏 Middle East">
+          <option value="Dubai International (DXB)">Dubai (DXB)</option>
+          <option value="Abu Dhabi International (AUH)">Abu Dhabi (AUH)</option>
+          <option value="Hamad International, Doha (DOH)">Doha (DOH)</option>
+          <option value="King Abdulaziz International, Jeddah (JED)">Jeddah (JED)</option>
+        </optgroup>
+        <optgroup label="🌏 Asia">
+          <option value="Tokyo Narita International (NRT)">Tokyo Narita (NRT)</option>
+          <option value="Tokyo Haneda (HND)">Tokyo Haneda (HND)</option>
+          <option value="Osaka Kansai International (KIX)">Osaka Kansai (KIX)</option>
+          <option value="Seoul Incheon International (ICN)">Seoul Incheon (ICN)</option>
+          <option value="Singapore Changi (SIN)">Singapore Changi (SIN)</option>
+          <option value="Hong Kong International (HKG)">Hong Kong (HKG)</option>
+          <option value="Bangkok Suvarnabhumi (BKK)">Bangkok (BKK)</option>
+          <option value="Bali Ngurah Rai (DPS)">Bali (DPS)</option>
+          <option value="Kuala Lumpur International (KUL)">Kuala Lumpur (KUL)</option>
+          <option value="Taipei Taoyuan International (TPE)">Taipei (TPE)</option>
+          <option value="Delhi Indira Gandhi International (DEL)">Delhi (DEL)</option>
+          <option value="Mumbai Chhatrapati Shivaji (BOM)">Mumbai (BOM)</option>
+        </optgroup>
+        <optgroup label="🌏 Oceania & Africa">
+          <option value="Sydney Kingsford Smith (SYD)">Sydney (SYD)</option>
+          <option value="Melbourne Airport (MEL)">Melbourne (MEL)</option>
+          <option value="Auckland International (AKL)">Auckland (AKL)</option>
+          <option value="Cape Town International (CPT)">Cape Town (CPT)</option>
+          <option value="Cairo International (CAI)">Cairo (CAI)</option>
+        </optgroup>
+        <option value="OTHER">My airport isn't listed →</option>
+      </select>
+      <div id="customAirportWrap" class="hidden" style="margin-top:0.5rem">
+        <input id="customAirport" type="text" class="vg-input" placeholder="Enter your airport name or IATA code"/>
+      </div>
+      <div id="airportError" class="error-msg hidden">⚠ Please select your airport.</div>
+    </div>
+
+    <!-- Terminal -->
+    <div class="field">
+      <label for="terminal">🏢 Terminal <span class="opt-tag">Optional but helpful</span></label>
+      <input id="terminal" type="text" class="vg-input" placeholder="e.g. Terminal 3, Concourse B, International"/>
+    </div>
+
+    <!-- Airline & Class -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="field">
+        <label for="airline">✈️ Your Airline <span class="opt-tag">Optional</span></label>
+        <input id="airline" type="text" class="vg-input" placeholder="e.g. British Airways, Delta"/>
+      </div>
+      <div class="field">
+        <label for="cabinClass">💺 Cabin Class <span class="opt-tag">Optional</span></label>
+        <select id="cabinClass" class="vg-select">
+          <option value="">-- Select --</option>
+          <option value="Economy">Economy</option>
+          <option value="Premium Economy">Premium Economy</option>
+          <option value="Business Class">Business Class</option>
+          <option value="First Class">First Class</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Access Methods -->
+    <div class="section-label">🔑 How Might You Access a Lounge? <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.78rem;color:var(--text-muted)">Select all that apply</span></div>
+    <div class="access-grid" id="accessGrid">
+      <label class="access-card">
+        <input type="checkbox" name="access" value="priority_pass"/>
+        <span class="access-icon">🌐</span>
+        <span class="access-label">Priority Pass</span>
+        <span class="access-ex">or LoungeKey, Lounge Club</span>
+      </label>
+      <label class="access-card">
+        <input type="checkbox" name="access" value="credit_card"/>
+        <span class="access-icon">💳</span>
+        <span class="access-label">Credit Card</span>
+        <span class="access-ex">Amex Platinum, Chase Sapphire, etc.</span>
+      </label>
+      <label class="access-card">
+        <input type="checkbox" name="access" value="airline_status"/>
+        <span class="access-icon">⭐</span>
+        <span class="access-label">Airline Status</span>
+        <span class="access-ex">Gold, Platinum, elite tier</span>
+      </label>
+      <label class="access-card">
+        <input type="checkbox" name="access" value="business_first"/>
+        <span class="access-icon">🛋️</span>
+        <span class="access-label">Business / First</span>
+        <span class="access-ex">Ticket class entitles access</span>
+      </label>
+      <label class="access-card">
+        <input type="checkbox" name="access" value="day_pass"/>
+        <span class="access-icon">🎟️</span>
+        <span class="access-label">Pay at Door</span>
+        <span class="access-ex">Day pass or walk-in fee</span>
+      </label>
+      <label class="access-card">
+        <input type="checkbox" name="access" value="travel_insurance"/>
+        <span class="access-icon">🛡️</span>
+        <span class="access-label">Travel Insurance</span>
+        <span class="access-ex">Some policies include lounge access</span>
+      </label>
+    </div>
+
+    <!-- Specific Cards -->
+    <div class="field" style="margin-top:1.25rem">
+      <label for="creditCards">💳 Credit Cards You Have <span class="opt-tag">Optional — helps Genie check eligibility</span></label>
+      <input id="creditCards" type="text" class="vg-input" placeholder="e.g. Amex Platinum, Chase Sapphire Reserve, Citi Prestige"/>
+    </div>
+
+    <!-- Layover time -->
+    <div class="field">
+      <label for="layoverTime">⏱️ Time at Airport <span class="opt-tag">Optional</span></label>
+      <select id="layoverTime" class="vg-select">
+        <option value="">-- How long do you have? --</option>
+        <option value="under 1 hour">Under 1 hour</option>
+        <option value="1–2 hours">1–2 hours</option>
+        <option value="2–4 hours">2–4 hours</option>
+        <option value="4+ hours (long layover)">4+ hours (long layover)</option>
+        <option value="overnight">Overnight</option>
+      </select>
+    </div>
+
+    <!-- Preferences -->
+    <div class="field">
+      <label for="preferences">✨ Lounge Preferences <span class="opt-tag">Optional</span></label>
+      <select id="preferences" class="vg-select">
+        <option value="">No preference</option>
+        <option value="shower facilities">Shower facilities (long-haul or overnight)</option>
+        <option value="hot food and buffet">Hot food and full buffet</option>
+        <option value="quiet and work-friendly">Quiet and work-friendly</option>
+        <option value="family-friendly with kids area">Family-friendly with kids area</option>
+        <option value="closest to my gate">Closest to my gate</option>
+        <option value="open bar and premium drinks">Premium bar and drinks</option>
+      </select>
+    </div>
+
+    <div class="premium-tip">
+      <span style="font-size:1rem;flex-shrink:0">💡</span>
+      <div><strong>Pro tip:</strong> The Amex Platinum card alone gives access to Centurion Lounges, Priority Pass, Delta Sky Clubs (when flying Delta), and Escape Lounges — covering most US airports. Worth checking before paying a day-pass fee.</div>
+    </div>
+
+    <button class="btn-generate" id="generateBtn" onclick="findLounges()">
+      🛋️ Find My Lounge Options
+    </button>
+
+    <!-- RESULTS -->
+    <div class="results-card" id="resultsCard">
+      <div class="results-header">
+        <h3 id="resultsTitle">Your Lounge Options</h3>
+        <p id="resultsSubtitle"></p>
+      </div>
+      <div class="results-body" id="resultsBody"></div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="affiliate-sidebar">
+
+    <div class="deal-banner">
+      <h3>🌐 Get Priority Pass</h3>
+      <p>Access 1,400+ lounges worldwide. One membership, every airport.</p>
+      <a href="https://www.prioritypass.com" target="_blank" rel="noopener" class="deal-btn">Get Priority Pass →</a>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🛋️ Lounge Networks</div>
+      <a href="https://www.prioritypass.com" target="_blank" rel="noopener" class="affiliate-link"><span>Priority Pass</span><span class="arr">↗</span></a>
+      <a href="https://www.loungekey.com" target="_blank" rel="noopener" class="affiliate-link"><span>LoungeKey</span><span class="arr">↗</span></a>
+      <a href="https://www.dragonpass.com" target="_blank" rel="noopener" class="affiliate-link"><span>DragonPass</span><span class="arr">↗</span></a>
+      <a href="https://www.loungebuddy.com" target="_blank" rel="noopener" class="affiliate-link"><span>LoungeBuddy</span><span class="arr">↗</span></a>
+      <p class="affiliate-note">We may earn a small commission at no cost to you.</p>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">💳 Premium Cards with Lounge Access</div>
+      <a href="https://www.americanexpress.com/en-us/credit-cards/platinum/" target="_blank" rel="noopener" class="affiliate-link"><span>Amex Platinum</span><span class="arr">↗</span></a>
+      <a href="https://creditcards.chase.com/travel-credit-cards/sapphire/reserve" target="_blank" rel="noopener" class="affiliate-link"><span>Chase Sapphire Reserve</span><span class="arr">↗</span></a>
+      <a href="https://www.capitalone.com/credit-cards/venture-x/" target="_blank" rel="noopener" class="affiliate-link"><span>Capital One Venture X</span><span class="arr">↗</span></a>
+      <p class="affiliate-note">Compare cards that include Priority Pass.</p>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🎟️ Book a Day Pass</div>
+      <a href="https://www.loungebuddy.com" target="_blank" rel="noopener" class="affiliate-link"><span>LoungeBuddy (book online)</span><span class="arr">↗</span></a>
+      <a href="https://www.airportloungereview.com" target="_blank" rel="noopener" class="affiliate-link"><span>Airport Lounge Reviews</span><span class="arr">↗</span></a>
+      <p class="affiliate-note">Day passes typically $35–$60. Usually cheaper than buying food &amp; drinks airside.</p>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🛡️ Travel Insurance with Lounge Access</div>
+      <a href="https://www.worldnomads.com" target="_blank" rel="noopener" class="affiliate-link"><span>World Nomads</span><span class="arr">↗</span></a>
+      <a href="https://www.safetywing.com" target="_blank" rel="noopener" class="affiliate-link"><span>SafetyWing</span><span class="arr">↗</span></a>
+    </div>
+
+  </aside>
+</div>
+</main>
+
+<footer><div class="footer-inner">
+  <div>
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+    <div class="footer-subscribe"><input class="footer-email" placeholder="Enter your email" type="email"/><button class="footer-sub-btn">Subscribe</button></div>
+    <div class="footer-links"><a href="index.html">Home</a><a href="index.html#plan-trip">Plan</a><a href="index.html#travel-tools">Tools</a><a href="contact.html">Contact</a></div>
+  </div>
+</div>
+<div class="footer-copy" style="max-width:1100px;margin:0 auto;">© 2026 VoyageGenie.com – All rights reserved.</div>
+</footer>
+
+<!-- Genie Chat Widget -->
+<script src="js/genie-chat.js" defer></script>
+
+<script>
+// ── Access card toggle ──────────────────────────────────────────
+document.querySelectorAll('.access-card').forEach(card => {
+  card.addEventListener('click', () => {
+    card.classList.toggle('selected');
+  });
+});
+
+// ── Custom airport toggle ───────────────────────────────────────
+document.getElementById('airportSelect').addEventListener('change', function() {
+  document.getElementById('customAirportWrap').classList.toggle('hidden', this.value !== 'OTHER');
+});
+
+// ── Build AI prompt ─────────────────────────────────────────────
+function buildPrompt() {
+  const airport    = document.getElementById('airportSelect').value === 'OTHER'
+    ? document.getElementById('customAirport').value.trim()
+    : document.getElementById('airportSelect').value;
+  const terminal   = document.getElementById('terminal').value.trim();
+  const airline    = document.getElementById('airline').value.trim();
+  const cabinClass = document.getElementById('cabinClass').value;
+  const access     = [...document.querySelectorAll('input[name="access"]:checked')].map(i => i.value);
+  const cards      = document.getElementById('creditCards').value.trim();
+  const layover    = document.getElementById('layoverTime').value;
+  const prefs      = document.getElementById('preferences').value;
+
+  const accessLabels = {
+    priority_pass: 'Priority Pass / LoungeKey',
+    credit_card: `Credit card access (cards: ${cards || 'not specified'})`,
+    airline_status: 'Airline elite status',
+    business_first: `${cabinClass || 'Business/First'} class ticket`,
+    day_pass: 'Willing to pay a day-pass fee',
+    travel_insurance: 'Travel insurance with lounge benefit'
+  };
+
+  return `Please create a complete airport lounge guide for a traveller with these details:
+
+- Airport: ${airport}${terminal ? ` — ${terminal}` : ''}
+- Airline: ${airline || 'Not specified'}
+- Cabin class: ${cabinClass || 'Not specified'}
+- Time at airport: ${layover || 'Not specified'}
+- Lounge preference: ${prefs || 'No preference'}
+- Access methods available: ${access.length ? access.map(a => accessLabels[a]).join('; ') : 'None specified — show all options including paid'}
+${cards ? `- Credit cards held: ${cards}` : ''}
+
+For EACH lounge that this traveller can likely access at ${airport}, provide:
+1. Lounge name and location (terminal, level, airside/landside, near which gate area)
+2. How to access it (which of their access methods works, any conditions)
+3. Cost (free with their access, or day-pass price)
+4. What's inside: food, drinks, Wi-Fi, showers, quiet zones, kids area, etc.
+5. Hours and any important restrictions (e.g. only for departing pax, capacity limits)
+6. A direct booking or info link
+7. A star rating (1–5) for this airport specifically
+
+Also include:
+- A RECOMMENDED lounge with clear reasoning based on their preferences and access
+- Any insider tips for this specific airport (e.g. which lounge is least crowded, hidden gems, best shower availability)
+- If they have NO lounge access: the 2 best day-pass options with current prices and how to book
+- Any free alternatives (premium seating areas, quiet zones, good cafes airside) if lounges are limited
+
+Formatting:
+- No Markdown (no ###, **)
+- Section headings: plain text ending with colon
+- Bullets: leading hyphen (- item)
+- Each lounge as its own clear section
+- Every booking link as <a href="URL">text →</a>
+- Keep it practical and specific to this exact airport`;
+}
+
+// ── Validate ────────────────────────────────────────────────────
+function validate() {
+  const airport = document.getElementById('airportSelect').value;
+  const custom  = document.getElementById('customAirport').value.trim();
+  const errEl   = document.getElementById('airportError');
+  const ok = airport && (airport !== 'OTHER' || custom);
+  errEl.classList.toggle('hidden', ok);
+  if (!ok) document.getElementById('airportSelect').style.borderColor = '#ef4444';
+  else document.getElementById('airportSelect').style.borderColor = '';
+  return ok;
+}
+
+// ── Generate ────────────────────────────────────────────────────
+async function findLounges() {
+  if (!validate()) return;
+
+  const overlay = document.getElementById('spinnerOverlay');
+  const btn     = document.getElementById('generateBtn');
+  overlay.classList.add('active');
+  btn.disabled  = true;
+
+  const airport = document.getElementById('airportSelect').value === 'OTHER'
+    ? document.getElementById('customAirport').value.trim()
+    : document.getElementById('airportSelect').options[document.getElementById('airportSelect').selectedIndex].text;
+
+  try {
+    const res  = await fetch('https://exodonprofits.app.n8n.cloud/webhook/ai-tool-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: buildPrompt() }]
+      })
+    });
+    const data = await res.json();
+    const raw  = data?.content?.map(b => b.text || '').join('') || '';
+    if (!raw) throw new Error('Empty response');
+    renderResults(raw, airport);
+  } catch(err) {
+    renderFallback(airport);
+    console.error('[Lounge Finder]', err);
+  } finally {
+    overlay.classList.remove('active');
+    btn.disabled = false;
+  }
+}
+
+// ── Render AI results ───────────────────────────────────────────
+function renderResults(raw, airport) {
+  const access = [...document.querySelectorAll('input[name="access"]:checked')].map(i => i.value);
+
+  document.getElementById('resultsTitle').textContent   = `Lounges at ${airport}`;
+  document.getElementById('resultsSubtitle').textContent = `${access.length} access method${access.length!==1?'s':''} checked · personalised recommendations`;
+
+  let formatted = raw.trim().replace(/(<br\s*\/?>\s*){3,}/gi,'<br><br>');
+  if (!formatted.includes('<')) {
+    formatted = formatted.split('\n').map(line => {
+      const t = line.trim();
+      if (!t) return '<br>';
+      if (t.endsWith(':') && t.length < 80) return `<strong style="font-size:1rem;color:#023e8a;display:block;margin:14px 0 5px">${t}</strong>`;
+      if (t.startsWith('- ')) return `<div style="margin:3px 0 3px 14px">• ${t.slice(2)}</div>`;
+      return `<span>${t}</span><br>`;
+    }).join('');
+  }
+
+  document.getElementById('resultsBody').innerHTML = `
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:#78350f;">
+      💡 <strong style="color:#92400e">Access eligibility is AI-estimated</strong> — confirm directly with the lounge or your card/membership before visiting. Rules change and capacity varies.
+    </div>
+    ${formatted}`;
+
+  document.getElementById('resultsCard').classList.add('visible');
+  document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Fallback when API unavailable ──────────────────────────────
+function renderFallback(airport) {
+  document.getElementById('resultsTitle').textContent    = `Lounge Access at ${airport}`;
+  document.getElementById('resultsSubtitle').textContent = 'General guide — use the links below to check live availability';
+
+  document.getElementById('resultsBody').innerHTML = `
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:#78350f;">
+      💡 <strong style="color:#92400e">Live lounge data</strong> is best checked on LoungeBuddy or Priority Pass — here's a general guide for your options.
+    </div>
+
+    <div class="lounge-card">
+      <div class="lounge-card-header">
+        <span class="lounge-card-name">🌐 Priority Pass / LoungeKey Lounges</span>
+        <div class="lounge-badges"><span class="lounge-badge badge-card">Membership</span></div>
+      </div>
+      <div class="lounge-card-body">
+        If you hold a Priority Pass, LoungeKey, or DragonPass membership (often included with premium credit cards), you can access 1,400+ partner lounges worldwide. Search for your specific airport on <a href="https://www.prioritypass.com/en/lounges" target="_blank">Priority Pass →</a> or <a href="https://www.loungebuddy.com" target="_blank">LoungeBuddy →</a>.
+      </div>
+    </div>
+
+    <div class="lounge-card">
+      <div class="lounge-card-header">
+        <span class="lounge-card-name">💳 Credit Card Lounges (Amex Centurion, Capital One, etc.)</span>
+        <div class="lounge-badges"><span class="lounge-badge badge-free">Free with card</span></div>
+      </div>
+      <div class="lounge-card-body">
+        Amex Platinum holders can access Centurion Lounges, Escape Lounges, Delta Sky Clubs (when flying Delta), and Priority Pass. Capital One Venture X includes Capital One Lounges and Priority Pass. Chase Sapphire Reserve includes Priority Pass Select. Check your card's benefits portal for your specific airport.
+      </div>
+    </div>
+
+    <div class="lounge-card">
+      <div class="lounge-card-header">
+        <span class="lounge-card-name">✈️ Airline Lounges (Business / First Class)</span>
+        <div class="lounge-badges"><span class="lounge-badge badge-premium">Ticket-based</span></div>
+      </div>
+      <div class="lounge-card-body">
+        Business and First Class tickets on most major carriers include lounge access at departure. Common lounges: United Club, Delta Sky Club, American Admirals Club, British Airways Galleries, Qantas Club, Lufthansa Business Lounge. Check your airline's website for the specific terminal location.
+      </div>
+    </div>
+
+    <div class="lounge-card">
+      <div class="lounge-card-header">
+        <span class="lounge-card-name">🎟️ Pay-at-Door / Day Pass</span>
+        <div class="lounge-badges"><span class="lounge-badge badge-fee">~$35–$65</span></div>
+      </div>
+      <div class="lounge-card-body">
+        Most independent airport lounges sell day passes. Pre-book online for the best price — walk-up prices can be 20–40% higher. <a href="https://www.loungebuddy.com" target="_blank">LoungeBuddy →</a> lets you book online with a guaranteed slot. Typically includes food, open bar, Wi-Fi, and showers — often cheaper than buying the equivalent airside.
+      </div>
+    </div>`;
+
+  document.getElementById('resultsCard').classList.add('visible');
+  document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+{
+  "name": "Genie_Chat_Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "genie-chat",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "8dc72c64-ac02-42f9-9c5b-eb3e4238f8ab",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst body     = $json.body || $json;\nconst messages = Array.isArray(body.messages) ? body.messages : [];\nconst today    = body.today || new Date().toISOString().split('T')[0];\nconst tripData = typeof body.tripData === 'object' ? body.tripData : {};\n\nif (!messages.length) throw new Error('400: No messages');\n\n// Build a readable summary of what's already known\nconst knownLines = Object.entries(tripData)\n  .filter(([,v]) => v !== null && v !== undefined && v !== '')\n  .map(([k,v]) => `  ${k}: ${v}`)\n  .join('\\n');\nconst accumulated = knownLines || '  (nothing yet)';\n\nconst systemContent = `You are Genie, a warm and knowledgeable AI travel planning assistant for Voyage Genie. Today's date is ${today}.\n\nYOUR JOB: Have a natural conversation, extract trip details as they emerge, and route the user to the right planner once you know enough.\n\n════════════════════════════════════\nFIELDS TO EXTRACT\n════════════════════════════════════\nExtract every field you can from each message. Only leave blank what genuinely wasn't mentioned.\n\n- destination        → where they want to go (city, region, country). \"Italy\" is fine.\n- departure          → where they fly FROM. OPTIONAL — never block on this.\n- startDate          → YYYY-MM-DD. Calculate from relative phrases (see DATE RULES).\n- endDate            → YYYY-MM-DD. Calculate from duration (\"10 days\", \"2 weeks\").\n- tripType           → MUST be exactly one of: \"Tropical Resort\" | \"Cruise Adventure\" | \"Airbnb Getaway\" | \"Adventure Trip\"\n- accommodationType  → what kind of stay they want. Use their exact words or infer:\n                       \"Hotel\", \"Boutique Hotel\", \"Entire Home / Airbnb\", \"Apartment\", \"Hostel\", \"No preference\"\n- travelPace         → \"Relaxed\" | \"Balanced\" | \"Active\"  (default \"Balanced\")\n- groupSize          → \"Solo\" | \"Couple\" | \"Family\" | \"Group\"  (default \"Couple\")\n- budgetTier         → \"Economy\" | \"Standard\" | \"Elite\"  (default \"Standard\")\n- activities         → free text of what they want to do (sightseeing, hiking, food tours, etc.)\n\n════════════════════════════════════\nACCOMMODATION INFERENCE\n════════════════════════════════════\nMap what the user says → accommodationType:\n- \"hotel\", \"stay at a hotel\", \"book a hotel\"  → \"Hotel\"\n- \"boutique hotel\", \"small hotel\"              → \"Boutique Hotel\"\n- \"Airbnb\", \"rent a home\", \"apartment\"         → \"Entire Home / Airbnb\"\n- \"hostel\", \"budget\"                           → \"Hostel\"\n- \"villa\", \"private villa\"                     → \"Entire Home / Airbnb\"\n- nothing mentioned                            → \"No preference\"\n\n════════════════════════════════════\nTRIP TYPE INFERENCE\n════════════════════════════════════\nInfer confidently from destination + activities + accommodation:\n- \"Tropical Resort\"  → beach, island, resort, Bali, Maldives, Phuket, Cancun, Caribbean, Hawaii, Fiji, Tulum\n- \"Cruise Adventure\" → cruise, ship, ocean liner, Mediterranean cruise, Alaska cruise, ports of call\n- \"Airbnb Getaway\"   → city visit, cultural trip, sightseeing, Italy, France, Greece, Spain, Japan, Paris, Rome, Tokyo, any major city + hotel/apartment stay\n- \"Adventure Trip\"   → hiking, trekking, safari, mountains, Patagonia, Nepal, New Zealand, Iceland adventure\n\nIMPORTANT: \"I want to visit Italy / Paris / Greece / Japan\" → tripType = \"Airbnb Getaway\" (city & cultural)\n\"I want to stay at a hotel in Rome\" → tripType = \"Airbnb Getaway\", accommodationType = \"Hotel\"\n\n════════════════════════════════════\nDATE INTELLIGENCE\n════════════════════════════════════\nAlways calculate actual YYYY-MM-DD dates. Today = ${today}\n- \"for 10 days\"         → endDate = startDate + 10 days\n- \"for a week\"          → endDate = startDate + 7\n- \"for 2 weeks\"         → endDate = startDate + 14\n- \"next July\"           → July 1 of next occurrence of July\n- \"in September\"        → September 1 of next occurrence\n- \"this weekend\"        → coming Saturday\n- \"next month\"          → 1st of next month\n- \"in 3 weeks\"          → today + 21 days\n- No start date given + has duration → use a reasonable near-future date (2–4 weeks from today) as startDate placeholder — the user can adjust in the planner\n\n════════════════════════════════════\nSTATUS RULES — decide when to go ready\n════════════════════════════════════\n\"collecting\" → still missing destination. Keep asking naturally.\n\"clarifying\" → have destination but tripType genuinely cannot be inferred (rare — only if truly ambiguous).\n\"ready\"      → have destination + (startDate OR duration/days mentioned) + confident tripType.\n               Departure is OPTIONAL — never block on it.\n               \"I want to stay in Italy for 10 days\" = READY immediately.\n               \"I want to visit Paris\" + no dates = ask ONE question about timing, then ready.\n\n════════════════════════════════════\nCONVERSATION STYLE\n════════════════════════════════════\n- Warm, enthusiastic, concise. 1 sentence max when collecting. 2 sentences max when ready.\n- NEVER ask for more than ONE thing at a time.\n- NEVER ask for departure — it's optional. The planner will ask if needed.\n- Acknowledge what you understood: \"Italy for 10 days — perfect! 🇮🇹\"\n- When status = ready, say something like \"I've got everything — heading to the City & Stays Planner now!\"\n- If user mentions budget (\"cheap\", \"luxury\", \"around $3000\") → map to budgetTier\n- \"just the two of us\", \"me and my partner\", \"honeymoon\" → groupSize = Couple\n- \"with kids\", \"family\" → groupSize = Family\n- \"solo\", \"just me\" → groupSize = Solo\n\n════════════════════════════════════\nALREADY KNOWN (do not ask for these again)\n════════════════════════════════════\n${accumulated}\n\n════════════════════════════════════\nRESPONSE FORMAT — return ONLY valid JSON, nothing else\n════════════════════════════════════\n{\n  \"reply\": \"Your 1-2 sentence response\",\n  \"status\": \"collecting\",\n  \"extracted\": {\n    \"destination\": \"\",\n    \"departure\": \"\",\n    \"startDate\": \"\",\n    \"endDate\": \"\",\n    \"tripType\": \"\",\n    \"accommodationType\": \"\",\n    \"travelPace\": \"\",\n    \"groupSize\": \"\",\n    \"budgetTier\": \"\",\n    \"activities\": \"\"\n  }\n}\n\nOnly put values you extracted from THIS message. Leave others blank — the frontend merges them.`;\n\nconst convoMessages = messages\n  .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: String(m.content || '') }))\n  .filter(m => m.content.trim());\n\nreturn [{ json: { systemContent, convoMessages, today } }];\n"
+      },
+      "id": "9f27fd0b-08c7-4552-a32b-8f6d7ad57e67",
+      "name": "Prepare Messages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -360,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "={{ $json.systemContent }}"
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.convoMessages.map(m => m.role + ': ' + m.content).join('\\n\\n') }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "id": "1f5b0226-bc39-4fe0-b413-2cf42e733afc",
+      "name": "OpenAI Extract",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -120,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage-Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst raw = $node['OpenAI Extract'].json.message?.content || '';\n\n// Strip markdown fences\nconst clean = raw.replace(/^```[a-z]*\\n?/gm, '').replace(/```\\s*$/gm, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(clean);\n} catch(e) {\n  const match = clean.match(/\\{[\\s\\S]*\\}/);\n  if (!match) return [{ json: {\n    reply: \"Sorry, I had a hiccup! Where would you like to go?\",\n    status: 'collecting', tripData: {}\n  }}];\n  try { parsed = JSON.parse(match[0]); }\n  catch { return [{ json: {\n    reply: \"Sorry, I had a hiccup! Where would you like to go?\",\n    status: 'collecting', tripData: {}\n  }}]; }\n}\n\nconst reply     = (parsed.reply   || '').trim();\nconst status    = parsed.status   || 'collecting';\nconst extracted = parsed.extracted || {};\n\n// Sanitise — only keep non-empty strings\nconst tripData = {};\nObject.entries(extracted).forEach(([k, v]) => {\n  const val = String(v || '').trim();\n  if (val) tripData[k] = val;\n});\n\n// Validate tripType\nconst VALID_TYPES = ['Tropical Resort', 'Cruise Adventure', 'Airbnb Getaway', 'Adventure Trip'];\nif (tripData.tripType && !VALID_TYPES.includes(tripData.tripType)) {\n  delete tripData.tripType;\n}\n\n// Validate accommodationType  \nconst VALID_ACCOM = ['Hotel', 'Boutique Hotel', 'Entire Home / Airbnb', 'Apartment', 'Hostel', 'No preference'];\nif (tripData.accommodationType && !VALID_ACCOM.includes(tripData.accommodationType)) {\n  // Try to normalise it\n  const raw_a = tripData.accommodationType.toLowerCase();\n  if (raw_a.includes('hotel') && raw_a.includes('boutique')) tripData.accommodationType = 'Boutique Hotel';\n  else if (raw_a.includes('hotel'))   tripData.accommodationType = 'Hotel';\n  else if (raw_a.includes('airbnb') || raw_a.includes('home') || raw_a.includes('villa')) tripData.accommodationType = 'Entire Home / Airbnb';\n  else if (raw_a.includes('apart'))   tripData.accommodationType = 'Apartment';\n  else if (raw_a.includes('hostel'))  tripData.accommodationType = 'Hostel';\n  else delete tripData.accommodationType;\n}\n\n// Validate status\nconst VALID_STATUS = ['collecting', 'clarifying', 'ready'];\nconst safeStatus = VALID_STATUS.includes(status) ? status : 'collecting';\n\nreturn [{ json: { reply, status: safeStatus, tripData } }];\n"
+      },
+      "id": "55fcd6ce-ef7a-425f-b22b-fa9ec92a80bb",
+      "name": "Parse Extract",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ reply: $json.reply, status: $json.status, tripData: $json.extracted }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "eaa48e86-2ea6-485d-aa6f-50174bece143",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        360,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Messages": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Extract": {
+      "main": [
+        [
+          {
+            "node": "Parse Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Extract": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

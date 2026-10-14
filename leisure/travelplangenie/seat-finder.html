@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Seat Finder – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ocean: #0077b6; --ocean-deep: #023e8a; --teal: #00b4d8;
+  --coral: #e76f51; --coral-dark: #c1551c; --green: #16a34a;
+  --off-white: #f8fafc; --gray-light: #f1f5f9; --gray-border: #e2e8f0;
+  --text: #1e293b; --text-muted: #64748b;
+  --radius: 10px; --radius-lg: 16px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07); --shadow-hover: 0 10px 28px rgba(0,0,0,0.12);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+
+  /* Seat colors */
+  --seat-empty: #e0f2fe; --seat-empty-border: #7dd3fc;
+  --seat-exit: #dcfce7; --seat-exit-border: #86efac;
+  --seat-bulkhead: #fef9c3; --seat-bulkhead-border: #fde047;
+  --seat-galley: #fce7f3; --seat-galley-border: #f9a8d4;
+  --seat-selected: #0077b6; --seat-selected-border: #023e8a;
+  --seat-avoid: #fee2e2; --seat-avoid-border: #fca5a5;
+  --seat-premium: #f3e8ff; --seat-premium-border: #c084fc;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; }
+.hidden { display: none !important; }
+
+/* ── HEADER ── */
+.vg-header { position: sticky; top: 0; z-index: 40; background: linear-gradient(105deg, #023e8a 0%, #0077b6 55%, #0096c7 100%); box-shadow: 0 2px 20px rgba(2,62,138,0.25); }
+.vg-nav { max-width: 1240px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vg-brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.vg-brand img { width: 46px; height: 46px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+.vg-title-brand { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.4rem; color: #fff; }
+.vg-right { display: flex; align-items: center; gap: 12px; }
+.nav-chip { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; height: 38px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); font-size: 0.88rem; font-weight: 500; transition: background var(--transition); white-space: nowrap; }
+.nav-chip:hover { background: rgba(255,255,255,0.24); }
+.menu-group { position: relative; }
+.menu { position: absolute; top: calc(100% + 8px); right: 0; min-width: 200px; padding: 6px; background: #fff; color: var(--text); border-radius: var(--radius); box-shadow: 0 16px 40px rgba(0,0,0,0.18); display: none; z-index: 60; border: 1px solid rgba(0,0,0,0.06); }
+.menu a { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 8px; color: var(--text); text-decoration: none; font-size: 0.9rem; }
+.menu a:hover { background: var(--gray-light); color: var(--ocean); }
+.menu-divider { height: 1px; background: var(--gray-border); margin: 6px 4px; }
+.account-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); font-size: 0.88rem; cursor: pointer; }
+.account-chip:hover { background: rgba(255,255,255,0.24); }
+.caret { font-size: 0.65rem; opacity: 0.8; }
+
+/* ── PAGE BANNER ── */
+.page-banner { background: linear-gradient(135deg, #eaf4fb 0%, #f0f9ff 100%); border-bottom: 1px solid #c9e4f5; padding: 1.5rem 1.5rem 1.25rem; }
+.page-banner-inner { max-width: 1200px; margin: 0 auto; }
+.page-banner h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.3rem, 2.5vw, 1.7rem); font-weight: 700; color: var(--ocean-deep); margin-bottom: 0.3rem; }
+.page-banner p { font-size: 0.88rem; color: var(--text-muted); }
+
+/* ── LAYOUT ── */
+.page-body { max-width: 1200px; margin: 0 auto; padding: 1.75rem 1.25rem 3rem; display: grid; grid-template-columns: 340px 1fr; gap: 1.5rem; align-items: start; }
+@media (max-width: 960px) { .page-body { grid-template-columns: 1fr; } }
+
+/* ── CARDS ── */
+.vg-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+.card-hd { padding: 1rem 1.25rem; border-bottom: 1px solid var(--gray-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+.card-title { font-size: 1rem; font-weight: 600; }
+.card-bd { padding: 1.25rem; }
+
+/* ── INPUTS ── */
+.vg-input, .vg-select { width: 100%; border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 0.6rem 0.9rem; background: var(--gray-light); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text); outline: none; transition: border-color var(--transition), background var(--transition); }
+.vg-input:focus, .vg-select:focus { border-color: var(--ocean); background: #fff; box-shadow: 0 0 0 3px rgba(0,119,182,0.1); }
+label.field-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 5px; }
+
+/* ── BUTTONS ── */
+.vg-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--gray-border); border-radius: 8px; padding: 0.5rem 0.9rem; background: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; color: var(--text); cursor: pointer; transition: all var(--transition); white-space: nowrap; text-decoration: none; }
+.vg-btn:hover { background: var(--gray-light); transform: translateY(-1px); }
+.vg-btn-ocean { background: var(--ocean); color: #fff; border-color: var(--ocean); }
+.vg-btn-ocean:hover { background: var(--ocean-deep); border-color: var(--ocean-deep); }
+.vg-btn-sm { padding: 0.3rem 0.65rem; font-size: 0.78rem; }
+
+/* ── PRIORITY PILLS ── */
+.priority-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.priority-pill { display: flex; flex-direction: column; gap: 2px; border: 2px solid var(--gray-border); border-radius: 10px; padding: 0.65rem 0.75rem; cursor: pointer; transition: all var(--transition); background: #fff; text-align: left; }
+.priority-pill:hover { border-color: var(--ocean); background: #eaf4fb; }
+.priority-pill.active { border-color: var(--ocean); background: #eaf4fb; }
+.priority-pill .pp-icon { font-size: 1.3rem; line-height: 1; }
+.priority-pill .pp-name { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+.priority-pill .pp-sub { font-size: 0.72rem; color: var(--text-muted); }
+
+/* ── SEAT MAP ── */
+.seat-map-wrap { overflow-x: auto; padding-bottom: 0.5rem; }
+.plane-container { position: relative; display: inline-flex; flex-direction: column; align-items: center; min-width: 320px; }
+.plane-nose { width: 80px; height: 40px; background: linear-gradient(to bottom, #cbd5e1, #94a3b8); border-radius: 50% 50% 0 0 / 100% 100% 0 0; margin-bottom: 2px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
+.plane-nose span { font-size: 0.6rem; color: #fff; font-weight: 600; }
+.plane-body { background: linear-gradient(to bottom, #e2e8f0, #f1f5f9); border: 2px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; width: 100%; }
+.cabin-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); text-align: center; padding: 4px 0 2px; border-top: 1px dashed var(--gray-border); margin-top: 4px; }
+.cabin-label:first-child { border-top: none; margin-top: 0; }
+.seat-row { display: flex; align-items: center; gap: 3px; margin: 2px 0; }
+.row-num { width: 22px; font-size: 0.62rem; color: var(--text-muted); text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.aisle-gap { width: 12px; flex-shrink: 0; }
+.seat { width: 22px; height: 22px; border-radius: 4px 4px 2px 2px; border: 1.5px solid var(--seat-empty-border); background: var(--seat-empty); cursor: pointer; transition: all 0.12s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 700; position: relative; }
+.seat:hover { transform: scale(1.2); z-index: 5; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.seat.exit      { background: var(--seat-exit); border-color: var(--seat-exit-border); }
+.seat.bulkhead  { background: var(--seat-bulkhead); border-color: var(--seat-bulkhead-border); }
+.seat.galley    { background: var(--seat-galley); border-color: var(--seat-galley-border); }
+.seat.avoid     { background: var(--seat-avoid); border-color: var(--seat-avoid-border); }
+.seat.premium   { background: var(--seat-premium); border-color: var(--seat-premium-border); }
+.seat.selected  { background: var(--seat-selected); border-color: var(--seat-selected-border); color: #fff; }
+.seat.recommended { box-shadow: 0 0 0 2px #16a34a, 0 0 0 4px #dcfce7; z-index: 2; }
+.seat-letter-row { display: flex; align-items: center; gap: 3px; margin-bottom: 3px; }
+.seat-letter { width: 22px; text-align: center; font-size: 0.6rem; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
+.plane-tail { width: 80px; height: 28px; background: linear-gradient(to top, #cbd5e1, #94a3b8); border-radius: 0 0 50% 50% / 0 0 100% 100%; margin-top: 2px; }
+
+/* ── LEGEND ── */
+.legend { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text-muted); }
+.legend-dot { width: 14px; height: 14px; border-radius: 3px; border: 1.5px solid; flex-shrink: 0; }
+
+/* ── RECOMMENDATIONS ── */
+.rec-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.rec-card { border: 1px solid var(--gray-border); border-radius: 10px; padding: 0.75rem 1rem; display: flex; align-items: flex-start; gap: 0.75rem; transition: all var(--transition); cursor: pointer; background: #fff; }
+.rec-card:hover { border-color: var(--ocean); box-shadow: 0 4px 12px rgba(0,119,182,0.1); }
+.rec-card.top-pick { border-color: #86efac; background: linear-gradient(135deg, #f0fdf4, #fff); }
+.rec-seat-badge { font-size: 1.1rem; font-weight: 800; color: var(--ocean); background: #eaf4fb; border-radius: 8px; padding: 4px 10px; min-width: 52px; text-align: center; line-height: 1.3; border: 1px solid #c9e4f5; }
+.rec-seat-badge.top { background: #dcfce7; color: #166534; border-color: #86efac; }
+.rec-info { flex: 1; min-width: 0; }
+.rec-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+.rec-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+.rec-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.rec-tag { font-size: 0.7rem; padding: 2px 7px; border-radius: 999px; background: var(--gray-light); border: 1px solid var(--gray-border); color: var(--text-muted); }
+.rec-tag.good { background: #dcfce7; border-color: #86efac; color: #166534; }
+.rec-tag.warn { background: #fef3c7; border-color: #fde047; color: #92400e; }
+.rec-tag.bad  { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+
+/* ── EXTERNAL LINKS ── */
+.ext-links { display: flex; flex-direction: column; gap: 0.5rem; }
+.ext-link { display: flex; align-items: center; gap: 10px; padding: 0.65rem 0.9rem; border-radius: 10px; border: 1px solid var(--gray-border); background: var(--gray-light); text-decoration: none; color: var(--text); font-size: 0.88rem; font-weight: 500; transition: all var(--transition); }
+.ext-link:hover { background: #eaf4fb; border-color: var(--teal); color: var(--ocean); transform: translateX(3px); }
+.ext-link .ext-arr { margin-left: auto; font-size: 0.7rem; color: var(--text-muted); }
+.ext-link:hover .ext-arr { color: var(--ocean); }
+
+/* ── SAVED TABLE ── */
+.saved-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.saved-table th { background: var(--gray-light); padding: 7px 10px; text-align: left; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--gray-border); }
+.saved-table td { padding: 7px 10px; border-bottom: 1px solid var(--gray-border); vertical-align: middle; }
+.saved-table tr:last-child td { border-bottom: none; }
+.saved-table tr:hover td { background: var(--gray-light); }
+
+/* ── TIPS ── */
+.tip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+@media (max-width: 600px) { .tip-grid { grid-template-columns: 1fr; } }
+.tip-card { border-radius: 10px; padding: 0.75rem; font-size: 0.82rem; line-height: 1.5; }
+.tip-card.green  { background: #f0fdf4; border: 1px solid #86efac; }
+.tip-card.yellow { background: #fefce8; border: 1px solid #fde047; }
+.tip-card.red    { background: #fef2f2; border: 1px solid #fca5a5; }
+.tip-card.blue   { background: #eff6ff; border: 1px solid #bfdbfe; }
+.tip-card strong { display: block; font-size: 0.8rem; margin-bottom: 3px; }
+
+/* ── SEAT TOOLTIP ── */
+#seatTooltip { position: fixed; background: #1e293b; color: #fff; font-size: 0.78rem; padding: 6px 10px; border-radius: 8px; pointer-events: none; z-index: 9999; max-width: 180px; line-height: 1.4; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 0; border-bottom: 2px solid var(--gray-border); margin-bottom: 1.25rem; }
+.tab-btn { padding: 0.6rem 1rem; background: none; border: none; border-bottom: 3px solid transparent; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all var(--transition); margin-bottom: -2px; }
+.tab-btn:hover { color: var(--ocean); }
+.tab-btn.active { color: var(--ocean); border-bottom-color: var(--ocean); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ── MISC ── */
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 500px) { .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; } }
+.section-gap { margin-top: 1rem; }
+.empty-state { text-align: center; padding: 2rem 1rem; color: var(--text-muted); font-size: 0.88rem; }
+.badge-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--gray-border); background: #fff; }
+.selected-label { font-size: 0.88rem; color: var(--text-muted); margin-top: 0.5rem; min-height: 1.4em; }
+.aircraft-info-bar { background: linear-gradient(135deg, #eaf4fb, #f0f9ff); border: 1px solid #bae6fd; border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.83rem; display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+.ai-stat { display: flex; flex-direction: column; gap: 1px; }
+.ai-stat .lbl { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.ai-stat .val { font-weight: 700; color: var(--ocean-deep); font-size: 0.9rem; }
+
+/* ── FOOTER ── */
+footer { background: linear-gradient(105deg, #023e8a 0%, #0077b6 100%); color: rgba(255,255,255,0.85); padding: 2.5rem 1.5rem 2rem; }
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-brand { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.3rem; }
+.footer-copy { font-size: 0.78rem; opacity: 0.55; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.12); }
+.footer-links { display: flex; gap: 1rem; margin-top: 0.9rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.85rem; }
+.footer-links a:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- Supabase -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+</script>
+
+<!-- HEADER -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html">
+      <img src="images/nav-icon.png" alt="Voyage Genie"/>
+      <span class="vg-title-brand">Voyage Genie</span>
+    </a>
+    <div class="vg-right">
+      <a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a>
+      <div id="authSlot">
+        <a class="nav-chip" href="login.html?next=seat-finder.html">🔑 Sign in</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- PAGE BANNER -->
+<div class="page-banner">
+  <div class="page-banner-inner">
+    <h1>🪑 Seat Strategy Guide</h1>
+    <p>Visual seat maps · Smart recommendations based on your priority · Direct links to official seat maps</p>
+  </div>
+</div>
+
+<main>
+<div class="page-body">
+
+  <!-- LEFT PANEL: Controls -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- Aircraft selector -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">✈️ Your Flight</div></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:0.75rem">
+        <div>
+          <label class="field-label">Aircraft Type</label>
+          <select id="aircraftSel" class="vg-select" onchange="onAircraftChange()">
+            <option value="">— Select aircraft —</option>
+            <optgroup label="Airbus Narrowbody">
+              <option value="A319">Airbus A319</option>
+              <option value="A320">Airbus A320</option>
+              <option value="A321">Airbus A321 / A321neo</option>
+            </optgroup>
+            <optgroup label="Airbus Widebody">
+              <option value="A330-200">Airbus A330-200</option>
+              <option value="A330-300">Airbus A330-300</option>
+              <option value="A350-900">Airbus A350-900</option>
+            </optgroup>
+            <optgroup label="Boeing Narrowbody">
+              <option value="737-800">Boeing 737-800</option>
+              <option value="737MAX8">Boeing 737 MAX 8</option>
+              <option value="757-200">Boeing 757-200</option>
+            </optgroup>
+            <optgroup label="Boeing Widebody">
+              <option value="767-300">Boeing 767-300ER</option>
+              <option value="777-200">Boeing 777-200ER</option>
+              <option value="777-300ER">Boeing 777-300ER</option>
+              <option value="787-8">Boeing 787-8 Dreamliner</option>
+              <option value="787-9">Boeing 787-9 Dreamliner</option>
+              <option value="787-10">Boeing 787-10 Dreamliner</option>
+            </optgroup>
+            <optgroup label="Regional">
+              <option value="E175">Embraer E175</option>
+              <option value="CRJ900">Bombardier CRJ-900</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-grid-2">
+          <div>
+            <label class="field-label">Cabin</label>
+            <select id="cabinSel" class="vg-select" onchange="updateRecommendations()">
+              <option value="economy">Economy</option>
+              <option value="premium">Premium Economy</option>
+              <option value="business">Business / First</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Flight Duration</label>
+            <select id="durationSel" class="vg-select" onchange="updateRecommendations()">
+              <option value="short">Short (&lt; 3 hrs)</option>
+              <option value="medium">Medium (3–7 hrs)</option>
+              <option value="long">Long-haul (7+ hrs)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div>
+            <label class="field-label">Airline (optional)</label>
+            <input id="airlineInput" class="vg-input" placeholder="e.g. United, Delta"/>
+          </div>
+          <div>
+            <label class="field-label">Flight # (optional)</label>
+            <input id="flightInput" class="vg-input" placeholder="e.g. AA 2256"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Priority selector -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">🎯 Your Priority</div></div>
+      <div class="card-bd">
+        <div class="priority-grid">
+          <button class="priority-pill active" data-priority="legroom" onclick="setPriority('legroom',this)">
+            <span class="pp-icon">🦵</span>
+            <span class="pp-name">More Legroom</span>
+            <span class="pp-sub">Exit row, bulkhead</span>
+          </button>
+          <button class="priority-pill" data-priority="quiet" onclick="setPriority('quiet',this)">
+            <span class="pp-icon">🔇</span>
+            <span class="pp-name">Quiet &amp; Sleep</span>
+            <span class="pp-sub">Away from galleys</span>
+          </button>
+          <button class="priority-pill" data-priority="window" onclick="setPriority('window',this)">
+            <span class="pp-icon">🪟</span>
+            <span class="pp-name">Window View</span>
+            <span class="pp-sub">Best views, no window-less</span>
+          </button>
+          <button class="priority-pill" data-priority="exit" onclick="setPriority('exit',this)">
+            <span class="pp-icon">🏃</span>
+            <span class="pp-name">Quick Exit</span>
+            <span class="pp-sub">First off the plane</span>
+          </button>
+          <button class="priority-pill" data-priority="family" onclick="setPriority('family',this)">
+            <span class="pp-icon">👨‍👩‍👧</span>
+            <span class="pp-name">Traveling Together</span>
+            <span class="pp-sub">Group seating</span>
+          </button>
+          <button class="priority-pill" data-priority="aisle" onclick="setPriority('aisle',this)">
+            <span class="pp-icon">🚶</span>
+            <span class="pp-name">Easy Aisle Access</span>
+            <span class="pp-sub">No climbing over people</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save pick -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">💾 Save Your Pick</div></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:0.75rem">
+        <div id="selectedLabel" class="selected-label" style="color:var(--text-muted)">Click a seat on the map to select it</div>
+        <button class="vg-btn vg-btn-ocean" id="btnSave" onclick="savePick()" disabled>💾 Save This Seat</button>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="vg-btn" onclick="shareLink()">🔗 Share</button>
+          <button class="vg-btn" onclick="window.print()">🖨️ Print</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL: Map + Tabs -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- Aircraft info bar -->
+    <div id="aircraftInfoBar" class="aircraft-info-bar hidden">
+      <div class="ai-stat"><span class="lbl">Aircraft</span><span class="val" id="infoName">—</span></div>
+      <div class="ai-stat"><span class="lbl">Seats</span><span class="val" id="infoSeats">—</span></div>
+      <div class="ai-stat"><span class="lbl">Config</span><span class="val" id="infoConfig">—</span></div>
+      <div class="ai-stat"><span class="lbl">Exit Rows</span><span class="val" id="infoExits">—</span></div>
+      <div class="ai-stat"><span class="lbl">Pitch (Eco)</span><span class="val" id="infoPitch">—</span></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="vg-card">
+      <div style="padding:0 1.25rem;border-bottom:1px solid var(--gray-border)">
+        <div class="tabs" style="border:none;margin:0">
+          <button class="tab-btn active" onclick="switchTab('map',this)">🗺️ Seat Map</button>
+          <button class="tab-btn" onclick="switchTab('recs',this)">⭐ Recommendations</button>
+          <button class="tab-btn" onclick="switchTab('links',this)">🔗 Official Links</button>
+          <button class="tab-btn" onclick="switchTab('tips',this)">💡 Tips</button>
+          <button class="tab-btn" onclick="switchTab('saved',this)">📋 Saved</button>
+        </div>
+      </div>
+      <div class="card-bd">
+
+        <!-- MAP TAB -->
+        <div id="tab-map" class="tab-pane active">
+          <div id="mapEmpty" class="empty-state">
+            <div style="font-size:3rem;margin-bottom:0.75rem">✈️</div>
+            <div style="font-weight:600;margin-bottom:0.4rem">Select an aircraft to see its seat map</div>
+            <div>Click any seat to get zone info and select it</div>
+          </div>
+          <div id="mapWrap" class="hidden">
+            <div class="seat-map-wrap">
+              <div style="text-align:center">
+                <div class="plane-container" id="planeContainer"></div>
+              </div>
+            </div>
+            <div class="legend" id="legendWrap"></div>
+          </div>
+        </div>
+
+        <!-- RECOMMENDATIONS TAB -->
+        <div id="tab-recs" class="tab-pane">
+          <div id="recsEmpty" class="empty-state">
+            <div style="font-size:2.5rem;margin-bottom:0.75rem">⭐</div>
+            <div style="font-weight:600;margin-bottom:0.4rem">Select aircraft + priority to get recommendations</div>
+          </div>
+          <div id="recsList" class="rec-list hidden"></div>
+        </div>
+
+        <!-- LINKS TAB -->
+        <div id="tab-links" class="tab-pane">
+          <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:1rem">Official sources show the exact seat map for your specific flight date and configuration. Always check before paying for a seat upgrade.</p>
+          <div class="ext-links" id="extLinksWrap">
+            <a class="ext-link" id="lkSeatGuru" href="#" target="_blank" rel="noopener">
+              <span>🧠</span><span><strong>SeatGuru</strong> — Detailed seat reviews & ratings</span><span class="ext-arr">↗</span>
+            </a>
+            <a class="ext-link" id="lkAeroCRS" href="#" target="_blank" rel="noopener">
+              <span>🛩️</span><span><strong>AeroClassified / SeatLink</strong> — Aircraft configs</span><span class="ext-arr">↗</span>
+            </a>
+            <a class="ext-link" id="lkGoogle" href="#" target="_blank" rel="noopener">
+              <span>🔍</span><span><strong>Google Search</strong> — Seat map for this aircraft</span><span class="ext-arr">↗</span>
+            </a>
+            <a class="ext-link" id="lkYouTube" href="#" target="_blank" rel="noopener">
+              <span>▶️</span><span><strong>YouTube</strong> — Cabin tour &amp; seat review videos</span><span class="ext-arr">↗</span>
+            </a>
+            <a class="ext-link" id="lkAirline" href="#" target="_blank" rel="noopener">
+              <span>🏛️</span><span><strong>Airline Manage Booking</strong> — Confirm your actual seat</span><span class="ext-arr">↗</span>
+            </a>
+          </div>
+          <div style="margin-top:1rem;padding:0.75rem;background:#fefce8;border:1px solid #fde047;border-radius:10px;font-size:0.8rem;color:#92400e">
+            ⚠️ Seat maps vary by airline, route, sub-fleet configuration, and last-minute aircraft swaps. Always confirm on the airline's manage-booking page before paying for an upgrade.
+          </div>
+        </div>
+
+        <!-- TIPS TAB -->
+        <div id="tab-tips" class="tab-pane">
+          <div class="tip-grid">
+            <div class="tip-card green"><strong>✅ Exit Rows</strong>Extra legroom (4–6 inches more). Great for tall passengers. Trade-off: seats don't recline, no under-seat storage, fixed armrests.</div>
+            <div class="tip-card green"><strong>✅ Bulkhead Rows</strong>Extra knee space at the front of a cabin. IFE screen &amp; tray table in armrest. Often bassinet rows — can mean families nearby.</div>
+            <div class="tip-card yellow"><strong>⚠️ Galleys &amp; Lavs</strong>Rows directly in front of or behind galleys/lavatories get more foot traffic, smells, and light. Avoid last row of each cabin.</div>
+            <div class="tip-card yellow"><strong>⚠️ Last Row</strong>Often non-reclining (wall behind). Can be next to lavatory. Noisy. Good if you don't mind — boarding lines form nearby though.</div>
+            <div class="tip-card blue"><strong>💡 Window Alignment</strong>On 737-800, rows 8-10 often have misaligned windows. On 787, all windows are larger. Check SeatGuru photos for your specific row.</div>
+            <div class="tip-card blue"><strong>💡 Long-haul Config</strong>787/A350 in 3-3-3 eco has decent pitch (~32–34"). A330 in 2-4-2 means middle section has 4 seats — avoid D/E/F/G on center block.</div>
+            <div class="tip-card red"><strong>🚫 Seat Fee Trap</strong>"Choice" seats near the front are often just regular seats with an upcharge. Only pay if it's genuinely exit row, bulkhead, or has measurably better pitch.</div>
+            <div class="tip-card red"><strong>🚫 Middle Seat 777</strong>The 777-300ER in 3-4-3 config means the center block has 4 seats. Avoid seats E, F (inner-center) at all costs on long hauls.</div>
+          </div>
+        </div>
+
+        <!-- SAVED TAB -->
+        <div id="tab-saved" class="tab-pane">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <span style="font-size:0.85rem;color:var(--text-muted)" id="savedCount">No saved picks</span>
+            <button class="vg-btn vg-btn-sm" onclick="clearPicks()">🧹 Clear All</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="saved-table">
+              <thead>
+                <tr>
+                  <th>Seat</th><th>Aircraft</th><th>Cabin</th><th>Airline</th><th>Flight</th><th>Zone</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="savedBody">
+                <tr><td colspan="7" class="empty-state" style="padding:1.5rem">No saved picks yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</main>
+
+<!-- Seat tooltip -->
+<div id="seatTooltip"></div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="trip-dashboard.html">My Trips</a>
+      <a href="packing-checklist.html">Packing List</a>
+      <a href="features.html">Features</a>
+    </div>
+    <div class="footer-copy">© 2025 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- Auth -->
+<script type="module">
+  const sb = window.supabase;
+  const authSlot = document.getElementById('authSlot');
+  function toggle(el, show){ if(el) el.style.display = show ? 'block' : 'none'; }
+  async function renderAuth(){
+    try {
+      const { data:{ user } } = await sb.auth.getUser();
+      authSlot.innerHTML = '';
+      if (user) {
+        const name = (user.email||'Account').split('@')[0];
+        const wrap = document.createElement('div');
+        wrap.className = 'menu-group';
+        wrap.innerHTML = `
+          <a href="#" class="account-chip" id="acctBtn"><span>🪪</span><span>${name}</span><span class="caret">▾</span></a>
+          <div class="menu" id="acctMenu">
+            <a href="account.html">👤 Account</a>
+            <div class="menu-divider"></div>
+            <a href="#" id="signOutBtn">🚪 Sign out</a>
+          </div>`;
+        authSlot.appendChild(wrap);
+        const btn = wrap.querySelector('#acctBtn'), menu = wrap.querySelector('#acctMenu');
+        btn.addEventListener('click', e => { e.preventDefault(); const open = menu.style.display==='block'; toggle(menu,!open); });
+        document.addEventListener('click', e => { if(!menu.contains(e.target)&&e.target!==btn) toggle(menu,false); });
+        wrap.querySelector('#signOutBtn').addEventListener('click', async e => { e.preventDefault(); await sb.auth.signOut(); location.href='login.html'; });
+      } else {
+        const a = document.createElement('a');
+        a.className='nav-chip'; a.href='login.html?next=seat-finder.html'; a.textContent='🔑 Sign in';
+        authSlot.appendChild(a);
+      }
+    } catch{}
+  }
+  renderAuth();
+</script>
+
+<!-- SEAT FINDER LOGIC -->
+<script>
+// ═══════════════════════════════════════════════════════════════
+// AIRCRAFT DATABASE
+// Each aircraft has: info{}, layout (array of rows), zones
+// Layout: each row is { num, seats: [letter], type: 'normal'|'exit'|'bulkhead'|'galley' }
+// ═══════════════════════════════════════════════════════════════
+const AIRCRAFT_DB = {
+  'A319': {
+    info: { name:'Airbus A319', seats:'120–160', config:'3-3', exits:'Rows 12, 26', pitch:'30–31"', type:'narrowbody' },
+    cabins: { business:{ rows:[1,2,3], letters:['A','B','C','D','E','F'], config:'2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F'], config:'3-3' } },
+    totalRows: 30,
+    layout: buildNarrowbodyLayout(30, [12,26], [1,4], [29,30], [1,2,3]),
+    tips: { legroom:'Row 12 (exit) has best economy legroom', quiet:'Rows 8–10 mid-cabin', window:'All rows have windows' }
+  },
+  'A320': {
+    info: { name:'Airbus A320', seats:'150–180', config:'3-3', exits:'Rows 11, 30', pitch:'30–32"', type:'narrowbody' },
+    cabins: { business:{ rows:[1,2,3,4], letters:['A','B','C','D','E','F'], config:'2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F'], config:'3-3' } },
+    totalRows: 32,
+    layout: buildNarrowbodyLayout(32, [11,30], [1,5], [31,32], [1,2,3,4]),
+    tips: { legroom:'Row 11 (exit row) — best legroom in economy', quiet:'Rows 14–20 over wing, less engine noise', window:'All standard windows' }
+  },
+  'A321': {
+    info: { name:'Airbus A321/neo', seats:'180–220', config:'3-3', exits:'Rows 16, 33', pitch:'30–32"', type:'narrowbody' },
+    cabins: { business:{ rows:[1,2,3,4,5], letters:['A','B','C','D','E','F'], config:'2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F'], config:'3-3' } },
+    totalRows: 36,
+    layout: buildNarrowbodyLayout(36, [16,33], [1,6], [35,36], [1,2,3,4,5]),
+    tips: { legroom:'Rows 16 & 33 exit rows', quiet:'Rows 18–26 mid-cabin', window:'Rows 1–5 business have windows' }
+  },
+  '737-800': {
+    info: { name:'Boeing 737-800', seats:'162–189', config:'3-3', exits:'Rows 16, 30', pitch:'30–32"', type:'narrowbody' },
+    cabins: { business:{ rows:[1,2,3], letters:['A','B','C','D','E','F'], config:'2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F'], config:'3-3' } },
+    totalRows: 33,
+    layout: buildNarrowbodyLayout(33, [16,30], [1,4], [32,33], [1,2,3]),
+    tips: { legroom:'Rows 16 & 30 exit rows, Row 16 preferred (mid-plane)', quiet:'Rows 10–15 mid-cabin sweet spot', window:'Rows 8–10 sometimes misaligned windows — check SeatGuru' }
+  },
+  '737MAX8': {
+    info: { name:'Boeing 737 MAX 8', seats:'162–178', config:'3-3', exits:'Rows 16, 30', pitch:'30–32"', type:'narrowbody' },
+    cabins: { business:{ rows:[1,2,3], letters:['A','B','C','D','E','F'], config:'2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F'], config:'3-3' } },
+    totalRows: 32,
+    layout: buildNarrowbodyLayout(32, [16,30], [1,4], [31,32], [1,2,3]),
+    tips: { legroom:'Row 16 exit (mid-plane) best option', quiet:'Rows 10–14 quieter zone', window:'Larger windows than original 737' }
+  },
+  '757-200': {
+    info: { name:'Boeing 757-200', seats:'182–224', config:'3-3', exits:'Rows 14, 28', pitch:'31–33"', type:'narrowbody' },
+    cabins: { business:{ rows:[1,2,3,4,5,6], letters:['A','B','C','D','E','F'], config:'2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F'], config:'3-3' } },
+    totalRows: 36,
+    layout: buildNarrowbodyLayout(36, [14,28], [1,7], [35,36], [1,2,3,4,5,6]),
+    tips: { legroom:'Row 14 bulkhead has most legroom', quiet:'Rows 16–24 mid-section', window:'757 has good window alignment throughout' }
+  },
+  'A330-200': {
+    info: { name:'Airbus A330-200', seats:'246–293', config:'2-4-2', exits:'Rows 22, 43', pitch:'31–33"', type:'widebody' },
+    cabins: { business:{ rows:[1,2,3,4,5,6,7,8], letters:['A','B','C','D','E','F','G','H'], config:'2-2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F','G','H'], config:'2-4-2' } },
+    totalRows: 44,
+    layout: buildWidebodyLayout('A330', 44, [22,43], [1,9], [43,44]),
+    tips: { legroom:'Row 22 exit row best in economy', quiet:'Rows 12–18 avoid engine rows', window:'A/B on left, H/J on right — avoid D/E/F/G center block for comfort' }
+  },
+  'A330-300': {
+    info: { name:'Airbus A330-300', seats:'277–335', config:'2-4-2', exits:'Rows 24, 46', pitch:'31–33"', type:'widebody' },
+    cabins: { business:{ rows:[1,2,3,4,5,6,7,8,9], letters:['A','B','C','D','E','F','G','H'], config:'2-2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F','G','H'], config:'2-4-2' } },
+    totalRows: 47,
+    layout: buildWidebodyLayout('A330', 47, [24,46], [1,10], [46,47]),
+    tips: { legroom:'Row 24 exit row — plan ahead as fills fast', quiet:'Window seats rows 12–20', window:'A & J window seats are best — avoid center block (D/E/F/G)' }
+  },
+  'A350-900': {
+    info: { name:'Airbus A350-900', seats:'300–369', config:'3-3-3', exits:'Rows 24, 48', pitch:'31–33"', type:'widebody' },
+    cabins: { business:{ rows:[1,2,3,4,5,6,7,8], letters:['A','B','C','D','E','F','G','H','K'], config:'1-2-1' }, economy:{ rows:null, letters:['A','B','C','D','E','F','G','H','K'], config:'3-3-3' } },
+    totalRows: 50,
+    layout: buildWidebodyLayout('A350', 50, [24,48], [1,9], [49,50]),
+    tips: { legroom:'Row 24 exit row — book early', quiet:'A350 is the quietest widebody — any mid-cabin seat works', window:'All seats have large windows with electrochromic dimming' }
+  },
+  '767-300': {
+    info: { name:'Boeing 767-300ER', seats:'218–269', config:'2-3-2', exits:'Rows 20, 40', pitch:'31–33"', type:'widebody' },
+    cabins: { business:{ rows:[1,2,3,4,5,6,7], letters:['A','B','C','D','E','F','G'], config:'2-1-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F','G'], config:'2-3-2' } },
+    totalRows: 42,
+    layout: buildWidebodyLayout('767', 42, [20,40], [1,8], [41,42]),
+    tips: { legroom:'Row 20 exit row is premium', quiet:'Rows 10–16 sweet spot', window:'767 has the narrowest center section of widebodies — D/E/F only 3 across' }
+  },
+  '777-200': {
+    info: { name:'Boeing 777-200ER', seats:'305–400', config:'3-3-3', exits:'Rows 30, 52', pitch:'31–34"', type:'widebody' },
+    cabins: { business:{ rows:[1,2,3,4,5,6,7,8,9], letters:['A','B','C','D','E','F','G','H','J'], config:'1-2-1' }, economy:{ rows:null, letters:['A','B','C','D','E','F','G','H','J'], config:'3-3-3' } },
+    totalRows: 54,
+    layout: buildWidebodyLayout('777', 54, [30,52], [1,10], [53,54]),
+    tips: { legroom:'Row 30 exit row — fills extremely fast', quiet:'Window seats rows 14–22 quieter than engine rows', window:'A/K are window seats — avoid center block D/E/F for long hauls' }
+  },
+  '777-300ER': {
+    info: { name:'Boeing 777-300ER', seats:'368–550', config:'3-4-3 (some)', exits:'Rows 30, 55', pitch:'30–31" (3-4-3)', type:'widebody' },
+    cabins: { business:{ rows:[1,2,3,4,5,6,7,8,9,10], letters:['A','B','C','D','E','F','G','H','J','K'], config:'1-2-1' }, economy:{ rows:null, letters:['A','B','C','D','E','F','G','H','J','K'], config:'3-4-3' } },
+    totalRows: 57,
+    layout: buildWidebodyLayout('777-300', 57, [30,55], [1,11], [56,57]),
+    tips: { legroom:'Row 30 exit row — MUST book early', quiet:'Window seats ONLY — avoid E/F/G/H center on 3-4-3 config at all costs on long hauls', window:'A/K are windows. The 3-4-3 center block is famously uncomfortable — the worst seats in the sky for long hauls' }
+  },
+  '787-8': {
+    info: { name:'Boeing 787-8 Dreamliner', seats:'242–296', config:'3-3-3', exits:'Rows 20, 38', pitch:'31–32"', type:'widebody' },
+    cabins: { business:{ rows:[1,2,3,4,5,6,7,8], letters:['A','B','C','D','E','F','G','H','K'], config:'2-2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F','G','H','K'], config:'3-3-3' } },
+    totalRows: 40,
+    layout: buildWidebodyLayout('787', 40, [20,38], [1,9], [39,40]),
+    tips: { legroom:'Row 20 exit row has noticeably more space', quiet:'787 is significantly quieter cabin — any seat is comfortable', window:'787 has the best windows in aviation — larger, electrochromic dimming, A/K window seats are spectacular' }
+  },
+  '787-9': {
+    info: { name:'Boeing 787-9 Dreamliner', seats:'296–335', config:'3-3-3', exits:'Rows 24, 44', pitch:'31–32"', type:'widebody' },
+    cabins: { business:{ rows:[1,2,3,4,5,6,7,8,9], letters:['A','B','C','D','E','F','G','H','K'], config:'2-2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F','G','H','K'], config:'3-3-3' } },
+    totalRows: 46,
+    layout: buildWidebodyLayout('787', 46, [24,44], [1,10], [45,46]),
+    tips: { legroom:'Row 24 exit row — the most-booked seat on this aircraft', quiet:'787-9 has lowest cabin altitude pressure — less fatigue on any seat', window:'787 windows are best in class — A/K seats highly recommended for long hauls' }
+  },
+  '787-10': {
+    info: { name:'Boeing 787-10 Dreamliner', seats:'330–440', config:'3-3-3', exits:'Rows 26, 48', pitch:'31–32"', type:'widebody' },
+    cabins: { business:{ rows:[1,2,3,4,5,6,7,8,9,10], letters:['A','B','C','D','E','F','G','H','K'], config:'2-2-2' }, economy:{ rows:null, letters:['A','B','C','D','E','F','G','H','K'], config:'3-3-3' } },
+    totalRows: 50,
+    layout: buildWidebodyLayout('787', 50, [26,48], [1,11], [49,50]),
+    tips: { legroom:'Row 26 exit — book as far in advance as possible', quiet:'787-10 has same Dreamliner quiet cabin benefits', window:'Largest 787 variant — same great windows' }
+  },
+  'E175': {
+    info: { name:'Embraer E175', seats:'76', config:'2-2', exits:'Row 12', pitch:'30–31"', type:'regional' },
+    cabins: { business:{ rows:[1,2,3], letters:['A','B','C','D'], config:'1-1' }, economy:{ rows:null, letters:['A','B','C','D'], config:'2-2' } },
+    totalRows: 19,
+    layout: buildNarrowbodyLayout(19, [12], [1,4], [18,19], [1,2,3], 4),
+    tips: { legroom:'Row 12 exit row — most legroom', quiet:'No galley in rear on most configs', window:'All seats close to windows on E175 — narrow enough' }
+  },
+  'CRJ900': {
+    info: { name:'Bombardier CRJ-900', seats:'76–90', config:'2-2', exits:'Row 10', pitch:'30–31"', type:'regional' },
+    cabins: { business:{ rows:[1,2], letters:['A','B','C','D'], config:'1-1' }, economy:{ rows:null, letters:['A','B','C','D'], config:'2-2' } },
+    totalRows: 22,
+    layout: buildNarrowbodyLayout(22, [10], [1,3], [21,22], [1,2], 4),
+    tips: { legroom:'Row 10 exit row only option', quiet:'Avoid last 3 rows (engine noise)', window:'Every seat is either window or aisle on CRJ — no true middle seat' }
+  }
+};
+
+// ── Layout builders ──────────────────────────────────────────────────────────
+function buildNarrowbodyLayout(totalRows, exitRows, busRows, avoidRows, bulkheadRows, cols=6) {
+  const rows = [];
+  for (let r = 1; r <= totalRows; r++) {
+    let type = 'normal';
+    if (exitRows.includes(r)) type = 'exit';
+    else if (bulkheadRows.includes(r)) type = 'bulkhead';
+    else if (avoidRows.includes(r)) type = 'avoid';
+    const isBusiness = busRows.includes(r);
+    const letters = cols === 4 ? ['A','B','C','D'] : ['A','B','C','D','E','F'];
+    rows.push({ num: r, type, isBusiness, letters, hasMidExitDoor: exitRows.includes(r) });
+  }
+  return rows;
+}
+function buildWidebodyLayout(acType, totalRows, exitRows, busRows, avoidRows) {
+  const rows = [];
+  const isSmall = ['767'].includes(acType); // 2-3-2
+  const is300 = acType === '777-300';       // 3-4-3
+  const letters = is300 ? ['A','B','C','D','E','F','G','H','J','K']
+    : isSmall ? ['A','B','C','D','E','F','G']
+    : ['A','B','C','D','E','F','G','H','K'];
+  for (let r = 1; r <= totalRows; r++) {
+    let type = 'normal';
+    if (exitRows.includes(r)) type = 'exit';
+    else if (r === busRows[0] || r === busRows[0]+1) type = 'bulkhead';
+    else if (avoidRows.includes(r)) type = 'avoid';
+    const isBusiness = (Array.isArray(busRows) ? busRows : []).some(br => r >= busRows[0] && r <= busRows[busRows.length-1] && busRows.includes(r));
+    rows.push({ num: r, type, isBusiness: busRows.includes(r), letters });
+  }
+  return rows;
+}
+
+// ── State ────────────────────────────────────────────────────────────────────
+let currentAircraft = null;
+let currentPriority = 'legroom';
+let selectedSeat = null; // { row, letter, type }
+const STORE_KEY = 'vg_seat_picks_v2';
+
+// ── Init ────────────────────────────────────────────────────────────────────
+function init() {
+  renderSaved();
+  applyFromURL();
+  updateExternalLinks();
+  ['airlineInput','flightInput'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateExternalLinks);
+  });
+}
+
+// ── Aircraft change ──────────────────────────────────────────────────────────
+function onAircraftChange() {
+  const key = document.getElementById('aircraftSel').value;
+  currentAircraft = key ? AIRCRAFT_DB[key] : null;
+  selectedSeat = null;
+  document.getElementById('selectedLabel').textContent = 'Click a seat on the map to select it';
+  document.getElementById('btnSave').disabled = true;
+
+  if (!currentAircraft) {
+    document.getElementById('mapEmpty').classList.remove('hidden');
+    document.getElementById('mapWrap').classList.add('hidden');
+    document.getElementById('aircraftInfoBar').classList.add('hidden');
+    document.getElementById('recsEmpty').classList.remove('hidden');
+    document.getElementById('recsList').classList.add('hidden');
+    return;
+  }
+
+  // Fill info bar
+  const inf = currentAircraft.info;
+  document.getElementById('infoName').textContent = inf.name;
+  document.getElementById('infoSeats').textContent = inf.seats;
+  document.getElementById('infoConfig').textContent = inf.config;
+  document.getElementById('infoExits').textContent = inf.exits;
+  document.getElementById('infoPitch').textContent = inf.pitch;
+  document.getElementById('aircraftInfoBar').classList.remove('hidden');
+
+  renderSeatMap();
+  updateRecommendations();
+  updateExternalLinks();
+}
+
+// ── Seat Map Renderer ────────────────────────────────────────────────────────
+function renderSeatMap() {
+  if (!currentAircraft) return;
+  document.getElementById('mapEmpty').classList.add('hidden');
+  document.getElementById('mapWrap').classList.remove('hidden');
+
+  const container = document.getElementById('planeContainer');
+  container.innerHTML = '';
+
+  const isWidebody = currentAircraft.info.type === 'widebody';
+  const isRegional = currentAircraft.info.type === 'regional';
+  const layout = currentAircraft.layout;
+  const cabin = document.getElementById('cabinSel').value;
+
+  // Work out seat letters for chosen cabin
+  const allLetters = layout[0]?.letters || ['A','B','C','D','E','F'];
+  const numCols = allLetters.length;
+
+  // Nose
+  const nose = document.createElement('div');
+  nose.className = 'plane-nose';
+  nose.innerHTML = '<span>FRONT</span>';
+  container.appendChild(nose);
+
+  // Plane body
+  const body = document.createElement('div');
+  body.className = 'plane-body';
+
+  // Letter headers
+  const letterRow = document.createElement('div');
+  letterRow.className = 'seat-letter-row';
+  letterRow.innerHTML = `<div style="width:22px"></div>`; // row num spacer
+  allLetters.forEach((l, li) => {
+    if (isWidebody && li === Math.floor(numCols/3)) {
+      letterRow.innerHTML += `<div class="aisle-gap"></div>`;
+    }
+    if (isWidebody && li === Math.floor(numCols*2/3)) {
+      letterRow.innerHTML += `<div class="aisle-gap"></div>`;
+    }
+    letterRow.innerHTML += `<div class="seat-letter">${l}</div>`;
+  });
+  body.appendChild(letterRow);
+
+  // Cabin divider labels
+  let lastCabinType = null;
+
+  layout.forEach(row => {
+    const showingCabin = (cabin === 'business') ? row.isBusiness : (!row.isBusiness);
+    if (!showingCabin && cabin !== 'economy') return; // in economy show all non-business
+    if (cabin === 'business' && !row.isBusiness) return;
+
+    // Cabin label
+    const thisCabin = row.isBusiness ? 'business' : 'economy';
+    if (thisCabin !== lastCabinType) {
+      const lbl = document.createElement('div');
+      lbl.className = 'cabin-label';
+      lbl.textContent = row.isBusiness ? '✦ Business / First' : '— Economy —';
+      body.appendChild(lbl);
+      lastCabinType = thisCabin;
+    }
+
+    const rowEl = document.createElement('div');
+    rowEl.className = 'seat-row';
+
+    // Row number
+    const numEl = document.createElement('div');
+    numEl.className = 'row-num';
+    numEl.textContent = row.num;
+    rowEl.appendChild(numEl);
+
+    row.letters.forEach((letter, li) => {
+      // Aisle gaps for widebody
+      if (isWidebody && li === Math.floor(numCols/3)) {
+        const gap = document.createElement('div');
+        gap.className = 'aisle-gap';
+        rowEl.appendChild(gap);
+      }
+      if (isWidebody && li === Math.floor(numCols*2/3)) {
+        const gap = document.createElement('div');
+        gap.className = 'aisle-gap';
+        rowEl.appendChild(gap);
+      }
+      // Aisle for narrowbody (between C and D)
+      if (!isWidebody && !isRegional && li === 3) {
+        const gap = document.createElement('div');
+        gap.className = 'aisle-gap';
+        rowEl.appendChild(gap);
+      }
+      if (isRegional && li === 2) {
+        const gap = document.createElement('div');
+        gap.className = 'aisle-gap';
+        rowEl.appendChild(gap);
+      }
+
+      const seat = document.createElement('div');
+      seat.className = 'seat ' + row.type;
+
+      // Check if it's recommended
+      const recSeats = getRecommendedSeats();
+      if (recSeats.some(rs => rs.row === row.num && rs.letter === letter)) {
+        seat.classList.add('recommended');
+      }
+
+      // Selected
+      if (selectedSeat && selectedSeat.row === row.num && selectedSeat.letter === letter) {
+        seat.classList.remove(row.type);
+        seat.classList.add('selected');
+      }
+
+      // Tooltip
+      seat.title = getSeatTooltip(row, letter);
+      seat.addEventListener('mouseenter', e => showTooltip(e, row, letter));
+      seat.addEventListener('mouseleave', hideTooltip);
+      seat.addEventListener('click', () => selectSeat(row, letter));
+
+      rowEl.appendChild(seat);
+    });
+
+    body.appendChild(rowEl);
+  });
+
+  container.appendChild(body);
+
+  // Tail
+  const tail = document.createElement('div');
+  tail.className = 'plane-tail';
+  container.appendChild(tail);
+
+  // Legend
+  renderLegend();
+}
+
+function getSeatZone(row, letter) {
+  const letters = row.letters;
+  const idx = letters.indexOf(letter);
+  const numCols = letters.length;
+  if (idx === 0 || idx === numCols-1) return 'Window';
+  if (idx === 1 || idx === numCols-2) return numCols > 4 ? 'Middle' : 'Aisle';
+  if (numCols > 4 && (idx === 2 || idx === numCols-3)) return 'Aisle';
+  return 'Middle';
+}
+
+function getSeatTooltip(row, letter) {
+  const zone = getSeatZone(row, letter);
+  const type = row.type;
+  let info = `Row ${row.num}${letter} · ${zone}`;
+  if (type === 'exit') info += ' · Exit row (+legroom, no recline)';
+  if (type === 'bulkhead') info += ' · Bulkhead (+knee space, tray in armrest)';
+  if (type === 'avoid') info += ' · Near lav/galley (noise/traffic)';
+  if (type === 'galley') info += ' · Galley row (avoid)';
+  return info;
+}
+
+function showTooltip(e, row, letter) {
+  const tip = document.getElementById('seatTooltip');
+  tip.textContent = getSeatTooltip(row, letter);
+  tip.style.display = 'block';
+  moveTip(e);
+}
+function hideTooltip() { document.getElementById('seatTooltip').style.display = 'none'; }
+document.addEventListener('mousemove', e => {
+  const tip = document.getElementById('seatTooltip');
+  if (tip.style.display !== 'none') moveTip(e);
+});
+function moveTip(e) {
+  const tip = document.getElementById('seatTooltip');
+  tip.style.left = (e.clientX + 12) + 'px';
+  tip.style.top  = (e.clientY - 10) + 'px';
+}
+
+function selectSeat(row, letter) {
+  selectedSeat = { row: row.num, letter, type: row.type, zone: getSeatZone(row, letter) };
+  const typeLabel = { exit:'Exit Row', bulkhead:'Bulkhead', avoid:'Near Lav/Galley', normal:'Standard', premium:'Premium' }[row.type] || 'Standard';
+  document.getElementById('selectedLabel').innerHTML = `
+    <span style="font-weight:700;color:var(--ocean-deep)">Selected: Row ${row.num}${letter}</span>
+    · ${selectedSeat.zone} · ${typeLabel}
+    <br><span style="font-size:0.75rem">${getSeatTooltip(row, letter)}</span>`;
+  document.getElementById('btnSave').disabled = false;
+  renderSeatMap(); // re-render to show selection
+}
+
+function renderLegend() {
+  const wrap = document.getElementById('legendWrap');
+  wrap.innerHTML = `
+    <div class="legend-item"><div class="legend-dot" style="background:var(--seat-empty);border-color:var(--seat-empty-border)"></div>Standard</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--seat-exit);border-color:var(--seat-exit-border)"></div>Exit Row</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--seat-bulkhead);border-color:var(--seat-bulkhead-border)"></div>Bulkhead</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--seat-avoid);border-color:var(--seat-avoid-border)"></div>Near Lav/Galley</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--seat-selected);border-color:var(--seat-selected-border)"></div>Your Selection</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:2px solid #16a34a"></div>Recommended</div>
+  `;
+}
+
+// ── Recommendations ──────────────────────────────────────────────────────────
+function getRecommendedSeats() {
+  if (!currentAircraft) return [];
+  const layout = currentAircraft.layout;
+  const isWidebody = currentAircraft.info.type === 'widebody';
+  const allLetters = layout[0]?.letters || ['A','B','C','D','E','F'];
+  const numCols = allLetters.length;
+  const recs = [];
+
+  const ecoRows = layout.filter(r => !r.isBusiness);
+
+  switch (currentPriority) {
+    case 'legroom': {
+      const exitRows = ecoRows.filter(r => r.type === 'exit');
+      const bulkRows = ecoRows.filter(r => r.type === 'bulkhead');
+      [...exitRows, ...bulkRows].slice(0,2).forEach(row => {
+        // Aisle seats in exit/bulkhead
+        const aisleLetters = isWidebody ? [allLetters[2], allLetters[numCols-3]] : [allLetters[2], allLetters[3]];
+        aisleLetters.forEach(l => recs.push({ row: row.num, letter: l, type: row.type }));
+      });
+      break;
+    }
+    case 'quiet': {
+      // Mid-cabin, window seats, away from last rows
+      const midStart = Math.floor(ecoRows.length * 0.25);
+      const midEnd   = Math.floor(ecoRows.length * 0.55);
+      ecoRows.slice(midStart, midEnd).filter(r => r.type === 'normal').slice(0,3).forEach(row => {
+        recs.push({ row: row.num, letter: allLetters[0] }); // window
+      });
+      break;
+    }
+    case 'window': {
+      const goodRows = ecoRows.filter(r => r.type !== 'avoid' && r.type !== 'galley').slice(2, 8);
+      goodRows.forEach(row => {
+        recs.push({ row: row.num, letter: allLetters[0] });
+        recs.push({ row: row.num, letter: allLetters[numCols-1] });
+      });
+      break;
+    }
+    case 'exit': {
+      // First few eco rows or bulkhead
+      ecoRows.slice(0,3).forEach(row => {
+        [allLetters[0], allLetters[numCols-1]].forEach(l => recs.push({ row: row.num, letter: l }));
+      });
+      break;
+    }
+    case 'family': {
+      // Rows with adjacent seats in groups — center blocks on widebody, row pairs
+      ecoRows.filter(r => r.type !== 'avoid').slice(3, 8).forEach(row => {
+        if (isWidebody) {
+          // Center 3 or 4 seats
+          const mid = Math.floor(numCols/3);
+          for (let i = mid; i < mid+3 && i < numCols; i++) recs.push({ row: row.num, letter: allLetters[i] });
+        } else {
+          // Window + middle in a 3-seat block
+          recs.push({ row: row.num, letter: allLetters[0] });
+          recs.push({ row: row.num, letter: allLetters[1] });
+          recs.push({ row: row.num, letter: allLetters[3] });
+          recs.push({ row: row.num, letter: allLetters[4] });
+        }
+      });
+      break;
+    }
+    case 'aisle': {
+      // Aisle seats throughout mid-cabin
+      const midRows = ecoRows.filter(r => r.type !== 'avoid').slice(2, 12);
+      midRows.forEach(row => {
+        const aisleLetters = isWidebody ? [allLetters[2], allLetters[numCols-3]] : [allLetters[2], allLetters[3]];
+        aisleLetters.forEach(l => recs.push({ row: row.num, letter: l }));
+      });
+      break;
+    }
+  }
+  return recs.slice(0, 12);
+}
+
+function updateRecommendations() {
+  if (!currentAircraft) {
+    document.getElementById('recsEmpty').classList.remove('hidden');
+    document.getElementById('recsList').classList.add('hidden');
+    return;
+  }
+  const recSeats = getRecommendedSeats();
+  const inf = currentAircraft.info;
+  const tips = currentAircraft.tips;
+  const priorityTip = tips[currentPriority] || tips.legroom || '';
+
+  document.getElementById('recsEmpty').classList.add('hidden');
+  const list = document.getElementById('recsList');
+  list.classList.remove('hidden');
+
+  const priorityLabels = {
+    legroom:'Most Legroom', quiet:'Quiet & Sleep', window:'Window Views',
+    exit:'Quick Exit', family:'Traveling Together', aisle:'Aisle Access'
+  };
+
+  const priorityDescs = {
+    legroom: 'Exit rows and bulkheads give 4–6 inches of extra knee space. Best for tall passengers or long hauls.',
+    quiet: 'Mid-cabin window seats away from engines, galleys, and lavatories. Ideal for sleeping.',
+    window: 'Window column seats (A or K/J) away from avoid zones. Check for window-row alignment on SeatGuru.',
+    exit: 'Front of economy cabin seats board and deplane fastest. Overhead bin space also fills slower.',
+    family: 'Center block seats keep groups together without splitting across aisles.',
+    aisle: 'Aisle seats (C/D on narrowbody, C/H on widebody) give easy stretch access without climbing over others.'
+  };
+
+  let html = `
+    <div style="background:#eaf4fb;border:1px solid #bae6fd;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1rem">
+      <div style="font-size:0.85rem;font-weight:600;color:var(--ocean-deep);margin-bottom:4px">${priorityLabels[currentPriority]} on ${inf.name}</div>
+      <div style="font-size:0.8rem;color:var(--text-muted)">${priorityDescs[currentPriority]}</div>
+      ${priorityTip ? `<div style="font-size:0.78rem;color:var(--green);margin-top:5px;font-weight:500">💡 ${priorityTip}</div>` : ''}
+    </div>
+  `;
+
+  recSeats.slice(0, 6).forEach((rs, idx) => {
+    const isTop = idx === 0;
+    const typeLabel = { exit:'Exit Row', bulkhead:'Bulkhead', normal:'Standard', avoid:'⚠️ Avoid', premium:'Premium' }[rs.type || 'normal'] || 'Standard';
+    const tags = [];
+    if (rs.type === 'exit') { tags.push({cls:'good', text:'Extra legroom'}); tags.push({cls:'warn', text:'No recline'}); }
+    if (rs.type === 'bulkhead') { tags.push({cls:'good', text:'Knee space'}); tags.push({cls:'warn', text:'Tray in armrest'}); }
+    if (currentPriority === 'window') tags.push({cls:'good', text:'Window seat'});
+    if (currentPriority === 'aisle') tags.push({cls:'good', text:'Easy access'});
+    if (currentPriority === 'quiet') tags.push({cls:'good', text:'Low traffic zone'});
+
+    html += `
+      <div class="rec-card ${isTop ? 'top-pick' : ''}" onclick="selectSeatFromRec(${rs.row}, '${rs.letter}', '${rs.type||'normal'}')">
+        <div class="rec-seat-badge ${isTop ? 'top' : ''}">${rs.row}${rs.letter}</div>
+        <div class="rec-info">
+          <div class="rec-title">Row ${rs.row}, Seat ${rs.letter} ${isTop ? '⭐ Top Pick' : ''}</div>
+          <div class="rec-desc">${typeLabel} · ${rs.zone || getSeatZone({letters:(currentAircraft.layout[0]?.letters||[])}, rs.letter) || 'Standard seat'}</div>
+          <div class="rec-tags">
+            ${tags.map(t => `<span class="rec-tag ${t.cls}">${t.text}</span>`).join('')}
+          </div>
+        </div>
+      </div>`;
+  });
+
+  list.innerHTML = html;
+
+  // Also re-render map to show recommendations
+  if (document.getElementById('mapWrap') && !document.getElementById('mapWrap').classList.contains('hidden')) {
+    renderSeatMap();
+  }
+}
+
+function selectSeatFromRec(rowNum, letter, type) {
+  const row = currentAircraft.layout.find(r => r.num === rowNum);
+  if (row) {
+    selectSeat(row, letter);
+    switchTab('map', document.querySelector('.tab-btn'));
+  }
+}
+
+// ── Priority ─────────────────────────────────────────────────────────────────
+function setPriority(p, el) {
+  currentPriority = p;
+  document.querySelectorAll('.priority-pill').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  updateRecommendations();
+}
+
+// ── External Links ────────────────────────────────────────────────────────────
+function updateExternalLinks() {
+  const ac = document.getElementById('aircraftSel').value;
+  const airline = document.getElementById('airlineInput').value.trim();
+  const flight = document.getElementById('flightInput').value.trim();
+  const acLabel = ac ? (AIRCRAFT_DB[ac]?.info?.name || ac) : '';
+
+  const q = [airline, acLabel, flight].filter(Boolean).join(' ');
+
+  document.getElementById('lkSeatGuru').href = q
+    ? `https://www.google.com/search?q=${encodeURIComponent(q + ' seatguru seat map')}`
+    : 'https://www.seatguru.com/';
+
+  document.getElementById('lkGoogle').href =
+    `https://www.google.com/search?q=${encodeURIComponent((q||'airplane') + ' seat map')}`;
+
+  document.getElementById('lkYouTube').href =
+    `https://www.youtube.com/results?search_query=${encodeURIComponent((q||'airplane') + ' cabin tour seat review')}`;
+
+  document.getElementById('lkAeroCRS').href = q
+    ? `https://www.google.com/search?q=${encodeURIComponent(q + ' site:seatlink.com OR site:airfleets.net')}`
+    : 'https://www.seatlink.com/';
+
+  document.getElementById('lkAirline').href = airline
+    ? `https://www.google.com/search?q=${encodeURIComponent(airline + ' manage booking seat selection')}`
+    : 'https://www.google.com/search?q=airline+manage+booking+seat+selection';
+}
+
+// ── Save / Load Picks ────────────────────────────────────────────────────────
+function getPicks() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch { return []; } }
+function setPicks(arr) { localStorage.setItem(STORE_KEY, JSON.stringify(arr)); renderSaved(); }
+
+function savePick() {
+  if (!selectedSeat || !currentAircraft) return;
+  const row = { 
+    seat: `${selectedSeat.row}${selectedSeat.letter}`,
+    aircraft: document.getElementById('aircraftSel').value,
+    aircraftName: currentAircraft.info.name,
+    cabin: document.getElementById('cabinSel').value,
+    airline: document.getElementById('airlineInput').value.trim(),
+    flight: document.getElementById('flightInput').value.trim(),
+    zone: selectedSeat.zone,
+    type: selectedSeat.type,
+    priority: currentPriority,
+    at: new Date().toLocaleDateString()
+  };
+  const list = getPicks();
+  list.unshift(row);
+  setPicks(list.slice(0, 20));
+
+  // Flash confirmation
+  const btn = document.getElementById('btnSave');
+  btn.textContent = '✅ Saved!';
+  btn.style.background = 'var(--green)';
+  setTimeout(() => { btn.textContent = '💾 Save This Seat'; btn.style.background = ''; }, 1800);
+
+  // Switch to saved tab
+  setTimeout(() => switchTab('saved', document.querySelectorAll('.tab-btn')[4]), 1000);
+}
+
+function removePick(i) {
+  const list = getPicks(); list.splice(i, 1); setPicks(list);
+}
+function clearPicks() {
+  if (getPicks().length && confirm('Clear all saved picks?')) setPicks([]);
+}
+
+function renderSaved() {
+  const picks = getPicks();
+  const body = document.getElementById('savedBody');
+  const count = document.getElementById('savedCount');
+  count.textContent = picks.length ? `${picks.length} saved pick${picks.length>1?'s':''}` : 'No saved picks';
+
+  if (!picks.length) {
+    body.innerHTML = `<tr><td colspan="7" class="empty-state" style="padding:1.5rem;text-align:center;color:var(--text-muted)">No saved picks yet. Select a seat on the map and save it.</td></tr>`;
+    return;
+  }
+
+  const typeLabel = { exit:'Exit Row 🟢', bulkhead:'Bulkhead 🟡', avoid:'Near Lav ⚠️', normal:'Standard', premium:'Premium ✦' };
+  body.innerHTML = picks.map((p, i) => `
+    <tr>
+      <td style="font-weight:700;color:var(--ocean)">${p.seat}</td>
+      <td style="font-size:0.8rem">${p.aircraftName || p.aircraft || '—'}</td>
+      <td style="text-transform:capitalize;font-size:0.8rem">${p.cabin || '—'}</td>
+      <td style="font-size:0.8rem">${p.airline || '—'}</td>
+      <td style="font-size:0.8rem">${p.flight || '—'}</td>
+      <td style="font-size:0.78rem">${typeLabel[p.type] || p.type || '—'}</td>
+      <td><button class="vg-btn vg-btn-sm" style="color:#dc2626;border-color:#fca5a5" onclick="removePick(${i})">🗑️</button></td>
+    </tr>`).join('');
+}
+
+// ── URL Share ────────────────────────────────────────────────────────────────
+function shareLink() {
+  const u = new URL(location.href);
+  const ac = document.getElementById('aircraftSel').value;
+  const airline = document.getElementById('airlineInput').value;
+  const flight = document.getElementById('flightInput').value;
+  if (ac) u.searchParams.set('ac', ac);
+  if (airline) u.searchParams.set('airline', airline);
+  if (flight) u.searchParams.set('flight', flight);
+  if (selectedSeat) u.searchParams.set('seat', `${selectedSeat.row}${selectedSeat.letter}`);
+  navigator.clipboard?.writeText(u.toString())
+    .then(() => alert('Link copied to clipboard!'))
+    .catch(() => prompt('Copy this link:', u.toString()));
+}
+
+function applyFromURL() {
+  const p = new URLSearchParams(location.search);
+  if (p.get('ac')) { document.getElementById('aircraftSel').value = p.get('ac'); onAircraftChange(); }
+  if (p.get('airline')) document.getElementById('airlineInput').value = p.get('airline');
+  if (p.get('flight')) document.getElementById('flightInput').value = p.get('flight');
+  updateExternalLinks();
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  // Find the right tab button by iterating if btn not correct
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + name + "'")) b.classList.add('active');
+  });
+}
+
+window.onAircraftChange = onAircraftChange;
+window.setPriority = setPriority;
+window.updateRecommendations = updateRecommendations;
+window.switchTab = switchTab;
+window.savePick = savePick;
+window.removePick = removePick;
+window.clearPicks = clearPicks;
+window.shareLink = shareLink;
+window.selectSeatFromRec = selectSeatFromRec;
+
+init();
+</script>
+</body>
+</html>

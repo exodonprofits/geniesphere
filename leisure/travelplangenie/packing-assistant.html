@@ -1,0 +1,831 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Packing Assistant – GenieSphere</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ===== GenieSphere Layout Tokens ===== */
+    .container { @apply max-w-6xl mx-auto px-4; }
+    .site-header { @apply bg-white/90 backdrop-blur sticky top-0 z-40 border-b; }
+    .header-inner { @apply container py-4 flex items-center justify-between; }
+    .brand { @apply flex items-center gap-3; }
+    .brand-mark { @apply text-2xl; }
+    .brand-title { @apply text-xl font-semibold; }
+    .brand-sub { @apply text-xs text-gray-500; }
+    .site-nav { @apply flex items-center gap-3; }
+
+    /* Buttons */
+    .btn { @apply rounded-full flex items-center gap-2 px-6 py-2 transition text-white; }
+    .btn-green { @apply bg-green-600 hover:bg-green-700; }
+    .btn-blue { @apply bg-blue-600 hover:bg-blue-700; }
+    .btn-ghost { @apply rounded-full border border-gray-300 px-4 py-2 hover:bg-gray-50 text-gray-700; }
+
+    /* Cards & Pills */
+    .card { @apply bg-white rounded-2xl shadow-md p-5; }
+    .pill { @apply inline-flex items-center gap-2 rounded-full px-4 py-1 text-sm bg-gray-100; }
+    .section-title { @apply text-lg font-semibold mb-3; }
+
+    /* Footer */
+    .site-footer { @apply bg-white border-t mt-12; }
+    .footer-inner { @apply container py-10; }
+    .footer-grid { @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8; }
+    .footer-col h4 { @apply font-semibold mb-3; }
+    .footer-col a { @apply block text-sm text-gray-600 hover:text-blue-600 mb-2; }
+    .footer-bottom { @apply border-t mt-8 pt-6; }
+    .footer-bottom-inner { @apply container text-center text-sm text-gray-500 space-y-2; }
+  
+    /* GenieSphere defaults per user's style guide */
+    .gs-btn { @apply rounded-full flex items-center gap-2 px-6 py-2 transition text-white; }
+    .gs-btn-green { @apply bg-green-600 hover:bg-green-700; }
+    .gs-btn-blue { @apply bg-blue-600 hover:bg-blue-700; }
+    .card { @apply bg-white rounded-2xl shadow-md p-5; }
+    .pill { @apply inline-flex items-center gap-2 rounded-full px-4 py-1 text-sm bg-gray-100; }
+    .section-title { @apply text-lg font-semibold mb-3; }
+    .ghost-btn { @apply rounded-full border border-gray-300 px-4 py-2 hover:bg-gray-50; }
+  
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+    .hidden { display: none; }
+    .option-card {
+      cursor: pointer;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .option-card:hover {
+      background-color: #f3f4f6;
+    }
+    .error {
+      border-color: #ef4444;
+    }
+    .error-message {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    .section-icon {
+      font-size: 1.5rem;
+      margin-right: 0.5rem;
+    }
+    .required::after {
+      content: " *";
+      color: #ef4444;
+    }
+    .optional {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-left: 0.5rem;
+    }
+    .custom-btn { 
+      @apply flex items-center justify-center px-10 py-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-opacity-50 text-2xl;
+    }
+    .next-btn { 
+      @apply custom-btn bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-300;
+    }
+    .prev-btn { 
+      @apply custom-btn bg-gray-500 text-white hover:bg-gray-600 focus:ring-gray-300;
+    }
+    .generate-btn { 
+      @apply custom-btn bg-green-500 text-white hover:bg-green-600 focus:ring-green-300;
+    }
+    .btn-icon {
+      @apply mr-2 text-2xl;
+    }
+    .planning-section {
+      max-width: 4xl;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #0096c7;
+      transition: width 0.3s ease;
+    }
+    select {
+      appearance: none;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232A6BCC"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center/16px;
+    }
+    .nav-icon {
+      height: 30px;
+      width: auto;
+      margin-right: 8px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+    }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 24px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .hamburger span {
+      width: 100%;
+      height: 3px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+    
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(7px, -7px);
+    }
+    .dropdown {
+      position: relative;
+    }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      background-color: white;
+      min-width: 200px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      z-index: 1;
+      border-radius: 8px;
+      padding: 8px 0;
+    }
+    .dropdown-menu a {
+      color: #333;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      transition: background-color 0.3s;
+    }
+    .dropdown-menu a:hover {
+      background-color: #f1f1f1;
+    }
+    .dropdown:hover .dropdown-menu {
+      display: block;
+    }
+    .spinner-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .spinner-text {
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-left: 1rem;
+    }
+    .ai-spinner {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .ai-spinner-core {
+      width: 20px;
+      height: 20px;
+      background: #00d4ff;
+      border-radius: 50%;
+      box-shadow: 0 0 15px #00d4ff, 0 0 30px #00d4ff;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+    .ai-spinner-particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #00d4ff;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #00d4ff;
+    }
+    .ai-spinner-particle:nth-child(2) {
+      animation: orbit1 2s infinite linear;
+    }
+    .ai-spinner-particle:nth-child(3) {
+      animation: orbit2 2s infinite linear;
+    }
+    .ai-spinner-particle:nth-child(4) {
+      animation: orbit3 2s infinite linear;
+    }
+    .ai-spinner-timer {
+      position: absolute;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.7; }
+    }
+    @keyframes orbit1 {
+      0% { transform: rotate(0deg) translateX(25px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(25px) rotate(-360deg); }
+    }
+    @keyframes orbit2 {
+      0% { transform: rotate(120deg) translateX(25px) rotate(0deg); }
+      100% { transform: rotate(480deg) translateX(25px) rotate(-360deg); }
+    }
+    @keyframes orbit3 {
+      0% { transform: rotate(240deg) translateX(25px) rotate(0deg); }
+      100% { transform: rotate(600deg) translateX(25px) rotate(-360deg); }
+    }
+    @media (max-width: 640px) {
+      .hamburger {
+        display: flex;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: linear-gradient(to bottom, #60a5fa, #4c6ef5);
+        width: 100%;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .nav-links.active {
+        display: flex;
+      }
+      .nav-links li {
+        margin: 0.5rem 0;
+      }
+      .nav-links a {
+        font-size: 1.1rem;
+        padding: 0.5rem;
+        display: block;
+        text-align: center;
+      }
+      .nav-brand h1 {
+        font-size: 1.125rem;
+      }
+      .dropdown-menu {
+        position: static;
+        display: none;
+        width: 100%;
+        box-shadow: none;
+      }
+      .dropdown:hover .dropdown-menu {
+        display: block;
+      }
+    }
+    .floating-chatbot {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background-color: #00c4b4;
+        color: white;
+        padding: 0.75rem;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        font-size: 1.5rem;
+        z-index: 50;
+        cursor: pointer;
+    }
+    .floating-chatbot:hover {
+        background-color: #009c8c;
+    }    
+  
+</style>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <!-- Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center nav-menu">
+      <a href="index.html" class="nav-brand" aria-label="Go to Home">
+        <img src="images/nav-icon.png" alt="Voyage Genie Icon" class="nav-icon">
+        <h1 class="text-2xl font-bold">Voyage Genie</h1>
+      </a>
+      <div class="hamburger" aria-label="Toggle navigation menu" role="button" tabindex="0">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <ul class="nav-links flex space-x-6">
+        <li><a href="index.html" class="hover:underline" aria-label="Go to Home">Home</a></li>
+        <li class="dropdown relative">
+          <a href="index.html" class="hover:underline flex items-center" aria-label="Plan A Trip" aria-haspopup="true">
+            Plan A Trip
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a href="tropical-trip-planner.html" class="hover:bg-blue-50" aria-label="Tropical Resort">🏖️ Tropical Resort</a></li>
+            <li><a href="cruise-trip-planner.html" class="hover:bg-blue-50" aria-label="Cruise Adventure">🚢 Cruise Adventure</a></li>
+            <li><a href="airbnb-trip-planner.html" class="hover:bg-blue-50" aria-label="Airbnb Getaway">🏠 Airbnb Getaway</a></li>
+            <li><a href="adventure-trip-planner.html" class="hover:bg-blue-50" aria-label="Adventure Trip">🌄 Adventure Trip</a></li>
+          </ul>
+        </li>
+        <li><a href="trip-dashboard.html" class="hover:underline">📋 My Trips</a></li>
+        <li><a href="features.html" class="hover:underline" aria-label="Go to Features">Features</a></li>
+        <li><a href="contact.html" class="hover:underline" aria-label="Go to Contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  
+
+  <main class="max-w-5xl mx-auto px-4 py-6">
+    <!-- Trip Summary -->
+    <section class="card mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-semibold mb-1" id="tripTitle">Your Trip</h2>
+          <p class="text-gray-500" id="tripMeta">Destination • Dates • Travelers</p>
+        </div>
+        <div class="flex flex-wrap gap-2" id="contextPills"></div>
+      </div>
+      <div class="mt-4 grid md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium">Destination</label>
+          <input id="destInput" type="text" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="e.g., Aruba"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Start Date</label>
+          <input id="startInput" type="date" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">End Date</label>
+          <input id="endInput" type="date" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"/>
+        </div>
+      </div>
+      <div class="mt-4 grid md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium">Travelers</label>
+          <input id="travelerCount" type="number" min="1" value="1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"/>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium">Activities (influence your list)</label>
+          <div id="activitiesWrap" class="mt-2 flex flex-wrap gap-2">
+            <!-- Activities checkboxes injected -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Controls -->
+    <section class="mb-4 flex flex-wrap items-center gap-3">
+      <button id="generateBtn" class="gs-btn gs-btn-green">✨ Generate / Update List</button>
+      <button id="exportBtn" class="ghost-btn">⬇️ Export CSV</button>
+      <button id="printBtn" class="ghost-btn">🖨️ Print</button>
+      <span class="text-sm text-gray-500">Tip: tweak categories below or add your own items.</span>
+    </section>
+
+    <!-- Packing List -->
+    <section id="listRoot" class="grid md:grid-cols-2 gap-4">
+      <!-- Category cards injected here -->
+    </section>
+
+    <!-- Add Custom Item -->
+    <section class="card mt-6">
+      <h3 class="section-title">Add a custom item</h3>
+      <div class="grid md:grid-cols-4 gap-3">
+        <div>
+          <label class="block text-sm font-medium">Category</label>
+          <select id="customCategory" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium">Item name</label>
+          <input id="customName" type="text" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="e.g., Snorkel mask"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Qty</label>
+          <input id="customQty" type="number" min="1" value="1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"/>
+        </div>
+      </div>
+      <div class="mt-3">
+        <button id="addCustomBtn" class="gs-btn gs-btn-blue">➕ Add item</button>
+      </div>
+    </section>
+
+    <!-- Footer link -->
+    <div class="mt-8 text-center">
+      <a id="backBottomLink" href="#" class="text-blue-600 hover:underline">← Back to Trip Planner</a>
+    </div>
+  </main>
+
+  
+
+<script>
+(function(){
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  // ----- Trip Context Integration -----
+  const params = new URLSearchParams(location.search);
+  const ctx = {
+    destination: params.get('destination') || '',
+    startDate: params.get('startDate') || '',
+    endDate: params.get('endDate') || '',
+    travelers: parseInt(params.get('travelers') || '1', 10),
+    activities: (params.get('activities') || '').split(',').filter(Boolean),
+    source: params.get('source') || '' // e.g., 'tropical-trip-planner'
+  };
+
+  // Attempt to recover context from localStorage if empty
+  try {
+    const ls = JSON.parse(localStorage.getItem('tripContext') || '{}');
+    for (const k of ['destination','startDate','endDate','travelers','activities']) {
+      if (!ctx[k] && ls[k]) ctx[k] = ls[k];
+    }
+  } catch(e){}
+
+  // Populate header & fields
+  const title = $('#tripTitle');
+  const meta = $('#tripMeta');
+  const pills = $('#contextPills');
+  const backLink = $('#backLink');
+  const backBottomLink = $('#backBottomLink');
+
+  function fmtDates(a, b) {
+    if (!a && !b) return 'Dates not set';
+    if (a && !b) return a;
+    if (!a && b) return b;
+    return `${a} → ${b}`;
+  }
+
+  function setBackLinks(){
+    const fallback = 'tropical-trip-planner.html';
+    const url = document.referrer && document.referrer.endsWith('.html') ? document.referrer : fallback;
+    backLink.href = url;
+    backBottomLink.href = url;
+  }
+  setBackLinks();
+
+  $('#destInput').value = ctx.destination || '';
+  $('#startInput').value = ctx.startDate || '';
+  $('#endInput').value = ctx.endDate || '';
+  $('#travelerCount').value = isNaN(ctx.travelers) ? 1 : Math.max(1, ctx.travelers);
+
+  function renderPills(){
+    pills.innerHTML = '';
+    if (ctx.destination) addPill('📍', ctx.destination);
+    addPill('📅', fmtDates(ctx.startDate, ctx.endDate));
+    addPill('👥', `${$('#travelerCount').value} traveler(s)`);
+    if (ctx.activities && ctx.activities.length) addPill('🎯', ctx.activities.join(', '));
+  }
+  function addPill(emoji, text){
+    const el = document.createElement('span');
+    el.className = 'pill';
+    el.textContent = `${emoji} ${text}`;
+    pills.appendChild(el);
+  }
+
+  function updateTripTitle(){
+    const d = $('#destInput').value || 'Your Trip';
+    title.textContent = `Packing for ${d}`;
+    meta.textContent = `${fmtDates($('#startInput').value, $('#endInput').value)} • ${$('#travelerCount').value} traveler(s)`;
+  }
+
+  // ----- Activities -----
+  const ACTIVITY_LIST = [
+    'Beach','Snorkeling','Diving','Hiking','Nightlife','Fine Dining','Casual Dining',
+    'Boating','Photography','Running','Gym','Business','Wedding','Kids','Elderly'
+  ];
+  const activitiesWrap = $('#activitiesWrap');
+  function renderActivities(){
+    activitiesWrap.innerHTML = '';
+    ACTIVITY_LIST.forEach(name=>{
+      const id = 'act_' + name.replace(/\s+/g,'');
+      const label = document.createElement('label');
+      label.className = 'inline-flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1 cursor-pointer';
+      label.innerHTML = `<input type="checkbox" id="${id}" class="accent-blue-600"> <span>${name}</span>`;
+      activitiesWrap.appendChild(label);
+      const cb = $('#'+id);
+      if (ctx.activities && ctx.activities.includes(name)) cb.checked = true;
+      cb.addEventListener('change', ()=> {
+        const picked = $$('input[type=checkbox]', activitiesWrap).filter(x=>x.checked).map(x=>x.nextElementSibling.textContent);
+        ctx.activities = picked;
+        saveContext();
+        renderPills();
+      });
+    });
+  }
+
+  // ----- Categories & Seed Items -----
+  const CATEGORIES = {
+    "Documents": ["Passport/ID","Boarding pass","Travel insurance","Itinerary printout","Cash & cards"],
+    "Clothing": ["T‑shirts","Shorts","Light pants","Underwear","Socks","Sleepwear","Swimsuits","Cover‑up","Hat / cap"],
+    "Footwear": ["Sandals","Water shoes","Sneakers","Dress shoes"],
+    "Toiletries": ["Toothbrush","Toothpaste","Deodorant","Razor","Sunscreen SPF 50+","Aloe vera","Lip balm SPF","Brush/comb"],
+    "Tech": ["Phone + charger","Power bank","Camera + charger","Travel adapter","Headphones/earbuds"],
+    "Health": ["Prescription meds","Pain reliever","Motion sickness tabs","Band‑aids","Electrolyte packets"],
+    "Beach & Water": ["Snorkel set","Goggles","Reef‑safe sunscreen","Dry bag","Microfiber towel"],
+    "Activities": ["Hiking daypack","Refillable bottle","Insect repellent","Light rain jacket"],
+    "Kids/Elderly": ["Snacks","Wipes","Travel pillow","Compression socks","Entertainment"]
+  };
+
+  // Influence rules based on activities
+  function activityAdjustments(set){
+    const push = (cat, item) => { if (!set[cat]) set[cat]=[]; if (!set[cat].includes(item)) set[cat].push(item); };
+    (ctx.activities||[]).forEach(a=>{
+      switch(a){
+        case 'Snorkeling':
+        case 'Diving':
+        case 'Beach':
+          push('Beach & Water','Waterproof phone pouch');
+          push('Beach & Water','Beach bag');
+          break;
+        case 'Hiking':
+          push('Activities','Trekking poles');
+          push('Activities','Trail snacks');
+          break;
+        case 'Business':
+          push('Clothing','Blazer / dress shirt');
+          push('Tech','Laptop + charger');
+          break;
+        case 'Wedding':
+          push('Clothing','Formal outfit');
+          push('Footwear','Dress shoes');
+          break;
+        case 'Kids':
+          push('Kids/Elderly','Extra outfits');
+          push('Kids/Elderly','Small first‑aid kit');
+          break;
+        case 'Elderly':
+          push('Kids/Elderly','Med organizer');
+          push('Kids/Elderly','Comfortable slip‑ons');
+          break;
+      }
+    });
+    return set;
+  }
+
+  // State
+  let listState = {}; // { category: [ {name, qty, packed} ] }
+
+  function seedList(){
+    const base = JSON.parse(JSON.stringify(CATEGORIES));
+    activityAdjustments(base);
+    // Traveler count nudge for quantities of basics
+    const n = parseInt($('#travelerCount').value || '1', 10);
+    const qtyBoost = (name)=>{
+      // Simple heuristic: apply qty to underwear/socks/swimsuits/teesshorts if multi-day
+      const days = daysBetween($('#startInput').value, $('#endInput').value) || 3;
+      if (/Underwear|Socks/i.test(name)) return Math.max(n*days, n*3);
+      if (/T‑shirts|T-shirts|Shorts/i.test(name)) return Math.max(n*Math.ceil(days/2), n*2);
+      if (/Swimsuit/i.test(name)) return Math.max(n*2, n);
+      return n;
+    };
+    listState = {};
+    Object.entries(base).forEach(([cat, items])=>{
+      listState[cat] = items.map(it=>({name: it, qty: qtyBoost(it), packed: false}));
+    });
+  }
+
+  function daysBetween(a,b){
+    if (!a || !b) return 0;
+    const d1 = new Date(a), d2 = new Date(b);
+    const ms = Math.abs(d2 - d1);
+    return Math.ceil(ms / (1000*60*60*24));
+  }
+
+  function renderList(){
+    const root = $('#listRoot');
+    root.innerHTML='';
+    Object.keys(listState).forEach(cat=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <h3 class="section-title">${cat}</h3>
+          <div class="flex items-center gap-2">
+            <button data-cat="${cat}" class="ghost-btn cat-pack-all">✅ Mark all</button>
+            <button data-cat="${cat}" class="ghost-btn cat-clear-all">↩️ Clear</button>
+          </div>
+        </div>
+        <div class="mt-2 space-y-2"></div>
+      `;
+      const listWrap = card.querySelector('.mt-2');
+      listState[cat].forEach((item, idx)=>{
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between border rounded-lg p-2';
+        row.innerHTML = `
+          <label class="flex items-center gap-3">
+            <input type="checkbox" class="accent-green-600 item-pack" data-cat="${cat}" data-idx="${idx}" ${item.packed?'checked':''}>
+            <span ${item.packed?'class="line-through text-gray-400"':''}>${item.name}</span>
+          </label>
+          <div class="flex items-center gap-2">
+            <input type="number" min="1" class="w-16 p-1 border rounded qty-input" data-cat="${cat}" data-idx="${idx}" value="${item.qty}">
+            <button class="ghost-btn remove-item" data-cat="${cat}" data-idx="${idx}">🗑️</button>
+          </div>
+        `;
+        listWrap.appendChild(row);
+      });
+      root.appendChild(card);
+    });
+    wireCategoryButtons();
+    populateCustomCategorySelect();
+  }
+
+  function wireCategoryButtons(){
+    $$('.cat-pack-all').forEach(btn=> btn.addEventListener('click', ()=>{
+      const cat = btn.getAttribute('data-cat');
+      listState[cat].forEach(i=> i.packed = true);
+      saveState(); renderList();
+    }));
+    $$('.cat-clear-all').forEach(btn=> btn.addEventListener('click', ()=>{
+      const cat = btn.getAttribute('data-cat');
+      listState[cat].forEach(i=> i.packed = false);
+      saveState(); renderList();
+    }));
+    $$('.item-pack').forEach(cb=> cb.addEventListener('change', ()=>{
+      const cat = cb.getAttribute('data-cat');
+      const idx = +cb.getAttribute('data-idx');
+      listState[cat][idx].packed = cb.checked;
+      saveState();
+    }));
+    $$('.qty-input').forEach(inp=> inp.addEventListener('change', ()=>{
+      const cat = inp.getAttribute('data-cat');
+      const idx = +inp.getAttribute('data-idx');
+      listState[cat][idx].qty = Math.max(1, parseInt(inp.value||'1',10));
+      saveState();
+    }));
+    $$('.remove-item').forEach(btn=> btn.addEventListener('click', ()=>{
+      const cat = btn.getAttribute('data-cat');
+      const idx = +btn.getAttribute('data-idx');
+      listState[cat].splice(idx,1);
+      if (listState[cat].length===0) delete listState[cat];
+      saveState(); renderList();
+    }));
+  }
+
+  function populateCustomCategorySelect(){
+    const sel = $('#customCategory');
+    sel.innerHTML = '';
+    Object.keys(listState).forEach(cat=>{
+      const opt = document.createElement('option');
+      opt.value = cat; opt.textContent = cat;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ----- Custom Add -----
+  $('#addCustomBtn').addEventListener('click', ()=>{
+    const cat = $('#customCategory').value;
+    const name = ($('#customName').value || '').trim();
+    const qty = Math.max(1, parseInt($('#customQty').value||'1',10));
+    if (!name) return;
+    if (!listState[cat]) listState[cat]=[];
+    listState[cat].push({name, qty, packed:false});
+    $('#customName').value='';
+    $('#customQty').value='1';
+    saveState(); renderList();
+  });
+
+  // ----- Generate / Update -----
+  $('#generateBtn').addEventListener('click', ()=>{
+    // Update ctx from fields
+    ctx.destination = $('#destInput').value.trim();
+    ctx.startDate = $('#startInput').value;
+    ctx.endDate = $('#endInput').value;
+    ctx.travelers = Math.max(1, parseInt($('#travelerCount').value||'1',10));
+    saveContext();
+    seedList(); renderList(); updateTripTitle(); renderPills();
+  });
+
+  // ----- Save / Export / Print -----
+  function saveState(){
+    const key = storageKey();
+    localStorage.setItem(key, JSON.stringify(listState));
+  }
+  function loadState(){
+    const key = storageKey();
+    try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch(e){ return null; }
+  }
+  function storageKey(){
+    const d = $('#destInput').value || ctx.destination || 'trip';
+    const a = $('#startInput').value || 'start';
+    const b = $('#endInput').value || 'end';
+    return `packing_${d}_${a}_${b}`;
+  }
+
+  $('#saveBtn').addEventListener('click', ()=>{
+    saveContext();
+    saveState();
+    alert('Saved! Your packing list is stored locally for this trip.');
+  });
+
+  $('#exportBtn').addEventListener('click', ()=>{
+    const rows = [['Category','Item','Qty','Packed']];
+    Object.entries(listState).forEach(([cat, items])=>{
+      items.forEach(i=> rows.push([cat, i.name, String(i.qty), i.packed?'Yes':'No']));
+    });
+    const csv = rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'packing-list.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  $('#printBtn').addEventListener('click', ()=> window.print());
+
+  // ----- Context Save -----
+  function saveContext(){
+    const ctxForSave = {
+      destination: $('#destInput').value,
+      startDate: $('#startInput').value,
+      endDate: $('#endInput').value,
+      travelers: Math.max(1, parseInt($('#travelerCount').value||'1',10)),
+      activities: ctx.activities || []
+    };
+    localStorage.setItem('tripContext', JSON.stringify(ctxForSave));
+  }
+
+  // ----- Init -----
+  function init(){
+    renderActivities();
+    renderPills();
+    updateTripTitle();
+
+    const existing = loadState();
+    if (existing) {
+      listState = existing;
+      renderList();
+    } else {
+      seedList();
+      renderList();
+    }
+  }
+
+  // Update title/meta live
+  ['destInput','startInput','endInput','travelerCount'].forEach(id=>{
+    $('#'+id).addEventListener('change', ()=>{ updateTripTitle(); renderPills(); });
+  });
+
+  init();
+})();
+</script>
+
+  <!-- Footer -->
+  <footer class="bg-gradient-to-r from-blue-400 to-indigo-600 text-center py-8 text-sm text-white" id="contact">
+      <p class="mb-2">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍 | Plan Smarter with Genie</p>
+      <form class="flex flex-col sm:flex-row justify-center items-center gap-2 mt-4">
+          <input class="px-4 py-2 rounded bg-white shadow border text-gray-800" placeholder="Enter your email" type="email"/>
+          <button class="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600">Subscribe</button>
+      </form>
+      <div class="mt-4">
+          <a class="mx-2 hover:underline text-white" href="#home">Home</a>
+          <a class="mx-2 hover:underline text-white" href="#plan-trip">Plan</a>
+          <a class="mx-2 hover:underline text-white" href="features.html">Features</a>
+          <a class="mx-2 hover:underline text-white" href="contact.html">Contact</a>
+      </div>
+  </footer>
+  
+  <div class="floating-chatbot" title="Ask Genie">
+          💬
+  </div>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+
+    hamburger.addEventListener('click', function () {
+      hamburger.classList.toggle('active');
+      navLinks.classList.toggle('active');
+    });
+  });
+
+</script>
+</body>
+</html>

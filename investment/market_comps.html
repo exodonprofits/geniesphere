@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🧭 Market & Rent Comps — Revised</title>
+  <style>
+    :root{--bg:#f7f9fb;--ink:#0f172a;--muted:#64748b;--card:#fff;--brand:#10b981;--accent:#1e3a8a;--danger:#ef4444;--info:#3b82f6;--radius:14px;--shadow:0 8px 24px rgba(0,0,0,.06)}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;background:#fff;padding:16px;border-bottom:1px solid #e5e7eb;z-index:10}
+    header h1{margin:0;color:var(--accent)}
+    .wrap{max-width:1100px;margin:18px auto;padding:0 16px}
+
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
+    .sub{color:var(--muted);font-size:14px;margin:6px 0 0}
+    label{display:block;font-size:13px;color:#334155;margin:10px 0 6px}
+    input,select{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px}
+    .row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    @media(max-width:720px){.row{grid-template-columns:1fr}}
+
+    .btn{border:0;border-radius:999px;padding:10px 16px;background:#3b82f6;color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+    .btn.ghost{background:#e5e7eb;color:#111}
+    .btn.ok{background:var(--brand)}
+    .btn.danger{background:var(--danger)}
+
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px}
+
+    .tables{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:1100px){.tables{grid-template-columns:1fr 1fr}}
+
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    th{text-align:left;color:var(--muted);font-size:12px}
+    td{background:#fff;padding:10px;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;vertical-align:top}
+    td:first-child{border-left:1px solid #e5e7eb;border-top-left-radius:10px;border-bottom-left-radius:10px}
+    td:last-child{border-right:1px solid #e5e7eb;border-top-right-radius:10px;border-bottom-right-radius:10px}
+
+    .stats{color:#1f2937;margin-top:8px}
+    .pill{display:inline-block;background:#eef2ff;color:#3730a3;border-radius:999px;padding:4px 10px;font-size:12px}
+
+    .empty{color:#64748b;padding:16px;border:1px dashed #cbd5e1;border-radius:12px;background:#fff}
+
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 10px 24px rgba(0,0,0,.18);display:none}
+    .loading{display:inline-flex;align-items:center;gap:10px}
+    .spinner{width:18px;height:18px;border:2px solid #c7d2fe;border-top-color:#4338ca;border-radius:50%;animation:spin .9s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Print */
+    @media print{
+      header,#searchCard,#rentTools,#saleTools,.toast{display:none}
+      .card{box-shadow:none;border:0}
+    }
+  </style>
+</head>
+<body>
+<header class="wrap">
+  <h1>🧭 Market & Rent Comps</h1>
+  <p class="sub">Send an address to your n8n webhook → get rental & sales comps, summary stats, and $/sqft. Export CSV or print to PDF.</p>
+</header>
+
+<div class="wrap">
+  <!-- Search -->
+  <section class="card" id="searchCard">
+    <h2>Search</h2>
+    <div class="row">
+      <div>
+        <label>Address</label>
+        <input id="addr" placeholder="123 Main St, City, ST" />
+        <label>Radius (miles)</label>
+        <input id="radius" type="number" step="0.1" value="1" />
+        <label>Property Type</label>
+        <select id="ptype"><option>Single Family</option><option>Condo</option><option>Townhouse</option><option>Multi‑Family</option></select>
+      </div>
+      <div>
+        <label>Beds (min)</label>
+        <input id="beds" type="number" value="3" />
+        <label>Baths (min)</label>
+        <input id="baths" type="number" value="2" />
+        <label>Max Age (years)</label>
+        <input id="age" type="number" value="30" />
+      </div>
+    </div>
+    <div class="toolbar" style="margin-top:12px">
+      <button class="btn ok" id="run">🔎 Fetch Comps</button>
+      <a class="btn" id="map" target="_blank">🗺️ Open in Maps</a>
+      <button class="btn ghost" id="clear">🧹 Clear</button>
+      <button class="btn" onclick="window.print()">🖨️ Print / PDF</button>
+    </div>
+    <div id="hint" class="sub" style="margin-top:8px">Tip: Include city & state for more precise comps. Webhook must return the expected JSON shape (see bottom comment).</div>
+  </section>
+
+  <!-- Tools: sort/export -->
+  <section class="card" id="rentTools">
+    <div class="toolbar">
+      <div class="pill">Rent Comps Tools</div>
+      <button class="btn ghost" id="sortRent">↕️ Sort by Rent</button>
+      <button class="btn ghost" id="sortRentPpsf">↕️ Sort by $/Sqft</button>
+      <button class="btn" id="exportRent">💾 Export Rent CSV</button>
+    </div>
+  </section>
+
+  <section class="card" id="saleTools">
+    <div class="toolbar">
+      <div class="pill">Sale Comps Tools</div>
+      <button class="btn ghost" id="sortSale">↕️ Sort by Price</button>
+      <button class="btn ghost" id="sortSalePpsf">↕️ Sort by $/Sqft</button>
+      <button class="btn" id="exportSale">💾 Export Sale CSV</button>
+    </div>
+  </section>
+
+  <!-- Tables -->
+  <section class="tables">
+    <div class="card">
+      <h2>Rent Comps</h2>
+      <div id="rentEmpty" class="empty">No rent comps yet. Run a search to see results.</div>
+      <div style="overflow:auto"><table id="rentTbl"><thead><tr>
+        <th>Address</th><th>Beds</th><th>Baths</th><th>Sqft</th><th>Rent</th><th>$ / Sqft</th><th>Source</th>
+      </tr></thead><tbody></tbody></table></div>
+      <div id="rentStats" class="stats"></div>
+    </div>
+
+    <div class="card">
+      <h2>Sale Comps</h2>
+      <div id="saleEmpty" class="empty">No sale comps yet. Run a search to see results.</div>
+      <div style="overflow:auto"><table id="saleTbl"><thead><tr>
+        <th>Address</th><th>Beds</th><th>Baths</th><th>Sqft</th><th>Price</th><th>$ / Sqft</th><th>DOM</th><th>Source</th>
+      </tr></thead><tbody></tbody></table></div>
+      <div id="saleStats" class="stats"></div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const HOOK='YOUR_N8N_WEBHOOK_URL'; // <-- replace with your webhook
+let rentComps=[], saleComps=[];
+
+function showToast(msg, ms=2200){ const t=$('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', ms); }
+function money(n){return '$'+Number(n||0).toLocaleString()} 
+function avg(a){return a.length? a.reduce((x,y)=>x+(+y||0),0)/a.length:0}
+function median(a){ const s=[...a].filter(x=>isFinite(+x)).sort((x,y)=>x-y); if(!s.length) return 0; const m=Math.floor(s.length/2); return s.length%2? s[m]: (s[m-1]+s[m])/2 }
+function fmtPpsf(price, sqft){ if(!price||!sqft) return '—'; return Math.round(price/Math.max(1, sqft)); }
+function link(url,txt){ return url? `<a href="${url}" target="_blank">${txt||'link'}</a>`:'' }
+
+function buildMaps(){ const q = encodeURIComponent($('addr').value||''); $('map').href = `https://www.google.com/maps/search/?api=1&query=${q}`; }
+
+function toCSV(headers, rows){ const body = rows.map(r=>headers.map(h=>r[h]??'').join(',')).join('\n'); return headers.join(',')+'\n'+body; }
+function download(filename, text){ const a=document.createElement('a'); a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(text); a.download=filename; a.click(); }
+
+async function run(){
+  buildMaps();
+  const payload = {
+    address: $('addr').value, radius_miles: +$('radius').value||1, type: $('ptype').value,
+    filters:{beds_min:+$('beds').value||0,baths_min:+$('baths').value||0,age_max:+$('age').value||0}
+  };
+  const btn=$('run'); const orig=btn.innerHTML; btn.disabled=true; btn.innerHTML=`<span class="loading"><span class="spinner"></span>Fetching…</span>`;
+  try{
+    const res = await fetch(HOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderComps(data);
+    showToast('Comps loaded');
+  }catch(e){
+    showToast('Webhook error: '+e.message+' — showing sample data');
+    renderComps(sample());
+  }finally{
+    btn.disabled=false; btn.innerHTML=orig;
+  }
+}
+
+function renderComps(data){
+  rentComps = data.rent_comps||[]; saleComps=data.sale_comps||[];
+  // Rents
+  const rentBody = $('rentTbl').querySelector('tbody');
+  rentBody.innerHTML = rentComps.map(r=>`<tr>
+    <td>${r.address||''}</td><td>${r.beds||''}</td><td>${r.baths||''}</td><td>${r.sqft||''}</td>
+    <td>${money(r.rent)}</td><td>${fmtPpsf(r.rent, r.sqft)}</td><td>${link(r.source,'view')}</td>
+  </tr>`).join('');
+  $('rentEmpty').style.display = rentComps.length? 'none':'block';
+  $('rentStats').innerHTML = statsBlock(rentComps.map(x=>+x.rent||0), rentComps.map(x=>(+x.rent||0)/(+x.sqft||1)));
+
+  // Sales
+  const saleBody = $('saleTbl').querySelector('tbody');
+  saleBody.innerHTML = saleComps.map(s=>`<tr>
+    <td>${s.address||''}</td><td>${s.beds||''}</td><td>${s.baths||''}</td><td>${s.sqft||''}</td>
+    <td>${money(s.price)}</td><td>${fmtPpsf(s.price, s.sqft)}</td><td>${s.dom||''}</td><td>${link(s.source,'view')}</td>
+  </tr>`).join('');
+  $('saleEmpty').style.display = saleComps.length? 'none':'block';
+  $('saleStats').innerHTML = statsBlock(saleComps.map(x=>+x.price||0), saleComps.map(x=>(+x.price||0)/(+x.sqft||1)));
+}
+
+function statsBlock(vals, ppsf){
+  const cleanVals = vals.filter(v=>isFinite(+v));
+  const cleanPpsf = ppsf.filter(v=>isFinite(+v));
+  if(!cleanVals.length) return '';
+  const av = avg(cleanVals), med = median(cleanVals), lo = Math.min(...cleanVals), hi = Math.max(...cleanVals);
+  const avS = avg(cleanPpsf), medS = median(cleanPpsf);
+  return `<div>Avg: <b>${money(av)}</b> · Median: <b>${money(med)}</b> · Range: <b>${money(lo)}</b> – <b>${money(hi)}</b></div>
+          <div>Avg $/sqft: <b>${isFinite(avS)?Math.round(avS):'—'}</b> · Median $/sqft: <b>${isFinite(medS)?Math.round(medS):'—'}</b></div>`;
+}
+
+function sample(){
+  return {
+    rent_comps:[
+      {address:'12 Oak St',beds:3,baths:2,sqft:1500,rent:2400,source:'https://zillow.com/'},
+      {address:'45 Pine Ave',beds:3,baths:2,sqft:1600,rent:2550,source:'https://apartments.com/'},
+      {address:'78 Maple Dr',beds:4,baths:2,sqft:1800,rent:2700,source:'https://zillow.com/'}
+    ],
+    sale_comps:[
+      {address:'11 Oak St',beds:3,baths:2,sqft:1520,price:410000,dom:18,source:'https://realtor.com/'},
+      {address:'46 Pine Ave',beds:3,baths:2,sqft:1610,price:420000,dom:22,source:'https://redfin.com/'},
+      {address:'80 Maple Dr',beds:4,baths:2,sqft:1820,price:455000,dom:12,source:'https://realtor.com/'}
+    ]
+  };
+}
+
+// Sorting & exports
+$('sortRent').onclick = ()=>{ rentComps.sort((a,b)=>(b.rent||0)-(a.rent||0)); renderComps({rent_comps:rentComps,sale_comps:saleComps}); };
+$('sortRentPpsf').onclick = ()=>{ rentComps.sort((a,b)=>fmtPpsf(b.rent,b.sqft)-fmtPpsf(a.rent,a.sqft)); renderComps({rent_comps:rentComps,sale_comps:saleComps}); };
+$('sortSale').onclick = ()=>{ saleComps.sort((a,b)=>(b.price||0)-(a.price||0)); renderComps({rent_comps:rentComps,sale_comps:saleComps}); };
+$('sortSalePpsf').onclick = ()=>{ saleComps.sort((a,b)=>fmtPpsf(b.price,b.sqft)-fmtPpsf(a.price,a.sqft)); renderComps({rent_comps:rentComps,sale_comps:saleComps}); };
+$('exportRent').onclick = ()=>{ const headers=['address','beds','baths','sqft','rent','source']; const csv = toCSV(headers, rentComps); download('rent_comps.csv', csv); };
+$('exportSale').onclick = ()=>{ const headers=['address','beds','baths','sqft','price','dom','source']; const csv = toCSV(headers, saleComps); download('sale_comps.csv', csv); };
+
+// Bindings
+$('run').onclick=run; $('addr').addEventListener('input', buildMaps); $('clear').onclick=()=>{['addr','radius','beds','baths','age'].forEach(id=>$(id).value=''); buildMaps();}; buildMaps();
+</script>
+
+<!--
+Expected n8n Webhook JSON response:
+{
+  "rent_comps": [
+    {"address":"...","beds":3,"baths":2,"sqft":1500,"rent":2400,"source":"https://..."},
+    ...
+  ],
+  "sale_comps": [
+    {"address":"...","beds":2,"baths":1,"sqft":1200,"price":410000,"dom":18,"source":"https://..."},
+    ...
+  ]
+}
+Request payload sent:
+{ address:string, radius_miles:number, type:string, filters:{beds_min:number,baths_min:number,age_max:number} }
+-->
+</body>
+</html>

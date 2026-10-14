@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nutrition Genie | GenieSphere</title>
+<meta name="gs-config" content="/shared/config.json"/>
+<style>
+/* HOUSEHOLD TOKEN SET — bg:#F5F7FA panel:#FFF text:#111827 accent:teal */
+:root{
+  --area-accent:#22D3EE; --area-dim:rgba(34,211,238,.10); --area-dark:#0E7490;
+  --bg:#F5F7FA; --panel:#FFFFFF; --panel-soft:#F0F4F8;
+  --text:#111827; --muted:#6B7280; --muted-2:#9CA3AF;
+  --line:#E5EAF0; --line-2:#D1D9E0;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.08);
+  --radius:18px; --radius-lg:24px; --max:1440px;
+  --teal:#22D3EE; --teal-dark:#0891B2; --teal-deep:#0E7490;
+  --teal-dim:rgba(34,211,238,.10); --teal-soft:rgba(34,211,238,.06); --teal-bd:rgba(34,211,238,.28);
+  --ok-bg:#F0FDFA; --ok-bd:#99F6E4; --ok-txt:#0F766E;
+  --warn-bg:#FFFBEB; --warn-bd:#FCD34D; --warn-txt:#92400E;
+  --err-bg:#FEF2F2; --err-bd:#FECACA; --err-txt:#B91C1C;
+}
+*{box-sizing:border-box} html,body{margin:0;padding:0;min-height:100%}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(14px) saturate(180%);border-bottom:1px solid var(--line);box-shadow:0 1px 0 var(--line),0 2px 10px rgba(0,0,0,.04)}
+.topbar-inner{max-width:var(--max);margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+.brand-mark{width:36px;height:36px;border-radius:50%;flex:0 0 auto;background:radial-gradient(circle at 30% 30%,#7ef1c7 0%,#34d399 45%,#0f9f68 100%);box-shadow:0 0 0 3px rgba(52,211,153,.18),0 4px 12px rgba(52,211,153,.14)}
+.brand-name{font-size:18px;font-weight:800;letter-spacing:-.03em}
+.nav{display:flex;align-items:center;gap:2px;flex-wrap:wrap;margin-left:12px}
+.nav-link{color:var(--muted);font-weight:500;font-size:13px;padding:6px 10px;border-radius:8px;border-bottom:2px solid transparent;transition:background .14s,color .14s}
+.nav-link:hover{background:var(--area-dim);color:var(--area-dark)}
+.nav-link.active{background:var(--area-dim);color:var(--area-dark);font-weight:700;border-bottom-color:var(--area-accent)}
+.userbox{display:flex;align-items:center;gap:10px;margin-left:auto}
+.search{width:220px;max-width:26vw;border:1px solid var(--line-2);border-radius:999px;background:var(--panel-soft);padding:9px 14px;color:var(--text);outline:none;font-size:13px;font-family:inherit;transition:border-color .14s,box-shadow .14s}
+.search:focus{border-color:var(--area-accent);box-shadow:0 0 0 3px var(--area-dim)}
+.search::placeholder{color:var(--muted-2)}
+.user-menu{position:relative;display:flex;align-items:center}
+.user-menu-toggle{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 1px 2px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.06);transition:border-color .14s;white-space:nowrap}
+.user-menu-toggle:hover{border-color:var(--area-accent)}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--area-dim);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--area-dark);flex-shrink:0}
+.user-menu-dropdown{position:absolute;right:0;top:calc(100% + 8px);min-width:240px;background:var(--panel);border-radius:16px;border:1px solid var(--line);box-shadow:0 4px 6px rgba(0,0,0,.04),0 20px 48px rgba(0,0,0,.13);padding:6px 0;display:none;z-index:2005}
+.user-menu.open .user-menu-dropdown{display:block}
+.user-menu-dropdown a,.user-menu-dropdown button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 14px;background:none;border:none;color:var(--text);font-size:13px;cursor:pointer;transition:background .12s;font-family:inherit}
+.user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:var(--panel-soft)}
+.user-menu-divider{height:1px;margin:4px 8px;background:var(--line)}
+.dropdown-label{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted-2);padding:8px 14px 3px;font-weight:700}
+.mobile-only{display:none} .auth-only{display:none}
+
+/* PAGE */
+.page{max-width:var(--max);margin:0 auto;padding:32px 24px 52px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;transition:filter .15s,transform .12s;white-space:nowrap;font-family:inherit}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none;transform:none}
+.btn-green{background:var(--teal);color:#012e38}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--line-2)}
+.btn-outline:hover{border-color:var(--teal);background:var(--teal-dim)}
+.btn-soft{background:var(--panel-soft);color:var(--text);border:1px solid var(--line-2)}
+.btn-soft:hover{border-color:var(--teal-bd);background:var(--teal-dim)}
+.btn-sm{padding:7px 14px;font-size:13px}
+
+/* ASK BAR */
+.ask-bar{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;margin-bottom:24px;box-shadow:var(--shadow)}
+.ask-row{display:flex;gap:10px;align-items:center}
+.ask-input{flex:1;background:var(--panel-soft);border:1px solid var(--line-2);border-radius:999px;padding:11px 16px;color:var(--text);font-size:14px;outline:none;font-family:inherit;transition:border-color .14s,box-shadow .14s}
+.ask-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim)}
+.ask-input::placeholder{color:var(--muted-2)}
+.ask-hint{margin-top:9px;color:var(--muted-2);font-size:12px}
+.ask-hint span{color:var(--muted)}
+
+/* PILLS */
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);color:var(--muted);font-size:12px;font-weight:600}
+
+/* WIZARD CARD */
+.wizard-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+.wizard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 24px 16px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,var(--teal-soft),rgba(8,145,178,.02))}
+.wizard-top h2{font-size:17px;font-weight:800;color:var(--text);margin:0 0 3px}
+.wizard-top p{font-size:13px;color:var(--muted);margin:0}
+.wizard-top-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:2px}
+.progress-wrap{padding:16px 24px 0}
+.progress-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.prog-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-2)}
+.prog-step{font-size:12px;font-weight:600;color:var(--teal-deep)}
+.prog-track{height:6px;background:var(--panel-soft);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.prog-fill{height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--teal-dark));border-radius:999px;transition:width .3s ease}
+.steps-body{padding:22px 24px 18px}
+.form-step{display:none;animation:.18s fadeUp both}
+.form-step.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.step-h{font-size:15px;font-weight:800;color:var(--text);margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.fg{display:grid;gap:14px}
+.fg-2{grid-template-columns:1fr 1fr}
+@media(max-width:640px){.fg-2{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select,.field textarea{padding:10px 14px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-soft);color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .14s,box-shadow .14s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim)}
+.field textarea{resize:vertical}
+.field-hint{font-size:12px;color:var(--muted-2);margin-top:3px}
+.field-err{display:none;font-size:12px;font-weight:600;color:var(--err-txt);margin-top:2px}
+.field.has-error input,.field.has-error select,.field.has-error textarea{border-color:var(--err-bd)}
+.field.has-error .field-err{display:block}
+.check-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:3px}
+.cpill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-soft);cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);transition:all .14s;user-select:none}
+.cpill input[type=checkbox]{display:none}
+.cpill:has(input:checked){background:var(--teal-dim);border-color:var(--teal-bd);color:var(--teal-deep)}
+.cpill:hover{border-color:var(--teal-bd);color:var(--teal-deep)}
+.family-box{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:12px;background:var(--teal-soft);border:1px solid var(--teal-bd)}
+.family-box-label{font-size:14px;font-weight:600;color:var(--teal-deep)}
+.family-box-sub{font-size:12px;color:var(--teal-dark);margin-top:2px}
+.ctrls{display:flex;align-items:center;gap:10px}
+.cbtn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--teal-dark);background:transparent;color:var(--teal-deep);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .14s}
+.cbtn:hover{background:var(--teal);color:#012e38;border-color:var(--teal)}
+.cval{font-size:18px;font-weight:900;color:var(--teal-deep);min-width:22px;text-align:center}
+.form-sep{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-2);margin:18px 0 12px;display:flex;align-items:center;gap:10px}
+.form-sep::after{content:"";flex:1;height:1px;background:var(--line)}
+.nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:20px;flex-wrap:wrap}
+.review-groups{display:grid;gap:10px}
+.rgroup{background:var(--panel-soft);border-radius:12px;padding:12px 16px}
+.rgroup-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted-2);margin-bottom:8px}
+.rrow{display:flex;gap:10px;padding:5px 0;border-top:1px solid var(--line);font-size:13px}
+.rrow:first-of-type{border-top:none}
+.rk{color:var(--muted);font-weight:600;width:38%;flex-shrink:0}
+.rv{color:var(--text);font-weight:500}
+.wh-row{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+.wh-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-soft);font-size:12px;font-weight:600;color:var(--muted)}
+
+/* RESULTS */
+.res-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px;display:none}
+.res-card.show{display:block}
+.res-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 24px 16px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,var(--teal-soft),rgba(8,145,178,.02))}
+.res-top h2{font-size:17px;font-weight:800;margin:0 0 3px}
+.res-top p{font-size:13px;color:var(--muted);margin:0}
+.stat-pill{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-soft);font-size:12px;font-weight:700}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--teal);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-banner{display:none;margin:0 24px 12px;padding:10px 14px;border-radius:10px;background:var(--err-bg);border:1px solid var(--err-bd);color:var(--err-txt);font-size:13px;font-weight:500}
+.err-banner.show{display:block}
+.res-body{padding:22px 24px}
+.res-layout{display:grid;gap:16px;grid-template-columns:1.4fr .6fr}
+@media(max-width:860px){.res-layout{grid-template-columns:1fr}}
+.days-grid{display:flex;flex-direction:column;gap:10px}
+.day-card{background:var(--panel-soft);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;transition:border-color .13s}
+.day-card:hover{border-color:var(--teal-bd)}
+.day-head{padding:9px 14px;background:var(--teal-dim);font-size:13px;font-weight:700;color:var(--teal-deep)}
+.day-meals{padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.mrow{border-top:1px dashed var(--line-2)}
+.mrow:first-child{border-top:none}
+.mtype{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-2);padding-top:8px;margin-bottom:2px}
+.mrow:first-child .mtype{padding-top:0}
+.mname{font-size:13px;font-weight:600;color:var(--text)}
+.mnote{font-size:12px;color:var(--ok-txt);margin-top:2px}
+.scard{background:var(--panel-soft);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:10px}
+.scard:last-child{margin-bottom:0}
+.shead{padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+.sbody{padding:12px 14px}
+.glist{list-style:none;display:flex;flex-direction:column;gap:4px}
+.glist li{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all .13s}
+.glist li:hover{background:var(--panel);border-color:var(--teal-bd)}
+.glist li.chk{color:var(--muted-2);text-decoration:line-through}
+.gck{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line-2);background:var(--panel);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;transition:all .13s}
+.glist li.chk .gck{background:var(--teal);border-color:var(--teal);color:#012e38}
+.macro-row{margin-bottom:10px}
+.macro-lr{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.macro-bar{height:7px;background:var(--line);border-radius:999px;overflow:hidden}
+.mfill{height:100%;border-radius:999px;transition:width .4s ease}
+.mp{background:#0891B2} .mc{background:#D97706} .mf{background:#16A34A}
+.res-actions{padding:14px 24px;border-top:1px solid var(--line);background:var(--panel-soft);display:flex;gap:8px;flex-wrap:wrap}
+
+/* HISTORY SECTION */
+details.section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+details.section>summary{list-style:none;cursor:pointer;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:background .13s;user-select:none}
+details.section>summary::-webkit-details-marker{display:none}
+details.section>summary:hover{background:var(--teal-soft)}
+details.section[open]>summary{border-bottom:1px solid var(--line)}
+.section-title{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;margin:0}
+.section-right{display:flex;align-items:center;gap:12px}
+.sec-right-txt{color:var(--muted-2);font-size:13px;font-weight:500}
+.sec-chev{font-size:12px;color:var(--muted-2);transition:transform .2s;flex-shrink:0}
+details.section[open] .sec-chev{transform:rotate(180deg)}
+.section-body{padding:16px 20px}
+.h-table{width:100%;border-collapse:collapse;font-size:13px}
+.h-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted-2);padding:8px 12px;text-align:left;border-bottom:2px solid var(--line)}
+.h-table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.h-table tr:last-child td{border-bottom:none}
+.h-table tr:hover td{background:var(--teal-soft)}
+
+/* FOOTER */
+.site-footer{margin-top:40px;padding:26px 0 34px;border-top:1px solid var(--line);background:var(--panel)}
+.site-footer-inner{max-width:var(--max);margin:0 auto;padding:0 24px}
+.footer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+@media(max-width:860px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.footer-col h4{margin:0 0 10px;font-size:13px;font-weight:700}
+.footer-col a{display:block;color:var(--muted);margin:5px 0;font-size:13px;transition:color .13s}
+.footer-col a:hover{color:var(--teal-dark)}
+.footer-bottom{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted-2)}
+
+/* MOBILE NAV */
+.mobile-nav{position:fixed;left:0;right:0;bottom:0;display:none;z-index:1200;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.08);backdrop-filter:blur(12px)}
+.mobile-nav-inner{max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.mnav{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--muted-2);font-weight:600;font-size:10px;text-decoration:none;transition:all .14s}
+.mnav .ico{font-size:17px;line-height:1}
+.mnav.active{color:var(--teal-deep);border-color:var(--teal-bd);background:var(--teal-dim)}
+.mobile-pad{display:none;height:70px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:var(--bg);border-radius:999px;padding:10px 18px;font-size:13px;font-weight:600;box-shadow:var(--shadow-md);opacity:0;transform:translateY(6px);transition:all .22s;pointer-events:none;z-index:9999}
+.toast.show{opacity:1;transform:translateY(0)}
+
+@media(max-width:860px){.mobile-nav{display:block}.mobile-pad{display:block}.page{padding-bottom:calc(70px + env(safe-area-inset-bottom))}}
+@media(max-width:820px){.nav{display:none}.mobile-only{display:block}}
+@media(max-width:640px){.search{display:none}.topbar-inner{padding:0 14px}.wizard-top,.steps-body,.res-body,.res-actions,.section-body{padding-left:16px;padding-right:16px}.progress-wrap{padding-left:16px;padding-right:16px}}
+@media(max-width:480px){.site-footer{display:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/index.html">
+      <div class="brand-mark"></div>
+      <span class="brand-name">GenieSphere</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-link" href="/dashboard/overview.html">🧭 Overview</a>
+      <a class="nav-link active" href="/dashboard/household.html">🏡 Household</a>
+      <a class="nav-link" href="/dashboard/business.html">🏢 Business</a>
+      <a class="nav-link" href="/dashboard/investment.html">📈 Investment</a>
+      <a class="nav-link" href="/dashboard/leisure.html">🌴 Leisure</a>
+      <a class="nav-link" href="/dashboard/finance.html">💼 Finance</a>
+    </nav>
+    <div class="userbox">
+      <input class="search" type="search" placeholder="Search meals, plans, grocery…" aria-label="Search"/>
+      <div class="user-menu" id="user-menu">
+        <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle" type="button">
+          <span class="avatar" aria-hidden="true">👤</span>
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="user-menu-dropdown" id="user-menu-dropdown" aria-hidden="true">
+          <div class="mobile-only">
+            <div class="dropdown-label">Areas</div>
+            <button class="dropdown-nav" data-target="/dashboard/household.html" type="button">🏡 Household</button>
+            <button class="dropdown-nav" data-target="/dashboard/business.html" type="button">🏢 Business</button>
+            <button class="dropdown-nav" data-target="/dashboard/investment.html" type="button">📈 Investment</button>
+            <button class="dropdown-nav" data-target="/dashboard/leisure.html" type="button">🌴 Leisure</button>
+            <div class="user-menu-divider"></div>
+          </div>
+          <div class="dropdown-label">Account</div>
+          <button class="dropdown-nav" data-target="/onboarding/user_profile_form.html" type="button">👤 User profile</button>
+          <button class="dropdown-nav" data-target="/onboarding/display_settings.html" type="button">⚙️ Settings</button>
+          <div class="user-menu-divider"></div>
+          <button id="user-auth-action" type="button">Log in / Sign up</button>
+          <button class="auth-only" id="user-signout-btn" type="button">🚪 Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div style="margin-bottom:24px">
+    <div style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-dark);margin-bottom:10px">🏡 Household · Food &amp; Nutrition</div>
+    <h1 style="font-size:clamp(24px,3.5vw,38px);font-weight:900;letter-spacing:-.04em;line-height:1.06;margin:0 0 8px">🍱 Nutrition Genie</h1>
+    <p style="color:var(--muted);font-size:15px;max-width:560px;margin:0 0 16px;line-height:1.6">Answer a few quick questions about your household and we'll prepare a personalised weekly meal plan — complete with grocery list and nutrition summary for your review.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn btn-outline btn-sm" href="/household/nutritiongenie/nutrition-engine-hub.html">← Nutrition Engine</a>
+      <a class="btn btn-outline btn-sm" href="/household/nutritiongenie/grocery-planner.html">🛒 Grocery Planner</a>
+    </div>
+  </div>
+
+  <div class="pill-row">
+    <span class="pill">🧙 6-step wizard</span>
+    <span class="pill">👨‍👩‍👧 Family-aware</span>
+    <span class="pill">🧺 Grocery list</span>
+    <span class="pill">📊 Macro summary</span>
+    <span class="pill">🗃️ Plan history</span>
+  </div>
+
+  <div class="ask-bar">
+    <form class="ask-row" id="prompt-form" novalidate>
+      <label class="sr-only" for="prompt-input">Quick prompt</label>
+      <input class="ask-input" id="prompt-input" type="text" autocomplete="off" placeholder="Try: &quot;diabetic-friendly Vietnamese meals, family of 4, high protein, quick lunches&quot;"/>
+      <button class="btn btn-green" type="submit">✨ Use Prompt</button>
+    </form>
+    <div class="ask-hint">Pre-fills goal detail and tries to detect diet type, cuisine, and family size. <span>Try: "family of 4"</span> · <span>"diabetic-friendly"</span> · <span>"vegetarian"</span></div>
+  </div>
+
+  <!-- WIZARD -->
+  <div class="wizard-card">
+    <div class="wizard-top">
+      <div>
+        <h2>🥗 Personalised Planner</h2>
+        <p>Build your household meal plan step by step.</p>
+      </div>
+      <div class="wizard-top-actions">
+        <button class="btn btn-soft btn-sm" id="sampleBtn" type="button">📥 Load Sample</button>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span class="prog-label" id="progLabel">Step 1 of 6</span>
+        <span class="prog-step" id="progStep">Personal Information</span>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="progFill" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
+    </div>
+    <div class="steps-body">
+      <form id="wiz" novalidate>
+
+        <!-- S1 -->
+        <div class="form-step active" data-step="1">
+          <div class="step-h">👤 Personal Information</div>
+          <div class="fg fg-2">
+            <div class="field" data-req><label for="f-name">Name *</label><input id="f-name" name="name" type="text" required placeholder="e.g., Jimmy"/><span class="field-err">Please enter a name.</span></div>
+            <div class="field" data-req><label for="f-age">Age Range *</label>
+              <select id="f-age" name="age_range" required><option value="">Select</option><option value="under-18">Under 18</option><option value="19-29">19–29</option><option value="30-49">30–49</option><option value="50-64">50–64</option><option value="65+">65+</option></select>
+              <span class="field-err">Please select an age range.</span></div>
+            <div class="field" data-req><label for="f-start">Plan Start *</label><input id="f-start" name="start_date" type="date" required/><span class="field-err">Please pick a start date.</span></div>
+            <div class="field" data-req><label for="f-end">Plan End *</label><input id="f-end" name="end_date" type="date" required/><span class="field-err">End must be after start.</span></div>
+          </div>
+          <div style="font-size:12px;color:var(--teal-deep);margin:-6px 0 10px;display:flex;align-items:center;gap:5px">
+            <span>📅</span><span id="dateRangeHint">Set to this week — adjust if needed.</span>
+          </div>
+          <div class="form-sep">Household Size</div>
+          <div class="family-box">
+            <div><div class="family-box-label">🏠 How many people are you planning for?</div><div class="family-box-sub" id="famLabel">Just me (1 person)</div></div>
+            <div class="ctrls"><button class="cbtn" id="famMinus" type="button" aria-label="Decrease">−</button><span class="cval" id="famCount">1</span><button class="cbtn" id="famPlus" type="button" aria-label="Increase">+</button></div>
+          </div>
+          <input type="hidden" id="f-hs" name="household_size" value="1"/>
+          <div class="nav-row"><button type="button" class="btn btn-soft" disabled>← Back</button><button type="button" class="btn btn-green wiz-next">Next →</button></div>
+        </div>
+
+        <!-- S2 -->
+        <div class="form-step" data-step="2">
+          <div class="step-h">💊 Health &amp; Dietary Restrictions</div>
+          <div class="fg">
+            <div class="field"><label>Medical conditions (optional)</label><div class="check-grid"><label class="cpill"><input type="checkbox" name="medical" value="diabetes"/> 🩺 Diabetes</label><label class="cpill"><input type="checkbox" name="medical" value="hypertension"/> ❤️ Hypertension</label><label class="cpill"><input type="checkbox" name="medical" value="celiac"/> 🌾 Celiac</label><label class="cpill"><input type="checkbox" name="medical" value="none"/> ✅ None</label><label class="cpill"><input type="checkbox" name="medical" value="other"/> Other</label></div></div>
+            <div class="field"><label>Allergies (optional)</label><div class="check-grid"><label class="cpill"><input type="checkbox" name="allergies" value="nuts"/> 🥜 Nuts</label><label class="cpill"><input type="checkbox" name="allergies" value="dairy"/> 🥛 Dairy</label><label class="cpill"><input type="checkbox" name="allergies" value="gluten"/> 🍞 Gluten</label><label class="cpill"><input type="checkbox" name="allergies" value="shellfish"/> 🦐 Shellfish</label><label class="cpill"><input type="checkbox" name="allergies" value="eggs"/> 🥚 Eggs</label><label class="cpill"><input type="checkbox" name="allergies" value="none"/> ✅ None</label></div></div>
+            <div class="field"><label>Dietary restrictions (optional)</label><div class="check-grid"><label class="cpill"><input type="checkbox" name="diet" value="vegetarian"/> 🥦 Vegetarian</label><label class="cpill"><input type="checkbox" name="diet" value="vegan"/> 🌱 Vegan</label><label class="cpill"><input type="checkbox" name="diet" value="keto"/> 🥑 Keto</label><label class="cpill"><input type="checkbox" name="diet" value="halal"/> ☪️ Halal</label><label class="cpill"><input type="checkbox" name="diet" value="none"/> ✅ None</label></div></div>
+            <div class="field" data-req><label for="f-goals">Nutritional Goal *</label>
+              <select id="f-goals" name="goals" required><option value="">Select a goal</option><option value="diabetic-friendly">Diabetic-friendly</option><option value="weight_loss">Weight loss</option><option value="muscle_gain">Muscle gain</option><option value="maintenance">Maintenance</option><option value="heart_healthy">Heart-healthy</option><option value="other">Other</option></select>
+              <span class="field-err">Please select a nutritional goal.</span></div>
+          </div>
+          <div class="nav-row"><button type="button" class="btn btn-soft wiz-prev">← Back</button><button type="button" class="btn btn-green wiz-next">Next →</button></div>
+        </div>
+
+        <!-- S3 -->
+        <div class="form-step" data-step="3">
+          <div class="step-h">🍽️ Meals &amp; Cuisine Preferences</div>
+          <div class="fg fg-2">
+            <div class="field" data-req><label for="f-mpd">Meals per day *</label><select id="f-mpd" name="meals_per_day" required><option value="">Select</option><option value="3_meals">3 meals</option><option value="3_meals_2_snacks">3 meals + 2 snacks</option><option value="5_small">5 small meals</option></select><span class="field-err">Please select an option.</span></div>
+            <div class="field" data-req><label for="f-dislikes">Disliked foods *</label><input id="f-dislikes" name="disliked_foods" type="text" value="None" required placeholder='e.g., mushrooms — or "None"'/><span class="field-err">Enter foods to avoid, or "None".</span></div>
+          </div>
+          <div class="fg" style="margin-top:4px">
+            <div class="field"><label>Cuisine preferences (optional)</label><div class="check-grid"><label class="cpill"><input type="checkbox" name="cuisine" value="vietnamese"/> 🇻🇳 Vietnamese</label><label class="cpill"><input type="checkbox" name="cuisine" value="asian"/> 🥢 Asian</label><label class="cpill"><input type="checkbox" name="cuisine" value="mediterranean"/> 🫒 Mediterranean</label><label class="cpill"><input type="checkbox" name="cuisine" value="american"/> 🍔 American</label><label class="cpill"><input type="checkbox" name="cuisine" value="mexican"/> 🌮 Mexican</label><label class="cpill"><input type="checkbox" name="cuisine" value="other"/> Other</label></div></div>
+            <div class="field"><label>Preferred meal types (optional)</label><div class="check-grid"><label class="cpill"><input type="checkbox" name="meal_type" value="hot_meals"/> 🍲 Hot meals</label><label class="cpill"><input type="checkbox" name="meal_type" value="cold_dishes"/> 🥗 Cold dishes</label><label class="cpill"><input type="checkbox" name="meal_type" value="soups"/> 🍜 Soups</label><label class="cpill"><input type="checkbox" name="meal_type" value="salads"/> 🥙 Salads</label><label class="cpill"><input type="checkbox" name="meal_type" value="meal_prep"/> 📦 Meal prep</label></div></div>
+          </div>
+          <div class="nav-row"><button type="button" class="btn btn-soft wiz-prev">← Back</button><button type="button" class="btn btn-green wiz-next">Next →</button></div>
+        </div>
+
+        <!-- S4 -->
+        <div class="form-step" data-step="4">
+          <div class="step-h">👨‍🍳 Cooking &amp; Lifestyle</div>
+          <div class="fg fg-2">
+            <div class="field" data-req><label for="f-skill">Cooking skill *</label><select id="f-skill" name="cooking_skill" required><option value="">Select</option><option value="beginner">Beginner — simple recipes</option><option value="intermediate">Intermediate — comfortable</option><option value="advanced">Advanced — complex meals</option></select><span class="field-err">Please select your skill level.</span></div>
+            <div class="field" data-req><label for="f-time">Max time per meal (min) *</label><input id="f-time" name="time_per_meal" type="number" min="10" max="180" step="5" required placeholder="e.g., 30"/><span class="field-err">Enter time in minutes.</span></div>
+          </div>
+          <div class="fg fg-2" style="margin-top:4px">
+            <div class="field"><label>Equipment (optional)</label><div class="check-grid"><label class="cpill"><input type="checkbox" name="equipment" value="oven"/> 🍳 Oven</label><label class="cpill"><input type="checkbox" name="equipment" value="microwave"/> 📡 Microwave</label><label class="cpill"><input type="checkbox" name="equipment" value="blender"/> 🥤 Blender</label><label class="cpill"><input type="checkbox" name="equipment" value="slow_cooker"/> ⏱ Slow cooker</label><label class="cpill"><input type="checkbox" name="equipment" value="air_fryer"/> 🌀 Air fryer</label></div></div>
+            <div class="field"><label>Pantry staples (optional)</label><div class="check-grid"><label class="cpill"><input type="checkbox" name="pantry" value="rice"/> 🍚 Rice</label><label class="cpill"><input type="checkbox" name="pantry" value="pasta"/> 🍝 Pasta</label><label class="cpill"><input type="checkbox" name="pantry" value="canned_goods"/> 🥫 Canned goods</label><label class="cpill"><input type="checkbox" name="pantry" value="spices"/> 🌿 Spices</label><label class="cpill"><input type="checkbox" name="pantry" value="oils"/> 🫒 Oils</label></div></div>
+          </div>
+          <div class="nav-row"><button type="button" class="btn btn-soft wiz-prev">← Back</button><button type="button" class="btn btn-green wiz-next">Next →</button></div>
+        </div>
+
+        <!-- S5 -->
+        <div class="form-step" data-step="5">
+          <div class="step-h">🛒 Budget &amp; Nutrition Targets</div>
+          <div class="fg fg-2">
+            <div class="field" data-req><label for="f-budget">Weekly grocery budget ($) *</label><input id="f-budget" name="grocery_budget" type="number" min="0" step="1" required placeholder="e.g., 200"/><div class="field-hint" id="budgetHint">For your household.</div><span class="field-err">Please enter your weekly budget.</span></div>
+            <div class="field"><label for="f-cal">🔥 Daily calories / person (optional)</label><input id="f-cal" name="calories" type="number" min="0" step="10" placeholder="e.g., 1800"/></div>
+            <div class="field"><label for="f-prot">🥩 Protein (g) (optional)</label><input id="f-prot" name="protein" type="number" min="0" step="5" placeholder="e.g., 140"/></div>
+            <div class="field"><label for="f-carbs">🍚 Carbs (g) (optional)</label><input id="f-carbs" name="carbs" type="number" min="0" step="5" placeholder="e.g., 180"/></div>
+            <div class="field"><label for="f-fat">🥑 Fat (g) (optional)</label><input id="f-fat" name="fat" type="number" min="0" step="5" placeholder="e.g., 60"/></div>
+            <div class="field" style="grid-column:1/-1"><label for="f-notes">🎯 Additional details (optional)</label><textarea id="f-notes" name="goal_text" rows="3" placeholder="e.g., lower blood sugar, kids prefer mild flavours, quick dinners under 30 min…"></textarea></div>
+          </div>
+          <div class="nav-row"><button type="button" class="btn btn-soft wiz-prev">← Back</button><button type="button" class="btn btn-green wiz-next">Review →</button></div>
+        </div>
+
+        <!-- S6 -->
+        <div class="form-step" data-step="6">
+          <div class="step-h">✅ Review &amp; Generate</div>
+          <p style="font-size:13px;color:var(--muted);margin:0 0 16px">Review your selections. Once ready, click Generate.</p>
+          <div class="review-groups" id="reviewGrid"></div>
+          <div class="nav-row"><button type="button" class="btn btn-soft wiz-prev">← Back</button><button type="submit" class="btn btn-green">🍽️ Generate Meal Plan</button></div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="res-card" id="resCard">
+    <div class="res-top">
+      <div><h2>🤖 Your Household Meal Plan</h2><p>Prepared based on your preferences — review before use.</p></div>
+      <div class="stat-pill" id="statPill" aria-live="polite"><span class="spin" id="statSpin" style="display:none" aria-hidden="true"></span><span id="statTxt">Ready</span></div>
+    </div>
+    <div class="err-banner" id="errBanner"></div>
+    <div class="res-body">
+      <div class="res-layout">
+        <div class="days-grid" id="daysContainer"></div>
+        <div>
+          <div class="scard"><div class="shead">🧺 Grocery List<button class="btn btn-soft btn-sm" id="copyGroceryBtn" type="button">📋 Copy</button></div><div class="sbody"><ul class="glist" id="groceryListUi"><li style="color:var(--muted-2);font-size:13px;cursor:default">No items yet.</li></ul></div></div>
+          <div class="scard"><div class="shead">📊 Macro Summary</div><div class="sbody" id="macroUi"><p style="color:var(--muted-2);font-size:13px;margin:0">Generate a plan to see macro targets.</p></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="groceryCta" style="display:none;margin:0 24px 0;padding:14px 16px;background:var(--ok-bg);border:1px solid var(--ok-bd);border-radius:14px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:14px;font-weight:800;color:var(--ok-txt)">Plan ready — time to shop</div>
+        <div style="font-size:12px;color:var(--teal-deep);margin-top:2px" id="groceryCtaSub">Your grocery list is ready to import.</div>
+      </div>
+      <a class="btn btn-green" href="/household/nutritiongenie/grocery-planner.html?from=genie">🛒 Open Grocery Planner →</a>
+    </div>
+    <div class="res-actions">
+      <button class="btn btn-green" id="saveBtn" type="button">💾 Save to History</button>
+      <button class="btn btn-soft" id="openGroceryBtn" type="button">🛒 Send to Grocery Planner</button>
+      <button class="btn btn-outline" id="printBtn" type="button">🖨️ Print Plan</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <details class="section" open>
+    <summary><span class="section-title">🗃️ Plan History</span><div class="section-right"><span class="sec-right-txt">Saved on this device</span><span class="sec-chev">▾</span></div></summary>
+    <div class="section-body">
+      <div style="overflow:auto">
+        <table class="h-table" aria-label="Meal plan history">
+          <thead><tr><th>Date</th><th>Goal</th><th>Household</th><th>Outcome</th><th></th></tr></thead>
+          <tbody id="histBody"><tr><td style="color:var(--muted-2)">—</td><td style="color:var(--muted-2)">No plans saved yet</td><td></td><td></td><td></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col"><h4>All Areas</h4><a href="/dashboard/overview.html">🧭 Overview</a><a href="/dashboard/household.html">🏡 Household</a><a href="/dashboard/business.html">🏢 Business</a><a href="/dashboard/investment.html">📈 Investment</a><a href="/dashboard/finance.html">💼 Finance</a></div>
+      <div class="footer-col"><h4>Food &amp; Nutrition</h4><a href="/household/nutritiongenie/nutrition-engine-hub.html">Nutrition Engine</a><a href="/household/nutritiongenie/nutrition-genie_pro.html">Nutrition Genie</a><a href="/household/nutritiongenie/grocery-planner.html">Grocery Planner</a><a href="/household/nutritiongenie/pantry-tracker.html">Pantry Tracker</a></div>
+      <div class="footer-col"><h4>Household Tools</h4><a href="/household/bill-reminders.html">Bills Hub</a><a href="/household/appointment-center.html">Appointments</a><a href="/household/cargenie/car-care.html">Car Care Genie</a></div>
+      <div class="footer-col"><h4>Help</h4><a href="/onboarding/api-key-settings.html">API Keys</a><a href="/about.html">About</a><a href="/contact.html">Contact</a></div>
+    </div>
+    <div class="footer-bottom"><div>© <span id="yr"></span> GenieSphere. All rights reserved.</div></div>
+  </div>
+</footer>
+
+<div aria-hidden="true" class="mobile-pad"></div>
+<nav aria-label="GenieSphere mobile navigation" class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <a class="mnav" data-nav="overview" href="/dashboard/overview.html"><div class="ico">🧭</div><div>Overview</div></a>
+    <a class="mnav active" data-nav="household" href="/dashboard/household.html"><div class="ico">🏡</div><div>Home</div></a>
+    <a class="mnav" data-nav="business" href="/dashboard/business.html"><div class="ico">🏢</div><div>Business</div></a>
+    <a class="mnav" data-nav="investment" href="/dashboard/investment.html"><div class="ico">📈</div><div>Invest</div></a>
+    <a class="mnav" data-nav="leisure" href="/dashboard/leisure.html"><div class="ico">🏝️</div><div>Leisure</div></a>
+    <a class="mnav" data-nav="finance" href="/dashboard/finance.html"><div class="ico">💼</div><div>Finance</div></a>
+  </div>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>window.GS_CONFIG_URL="/shared/config.json";window.GS_CONFIG_PATH="/shared/config.json";</script>
+<script src="/shared/js/app-config.js?v=20260211"></script>
+<script src="/shared/js/gs-client.js?v=20260211"></script>
+<script src="/shared/js/auth-header.js?v=20260211"></script>
+<script>window.GSAuthHeader?.init({loginUrl:"/onboarding/login.html",afterLogoutUrl:"/index.html"});</script>
+<script>
+document.getElementById('yr').textContent=new Date().getFullYear();
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function safeArr(v){if(!v)return[];return Array.isArray(v)?v:[v];}
+function nice(v){return Array.isArray(v)?v.join(', '):(v||'—');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+// ── WEBHOOK — admin-only, read from shared config ─────────────────────
+// Webhook URL is set by the platform admin in /shared/config.json or
+// via the GS_MEAL_WEBHOOK_URL key in localStorage (admin tools only).
+// It is never exposed or editable at the user level.
+const LS_WH = 'GS_MEAL_WEBHOOK_URL';
+
+function getWH(){
+  // 1. Try app-config (admin-configured, loaded by app-config.js)
+  try{
+    const cfg = window.GSConfig || window.GS_APP_CONFIG || {};
+    if(cfg.mealPlanWebhookUrl) return cfg.mealPlanWebhookUrl.trim();
+    if(cfg.webhooks?.mealPlan) return cfg.webhooks.mealPlan.trim();
+  }catch(_){}
+  // 2. Fallback to localStorage (set by admin tools, never shown to users)
+  return (localStorage.getItem(LS_WH)||'').trim();
+}
+
+// Family counter
+let hs=1;
+function updFam(){document.getElementById('famCount').textContent=hs;document.getElementById('f-hs').value=hs;const L=['Just me (1 person)','2 people','3 people','4 people','5 people','6 people','7 people','8 people'];document.getElementById('famLabel').textContent=L[Math.min(hs-1,L.length-1)]||hs+' people';document.getElementById('budgetHint').textContent=hs===1?'For you alone.':'Split across '+hs+' people.';}
+document.getElementById('famMinus').addEventListener('click',()=>{if(hs>1){hs--;updFam();}});
+document.getElementById('famPlus').addEventListener('click',()=>{if(hs<12){hs++;updFam();}});
+
+// ── SMART FORM INIT — auto-populate Step 1 ────────────────────────────
+(function initFormDefaults(){
+  const iso = d => d.toISOString().slice(0,10);
+
+  // 1. Auto-fill dates: today → +6 days (this week)
+  const today = new Date();
+  const endOfWeek = new Date(today);
+  endOfWeek.setDate(today.getDate() + 6);
+  document.getElementById('f-start').value = iso(today);
+  document.getElementById('f-end').value   = iso(endOfWeek);
+
+  // Update date hint label
+  function updateDateHint(){
+    const s = document.getElementById('f-start').value;
+    const e = document.getElementById('f-end').value;
+    const hint = document.getElementById('dateRangeHint');
+    if(!hint) return;
+    if(s && e){
+      try{
+        const days = Math.round((new Date(e+'T00:00:00') - new Date(s+'T00:00:00')) / 86400000) + 1;
+        const fmt = d => new Date(d+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});
+        hint.textContent = `${days} day plan · ${fmt(s)} – ${fmt(e)}`;
+      }catch(_){ hint.textContent = 'Adjust dates as needed.'; }
+    }
+  }
+  updateDateHint();
+  document.getElementById('f-start').addEventListener('change', updateDateHint);
+  document.getElementById('f-end').addEventListener('change', updateDateHint);
+
+  // 2. Restore last-used form values if user has planned before
+  try{
+    const saved = JSON.parse(localStorage.getItem('nutritionFormData')||'null');
+    if(saved){
+      // Restore name if present
+      if(saved.name) document.getElementById('f-name').value = saved.name;
+      // Restore age range
+      if(saved.age_range){
+        const el = document.getElementById('f-age');
+        if(el) el.value = saved.age_range;
+      }
+      // Restore household size
+      const savedHs = Number(saved.household_size||1);
+      if(savedHs > 1){ hs = Math.min(12, savedHs); updFam(); }
+      // Note: dates intentionally reset to this week (fresh plan)
+    }
+  }catch(_){}
+
+  // 3. Populate name from authenticated user session
+  //    Done async after auth loads — may override saved name
+  function populateFromAuth(user){
+    if(!user) return;
+    const meta  = user.user_metadata || {};
+    const fname = (meta.full_name || meta.name || user.email || '').split(/\s+/)[0] || '';
+    const nameEl = document.getElementById('f-name');
+    // Only set if field is still empty (don't override user's typed value)
+    if(nameEl && !nameEl.value && fname) nameEl.value = fname;
+
+    // If user profile has household_size stored, use it
+    if(meta.household_size && !localStorage.getItem('nutritionFormData')){
+      const profileHs = Number(meta.household_size);
+      if(profileHs > 1 && profileHs <= 12){ hs = profileHs; updFam(); }
+    }
+  }
+
+  try{
+    if(window.GSClient){
+      window.GSClient.getAsync()
+        .then(c => c.auth.getSession())
+        .then(r => populateFromAuth(r?.data?.session?.user))
+        .catch(()=>{});
+    }
+  }catch(_){}
+})();
+
+// Wizard
+const form=document.getElementById('wiz');
+const steps=Array.from(document.querySelectorAll('.form-step'));
+const SNAMES=['Personal Information','Health & Restrictions','Meals & Cuisine','Cooking & Lifestyle','Budget & Nutrition','Review & Generate'];
+let cur=0;
+function showStep(i){steps.forEach((s,j)=>s.classList.toggle('active',j===i));cur=i;const p=Math.round(((i+1)/steps.length)*100);document.getElementById('progFill').style.width=p+'%';document.getElementById('progFill').setAttribute('aria-valuenow',String(p));document.getElementById('progLabel').textContent=`Step ${i+1} of ${steps.length}`;document.getElementById('progStep').textContent=SNAMES[i]||'';if(i===steps.length-1)buildReview();}
+function valStep(i){const step=steps[i];let ok=true;step.querySelectorAll('[data-req]').forEach(g=>{const f=g.querySelector('input[required],select[required],textarea[required]');g.classList.remove('has-error');if(f&&!(f.value||'').trim()){g.classList.add('has-error');ok=false;}});if(ok&&i===0){const s=document.getElementById('f-start').value,e=document.getElementById('f-end').value;if(s&&e&&e<s){document.getElementById('f-end').closest('.field').classList.add('has-error');ok=false;}}return ok;}
+document.querySelectorAll('.wiz-next').forEach(b=>b.addEventListener('click',()=>{if(!valStep(cur))return;if(cur<steps.length-1)showStep(cur+1);}));
+document.querySelectorAll('.wiz-prev').forEach(b=>b.addEventListener('click',()=>showStep(Math.max(0,cur-1))));
+
+function aggForm(){const d=new FormData(form),a={};for(const [k,v] of d.entries()){if(a[k])a[k]=Array.isArray(a[k])?[...a[k],v]:[a[k],v];else a[k]=v;}return a;}
+
+function buildReview(){const f=aggForm();const gs=[{t:'👤 Personal',r:[['Name',f.name],['Age',f.age_range],['Household',hs===1?'Just me':hs+' people'],['Dates',(f.start_date||'')+(f.end_date?' → '+f.end_date:'')]]},{t:'💊 Health',r:[['Medical',nice(f.medical)],['Allergies',nice(f.allergies)],['Dietary',nice(f.diet)],['Goal',f.goals]]},{t:'🍽️ Meals',r:[['Meals/day',f.meals_per_day],['Dislikes',f.disliked_foods],['Cuisine',nice(f.cuisine)],['Types',nice(f.meal_type)]]},{t:'👨‍🍳 Cooking',r:[['Skill',f.cooking_skill],['Time/meal',f.time_per_meal?f.time_per_meal+' min':'—'],['Equipment',nice(f.equipment)],['Pantry',nice(f.pantry)]]},{t:'🛒 Budget',r:[['Budget',f.grocery_budget?'$'+f.grocery_budget+'/week':'—'],['Calories',f.calories?f.calories+' kcal':'—'],['P/C/F',[f.protein||'—',f.carbs||'—',f.fat||'—'].join('/')+'g'],['Notes',f.goal_text||'—']]},];
+document.getElementById('reviewGrid').innerHTML=gs.map(g=>`<div class="rgroup"><div class="rgroup-title">${g.t}</div>${g.r.map(([k,v])=>`<div class="rrow"><span class="rk">${esc(k)}</span><span class="rv">${esc(String(v||'—'))}</span></div>`).join('')}</div>`).join('');}
+
+function daysBetween(s,e){try{const ms=new Date(e+'T00:00:00')-new Date(s+'T00:00:00');if(!isFinite(ms)||ms<0)return 7;return Math.max(1,Math.min(14,Math.floor(ms/86400000)+1));}catch{return 7;}}
+function budgetLevel(n){const v=Number(n);if(!isFinite(v)||v<=0)return'medium';if(v<120)return'low';if(v<260)return'medium';return'high';}
+
+function buildPayload(f){const med=safeArr(f.medical),al=safeArr(f.allergies),cu=safeArr(f.cuisine),isDiab=med.includes('diabetes')||f.goals==='diabetic-friendly',mpd=f.meals_per_day==='3_meals_2_snacks'?['breakfast','lunch','dinner','snack']:f.meals_per_day==='5_small'?['breakfast','morning_snack','lunch','afternoon_snack','dinner']:['breakfast','lunch','dinner'],avoid=(f.disliked_foods||'').trim().toLowerCase()==='none'?[]:(f.disliked_foods||'').split(',').map(s=>s.trim()).filter(Boolean).slice(0,12);
+return{requestedBy:(f.name||'').toString(),planDays:daysBetween(f.start_date,f.end_date),people:Number(f.household_size)||1,goal:isDiab?'diabetic-friendly':(f.goals||'balanced'),cuisine:cu.map(c=>({vietnamese:'Vietnamese',asian:'Asian',mediterranean:'Mediterranean',american:'American',mexican:'Mexican',other:'Other'}[c]||c)),allergies:al.includes('none')?[]:al.map(a=>({nuts:'peanuts/tree nuts',dairy:'dairy',gluten:'gluten',shellfish:'shellfish',eggs:'eggs',other:'other'}[a]||a)),avoidIngredients:avoid,budgetLevel:budgetLevel(f.grocery_budget),budgetTotal:Number(f.grocery_budget)||0,timePerMeal:Number(f.time_per_meal||30),mealsPerDay:mpd,calorieTarget:Number(f.calories||0)||'',macroTargets:{protein:Number(f.protein||0)||'',carbs:Number(f.carbs||0)||'',fat:Number(f.fat||0)||''},notes:(f.goal_text||'').toString()};}
+
+function setStatus({loading=false,text='Ready',error=''}){const card=document.getElementById('resCard');card.classList.add('show');document.getElementById('statSpin').style.display=loading?'inline-block':'none';document.getElementById('statTxt').textContent=text;const eb=document.getElementById('errBanner');eb.textContent=error||'';eb.classList.toggle('show',!!error);}
+
+// ── SHARED KEY: grocery-planner.html reads this ──
+const LS_PLAN_KEY = 'gs_nutrition_last_plan_v1';
+const LS_AGENT_KEY = 'gs_nutrition_agent_state_v1';
+
+function savePlanForGrocery(result){
+  try{
+    localStorage.setItem(LS_PLAN_KEY, JSON.stringify(result));
+    const gl = Array.isArray(result?.groceryList) ? result.groceryList : (Array.isArray(result?.grocery_list) ? result.grocery_list : []);
+    const state = {
+      planDate: new Date().toISOString(),
+      goal: (document.getElementById('f-goals')?.value || ''),
+      household: hs,
+      daysCount: (result?.days || []).length,
+      groceryCount: gl.length,
+      step: 'plan_ready'
+    };
+    localStorage.setItem(LS_AGENT_KEY, JSON.stringify(state));
+  }catch(_){}
+}
+
+function renderPlan(result){window.__plan=result;
+
+  // ── Wire plan to grocery planner ──
+  savePlanForGrocery(result);
+
+  const dc=document.getElementById('daysContainer');let days=[];if(Array.isArray(result?.days))days=result.days;else if(result?.meal_plan&&typeof result.meal_plan==='object'){const O=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];days=O.map((d,i)=>{const x=result.meal_plan[d]||{};return{day:i+1,label:d,meals:[{mealType:'Breakfast',title:x.breakfast||''},{mealType:'Lunch',title:x.lunch||''},{mealType:'Dinner',title:x.dinner||''}].filter(m=>m.title)};}).filter(d=>d.meals.length);}
+dc.innerHTML=days.length?days.map((d,i)=>`<div class="day-card"><div class="day-head">📅 ${esc(d.label||'Day '+(d.day??(i+1)))}</div><div class="day-meals">${(Array.isArray(d.meals)?d.meals:[]).map(m=>`<div class="mrow"><div class="mtype">${esc(m?.mealType||'Meal')}</div><div class="mname">${esc(m?.title||'—')}</div>${m?.diabeticNotes?`<div class="mnote">🩺 ${esc(m.diabeticNotes)}</div>`:''}</div>`).join('')||'<p style="color:var(--muted-2);font-size:13px">No meals.</p>'}</div></div>`).join(''):`<div class="day-card"><div class="day-head">📅 Plan</div><div class="day-meals"><p style="color:var(--muted-2);font-size:13px">No structured plan returned.</p></div></div>`;
+const gl=Array.isArray(result?.groceryList)?result.groceryList:(Array.isArray(result?.grocery_list)?result.grocery_list:[]);const gui=document.getElementById('groceryListUi');gui.innerHTML=gl.length?gl.slice(0,80).map((it,i)=>{const n=typeof it==='string'?it:(it.item||it.name||'Item');return`<li id="gi${i}" onclick="tgI(${i})"><span class="gck" id="gc${i}"></span>${esc(n)}</li>`;}).join(''):`<li style="color:var(--muted-2);font-size:13px;cursor:default">No grocery list.</li>`;
+const macro=result?.macro_summary||result?.macroSummary||result?.macros||'';const mu=document.getElementById('macroUi');if(!macro){mu.innerHTML='<p style="color:var(--muted-2);font-size:13px;margin:0">No macro data.</p>';}else if(typeof macro==='object'){const p=Number(macro.protein||0),c=Number(macro.carbs||0),f=Number(macro.fat||0),tot=p*4+c*4+f*9||1;mu.innerHTML=`<div class="macro-row"><div class="macro-lr"><span>🥩 Protein</span><span>${p}g</span></div><div class="macro-bar"><div class="mfill mp" style="width:${Math.round(p*4/tot*100)}%"></div></div></div><div class="macro-row"><div class="macro-lr"><span>🍚 Carbs</span><span>${c}g</span></div><div class="macro-bar"><div class="mfill mc" style="width:${Math.round(c*4/tot*100)}%"></div></div></div><div class="macro-row"><div class="macro-lr"><span>🥑 Fat</span><span>${f}g</span></div><div class="macro-bar"><div class="mfill mf" style="width:${Math.round(f*9/tot*100)}%"></div></div></div><p style="font-size:12px;color:var(--muted-2);margin-top:8px">~${Math.round(p*4+c*4+f*9)} kcal/person/day</p>`;}else{mu.innerHTML=`<p style="font-size:13px;color:var(--muted);line-height:1.5;margin:0">${esc(String(macro))}</p>`;}
+
+  // Show grocery CTA
+  const gl2 = Array.isArray(result?.groceryList)?result.groceryList:(Array.isArray(result?.grocery_list)?result.grocery_list:[]);
+  const cta = document.getElementById('groceryCta');
+  if(cta){
+    cta.style.display = 'flex';
+    const sub = document.getElementById('groceryCtaSub');
+    if(sub) sub.textContent = gl2.length ? `${gl2.length} items ready to import into your shopping list.` : 'Plan ready — add your own items in the grocery planner.';
+  }
+}}
+function tgI(i){const li=document.getElementById('gi'+i),ch=document.getElementById('gc'+i);if(!li)return;li.classList.toggle('chk');ch.textContent=li.classList.contains('chk')?'✓':'';}
+window.tgI=tgI;
+
+function tryParse(val){if(val&&typeof val==='object')return{ok:true,value:val};const s=(val??'').toString().replace(/```json|```/gi,'').trim();const m=s.match(/\{[\s\S]*\}$/);try{return{ok:true,value:JSON.parse(m?m[0]:s)};}catch(e){return{ok:false,raw:s};}}
+
+async function genAndRender(url,payload){setStatus({loading:true,text:'Preparing your plan…'});document.getElementById('resCard').scrollIntoView({behavior:'smooth',block:'start'});const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const raw=await res.text().catch(()=>'');let data=null;try{data=raw?JSON.parse(raw):null;}catch{data=null;}if(!res.ok)throw new Error(data?.message||data?.error||`Request failed (${res.status}).`);const candidate=data?.result||(data?.planMeta||data?.days||data?.groceryList||data?.meal_plan?data:null)||data?.output_text||data?.text||data?.content||data||raw;const parsed=tryParse(candidate);if(!parsed.ok)throw new Error('Response was not valid JSON. Preview: '+(parsed.raw||'').slice(0,500));renderPlan(parsed.value);setStatus({loading:false,text:'Plan ready ✅'});}
+
+form.addEventListener('submit',async e=>{e.preventDefault();if(!valStep(cur))return;const wh=getWH();if(!wh){setStatus({loading:false,text:'Not available',error:'Meal planning is not yet configured for this account. Please contact your administrator or check back later.'});document.getElementById('resCard').classList.add('show');document.getElementById('resCard').scrollIntoView({behavior:'smooth',block:'start'});return;}const agg=aggForm();localStorage.setItem('nutritionFormData',JSON.stringify(agg));const payload=buildPayload(agg);try{await genAndRender(wh,payload);saveHist({date:new Date().toLocaleString(),goal:(agg.goal_text||agg.goals||'').toString(),household:hs,outcome:'OK',data:window.__plan});}catch(err){setStatus({loading:false,text:'Error',error:err?.message||'Unknown error.'});}});
+
+const LS_H='gs_nutrition_history_v3';
+function loadHist(){let rows=[];try{rows=JSON.parse(localStorage.getItem(LS_H)||'[]');}catch{rows=[];}const tb=document.getElementById('histBody');if(!rows.length){tb.innerHTML=`<tr><td style="color:var(--muted-2)">—</td><td style="color:var(--muted-2)">No plans saved yet</td><td></td><td></td><td></td></tr>`;return;}tb.innerHTML=rows.slice(0,20).map((r,i)=>`<tr><td>${esc(r.date)}</td><td>${esc(r.goal||'—')}</td><td>${r.household?(r.household===1?'Just me':r.household+' people'):'—'}</td><td>${esc(r.outcome||'OK')}</td><td><button class="btn btn-soft btn-sm" data-view="${i}">👁 View</button></td></tr>`).join('');tb.querySelectorAll('button[data-view]').forEach(b=>{b.addEventListener('click',()=>{const rows2=JSON.parse(localStorage.getItem(LS_H)||'[]');const row=rows2[Number(b.dataset.view)];if(row?.data){renderPlan(row.data);setStatus({loading:false,text:'Loaded from history'});window.scrollTo({top:0,behavior:'smooth'});}});});}
+function saveHist(e){let rows=[];try{rows=JSON.parse(localStorage.getItem(LS_H)||'[]');}catch{rows=[];}rows.unshift(e);localStorage.setItem(LS_H,JSON.stringify(rows.slice(0,60)));loadHist();}
+
+document.getElementById('saveBtn').addEventListener('click',()=>{if(!window.__plan){toast('No plan to save yet.');return;}const f=aggForm();saveHist({date:new Date().toLocaleString(),goal:(f.goal_text||f.goals||'').toString(),household:hs,outcome:'OK',data:window.__plan});toast('Plan saved to history 💾');});
+document.getElementById('openGroceryBtn').addEventListener('click',()=>{if(!window.__plan){toast('Generate a plan first.');return;}savePlanForGrocery(window.__plan);window.location.href='/household/nutritiongenie/grocery-planner.html?from=genie';});
+document.getElementById('copyGroceryBtn').addEventListener('click',async()=>{const items=Array.from(document.querySelectorAll('#groceryListUi li')).map(li=>li.textContent.replace('✓','').trim()).filter(Boolean);if(!items.length){toast('No grocery list to copy.');return;}try{await navigator.clipboard.writeText(items.join('\n'));toast('Grocery list copied 📋');}catch{toast('Copy failed.');}});
+document.getElementById('printBtn').addEventListener('click',()=>window.print());
+
+document.getElementById('prompt-form').addEventListener('submit',e=>{e.preventDefault();const p=(document.getElementById('prompt-input').value||'').trim();if(!p)return;document.getElementById('f-notes').value=p;const pl=p.toLowerCase();if(pl.includes('diabet'))document.getElementById('f-goals').value='diabetic-friendly';if(pl.includes('vietnam'))document.querySelector('input[name="cuisine"][value="vietnamese"]')?.click();else if(pl.includes('asian'))document.querySelector('input[name="cuisine"][value="asian"]')?.click();const m=pl.match(/(\d+)\s*people/);if(m){hs=Math.min(12,Math.max(1,parseInt(m[1])));updFam();}else if(pl.includes('family')){hs=4;updFam();}document.getElementById('prompt-input').value='';toast('Prompt applied ✅');showStep(0);});
+
+document.getElementById('sampleBtn').addEventListener('click',()=>{
+  // Don't overwrite name if already filled (e.g. from auth)
+  const nameEl = document.getElementById('f-name');
+  if(nameEl && !nameEl.value) nameEl.value='Jimmy';
+  document.getElementById('f-age').value='30-49';
+  const t=new Date(),en=new Date();en.setDate(t.getDate()+6);
+  const iso=d=>d.toISOString().slice(0,10);
+  document.getElementById('f-start').value=iso(t);
+  document.getElementById('f-end').value=iso(en);
+  hs=4;updFam();
+  document.getElementById('f-goals').value='diabetic-friendly';
+  document.getElementById('f-mpd').value='3_meals';
+  document.getElementById('f-dislikes').value='None';
+  document.querySelector('input[name="medical"][value="diabetes"]').checked=true;
+  document.querySelector('input[name="cuisine"][value="vietnamese"]').checked=true;
+  document.getElementById('f-skill').value='intermediate';
+  document.getElementById('f-time').value='30';
+  document.getElementById('f-budget').value='280';
+  document.getElementById('f-cal').value='1800';
+  document.getElementById('f-prot').value='140';
+  document.getElementById('f-carbs').value='160';
+  document.getElementById('f-fat').value='60';
+  document.getElementById('f-notes').value='Diabetic-friendly Vietnamese family meals. High protein. Quick dinners. Kids prefer mild flavours. Avoid sugary sauces.';
+  showStep(0);toast('Sample data loaded ✅');
+});
+
+// User menu — from household.html
+(function(){var wrap=document.getElementById('user-menu'),toggle=document.getElementById('user-menu-toggle'),menu=document.getElementById('user-menu-dropdown');if(!wrap||!toggle||!menu)return;function openM(){wrap.classList.add('open');toggle.setAttribute('aria-expanded','true');menu.setAttribute('aria-hidden','false');}function closeM(){wrap.classList.remove('open');toggle.setAttribute('aria-expanded','false');menu.setAttribute('aria-hidden','true');}closeM();toggle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();wrap.classList.contains('open')?closeM():openM();});document.addEventListener('click',e=>{if(wrap&&!wrap.contains(e.target))closeM();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});menu.querySelectorAll('.dropdown-nav[data-target]').forEach(b=>{b.addEventListener('click',()=>{const t=b.getAttribute('data-target');closeM();if(t)window.location.href=t;});});const authBtn=document.getElementById('user-auth-action');if(authBtn)authBtn.addEventListener('click',()=>{closeM();window.location.href='/onboarding/login.html';});const signoutBtn=document.getElementById('user-signout-btn');if(signoutBtn)signoutBtn.addEventListener('click',()=>{closeM();try{if(window.GSClient)window.GSClient.getAsync().then(c=>c.auth.signOut());}catch(e){}setTimeout(()=>window.location.href='/index.html',300);});(function(){const lbl=document.getElementById('user-name-label');if(!lbl)return;try{if(window.GSClient){window.GSClient.getAsync().then(c=>c.auth.getSession()).then(r=>{const user=r?.data?.session?.user;if(user){const meta=user.user_metadata||{};const name=(meta.full_name||meta.name||user.email||'').split(/\s+/)[0]||'Account';lbl.textContent=name;if(authBtn)authBtn.textContent='My account';document.querySelectorAll('.auth-only').forEach(el=>el.style.display='block');}}).catch(()=>{}); }}catch(e){}})();})();
+
+// Mobile nav active
+document.querySelectorAll('.mobile-nav .mnav').forEach(a=>a.classList.toggle('active',a.getAttribute('data-nav')==='household'));
+
+showStep(0);updFam();loadHist();
+</script>
+</body>
+</html>

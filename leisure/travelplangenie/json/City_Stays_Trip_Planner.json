@@ -1,0 +1,829 @@
+{
+  "name": "City_Stays_Trip_Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "airbnb-travel-agent",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        -176
+      ],
+      "id": "d61972b2-9662-46fb-be5d-d15c21cc52c6",
+      "webhookId": "8b52f12d-e822-490b-bd4f-bd467e73c3a2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -464,
+        -176
+      ],
+      "id": "08a65252-10fb-4c2f-8fde-3d8dfdbe33d4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        -304
+      ],
+      "id": "85693378-ee28-4a66-82db-608356624812"
+    },
+    {
+      "parameters": {
+        "jsCode": "let method = $json.method;\nif (!method) { method = $json.headers?.[':method'] || 'POST'; }\nreturn [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        -64
+      ],
+      "id": "9632d037-2177-4248-ab13-cbfea3ceb424"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.method).toUpperCase() }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Method",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        -64
+      ],
+      "id": "8bf020c6-fa88-4132-8938-c6137360d013"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\":\"Method not allowed\",\"status\":405}",
+        "options": {
+          "responseCode": 405,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond 405",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -176
+      ],
+      "id": "7843c83c-fa0f-41e0-97a9-8e3f041006d7"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\nif (!body || typeof body !== 'object') throw new Error('400: Missing body');\n\nconst safeArray = v => Array.isArray(v) ? v : (v ? [v] : []);\nconst normaliseAge = arr => arr.map(v => {\n  if (v === 'Kids')      return 'Kids_0_12';\n  if (v === 'Teens')     return 'Teens_13_19';\n  if (v === 'Adults')    return 'Adults_20_39';\n  if (v === 'MiddleAge') return 'Adults_40_59';\n  if (v === 'Seniors')   return 'Seniors_60plus';\n  return v;\n});\n\nconst flexDates = body.flexDates === 'yes' || body.flexDates === true || body.flexDates === 'true';\nconst tripMode  = body.tripMode || 'single';\n\n// Parse multi-destination legs if present\nlet destinationLegs = null;\nif (tripMode === 'multi' && body.destinationLegs) {\n  try {\n    const parsed = typeof body.destinationLegs === 'string'\n      ? JSON.parse(body.destinationLegs)\n      : body.destinationLegs;\n    if (Array.isArray(parsed) && parsed.length >= 2) {\n      destinationLegs = parsed.map(l => ({\n        city:    (l.city    || '').trim(),\n        checkIn: l.checkIn  || '',\n        checkOut:l.checkOut || ''\n      })).filter(l => l.city);\n    }\n  } catch(e) { /* fall back to single */ }\n}\n\n// Validate single-mode dates\nif (!destinationLegs && !flexDates && body.startDate && body.endDate) {\n  const s = new Date(body.startDate), e = new Date(body.endDate);\n  if (isNaN(s) || isNaN(e)) throw new Error('400: Invalid dates');\n  if (e < s) throw new Error('400: endDate before startDate');\n}\n\n// Derive summary fields from legs for display/email\nconst derivedCity  = destinationLegs ? destinationLegs.map(l => l.city).join(' \u2192 ') : (body.destinationCity || body.destination || '').trim();\nconst derivedStart = destinationLegs ? destinationLegs[0].checkIn : (body.startDate || '');\nconst derivedEnd   = destinationLegs ? destinationLegs[destinationLegs.length - 1].checkOut : (body.endDate || '');\n\nreturn [{ json: {\n  departureLocation:  (body.departureLocation || body.departure || '').trim(),\n  destinationCity:    derivedCity,\n  startDate:          derivedStart,\n  endDate:            derivedEnd,\n  flexDates,\n  tripMode,\n  destinationLegs,\n  tripType:           body.tripType   || body.groupSize || 'Not specified',\n  travelPace:         body.travelPace || 'Balanced',\n  budgetTier:         body.budgetTier || 'Standard',\n  groupSize:          body.groupSize  || '1',\n  ageRange:           normaliseAge(safeArray(body.ageRange)),\n  accommodationType:  body.accommodationType || body.propertyType || 'No preference',\n  amenities:          safeArray(body.amenities),\n  bedrooms:           body.bedrooms   || '1',\n  bathrooms:          body.bathrooms  || '1',\n  travelMode:         body.travelMode || 'flight',\n  budget:             body.budget     || '0',\n  email:              (body.email     || '').trim()\n}}];"
+      },
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        304
+      ],
+      "id": "4aaad59b-4d41-4b01-b92d-a73fb5279366"
+    },
+    {
+      "parameters": {
+        "jsCode": "const {\n  departureLocation, destinationCity, startDate, endDate, flexDates,\n  tripMode, destinationLegs, travelMode,\n  tripType, travelPace, budgetTier, groupSize, ageRange,\n  accommodationType, amenities, bedrooms, bathrooms, budget, email\n} = $json;\n\nconst fmt = v => Array.isArray(v) && v.length ? v.join(', ') : 'No preference';\n\nconst paceLabel = {\n  Relaxed:  'Relaxed & slow (max 2 activities/day, linger at the property)',\n  Balanced: 'Balanced (3\u20134 activities/day \u2014 explore the city, return to your stay each evening)',\n  Active:   'Packed & active (full days, early starts, come home to rest)',\n}[travelPace] || travelPace;\n\nconst tierLabel = {\n  Economy:  'Economy \u2014 budget hotels, hostels, or budget Airbnb rooms; local transport, street food',\n  Standard: 'Standard \u2014 3-4 star hotels, quality Airbnb apartments or entire homes; good local restaurants',\n  Elite:    'Elite \u2014 5-star hotels, luxury villas, private pools, concierge service, fine dining',\n}[budgetTier] || budgetTier;\n\n\nconst modeLabel = {\n  flight: 'Flying \u2014 include flight recommendations with airline, route, price and Skyscanner/Google Flights booking link',\n  drive:  'Driving \u2014 replace the Flights section with a Road Trip Route section: estimated drive time, scenic stops, fuel cost, parking. Do NOT recommend flights.',\n  train:  'Train \u2014 replace the Flights section with a Rail Journey section: operators, journey time, key stations, booking links (Rome2rio/Trainline). Do NOT recommend flights.',\n  bus:    'Bus \u2014 replace the Flights section with a Bus Route section: operators, journey time, terminal info, booking links (Rome2rio/FlixBus). Do NOT recommend flights.',\n  ferry:  'Ferry \u2014 replace the Flights section with a Ferry Crossing section: operator names, crossing time, port logistics. Do NOT recommend flights.',\n}[travelMode] || 'Flying';\n\nlet prompt;\n\nif (tripMode === 'multi' && destinationLegs && destinationLegs.length >= 2) {\n  // \u2500\u2500 MULTI-DESTINATION PROMPT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  const totalNights = destinationLegs.reduce((sum, l) => {\n    if (!l.checkIn || !l.checkOut) return sum;\n    const n = Math.round((new Date(l.checkOut) - new Date(l.checkIn)) / 86400000);\n    return sum + (n > 0 ? n : 0);\n  }, 0);\n\n  const legsText = destinationLegs.map((l, i) =>\n    `  Stop ${i + 1}: ${l.city}\\n    Check-in: ${l.checkIn}  \u2192  Check-out: ${l.checkOut}\\n    Nights: ${Math.round((new Date(l.checkOut) - new Date(l.checkIn)) / 86400000)}`\n  ).join('\\n\\n');\n\n  const routeSummary = destinationLegs.map(l => l.city).join(' \u2192 ');\n\n  prompt = `Please create a complete multi-destination city & stays itinerary. CRITICAL: The Accommodation Type field tells you exactly what the user wants \u2014 match ALL accommodation recommendations to that type (hotel \u2192 Booking.com/Hotels.com links; Airbnb \u2192 airbnb.com; hostel \u2192 Hostelworld; etc.).\n\n- Departure: ${departureLocation}\n- Travel Mode: ${modeLabel}\n- Trip Route: ${routeSummary}\n- Total Duration: ${totalNights} nights\n- Trip Type: ${tripType}\n- Travel Pace: ${paceLabel}\n- Plan Tier: ${tierLabel}\n- Total Budget: $${budget} USD\n- Group Size: ${groupSize}\n- Age Ranges: ${fmt(ageRange)}\n- Accommodation Type: ${accommodationType}\n- Key Amenities: ${fmt(amenities)}\n- Bedrooms: ${bedrooms}, Bathrooms: ${bathrooms}\n\nDestination Legs:\n${legsText}\n\nFor EACH stop, provide:\n1. Flights / Transport: How to get there from the previous stop (or from departure airport for Stop 1). Include transport type, duration, estimated cost, and booking link.\n2. Accommodation Options: 2\u20133 options matching the accommodation type and tier. Include name, price/night, total for the stay, and booking link.\n3. Best Neighbourhoods: 1\u20132 areas to stay with pros/cons and a search link.\n4. Daily Schedule: Morning/Afternoon/Evening for each day at that stop. Density based on travel pace.\n5. Must-Visit Spots: 3\u20135 top attractions with booking/info links.\n6. Dining Guide: 3\u20135 restaurant recommendations matching tier, with cuisine, price range, link.\n\nAfter all stops:\n- Multi-Destination Travel Tips: Packing tips, transport between cities, luggage storage, SIM cards, currency.\n- Estimated Cost Summary (tab-separated): Flights, Accommodation per stop, Activities total, Food total, Transport between stops, Total, Remaining Budget.\n\nFormatting rules:\n- No Markdown (no ###, **, | tables)\n- Section headings: plain text ending with colon\n- Stop headings: <strong>Stop [N]: [City] ([dates])</strong>\n- Day labels: <strong>Day [N]: [description]</strong>\n- Bullets: leading hyphen (- item)\n- Cost Summary: tab-separated (Category\\tAmount)\n- <strong> on Total and Remaining Budget rows\n- Blank line between sections\n- Emojis welcome but purposeful\n- Every accommodation, transport, restaurant, and activity must have a real clickable booking link using <a href=\"URL\">text \u2192</a> format`;\n\n} else {\n  // \u2500\u2500 SINGLE DESTINATION PROMPT (original) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  const dateLine = flexDates\n    ? 'Flexible \u2014 suggest the optimal time to visit this destination'\n    : (startDate && endDate ? `${startDate} to ${endDate}` : 'Not specified');\n\n  prompt = `Please create a complete city & stays itinerary. CRITICAL: The Accommodation Type field tells you exactly what the user wants \u2014 match ALL accommodation recommendations to that type (hotel \u2192 recommend hotels with Booking.com/Hotels.com links; Airbnb \u2192 recommend Airbnb homes; hostel \u2192 recommend hostels; etc.). Do not recommend Airbnb if they want a hotel and vice versa.\n\n- Departure: ${departureLocation}\n- Travel Mode: ${modeLabel}\n- Destination: ${destinationCity}\n- Dates: ${dateLine}\n- Trip Type: ${tripType}\n- Travel Pace: ${paceLabel}\n- Plan Tier: ${tierLabel}\n- Total Budget: $${budget} USD\n- Group Size: ${groupSize}\n- Age Ranges: ${fmt(ageRange)}\n- Accommodation Type: ${accommodationType}\n- Key Amenities: ${fmt(amenities)}\n- Bedrooms: ${bedrooms}, Bathrooms: ${bathrooms}\n\nPlease follow all formatting and content rules from the system prompt exactly.`;\n}\n\nreturn [{ json: {\n  departureLocation, destinationCity, startDate, endDate, flexDates,\n  tripMode, destinationLegs, travelMode,\n  tripType, travelPace, budgetTier, groupSize, ageRange,\n  accommodationType, amenities, bedrooms, bathrooms, budget, email, prompt\n}}];"
+      },
+      "name": "Prepare Airbnb Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        304
+      ],
+      "id": "de063b1a-8bf8-4a3d-a467-f99e34ae60d9"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "You are an expert city travel and accommodation specialist at Voyage Genie. CRITICAL RULE: Always match your accommodation recommendations to the user's stated Accommodation Type. If they want a Hotel \u2014 recommend hotels. If they want an Airbnb \u2014 recommend Airbnbs. If \"No preference\" \u2014 offer the best mix. You help travellers find the perfect stay \u2014 whether that's a boutique hotel, a luxury resort, an Airbnb apartment, a hostel, or anything in between. Create exciting, detailed, and practical itineraries for city breaks, cultural trips, romantic getaways, family holidays, and multi-destination tours. Every accommodation, activity, restaurant, and flight suggestion must include a real clickable booking link.\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nBUDGET TIER \u2014 drives every recommendation\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nECONOMY tier:\n- Accommodation: Budget hotels (2\u20133 star), hostels with private rooms, budget Airbnb rooms. $30\u201380/night.\n- Links: Booking.com economy filter, Hostelworld, Airbnb budget filter.\n- Activities: Free parks, self-guided walks, free museums, public transport. Under $20/activity.\n- Dining: Street food, local markets, budget restaurants. ~$15\u201330/day.\n\nSTANDARD tier:\n- Accommodation: 3\u20134 star hotels, boutique guesthouses, quality Airbnb apartments or entire homes. $100\u2013250/night.\n- Links: Booking.com, Hotels.com, Airbnb, Expedia \u2014 whichever best suits the property type.\n- Activities: Guided tours $30\u201380, entry fees, day trips, Airbnb Experiences, local operators.\n- Dining: Mix of local restaurants and mid-range dining. ~$40\u201380/day.\n\nELITE tier:\n- Accommodation: 5-star hotels, luxury boutique hotels, private villas with pools, premium penthouse apartments. $300+/night.\n- Links: Direct hotel booking pages, Mr & Mrs Smith, Tablet Hotels, luxury Airbnb collections, Plum Guide.\n- Activities: Private guides, chartered boats, exclusive access. $100\u2013300+/activity.\n- Dining: Fine dining, tasting menus, private chef experiences. ~$100\u2013200/day.\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nTRAVEL PACE ADAPTATION\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n- Relaxed: Max 2 activities/day. Slow mornings, linger over breakfast, afternoon naps, neighbourhood walks.\n- Balanced: 3\u20134 activities/day. Use your base to explore \u2014 morning excursion, afternoon wander, evening out.\n- Active: Full packed days from morning to evening. Maximise every day.\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nTRIP TYPE ADAPTATION\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n- Solo: Central neighbourhoods, walkability, social spaces, safety tips, solo dining friendly spots.\n- Couple: Romantic properties, intimate restaurants, sunset experiences, couples activities.\n- Honeymoon: Private villa or luxury suite, romantic touches, private dining, surprise-worthy experiences.\n- Family: Entire home with kitchen, safe neighbourhood, near parks/playgrounds, family restaurants, age-appropriate activities.\n- Group: Large home with multiple bedrooms, shared spaces, group dining tables, group activity bookings.\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nFLEXIBLE DATES\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nIf flexDates is true: recommend the best time of year to visit \u2014 weather, events, value months, crowd levels. Briefly explain why.\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nBOOKING LINKS \u2014 MANDATORY\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nEvery suggestion must have a real working link using <a href=\"URL\">text \u2192</a> format:\n- Hotels: https://www.booking.com/searchresults.html?ss=[destination] or https://www.hotels.com/search.do?destination=[destination]\n- Airbnb / homes: https://www.airbnb.com/s/[destination]/homes\n- Expedia: https://www.expedia.com/Hotel-Search?destination=[destination]\n- Hostelworld: https://www.hostelworld.com/search?search_keywords=[destination]\n- Flights: https://www.skyscanner.com or https://www.google.com/travel/flights\n- Activities: https://www.viator.com/search?q=[destination] or https://www.getyourguide.com/s/?q=[destination]\n- Experiences: https://www.airbnb.com/experiences?query=[destination]\nNEVER use placeholder URLs.\nIMPORTANT: Match the booking link to the accommodation TYPE \u2014 hotels get Booking.com/Hotels.com, Airbnbs get airbnb.com, hostels get Hostelworld.\n\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nTRAVEL MODE ADAPTATION\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nThe user's Travel Mode field tells you HOW they are getting to the destination. Adapt the \"Flights / Getting There\" section accordingly:\n\nFLIGHT mode:\n- Include a Flights section with specific airlines, route, price range, and Skyscanner/Google Flights booking link.\n\nDRIVING mode:\n- Replace the Flights section with a \"Road Trip Route\" section.\n- Include: estimated drive time and distance, key scenic waypoints or stops en route, fuel cost estimate, parking at destination.\n- Link to Google Maps: https://www.google.com/maps/dir/[departure]/[destination]\n- Do NOT recommend or mention flights anywhere in the itinerary.\n\nTRAIN mode:\n- Replace the Flights section with a \"Rail Journey\" section.\n- Include: main train operators, journey time, key transfer stations, rail pass recommendations if applicable.\n- Link to https://www.rome2rio.com or https://www.thetrainline.com\n- Do NOT recommend or mention flights.\n\nBUS mode:\n- Replace the Flights section with a \"Bus Route\" section.\n- Include: bus operators, journey time, terminal information at destination.\n- Link to https://www.rome2rio.com or https://www.flixbus.com\n- Do NOT recommend or mention flights.\n\nFERRY mode:\n- Replace the Flights section with a \"Ferry Crossing\" section.\n- Include: ferry operator names, crossing time, port-to-city transfer tips.\n- Do NOT recommend or mention flights unless a flight is needed to reach the ferry port.\n\nFor MULTI-DESTINATION trips with non-flight modes:\n- Apply the same logic to each leg's transport section \u2014 e.g. driving directions from Stop 1 city to Stop 2 city.\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nSECTIONS \u2014 include ALL in this order\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n1. Flights / Getting There: (adapt based on Travel Mode \u2014 see TRAVEL MODE ADAPTATION section above)\n2. Accommodation Options: (3 options matching tier \u2014 can be hotels, Airbnbs, boutique stays, whatever fits best. Include name/type, price/night, total cost, and booking link)\n3. Best Neighbourhoods: (2\u20133 areas to stay with pros/cons, what each is best for, and a search link matching the accommodation type)\n4. Daily Schedule: (Morning/Afternoon/Evening per day \u2014 density based on travelPace)\n5. Must-Visit Spots: (5\u20138 attractions/experiences with brief description and booking/info link)\n6. Dining Guide: (5\u20138 restaurant recommendations matching tier, with cuisine, price range, link)\n7. Estimated Food Budget: (per person per day, matched to tier)\n8. Cost Summary: (tab-separated \u2014 mandatory)\n9. Multi-City Tips (if applicable): (if the destination covers multiple cities e.g. \"Italy\" or \"Greece\", suggest a logical route between 2\u20133 cities with day splits)\n10. Travel Tips: (5\u20138 practical tips specific to destination and trip type)\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nFORMATTING RULES\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n- No Markdown (no ###, **, | tables)\n- Section headings: plain text ending with colon\n- Bullets: leading hyphen (- item)\n- Day labels: <strong>Day 1: Arrival in [city]</strong>\n- Cost Summary: tab-separated (Category\\tAmount)\n- <strong> on Total and Remaining Budget rows\n- Blank line between sections\n- Emojis welcome but purposeful\n\nExample Cost Summary:\nCost Summary:\nFlights\\t$600\nAccommodation\\t$1,050\nActivities\\t$200\nFood\\t$350\n<strong>Total</strong>\\t<strong>$2,200</strong>\n<strong>Remaining Budget</strong>\\t<strong>$800</strong>",
+              "role": "system"
+            },
+            {
+              "content": "={{$json.prompt}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        896,
+        304
+      ],
+      "id": "8c41680e-1304-4e0b-b406-eaf323279905",
+      "credentials": {
+        "openAiApi": {
+          "id": "a3k4PaLdtRKABoos",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 Validate OpenAI response & format \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nconst rawContent = $node['OpenAI'].json?.message?.content;\n\nif (!rawContent || rawContent.trim() === '') {\n  const reason = $node['OpenAI'].json?.message?.finish_reason || 'unknown';\n  throw new Error(`OpenAI returned empty content. Finish reason: ${reason}. Check API quota or prompt length.`);\n}\n\n// Normalise literal \\t then strip code fences\nconst itineraryRaw = rawContent.replace(/\\\\t/g, '\\t').replace(/```[\\w]*\\n?/g,'').replace(/```/g,'').trim();\n\nconst itineraryLines = itineraryRaw.split('\\n');\nlet formattedItinerary = '';\nlet inDailySchedule = false;\nlet inCostSummary   = false;\nlet scheduleLines   = [];\nlet costSummaryRows = [];\n\nconst formatDailySchedule = (lines) => {\n  let output = '<strong style=\"font-size:16px;color:#2a4a6e;display:block;margin:15px 0 5px 0;\">Daily Schedule:</strong>';\n  const joined = lines.join(' ');\n  const daySections = joined.match(/(Day \\d+:.*?)(?=(Day \\d+:|$))/g);\n  if (!daySections) return output + '<br>';\n  daySections.forEach((dayMatch, index) => {\n    const dayLabelMatch = dayMatch.match(/(Day \\d+:[^\\-]*)/);\n    if (!dayLabelMatch) return;\n    const dayLabel = dayLabelMatch[1].trim();\n    const subItems = dayMatch.match(/- (Morning|Afternoon|Evening):.*?(?=(Day \\d+:|- (Morning|Afternoon|Evening):|$))/g);\n    output += `<strong>${dayLabel}</strong>`;\n    if (subItems) { output += `<div style=\"margin:4px 0 8px 12px;\">${subItems.map(i=>i.trim()).join('<br>')}</div>`; }\n    if (index < daySections.length - 1) output += '<br>';\n  });\n  return output + '<br>';\n};\n\nfor (let line of itineraryLines) {\n  line = line.trim();\n  if (!line) {\n    if (inDailySchedule) { formattedItinerary += formatDailySchedule(scheduleLines); inDailySchedule=false; scheduleLines=[]; }\n    else if (inCostSummary) { inCostSummary=false; formattedItinerary+=`<table style=\"border-collapse:collapse;width:100%;margin:10px 0;font-size:14px;\">${costSummaryRows.join('')}</table><br>`; costSummaryRows=[]; }\n    else { formattedItinerary += '<br>'; }\n    continue;\n  }\n  const lower = line.toLowerCase();\n  if (lower.startsWith('daily schedule:')) { inDailySchedule=true; scheduleLines=[]; continue; }\n  if (inDailySchedule) { scheduleLines.push(line); continue; }\n  if (lower.startsWith('cost summary:')) { formattedItinerary+=`<strong style=\"font-size:16px;color:#2a4a6e;display:block;margin:15px 0 5px 0;\">Cost Summary:</strong>`; inCostSummary=true; continue; }\n  if (inCostSummary && line.includes('\\t')) {\n    const parts=line.split('\\t').map(s=>s.trim()); const cat=parts[0]||''; const cost=parts[1]||'';\n    const isBold=cat.startsWith('Total')||cat.startsWith('Remaining Budget');\n    const cellStyle=isBold?'border:1px solid #e0e0e0;padding:8px;background:#f0f0f0;font-weight:bold;':'border:1px solid #e0e0e0;padding:8px;';\n    costSummaryRows.push(`<tr><td style=\"${cellStyle}\">${cat}</td><td style=\"${cellStyle}\">${cost}</td></tr>`); continue;\n  }\n  if (inCostSummary) { inCostSummary=false; formattedItinerary+=`<table style=\"border-collapse:collapse;width:100%;margin:10px 0;font-size:14px;\">${costSummaryRows.join('')}</table><br>`; costSummaryRows=[]; }\n  if (line.endsWith(':')) { formattedItinerary+=`<strong style=\"font-size:16px;color:#2a4a6e;display:block;margin:15px 0 5px 0;\">${line}</strong>`; }\n  else { formattedItinerary+=`${line}<br>`; }\n}\nif (inDailySchedule && scheduleLines.length>0) formattedItinerary+=formatDailySchedule(scheduleLines);\nif (costSummaryRows.length>0) formattedItinerary+=`<table style=\"border-collapse:collapse;width:100%;margin:10px 0;font-size:14px;\">${costSummaryRows.join('')}</table><br>`;\n\nreturn [{ json: { ...$json, itinerary: formattedItinerary } }];"
+      },
+      "name": "Format Daily Schedule",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        304
+      ],
+      "id": "2a74f8de-1c96-4ebc-a306-365409824178"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $node['Prepare Airbnb Data'].json;\nconst ai   = $node['Format Daily Schedule'].json;\nif (!prep || !ai) throw new Error('Airbnb Info: missing upstream data');\nif (!ai.itinerary || ai.itinerary.trim()==='') throw new Error('Airbnb Info: empty itinerary');\nreturn [{ json: {\n  departureLocation:  prep.departureLocation,\n  destinationCity:    prep.destinationCity,\n  startDate:          prep.startDate,\n  endDate:            prep.endDate,\n  flexDates:          prep.flexDates,\n  tripMode:           prep.tripMode,\n  destinationLegs:    prep.destinationLegs,\n  tripType:           prep.tripType,\n  travelPace:         prep.travelPace,\n  budgetTier:         prep.budgetTier,\n  groupSize:          prep.groupSize,\n  ageRange:           prep.ageRange,\n  accommodationType:  prep.accommodationType,\n  amenities:          prep.amenities,\n  bedrooms:           prep.bedrooms,\n  bathrooms:          prep.bathrooms,\n  travelMode:         prep.travelMode,\n  budget:             prep.budget,\n  email:              prep.email,\n  itinerary:          ai.itinerary\n}}];"
+      },
+      "name": "Airbnb Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        304
+      ],
+      "id": "658e0cf6-da9e-44ca-9e27-ce38fc7d3fbc"
+    },
+    {
+      "parameters": {
+        "jsCode": "const destination      = $json.destinationCity   || 'Your Destination';\nconst departure        = $json.departureLocation  || 'Not specified';\nconst flexDates        = $json.flexDates          || false;\nconst tripMode         = $json.tripMode           || 'single';\nconst destinationLegs  = $json.destinationLegs    || null;\nconst travelDates      = flexDates\n  ? 'Flexible \u2014 Genie will suggest the best time'\n  : `${$json.startDate||'N/A'} to ${$json.endDate||'N/A'}`;\nconst budget           = $json.budget             || 'N/A';\nconst groupSize        = $json.groupSize          || 'N/A';\nconst tripType         = $json.tripType           || 'N/A';\nconst travelPace       = $json.travelPace         || '';\nconst budgetTier       = $json.budgetTier         || 'Standard';\nconst accommodationType= $json.accommodationType  || 'Not specified';\nconst amenities        = Array.isArray($json.amenities) ? $json.amenities.join(', ') : ($json.amenities||'Not specified');\nconst bedrooms         = $json.bedrooms           || 'N/A';\nconst bathrooms        = $json.bathrooms          || 'N/A';\nconst ageRange         = Array.isArray($json.ageRange) ? $json.ageRange.join(', ') : ($json.ageRange||'');\nconst itineraryContent = $json.itinerary          || 'Itinerary details not available.';\n\nconst tierBadge  = { Economy: '\ud83d\udfe2 Economy', Standard: '\ud83d\udd35 Standard', Elite: '\u2b50 Elite' }[budgetTier] || budgetTier;\nconst paceLabel  = { Relaxed: '\ud83c\udf05 Relaxed', Balanced: '\ud83c\udf0a Balanced', Active: '\ud83c\udfc4 Active' }[travelPace] || travelPace;\n\n// Build destination display \u2014 route for multi, single city for single\nconst isMulti = tripMode === 'multi' && Array.isArray(destinationLegs) && destinationLegs.length >= 2;\nconst destinationDisplay = isMulti\n  ? destinationLegs.map(l => l.city).join(' \u2192 ')\n  : destination;\nconst stopsRow = isMulti\n  ? `<p style=\"color:#333;font-size:15px;margin:8px 0;line-height:1.5;\"><strong style=\"color:#023e8a;\">\ud83d\uddfa\ufe0f Stops:</strong> ${destinationLegs.length} cities \u2014 ${destinationLegs.map((l,i)=>`Stop ${i+1}: ${l.city} (${l.checkIn} \u2192 ${l.checkOut})`).join(' &nbsp;|&nbsp; ')}</p>`\n  : '';\n\nconst metaRow = (label, value) =>\n  `<p style=\"color:#333;font-size:15px;margin:8px 0;line-height:1.5;\"><strong style=\"color:#023e8a;\">${label}:</strong> ${value}</p>`;\n\nconst emailHtml = `\n<div style=\"font-family:'Helvetica Neue',Arial,sans-serif;max-width:660px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:12px;\">\n  <div style=\"background:linear-gradient(105deg,#023e8a,#0077b6);padding:26px 28px;border-radius:10px 10px 0 0;text-align:center;\">\n    <h1 style=\"color:#fff;margin:0;font-size:26px;font-family:Georgia,serif;\">\ud83c\udfe8 Your ${isMulti ? 'Multi-Destination' : 'City & Stays'} Itinerary</h1>\n    <p style=\"color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:14px;\">Generated by Voyage Genie \u00b7 ${tierBadge}</p>\n  </div>\n  <div style=\"background:#fff;padding:28px;border-radius:0 0 10px 10px;border:1px solid #e2e8f0;border-top:none;\">\n    <h2 style=\"color:#023e8a;font-size:18px;margin:0 0 16px;border-bottom:2px solid #eaf4fb;padding-bottom:10px;\">Trip Overview</h2>\n    ${metaRow('\ud83d\udccd Destination', destinationDisplay)}\n    ${stopsRow}\n    ${metaRow('\u2708\ufe0f Departing from', departure)}\n    ${metaRow('\ud83d\udcc5 Dates', travelDates)}\n    ${metaRow('\ud83e\uddf3 Trip Type', tripType)}\n    ${paceLabel ? metaRow('\u26a1 Travel Pace', paceLabel) : ''}\n    ${metaRow('\u2b50 Plan Tier', tierBadge)}\n    ${metaRow('\ud83d\udc65 Group Size', groupSize)}\n    ${metaRow('\ud83c\udfe0 Accommodation', `${accommodationType} \u00b7 ${bedrooms} bed \u00b7 ${bathrooms} bath`)}\n    ${metaRow('\u2728 Amenities', amenities)}\n    ${ageRange ? metaRow('\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67 Age Ranges', ageRange) : ''}\n    ${metaRow('\ud83d\udcb5 Budget', '$' + budget)}\n    <hr style=\"border:0;border-top:1px solid #e2e8f0;margin:20px 0;\">\n    <h3 style=\"color:#023e8a;font-size:16px;margin:0 0 14px;\">Your Itinerary</h3>\n    <div style=\"background:#f8fafc;padding:20px;border-radius:8px;font-size:14px;line-height:1.7;color:#1e293b;border:1px solid #e2e8f0;\">\n      ${itineraryContent}\n    </div>\n    <hr style=\"border:0;border-top:1px solid #e2e8f0;margin:24px 0 16px;\">\n    <p style=\"color:#64748b;font-size:12px;text-align:center;margin:0;\">\n      Generated by <strong>Voyage Genie</strong> \ud83c\udf1f &nbsp;|&nbsp; Plan Less, Explore More\n    </p>\n  </div>\n</div>`;\n\nconst sessionId = [Date.now().toString(36), Math.random().toString(36).slice(2,7)].join('-');\nconst subject   = isMulti\n  ? `Your ${tierBadge} Multi-Stop Itinerary: ${destinationDisplay} \u2013 Voyage Genie`\n  : `Your ${tierBadge} Airbnb & Hotel Itinerary for ${destination} \u2013 Voyage Genie`;\n\nconst formData = {\n  departureLocation: departure, destinationCity: destinationDisplay,\n  startDate: $json.startDate||'', endDate: $json.endDate||'',\n  flexDates, tripMode, destinationLegs,\n  tripType, travelPace, budgetTier,\n  accommodationType, bedrooms, bathrooms, budget, groupSize,\n  amenities: $json.amenities || [],\n  ageRange:  $json.ageRange  || []\n};\n\nreturn [{ json: {\n  sessionId,\n  itineraryHtml:   itineraryContent,\n  emailHtml:       emailHtml,\n  resolvedEmail:   ($json.email||'').trim(),\n  resolvedSubject: subject,\n  resolvedMessage: emailHtml,\n  formData\n}}];"
+      },
+      "name": "Resolve Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        304
+      ],
+      "id": "4e8b7517-be0f-46a3-9f56-201335ef932e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_WEBHOOK = 'https://exodonprofits.app.n8n.cloud/webhook/send-email';\nconst MAX_RETRIES   = 2;\nconst RETRY_DELAY   = 1500;\n\nconst payload = { resolvedEmail: $json.resolvedEmail, resolvedSubject: $json.resolvedSubject, resolvedMessage: $json.resolvedMessage };\n\nif (!payload.resolvedEmail || payload.resolvedEmail === '') {\n  return $input.all();\n}\n\nconst sleep = (ms) => new Promise(r => setTimeout(r, ms));\nlet lastError;\nfor (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {\n  try {\n    await $http({ method: 'POST', url: EMAIL_WEBHOOK, body: payload, headers: { 'Content-Type': 'application/json' } });\n    return $input.all();\n  } catch (err) {\n    lastError = err;\n    if (attempt < MAX_RETRIES) await sleep(RETRY_DELAY);\n  }\n}\nconsole.error(`Email delivery failed after ${MAX_RETRIES} attempts: ${lastError?.message}`);\nreturn $input.all();"
+      },
+      "name": "Trigger Email Workflow",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        304
+      ],
+      "id": "b185da80-ee74-4e24-b00f-2a7a13b09fb6"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}"
+            },
+            {
+              "name": "redirectUrl",
+              "value": "airbnb-trip-itinerary.html"
+            },
+            {
+              "name": "itineraryData",
+              "value": "={{ JSON.stringify($json.formData) }}"
+            },
+            {
+              "name": "itineraryHtml",
+              "value": "={{ $json.itineraryHtml }}"
+            },
+            {
+              "name": "emailHtml",
+              "value": "={{ $json.emailHtml }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Final Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        304
+      ],
+      "id": "e04fa094-dd3d-4622-aefb-5507cc0faea8"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: {\n  sessionId:     $json.sessionId,\n  redirectUrl:   $json.redirectUrl,\n  itineraryData: $json.itineraryData,\n  itineraryHtml: $json.itineraryHtml,\n  emailHtml:     $json.emailHtml\n}}];"
+      },
+      "name": "Clean Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        304
+      ],
+      "id": "1d9281be-cc73-4610-9752-4e7f7a7c519f"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ sessionId: $json.sessionId, redirectUrl: $json.redirectUrl, itineraryData: $json.itineraryData, itineraryHtml: $json.itineraryHtml }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return JSON Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2256,
+        304
+      ],
+      "id": "673d7906-8d1e-4352-8d0a-010f3e0141d9"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "airbnb-travel-agent-new-suggestion",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "New Suggestion Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        544
+      ],
+      "id": "b4426316-7639-4a68-8c42-77576930019d",
+      "webhookId": "c98c30a5-5827-4e26-8921-1c5b5e756693"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS New Suggestion",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -464,
+        544
+      ],
+      "id": "09c18c86-442e-473f-9ff2-3605978fa4c6"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS New Suggestion",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        432
+      ],
+      "id": "8d0142fe-33da-443f-99a3-acff96c1283a"
+    },
+    {
+      "parameters": {
+        "jsCode": "let method = $json.method;\nif (!method) { method = $json.headers?.[':method'] || 'POST'; }\nreturn [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method New Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        656
+      ],
+      "id": "e0e63838-32c8-427f-a054-b2370897a736"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.method).toUpperCase() }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Method New Suggestion",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        656
+      ],
+      "id": "bcb23105-c629-4e5b-8872-fee0ae2753f3"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\":\"Method not allowed\",\"status\":405}",
+        "options": {
+          "responseCode": 405,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond 405 New Suggestion",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        160,
+        544
+      ],
+      "id": "23578508-175a-4666-a2a1-a0d86c173d1b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst destination  = body.destinationCity  || body.destination  || 'unknown';\nconst departure    = body.departureLocation|| body.departure    || '';\nconst budget       = body.budget           || '0';\nconst tripType     = body.tripType         || 'Not specified';\nconst startDate    = body.startDate        || '';\nconst endDate      = body.endDate          || '';\nconst accommodationType = body.accommodationType || body.propertyType || 'Entire Home';\n\nconst accomLabel = accommodationType && accommodationType !== 'No preference' ? accommodationType : 'hotel or Airbnb';\nconst prompt = `The user has a city & stay itinerary for ${destination}. Budget: $${budget}. Trip type: ${tripType}. Accommodation preference: ${accomLabel}${startDate ? `. Dates: ${startDate} to ${endDate}` : ''}.\n\nSuggest 3 alternative destinations with a similar vibe that:\n- Match the same travel style and budget\n- Suit a ${tripType} traveler\n- Have good ${accomLabel} options\n\nFor each destination:\n- Destination name and country\n- Why it suits this traveler (vibe, culture, ease of travel)\n- Estimated total cost (flights + 7 nights accommodation)\n- Best area to stay\n- Top 3 experiences\n- Booking link matching their accommodation type (hotel \u2192 Booking.com, Airbnb \u2192 airbnb.com)\n\nFormat with clear headings and bullet points.`;\n\nreturn [{ json: { ...body, prompt } }];"
+      },
+      "name": "Prepare New Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        656
+      ],
+      "id": "496f963f-e88a-4e09-9944-b60c83117bb9"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "You are a city travel specialist at Voyage Genie. Suggest practical, specific alternative destinations with real booking links that match the user's accommodation preference (hotel, Airbnb, hostel, etc.).",
+              "role": "system"
+            },
+            {
+              "content": "={{$json.prompt}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "OpenAI New Suggestion",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        464,
+        656
+      ],
+      "id": "b9fc5c06-da70-43e3-b18d-629f57ee2fac",
+      "credentials": {
+        "openAiApi": {
+          "id": "a3k4PaLdtRKABoos",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawContent = $node['OpenAI New Suggestion'].json?.message?.content;\nif (!rawContent || rawContent.trim() === '') throw new Error('OpenAI New Suggestion returned empty content.');\nconst sessionId = [Date.now().toString(36), Math.random().toString(36).slice(2,7)].join('-');\nreturn [{ json: { sessionId, suggestions: rawContent.trim(), suggestionsHtml: rawContent.trim().replace(/\\n/g,'<br>') } }];"
+      },
+      "name": "Format New Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        656
+      ],
+      "id": "79398137-8531-4677-a65f-30b452674519"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ sessionId: $json.sessionId, suggestions: $json.suggestions, suggestionsHtml: $json.suggestionsHtml }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return New Suggestion Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        864,
+        656
+      ],
+      "id": "a84b5e9a-bc4a-41d3-83b0-cefef2cc2e09"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Method": {
+      "main": [
+        [
+          {
+            "node": "If Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 405",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Prepare Airbnb Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Airbnb Data": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Format Daily Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Airbnb Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airbnb Info": {
+      "main": [
+        [
+          {
+            "node": "Resolve Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Email Content": {
+      "main": [
+        [
+          {
+            "node": "Trigger Email Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Email Workflow": {
+      "main": [
+        [
+          {
+            "node": "Set Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Final Response": {
+      "main": [
+        [
+          {
+            "node": "Clean Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Output": {
+      "main": [
+        [
+          {
+            "node": "Return JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Suggestion Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Method New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Method New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "If Method New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Prepare New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 405 New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "OpenAI New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Format New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Return New Suggestion Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ddf1ee99-8cbe-4cc3-8ab0-0e9cdc12ee6c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "ECAIWEOLirAT7iQu",
+  "tags": []
+}

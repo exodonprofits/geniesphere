@@ -1,0 +1,324 @@
+{
+  "name": "Insurance Genie - Intake \u2192 Supabase \u2192 OpenAI \u2192 Email Summary \u2192 Respond",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "insurance-intake",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook: Insurance Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "pending"
+            }
+          ],
+          "json": [
+            {
+              "name": "payload",
+              "value": "={{$json}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2",
+      "name": "Prep Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "tableId": "insurance_intakes",
+        "dataToSend": "defineBelow",
+        "fieldValues": [
+          {
+            "fieldId": "payload",
+            "fieldValue": "={{$json.payload}}"
+          },
+          {
+            "fieldId": "status",
+            "fieldValue": "={{$json.status}}"
+          },
+          {
+            "fieldId": "user_id",
+            "fieldValue": "={{$json.payload.user_id || $json.payload.userId || $json.payload.user?.id || null}}"
+          },
+          {
+            "fieldId": "email",
+            "fieldValue": "={{$json.payload.email || $json.payload.user?.email || null}}"
+          }
+        ],
+        "options": {}
+      },
+      "id": "3",
+      "name": "Supabase: Insert Intake",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "intake_id",
+              "value": "={{$json.id || $json.data?.[0]?.id || $json.data?.id || ''}}"
+            },
+            {
+              "name": "to_email",
+              "value": "={{$node['Prep Payload'].json.payload.email || $node['Prep Payload'].json.payload.user?.email || ''}}"
+            }
+          ],
+          "json": [
+            {
+              "name": "intake_payload",
+              "value": "={{$node['Prep Payload'].json.payload}}"
+            }
+          ]
+        }
+      },
+      "id": "4",
+      "name": "Normalize Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        930,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {
+          "timeout": 120000
+        },
+        "headerParametersJson": "{\n  \"Authorization\": \"Bearer {{$env.OPENAI_API_KEY}}\",\n  \"Content-Type\": \"application/json\"\n}",
+        "bodyParametersJson": "{\n  \"model\": \"gpt-4o\",\n  \"temperature\": 0.3,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are Insurance Genie for GenieSphere. Return ONLY valid JSON. Be clear, actionable, non-technical. Do not provide legal advice.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Analyze this insurance intake. Return JSON ONLY in this schema:\\n\\n{\\n  \\\"risk_summary\\\": string,\\n  \\\"coverage_gaps\\\": string[],\\n  \\\"recommended_adjustments\\\": string[],\\n  \\\"savings_opportunities\\\": string[],\\n  \\\"bundle_strategy\\\": string,\\n  \\\"premium_comparison\\\": {\\n     \\\"assumptions\\\": string,\\n     \\\"options\\\": [{\\\"carrier\\\": string, \\\"monthly_premium\\\": number, \\\"deductible\\\": number, \\\"pros\\\": string[], \\\"cons\\\": string[]}],\\n     \\\"best_value_pick\\\": string\\n  },\\n  \\\"confidence_score\\\": number\\n}\\n\\nIntake:\\n\" + JSON.stringify($node['Normalize Output'].json.intake_payload)\n    }\n  ]\n}"
+      },
+      "id": "5",
+      "name": "OpenAI: Analyze Intake",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const raw = $json;\nconst content = raw.choices?.[0]?.message?.content || '';\nlet analysis;\ntry { analysis = JSON.parse(content); } catch (e) { analysis = { error: 'Invalid JSON from model', raw: content }; }\nreturn [{ json: { analysis_raw: content, analysis } }];"
+      },
+      "id": "6",
+      "name": "Parse AI JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1410,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "tableId": "insurance_intakes",
+        "updateKey": "id",
+        "idValue": "={{$node['Normalize Output'].json.intake_id}}",
+        "dataToSend": "defineBelow",
+        "fieldValues": [
+          {
+            "fieldId": "ai_analysis",
+            "fieldValue": "={{$json.analysis}}"
+          },
+          {
+            "fieldId": "status",
+            "fieldValue": "analyzed"
+          }
+        ],
+        "options": {}
+      },
+      "id": "7",
+      "name": "Supabase: Save AI Result",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "toEmail": "={{$node['Normalize Output'].json.to_email}}",
+        "subject": "={{'\ud83d\udee1\ufe0f Insurance Genie Summary \u2022 ' + ($node['Normalize Output'].json.intake_id || '')}}",
+        "text": "={{'Here is your Insurance Genie summary (JSON):\\n\\n' + JSON.stringify($node['Parse AI JSON'].json.analysis, null, 2)}}",
+        "options": {}
+      },
+      "id": "8",
+      "name": "Email Genie: Send Summary",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        1860,
+        300
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE_WITH_SMTP_CREDENTIAL_ID",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseBody": "={{({ success: true, intake_id: $node['Normalize Output'].json.intake_id, analysis: $node['Parse AI JSON'].json.analysis })}}",
+        "options": {}
+      },
+      "id": "9",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Insurance Intake": {
+      "main": [
+        [
+          {
+            "node": "Prep Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Payload": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Insert Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Insert Intake": {
+      "main": [
+        [
+          {
+            "node": "Normalize Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Output": {
+      "main": [
+        [
+          {
+            "node": "OpenAI: Analyze Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI: Analyze Intake": {
+      "main": [
+        [
+          {
+            "node": "Parse AI JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI JSON": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Save AI Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Save AI Result": {
+      "main": [
+        [
+          {
+            "node": "Email Genie: Send Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Genie: Send Summary": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionTimeout": 360,
+    "timezone": "America/Chicago"
+  },
+  "meta": {
+    "notes": "Replace Supabase/SMTP credential IDs. Set OPENAI_API_KEY env var in n8n."
+  }
+}

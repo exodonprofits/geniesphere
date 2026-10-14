@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swing Trade Strategy</title>
+    <link rel="stylesheet" href="styles.css">
+<!-- Add chart container -->
+<div id="chartContainer" style="height: 400px; margin: 20px 0;"></div>
+const API_KEY = 'Q4G5ENNEDL4AIFQ9'; // Get free key from alphavantage.co
+
+async function getStockData(symbol) {
+    try {
+        const response = await fetch(
+            `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${API_KEY}`
+        );
+        const data = await response.json();
+        return data['Time Series (Daily)'];
+    } catch (error) {
+        console.error('Error fetching stock data:', error);
+        return null;
+    }
+}
+
+// Modified strategy generation to include real data
+async function generateEnhancedStrategy(symbol, days, risk) {
+    const stockData = await getStockData(symbol);
+    if (!stockData) return '<p>⚠️ Failed to fetch stock data</p>';
+
+    const latestDate = Object.keys(stockData)[0];
+    const latestPrice = stockData[latestDate]['4. close'];
+    
+    // Add price context to strategy
+    return `<p>Current Price: $${latestPrice} (as of ${latestDate})</p>`;
+}
+
+</head>
+<body>
+    <div class="container">
+        <h1>Swing Trade Strategy Generator</h1>
+        <form id="strategyForm">
+            <label for="stockSymbol">Stock Symbol:</label>
+            <input type="text" id="stockSymbol" name="stockSymbol" required>
+
+            <label for="timeFrame">Time Frame:</label>
+            <select id="timeFrame" name="timeFrame" required>
+                <option value="1">1 Day</option>
+                <option value="5">5 Days</option>
+                <option value="10">10 Days</option>
+                <option value="20">20 Days</option>
+            </select>
+
+            <label for="riskTolerance">Risk Tolerance:</label>
+            <select id="riskTolerance" name="riskTolerance" required>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+
+            <button type="submit">Generate Strategy</button>
+        </form>
+
+        <div id="strategyResult" class="result">
+            <!-- Strategy result will be displayed here -->
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

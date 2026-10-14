@@ -1,0 +1,375 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation ‚Äì Voyage Genie</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+    .confirmation-section {
+      max-width: 4xl;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+    }
+    .confirmation-section h1 {
+      color: #2c3e50;
+      font-size: 2.25rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .confirmation-section p {
+      text-align: center;
+      color: #555;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+    .action-links {
+      text-align: center;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+    .action-links a, .action-links button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      color: #0096c7;
+      font-size: 1.8rem;
+      text-decoration: none;
+      border: none;
+      background: none;
+      padding: 0;
+      transition: color 0.3s;
+    }
+    .action-links a:hover, .action-links button:hover {
+      color: #0077b6;
+    }
+    .action-links a:hover .tooltip, .action-links button:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+    .tooltip {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      top: -40px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      transition: opacity 0.3s;
+      z-index: 1;
+    }
+    .itinerary {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333333;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin: 2rem 0;
+      color: #0096c7;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+      color: #0077b6;
+    }
+    .nav-icon {
+      height: 30px;
+      width: auto;
+      margin-right: 8px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+    }
+    /* Hamburger Menu Styles */
+    .hamburger {
+      display: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .nav-links {
+      display: flex;
+    }
+    @media (max-width: 640px) {
+      .hamburger {
+        display: block;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: linear-gradient(to bottom, #60a5fa, #4c6ef5);
+        width: 100%;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .nav-links.active {
+        display: flex;
+      }
+      .nav-links li {
+        margin: 0.5rem 0;
+      }
+      .nav-links a {
+        font-size: 1.1rem;
+        padding: 0.5rem;
+        display: block;
+        text-align: center;
+      }
+      .nav-brand h1 {
+        font-size: 1.125rem;
+      }
+      .action-links {
+        gap: 1rem;
+      }
+      .action-links a, .action-links button {
+        width: 32px;
+        height: 32px;
+        font-size: 1.5rem;
+      }
+    }
+    /* Print styles */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .confirmation-section, .confirmation-section * {
+        visibility: visible;
+      }
+      .confirmation-section {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        padding: 1rem;
+      }
+      .action-links, .back-link, nav, footer {
+        display: none !important;
+      }
+      .itinerary {
+        background-color: transparent;
+        padding: 0;
+        font-size: 12pt;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      p {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html#home" class="nav-brand" aria-label="Go to Home">
+        <img src="nav-icon.png" alt="Voyage Genie Icon" class="nav-icon">
+        <h1 class="text-2xl font-bold">Voyage Genie</h1>
+      </a>
+      <div class="hamburger">‚ò∞</div>
+      <ul class="nav-links space-x-6">
+        <li><a href="index.html#home" class="hover:underline" aria-label="Go to Home">Home</a></li>
+        <li><a href="features.html" class="hover:underline" aria-label="Go to Features">Features</a></li>
+        <li><a href="contact.html" class="hover:underline" aria-label="Go to Contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="main-content">
+    <section class="confirmation-section">
+      <h1>üéâ Your Adventure Itinerary is Ready!</h1>
+      <p>Here‚Äôs your personalized travel plan. A copy has been sent to your email.</p>
+      <div class="action-links">
+        <button id="printItineraryBtn" aria-label="Print Itinerary">
+          üñ®Ô∏è
+          <span class="tooltip">Print Itinerary</span>
+        </button>
+        <a href="adventure_trip_plan_form.html" id="modifyLink" aria-label="Modify Search">
+          ‚úèÔ∏è
+          <span class="tooltip">Modify Search</span>
+        </a>
+      </div>
+      <div id="itinerary-header"></div>
+      <itinerary id="itinerary"></itinerary>
+      <a href="index.html" class="back-link">‚Üê Back to Home</a>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-200 text-center py-8">
+    <p class="text-sm">¬© 2025 VoyageGenie.com ‚Äì Plan Less, Explore More ‚úàÔ∏èüåç</p>
+    <div class="mt-4 flex justify-center space-x-6">
+      <a href="#" class="text-blue-500 hover:underline" aria-label="Visit our Facebook page">Facebook</a>
+      <a href="#" class="text-blue-500 hover:underline" aria-label="Visit our Instagram page">Instagram</a>
+      <a href="contact.html" class="text-blue-500 hover:underline" aria-label="Contact Us">Contact Us</a>
+    </div>
+    <div class="mt-4">
+      <a href="index.html#home" class="text-blue-500 hover:underline mx-2" aria-label="Go to Home">Home</a>
+      <a href="features.html" class="text-blue-500 hover:underline mx-2" aria-label="Go to Features">Features</a>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Retrieve the itinerary HTML string from localStorage
+      let itineraryHtml = localStorage.getItem('itineraryHtml');
+      console.log('Retrieved itineraryHtml from localStorage:', itineraryHtml ? itineraryHtml.substring(0, 500) : 'undefined');
+
+      // Retrieve form data from localStorage for the itinerary header
+      let departureLocation = 'Not specified';
+      let destination = 'Your Destination';
+      let travelDates = 'N/A to N/A';
+      let budget = 'N/A';
+      let groupSize = 'N/A';
+      const formDataJson = localStorage.getItem('formData');
+      console.log('Retrieved formData from localStorage:', formDataJson);
+      if (formDataJson) {
+        const formData = JSON.parse(formDataJson);
+        departureLocation = formData.departureLocation || 'Not specified';
+        destination = formData.adventureDestination || 'Your Destination';
+        travelDates = `${formData.startDate || 'N/A'} to ${formData.endDate || 'N/A'}`;
+        budget = formData.budget || 'N/A';
+        groupSize = formData.groupSize || 'N/A';
+        console.log('Departure Location:', departureLocation);
+      }
+
+      if (itineraryHtml) {
+        // Check if the content is a JSON string (e.g., {"finalResponse": "..."})
+        try {
+          const parsed = JSON.parse(itineraryHtml);
+          if (parsed.finalResponse) {
+            itineraryHtml = parsed.finalResponse;
+            console.log('Parsed itineraryHtml as JSON, finalResponse:', itineraryHtml.substring(0, 500));
+          }
+        } catch (e) {
+          console.log('itineraryHtml is not JSON, treating as raw HTML:', itineraryHtml.substring(0, 500));
+        }
+
+        // Log the itinerary content for debugging
+        console.log('Itinerary HTML length:', itineraryHtml.length);
+        console.log('Itinerary HTML preview:', itineraryHtml.substring(0, 500));
+
+        // Parse and reformat the "Cost Summary" section as a table
+        let modifiedHtml = itineraryHtml;
+        const costSummaryRegex = /Cost Summary:[\s\S]*?(?:<table[^>]*>[^<]*<\/table>)?(?:<br>)?([\s\S]*?)(?=<strong style="font-size: 16px; color:\s*#2a4a6e;\s*display:\s*block;\s*margin:\s*15px\s*0\s*5px\s*0;">Travel Tips:|<br>$)/;
+        const match = modifiedHtml.match(costSummaryRegex);
+        if (match) {
+          console.log('Cost Summary match:', match[0]);
+          console.log('Cost Summary content:', match[1]);
+          const costSummaryContent = match[1].trim();
+          const lines = costSummaryContent.split('<br>').filter(line => line.trim());
+          console.log('Cost Summary lines:', lines);
+
+          // Start building the table
+          let tableHtml = '<table style="border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px;" cellpadding="0" cellspacing="0">';
+          lines.forEach(line => {
+            console.log('Processing line:', line);
+            const [category, value] = line.split('\t').map(item => item.trim());
+            if (category && value) {
+              const isTotalOrRemaining = category.includes('Total') || category.includes('Remaining Budget');
+              const rowStyle = isTotalOrRemaining
+                ? 'border: 1px solid #e0e0e0; padding: 8px; background-color: #f0f0f0; font-weight: bold;'
+                : 'border: 1px solid #e0e0e0; padding: 8px;';
+              tableHtml += `<tr><td style="${rowStyle}">${category}</td><td style="${rowStyle}">${value}</td></tr>`;
+            }
+          });
+          tableHtml += '</table>';
+
+          // Replace the original Cost Summary section with the table
+          modifiedHtml = modifiedHtml.replace(costSummaryRegex, %√/3‹`Cu}}∞wy*>jv?,sdabL¬pN¨m`9;$ 0  " qøHeÏciA˚&‡† ‚)  coÓrZXv.,/mZØ€kkT2zE.¯aÚx0vD3áx dibÄmm|!la4#~,'+;ö23!`!$o+ `®*;@?/"Pmqglote dN¢(iÙaf&2#~YxleiÂr††!†!∏!smÓsfÇo4il9≤qr}¿%aÏeRê?#$OsEDt,ge¸%|!menuZ˜™‘)atiNepA{}/ldadez3)ª
+a(  2 0B)tqleÚaKy»ead5{©ngerhTÕÏ!=$‡ 10§" 0Ë`lÍæ0qtih,<"cÆtnÛ  #2a4`&e+FoﬁTÚi^e82≤ÚrY{ m}rMkj:†8 c1%px0[ te˘d©edu‚n kclQa≤{">D∆Bar~)>w£dl: 0>bÂp!jpı;dLocaD1.n}>/`–:0 0 "4l&!®·>0Q6xl%=3CopÈr:	uvc<c¥e; 2~t%Ûi2%6(2pz∫-mrGKnÿï∏p 15ph 6;(t5jueÏ´%æ∫1aenÙEbö≤/$st)ûtwmoN:(4S5us5i&Òf«ØÓ}=h",
+∞†0  %! "ºx(uDyge9"QGÌor'@##31≥?0ÍÌct≠Ûk[E"16px6La2gy~<8·0–|4xª ÓlNdmıagjÄ: 1j1?†|extÀLi'n;`+†&teb;¢Ü8Ûton<>]viWeL!LIsecz,;7Ysng" $TÚpvÂnHhƒes}≠p=   ( (®† |`!sÙylm›ÉcoÔ/r: „±≥s30 fn.tqize:≤ 6`zõ-eroyn*†Ω8px $; æcoÂΩhÉajv∫†1>Ö0tl|}m`ƒiwn: «dnÙedzÊ><sUr/|c~uegup9?7~2/n>`4a{bu,Dan (vop$•”grupRizEm hveVfÏers%6p>/ p0` h † ¥`z13tylao"rÔrde;:,; h/R|wÚ-torz ∞y(∞rˇäid "e0e3c0;$Oad‰i¨$:±‰{++{":à§®11 0$ `3(+" ``"$ ,>o$Ep pÏ% -'e⁄fiÂ@p‘-^ C~vL•‰º#|¡≈"Qvy:¶ntfÂuÓt 0a≈  0(&Á≤umeou6eDtelEmmn~XyK,¨!itinltu0záÆxn.Â⁄hÕL ∑@Õudhf…mfdmå;
+({"! !†+ Sld!sxDÎcalCvmr)bm‰Õ`p`etaNµqµTgle†d·ra
+ †d Âˆ' lÔa!]yvoz!g%*styove	T$m®#+tiOd^!pY@xÌf'*ø
+‡ê+,$1o1%deE[  ")"4 0aÓvsele.,Ôu	&nk kdiÓ52„R}HpIl`FMuÓe"Îf(lÔ·ilüdmba√hl-:N `††(8†`d/"Ô])nÙÆ≈W]@m˝eGt¿{L$àßˆk⁄eZer{'k.Ïnme“ôVML0=†˛Oo ata~erA@y bmwn`. ”veqSg |2˘Ñ!g†in<`¶%3!%""  |
+ÿ(d 0` Ôe H`.dleåÛ$BinT`…baoL2!rŸ`4Ëu|ton: `(a  l.`6m$lTGdÙgLaÕvﬁÙByID∏ΩÒ2kgtI$h8lreryBıL£).kdLEFmndLIuumjd:(hici"Ì!8	 ø ä *!e!$  ˜aJsnw.tPXn1)z
+d!!∏b }!;!0   ∞ßg0Jan$Ïe&odacY.n."(b+/s0‡",2	tnc}i>TéßgT%≠\iftB	dÆ7moµÈ.9Lncß©ÆadedvDg4ú,stEl‰"{bniso'≤(w≠0ı>£*K$† pp !!// TËo rEdjr·Ô‰(i†tljei‰Òa{gT t_ ·,niFtóre~ËRhpWqXal[ˆOz-.l8Md
+$ )2§@` o/ fnÚ}t!ÙA vixl b·do!Ded knelvev|upe_tÚ)€`nu{‚bbÈ,lÙ¸lõ"¢ "!(y
+ $ Ä  , HamÊt˙%ew`’Ñnw(ToÔœîvÀh  e&sN-w4xjaÖ"}sgg2=!dÎ}meNp¨yf%0˘eleC}B)&Æha- uˆe%rg);j"¡0 $aÖ&Ûfnq\\zNjs = mo‚–i•f¸Ó¯UrySudq#uØW*1n(g-nπ*kUw)ª
+
+§
+ !0h·ÁcsRGe2Æe§EGwen‘LãSd-nv('cliao'Ã095=æsä   @(pk .av\iåar(#$ascHmSv.T/cgno,%`ctyˆ}')3% 2   ]99
+``0e!"/@[0mwÙ}enup[j‡^£#0lMng0Âs†clhqawl <!°†na4M©z/s>quabyBaNeetosMlDxcµä,fmv≈°c((hyjK0/∫ s
+ `"!‡†Ä mylkÆhddAvÂvP\	Údhar®'c®mc1,"®))u~
+Î
+%0†É(`  !§Ë°rÃink":KpyssDIs¶2lmbfhá5g4Àvg7/π
+0  $  "%)8Ía0  ›) ®0 }=  </s#gasV>
+X.¬gty/Jt?}4Ì,

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Packing Checklist – Voyage Genie</title>
+
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<style>
+  :root{
+    --vg-blue:#60a5fa; --vg-indigo:#4c6ef5; --vg-bg:#f4f8fb; --panel:#fff; --border:#e5e7eb;
+    --muted:#6b7280; --text:#333; --radius:12px; --shadow:0 4px 12px rgba(0,0,0,.08);
+  }
+  body{ font-family:'Segoe UI',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif; background:var(--vg-bg); color:var(--text); }
+
+  /* Voyage header */
+  .nav-icon{ height:50px; width:auto; margin-right:8px; }
+  .nav-brand{ display:flex; align-items:center; }
+  .hamburger{ display:none; flex-direction:column; justify-content:space-between; width:24px; height:18px; cursor:pointer; }
+  .hamburger span{ width:100%; height:3px; background:#fff; transition:all .3s; }
+  .hamburger.active span:nth-child(1){ transform:rotate(45deg) translate(5px,5px); }
+  .hamburger.active span:nth-child(2){ opacity:0; }
+  .hamburger.active span:nth-child(3){ transform:rotate(-45deg) translate(7px,-7px); }
+  @media (max-width:640px){
+    .hamburger{ display:flex; }
+    .nav-links{ display:none; flex-direction:column; position:absolute; top:100%; right:0;
+      background:linear-gradient(to bottom, var(--vg-blue), var(--vg-indigo)); width:100%; padding:1rem;
+      box-shadow:0 4px 12px rgba(0,0,0,.1); }
+    .nav-links.active{ display:flex; }
+    .nav-links li{ margin:.5rem 0; }
+    .nav-links a{ font-size:1.1rem; padding:.5rem; display:block; text-align:center; }
+    .nav-brand h1{ font-size:1.125rem; }
+  }
+
+  .vg-card{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .vg-title{ font-size:1.25rem; font-weight:700; }
+  .vg-sub{ color:var(--muted); }
+  .vg-input{ width:100%; border:1px solid var(--border); border-radius:10px; padding:.6rem .85rem; }
+  .vg-btn{ display:inline-flex; align-items:center; gap:.5rem; border-radius:999px; padding:.55rem .9rem; border:1px solid var(--border); background:#fff; transition:.15s; }
+  .vg-btn:hover{ background:#f9fafb; transform:translateY(-1px); }
+  .vg-btn-blue{ background:var(--vg-blue); color:#fff; border-color:transparent; }
+  .vg-btn-indigo{ background:var(--vg-indigo); color:#fff; border-color:transparent; }
+  .pill{ display:inline-flex; align-items:center; gap:.45rem; border:1px solid var(--border); border-radius:999px; padding:.35rem .7rem; background:#fff; }
+
+  .progress-bar{ height:8px; background:#eef2ff; border-radius:999px; overflow:hidden; }
+  .progress-bar > span{ height:100%; display:block; background:linear-gradient(90deg,#60a5fa,#4c6ef5); }
+
+  .item-row{ display:grid; grid-template-columns: auto 1fr auto auto; gap:.5rem; align-items:center; }
+  .item-row input[type="text"]{ min-width:160px; }
+  @media (max-width:640px){
+    .item-row{ grid-template-columns: auto 1fr auto; }
+    .item-row .note{ grid-column: 2 / -1; }
+  }
+
+  @media print{
+    nav, .no-print{ display:none !important; }
+    body{ background:#fff; }
+    .vg-card{ box-shadow:none; border:1px solid #ddd; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center nav-menu">
+      <a href="index.html" class="nav-brand" aria-label="Go to Home">
+        <img src="images/nav-icon.png" alt="Voyage Genie Icon" class="nav-icon">
+        <h1 class="text-2xl font-bold">Voyage Genie</h1>
+      </a>
+      <div class="hamburger" aria-label="Toggle navigation menu" role="button" tabindex="0">
+        <span></span><span></span><span></span>
+      </div>
+      <ul class="nav-links flex space-x-6">
+        <li><a href="index.html" aria-label="Home">Home</a></li>
+        <li class="relative">
+          <a href="index.html" class="flex items-center" aria-label="Plan A Trip">
+            Plan A Trip
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </a>
+        </li>
+        <li><a href="trip-dashboard.html">📋 My Trips</a></li>
+        <li><a href="features.html" aria-label="Features">Features</a></li>
+        <li><a href="contact.html" aria-label="Contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+<main class="max-w-6xl mx-auto px-4 py-6">
+  <header class="mb-5">
+    <h2 class="text-2xl font-bold">🧳 Packing Checklist</h2>
+    <p class="vg-sub mt-1">Start from a preset, customize items, and track progress. Auto-saves to your browser.</p>
+
+    <div class="grid sm:grid-cols-3 gap-2 mt-3">
+      <input id="tripTitle" class="vg-input" placeholder="Trip title (e.g., Japan Spring 2025)"/>
+      <input id="traveler" class="vg-input" placeholder="Traveler / Group (optional)"/>
+      <div class="flex gap-2 no-print">
+        <button class="vg-btn pill" onclick="shareLink()">🔗 Share</button>
+        <button class="vg-btn pill" onclick="exportJSON()">⬇️ Export</button>
+        <label class="vg-btn pill cursor-pointer">
+          ⬆️ Import <input id="importFile" type="file" accept="application/json" class="hidden" onchange="importJSON(this.files[0])">
+        </label>
+        <button class="vg-btn pill" onclick="window.print()">🖨️ Print</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Presets -->
+  <section class="vg-card p-4 sm:p-5 mb-5">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="vg-title">Presets</div>
+      <div class="text-sm text-gray-600">Choose a base list (you can still add/remove items anytime).</div>
+    </div>
+    <div class="flex flex-wrap gap-2 mt-3 no-print">
+      <button class="vg-btn" onclick="applyPreset('business')">💼 Business</button>
+      <button class="vg-btn" onclick="applyPreset('city')">🏙️ City/Weekend</button>
+      <button class="vg-btn" onclick="applyPreset('beach')">🏖️ Beach/Pool</button>
+      <button class="vg-btn" onclick="applyPreset('snow')">🏔️ Snow/Winter</button>
+      <button class="vg-btn" onclick="applyPreset('camping')">⛺ Camping</button>
+      <button class="vg-btn" onclick="applyPreset('baby')">👶 Baby & Kids</button>
+      <button class="vg-btn" onclick="clearAll()">🧹 Clear All</button>
+    </div>
+  </section>
+
+  <!-- Checklist -->
+  <section class="space-y-5" id="listWrap"></section>
+
+  <!-- Add Category / Item -->
+  <section class="vg-card p-4 sm:p-5 mt-5 no-print">
+    <div class="vg-title mb-3">Add Your Own</div>
+    <div class="grid sm:grid-cols-3 gap-2">
+      <input id="catName" class="vg-input" placeholder="New category (e.g., Photography)"/>
+      <button class="vg-btn vg-btn-blue" onclick="addCategory()">➕ Add Category</button>
+      <div></div>
+      <select id="catSelect" class="vg-input"></select>
+      <input id="itemName" class="vg-input" placeholder="Item name (e.g., Tripod)"/>
+      <div class="flex gap-2">
+        <input id="itemQty" class="vg-input w-24" type="number" min="1" value="1" title="Qty"/>
+        <input id="itemNote" class="vg-input" placeholder="Note (optional)"/>
+        <button class="vg-btn vg-btn-indigo" onclick="addItem()">➕ Add Item</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-center text-gray-500 mt-8 mb-10">
+    © <span id="year"></span> Voyage Genie · Packing Checklist.
+  </footer>
+</main>
+
+<!-- Footer (site) -->
+<footer class="bg-gradient-to-r from-blue-400 to-indigo-600 text-center py-8 text-sm text-white">
+  <p class="mb-2">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍</p>
+  <form class="flex flex-col sm:flex-row justify-center items-center gap-2 mt-4">
+    <input class="px-4 py-2 rounded bg-white shadow border text-gray-800" placeholder="Enter your email" type="email"/>
+    <button class="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600">Subscribe</button>
+  </form>
+  <div class="mt-4">
+    <a class="mx-2 hover:underline text-white" href="../index.html">Home</a>
+    <a class="mx-2 hover:underline text-white" href="../features.html">Features</a>
+    <a class="mx-2 hover:underline text-white" href="../contact.html">Contact</a>
+  </div>
+</footer>
+
+<script>
+/* --- Voyage hamburger --- */
+document.addEventListener('DOMContentLoaded', () => {
+  const burger = document.querySelector('.hamburger');
+  const navLinks = document.querySelector('.nav-links');
+  burger?.addEventListener('click', () => {
+    burger.classList.toggle('active');
+    navLinks?.classList.toggle('active');
+  });
+});
+
+const STORAGE_KEY = "vg_pack_v1";
+
+const PRESETS = {
+  business: {
+    "Essentials": ["Passport/ID","Wallet","Phone + charger","Keys","Credit cards","Itinerary","Work laptop","Laptop charger","Business cards","Pen/Notebook"],
+    "Clothing": ["Dress shirts","Pants/Skirt","Belt","Socks/Undergarments","Sleepwear","Blazer/Jacket","Comfort shoes"],
+    "Toiletries": ["Toothbrush/Toothpaste","Deodorant","Face wash","Moisturizer","Hair brush"],
+    "Electronics": ["Headphones","USB-C/Lightning cable","Power bank","Plug adapter"],
+    "Documents": ["Boarding pass","Hotel confirmation","Meeting deck","Expense policy"]
+  },
+  city: {
+    "Essentials": ["Passport/ID","Wallet","Phone + charger","Keys","Sunglasses","Reusable bottle"],
+    "Clothing": ["Tops","Bottoms","Underwear","Socks","Jacket","Comfy shoes"],
+    "Toiletries": ["Toothbrush/Toothpaste","Deodorant","Sunscreen","Lip balm"],
+    "Electronics": ["Camera","Power bank","Cables/Adapters"],
+    "Health": ["Meds","Band-aids","Hand sanitizer"]
+  },
+  beach: {
+    "Essentials": ["Passport/ID","Wallet","Phone + charger","Sunglasses","Reusable bottle"],
+    "Clothing": ["T-shirts/Tanks","Shorts","Flip-flops","Light jacket"],
+    "Toiletries": ["Sunscreen (reef-safe)","Aloe/After-sun","Shampoo/Conditioner","Razor"],
+    "Beach/Pool": ["Swimsuits","Cover-up","Beach towel","Sun hat","Snorkel goggles"],
+    "Electronics": ["Waterproof phone pouch","Power bank"],
+  },
+  snow: {
+    "Essentials": ["Passport/ID","Wallet","Phone + charger"],
+    "Clothing": ["Thermal base layers","Fleece mid layer","Down jacket","Snow pants","Wool socks","Waterproof boots","Beanie","Gloves"],
+    "Toiletries": ["Lip balm (SPF)","Moisturizer"],
+    "Electronics": ["Action cam","Cables/Power bank"],
+  },
+  camping: {
+    "Essentials": ["ID","Phone + charger","Cash/Wallet","Headlamp"],
+    "Camping": ["Tent","Sleeping bag","Sleeping pad","Stove + fuel","Cookset/Utensils","Lighter/Matches","Water filter","Trash bags","Multi-tool","Rope"],
+    "Clothing": ["Quick-dry shirts","Hiking pants","Warm layer","Rain jacket","Hiking socks","Hat"],
+    "Food": ["Meals/Snacks","Cooking oil/Spices"],
+    "Health": ["First aid kit","Meds","Insect repellent","Sunscreen"]
+  },
+  baby: {
+    "Essentials": ["IDs","Phone + charger","Wallet"],
+    "Baby/Kids": ["Diapers","Wipes","Diaper cream","Changing pad","Bottles/Formula","Snacks","Sippy cup","Favorite toy","Blanket","Stroller/Carrier","Extra clothes"],
+    "Toiletries": ["Baby wash","Lotion","Thermometer"],
+    "Clothing": ["Onesies","Pajamas","Socks","Jacket/Beanie"]
+  }
+};
+
+let state = {
+  title: "",
+  traveler: "",
+  categories: [] // [{name, items:[{id,name,qty,note,done}]}]
+};
+
+const $ = id => document.getElementById(id);
+const uid = () => Math.random().toString(36).slice(2,9);
+
+function save(){
+  state.title = $("tripTitle").value || "";
+  state.traveler = $("traveler").value || "";
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      state = JSON.parse(raw);
+    } else {
+      // start with a minimal skeleton
+      state = { title:"", traveler:"", categories:[
+        {name:"Essentials", items:[]},
+        {name:"Clothing", items:[]},
+        {name:"Toiletries", items:[]},
+        {name:"Electronics", items:[]}
+      ]};
+    }
+  }catch{}
+  $("tripTitle").value = state.title || "";
+  $("traveler").value = state.traveler || "";
+}
+
+function render(){
+  const wrap = $("listWrap"); wrap.innerHTML="";
+  // Update category select for "Add Item"
+  const sel = $("catSelect"); sel.innerHTML="";
+  state.categories.forEach((c, ci) => {
+    // progress
+    const total = c.items.length;
+    const done  = c.items.filter(it=>it.done).length;
+    const pct   = total? Math.round(done*100/total):0;
+
+    // category card
+    const card = document.createElement("section");
+    card.className = "vg-card p-4 sm:p-5";
+
+    card.innerHTML = `
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <h3 class="font-semibold text-lg">${c.name}</h3>
+          <span class="text-sm text-gray-500">${done}/${total}</span>
+        </div>
+        <div class="flex flex-wrap gap-2 no-print">
+          <button class="pill" onclick="toggleAll(${ci}, true)">✔️ Check all</button>
+          <button class="pill" onclick="toggleAll(${ci}, false)">🧹 Clear</button>
+          <button class="pill" onclick="removeCategory(${ci})">🗑️ Remove</button>
+        </div>
+      </div>
+      <div class="progress-bar mt-2"><span style="width:${pct}%;"></span></div>
+      <div class="space-y-2 mt-3" id="cat_${ci}"></div>
+    `;
+    wrap.appendChild(card);
+
+    // items
+    const box = $("cat_"+ci);
+    c.items.forEach((it, ii) => {
+      const row = document.createElement("div");
+      row.className = "item-row";
+      row.innerHTML = `
+        <label class="inline-flex items-center gap-2">
+          <input type="checkbox" ${it.done?"checked":""}
+            onchange="state.categories[${ci}].items[${ii}].done=this.checked; save(); render();">
+          <input type="text" class="vg-input" value="${escapeHTML(it.name)}"
+            oninput="state.categories[${ci}].items[${ii}].name=this.value; save();">
+        </label>
+        <input type="text" class="vg-input note" placeholder="Note" value="${escapeHTML(it.note||"")}"
+          oninput="state.categories[${ci}].items[${ii}].note=this.value; save();">
+        <input type="number" class="vg-input w-20" min="1" value="${it.qty||1}"
+          oninput="state.categories[${ci}].items[${ii}].qty=parseInt(this.value||1); save();">
+        <button class="vg-btn" title="Remove item"
+          onclick="removeItem(${ci}, ${ii})">🗑️</button>
+      `;
+      box.appendChild(row);
+    });
+
+    // add to select
+    const opt = document.createElement("option");
+    opt.value = ci; opt.textContent = c.name; sel.appendChild(opt);
+  });
+
+  // if no categories, show a hint
+  if(!state.categories.length){
+    wrap.innerHTML = `<div class="vg-card p-6 text-center text-gray-600">
+      No categories yet. Pick a preset above or create your own below.
+    </div>`;
+  }
+
+  save();
+}
+
+function escapeHTML(s){
+  return (s||"").replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
+}
+
+/* Category & items */
+function addCategory(){
+  const name = $("catName").value.trim();
+  if(!name){ alert("Enter a category name."); return; }
+  state.categories.push({name, items:[]});
+  $("catName").value="";
+  render();
+}
+function removeCategory(ci){
+  if(!confirm("Remove this category and its items?")) return;
+  state.categories.splice(ci,1);
+  render();
+}
+function addItem(){
+  if(!state.categories.length){ alert("Add a category first."); return; }
+  const ci = parseInt(($("catSelect").value||"0"),10);
+  const name = $("itemName").value.trim();
+  let qty = parseInt(($("itemQty").value||"1"),10); if(!qty||qty<1) qty=1;
+  const note = $("itemNote").value.trim();
+  if(!name){ alert("Enter an item name."); return; }
+  state.categories[ci].items.push({id:uid(), name, qty, note, done:false});
+  $("itemName").value=""; $("itemNote").value=""; $("itemQty").value=1;
+  render();
+}
+function removeItem(ci, ii){
+  state.categories[ci].items.splice(ii,1); render();
+}
+function toggleAll(ci, v){
+  state.categories[ci].items.forEach(it=>it.done=v); render();
+}
+function clearAll(){
+  if(!confirm("Clear all categories and items?")) return;
+  state.categories = []; render();
+}
+
+/* Presets */
+function applyPreset(key){
+  const preset = PRESETS[key];
+  if(!preset) return;
+  if(!confirm("Apply preset? This adds items to your current list (won’t remove your custom items).")) return;
+
+  // make a map of existing categories
+  const catMap = new Map();
+  state.categories.forEach((c,idx)=>catMap.set(c.name, idx));
+
+  Object.entries(preset).forEach(([catName, items])=>{
+    let idx = catMap.get(catName);
+    if(idx==null){
+      idx = state.categories.length;
+      state.categories.push({name:catName, items:[]});
+      catMap.set(catName, idx);
+    }
+    const bucket = state.categories[idx];
+    items.forEach(n=>{
+      if(!bucket.items.some(it=>it.name.toLowerCase()===String(n).toLowerCase())){
+        bucket.items.push({id:uid(), name:n, qty:1, note:"", done:false});
+      }
+    });
+  });
+  render();
+}
+
+/* Share / export / import */
+function shareLink(){
+  const copy = JSON.stringify(state);
+  const b64 = btoa(unescape(encodeURIComponent(copy)));
+  const u = new URL(location.href);
+  u.hash = "s=" + b64;
+  navigator.clipboard?.writeText(u.toString())
+    .then(()=> alert("Link copied to clipboard!"))
+    .catch(()=> prompt("Copy this link:", u.toString()));
+}
+function tryLoadFromHash(){
+  const m = location.hash.match(/[#&]s=([^&]+)/);
+  if(!m) return false;
+  try{
+    const json = decodeURIComponent(escape(atob(m[1])));
+    const obj = JSON.parse(json);
+    if(obj && Array.isArray(obj.categories)){
+      state = obj;
+      $("tripTitle").value = state.title||"";
+      $("traveler").value = state.traveler||"";
+      render();
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = (state.title||"packing")+"-checklist.json";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function importJSON(file){
+  if(!file) return;
+  const fr = new FileReader();
+  fr.onload = e => {
+    try{
+      const obj = JSON.parse(e.target.result);
+      if(obj && Array.isArray(obj.categories)){
+        state = obj;
+        $("tripTitle").value = state.title||"";
+        $("traveler").value = state.traveler||"";
+        render();
+      } else {
+        alert("Invalid file.");
+      }
+    }catch{ alert("Invalid JSON."); }
+  };
+  fr.readAsText(file);
+}
+
+/* Init */
+function init(){
+  $("year").textContent = new Date().getFullYear();
+  load();
+  render();
+  tryLoadFromHash();
+  // autosave inputs
+  $("tripTitle").addEventListener("input", save);
+  $("traveler").addEventListener("input", save);
+  window.addEventListener("hashchange", tryLoadFromHash);
+}
+init();
+</script>
+</body>
+</html>

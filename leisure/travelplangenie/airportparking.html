@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VoyageGenie • Airport Parking Finder</title>
+  <meta name="description" content="Compare airport parking prices, shuttles, distance, and savings tips in one place."/>
+  <style>
+    :root{
+      --bg:#0b1320; --card:#0f1b2d; --ink:#eaf2ff; --muted:#c7d2e6; --accent:#22c55e; --accent2:#3b82f6; --warn:#f59e0b;
+      --ring:rgba(59,130,246,.45); --shadow:0 10px 24px rgba(0,0,0,.25);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:radial-gradient(1000px 600px at 10% -10%,#1a2844 0%,#0b1320 40%), var(--bg); color:var(--ink)}
+    a{color:inherit}
+
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    header{display:flex;gap:18px;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#3b82f6, #22c55e);box-shadow:var(--shadow)}
+    .title{font-weight:700;letter-spacing:.3px}
+    .nav a{opacity:.85;margin-left:16px;text-decoration:none}
+    .nav a:hover{opacity:1}
+
+    .hero{display:grid;grid-template-columns:1.3fr .7fr;gap:20px;align-items:stretch;margin-top:6px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.0));border:1px solid rgba(255,255,255,.06);border-radius:20px;box-shadow:var(--shadow)}
+    .card.pad{padding:18px}
+
+    .h1{font-size:28px;margin:6px 0 12px}
+    .subtitle{color:var(--muted);font-size:14px;margin-bottom:16px}
+
+    /* Form */
+    form label{display:block;font-size:13px;color:var(--muted);margin:8px 0 6px}
+    .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+    .col-3{grid-column:span 3}
+    .col-2{grid-column:span 2}
+    .col-1{grid-column:span 1}
+    .field{position:relative}
+    input,select{width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:#0c1729;color:var(--ink);outline:none}
+    input:focus,select:focus{border-color:var(--accent2);box-shadow:0 0 0 3px var(--ring)}
+    .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:12px 18px;cursor:pointer;font-weight:600}
+    .btn-primary{background:var(--accent2);color:white}
+    .btn-primary:hover{filter:brightness(1.05)}
+    .btn-secondary{background:var(--accent);color:#03240f}
+    .btn-secondary:hover{filter:brightness(1.05)}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,.14);color:var(--ink)}
+
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+
+    /* Results */
+    .results{margin-top:10px;display:grid;grid-template-columns:1fr;gap:12px;max-height:520px;overflow:auto;padding-right:6px}
+    .result{display:grid;grid-template-columns:1fr auto;gap:10px;padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.0))}
+    .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;border-radius:999px;padding:6px 10px;border:1px solid rgba(255,255,255,.15);opacity:.9}
+    .stack{display:flex;gap:8px;flex-wrap:wrap}
+    .price{font-size:22px;font-weight:800}
+    .strike{font-size:12px;color:var(--muted);text-decoration:line-through;margin-left:6px}
+    .save{font-weight:700;color:#16a34a}
+
+    /* Sidebar tips */
+    aside .tip{display:flex;gap:10px;background:#0c1729;border:1px dashed rgba(255,255,255,.18);padding:12px;border-radius:14px;margin-bottom:10px}
+    aside h3{margin:8px 0 10px}
+    .small{font-size:12px;color:var(--muted)}
+
+    .toolbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0 10px}
+    .filters{display:flex;gap:8px;flex-wrap:wrap}
+    .chk{display:flex;gap:6px;align-items:center;border:1px solid rgba(255,255,255,.14);padding:6px 10px;border-radius:999px;font-size:13px}
+
+    /* Footer */
+    footer{margin:26px 0 20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;color:var(--muted)}
+
+    /* Responsive */
+    @media (max-width: 980px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,1fr)}.col-3{grid-column:span 2}.col-2{grid-column:span 1}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div class="title">VoyageGenie</div>
+          <div class="small">Smart travel tools that save you money</div>
+        </div>
+      </div>
+      <nav class="nav small">
+        <a href="#">Home</a>
+        <a href="#">Trips</a>
+        <a href="#">Tools</a>
+        <a href="#">Contact</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="card pad">
+        <h1 class="h1">✈️ Airport Parking Finder</h1>
+        <p class="subtitle">Compare on‑site & off‑site lots, shuttle times, distance, and real pricing. Plug in your dates—and we’ll surface the cheapest, closest options in seconds.</p>
+
+        <form id="searchForm" onsubmit="runSearch(event)">
+          <div class="grid">
+            <div class="col-2 field">
+              <label>Airport</label>
+              <input id="airport" placeholder="e.g., ORD or “O'Hare”" required/>
+            </div>
+            <div class="col-2 field">
+              <label>Arrive</label>
+              <input id="start" type="datetime-local" required />
+            </div>
+            <div class="col-2 field">
+              <label>Return</label>
+              <input id="end" type="datetime-local" required />
+            </div>
+            <div class="col-2 field">
+              <label>Vehicle</label>
+              <select id="vehicle">
+                <option value="standard">Standard</option>
+                <option value="oversize">Oversize (SUV/Truck)</option>
+                <option value="ev">EV (needs charger)</option>
+              </select>
+            </div>
+            <div class="col-2 field">
+              <label>Max Shuttle Time</label>
+              <select id="shuttle">
+                <option value="">Any</option>
+                <option value="5">≤ 5 min</option>
+                <option value="10">≤ 10 min</option>
+                <option value="15">≤ 15 min</option>
+              </select>
+            </div>
+            <div class="col-2 field">
+              <label>Sort</label>
+              <select id="sort">
+                <option value="price">Lowest Price</option>
+                <option value="distance">Closest</option>
+                <option value="rating">Best Rated</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button class="btn btn-primary" type="submit">🔎 Find Parking</button>
+            <button class="btn btn-secondary" type="button" onclick="share()">🔗 Share</button>
+            <button class="btn btn-ghost" type="button" onclick="savePrefs()">💾 Save Preferences</button>
+          </div>
+        </form>
+
+        <div class="toolbar small">
+          <div class="filters">
+            <label class="chk"><input type="checkbox" id="covered"> Covered</label>
+            <label class="chk"><input type="checkbox" id="onsite"> On‑site Only</label>
+            <label class="chk"><input type="checkbox" id="valet"> Valet</label>
+            <label class="chk"><input type="checkbox" id="evready"> EV Chargers</label>
+            <label class="chk"><input type="checkbox" id="promo"> Show Promo Picks</label>
+          </div>
+          <div class="small">Prices include all taxes where provided. Always confirm at checkout.</div>
+        </div>
+
+        <div id="results" class="results" aria-live="polite"></div>
+      </div>
+
+      <aside class="card pad">
+        <h3>💡 Money‑Saving Tips</h3>
+        <div class="tip"><span>🗓️</span><div><b>Book early</b><br><span class="small">Rates jump in the last 72 hours—lock in refundable deals ahead of time.</span></div></div>
+        <div class="tip"><span>📍</span><div><b>Look 1–3 miles off‑site</b><br><span class="small">Shuttle lots nearby are often 20–40% cheaper than airport‑owned garages.</span></div></div>
+        <div class="tip"><span>🔌</span><div><b>EV? Filter for chargers</b><br><span class="small">Some lots add charging free—factor that vs. airport superchargers.</span></div></div>
+        <div class="tip"><span>👥</span><div><b>Carpool & split</b><br><span class="small">Two families → one parking bill. Use “Share” to send details.</span></div></div>
+        <div class="tip"><span>🏷️</span><div><b>Check coupon codes</b><br><span class="small">Many providers run weekend codes. Toggle “Promo Picks” to surface likely deals.</span></div></div>
+        <hr style="border-color:rgba(255,255,255,.12)">
+        <h3>How it works</h3>
+        <p class="small">This page calls a secure VoyageGenie webhook (n8n) that checks partner APIs (e.g., SpotHero/ParkWhiz/airport sites), normalizes fees, and returns comparable options. Add your affiliate IDs in the <code>PROVIDERS</code> config below.</p>
+        <div class="tip"><span>🧪</span><div><b>MVP Mode</b><br><span class="small">Until your webhook is live, results use local demo data so you can style and test the UI.</span></div></div>
+      </aside>
+    </section>
+
+    <footer class="small">
+      <div>© <span id="year"></span> VoyageGenie.com</div>
+      <div>Need help integrating your n8n webhook? <a href="#" onclick="alert('Ping me and I\'ll wire it for you.')">Ask for setup</a></div>
+    </footer>
+  </div>
+
+  <script>
+    // =============== CONFIG ==================
+    const CONFIG = {
+      WEBHOOK_URL: "", // ← add your n8n webhook URL here
+      CURRENCY: "USD",
+      PROVIDERS: [
+        // Add/enable as you sign partner deals; include affiliate params if needed
+        { name: "SpotHero", enabled: true, affiliateParam: "?aff_id=YOUR_ID" },
+        { name: "ParkWhiz", enabled: true, affiliateParam: "?ref=YOUR_ID" },
+        { name: "Airport Authority", enabled: true, affiliateParam: "" }
+      ]
+    }
+
+    // =============== PREFERENCES (local) ==================
+    const PREF_KEYS = ["airport","start","end","vehicle","shuttle","sort","covered","onsite","valet","evready","promo"];
+    function savePrefs(){
+      PREF_KEYS.forEach(k=>{
+        const el = document.getElementById(k);
+        const v = el?.type === 'checkbox' ? el.checked : el?.value;
+        if(v!==undefined) localStorage.setItem("vg_parking_"+k, v);
+      });
+      toast("Preferences saved.")
+    }
+    function loadPrefs(){
+      PREF_KEYS.forEach(k=>{
+        const el=document.getElementById(k);
+        if(!el) return;
+        const v = localStorage.getItem("vg_parking_"+k);
+        if(v===null) return;
+        if(el.type==='checkbox') el.checked = (v === 'true');
+        else el.value = v;
+      })
+    }
+
+    // =============== SEARCH ==================
+    async function runSearch(e){
+      e.preventDefault();
+      const params = collectParams();
+      const resEl = document.getElementById('results');
+      resEl.innerHTML = loader();
+
+      try{
+        const data = CONFIG.WEBHOOK_URL ? await fetchWebhook(params) : demoResults(params);
+        const filtered = applyFilters(data, params);
+        renderResults(filtered, params);
+      }catch(err){
+        console.error(err);
+        resEl.innerHTML = errorBox("Couldn't load parking right now. Try again or contact support.");
+      }
+    }
+
+    function collectParams(){
+      const qs = o=>Object.fromEntries(new FormData(o));
+      const form = document.getElementById('searchForm');
+      const p = {
+        airport: document.getElementById('airport').value.trim(),
+        start: document.getElementById('start').value,
+        end: document.getElementById('end').value,
+        vehicle: document.getElementById('vehicle').value,
+        shuttle: document.getElementById('shuttle').value,
+        sort: document.getElementById('sort').value,
+        covered: document.getElementById('covered').checked,
+        onsite: document.getElementById('onsite').checked,
+        valet: document.getElementById('valet').checked,
+        evready: document.getElementById('evready').checked,
+        promo: document.getElementById('promo').checked,
+      }
+      return p;
+    }
+
+    async function fetchWebhook(params){
+      // POST to your n8n webhook; return normalized array
+      const resp = await fetch(CONFIG.WEBHOOK_URL, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ action:"search_airport_parking", params, providers: CONFIG.PROVIDERS.filter(p=>p.enabled) })
+      });
+      if(!resp.ok) throw new Error('Webhook error');
+      return await resp.json();
+    }
+
+    // =============== FILTERING/SORTING ==================
+    function applyFilters(list, p){
+      let out = list.filter(x=>{
+        if(p.covered && !x.covered) return false;
+        if(p.onsite && !x.onsite) return false;
+        if(p.valet && !x.valet) return false;
+        if(p.evready && !x.ev) return false;
+        if(p.shuttle && (x.shuttle_mins ?? 99) > Number(p.shuttle)) return false;
+        if(p.promo && !x.has_promo) return false;
+        return true;
+      });
+
+      const key = p.sort;
+      out.sort((a,b)=>{
+        if(key==='price') return a.total - b.total;
+        if(key==='distance') return (a.distance_mi??99) - (b.distance_mi??99);
+        if(key==='rating') return (b.rating??0) - (a.rating??0);
+        return 0;
+      });
+      return out;
+    }
+
+    // =============== RENDER ==================
+    function renderResults(list, p){
+      const resEl = document.getElementById('results');
+      if(!list.length){ resEl.innerHTML = empty(); return; }
+      resEl.innerHTML = list.map(card).join('');
+    }
+
+    function card(x){
+      const nightly = `$${x.nightly.toFixed(2)}/night`;
+      const total = `$${x.total.toFixed(2)} total`;
+      const strike = x.compare_at ? `<span class="strike">$${x.compare_at.toFixed(2)}</span>` : '';
+      const save = x.compare_at ? `<span class="save">Save ${(100*(1 - x.total/x.compare_at)).toFixed(0)}%</span>` : '';
+      const badge = y=>`<span class="pill">${y}</span>`;
+      const features = [
+        x.onsite ? 'On‑site' : `${x.distance_mi} mi away`,
+        x.shuttle_mins!=null? `${x.shuttle_mins} min shuttle` : 'Walkable',
+        x.covered?'Covered':'Open air',
+        x.valet?'Valet':'Self‑park',
+        x.ev?'EV chargers':'',
+      ].filter(Boolean).map(badge).join('');
+
+      return `
+      <div class="result">
+        <div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div class="pill">${x.provider}</div>
+            <div class="pill">${x.name}</div>
+            ${x.has_promo?'<div class="pill">🏷️ Promo</div>':''}
+            ${x.free_cancel?'<div class="pill">✅ Free cancel</div>':''}
+            ${x.secure?'<div class="pill">🛡️ Secured</div>':''}
+          </div>
+          <div style="margin:8px 0 10px" class="stack">${features}</div>
+          <div class="small">${x.desc || ''}</div>
+          <div class="small" style="margin-top:6px;opacity:.8">${stars(x.rating)} ${x.rating?.toFixed(1) ?? ''} • ${x.reviews ?? 0} reviews</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between">
+          <div>
+            <div class="price">${total} ${strike}</div>
+            <div class="small">${nightly}</div>
+            ${save?`<div class="small">${save}</div>`:''}
+          </div>
+          <div class="actions">
+            <a class="btn btn-primary" href="${x.book_url}" target="_blank" rel="nofollow noopener">Book →</a>
+            <button class="btn btn-ghost" onclick='copyText(`${x.name} — ${total} — ${x.book_url}`)'>Copy</button>
+          </div>
+        </div>
+      </div>`
+    }
+
+    function stars(r){
+      if(!r) return '☆☆☆☆☆';
+      const n=Math.round(r);
+      return '★★★★★☆☆☆☆☆'.slice(5-n,10-n)
+    }
+
+    function empty(){
+      return `<div class="card pad small">No matches yet. Try removing a filter or expanding shuttle time.</div>`
+    }
+    function loader(){
+      return `<div class="card pad small">Searching secure partners… ⏳</div>`
+    }
+    function errorBox(msg){
+      return `<div class="card pad small" style="border:1px solid #ef4444">${msg}</div>`
+    }
+
+    // =============== SHARE ==================
+    function share(){
+      const p = collectParams();
+      const url = new URL(location.href);
+      Object.entries(p).forEach(([k,v])=>url.searchParams.set(k,v));
+      navigator.clipboard.writeText(url.toString());
+      toast('Link copied!')
+    }
+    async function copyText(t){ await navigator.clipboard.writeText(t); toast('Copied!') }
+    function toast(t){
+      const n=document.createElement('div');
+      n.textContent=t; n.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#e5e7eb;padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);box-shadow:var(--shadow);z-index:9999';
+      document.body.appendChild(n); setTimeout(()=>n.remove(),1500);
+    }
+
+    // =============== DEMO DATA ==================
+    function nightsBetween(a,b){return Math.max(1, Math.ceil((new Date(b)-new Date(a))/(1000*60*60*24)))}
+    function demoResults(p){
+      const nights = nightsBetween(p.start,p.end);
+      const base = [
+        { provider:'SpotHero', name:'O\'Hare Economy Lot G', onsite:true, covered:false, valet:false, ev:true, distance_mi:0.3, shuttle_mins:0, rating:4.4, reviews:1832, free_cancel:true, secure:true, nightly:16.5, has_promo:true, compare_at: (16.5*nights*1.35), book_url:'#', desc:'Economy surface lot near Terminal 2.' },
+        { provider:'ParkWhiz', name:'Blue Sky Parking', onsite:false, covered:true, valet:true, ev:true, distance_mi:1.2, shuttle_mins:6, rating:4.6, reviews:2410, free_cancel:true, nightly:12.0, has_promo:false, book_url:'#', desc:'Indoor garage with 24/7 shuttle every 10–12 min.' },
+        { provider:'Airport Authority', name:'Main Garage (T1‑T3)', onsite:true, covered:true, valet:false, ev:true, distance_mi:0.1, shuttle_mins:0, rating:4.1, reviews:590, nightly:28.0, has_promo:false, book_url:'#', desc:'Shortest walk to terminals; premium pricing.' },
+        { provider:'SpotHero', name:'Economy H', onsite:true, covered:false, valet:false, ev:false, distance_mi:0.6, shuttle_mins:8, rating:4.0, reviews:980, nightly:13.0, has_promo:true, compare_at:(13*nights*1.2), book_url:'#', desc:'Budget lot with frequent shuttles.' },
+      ];
+      return base.map(x=>({ ...x, total: Number((x.nightly * nights).toFixed(2)) }));
+    }
+
+    // =============== INIT ==================
+    function initFromURL(){
+      const u = new URL(location.href);
+      const set=(id)=>{const v=u.searchParams.get(id); if(v){const el=document.getElementById(id); if(!el) return; if(el.type==='checkbox') el.checked=(v==='true'); else el.value=v;}}
+      PREF_KEYS.forEach(set);
+    }
+    (function(){
+      document.getElementById('year').textContent = new Date().getFullYear();
+      loadPrefs();
+      initFromURL();
+      // Seed sensible defaults for datetime
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0);
+      const end = new Date(start.getTime() + 3*24*60*60*1000);
+      if(!document.getElementById('start').value) document.getElementById('start').value = start.toISOString().slice(0,16);
+      if(!document.getElementById('end').value) document.getElementById('end').value = end.toISOString().slice(0,16);
+    })();
+  </script>
+</body>
+</html>

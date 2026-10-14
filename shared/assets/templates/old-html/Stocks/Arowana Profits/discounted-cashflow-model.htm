@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Intrinsic Value Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .calculator {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .disclaimer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .guide {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+
+        .guide h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            cursor: pointer;
+        }
+
+        .guide-content {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .guide ul {
+            padding-left: 20px;
+        }
+
+        .guide li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .guide a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+
+        .guide a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>Stock Intrinsic Value Calculator</h1>
+        <i>(Uses the Discounted Cash Flow (DCF) model)</i>
+        <div class="guide">
+            <h2 onclick="toggleGuide()">📘 How to Find Input Values (Click to Expand)</h2>
+            <div class="guide-content" id="guideContent">
+                <ul>
+                    <li>
+                        <strong>Stock Ticker:</strong> Find on Yahoo Finance or your brokerage platform
+                        <br>(e.g., AAPL for Apple)
+                    </li>
+                    <li>
+                        <strong>Free Cash Flow (FCF):</strong>
+                        <ul>
+                            <li>Find in company's 10-K filing (Cash Flow Statement)</li>
+                            <li>Calculate: Operating Cash Flow - Capital Expenditures</li>
+                            <li>Source: <a href="https://www.sec.gov/edgar" target="_blank">SEC Edgar</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Expected Growth Rate:</strong>
+                        <ul>
+                            <li>Use analyst estimates (Yahoo Finance > Analysis tab)</li>
+                            <li>Historical 5-year FCF growth rate</li>
+                            <li>Typically 2-15% (be conservative)</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Discount Rate:</strong>
+                        <ul>
+                            <li>Use company's WACC (find on GuruFocus)</li>
+                            <li>Default: 8-12% (10% for stable companies)</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Terminal Growth Rate:</strong>
+                        <ul>
+                            <li>Shouldn't exceed long-term GDP growth (2-4%)</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Outstanding Shares:</strong>
+                        <ul>
+                            <li>Find in 10-K filings or Yahoo Finance > Statistics</li>
+                            <li>Use diluted shares outstanding</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p><strong>Key Resources:</strong>
+                    <br><a href="https://finance.yahoo.com" target="_blank">Yahoo Finance</a> | 
+                    <a href="https://www.gurufocus.com" target="_blank">GuruFocus</a> | 
+                    <a href="https://pages.stern.nyu.edu/~adamodar/" target="_blank">Damodaran's Data</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="ticker">Stock Ticker Symbol:</label>
+            <input type="text" id="ticker" placeholder="e.g., AAPL" required>
+        </div>
+
+        <div class="input-group">
+            <label for="fcf">Free Cash Flow (FCF) in millions:</label>
+            <input type="number" id="fcf" step="0.1" required>
+        </div>
+
+        <div class="input-group">
+            <label for="growth">Expected Growth Rate (%):</label>
+            <input type="number" id="growth" step="0.1" required>
+        </div>
+
+        <div class="input-group">
+            <label for="discount">Discount Rate (%):</label>
+            <input type="number" id="discount" step="0.1" required>
+        </div>
+
+        <div class="input-group">
+            <label for="terminal">Terminal Growth Rate (%):</label>
+            <input type="number" id="terminal" step="0.1" required>
+        </div>
+
+        <div class="input-group">
+            <label for="shares">Outstanding Shares (millions):</label>
+            <input type="number" id="shares" step="0.1" required>
+        </div>
+
+        <div class="input-group">
+            <label for="currentPrice">Current Stock Price:</label>
+            <input type="number" id="currentPrice" step="0.01" required>
+        </div>
+
+        <button onclick="calculateIntrinsicValue()">Calculate Intrinsic Value</button>
+
+        <div class="result" id="result">
+            <h3>Results:</h3>
+            <p>Intrinsic Value per Share: $<span id="intrinsicValue"></span></p>
+            <p>Current Stock Price: $<span id="currentPriceDisplay"></span></p>
+            <p>Margin of Safety: <span id="margin"></span>%</p>
+            <p id="valuationConclusion"></p>
+        </div>
+
+        <div class="disclaimer">
+            <p><strong>Disclaimer:</strong> This calculator uses the Discounted Cash Flow model and Alpha Vantage API for stock prices. 
+            The results are estimates and should not be used as sole investment advice. Market data may be delayed.</p>
+        </div>
+    </div>
+
+    <script>
+        // Get your free API key from https://www.alphavantage.co/
+        const API_KEY = 'YOUR_API_KEY'; // Replace with your API key
+
+        // Toggle guide visibility
+        function toggleGuide() {
+            const guideContent = document.getElementById('guideContent');
+            guideContent.style.display = guideContent.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Fetch current stock price when ticker is entered
+        document.getElementById('ticker').addEventListener('blur', async function() {
+            const ticker = this.value.toUpperCase();
+            if (!ticker) return;
+
+            try {
+                const response = await fetch(
+                    `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${API_KEY}`
+                );
+                const data = await response.json();
+                
+                const price = data['Global Quote']['05. price'];
+                if (price) {
+                    document.getElementById('currentPrice').value = parseFloat(price).toFixed(2);
+                }
+            } catch (error) {
+                console.error('Error fetching stock price:', error);
+                alert('Could not fetch stock price. Please check the ticker or try again later.');
+            }
+        });
+
+        async function calculateIntrinsicValue() {
+            // Get input values
+            const fcf = parseFloat(document.getElementById('fcf').value) * 1000000;
+            const growthRate = parseFloat(document.getElementById('growth').value) / 100;
+            const discountRate = parseFloat(document.getElementById('discount').value) / 100;
+            const terminalRate = parseFloat(document.getElementById('terminal').value) / 100;
+            const shares = parseFloat(document.getElementById('shares').value) * 1000000;
+            const currentPrice = parseFloat(document.getElementById('currentPrice').value);
+
+            // Validate inputs
+            if (terminalRate >= discountRate) {
+                alert("Terminal growth rate must be less than discount rate");
+                return;
+            }
+
+            // Calculate present value of next 10 years cash flows
+            let presentValue = 0;
+            let projectedFCF = fcf;
+            
+            for (let year = 1; year <= 10; year++) {
+                projectedFCF *= (1 + growthRate);
+                const discountFactor = 1 / Math.pow(1 + discountRate, year);
+                presentValue += projectedFCF * discountFactor;
+            }
+
+            // Calculate terminal value
+            const terminalValue = (projectedFCF * (1 + terminalRate)) / (discountRate - terminalRate);
+            presentValue += terminalValue / Math.pow(1 + discountRate, 10);
+
+            // Calculate intrinsic value per share
+            const intrinsicValue = presentValue / shares;
+            const marginOfSafety = ((intrinsicValue - currentPrice) / intrinsicValue * 100).toFixed(2);
+
+            // Display results
+            document.getElementById('intrinsicValue').textContent = intrinsicValue.toFixed(2);
+            document.getElementById('currentPriceDisplay').textContent = currentPrice.toFixed(2);
+            document.getElementById('margin').textContent = marginOfSafety;
+            document.getElementById('valuationConclusion').textContent = 
+                intrinsicValue > currentPrice ? "Stock appears UNDERVALUED" : "Stock appears OVERVALUED";
+            
+            document.getElementById('result').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

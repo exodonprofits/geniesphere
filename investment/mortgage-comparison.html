@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🏦 Mortgage Comparison — Rate • Term • Points • APR</title>
+  <meta name="description" content="Compare mortgage options side‑by‑side: payment, APR, total interest, points breakeven, and lifetime cost.">
+  <style>
+    :root{--bg:#f7f9fb;--ink:#0f172a;--muted:#64748b;--card:#fff;--accent:#0f3b82;--brand:#10b981;--info:#3b82f6;--warn:#f59e0b;--danger:#ef4444;--radius:14px;--shadow:0 10px 24px rgba(0,0,0,.06)}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;background:linear-gradient(120deg,#ffffff,#eef6ff);border-bottom:1px solid #e5e7eb;z-index:10}
+    .wrap{max-width:1200px;margin:0 auto;padding:14px 16px}
+    h1{margin:0;color:var(--accent)} .sub{color:var(--muted);margin-top:4px}
+
+    .grid{display:grid;grid-template-columns:1fr;gap:14px;margin:16px auto}
+
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .card h2{margin:0 0 8px;color:var(--accent)}
+
+    label{display:block;font-size:13px;color:#334155;margin:10px 0 6px}
+    input,select{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px}
+
+    .row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    @media(max-width:980px){.row{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.row{grid-template-columns:1fr}}
+
+    .bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .btn{border:0;border-radius:999px;padding:10px 14px;background:#3b82f6;color:#fff;display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none}
+    .btn.save{background:var(--brand)} .btn.ghost{background:#e5e7eb;color:#111}
+    .btn.warn{background:var(--warn)} .btn.danger{background:var(--danger)}
+
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    th{text-align:left;font-size:12px;color:var(--muted);white-space:nowrap}
+    td{background:#fff;padding:10px;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;vertical-align:top}
+    td:first-child{border-left:1px solid #e5e7eb;border-top-left-radius:10px;border-bottom-left-radius:10px}
+    td:last-child{border-right:1px solid #e5e7eb;border-top-right-radius:10px;border-bottom-right-radius:10px}
+
+    .mini{font-size:12px;color:#6b7280}
+    .num{font-variant-numeric:tabular-nums}
+    .pill{display:inline-block;background:#eef2ff;color:#273391;border-radius:999px;padding:4px 10px;font-size:12px}
+
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+    @media(max-width:900px){.kpi{grid-template-columns:repeat(2,1fr)}}
+    .kpi .box{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px}
+    .kpi .label{font-size:12px;color:#6b7280}
+    .kpi .value{font-weight:900;font-size:20px}
+
+    .note{color:#6b7280;font-size:13px}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>🏦 Mortgage Comparison</h1>
+      <div class="sub">Compare multiple offers — monthly payment, **APR**, total interest, breakeven on points, and lifetime cost. Export and share.</div>
+    </div>
+  </header>
+
+  <main class="wrap grid">
+    <section class="card">
+      <h2>Loan & Property</h2>
+      <div class="row">
+        <div>
+          <label>Home Price ($)</label><input id="price" type="number" step="0.01" value="450000">
+        </div>
+        <div>
+          <label>Down Payment (%)</label><input id="downPct" type="number" step="0.01" value="20">
+        </div>
+        <div>
+          <label>Loan Amount ($)</label><input id="loan" type="number" step="0.01" value="360000">
+        </div>
+      </div>
+      <div class="bar">
+        <button class="btn" id="syncLoan">↔️ Sync Loan = Price × (1 − Down%)</button>
+        <button class="btn save" id="addRow">➕ Add Offer</button>
+        <button class="btn ghost" id="sample">🎯 Sample 30yr vs 15yr vs Points</button>
+        <button class="btn" id="calc">✅ Calculate</button>
+      </div>
+      <p class="note">APR is solved from cash‑flow (net proceeds vs payments + financed costs). Points/origination increase upfront cost and reduce APR only if the payment savings justify it.</p>
+    </section>
+
+    <section class="card">
+      <h2>Offers</h2>
+      <div style="overflow:auto">
+      <table id="offersTbl">
+        <thead><tr>
+          <th>Lender / Label</th>
+          <th>Rate %</th>
+          <th>Term (yrs)</th>
+          <th>Points %</th>
+          <th>Orig. $</th>
+          <th>Escrow / PMI $/mo</th>
+          <th>Notes</th>
+          <th></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+      </div>
+      <div class="bar">
+        <button class="btn" id="exportCsv">💾 Export CSV</button>
+        <button class="btn ghost" onclick="window.print()">🖨️ Print / PDF</button>
+        <button class="btn" id="share">🔗 Share Link</button>
+        <button class="btn warn" id="clearAll">🧹 Clear</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Results</h2>
+      <div class="kpi" id="kpis"></div>
+      <div class="row">
+        <div>
+          <canvas id="chartPay"></canvas>
+        </div>
+        <div>
+          <canvas id="chartCost"></canvas>
+        </div>
+        <div>
+          <canvas id="chartApr"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Breakeven on Points</h2>
+      <p class="note">Shows months to recover upfront points+origination vs the **cheapest payment** offer. If payment is higher, breakeven is —.</p>
+      <div style="overflow:auto">
+        <table id="beTbl"><thead><tr><th>Offer</th><th>Upfront Cost from Points/Orig</th><th>Payment vs Cheapest</th><th>Breakeven (months)</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id)=>document.getElementById(id);
+
+    // Payment helper (monthly). Returns positive number.
+    function pmt(rate, nper, pv){
+      if(rate===0) return (pv/nper);
+      const r=rate; return (pv*r)/(1-Math.pow(1+r,-nper));
+    }
+
+    // Solve APR: monthly rate such that PV(payments)=net proceeds
+    function solveAprMonthly(loanAmt, upfrontCosts, payment, nper){
+      const target = loanAmt - upfrontCosts; // net cash the borrower actually receives (or that goes to seller)
+      let r = 0.005; // initial guess 0.5% / mo (~6% APR)
+      for(let i=0;i<60;i++){
+        const pv = payment * (1 - Math.pow(1+r, -nper)) / r; // PV annuity
+        const f = pv - target; // want f=0
+        // derivative d/d r of PV
+        const df = ( (payment*( (Math.pow(1+r,-nper)*(nper/(1+r)) ) - (1 - Math.pow(1+r,-nper))/r )) );
+        if(!isFinite(df) || Math.abs(df)<1e-10) break;
+        const step = f/df;
+        r = r - step;
+        if(Math.abs(step) < 1e-10) break;
+      }
+      return Math.max(r, 0);
+    }
+
+    function money(n){ return isFinite(n)? '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0}) : '—'; }
+    function money2(n){ return isFinite(n)? '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:2}) : '—'; }
+    function pct(n, d=2){ return isFinite(n)? (n*100).toFixed(d)+'%' : '—'; }
+
+    // Offers state
+    const KEY='gs_mortgage_offers_v1';
+    let offers=[];
+
+    function addOffer(row){ offers.push(row); renderOffers(); }
+    function removeOffer(i){ offers.splice(i,1); renderOffers(); }
+
+    function offerRow(o,i){ return `<tr>
+      <td><input data-i="${i}" data-k="name" value="${o.name||''}"></td>
+      <td><input type="number" step="0.01" data-i="${i}" data-k="rate" value="${o.rate||0}"></td>
+      <td><input type="number" step="1" data-i="${i}" data-k="term" value="${o.term||30}"></td>
+      <td><input type="number" step="0.01" data-i="${i}" data-k="points" value="${o.points||0}"></td>
+      <td><input type="number" step="0.01" data-i="${i}" data-k="orig" value="${o.orig||0}"></td>
+      <td><input type="number" step="0.01" data-i="${i}" data-k="escrow" value="${o.escrow||0}"></td>
+      <td><input data-i="${i}" data-k="notes" value="${o.notes||''}"></td>
+      <td><button class="btn ghost" data-del="${i}">Remove</button></td>
+    </tr>`; }
+
+    function renderOffers(){
+      const tb = document.querySelector('#offersTbl tbody');
+      if(offers.length===0){ offers=[{name:'Lender A', rate:6.75, term:30, points:0, orig:0, escrow:0, notes:''}]; }
+      tb.innerHTML = offers.map(offerRow).join('');
+      tb.querySelectorAll('input').forEach(inp=>{
+        inp.addEventListener('input', (e)=>{
+          const i = +e.target.dataset.i; const k=e.target.dataset.k; let v=e.target.value;
+          if(['rate','term','points','orig','escrow'].includes(k)) v = +v; // numeric
+          offers[i][k]=v; persist();
+        });
+      });
+      tb.querySelectorAll('[data-del]').forEach(btn=>btn.addEventListener('click',()=>removeOffer(+btn.dataset.del)));
+      persist();
+    }
+
+    function readLoan(){
+      return {
+        price:+$('price').value||0,
+        downPct:(+$('downPct').value||0)/100,
+        loan:+$('loan').value||0,
+      };
+    }
+
+    function persist(){ localStorage.setItem(KEY, JSON.stringify({ loan: readLoan(), offers })); }
+    function restore(){ try{ const s=JSON.parse(localStorage.getItem(KEY)||'{}'); if(s.loan){ $('price').value=s.loan.price||$('price').value; $('downPct').value = (s.loan.downPct*100)||$('downPct').value; $('loan').value=s.loan.loan||$('loan').value; } if(Array.isArray(s.offers)&&s.offers.length){ offers=s.offers; } }catch{} }
+
+    function calc(){
+      const L = readLoan();
+      const results = offers.map(o=>{
+        const pointsCost = L.loan * ((+o.points||0)/100);
+        const upfront = pointsCost + (+o.orig||0);
+        const nper = (+o.term||30)*12;
+        const r = ((+o.rate||0)/100)/12;
+        const pAndI = pmt(r, nper, L.loan);
+        const payment = pAndI + (+o.escrow||0);
+        const totalPaid = payment*nper;
+        const totalInterest = pAndI*nper - L.loan;
+        // APR solve on net proceeds (loan - upfront)
+        const apr_m = solveAprMonthly(L.loan, upfront, payment, nper);
+        const apr = apr_m*12;
+        return { ...o, payment, pAndI, totalPaid, totalInterest, upfront, pointsCost, apr };
+      });
+
+      // KPIs + Charts
+      renderKPIs(results);
+      renderCharts(results);
+      renderBreakeven(results);
+    }
+
+    function renderKPIs(rows){
+      const box = (label, val)=>`<div class="box"><div class="label">${label}</div><div class="value">${val}</div></div>`;
+      const cheapestPay = rows.reduce((a,b)=> a.payment<b.payment?a:b, rows[0]);
+      const lowestApr = rows.reduce((a,b)=> a.apr<b.apr?a:b, rows[0]);
+      const leastInterest = rows.reduce((a,b)=> a.totalInterest<b.totalInterest?a:b, rows[0]);
+      $('kpis').innerHTML = [
+        box('Cheapest Monthly', `${cheapestPay.name||'Offer'} · ${money2(cheapestPay.payment)} /mo`),
+        box('Lowest APR', `${lowestApr.name||'Offer'} · ${pct(lowestApr.apr,2)}`),
+        box('Least Lifetime Interest', `${leastInterest.name||'Offer'} · ${money(leastInterest.totalInterest)}`),
+        box('Loan Amount', money(readLoan().loan))
+      ].join('');
+    }
+
+    let _chartPay, _chartCost, _chartApr;
+    function makeChart(id, cfg){ const ctx=$(id).getContext('2d'); const c=new Chart(ctx, cfg); return c; }
+    function renderCharts(rows){
+      const labels = rows.map(r=>r.name||'Offer');
+      const pay = rows.map(r=>+r.payment.toFixed(2));
+      const cost = rows.map(r=>Math.round(r.totalInterest));
+      const aprs = rows.map(r=>+(r.apr*100).toFixed(2));
+      const common = { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} };
+      // ensure canvas heights
+      ['chartPay','chartCost','chartApr'].forEach(id=>{ const c=$(id); c.width=c.parentElement.clientWidth; c.height=220; });
+      _chartPay && _chartPay.destroy();
+      _chartCost && _chartCost.destroy();
+      _chartApr && _chartApr.destroy();
+      _chartPay = makeChart('chartPay',{ type:'bar', data:{ labels, datasets:[{ label:'Payment /mo', data:pay }] }, options: common });
+      _chartCost = makeChart('chartCost',{ type:'bar', data:{ labels, datasets:[{ label:'Total Interest', data:cost }] }, options: common });
+      _chartApr = makeChart('chartApr',{ type:'bar', data:{ labels, datasets:[{ label:'APR %', data:aprs }] }, options: common });
+    }
+
+    function renderBreakeven(rows){
+      const cheapest = rows.reduce((a,b)=> a.payment<b.payment?a:b, rows[0]);
+      const body = document.querySelector('#beTbl tbody');
+      body.innerHTML = rows.map(r=>{
+        const diff = r.payment - cheapest.payment; // positive means worse than cheapest
+        const upfront = r.upfront;
+        let be = '—';
+        if(diff<0){ // this offer is cheaper per month
+          const savings = -diff; // monthly savings vs cheapest
+          be = savings>0 ? Math.ceil(upfront / savings) : '—';
+        }
+        return `<tr><td>${r.name||'Offer'}</td><td>${money(Math.round(upfront))}</td><td>${diff>=0? '+'+money2(diff): money2(diff)}</td><td>${be}</td></tr>`;
+      }).join('');
+    }
+
+    function toCSV(){
+      const L=readLoan();
+      const header=['Offer','Rate%','Term','Points%','Orig$','Escrow$/mo','Payment','APR%','Total Interest','Upfront'];
+      const rows = offers.map(o=>{
+        const nper=(+o.term||30)*12; const r=((+o.rate||0)/100)/12; const pAndI=pmt(r,nper, L.loan); const payment=pAndI+(+o.escrow||0);
+        const upfront = L.loan*((+o.points||0)/100) + (+o.orig||0);
+        const apr=(solveAprMonthly(L.loan,upfront,payment,nper))*12*100;
+        const totInt=pAndI*nper - L.loan;
+        return [o.name||'', o.rate||0, o.term||30, o.points||0, o.orig||0, o.escrow||0, payment.toFixed(2), apr.toFixed(2), Math.round(totInt), Math.round(upfront)];
+      });
+      const csv = [header, ...rows].map(r=>r.join(',')).join('\n');
+      const a=document.createElement('a'); a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(csv); a.download='mortgage_comparison.csv'; a.click();
+    }
+
+    function toQuery(){ const L=readLoan(); const q=new URLSearchParams(); q.set('price',L.price); q.set('downPct',L.downPct*100); q.set('loan',L.loan);
+      offers.forEach((o,i)=>{ Object.entries(o).forEach(([k,v])=> q.set(`${i}_${k}`, v)); }); return q.toString(); }
+    function fromQuery(){ const q=new URLSearchParams(location.search); if(!q.size) return; const L={ price:+q.get('price')||0, downPct:(+q.get('downPct')||0)/100, loan:+q.get('loan')||0 }; $('price').value=L.price||$('price').value; $('downPct').value=(L.downPct*100)||$('downPct').value; $('loan').value=L.loan||$('loan').value; const arr=[]; let i=0; while(q.has(`${i}_rate`)||q.has(`${i}_name`)){ const o={ name:q.get(`${i}_name`)||`Offer ${i+1}`, rate:+q.get(`${i}_rate`)||0, term:+q.get(`${i}_term`)||30, points:+q.get(`${i}_points`)||0, orig:+q.get(`${i}_orig`)||0, escrow:+q.get(`${i}_escrow`)||0, notes:q.get(`${i}_notes`)||''}; arr.push(o); i++; } if(arr.length) offers=arr; }
+
+    // Wire UI
+    $('syncLoan').onclick = ()=>{ const price=+$('price').value||0; const down=(+$('downPct').value||0)/100; $('loan').value = Math.max(0, Math.round(price*(1-down))); persist(); };
+    $('addRow').onclick = ()=> addOffer({name:`Offer ${offers.length+1}`, rate:7, term:30, points:0, orig:0, escrow:0, notes:''});
+    $('calc').onclick = calc;
+    $('exportCsv').onclick = toCSV;
+    $('share').onclick = ()=>{ const url=location.origin+location.pathname+'?'+toQuery(); navigator.clipboard.writeText(url).then(()=>alert('Shareable link copied!')).catch(()=>prompt('Copy link:',url)); };
+    $('clearAll').onclick = ()=>{ offers=[]; renderOffers(); $('kpis').innerHTML=''; document.querySelector('#beTbl tbody').innerHTML=''; ['chartPay','chartCost','chartApr'].forEach(id=>{ const c=$(id).getContext('2d'); c.clearRect(0,0,9999,9999); }); };
+    $('sample').onclick = ()=>{
+      offers = [
+        { name:'30yr No Points', rate:6.90, term:30, points:0.0, orig:995, escrow:0, notes:'' },
+        { name:'30yr w/1.0 pt', rate:6.40, term:30, points:1.0, orig:995, escrow:0, notes:'' },
+        { name:'15yr No Points', rate:6.10, term:15, points:0.0, orig:995, escrow:0, notes:'' }
+      ]; renderOffers(); calc();
+    };
+
+    // Boot
+    restore(); fromQuery(); renderOffers(); calc();
+  </script>
+</body>
+</html>

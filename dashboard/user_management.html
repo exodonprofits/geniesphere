@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin | User Management</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0f172a;
+      color: #f1f5f9;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #2BFFD9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #1e293b;
+      text-align: left;
+    }
+    th {
+      background-color: #1e293b;
+    }
+  </style>
+</head>
+<body>
+  <h1>User Management</h1>
+  <table id="user-table">
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Role</th>
+        <th>Full Name</th>
+        <th>Business ID</th>
+      </tr>
+    </thead>
+    <tbody id="user-tbody">
+      <tr><td colspan="4">Loading...</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+
+    async function fetchAndRenderUsers() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      const { data: pref } = await supabaseClient
+        .from("user_preferences")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (pref?.role === "admin") {
+        await supabaseClient.rpc("set_admin_context", { is_admin: true });
+      }
+
+      const { data, error } = await supabaseClient
+        .from("user_preferences")
+        .select("user_id, role, full_name, business_id");
+
+      const tbody = document.getElementById("user-tbody");
+      tbody.innerHTML = "";
+
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4">No users found or unauthorized.</td></tr>';
+        return;
+      }
+
+      data.forEach(user => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${user.user_id}</td>
+          <td>${user.role}</td>
+          <td>${user.full_name || "—"}</td>
+          <td>${user.business_id || "—"}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    fetchAndRenderUsers();
+  </script>
+</body>
+</html>

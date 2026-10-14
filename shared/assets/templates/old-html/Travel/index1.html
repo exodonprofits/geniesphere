@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Planner | Smart Journey Builder</title>
+    <style>
+        :root {
+            --primary: #2A6BCC;
+            --primary-light: #E8F1FF;
+            --background: #F8FAFF;
+            --border: #D1DAEB;
+            --text: #2C3E50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 2.5rem;
+            font-size: 2.4rem;
+            font-weight: 600;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.8rem;
+            background: #FBFCFE;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s ease;
+        }
+
+        .form-section:hover {
+            transform: translateY(-2px);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section-title svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(42,107,204,0.1);
+        }
+
+        /* Enhanced Selection Controls */
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .option-card {
+            position: relative;
+            padding: 1.2rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .option-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .option-card.selected::after {
+            content: "✓";
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .option-card input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Date Grid */
+        .date-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Budget Input */
+        .budget-group {
+            position: relative;
+        }
+
+        .currency {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .budget-input {
+            padding-left: 40px;
+        }
+
+        /* Destination Modal */
+        .destination-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.98);
+            padding: 2rem;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .destination-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .destination-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .destination-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .destination-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .destination-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, var(--primary), #1E5499);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.02);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .container {
+                padding: 1.5rem;
+            }
+            
+            .date-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .option-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 AI Travel Planner</h1>
+        
+        <form action="https://exodonprofits.app.n8n.cloud/webhook/travel-agent" method="POST">
+            
+            <!-- Departure Location -->
+            <div class="form-section">
+                <div class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+                    </svg>
+                    Departure Location
+                </div>
+                <input type="text" name="departureLocation" 
+                       placeholder="Enter city or airport code" 
+                       required>
+            </div>
+
+            <!-- Destination Selection -->
+            <div class="form-section">
+                <div class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+                    </svg>
+                    Choose Destination
+                </div>
+                <select name="destination" required>
+                    <option value="">-- Select Destination --</option>
+                    <!-- Destination options here -->
+                </select>
+                <div style="margin-top: 1rem; text-align: center;">
+                    <a href="#all-destinations" onclick="showDestinationModal()" 
+                       style="color: var(--primary); font-weight: 500; text-decoration: none;">
+                        🌐 Browse All Destinations
+                    </a>
+                </div>
+            </div>
+
+            <!-- Travel Dates -->
+            <div class="form-section">
+                <div class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/>
+                    </svg>
+                    Travel Dates
+                </div>
+                <div class="date-grid">
+                    <input type="date" name="startDate" required>
+                    <input type="date" name="endDate" required>
+                </div>
+            </div>
+
+            <!-- Budget -->
+            <div class="form-section">
+                <div class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                    Total Budget
+                </div>
+                <div class="budget-group">
+                    <span class="currency">$</span>
+                    <input type="number" name="budget" 
+                           class="budget-input" 
+                           placeholder="Enter estimated budget">
+                </div>
+            </div>
+
+            <!-- Trip Type -->
+            <div class="form-section">
+                <div class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    </svg>
+                    Trip Type
+                </div>
+                <div class="option-grid">
+                    <label class="option-card">
+                        <input type="radio" name="tripType" value="Solo" required>
+                        Solo Travel
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="tripType" value="Couple">
+                        Couple's Getaway
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="tripType" value="Family">
+                        Family Vacation
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="tripType" value="Group">
+                        Group Trip
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="tripType" value="Honeymoon">
+                        Honeymoon
+                    </label>
+                </div>
+            </div>
+
+            <!-- Group Size -->
+            <div class="form-section">
+                <div class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    </svg>
+                    Group Size
+                </div>
+                <div class="option-grid">
+                    <label class="option-card">
+                        <input type="radio" name="groupSize" value="1" required>
+                        1 Traveler
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="groupSize" value="2">
+                        2 People
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="groupSize" value="3-4">
+                        3-4 People
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="groupSize" value="5+">
+                        5+ People
+                    </label>
+                </div>
+            </div>
+
+            <!-- Age Ranges -->
+            <div class="form-section">
+                <div class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2-15.86c1.03.13 2 .45 2.87.93H13v-.93zM13 7h5.24c.25.31.48.65.68 1H13V7zm0 3h6.74c.08.33.15.66.19 1H13v-1zm0 9.93V19h2.87c-.87.48-1.84.8-2.87.93zM18.24 17H13v-1h6.93c-.08.67-.23 1.32-.43 1.93-.22-.63-.52-1.22-.89-1.77-.15-.23-.32-.45-.5-.66-.18-.21-.38-.41-.59-.6z"/>
+                    </svg>
+                    Traveler Ages
+                </div>
+                <div class="option-grid">
+                    <label class="option-card">
+                        <input type="checkbox" name="ageRange" value="Kids">
+                        Kids (0-12)
+                    </label>
+                    <label class="option-card">
+                        <input type="checkbox" name="ageRange" value="Teens">
+                        Teens (13-19)
+                    </label>
+                    <label class="option-card">
+                        <input type="checkbox" name="ageRange" value="Adults">
+                        Adults (20-39)
+                    </label>
+                    <label class="option-card">
+                        <input type="checkbox" name="ageRange" value="MiddleAge">
+                        Adults (40-64)
+                    </label>
+                    <label class="option-card">
+                        <input type="checkbox" name="ageRange" value="Seniors">
+                        Seniors (65+)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-section">
+                <div class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"/>
+                    </svg>
+                    Email Updates
+                </div>
+                <input type="email" name="email" 
+                       placeholder="name@example.com (optional)">
+            </div>
+
+            <button type="submit" class="submit-btn">
+                🚀 Generate Travel Plan
+            </button>
+        </form>
+    </div>
+
+    <!-- Destination Modal -->
+    <div id="destination-modal" class="destination-modal">
+        <div class="modal-header">
+            <h2>🌍 All Destinations</h2>
+            <button onclick="closeDestinationModal()" 
+                    style="background: none; border: none; font-size: 1.5rem; color: var(--primary); cursor: pointer;">
+                ×
+            </button>
+        </div>
+        <div class="destination-grid">
+            <!-- Destination cards would be dynamically populated here -->
+        </div>
+    </div>
+
+    <script>
+        // Selection Handling
+        document.querySelectorAll('.option-card input').forEach(input => {
+            input.addEventListener('change', function() {
+                const parent = this.closest('.option-card');
+                const isCheckbox = this.type === 'checkbox';
+                
+                if (this.type === 'radio') {
+                    document.querySelectorAll(`input[name="${this.name}"]`).forEach(radio => {
+                        radio.closest('.option-card').classList.remove('selected');
+                    });
+                }
+                
+                parent.classList.toggle('selected', this.checked);
+            });
+        });
+
+        // Modal Handling
+        function showDestinationModal() {
+            document.getElementById('destination-modal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDestinationModal() {
+            document.getElementById('destination-modal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal on ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDestinationModal();
+        });
+
+        // Initialize existing selections
+        document.querySelectorAll('input:checked').forEach(input => {
+            input.closest('.option-card').classList.add('selected');
+        });
+    </script>
+</body>
+</html>

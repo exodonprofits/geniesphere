@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expense Optimizer</title>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#101a2c;
+      --panel2:#0f1726;
+      --card:#16233b;
+      --card2:#1c2e52;
+      --text:#e6edf7;
+      --muted:#9fb0cc;
+      --border:rgba(120,155,255,.25);
+      --accent:#4c6ef5;
+      --success:#3ee1a1;
+      --warn:#fbbf24;
+      --danger:#fb7185;
+      --radius:10px;
+      --radius2:14px;
+      --shadow:0 18px 45px rgba(0,0,0,.45);
+      --shadow2:0 12px 30px rgba(0,0,0,.35);
+      --max:1200px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background: radial-gradient(1000px 600px at 20% 0%, rgba(76,110,245,.18), transparent 60%),
+                  radial-gradient(800px 500px at 90% 10%, rgba(62,225,161,.12), transparent 55%),
+                  linear-gradient(180deg, #0b1220, #0e1626);
+      color:var(--text);
+    }
+    a{color:inherit}
+    .wrap{max-width:var(--max); margin:0 auto; padding:18px}
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(11,18,32,.72);
+      border-bottom:1px solid rgba(120,155,255,.12);
+    }
+    .topbar .row{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:12px 18px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      text-decoration:none;
+    }
+    .logo{
+      width:36px; height:36px;
+      border-radius:12px;
+      background: linear-gradient(135deg, rgba(76,110,245,.95), rgba(62,225,161,.65));
+      box-shadow: 0 14px 34px rgba(0,0,0,.35);
+    }
+    .brand h1{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.2px;
+    }
+    .brand .sub{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:600;
+    }
+    .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end}
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:7px;
+      font-weight:800;
+      cursor:pointer;
+      transition: transform .12s ease, border-color .18s ease, background .18s ease;
+      display:inline-flex; align-items:center; gap:8px;
+      text-decoration:none;
+      white-space:nowrap;
+    }
+    .btn:hover{border-color: rgba(76,110,245,.55); transform: translateY(-1px);}
+    .btn.primary{background: linear-gradient(135deg, rgba(76,110,245,.92), rgba(76,110,245,.72)); border-color: rgba(76,110,245,.75);}
+    .btn.primary:hover{background: linear-gradient(135deg, rgba(76,110,245,1), rgba(59,91,219,.9));}
+    .btn.success{background: linear-gradient(135deg, rgba(62,225,161,.35), rgba(62,225,161,.18)); border-color: rgba(62,225,161,.55);}
+    .btn.ghost{background: transparent;}
+    .pill{
+      border:1px solid rgba(120,155,255,.22);
+      background: rgba(255,255,255,.03);
+      padding:6px 10px;
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .hero{
+      padding:22px 0 8px;
+    }
+    .hero-title{
+      margin:0 0 6px;
+      font-size:26px;
+      letter-spacing:.2px;
+    }
+    .hero-sub{
+      margin:0;
+      color:var(--muted);
+      line-height:1.45;
+      max-width: 72ch;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+      padding: 12px 0 26px;
+    }
+    @media(min-width: 980px){
+      .grid{ grid-template-columns: 1.25fr .75fr; }
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(16,26,44,.92), rgba(12,18,32,.92));
+      border:1px solid rgba(120,155,255,.18);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    .panel .head{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(120,155,255,.14);
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .panel .head h2{
+      margin:0;
+      font-size:16px;
+      display:flex; gap:10px; align-items:center;
+    }
+    .panel .head p{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .panel .body{ padding:16px; }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:12px;
+    }
+    @media(min-width:720px){ .kpis{ grid-template-columns: repeat(4, minmax(0,1fr)); } }
+    .kpi{
+      background: linear-gradient(180deg, rgba(28,46,82,.78), rgba(16,26,46,.92));
+      border:1px solid rgba(120,155,255,.18);
+      border-radius: var(--radius);
+      padding:14px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.28);
+    }
+    .kpi .label{font-size:12px; color:var(--muted); font-weight:900; letter-spacing:.06em; text-transform:uppercase;}
+    .kpi .value{font-size:20px; font-weight:900; margin-top:6px;}
+    .kpi .chip{margin-top:8px; display:inline-flex; gap:8px; align-items:center; font-size:12px; color:var(--muted);}
+    .dot{width:8px; height:8px; border-radius:999px; background: var(--accent); display:inline-block}
+    .dot.success{background: var(--success)}
+    .dot.warn{background: var(--warn)}
+    .dot.danger{background: var(--danger)}
+
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(1, minmax(0,1fr));
+      gap:12px;
+    }
+    @media(min-width:720px){ .cards{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    .card{
+      background: linear-gradient(180deg, rgba(28,46,82,.86), rgba(16,26,46,.96));
+      border:1px solid rgba(120,155,255,.20);
+      border-radius: var(--radius2);
+      padding:14px;
+      box-shadow: 0 14px 34px rgba(0,0,0,.33);
+      transition: transform .12s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .card:hover{
+      transform: translateY(-2px);
+      border-color: rgba(76,110,245,.62);
+      box-shadow: 0 18px 40px rgba(0,0,0,.45);
+    }
+    .card .title{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      margin:0 0 6px;
+    }
+    .card h3{margin:0; font-size:15px;}
+    .tag{
+      font-size:11px;
+      font-weight:900;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.28);
+      color:var(--muted);
+      background: rgba(0,0,0,.14);
+      white-space:nowrap;
+    }
+    .card p{margin:0; color:var(--muted); font-size:13px; line-height:1.45}
+    .card .meta{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .meta .mini{font-size:12px; color:var(--muted); font-weight:800; display:inline-flex; gap:8px; align-items:center}
+    .meta .mini strong{color:var(--text); font-weight:900}
+
+    .form{
+      display:grid;
+      gap:10px;
+    }
+    .row2{display:grid; gap:10px; grid-template-columns:1fr}
+    @media(min-width:720px){ .row2{ grid-template-columns: 1fr 1fr; } }
+    label{font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);}
+    input,select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:10px;
+      border:1px solid rgba(120,155,255,.22);
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      outline:none;
+    }
+    input:focus,select:focus{border-color: rgba(76,110,245,.65); box-shadow:0 0 0 3px rgba(76,110,245,.18);}
+    .help{font-size:12px; color:var(--muted); line-height:1.35; margin-top:4px}
+    .table-wrap{overflow:auto; border-radius: var(--radius2); border:1px solid rgba(120,155,255,.14)}
+    table{width:100%; border-collapse:collapse; min-width: 720px; background: rgba(0,0,0,.10);}
+    th,td{padding:10px 12px; border-bottom:1px solid rgba(120,155,255,.12); text-align:left; font-size:13px;}
+    th{color:var(--muted); font-weight:900; letter-spacing:.04em; text-transform:uppercase; font-size:11px;}
+    tr:hover td{background: rgba(255,255,255,.03);}
+    .right{text-align:right}
+    .muted{color:var(--muted)}
+    .foot{
+      padding:18px 0 30px;
+      color: rgba(159,176,204,.85);
+      font-size:12px;
+      text-align:center;
+    }
+    .note{
+      border-left:4px solid rgba(76,110,245,.7);
+      padding:10px 12px;
+      background: rgba(76,110,245,.08);
+      border-radius: 10px;
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.4;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="row">
+      <a class="brand" href="../index.html" aria-label="Back to dashboard">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>GenieSphere <span class="sub">Business • Expense Optimizer</span></h1>
+        </div>
+      </a>
+
+      <div class="actions">
+        <span class="pill">🧠 AI-ready • v1</span>
+        <button class="btn ghost" id="btnImport" type="button">📥 Import</button>
+        <button class="btn ghost" id="btnExport" type="button">⬇️ Export</button>
+        <button class="btn primary" id="btnRun" type="button">🚀 Run Analysis</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <h2 class="hero-title">💰 Expense Optimizer</h2>
+      <p class="hero-sub">
+        Upload expenses (CSV), spot subscriptions + vendor spikes, and get a simple “what to fix first” list.
+        Designed to scale across users who may or may not have specific businesses.
+      </p>
+    </div>
+
+    <div class="panel">
+      <div class="head">
+        <div>
+          <h2>📌 Quick Peek</h2>
+          <p>These are placeholders until you connect real expense data.</p>
+        </div>
+        <div class="actions">
+          <span class="pill">Period: <strong id="periodLabel">Last 30 days</strong></span>
+          <button class="btn ghost" id="btnPeriod" type="button">🗓️ Change</button>
+        </div>
+      </div>
+      <div class="body">
+        <div class="kpis">
+          <div class="kpi">
+            <div class="label">Monthly Spend</div>
+            <div class="value" id="kpiSpend">$0</div>
+            <div class="chip"><span class="dot"></span><span class="muted" id="kpiSpendNote">No data yet</span></div>
+          </div>
+          <div class="kpi">
+            <div class="label">Potential Savings</div>
+            <div class="value" id="kpiSavings">$0</div>
+            <div class="chip"><span class="dot success"></span><span class="muted" id="kpiSavingsNote">Add rules to estimate</span></div>
+          </div>
+          <div class="kpi">
+            <div class="label">Subscriptions</div>
+            <div class="value" id="kpiSubs">0</div>
+            <div class="chip"><span class="dot warn"></span><span class="muted" id="kpiSubsNote">Recurring detection</span></div>
+          </div>
+          <div class="kpi">
+            <div class="label">High Cost Vendors</div>
+            <div class="value" id="kpiVendors">0</div>
+            <div class="chip"><span class="dot danger"></span><span class="muted" id="kpiVendorsNote">Vendor spikes</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <div class="head">
+            <div>
+              <h2>🧭 Optimization Suggestions</h2>
+              <p>Action cards — turn these into real checks once expenses are connected.</p>
+            </div>
+          </div>
+          <div class="body">
+            <div class="cards">
+              <div class="card">
+                <div class="title">
+                  <h3>Cancel Unused Subscriptions</h3>
+                  <span class="tag">Recurring</span>
+                </div>
+                <p>Detect subscriptions with low usage, duplicates (e.g., multiple tools doing the same thing), and “forgotten” trials.</p>
+                <div class="meta">
+                  <span class="mini">📌 Target: <strong id="m1">—</strong></span>
+                  <span class="mini">💡 Est. save: <strong id="m1s">$—</strong></span>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="title">
+                  <h3>Negotiate Vendor Contracts</h3>
+                  <span class="tag">Vendors</span>
+                </div>
+                <p>Flag vendors that rose sharply month-over-month or exceed your expected budget.</p>
+                <div class="meta">
+                  <span class="mini">📌 Target: <strong id="m2">—</strong></span>
+                  <span class="mini">💡 Est. save: <strong id="m2s">$—</strong></span>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="title">
+                  <h3>Switch Payment Method</h3>
+                  <span class="tag">Rewards</span>
+                </div>
+                <p>Route categories to the best rewards card (ties into your Credit Card Hub).</p>
+                <div class="meta">
+                  <span class="mini">💳 Category: <strong>—</strong></span>
+                  <span class="mini">✅ Best card: <strong>—</strong></span>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="title">
+                  <h3>Tax-Smart Category Cleanup</h3>
+                  <span class="tag">Books</span>
+                </div>
+                <p>Spot miscategorized expenses (supplies vs. meals vs. utilities) to reduce friction at tax time.</p>
+                <div class="meta">
+                  <span class="mini">🧾 Reclass: <strong>—</strong></span>
+                  <span class="mini">⚠️ Review: <strong>—</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div style="height:12px"></div>
+            <div class="note">
+              <strong>Next step:</strong> connect Supabase (or CSV upload) and we’ll auto-populate KPIs + “Top opportunities” from your actual transactions.
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="head">
+            <div>
+              <h2>📄 Recent Expenses</h2>
+              <p>Placeholder table. Once you import, this will show your most recent vendor/category spend.</p>
+            </div>
+          </div>
+          <div class="body">
+            <div class="table-wrap">
+              <table aria-label="Recent expenses table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Vendor</th>
+                    <th>Category</th>
+                    <th class="right">Amount</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody">
+                  <tr>
+                    <td colspan="5" class="muted">No expense data loaded yet. Use “Import” to add CSV.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="head">
+            <div>
+              <h2>⚙️ Settings</h2>
+              <p>Pick a workspace + date range (wired for later Supabase multi-tenant).</p>
+            </div>
+          </div>
+          <div class="body">
+            <div class="form">
+              <div>
+                <label for="workspace">Workspace</label>
+                <select id="workspace">
+                  <option value="all">All workspaces</option>
+                  <option value="personal">Personal</option>
+                  <option value="business">Business</option>
+                </select>
+                <div class="help">When you connect business_profiles later, this becomes dynamic.</div>
+              </div>
+
+              <div class="row2">
+                <div>
+                  <label for="from">From</label>
+                  <input id="from" type="date"/>
+                </div>
+                <div>
+                  <label for="to">To</label>
+                  <input id="to" type="date"/>
+                </div>
+              </div>
+
+              <div>
+                <label for="focus">Focus</label>
+                <select id="focus">
+                  <option value="savings">Savings first</option>
+                  <option value="cleanup">Cleanup / bookkeeping</option>
+                  <option value="subscriptions">Subscriptions</option>
+                  <option value="vendors">Vendors</option>
+                </select>
+              </div>
+
+              <button class="btn success" type="button" id="btnApply">✅ Apply</button>
+              <div class="help">This page is UI-first. When you’re ready, we’ll connect to Supabase + n8n + AI.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="head">
+            <div>
+              <h2>🧠 AI Ideas</h2>
+              <p>Optional future upgrades for GenieSphere scaling.</p>
+            </div>
+          </div>
+          <div class="body">
+            <ul style="margin:0; padding-left:18px; color:var(--muted); line-height:1.5; font-size:13px">
+              <li>Auto-detect subscriptions (same vendor, similar amount, monthly cadence).</li>
+              <li>Vendor benchmarking: compare against your historical average and budget rules.</li>
+              <li>One-click “Route spend to best card” recommendations (links into Credit Card Optimizer).</li>
+              <li>QuickBooks category suggestions (tax mapping).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      Built for GenieSphere • Expense Optimizer (starter UI). Connect data later for real analytics.
+    </div>
+  </div>
+
+  <script>
+    // Simple demo interactivity (no data connection yet)
+    const $ = (id)=>document.getElementById(id);
+
+    function fmtMoney(n){
+      const x = Number(n||0);
+      return x.toLocaleString(undefined,{style:'currency',currency:'USD'});
+    }
+
+    function setDefaultDates(){
+      const to = new Date();
+      const from = new Date();
+      from.setDate(from.getDate()-30);
+      const iso = (d)=>d.toISOString().slice(0,10);
+      $('from').value = iso(from);
+      $('to').value = iso(to);
+    }
+
+    function applyUI(){
+      const from = $('from').value;
+      const to = $('to').value;
+      $('periodLabel').textContent = (from && to) ? `${from} → ${to}` : 'Last 30 days';
+    }
+
+    $('btnApply').addEventListener('click', ()=>{
+      applyUI();
+      alert('Applied. (Next step: wire this to your expense dataset.)');
+    });
+
+    $('btnPeriod').addEventListener('click', ()=>{
+      alert('Tip: use the From/To fields in Settings, then click Apply.');
+    });
+
+    $('btnImport').addEventListener('click', ()=>{
+      alert('Import is UI-only in this starter. Next: add CSV upload or Supabase table.');
+    });
+
+    $('btnExport').addEventListener('click', ()=>{
+      alert('Export is UI-only in this starter. Next: export the current table as CSV.');
+    });
+
+    $('btnRun').addEventListener('click', ()=>{
+      // Demo values to prove the page isn't empty + feels alive
+      $('kpiSpend').textContent = fmtMoney(12450);
+      $('kpiSavings').textContent = fmtMoney(860);
+      $('kpiSubs').textContent = '7';
+      $('kpiVendors').textContent = '3';
+      $('kpiSpendNote').textContent = 'Sample data (demo)';
+      $('kpiSavingsNote').textContent = 'Estimated from common cuts';
+      $('kpiSubsNote').textContent = 'Likely recurring vendors';
+      $('kpiVendorsNote').textContent = 'Spikes vs last month';
+
+      $('tbody').innerHTML = `
+        <tr><td>2026-02-05</td><td>Adobe</td><td>Software</td><td class="right">${fmtMoney(69.99)}</td><td class="muted">Subscription</td></tr>
+        <tr><td>2026-02-04</td><td>AT&amp;T</td><td>Phone</td><td class="right">${fmtMoney(210.00)}</td><td class="muted">Bill</td></tr>
+        <tr><td>2026-02-03</td><td>Grainger</td><td>Supplies</td><td class="right">${fmtMoney(489.32)}</td><td class="muted">Vendor spike</td></tr>
+        <tr><td>2026-02-02</td><td>Amazon</td><td>Office</td><td class="right">${fmtMoney(155.18)}</td><td class="muted">Review category</td></tr>
+      `;
+
+      $('m1').textContent = 'Adobe + unused trials';
+      $('m1s').textContent = fmtMoney(120);
+      $('m2').textContent = 'Grainger';
+      $('m2s').textContent = fmtMoney(250);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    setDefaultDates();
+    applyUI();
+  </script>
+</body>
+</html>

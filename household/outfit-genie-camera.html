@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Outfit Genie – Outfit Check</title>
+  <meta name="description" content="Upload or take a photo and get AI feedback on whether your outfit fits work, going out, or an event." />
+  <style>
+    :root{
+      --bg:#0b1220; --card:#121a2b; --text:#e9f0ff; --muted:#a9b6d9;
+      --field:#0e1626; --accent:#3ee1a1; --accent2:#4aa3ff;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);margin:0;padding:20px}
+    h1{font-size:32px;margin:0 0 10px}
+    p{color:var(--muted);margin:0 0 14px;line-height:1.5}
+    .card{max-width:900px;margin:auto;background:var(--card);border-radius:16px;padding:20px;border:1px solid rgba(255,255,255,.06)}
+    .row{display:grid;gap:12px}
+    @media(min-width:820px){ .row.two{grid-template-columns:1fr 1fr} }
+    label{display:block;font-weight:800;margin:10px 0 6px}
+    input,select,textarea{
+      width:100%;padding:12px;border-radius:12px;border:1px solid rgba(120,155,255,.18);
+      background:var(--field);color:#fff
+    }
+    textarea{min-height:90px;resize:vertical}
+    .btnbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .btn{
+      background:var(--accent);color:#04131a;padding:12px 18px;border-radius:999px;border:none;
+      font-weight:800;cursor:pointer
+    }
+    .btn.secondary{background:var(--accent2);color:#03101f}
+    .btn.ghost{
+      background:transparent;color:var(--text);border:1px solid rgba(120,155,255,.18)
+    }
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .result{margin-top:18px;padding:15px;background:var(--field);border-radius:12px;border:1px solid rgba(255,255,255,.06)}
+    .previewWrap{display:none;gap:12px;align-items:flex-start;margin-top:12px}
+    .preview{width:140px;height:180px;object-fit:cover;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:#080d16}
+    .meta{color:var(--muted);font-size:14px}
+    .cameraWrap{display:none;margin-top:12px;padding:12px;border-radius:12px;border:1px solid rgba(120,155,255,.18);background:rgba(14,22,38,.65)}
+    video{width:100%;max-height:420px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:#080d16}
+    .hint{color:var(--muted);font-size:14px;margin-top:8px}
+    .error{display:none;margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,107,107,.35);background:rgba(255,107,107,.10);color:#ffd0d0;font-weight:700}
+    .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🧥 Outfit Genie</h1>
+    <p>Upload a photo or use your camera. For best results, use a <strong>full-body</strong> photo in good lighting.</p>
+
+    <div class="row two">
+      <div>
+        <label>📸 Photo</label>
+
+        <!-- File picker (desktop + mobile gallery) -->
+        <input class="sr-only" id="fileInput" type="file" accept="image/*" />
+        <!-- Direct camera capture (best on mobile) -->
+        <input class="sr-only" id="captureInput" type="file" accept="image/*" capture="environment" />
+
+        <div class="btnbar">
+          <button class="btn" id="btnChoose" type="button">🖼️ Choose Photo</button>
+          <button class="btn secondary" id="btnTake" type="button">📷 Take Photo</button>
+          <button class="btn ghost" id="btnOpenCamera" type="button">🎥 Open Live Camera</button>
+          <button class="btn ghost" id="btnClear" type="button" disabled>🗑️ Clear</button>
+        </div>
+
+        <div class="previewWrap" id="previewWrap">
+          <img class="preview" id="preview" alt="Selected outfit preview" />
+          <div class="meta" id="meta"></div>
+        </div>
+
+        <div class="cameraWrap" id="cameraWrap">
+          <video id="video" autoplay playsinline></video>
+          <div class="btnbar" style="margin-top:10px">
+            <button class="btn secondary" id="btnSnap" type="button">📸 Capture</button>
+            <button class="btn ghost" id="btnCloseCamera" type="button">❌ Close Camera</button>
+          </div>
+          <div class="hint">If live camera doesn’t open, use <strong>Take Photo</strong> (mobile) or <strong>Choose Photo</strong>.</div>
+        </div>
+
+        <div class="error" id="error"></div>
+      </div>
+
+      <div>
+        <label>🎯 Occasion</label>
+        <select id="occasion">
+          <option>Work (Office)</option>
+          <option>Interview</option>
+          <option>Date Night</option>
+          <option>Wedding</option>
+          <option>Going Out</option>
+          <option>Formal Event</option>
+        </select>
+
+        <label>📝 Notes (optional)</label>
+        <textarea id="notes" placeholder="Dress code, comfort needs, no heels, outdoor event, etc."></textarea>
+
+        <div class="btnbar">
+          <button type="button" class="btn" id="btnAnalyze" disabled>🔍 Analyze Outfit</button>
+        </div>
+        <div class="hint">This page shows a demo result. Next step is connecting to your n8n webhook for real AI feedback.</div>
+      </div>
+    </div>
+
+    <div class="result" id="result">
+      <strong>Demo Result</strong>
+      <p style="margin:10px 0 0;color:var(--text)"><span style="font-weight:900">⭐ Score:</span> 8/10</p>
+      <p style="margin:6px 0 0;color:var(--text)"><span style="font-weight:900">✅ Works:</span> Clean colors, good fit</p>
+      <p style="margin:6px 0 0;color:var(--text)"><span style="font-weight:900">⚠️ Risk:</span> Shoes slightly casual</p>
+      <p style="margin:6px 0 0;color:var(--text)"><span style="font-weight:900">🔧 Upgrade:</span> Add blazer, dress shoes</p>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const captureInput = document.getElementById('captureInput');
+
+    const btnChoose = document.getElementById('btnChoose');
+    const btnTake = document.getElementById('btnTake');
+    const btnOpenCamera = document.getElementById('btnOpenCamera');
+    const btnCloseCamera = document.getElementById('btnCloseCamera');
+    const btnSnap = document.getElementById('btnSnap');
+    const btnClear = document.getElementById('btnClear');
+    const btnAnalyze = document.getElementById('btnAnalyze');
+
+    const previewWrap = document.getElementById('previewWrap');
+    const preview = document.getElementById('preview');
+    const meta = document.getElementById('meta');
+    const cameraWrap = document.getElementById('cameraWrap');
+    const video = document.getElementById('video');
+    const errorEl = document.getElementById('error');
+
+    let stream = null;
+    let selectedBlob = null; // captured image blob
+
+    function showError(msg){
+      errorEl.textContent = msg || 'Something went wrong.';
+      errorEl.style.display = 'block';
+    }
+    function clearError(){
+      errorEl.textContent = '';
+      errorEl.style.display = 'none';
+    }
+    function bytesToNice(bytes){
+      const units = ["B","KB","MB","GB"];
+      let v = bytes || 0, i = 0;
+      while(v >= 1024 && i < units.length-1){ v /= 1024; i++; }
+      return `${v.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+    }
+    function enableActions(hasPhoto){
+      btnClear.disabled = !hasPhoto;
+      btnAnalyze.disabled = !hasPhoto;
+    }
+    function resetPhoto(){
+      selectedBlob = null;
+      fileInput.value = '';
+      captureInput.value = '';
+      previewWrap.style.display = 'none';
+      preview.removeAttribute('src');
+      meta.textContent = '';
+      enableActions(false);
+      clearError();
+    }
+
+    function setPreviewFromFile(file){
+      if (!file) return;
+      clearError();
+      selectedBlob = null; // file-based
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+      meta.textContent = `${file.name || 'photo.jpg'} • ${bytesToNice(file.size)} • ${file.type || 'image/*'}`;
+      previewWrap.style.display = 'flex';
+      enableActions(true);
+    }
+
+    btnChoose.addEventListener('click', ()=> fileInput.click());
+    btnTake.addEventListener('click', ()=> captureInput.click());
+
+    fileInput.addEventListener('change', ()=> setPreviewFromFile(fileInput.files?.[0]));
+    captureInput.addEventListener('change', ()=> setPreviewFromFile(captureInput.files?.[0]));
+
+    btnClear.addEventListener('click', ()=>{
+      stopCamera();
+      resetPhoto();
+    });
+
+    async function openCamera(){
+      clearError();
+      if (!navigator.mediaDevices?.getUserMedia){
+        showError("Live camera isn't supported on this browser. Use Take Photo or Choose Photo.");
+        return;
+      }
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false
+        });
+        video.srcObject = stream;
+        cameraWrap.style.display = 'block';
+      }catch(err){
+        showError("Couldn't open the live camera. Please allow camera permission (Safari/Chrome settings).");
+      }
+    }
+
+    function stopCamera(){
+      if (stream){
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      cameraWrap.style.display = 'none';
+      video.srcObject = null;
+    }
+
+    btnOpenCamera.addEventListener('click', openCamera);
+    btnCloseCamera.addEventListener('click', stopCamera);
+
+    btnSnap.addEventListener('click', ()=>{
+      clearError();
+      if (!video.videoWidth || !video.videoHeight){
+        showError("Camera isn't ready yet. Try again in a second.");
+        return;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob((blob)=>{
+        if (!blob){
+          showError("Couldn't capture image.");
+          return;
+        }
+        selectedBlob = blob;
+        const url = URL.createObjectURL(blob);
+        preview.src = url;
+        meta.textContent = `camera-capture.jpg • ${bytesToNice(blob.size)} • ${blob.type || 'image/jpeg'}`;
+        previewWrap.style.display = 'flex';
+        enableActions(true);
+        stopCamera();
+      }, 'image/jpeg', 0.92);
+    });
+
+    btnAnalyze.addEventListener('click', ()=>{
+      alert("Demo only. Next step: connect this to your n8n webhook for real AI feedback.");
+    });
+
+    resetPhoto();
+  </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+</div>
+<div style="margin-top:12px"><button class="btn save" id="run">✅ Compare</button></div>
+</section>
+
+
+<section class="card">
+<h2>Results</h2>
+<table>
+<tbody id="out"></tbody>
+</table>
+<div class="sub" id="notes"></div>
+</section>
+</div>
+
+
+<script>
+const $=id=>document.getElementById(id);
+function pmt(r, n, pv){ if(r===0) return -(pv/n); return -(pv*r)/(1-Math.pow(1+r,-n)); }
+function money(n){return '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0})}
+function pct(n){return (n*100).toFixed(2)+'%'}
+
+
+function run(){
+const val=+$("cur_value").value||0, bal=+$("cur_bal").value||0, cr=(+$("cur_rate").value||0)/100/12, ct=(+$("cur_term").value||0)*12;
+const noi=+$("noi_mo").value||0, gpi=+$("gpi_mo").value||0, opex=+$("opex_mo").value||0, cc=+$("close_costs").value||0;
+const rt_rate=(+$("rt_rate").value||0)/100/12, rt_term=(+$("rt_term").value||0)*12;
+const co_ltv=(+$("co_ltv").value||0)/100, co_rate=(+$("co_rate").value||0)/100/12, co_term=(+$("co_term").value||0)*12;
+
+
+const curPmt = Math.max(0, pmt(cr, ct, bal));
+const rtPmt = Math.max(0, pmt(rt_rate, rt_term, bal));
+const coNewBal = Math.min(val*co_ltv, Math.max(bal,0));
+const cashOut = Math.max(0, coNewBal - bal);
+const coPmt = Math.max(0, pmt(co_rate, co_term, coNewBal));
+
+
+const curDS = curPmt*12, rtDS = rtPmt*12, coDS = coPmt*12;
+const dscrCur = curDS>0 ? (noi*12)/curDS : 0;
+const dscrRT = rtDS>0 ? (noi*12)/rtDS : 0;
+const dscrCO = coDS>0 ? (noi*12)/coDS : 0;
+
+
+const moSaveRT = curPmt-rtPmt; const moSaveCO = curPmt-coPmt;
+const beMonthsRT = moSaveRT>0 ? Math.ceil(cc/moSaveRT) : Infinity;
+const beMonthsCO = (moSaveCO>0? Math.ceil(cc/moSaveCO): Infinity);
+
+
+const rows = [
+["Current Payment", money(curPmt)],
+["Rate/Term Payment", money(rtPmt)],
+["Cash‑Out Payment", money(coPmt)],
+["Monthly Savings (Rate/Term)", money(moSaveRT)],
+["Monthly Savings (Cash‑Out)", money(moSaveCO)],
+["Break‑Even Months (Rate/Term)", beMonthsRT===Infinity? '—' : beMonthsRT+' mo'],
+["Break‑Even Months (Cash‑Out)", beMonthsCO===Infinity? '—' : beMonthsCO+' mo'],
+["Cash‑Out Proceeds", money(cashOut)],
+["DSCR – Current", dscrCur.toFixed(2)],
+["DSCR – Rate/Term", dscrRT.toFixed(2)],
+["DSCR – Cash‑Out", dscrCO.toFixed(2)]
+];
+$("out").innerHTML = rows.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+$("notes").textContent = "Break‑even ignores tax effects and assumes closing costs paid upfront. Consider reinvestment returns on cash‑out for a full CoC view.";
+}
+$("run").onclick = run; run();
+</script>
+</body>
+</html>

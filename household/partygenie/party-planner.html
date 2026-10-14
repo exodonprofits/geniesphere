@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Party Planner – GenieSphere</title>
+  <style>
+    :root{
+      --gs-green:#16a34a; /* buttons save/confirm */
+      --gs-blue:#2563eb;  /* nav/back buttons */
+      --gs-bg:#0b1220;
+      --gs-card:#0f172a;
+      --gs-muted:#94a3b8;
+      --gs-text:#e5e7eb;
+      --gs-border:#1f2937;
+      --radius:18px;
+    }
+    html,body{margin:0;padding:0;background:radial-gradient(1200px 800px at 10% -10%,rgba(78,130,255,.15),transparent),linear-gradient(180deg,#071021,#0b1220 35%,#0b1220);color:var(--gs-text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;}
+    .container{max-width:1100px;margin:0 auto;padding:24px;}
+    header{position:sticky;top:0;background:rgba(11,18,32,.75);backdrop-filter:blur(10px);border-bottom:1px solid var(--gs-border);z-index:20;}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0;}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700;}
+    .brand .logo{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#22d3ee);}
+    .nav-links{display:flex;gap:18px;}
+    .nav-link{color:var(--gs-text);text-decoration:none;opacity:.85}
+    .nav-link:hover{opacity:1}
+    h1{font-size:28px;margin:16px 0 8px}
+    .subtitle{color:var(--gs-muted);margin-bottom:18px}
+    .grid{display:grid;gap:16px}
+    @media(min-width:800px){.grid-2{grid-template-columns:1fr 1fr}}
+    .card{background:var(--gs-card);border:1px solid var(--gs-border);border-radius:var(--radius);padding:18px}
+    .section-title{font-weight:700;margin:4px 0 14px}
+    .form-row{display:grid;gap:10px}
+    @media(min-width:680px){.form-row-2{grid-template-columns:1fr 1fr}}
+    label{font-size:14px;color:var(--gs-text);display:block;margin:2px 0 6px}
+    input,select,textarea{width:100%;background:#0b1327;color:var(--gs-text);border:1px solid var(--gs-border);border-radius:12px;padding:10px 12px;outline:none}
+    textarea{min-height:110px;resize:vertical}
+    .switch{display:flex;align-items:center;gap:10px}
+    .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:10px 16px;font-weight:600;cursor:pointer;transition:filter .2s,transform .02s}
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{background:var(--gs-green);color:#fff}
+    .btn-back{background:var(--gs-blue);color:#fff}
+    .btn-secondary{background:#334155;color:#fff}
+    .muted{color:var(--gs-muted);font-size:13px}
+    .results{display:none}
+    .spinner{display:none;align-items:center;gap:10px}
+    .dot{width:8px;height:8px;border-radius:50%;background:#cbd5e1;animation:bounce 1s infinite}
+    .dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
+    @keyframes bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+    footer{margin-top:36px;border-top:1px solid var(--gs-border);background:#0b1220}
+    .footer-wrap{max-width:1100px;margin:0 auto;padding:24px}
+    .footer-cols{display:grid;gap:16px}
+    @media(min-width:900px){.footer-cols{grid-template-columns:repeat(3,1fr)}}
+    .copy{text-align:center;margin-top:12px;color:var(--gs-muted)}
+    .pill{display:inline-block;border:1px solid var(--gs-border);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--gs-muted)}
+    .plan-grid{display:grid;gap:14px}
+    @media(min-width:850px){.plan-grid{grid-template-columns:1.2fr .8fr}}
+    .plan-section h3{margin:0 0 6px}
+    .list{margin:6px 0 0 18px}
+    .list li{margin:4px 0}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0b1327;border:1px solid var(--gs-border);border-radius:8px;padding:2px 6px;font-size:12px}
+    .success{border:1px solid rgba(34,197,94,.35)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand"><div class="logo" aria-hidden="true"></div> <span>GenieSphere</span></div>
+      <nav class="nav-links">
+        <a class="nav-link" href="/personal.html">Personal</a>
+        <a class="nav-link" href="/business.html">Business</a>
+        <a class="nav-link" href="/investment.html">Investment</a>
+        <a class="nav-link" href="/leisure.html">Leisure</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>🎉 Party Planner</h1>
+    <p class="subtitle">Plan smarter: tell the Genie your occasion, budget, guests & vibe — get a full theme, menu, schedule, checklist, and shopping list.</p>
+
+    <!-- Ask Genie -->
+    <section class="card">
+      <div class="section-title">🧞 Ask Genie</div>
+      <p class="muted">Tip: be specific (e.g., “30th birthday, 25 guests, backyard, taco bar, $600 budget, kids welcome”).</p>
+      <div class="form-row">
+        <textarea id="freePrompt" placeholder="Describe your party or leave blank and use the form below..."></textarea>
+      </div>
+    </section>
+
+    <!-- Planner Form -->
+    <section class="grid grid-2" id="planner">
+      <form id="partyForm" class="card">
+        <div class="section-title">🗓️ Basic Details</div>
+        <div class="form-row form-row-2">
+          <div>
+            <label>Occasion 🎂</label>
+            <input name="occasion" placeholder="30th Birthday, Friendsgiving, Game Night"/>
+          </div>
+          <div>
+            <label>Date & Time 📆</label>
+            <input name="datetime" type="datetime-local"/>
+          </div>
+          <div>
+            <label>Guests 👥</label>
+            <input name="guests" type="number" min="1" placeholder="20"/>
+          </div>
+          <div>
+            <label>Location 📍</label>
+            <input name="location" placeholder="Home backyard, Clubhouse, Park Pavilion"/>
+          </div>
+        </div>
+
+        <div class="section-title">🎨 Theme & Vibe</div>
+        <div class="form-row form-row-2">
+          <div><label>Theme</label><input name="theme" placeholder="Retro Neon, Cozy Autumn, Tropical Luau"/></div>
+          <div>
+            <label>Vibe</label>
+            <select name="vibe">
+              <option value="">Choose…</option>
+              <option>Casual</option><option>Elegant</option><option>Family-friendly</option>
+              <option>Romantic</option><option>High-energy</option>
+            </select>
+          </div>
+          <div><label>Dress Code</label><input name="dressCode" placeholder="Casual chic, All-white, Festive"/></div>
+          <div><label>Colors</label><input name="colors" placeholder="Sage + Gold, Teal + Coral"/></div>
+        </div>
+
+        <div class="section-title">🍽️ Food & Drinks</div>
+        <div class="form-row form-row-2">
+          <div><label>Dietary Prefs</label><input name="diet" placeholder="Vegan options, gluten-free, nut-free"/></div>
+          <div><label>Cuisine</label><input name="cuisine" placeholder="Vietnamese, Tex-Mex, Italian"/></div>
+          <div><label>Alcohol?</label>
+            <select name="alcohol"><option value="">Choose…</option><option>Yes</option><option>No</option></select>
+          </div>
+          <div><label>Budget (USD)</label><input name="budget" type="number" min="0" placeholder="600"/></div>
+        </div>
+
+        <div class="section-title">🧒 Guests & Extras</div>
+        <div class="form-row form-row-2">
+          <div><label>Kids Attending?</label>
+            <select name="kids"><option value="">Choose…</option><option>Yes</option><option>No</option></select>
+          </div>
+          <div><label>Age Range</label><input name="ages" placeholder="3–8 yrs & adults"/></div>
+          <div><label>Entertainment</label><input name="entertainment" placeholder="Playlist, karaoke, yard games"/></div>
+          <div><label>Notes</label><input name="notes" placeholder="No red dye, 2 vegetarians, parking limited"/></div>
+        </div>
+
+        <div class="section-title">📨 Automations</div>
+        <div class="form-row form-row-2">
+          <div class="switch">
+            <input id="autoEmail" name="autoEmail" type="checkbox"/> <label for="autoEmail">Email invitations</label>
+          </div>
+          <div class="switch">
+            <input id="autoCalendar" name="autoCalendar" type="checkbox"/> <label for="autoCalendar">Add to Google Calendar</label>
+          </div>
+          <div class="switch">
+            <input id="autoShopping" name="autoShopping" type="checkbox"/> <label for="autoShopping">Generate shopping list</label>
+          </div>
+          <div class="switch">
+            <input id="autoRsvp" name="autoRsvp" type="checkbox"/> <label for="autoRsvp">RSVP tracker</label>
+          </div>
+        </div>
+
+        <div class="btns">
+          <button class="btn btn-primary" type="submit">✨ Generate Plan</button>
+          <button class="btn btn-secondary" type="button" id="clearBtn">Clear</button>
+        </div>
+        <p class="muted">Submits to your n8n webhook → ChatGPT → returns a structured plan.</p>
+        <div class="spinner" id="spinner" aria-live="polite">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <span>Crafting your plan…</span>
+        </div>
+      </form>
+
+      <!-- Preview / Help -->
+      <aside class="card">
+        <div class="section-title">🔎 What you’ll get</div>
+        <p class="muted">A structured plan with:</p>
+        <ul class="list">
+          <li>🎨 Theme & Decor (+ mood board ideas)</li>
+          <li>🍽️ Menu & Drinks (with dietary swaps)</li>
+          <li>🪩 Entertainment & Playlist</li>
+          <li>📋 Timeline & Checklist</li>
+          <li>🛒 Shopping List (+ quantities)</li>
+          <li>💸 Budget breakdown</li>
+        </ul>
+        <p class="pill" style="margin-top:10px">JSON spec: <span class="kbd">theme, decor, menu, drinks, entertainment, timeline, checklist, shopping, budget, rsvp</span></p>
+      </aside>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="results">
+      <div class="card success">
+        <div class="section-title">✅ Your Party Plan</div>
+        <div class="btns">
+          <button class="btn btn-back" id="backBtn">⬅️ Back</button>
+          <button class="btn btn-primary" id="downloadBtn">💾 Download JSON</button>
+        </div>
+      </div>
+
+      <div class="plan-grid" id="planGrid">
+        <section class="card plan-section"><h3>🎨 Theme & Decor</h3><div id="theme"></div><ul id="decor" class="list"></ul></section>
+        <section class="card plan-section"><h3>🍽️ Menu & Drinks</h3><div id="menu"></div><ul id="drinks" class="list"></ul></section>
+        <section class="card plan-section"><h3>🪩 Entertainment</h3><div id="entertainment"></div><ul id="playlist" class="list"></ul></section>
+        <section class="card plan-section"><h3>🕒 Timeline</h3><ul id="timeline" class="list"></ul></section>
+        <section class="card plan-section"><h3>✅ Checklist</h3><ul id="checklist" class="list"></ul></section>
+        <section class="card plan-section"><h3>🛒 Shopping List</h3><ul id="shopping" class="list"></ul></section>
+        <section class="card plan-section"><h3>💸 Budget</h3><div id="budget"></div></section>
+        <section class="card plan-section"><h3>📨 RSVP / Notes</h3><div id="rsvp"></div></section>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-wrap">
+      <div class="footer-cols">
+        <div>
+          <div class="section-title">Everyday Health</div>
+          <p class="muted">Meal plans, fitness, family routines.</p>
+        </div>
+        <div>
+          <div class="section-title">Finance</div>
+          <p class="muted">Budgets, bills, investments, payroll.</p>
+        </div>
+        <div>
+          <div class="section-title">Help</div>
+          <p class="muted">Docs, support, quick start guides.</p>
+        </div>
+      </div>
+      <div class="copy">© 2025 GenieSphere. All rights reserved. 🐦 ▶️ 🐙</div>
+    </div>
+  </footer>
+
+  <script>
+    const WEBHOOK_URL = 'https://YOUR-N8N-URL/webhook/party-planner';
+
+    const form = document.getElementById('partyForm');
+    const spinner = document.getElementById('spinner');
+    const results = document.getElementById('results');
+    const planner = document.getElementById('planner');
+    const freePrompt = document.getElementById('freePrompt');
+
+    const el = id => document.getElementById(id);
+    const listFill = (id, arr=[]) => { const ul=el(id); ul.innerHTML=''; (arr||[]).forEach(x=>{ const li=document.createElement('li'); li.textContent=x; ul.appendChild(li);}); };
+
+    const renderPlan = (data) => {
+      el('theme').textContent = data.theme?.summary || '';
+      listFill('decor', data.decor || []);
+      el('menu').textContent = data.menu?.summary || '';
+      listFill('drinks', data.drinks || []);
+      el('entertainment').textContent = data.entertainment?.summary || '';
+      listFill('playlist', data.entertainment?.playlist || []);
+      listFill('timeline', data.timeline || []);
+      listFill('checklist', data.checklist || []);
+      listFill('shopping', data.shopping || []);
+      el('budget').textContent = data.budget?.summary || '';
+      el('rsvp').textContent = data.rsvp?.summary || '';
+    };
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      spinner.style.display='flex';
+      const payload = Object.fromEntries(new FormData(form).entries());
+      payload.autoEmail = el('autoEmail').checked;
+      payload.autoCalendar = el('autoCalendar').checked;
+      payload.autoShopping = el('autoShopping').checked;
+      payload.autoRsvp = el('autoRsvp').checked;
+      if (freePrompt.value?.trim()) payload.freePrompt = freePrompt.value.trim();
+
+      try{
+        const res = await fetch(WEBHOOK_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json(); // expects { plan: {...} }
+        spinner.style.display='none';
+        planner.style.display='none';
+        results.style.display='block';
+        renderPlan(data.plan || {});
+        // Download JSON
+        document.getElementById('downloadBtn').onclick = ()=>{
+          const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = 'party-plan.json'; a.click();
+          URL.revokeObjectURL(url);
+        };
+      }catch(err){
+        spinner.style.display='none';
+        alert('Error generating plan. Please check the webhook URL / n8n logs.');
+      }
+    });
+
+    document.getElementById('backBtn').addEventListener('click', ()=>{
+      results.style.display='none';
+      planner.style.display='grid';
+    });
+    document.getElementById('clearBtn').addEventListener('click', ()=>{
+      form.reset(); freePrompt.value='';
+    });
+  </script>
+</body>
+</html>

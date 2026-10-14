@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>⚙️ Usage Rules Setup | GenieSphere</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Tell GenieSphere which credit card to use for each type of spending.">
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --bg-soft:#0e1626;
+      --card:#121a2b;
+      --card-soft:#18233a;
+      --text:#e9f0ff;
+      --muted:#a9b6d9;
+      --accent:#3ee1a1;
+      --accent-blue:#4c6ef5;
+      --danger:#f97373;
+      --border-soft:rgba(120,155,255,.35);
+      --border-strong:rgba(120,155,255,.55);
+      --shadow-soft:0 10px 30px rgba(0,0,0,.35);
+      --radius:7px;
+      --radius-pill:999px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:radial-gradient(circle at top, #111827 0, #020617 58%);
+      color:var(--text);
+      font:500 15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+    }
+    .page{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* Header */
+    .site-header{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background:linear-gradient(180deg,rgba(9,14,25,.88),rgba(11,18,32,.96));
+      border-bottom:1px solid rgba(120,155,255,.18);
+      box-shadow:0 8px 22px rgba(0,0,0,.25);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+    .site-header-inner{
+      max-width:1200px;
+      margin:0 auto;
+      padding:12px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--text);
+      text-decoration:none;
+      font-weight:700;
+    }
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+      box-shadow:0 0 0 3px rgba(62,225,161,.3),0 8px 24px rgba(62,225,161,.35);
+    }
+    .menu{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      font-size:14px;
+    }
+    .menu a{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 2px;
+      text-decoration:none;
+      color:var(--muted);
+      border-bottom:2px solid transparent;
+      transition:color .15s ease,border-bottom-color .15s ease;
+    }
+    .menu a:hover{
+      color:var(--text);
+      border-bottom-color:var(--accent-blue);
+    }
+    .menu a.active{
+      color:var(--text);
+      border-bottom-color:var(--accent);
+      font-weight:600;
+    }
+    .hamburger{
+      display:none;
+      border:1px solid rgba(120,155,255,.25);
+      background:var(--bg-soft);
+      color:var(--text);
+      border-radius:8px;
+      padding:7px 10px;
+      cursor:pointer;
+      font-size:16px;
+    }
+    @media(max-width:720px){
+      .menu{display:none}
+      .hamburger{display:inline-flex}
+      .site-header-inner{padding:10px 12px}
+    }
+    .drawer{
+      position:fixed;
+      inset:60px 12px auto 12px;
+      background:#0e1626;
+      border:1px solid rgba(120,155,255,.2);
+      border-radius:var(--radius);
+      padding:10px;
+      display:none;
+      z-index:1001;
+      box-shadow:0 18px 34px rgba(0,0,0,.45);
+    }
+    .drawer a{
+      display:block;
+      margin:6px 0;
+      padding:10px 12px;
+      border-radius:var(--radius);
+      text-decoration:none;
+      color:var(--text);
+      background:#121a2b;
+      border:1px solid rgba(120,155,255,.15);
+    }
+    .drawer a.active{
+      background:#18233a;
+      border-color:rgba(62,225,161,.35);
+    }
+
+    /* Layout */
+    .container{
+      max-width:1000px;
+      margin:0 auto;
+      padding:20px 24px 32px;
+      flex:1;
+    }
+    .hero{
+      margin-bottom:16px;
+    }
+    .title{
+      margin:0 0 4px;
+      font-size:clamp(22px,3vw,28px);
+      font-weight:800;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .subtitle{
+      margin:0;
+      font-size:14px;
+      color:var(--muted);
+      max-width:680px;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,2.1fr) minmax(0,1.4fr);
+      gap:18px;
+    }
+    @media(max-width:880px){
+      .layout{grid-template-columns:1fr}
+    }
+
+    .card{
+      background:linear-gradient(180deg,rgba(24,35,58,.8),rgba(12,19,35,.98));
+      border-radius:var(--radius);
+      border:1px solid rgba(120,155,255,.4);
+      box-shadow:var(--shadow-soft);
+      padding:16px 16px 18px;
+    }
+    .card-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .card-title{
+      font-size:15px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .card-subtitle{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .pill{
+      font-size:11px;
+      padding:4px 10px;
+      border-radius:var(--radius-pill);
+      border:1px solid var(--border-soft);
+      background:#020617;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    /* Tabs */
+    .tabs{
+      display:inline-flex;
+      padding:3px;
+      border-radius:var(--radius-pill);
+      background:#020617;
+      border:1px solid rgba(120,155,255,.35);
+      margin-bottom:10px;
+    }
+    .tab-btn{
+      border-radius:var(--radius-pill);
+      border:0;
+      padding:6px 14px;
+      font-size:13px;
+      font-weight:600;
+      color:var(--muted);
+      background:transparent;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      transition:.18s;
+    }
+    .tab-btn.active{
+      background:radial-gradient(circle at 30% 0,rgba(62,225,161,.1),rgba(76,110,245,.7));
+      color:#eef2ff;
+      box-shadow:0 8px 18px rgba(15,23,42,.9);
+    }
+
+    /* Rule rows */
+    .rules-grid{
+      border-radius:var(--radius);
+      border:1px solid rgba(120,155,255,.35);
+      background:#020617;
+      padding:8px 10px 8px;
+      max-height:360px;
+      overflow:auto;
+    }
+    .rule-row{
+      display:grid;
+      grid-template-columns:minmax(0,1.2fr) minmax(0,1.6fr);
+      gap:8px;
+      padding:7px 6px;
+      border-bottom:1px solid rgba(15,23,42,.95);
+      align-items:center;
+    }
+    .rule-row:last-child{
+      border-bottom:none;
+    }
+    @media(max-width:720px){
+      .rule-row{
+        grid-template-columns:1fr;
+        align-items:flex-start;
+      }
+    }
+    .rule-label{
+      font-size:13px;
+      font-weight:600;
+      display:flex;
+      flex-direction:column;
+      gap:1px;
+    }
+    .rule-label span.hint{
+      font-weight:400;
+      font-size:11px;
+      color:var(--muted);
+    }
+    select{
+      width:100%;
+      border-radius:var(--radius);
+      border:1px solid var(--border-soft);
+      background:#020617;
+      color:var(--text);
+      padding:7px 9px;
+      font-size:13px;
+      outline:none;
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    select:focus{
+      border-color:var(--accent-blue);
+      box-shadow:0 0 0 1px rgba(76,110,245,.55);
+    }
+
+    .helper-text{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    /* Business selector */
+    .biz-selector{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      margin:6px 0 10px;
+      font-size:13px;
+    }
+    .biz-selector strong{
+      font-size:13px;
+    }
+
+    /* Buttons & status */
+    .btn-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 16px;
+      border-radius:var(--radius-pill);
+      font-size:13px;
+      font-weight:600;
+      border:0;
+      cursor:pointer;
+      text-decoration:none;
+      transition:.18s;
+      white-space:nowrap;
+    }
+    .btn-primary{
+      background:var(--accent);
+      color:#02130d;
+      box-shadow:0 8px 18px rgba(62,225,161,.25);
+    }
+    .btn-primary:hover{filter:brightness(1.05)}
+    .btn-outline{
+      background:#0e1626;
+      color:var(--text);
+      border:1px solid var(--border-soft);
+    }
+    .btn-outline:hover{
+      border-color:var(--accent-blue);
+      color:#eef2ff;
+    }
+
+    .status{
+      margin-top:8px;
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:var(--radius);
+      border:1px solid transparent;
+      display:none;
+    }
+    .status.success{
+      display:block;
+      border-color:rgba(62,225,161,.7);
+      background:rgba(62,225,161,.12);
+      color:#bbf7d0;
+    }
+    .status.error{
+      display:block;
+      border-color:rgba(248,113,113,.8);
+      background:rgba(248,113,113,.15);
+      color:#fecaca;
+    }
+
+    /* Sidebar */
+    .info-list{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .info-list li{
+      display:flex;
+      gap:6px;
+    }
+    .info-dot{
+      font-size:15px;
+      margin-top:1px;
+    }
+    .mini-card{
+      margin-top:10px;
+      padding:10px 11px;
+      border-radius:var(--radius);
+      background:linear-gradient(135deg,rgba(15,23,42,.9),rgba(37,99,235,.35));
+      border:1px dashed rgba(96,165,250,.7);
+      font-size:12px;
+    }
+    .mini-card strong{
+      display:block;
+      margin-bottom:2px;
+    }
+
+    @media(max-width:640px){
+      .container{padding:16px 12px 26px;}
+      .card{padding:12px 11px 14px;}
+      .hero{margin-bottom:12px;}
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img class="logo" src="../genie-logo.png" alt="GenieSphere logo">
+        <span>GenieSphere</span>
+      </a>
+      <nav class="menu" aria-label="Primary">
+        <a href="../personal/personal.html">🏡 Personal</a>
+        <a class="active" href="../personal/business.html">🏢 Business</a>
+        <a href="../personal/investment.html">📈 Investment</a>
+        <a href="../personal/leisure.html">🏝️ Leisure</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-label="Toggle navigation">☰</button>
+    </div>
+  </header>
+
+  <!-- Mobile drawer -->
+  <div class="drawer" id="mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+    <a href="../personal/personal.html">🏡 Personal</a>
+    <a class="active" href="../personal/business.html">🏢 Business</a>
+    <a href="../personal/investment.html">📈 Investment</a>
+    <a href="../personal/leisure.html">🏝️ Leisure</a>
+  </div>
+
+  <main class="container">
+    <section class="hero">
+      <h1 class="title">⚙️ Credit Card Usage Rules</h1>
+      <p class="subtitle">
+        Tell GenieSphere which card you want to use for groceries, utilities, travel, software, ads, and more. These rules power the Credit Card Optimizer dashboard.
+      </p>
+    </section>
+
+    <section class="layout">
+      <!-- Main rules pane -->
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              Setup your strategy
+            </div>
+            <p class="card-subtitle">
+              Choose 1 card per category. We’ll create or update rules in the background – no SQL needed.
+            </p>
+          </div>
+          <span class="pill">Step 3 · Usage rules</span>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" id="tabPersonal">
+            👤 Personal
+          </button>
+          <button class="tab-btn" id="tabBusiness">
+            🏢 Business
+          </button>
+        </div>
+
+        <!-- Personal rules -->
+        <div id="personalPanel">
+          <div class="rules-grid" id="personalRules">
+            <!-- Filled by JS -->
+          </div>
+          <p class="helper-text">
+            Tip: If you don’t want to optimize a category, leave it on “No preferred card”. We’ll skip that category.
+          </p>
+        </div>
+
+        <!-- Business rules -->
+        <div id="businessPanel" style="display:none;">
+          <div class="biz-selector">
+            <strong>Business:</strong>
+            <select id="businessSelect">
+              <option value="">Select a business...</option>
+            </select>
+            <span class="helper-text">
+              Pick a business to assign cards for software, ads, fuel, and other expenses.
+            </span>
+          </div>
+          <div class="rules-grid" id="businessRules">
+            <div class="helper-text" style="padding:6px 4px;">
+              Select a business above to configure its card usage rules.
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <a href="credit-card-optimizer.html" class="btn btn-outline">
+            📊 Back to Optimizer
+          </a>
+          <a href="credit-card-setup.html" class="btn btn-outline">
+            💳 Manage Cards
+          </a>
+        </div>
+
+        <div class="status" id="statusMessage"></div>
+      </article>
+
+      <!-- Sidebar -->
+      <aside class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              How rules work
+            </div>
+            <p class="card-subtitle">
+              Each rule is “Category + Scope → Card”. You can change them anytime as your wallet or businesses change.
+            </p>
+          </div>
+        </div>
+
+        <ul class="info-list">
+          <li>
+            <span class="info-dot">🧠</span>
+            <span>Personal scope rules cover things like groceries, gas, streaming, and personal travel.</span>
+          </li>
+          <li>
+            <span class="info-dot">📂</span>
+            <span>Business scope rules are tied to a specific business profile when possible (e.g., Victoria Nails, Exodon Profits).</span>
+          </li>
+          <li>
+            <span class="info-dot">✅</span>
+            <span>Picking a card for a category will create or update a single rule. Choosing “No preferred card” will remove it.</span>
+          </li>
+          <li>
+            <span class="info-dot">🔄</span>
+            <span>The Credit Card Optimizer page reads these rules to build your cheat sheet and business map.</span>
+          </li>
+        </ul>
+
+        <div class="mini-card">
+          <strong>Suggested flow</strong>
+          <span>
+            1) Add your cards → 2) Set usage rules here → 3) Print or save the PDF cheatsheet from the Optimizer.  
+            Repeat when you add or close a card.
+          </span>
+        </div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<!-- Supabase -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-init.js"></script>
+
+<script>
+  // --- Mobile drawer toggle ---
+  (function(){
+    const drawer = document.getElementById('mobile-drawer');
+    const btn = document.getElementById('hamburger');
+    if (!drawer || !btn) return;
+    const open = () => { drawer.style.display = 'block'; btn.setAttribute('aria-expanded','true'); };
+    const close = () => { drawer.style.display = 'none'; btn.setAttribute('aria-expanded','false'); };
+    btn.addEventListener('click', () => {
+      btn.getAttribute('aria-expanded') === 'true' ? close() : open();
+    });
+    drawer.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') close();
+    });
+  })();
+
+  // --- Helpers ---
+  function escapeHtml(str){
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
+  }
+
+  const PERSONAL_CATEGORIES = [
+    { id:'groceries', label:'Groceries & Wholesale', hint:'Supermarkets, Costco, Sam\'s Club, household food.' },
+    { id:'gas', label:'Gas / Fuel', hint:'Gas stations, fuel for family cars.' },
+    { id:'dining', label:'Dining & Restaurants', hint:'Eating out, takeout, coffee shops.' },
+    { id:'travel_flights', label:'Travel – Flights', hint:'Airline tickets and airfare.' },
+    { id:'travel_hotels', label:'Travel – Hotels & Lodging', hint:'Hotels, resorts, Airbnbs.' },
+    { id:'streaming', label:'Streaming & Entertainment', hint:'Netflix, Disney+, Spotify, etc.' },
+    { id:'utilities', label:'Home Utilities & Internet', hint:'Electricity, water, gas, internet.' },
+    { id:'online_shopping', label:'Online Shopping', hint:'Amazon, online retail.' },
+    { id:'general_everyday', label:'General Everyday', hint:'Catch-all when no other category applies.' }
+  ];
+
+  const BUSINESS_CATEGORIES = [
+    { id:'software_saas', label:'Software & SaaS', hint:'ChatGPT, APIs, booking tools, CRMs, subscriptions.' },
+    { id:'internet_phone', label:'Internet & Phone', hint:'Business internet and phone lines.' },
+    { id:'ads_marketing', label:'Ads & Marketing', hint:'Facebook Ads, Google Ads, boosting posts, flyers.' },
+    { id:'office_supplies', label:'Office / Salon Supplies', hint:'Paper, ink, front desk supplies, back-office items.' },
+    { id:'wholesale_club', label:'Wholesale & Bulk', hint:'Costco, Sam\'s Club, other bulk suppliers.' },
+    { id:'fuel_business', label:'Fuel / Travel for Business', hint:'Gas and travel used specifically for business.' },
+    { id:'education_training', label:'Education & Training', hint:'Courses, certifications, coaching related to the business.' },
+    { id:'general_business', label:'General Business Spend', hint:'When nothing else fits – your default business card.' }
+  ];
+
+  let currentUser = null;
+  let personalCards = [];
+  let businessCards = [];
+  let businessMap = {}; // id -> name
+  let existingRules = []; // all card_usage_rules for this user
+
+  const statusEl = document.getElementById('statusMessage');
+
+  function setStatus(type, msg){
+    if (!statusEl) return;
+    statusEl.className = 'status ' + type;
+    statusEl.innerHTML = escapeHtml(msg);
+    statusEl.style.display = 'block';
+  }
+
+  function clearStatus(){
+    if (!statusEl) return;
+    statusEl.style.display = 'none';
+  }
+
+  // --- Init ---
+  async function initUsageRules(){
+    if (!window.supabase){
+      console.error('Supabase client not found.');
+      return;
+    }
+
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError){
+      console.error('Error fetching user:', userError);
+      setStatus('error','Error loading user. Please refresh.');
+      return;
+    }
+    const user = userData?.user;
+    currentUser = user;
+
+    if (!user){
+      setStatus('error','You must be logged in to edit usage rules.');
+      return;
+    }
+
+    clearStatus();
+
+    // Load cards
+    const { data: cards, error: cardsError } = await supabase
+      .from('credit_cards')
+      .select('id, nickname, issuer, product_name, is_business, business_profile_id')
+      .eq('user_id', user.id)
+      .order('nickname', { ascending:true });
+
+    if (cardsError){
+      console.error('Error loading cards:', cardsError);
+      setStatus('error','Error loading cards.');
+      return;
+    }
+
+    personalCards = (cards || []).filter(c => !c.is_business);
+    businessCards = (cards || []).filter(c => c.is_business);
+
+    // Load businesses
+    const { data: businesses, error: bizError } = await supabase
+      .from('business_profiles')
+      .select('id, name')
+      .eq('user_id', user.id)
+      .order('name', { ascending:true });
+
+    if (bizError){
+      console.error('Error loading businesses:', bizError);
+    }
+
+    const businessSelect = document.getElementById('businessSelect');
+    if (businesses && businesses.length && businessSelect){
+      businesses.forEach(biz => {
+        businessMap[biz.id] = biz.name;
+        const opt = document.createElement('option');
+        opt.value = biz.id;
+        opt.textContent = biz.name;
+        businessSelect.appendChild(opt);
+      });
+    }
+
+    // Load existing rules
+    const { data: rules, error: rulesError } = await supabase
+      .from('card_usage_rules')
+      .select('id, scope, category, credit_card_id, business_profile_id')
+      .eq('user_id', user.id);
+
+    if (rulesError){
+      console.error('Error loading rules:', rulesError);
+      setStatus('error','Error loading existing rules.');
+      return;
+    }
+    existingRules = rules || [];
+
+    renderPersonalRules();
+    // business rules rendered when a business is selected
+  }
+
+  // --- Render personal rules ---
+  function renderPersonalRules(){
+    const container = document.getElementById('personalRules');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!personalCards.length){
+      container.innerHTML = '<div class="helper-text" style="padding:6px 4px;">No personal cards found. Add cards first, then set rules.</div>';
+      return;
+    }
+
+    PERSONAL_CATEGORIES.forEach(cat => {
+      const row = document.createElement('div');
+      row.className = 'rule-row';
+
+      const label = document.createElement('div');
+      label.className = 'rule-label';
+      label.innerHTML = `
+        <span>${escapeHtml(cat.label)}</span>
+        <span class="hint">${escapeHtml(cat.hint)}</span>
+      `;
+
+      const select = document.createElement('select');
+      select.dataset.category = cat.id;
+      select.dataset.scope = 'personal';
+
+      // Option: none
+      const optNone = document.createElement('option');
+      optNone.value = '';
+      optNone.textContent = 'No preferred card';
+      select.appendChild(optNone);
+
+      // Card options
+      personalCards.forEach(card => {
+        const opt = document.createElement('option');
+        opt.value = card.id;
+        opt.textContent = `${card.nickname} (${card.issuer})`;
+        select.appendChild(opt);
+      });
+
+      // Pre-select existing rule if exists
+      const existing = existingRules.find(r =>
+        r.scope === 'personal' &&
+        r.category === cat.id &&
+        !r.business_profile_id
+      );
+      if (existing){
+        select.value = existing.credit_card_id;
+      }
+
+      select.addEventListener('change', () => {
+        handleRuleChange('personal', cat.id, null, select.value);
+      });
+
+      row.appendChild(label);
+      row.appendChild(select);
+      container.appendChild(row);
+    });
+  }
+
+  // --- Render business rules ---
+  function renderBusinessRules(){
+    const container = document.getElementById('businessRules');
+    const businessSelect = document.getElementById('businessSelect');
+    if (!container || !businessSelect) return;
+
+    const bizId = businessSelect.value || null;
+
+    if (!bizId){
+      container.innerHTML = '<div class="helper-text" style="padding:6px 4px;">Select a business above to configure its card usage rules.</div>';
+      return;
+    }
+
+    const cardsForBiz = businessCards.filter(c =>
+      !c.business_profile_id || c.business_profile_id === bizId
+    );
+
+    if (!cardsForBiz.length){
+      container.innerHTML = '<div class="helper-text" style="padding:6px 4px;">No business cards available for this business. Link cards to this business in the card setup page.</div>';
+      return;
+    }
+
+    container.innerHTML = '';
+
+    BUSINESS_CATEGORIES.forEach(cat => {
+      const row = document.createElement('div');
+      row.className = 'rule-row';
+
+      const label = document.createElement('div');
+      label.className = 'rule-label';
+      label.innerHTML = `
+        <span>${escapeHtml(cat.label)}</span>
+        <span class="hint">${escapeHtml(cat.hint)}</span>
+      `;
+
+      const select = document.createElement('select');
+      select.dataset.category = cat.id;
+      select.dataset.scope = 'business';
+      select.dataset.businessId = bizId;
+
+      const optNone = document.createElement('option');
+      optNone.value = '';
+      optNone.textContent = 'No preferred card';
+      select.appendChild(optNone);
+
+      cardsForBiz.forEach(card => {
+        const opt = document.createElement('option');
+        opt.value = card.id;
+        const bizLabel = card.business_profile_id && businessMap[card.business_profile_id]
+          ? ` · ${businessMap[card.business_profile_id]}`
+          : '';
+        opt.textContent = `${card.nickname} (${card.issuer})${bizLabel}`;
+        select.appendChild(opt);
+      });
+
+      const existing = existingRules.find(r =>
+        r.scope === 'business' &&
+        r.category === cat.id &&
+        r.business_profile_id === bizId
+      );
+      if (existing){
+        select.value = existing.credit_card_id;
+      }
+
+      select.addEventListener('change', () => {
+        handleRuleChange('business', cat.id, bizId, select.value);
+      });
+
+      row.appendChild(label);
+      row.appendChild(select);
+      container.appendChild(row);
+    });
+  }
+
+  // --- Handle rule change (insert/update/delete) ---
+  async function handleRuleChange(scope, category, businessId, cardId){
+    clearStatus();
+    if (!currentUser || !window.supabase) return;
+
+    // Check if rule already exists
+    const existing = existingRules.find(r =>
+      r.scope === scope &&
+      r.category === category &&
+      ((scope === 'business' && r.business_profile_id === businessId) ||
+       (scope === 'personal' && !r.business_profile_id))
+    );
+
+    // If cardId empty -> delete rule if exists
+    if (!cardId){
+      if (existing){
+        const { error } = await supabase
+          .from('card_usage_rules')
+          .delete()
+          .eq('id', existing.id)
+          .eq('user_id', currentUser.id);
+
+        if (error){
+          console.error('Error deleting rule:', error);
+          setStatus('error','Error deleting rule.');
+          return;
+        }
+        existingRules = existingRules.filter(r => r.id !== existing.id);
+        setStatus('success','Rule removed.');
+      }
+      return;
+    }
+
+    // Need description auto-hint
+    const description = buildDescription(scope, category);
+
+    if (existing){
+      const { error } = await supabase
+        .from('card_usage_rules')
+        .update({
+          credit_card_id: cardId,
+          description
+        })
+        .eq('id', existing.id)
+        .eq('user_id', currentUser.id);
+
+      if (error){
+        console.error('Error updating rule:', error);
+        setStatus('error','Error updating rule.');
+        return;
+      }
+      existing.credit_card_id = cardId;
+      existing.description = description;
+      setStatus('success','Rule updated.');
+    } else {
+      const payload = {
+        user_id: currentUser.id,
+        scope,
+        category,
+        credit_card_id: cardId,
+        business_profile_id: scope === 'business' ? businessId : null,
+        priority: 1,
+        description
+      };
+      const { data, error } = await supabase
+        .from('card_usage_rules')
+        .insert(payload)
+        .select('id')
+        .single();
+
+      if (error){
+        console.error('Error creating rule:', error);
+        setStatus('error','Error saving rule.');
+        return;
+      }
+      existingRules.push({
+        id: data.id,
+        ...payload
+      });
+      setStatus('success','Rule saved.');
+    }
+  }
+
+  function buildDescription(scope, category){
+    // Simple auto-descriptions; can customize later
+    if (scope === 'personal'){
+      switch(category){
+        case 'groceries': return 'Preferred card for personal groceries and wholesale shopping.';
+        case 'gas': return 'Preferred card for personal gas and fuel.';
+        case 'dining': return 'Preferred card for restaurants and takeout.';
+        case 'travel_flights': return 'Preferred card for personal flight tickets.';
+        case 'travel_hotels': return 'Preferred card for personal hotel and lodging.';
+        case 'streaming': return 'Preferred card for streaming and entertainment subscriptions.';
+        case 'utilities': return 'Preferred card for home utilities and internet.';
+        case 'online_shopping': return 'Preferred card for online shopping and marketplaces.';
+        case 'general_everyday': return 'Default card for everyday personal purchases.';
+      }
+    } else {
+      switch(category){
+        case 'software_saas': return 'Preferred card for this business’s software and SaaS subscriptions.';
+        case 'internet_phone': return 'Preferred card for this business’s internet and phone bills.';
+        case 'ads_marketing': return 'Preferred card for ads and marketing expenses for this business.';
+        case 'office_supplies': return 'Preferred card for office or salon supplies for this business.';
+        case 'wholesale_club': return 'Preferred card for wholesale and bulk purchases for this business.';
+        case 'fuel_business': return 'Preferred card for fuel and travel related to this business.';
+        case 'education_training': return 'Preferred card for education and training related to this business.';
+        case 'general_business': return 'Default card for general spending for this business.';
+      }
+    }
+    return 'Usage rule managed by GenieSphere.';
+  }
+
+  // --- Tabs + business select events ---
+  document.getElementById('tabPersonal')?.addEventListener('click', () => {
+    document.getElementById('tabPersonal').classList.add('active');
+    document.getElementById('tabBusiness').classList.remove('active');
+    document.getElementById('personalPanel').style.display = 'block';
+    document.getElementById('businessPanel').style.display = 'none';
+  });
+
+  document.getElementById('tabBusiness')?.addEventListener('click', () => {
+    document.getElementById('tabBusiness').classList.add('active');
+    document.getElementById('tabPersonal').classList.remove('active');
+    document.getElementById('personalPanel').style.display = 'none';
+    document.getElementById('businessPanel').style.display = 'block';
+  });
+
+  document.getElementById('businessSelect')?.addEventListener('change', () => {
+    renderBusinessRules();
+  });
+
+  // --- Kick off ---
+  initUsageRules();
+</script>
+</body>
+</html>

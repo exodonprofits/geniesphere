@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>ATR Stop Planner &#x2014; Arowana Profits</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--brand:#0b4f8a;--brand-dark:#083c69;--brand-light:#1a6bbb;--accent:#16a34a;--bg:#f6f8fb;--panel:#ffffff;--ink:#0d1b2a;--muted:#64748b;--border:#e2e8f0;--max:1160px;--radius:16px;--shadow:0 4px 20px rgba(11,79,138,.08);--shadow-lg:0 8px 32px rgba(11,79,138,.13);--red:#ef4444;--amber:#f59e0b;--green:#16a34a;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Inter",system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;line-height:1.6}
+a{color:var(--brand);text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+.container{width:100%;max-width:var(--max);margin:0 auto;padding:0 20px}
+
+/* NAV — identical to position-sizer */
+.nav-wrap{position:sticky;top:0;z-index:90;background:var(--brand);box-shadow:0 2px 20px rgba(0,0,0,.2)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 20px;max-width:1200px;margin:0 auto}
+.logo{display:flex;align-items:center;gap:10px;font-family:"Inter Tight",sans-serif;font-weight:800;font-size:18px;color:#fff;white-space:nowrap;text-decoration:none}
+.logo img{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.12);padding:2px}
+.nav-links{display:flex;align-items:center;gap:3px;flex:1;justify-content:center;overflow-x:auto}
+.nav-links::-webkit-scrollbar{height:0}
+.nav-links a{color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;text-decoration:none;transition:background .15s}
+.nav-links a:hover{background:rgba(255,255,255,.13)}
+.nav-links a.nav-cur{background:rgba(255,255,255,.18);color:#fff}
+.nav-links .nav-agent{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14)}
+.nav-divider{width:1px;height:16px;background:rgba(255,255,255,.18);margin:0 4px;flex-shrink:0}
+.nav-auth{display:flex;align-items:center;gap:7px}
+.nbtn{padding:6px 14px;border-radius:8px;font-size:.76rem;font-weight:600;text-decoration:none;transition:all .15s}
+.nbtn-ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}.nbtn-ghost:hover{background:rgba(255,255,255,.18)}
+.nbtn-solid{background:#fff;color:var(--brand);font-weight:700}.nbtn-solid:hover{opacity:.92}
+.nav-user{position:relative;display:none}.nav-user.show{display:block}
+.nav-user-toggle{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:.76rem;font-weight:600;cursor:pointer}
+.nav-user-menu{position:absolute;right:0;top:calc(100% + 8px);min-width:190px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.15);padding:6px;display:none;z-index:200}
+.nav-user.open .nav-user-menu{display:block}
+.nav-user-menu a,.nav-user-menu button{display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:7px;color:var(--muted);font-size:.82rem;font-weight:500;background:none;border:none;width:100%;text-align:left;text-decoration:none;cursor:pointer;transition:all .12s}
+.nav-user-menu a:hover,.nav-user-menu button:hover{color:var(--ink);background:rgba(11,79,138,.06)}
+.menu-sep{height:1px;background:var(--border);margin:3px 0}
+.nav-burger{display:none;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;border-radius:8px;padding:6px 10px;font-size:1rem}
+.mob-menu{display:none;position:fixed;top:60px;left:0;right:0;z-index:80;background:var(--brand-dark);border-top:1px solid rgba(255,255,255,.12)}
+.mob-menu[data-open="true"]{display:block}
+.mob-panel{padding:10px 20px 16px;display:flex;flex-direction:column;gap:2px}
+.mob-link{display:flex;align-items:center;gap:9px;padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none}
+.mob-link:hover{background:rgba(255,255,255,.08)}
+.mob-div{height:1px;background:rgba(255,255,255,.12);margin:5px 0}
+@media(max-width:700px){.nav-links{display:none}.nbtn-solid{display:none}.nav-burger{display:inline-flex;align-items:center}}
+
+/* PAGE */
+.page-hero{background:linear-gradient(135deg,#fff,var(--bg));border-bottom:1px solid var(--border);padding:32px 0 24px}
+.hero-kicker{font-size:.72rem;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.hero-title{font-family:"Inter Tight",sans-serif;font-size:clamp(22px,3.5vw,32px);font-weight:800;color:var(--ink);letter-spacing:-.4px;margin-bottom:6px}
+.hero-sub{font-size:.9rem;color:var(--muted);max-width:580px;line-height:1.65}
+main{flex:1;padding:32px 0 56px}
+.tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:760px){.tool-grid{grid-template-columns:1fr}}
+
+/* CARDS & FORM */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+.card:last-child{margin-bottom:0}
+.sec-label{font-size:.68rem;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.12em;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:"";flex:1;height:1px;background:var(--border)}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.lbl{font-size:.78rem;font-weight:700;color:var(--ink);display:flex;align-items:center;justify-content:space-between}
+.lbl-hint{font-size:.72rem;font-weight:400;color:var(--muted)}
+.inp{width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-size:.95rem;color:var(--ink);font-family:inherit;outline:none;transition:border-color .15s}
+.inp:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(11,79,138,.08)}
+.inp-pre{position:relative}
+.inp-pre .pfx{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600;font-size:.95rem;pointer-events:none}
+.inp-pre .inp{padding-left:26px}
+.inp-suf{position:relative}
+.inp-suf .sfx{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
+.inp-suf .inp{padding-right:30px}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.pre{padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;border:1.5px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;transition:all .15s}
+.pre:hover,.pre.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.div-line{height:1px;background:var(--border);margin:20px 0}
+
+/* RESULTS */
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+@media(max-width:400px){.res-grid{grid-template-columns:1fr}}
+.res-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:center}
+.res-card.hl{background:linear-gradient(135deg,rgba(11,79,138,.06),rgba(11,79,138,.03));border-color:rgba(11,79,138,.2)}
+.res-card.danger{background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.2)}
+.res-card.warn{background:rgba(245,158,11,.04);border-color:rgba(245,158,11,.25)}
+.res-lbl{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.res-val{font-family:"Inter Tight",sans-serif;font-size:1.5rem;font-weight:800;color:var(--ink);line-height:1}
+.res-val.big{font-size:2rem}
+.res-sub{font-size:.72rem;color:var(--muted);margin-top:3px}
+
+/* STOP SCENARIOS TABLE */
+.scenarios-table{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.sc-header{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;padding:9px 14px;background:var(--bg);border-bottom:1px solid var(--border);font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.sc-row{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;padding:11px 14px;border-bottom:1px solid var(--border);font-size:.85rem;transition:background .15s;cursor:pointer}
+.sc-row:last-child{border-bottom:none}
+.sc-row:hover{background:rgba(11,79,138,.03)}
+.sc-row.active{background:rgba(11,79,138,.06);border-left:3px solid var(--brand)}
+.sc-label{font-weight:600;color:var(--ink)}
+.sc-stop{font-weight:700;color:var(--red)}
+.sc-dist{color:var(--muted)}
+.sc-risk{color:var(--muted)}
+
+/* RULE BOX */
+.rule-box{background:rgba(11,79,138,.04);border:1px solid rgba(11,79,138,.15);border-left:3px solid var(--brand);border-radius:10px;padding:12px 14px;font-size:.82rem;color:var(--ink);line-height:1.65;margin-top:16px}
+.rule-box strong{color:var(--brand)}
+
+/* BUTTONS */
+.btn-calc{width:100%;padding:13px;border-radius:999px;background:var(--brand);color:#fff;font-family:"Inter Tight",sans-serif;font-size:1rem;font-weight:800;border:none;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+.btn-calc:hover{background:var(--brand-light);transform:translateY(-1px);box-shadow:0 6px 20px rgba(11,79,138,.3)}
+.btn-sm{padding:8px 16px;border-radius:999px;background:var(--panel);color:var(--muted);border:1.5px solid var(--border);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-sm:hover{border-color:var(--brand);color:var(--brand)}
+
+/* TOOL LINKS */
+.tool-link{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:10px;text-decoration:none;transition:all .15s;margin-bottom:8px}
+.tool-link:last-child{margin-bottom:0}
+.tool-link:hover{border-color:var(--brand);box-shadow:var(--shadow)}
+.tool-link .tl-name{font-weight:700;font-size:.88rem;color:var(--ink)}
+.tool-link .tl-desc{font-size:.76rem;color:var(--muted)}
+.tool-link .tl-arrow{color:var(--brand);font-size:.8rem;font-weight:700;flex-shrink:0}
+
+/* FOOTER */
+.site-footer{background:var(--brand-dark);color:#94a3b8;padding:40px 0 24px;margin-top:auto}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:24px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:18px}
+.footer-brand{font-family:"Inter Tight",sans-serif;font-weight:800;font-size:1.1rem;color:#fff;margin-bottom:6px}
+.footer-tagline{font-size:.8rem;color:rgba(255,255,255,.5);line-height:1.6}
+.footer-col-title{font-weight:700;color:rgba(255,255,255,.75);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.footer-link{display:block;padding:3px 0;color:rgba(255,255,255,.5);font-size:.82rem;transition:color .15s;text-decoration:none}
+.footer-link:hover{color:rgba(255,255,255,.85)}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:.75rem;color:rgba(255,255,255,.35);margin-bottom:12px}
+.footer-pills{display:flex;gap:8px;flex-wrap:wrap}
+.footer-pill{background:rgba(255,255,255,.06);padding:3px 10px;border-radius:999px;font-size:.7rem;color:rgba(255,255,255,.4)}
+.footer-disclaimer{font-size:.72rem;color:rgba(255,255,255,.3);line-height:1.65}
+.footer-disclaimer strong{color:rgba(255,255,255,.45)}
+@media(max-width:700px){.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.footer-grid{grid-template-columns:1fr}}
+
+/* TOAST */
+.toast-stack{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:7px;z-index:1000}
+.toast{background:var(--panel);color:var(--ink);padding:10px 14px;border-radius:10px;border:1px solid var(--border);box-shadow:0 12px 30px rgba(0,0,0,.15);font-size:.82rem;max-width:280px;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="nav-wrap">
+<nav class="nav">
+  <a href="index.html" class="logo"><img src="images/arowanalogo.png?v=20260117" alt="" onerror="this.style.display='none'">Arowana Profits</a>
+  <div class="nav-links" id="navLinks">
+    <a href="arowana-trader.html" class="nav-agent">&#9889; Arowana Trader</a>
+    <a href="portfolio-advisor.html" class="nav-agent">&#127974; Portfolio Advisor</a>
+    <div class="nav-divider"></div>
+    <a href="learn-investing.html">&#128218; Learn</a>
+    <a href="features.html">&#128296; Features</a>
+    <a href="pricing.html">&#128179; Plans</a>
+    <a href="atr-stop-planner.html" class="nav-cur">&#128208; ATR Stop</a>
+  </div>
+  <button class="nav-burger" id="navBurger">&#9776;</button>
+  <div class="nav-auth">
+    <a href="login.html" id="navSignIn" class="nbtn nbtn-ghost">Sign In</a>
+    <a href="signup.html" id="navSignUp" class="nbtn nbtn-solid">&#128640; Start Free</a>
+    <div class="nav-user" id="navUserDrop">
+      <button class="nav-user-toggle" id="navUserToggle">&#128100; <span id="navUserName">Account</span></button>
+      <div class="nav-user-menu" id="navUserMenu">
+        <a href="account.html">&#128282; My Account</a>
+        <div class="menu-sep"></div>
+        <a href="arowana-trader.html">&#9889; Arowana Trader</a>
+        <a href="portfolio-advisor.html">&#127974; Portfolio Advisor</a>
+        <div class="menu-sep"></div>
+        <a href="short-term-dashboard.html">&#9889; Short-Term Dashboard</a>
+        <a href="long-term-dashboard.html">&#128200; Long-Term Dashboard</a>
+        <div class="menu-sep"></div>
+        <button id="navSignOutBtn">&#128682; Sign Out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+</div>
+
+<div class="mob-menu" id="mobMenu" data-open="false">
+  <div class="mob-panel">
+    <a class="mob-link" href="arowana-trader.html">&#9889; Arowana Trader</a>
+    <a class="mob-link" href="portfolio-advisor.html">&#127974; Portfolio Advisor</a>
+    <a class="mob-link" href="short-term-dashboard.html">&#9889; Short-Term Dashboard</a>
+    <a class="mob-link" href="long-term-dashboard.html">&#128200; Long-Term Dashboard</a>
+    <div class="mob-div"></div>
+    <a class="mob-link" href="learn-investing.html">&#128218; Learn</a>
+    <a class="mob-link" href="features.html">&#128296; Features</a>
+    <a class="mob-link" href="pricing.html">&#128179; Plans</a>
+    <div class="mob-div"></div>
+    <div id="mobAuthLinks"></div>
+  </div>
+</div>
+
+<div class="page-hero">
+  <div class="container">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <div class="hero-kicker">&#128208; Risk &amp; Sizing</div>
+        <h1 class="hero-title">ATR Stop Planner</h1>
+        <p class="hero-sub">Set your stop loss based on the stock's actual volatility (ATR), not arbitrary round numbers. See 4 scenarios — tight, standard, wide, and very wide — then pick the one that fits your plan.</p>
+      </div>
+      <a href="short-term-dashboard.html" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--border);background:var(--panel);color:var(--muted);font-size:.82rem;font-weight:600;text-decoration:none;white-space:nowrap;transition:all .15s;flex-shrink:0;margin-top:4px" onmouseover="this.style.borderColor='var(--brand)';this.style.color='var(--brand)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">&#8592; Dashboard</a>
+    </div>
+  </div>
+</div>
+
+<main>
+<div class="container">
+<div class="tool-grid">
+
+  <!-- LEFT: Inputs -->
+  <div>
+    <div class="card">
+      <div class="sec-label">&#128200; Stock Data</div>
+
+      <div class="field">
+        <label class="lbl" for="ticker">Ticker <span class="lbl-hint">Optional</span></label>
+        <input class="inp" id="ticker" type="text" placeholder="e.g. NVDA" maxlength="10" oninput="this.value=this.value.toUpperCase()">
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="entryPrice">Entry Price</label>
+        <div class="inp-pre"><span class="pfx">$</span><input class="inp" id="entryPrice" type="number" min="0" step="0.01" placeholder="150.00"></div>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="atrValue">ATR Value <span class="lbl-hint">Average True Range</span></label>
+        <div class="inp-pre"><span class="pfx">$</span><input class="inp" id="atrValue" type="number" min="0" step="0.01" placeholder="4.50"></div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:2px">Find ATR on TradingView: Add indicator &rarr; search &ldquo;ATR&rdquo; &rarr; use 14-period default</div>
+      </div>
+
+      <div class="div-line"></div>
+      <div class="sec-label">&#129518; Position Sizing</div>
+
+      <div class="field">
+        <label class="lbl" for="acctSize">Account Size</label>
+        <div class="inp-pre"><span class="pfx">$</span><input class="inp" id="acctSize" type="number" min="0" step="100" value="25000"></div>
+        <div class="presets">
+          <span class="pre" data-f="acctSize" data-v="5000">$5k</span>
+          <span class="pre" data-f="acctSize" data-v="10000">$10k</span>
+          <span class="pre" data-f="acctSize" data-v="25000">$25k</span>
+          <span class="pre" data-f="acctSize" data-v="50000">$50k</span>
+          <span class="pre" data-f="acctSize" data-v="100000">$100k</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="riskPct">Risk per Trade</label>
+        <div class="inp-suf"><span class="sfx">%</span><input class="inp" id="riskPct" type="number" min="0.1" max="10" step="0.1" value="1"></div>
+        <div class="presets">
+          <span class="pre" data-f="riskPct" data-v="0.5">0.5%</span>
+          <span class="pre on" data-f="riskPct" data-v="1">1%</span>
+          <span class="pre" data-f="riskPct" data-v="1.5">1.5%</span>
+          <span class="pre" data-f="riskPct" data-v="2">2%</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="lbl">Trade Direction</label>
+        <div class="presets">
+          <span class="pre on" data-f="direction" data-v="long">&#9650; Long</span>
+          <span class="pre" data-f="direction" data-v="short">&#9660; Short</span>
+        </div>
+      </div>
+
+      <button class="btn-calc" id="calcBtn">&#9881;&#65039; Calculate ATR Stops</button>
+
+      <div class="rule-box"><strong>Why ATR?</strong> A stop set at 1&times; ATR below entry respects the stock's normal daily swing. Stops too close get hit by noise. ATR-based stops are wider on volatile stocks and tighter on calm ones &mdash; automatically.</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Results -->
+  <div>
+    <div class="card" id="resCard">
+      <div class="sec-label">&#127919; Scenarios</div>
+      <div id="resPlaceholder" style="text-align:center;padding:36px 0;color:var(--muted)">
+        <div style="font-size:2.5rem;margin-bottom:10px">&#128208;</div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--ink);margin-bottom:4px">Enter entry price and ATR</div>
+        <div style="font-size:.83rem;line-height:1.65">4 stop scenarios will appear —<br>click any row to select it.</div>
+      </div>
+      <div id="resOutput" style="display:none">
+
+        <!-- Selected scenario summary -->
+        <div class="res-grid">
+          <div class="res-card hl">
+            <div class="res-lbl">&#128308; Stop Level</div>
+            <div class="res-val big" id="rStop">&#8212;</div>
+            <div class="res-sub" id="rStopSub"></div>
+          </div>
+          <div class="res-card danger">
+            <div class="res-lbl">&#128202; Shares</div>
+            <div class="res-val" id="rShares">&#8212;</div>
+            <div class="res-sub" id="rSharesSub"></div>
+          </div>
+          <div class="res-card">
+            <div class="res-lbl">&#128176; $ Risk</div>
+            <div class="res-val" id="rRisk">&#8212;</div>
+            <div class="res-sub" id="rRiskSub"></div>
+          </div>
+          <div class="res-card">
+            <div class="res-lbl">&#128208; ATR Multiple</div>
+            <div class="res-val" id="rAtrMult">&#8212;</div>
+            <div class="res-sub" id="rAtrSub"></div>
+          </div>
+        </div>
+
+        <!-- Scenarios table -->
+        <div style="font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:8px">Click a scenario to select it:</div>
+        <div class="scenarios-table">
+          <div class="sc-header">
+            <span>Scenario</span>
+            <span>Stop Price</span>
+            <span>Distance</span>
+            <span>Shares</span>
+          </div>
+          <div id="scRows"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm" id="copyBtn">&#128203; Copy</button>
+          <a id="sizerLink" href="position-sizer.html" class="btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px">&#129518; Position Sizer</a>
+          <button class="btn-sm" id="resetBtn">&#8635; Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ATR guide -->
+    <div class="card">
+      <div class="sec-label">&#128218; ATR Multiplier Guide</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:.84rem;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><div style="font-weight:700">0.75&times; ATR &mdash; Tight</div><div style="font-size:.76rem;color:var(--muted)">Scalp or very clean setup. Higher fill chance.</div></div>
+          <span style="font-weight:700;color:var(--amber);flex-shrink:0;margin-left:12px">Aggressive</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:.84rem;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><div style="font-weight:700">1.0&times; ATR &mdash; Standard</div><div style="font-size:.76rem;color:var(--muted)">Good balance. Most day and swing trades.</div></div>
+          <span style="font-weight:700;color:var(--green);flex-shrink:0;margin-left:12px">Recommended</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:.84rem;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><div style="font-weight:700">1.5&times; ATR &mdash; Wide</div><div style="font-size:.76rem;color:var(--muted)">Volatile stocks, wider setups. Fewer shares.</div></div>
+          <span style="font-weight:700;color:var(--brand);flex-shrink:0;margin-left:12px">Conservative</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:.84rem;padding:8px 0">
+          <div><div style="font-weight:700">2.0&times; ATR &mdash; Very Wide</div><div style="font-size:.76rem;color:var(--muted)">Swing trades, earnings plays, or very choppy action.</div></div>
+          <span style="font-weight:700;color:var(--muted);flex-shrink:0;margin-left:12px">Swing</span>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:11px;background:var(--bg);border-radius:10px;font-size:.8rem;color:var(--muted);line-height:1.7"><strong style="color:var(--ink)">Pro tip:</strong> Combine ATR stops with key support levels. If 1&times; ATR falls right on a major support, that is a high-conviction stop. If it misses support, consider widening to 1.5&times;.</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-label">&#128279; Related Tools</div>
+      <a class="tool-link" href="position-sizer.html">
+        <div><div class="tl-name">&#129518; Position Sizer</div><div class="tl-desc">Set your exact share count from risk % and stop distance</div></div>
+        <span class="tl-arrow">Open &#8594;</span>
+      </a>
+      <a class="tool-link" href="arowana-trader.html">
+        <div><div class="tl-name">&#9889; Arowana Trader</div><div class="tl-desc">Morning scan with built-in ATR-aware sizing</div></div>
+        <span class="tl-arrow">Open &#8594;</span>
+      </a>
+      <a class="tool-link" href="chart-analysis-form.html">
+        <div><div class="tl-name">&#128248; Chart Analyzer</div><div class="tl-desc">AI-generated stop and target levels from a chart screenshot</div></div>
+        <span class="tl-arrow">Open &#8594;</span>
+      </a>
+    </div>
+  </div>
+</div>
+</div>
+</main>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<footer class="site-footer">
+<div class="container">
+  <div class="footer-grid">
+    <div><div class="footer-brand">Arowana Profits</div><div class="footer-tagline">Risk-first education and AI-assisted planning tools for retail traders and investors.</div></div>
+    <div><div class="footer-col-title">Explore</div><a class="footer-link" href="arowana-trader.html">Arowana Trader</a><a class="footer-link" href="portfolio-advisor.html">Portfolio Advisor</a><a class="footer-link" href="features.html">All Tools</a><a class="footer-link" href="pricing.html">Plans</a></div>
+    <div><div class="footer-col-title">Tools</div><a class="footer-link" href="atr-stop-planner.html">ATR Stop Planner</a><a class="footer-link" href="position-sizer.html">Position Sizer</a><a class="footer-link" href="chart-analysis-form.html">Chart Analyzer</a><a class="footer-link" href="trade-journal-pro.html">Trade Journal</a></div>
+    <div><div class="footer-col-title">Legal</div><a class="footer-link" href="disclosures.html">Disclosures</a><a class="footer-link" href="terms.html">Terms</a><a class="footer-link" href="privacy.html">Privacy</a></div>
+  </div>
+  <div class="footer-bottom"><div>&#169; <span id="yearNow"></span> Arowana Profits. All rights reserved.</div><div class="footer-pills"><span class="footer-pill">Education-only</span><span class="footer-pill">Not financial advice</span></div></div>
+  <p class="footer-disclaimer"><strong>Important:</strong> ATR calculations are for educational purposes only. Not financial advice. Trading involves risk.</p>
+</div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+
+var yn=document.getElementById('yearNow');if(yn)yn.textContent=new Date().getFullYear();
+
+/* Auth */
+var KEY='gs_auth_user_v1';
+var aKeys=[KEY,'gs_session','ap_session','sb-access-token'];
+var u=JSON.parse(localStorage.getItem(KEY)||'null');
+var hasSess=u||aKeys.some(function(k){try{var v=localStorage.getItem(k);return v&&v.length>10;}catch(e){return false;}});
+var $=function(id){return document.getElementById(id);};
+var si=$('navSignIn'),su=$('navSignUp'),dd=$('navUserDrop'),tog=$('navUserToggle'),nm=$('navUserName'),mob=$('mobAuthLinks');
+if(hasSess){
+  if(si)si.style.display='none';if(su)su.style.display='none';
+  if(dd)dd.classList.add('show');
+  var n=u&&(u.name||u.full_name||(u.email?u.email.split('@')[0]:null))||'Account';
+  if(nm)nm.textContent=n;
+  if(mob)mob.innerHTML='<a class="mob-link" href="account.html">&#128282; My Account</a><a class="mob-link" id="mobOut" href="#">&#128682; Sign Out</a>';
+  $('mobOut')&&$('mobOut').addEventListener('click',function(e){e.preventDefault();signOut();});
+}else{
+  if(mob)mob.innerHTML='<a class="mob-link" href="login.html">&#128272; Sign In</a><a class="mob-link" href="signup.html">&#128640; Start Free</a>';
+}
+if(tog&&dd){tog.addEventListener('click',function(e){e.stopPropagation();dd.classList.toggle('open');});document.addEventListener('click',function(){dd.classList.remove('open');});}
+var sob=$('navSignOutBtn');
+function signOut(){aKeys.forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});location.href='index.html';}
+if(sob)sob.addEventListener('click',signOut);
+var burger=$('navBurger'),mm=$('mobMenu');
+if(burger&&mm){burger.addEventListener('click',function(){mm.setAttribute('data-open',mm.getAttribute('data-open')==='true'?'false':'true');});}
+
+/* State */
+var dir='long';
+var selectedScenario=null;
+var saved={};
+
+/* Helpers */
+function fmt(n,d){return n.toLocaleString('en-US',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});}
+function fmtD(n){return'$'+fmt(Math.abs(n),2);}
+function toast(msg,type){var el=document.createElement('div');el.className='toast';el.style.borderLeft='4px solid '+({ok:'#16a34a',err:'#ef4444',warn:'#f59e0b'}[type]||'#16a34a');el.textContent=msg;$('toastStack').appendChild(el);setTimeout(function(){el.remove();},4000);}
+
+/* Presets */
+document.querySelectorAll('.pre[data-f]').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var f=btn.dataset.f,v=btn.dataset.v;
+    if(f==='direction'){dir=v;document.querySelectorAll('.pre[data-f="direction"]').forEach(function(b){b.classList.toggle('on',b.dataset.v===v);});}
+    else{var el=$(f);if(el){el.value=v;el.dispatchEvent(new Event('input'));}document.querySelectorAll('.pre[data-f="'+f+'"]').forEach(function(b){b.classList.toggle('on',b.dataset.v===v);});}
+    calc();
+  });
+});
+
+/* Auto-calc */
+['entryPrice','atrValue','acctSize','riskPct'].forEach(function(id){var el=$(id);if(el)el.addEventListener('input',calc);});
+
+/* ATR multipliers */
+var SCENARIOS=[
+  {mult:0.75,label:'Tight',color:'var(--amber)'},
+  {mult:1.0, label:'Standard',color:'var(--green)'},
+  {mult:1.5, label:'Wide',color:'var(--brand)'},
+  {mult:2.0, label:'Very Wide',color:'var(--muted)'},
+];
+
+function calcScenario(entry,atr,acct,pct,mult,dir){
+  var stopDist=atr*mult;
+  var stop=dir==='long'?entry-stopDist:entry+stopDist;
+  var maxRisk=acct*(pct/100);
+  var shares=Math.max(1,Math.floor(maxRisk/stopDist));
+  var actualRisk=shares*stopDist;
+  return{stop,stopDist,shares,actualRisk,mult};
+}
+
+function calc(){
+  var entry=parseFloat($('entryPrice').value);
+  var atr=parseFloat($('atrValue').value);
+  var acct=parseFloat($('acctSize').value)||25000;
+  var pct=parseFloat($('riskPct').value)||1;
+  if(!entry||!atr){$('resPlaceholder').style.display='';$('resOutput').style.display='none';return;}
+
+  $('resPlaceholder').style.display='none';$('resOutput').style.display='';
+
+  var scenarios=SCENARIOS.map(function(s){return Object.assign({},s,calcScenario(entry,atr,acct,pct,s.mult,dir));});
+
+  // Render scenario rows
+  var rows=$('scRows');
+  rows.innerHTML='';
+  scenarios.forEach(function(s,i){
+    var row=document.createElement('div');
+    row.className='sc-row'+(i===1?' active':'');
+    row.dataset.i=i;
+    row.innerHTML='<span class="sc-label" style="color:'+s.color+'">'+s.mult+'&times; &mdash; '+s.label+'</span>'
+      +'<span class="sc-stop">'+fmtD(s.stop)+'</span>'
+      +'<span class="sc-dist">'+fmtD(s.stopDist)+'</span>'
+      +'<span class="sc-risk">'+fmt(s.shares)+'sh</span>';
+    row.addEventListener('click',function(){
+      document.querySelectorAll('.sc-row').forEach(function(r){r.classList.remove('active');});
+      row.classList.add('active');
+      selectScenario(scenarios[i],s.color);
+    });
+    rows.appendChild(row);
+  });
+
+  // Default select standard (index 1)
+  selectScenario(scenarios[1],SCENARIOS[1].color);
+  saved={entry,atr,acct,pct,dir,scenarios};
+}
+
+function selectScenario(s,color){
+  selectedScenario=s;
+  $('rStop').textContent=fmtD(s.stop);$('rStop').style.color=color||'var(--red)';
+  $('rStopSub').textContent=fmtD(s.stopDist)+' from entry';
+  $('rShares').textContent=fmt(s.shares);
+  $('rSharesSub').textContent='shares';
+  $('rRisk').textContent=fmtD(s.actualRisk);
+  $('rRiskSub').textContent=saved.pct+'% of account';
+  $('rAtrMult').textContent=s.mult+'&times;';
+  $('rAtrSub').textContent=s.label+' stop';
+}
+
+$('calcBtn').addEventListener('click',function(){calc();if(window.innerWidth<=760)$('resCard').scrollIntoView({behavior:'smooth',block:'start'});});
+
+$('copyBtn').addEventListener('click',function(){
+  if(!selectedScenario||!saved.entry){toast('Calculate first','warn');return;}
+  var s=selectedScenario;
+  var t='ATR Stop Planner\nTicker: '+($('ticker').value||'N/A')+'\nEntry: '+fmtD(saved.entry)+'\nATR: '+fmtD(saved.atr)+'\nMultiplier: '+s.mult+'x ('+s.label+')\nStop: '+fmtD(s.stop)+'\nDistance: '+fmtD(s.stopDist)+'\nShares: '+fmt(s.shares)+'\nMax Risk: '+fmtD(s.actualRisk);
+  navigator.clipboard&&navigator.clipboard.writeText(t).then(function(){toast('Copied ✓');}).catch(function(){toast('Copy failed','err');});
+});
+
+$('resetBtn').addEventListener('click',function(){
+  ['entryPrice','atrValue','ticker'].forEach(function(id){$(id).value='';});
+  $('acctSize').value=25000;$('riskPct').value=1;
+  dir='long';
+  document.querySelectorAll('.pre[data-f="direction"]').forEach(function(b){b.classList.toggle('on',b.dataset.v==='long');});
+  document.querySelectorAll('.pre[data-f="riskPct"]').forEach(function(b){b.classList.toggle('on',b.dataset.v==='1');});
+  $('resPlaceholder').style.display='';$('resOutput').style.display='none';
+  selectedScenario=null;saved={};toast('Reset');
+});
+
+})();
+</script>
+</body>
+</html>

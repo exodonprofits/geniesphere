@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GenieSphere – Space Organizer Genie</title>
+  <meta name="description" content="Upload photos, run AI space analysis, save project history, and receive organization plans inside GenieSphere." />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg-1: #09111d;
+      --bg-2: #0b1220;
+      --panel: rgba(20, 31, 52, 0.95);
+      --panel-2: rgba(15, 24, 40, 0.94);
+      --text: #ecf3ff;
+      --muted: #a8b6d8;
+      --line: rgba(120, 155, 255, 0.16);
+      --accent: #3ee1a1;
+      --accent-2: #4c6ef5;
+      --warn: #ffd166;
+      --danger: #ff7a7a;
+      --shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --max: 1320px;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(1000px 700px at 0% -10%, rgba(76, 110, 245, 0.18), transparent 60%),
+        radial-gradient(900px 650px at 100% 0%, rgba(62, 225, 161, 0.12), transparent 55%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+      color: var(--text);
+      font: 500 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body { padding: 24px; }
+    button, input, select, textarea { font: inherit; }
+    img { display: block; max-width: 100%; }
+    .hidden { display: none !important; }
+    .page { max-width: var(--max); margin: 0 auto; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #74efc7, #3ee1a1 42%, #1f8b67 80%);
+      box-shadow: 0 0 0 4px rgba(62, 225, 161, 0.18), 0 10px 22px rgba(62, 225, 161, 0.24);
+      flex: 0 0 auto;
+    }
+    .brand-title { font-size: 18px; font-weight: 800; line-height: 1.2; letter-spacing: 0.2px; }
+    .brand-subtitle { font-size: 13px; color: var(--muted); }
+    .topbar-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); gap: 18px; margin-bottom: 18px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 430px); gap: 18px; align-items: start; }
+    .panel { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .hero-main { padding: 28px; }
+    .hero-side, .builder, .report-panel { padding: 24px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: rgba(62, 225, 161, 0.1); color: #93f3cf; font-size: 13px; font-weight: 700; border: 1px solid rgba(62, 225, 161, 0.18); margin-bottom: 14px; }
+    h1 { margin: 0 0 10px; font-size: clamp(30px, 4vw, 46px); line-height: 1.1; letter-spacing: -.02em; }
+    h2, h3, h4 { margin: 0; }
+    .hero-text, .section-note, .muted, .small { color: var(--muted); }
+    .hero-points, .history-list { display: grid; gap: 12px; }
+    .hero-points { margin-top: 20px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .mini-card, .stat, .tip, .history-item, .report-card, .auth-card { padding: 14px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(120, 155, 255, 0.12); }
+    .mini-title, .history-title { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+    .mini-text, .history-meta, .tip p, .small { font-size: 13px; color: var(--muted); margin: 0; }
+    .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+    .stat-value { font-size: 24px; font-weight: 900; line-height: 1; margin-bottom: 6px; }
+    .auth-stack { display: grid; gap: 12px; margin-top: 14px; }
+    .section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+    .section-head h2, .section-head h3 { font-size: 22px; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; background: rgba(76, 110, 245, 0.12); color: #c9d3ff; border: 1px solid rgba(76, 110, 245, 0.2); }
+    .pill.good { background: rgba(62, 225, 161, 0.1); color: #9cf5d5; border-color: rgba(62, 225, 161, 0.18); }
+    .pill.warn { background: rgba(255, 209, 102, 0.1); color: #ffe6a2; border-color: rgba(255, 209, 102, 0.18); }
+    .builder-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field.span-2 { grid-column: 1 / -1; }
+    .label { font-weight: 700; font-size: 14px; }
+    .sub-label { color: var(--muted); font-size: 13px; margin-top: -2px; }
+    .control, .textarea { width: 100%; background: #0d1628; color: var(--text); border: 1px solid rgba(120, 155, 255, 0.16); border-radius: var(--radius-sm); padding: 12px 14px; outline: none; }
+    .control:focus, .textarea:focus { border-color: rgba(62, 225, 161, 0.4); box-shadow: 0 0 0 4px rgba(62, 225, 161, 0.08); }
+    .textarea { min-height: 108px; resize: vertical; }
+    .choice-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .choice { position: relative; }
+    .choice input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .choice span { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: rgba(255, 255, 255, 0.02); }
+    .choice input:checked + span { border-color: rgba(62, 225, 161, 0.55); background: rgba(62, 225, 161, 0.09); box-shadow: 0 0 0 4px rgba(62, 225, 161, 0.1); }
+    .btn, .btn-secondary, .btn-ghost, .chip { border: 0; border-radius: 7px; padding: 11px 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease, opacity .15s ease; text-decoration: none; }
+    .btn:hover, .btn-secondary:hover, .btn-ghost:hover, .chip:hover { transform: translateY(-1px); }
+    .btn { background: var(--accent); color: #082016; font-weight: 800; box-shadow: 0 12px 24px rgba(62, 225, 161, 0.22); }
+    .btn-secondary { background: var(--accent-2); color: #f6f8ff; font-weight: 700; box-shadow: 0 12px 24px rgba(76, 110, 245, 0.22); }
+    .btn-ghost, .chip { background: rgba(255, 255, 255, 0.02); color: var(--text); border: 1px solid var(--line); }
+    .btn[disabled], .btn-secondary[disabled], .btn-ghost[disabled], .chip[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .uploader { border: 1px dashed rgba(120, 155, 255, 0.28); background: rgba(255, 255, 255, 0.025); border-radius: 16px; padding: 18px; }
+    .uploader-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .dropzone { position: relative; min-height: 120px; border-radius: 14px; border: 1px dashed rgba(120, 155, 255, 0.24); background: rgba(11, 18, 32, 0.6); display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; }
+    .dropzone.is-dragover { border-color: rgba(62, 225, 161, 0.48); background: rgba(62, 225, 161, 0.06); }
+    .dropzone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .dropzone-copy strong { display: block; margin-bottom: 4px; font-size: 15px; }
+    .preview-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    .preview-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(120, 155, 255, 0.12); border-radius: 14px; overflow: hidden; min-width: 0; }
+    .preview-card img { width: 100%; height: 132px; object-fit: cover; background: #0f1828; }
+    .preview-meta { padding: 10px 12px; display: grid; gap: 4px; }
+    .preview-name { font-size: 13px; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .preview-size, .preview-path { font-size: 12px; color: var(--muted); margin: 0; word-break: break-all; }
+    .preview-empty, .empty-state { padding: 16px; text-align: center; border-radius: 14px; border: 1px dashed rgba(120, 155, 255, 0.2); color: var(--muted); background: rgba(255, 255, 255, 0.02); }
+    .action-row, .helper-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .report-shell { display: flex; flex-direction: column; gap: 14px; }
+    .report-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .score-card { padding: 18px; border-radius: 16px; background: linear-gradient(180deg, rgba(62, 225, 161, 0.11), rgba(255, 209, 102, 0.05)); border: 1px solid rgba(62, 225, 161, 0.18); }
+    .score-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .score-label { font-size: 13px; font-weight: 800; color: #93f3cf; text-transform: uppercase; letter-spacing: .08em; }
+    .score-value { font-size: 44px; font-weight: 900; line-height: 1; }
+    .progress { height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.06); }
+    .progress-bar { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--danger) 0%, var(--warn) 48%, var(--accent) 100%); transition: width .45s ease; }
+    .report-grid { display: grid; gap: 14px; }
+    .report-card ul, .report-card ol { margin: 0; padding-left: 20px; }
+    .report-card li + li { margin-top: 6px; }
+    .report-card p, .report-card li, .report-card small { color: var(--muted); }
+    .blueprint { background: #0d1524; border-radius: 14px; border: 1px solid rgba(120, 155, 255, 0.12); padding: 16px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; white-space: pre-wrap; color: #d8e3ff; font-size: 13px; line-height: 1.65; overflow-x: auto; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(120, 155, 255, 0.12); color: var(--text); font-size: 13px; font-weight: 700; }
+    .tips { margin-top: 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 22px; padding: 20px 4px 8px; color: var(--muted); font-size: 14px; }
+    .loading { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; }
+    .spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.16); border-top-color: var(--accent); animation: spin .9s linear infinite; }
+    .toast-stack { position: fixed; right: 18px; bottom: 18px; display: grid; gap: 10px; z-index: 40; max-width: min(360px, calc(100vw - 24px)); }
+    .toast { background: rgba(12, 18, 32, 0.95); color: var(--text); border: 1px solid rgba(120, 155, 255, 0.16); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow); font-size: 14px; }
+    .toast.good { border-color: rgba(62, 225, 161, 0.3); }
+    .toast.warn { border-color: rgba(255, 209, 102, 0.3); }
+    .toast.bad { border-color: rgba(255, 122, 122, 0.3); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 1100px) { .hero, .layout { grid-template-columns: 1fr; } .preview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { body { padding: 16px; } .hero-main, .hero-side, .builder, .report-panel { padding: 20px; } .builder-grid, .hero-points, .stats, .tips { grid-template-columns: 1fr; } .preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .section-head, .score-top, .report-header, .uploader-top, .footer, .topbar { flex-direction: column; align-items: flex-start; } }
+    @media (max-width: 520px) { .preview-grid { grid-template-columns: 1fr; } .topbar-actions, .action-row, .helper-row, .choice-grid { width: 100%; } .topbar-actions > *, .action-row > *, .helper-row > *, .choice-grid > * { width: 100%; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <div class="brand-title">GenieSphere</div>
+          <div class="brand-subtitle">Household Genie · Space Organizer Connected</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-ghost" type="button" id="demoFillBtn">✨ Load Demo</button>
+        <button class="btn-secondary" type="button" id="clearBtn">↺ Reset</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <article class="panel hero-main">
+        <div class="eyebrow">🏠 Real GenieSphere-connected version</div>
+        <h1>Upload photos, run AI analysis, and save project history.</h1>
+        <p class="hero-text">This version connects to Supabase storage, sends uploaded image URLs to your n8n webhook, receives OpenAI vision results, and stores finished reports back into Supabase for project history.</p>
+
+        <div class="hero-points">
+          <div class="mini-card"><div class="mini-title">☁️ Supabase image upload</div><p class="mini-text">Each photo is uploaded into a per-user project folder inside a storage bucket.</p></div>
+          <div class="mini-card"><div class="mini-title">🧠 OpenAI via n8n</div><p class="mini-text">The page sends project data and public image URLs to your n8n webhook for vision analysis.</p></div>
+          <div class="mini-card"><div class="mini-title">🗂️ Saved project history</div><p class="mini-text">Every completed analysis is saved so users can revisit previous organization plans.</p></div>
+        </div>
+      </article>
+
+      <aside class="panel hero-side">
+        <h2>Connection status</h2>
+        <div class="stats">
+          <div class="stat"><div class="stat-value" id="statAuth">—</div><div class="small">auth</div></div>
+          <div class="stat"><div class="stat-value" id="statStorage">—</div><div class="small">storage</div></div>
+          <div class="stat"><div class="stat-value" id="statWebhook">—</div><div class="small">webhook</div></div>
+          <div class="stat"><div class="stat-value" id="statHistory">0</div><div class="small">saved projects</div></div>
+        </div>
+
+        <div class="auth-stack">
+          <div class="auth-card"><div class="history-title">🔐 Signed-in user</div><p class="history-meta" id="userStatusText">Checking session…</p></div>
+          <div class="auth-card"><div class="history-title">📁 Latest saved projects</div><div class="history-list" id="historyList"><div class="empty-state">No saved history loaded yet.</div></div></div>
+        </div>
+      </aside>
+    </section>
+
+    <main class="layout">
+      <section class="panel builder">
+        <div class="section-head">
+          <div>
+            <h2>Build your organization request</h2>
+            <p class="section-note">Sign in first. Then upload photos, analyze them, and save everything to project history.</p>
+          </div>
+          <div class="pill" id="authPill">Session loading…</div>
+        </div>
+
+        <form id="organizerForm">
+          <div class="builder-grid">
+            <div class="field">
+              <label class="label" for="spaceType">🏷️ Space type</label>
+              <select class="control" id="spaceType" name="spaceType">
+                <option value="Garage">Garage</option>
+                <option value="Closet">Closet</option>
+                <option value="Kitchen">Kitchen</option>
+                <option value="Office">Office</option>
+                <option value="Basement">Basement</option>
+                <option value="Storage Room">Storage Room</option>
+                <option value="Laundry Room">Laundry Room</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="label" for="budget">💵 Budget preference</label>
+              <select class="control" id="budget" name="budget">
+                <option value="$0 (rearrange only)">$0 (rearrange only)</option>
+                <option value="Under $25">Under $25</option>
+                <option value="Under $50">Under $50</option>
+                <option value="Under $100">Under $100</option>
+              </select>
+            </div>
+            <div class="field span-2">
+              <label class="label" for="projectTitle">🗂️ Project title</label>
+              <input class="control" id="projectTitle" name="projectTitle" type="text" placeholder="Example: Main garage cleanup – March 2026" />
+            </div>
+            <div class="field span-2">
+              <span class="label">🎯 Primary goal</span>
+              <div class="choice-grid" role="radiogroup" aria-label="Primary goal">
+                <label class="choice"><input type="radio" name="goal" value="Clear floor space" checked /><span>🚗 Clear floor space</span></label>
+                <label class="choice"><input type="radio" name="goal" value="Create zones" /><span>🧭 Create zones</span></label>
+                <label class="choice"><input type="radio" name="goal" value="Improve access" /><span>🛠️ Improve access</span></label>
+                <label class="choice"><input type="radio" name="goal" value="Reduce visual clutter" /><span>✨ Reduce visual clutter</span></label>
+              </div>
+            </div>
+            <div class="field span-2">
+              <span class="label">🧱 Space constraints</span>
+              <div class="choice-grid">
+                <label class="choice"><input type="checkbox" name="constraints" value="Need car parking" checked /><span>🚘 Need car parking</span></label>
+                <label class="choice"><input type="checkbox" name="constraints" value="Keep walkway clear" checked /><span>🚶 Keep walkway clear</span></label>
+                <label class="choice"><input type="checkbox" name="constraints" value="Heavy items stay low" /><span>📦 Heavy items stay low</span></label>
+                <label class="choice"><input type="checkbox" name="constraints" value="Kid-friendly access" /><span>👨‍👩‍👧 Kid-friendly access</span></label>
+              </div>
+            </div>
+            <div class="field span-2">
+              <label class="label" for="notes">📝 Notes for the organizer</label>
+              <div class="sub-label">Example: “I want to park one car inside and keep tools easy to reach.”</div>
+              <textarea class="textarea" id="notes" name="notes" placeholder="Add extra details about the space, what must stay, what annoys you most, and anything AI should consider."></textarea>
+            </div>
+            <div class="field span-2">
+              <div class="uploader">
+                <div class="uploader-top">
+                  <div>
+                    <div class="history-title">📷 Upload space photos</div>
+                    <p class="history-meta">PNG, JPG, WEBP. Up to 8 images. Best order: front, left, right, floor, shelves, problem corners.</p>
+                  </div>
+                  <button class="chip" type="button" id="browseBtn">🖼️ Browse Photos</button>
+                </div>
+                <div class="dropzone" id="dropzone">
+                  <input type="file" id="photoInput" accept="image/*" multiple />
+                  <div class="dropzone-copy">
+                    <strong>Drop photos here or click to upload</strong>
+                    <span>After analyze, the images are uploaded to Supabase and their URLs are sent to n8n.</span>
+                  </div>
+                </div>
+                <div class="preview-grid" id="previewGrid"><div class="preview-empty">No photos uploaded yet.</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="action-row">
+            <button class="btn" type="submit" id="analyzeBtn">🧠 Analyze & Save Project</button>
+            <button class="btn-ghost" type="button" id="sampleGarageBtn">🚗 Demo Garage Setup</button>
+          </div>
+          <div class="helper-row">
+            <div class="pill" id="modePill">Ready</div>
+            <div class="loading hidden" id="loadingState"><span class="spinner" aria-hidden="true"></span><span id="loadingText">Working…</span></div>
+          </div>
+        </form>
+      </section>
+
+      <aside class="panel report-panel">
+        <div class="section-head">
+          <div>
+            <h3>AI organization report</h3>
+            <p class="section-note">Generated results from your latest webhook response.</p>
+          </div>
+          <button class="btn-ghost" type="button" id="refreshHistoryBtn">↻ Refresh History</button>
+        </div>
+        <div class="report-shell">
+          <div class="empty-state" id="reportEmpty">Sign in, upload photos, and click <strong>Analyze & Save Project</strong> to generate a report.</div>
+          <div class="hidden" id="reportContent">
+            <div class="report-header">
+              <div class="pill good" id="statusPill">Ready</div>
+              <small class="muted" id="reportMeta">No analysis yet</small>
+            </div>
+            <div class="score-card">
+              <div class="score-top">
+                <div>
+                  <div class="score-label">Organization score</div>
+                  <div class="small" id="scoreCaption">Estimated from AI analysis</div>
+                </div>
+                <div class="score-value" id="scoreValue">0</div>
+              </div>
+              <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+            </div>
+            <div class="report-grid">
+              <div class="report-card"><h4>🔎 Detected objects</h4><div class="tag-row" id="detectedObjects"></div></div>
+              <div class="report-card"><h4>⚠️ Current problems</h4><ul id="problemsList"></ul></div>
+              <div class="report-card"><h4>✅ Rearrangement plan</h4><ol id="planList"></ol></div>
+              <div class="report-card"><h4>🗺️ Blueprint layout</h4><div class="blueprint" id="blueprintBox"></div></div>
+              <div class="report-card"><h4>💡 Low-cost improvements</h4><ul id="improvementsList"></ul></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <section class="tips">
+      <article class="tip"><h4>1. Sign in required</h4><p>This page uses Supabase auth to connect uploads and history to the correct user account.</p></article>
+      <article class="tip"><h4>2. Public URLs to n8n</h4><p>n8n receives public storage URLs, so bucket policy or signed URL handling must be configured correctly.</p></article>
+      <article class="tip"><h4>3. Storage + history</h4><p>Each analysis creates a project row, image rows, and a result row for easy saved project history.</p></article>
+    </section>
+
+    <footer class="footer">
+      <div>GenieSphere · Household Genie · Space Organizer Connected</div>
+      <div>Supabase + n8n + OpenAI vision ready</div>
+    </footer>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script>
+    window.GS_SPACE_ORGANIZER_CONFIG = window.GS_SPACE_ORGANIZER_CONFIG || {
+      supabaseUrl: "https://YOUR_PROJECT.supabase.co",
+      supabaseAnonKey: "YOUR_SUPABASE_ANON_KEY",
+      bucketName: "space-organizer-images",
+      webhookUrl: "https://YOUR_N8N_DOMAIN/webhook/space-organizer",
+      authRedirectUrl: window.location.href
+    };
+  </script>
+
+  <script>
+    (function () {
+      const cfg = window.GS_SPACE_ORGANIZER_CONFIG || {};
+      const state = { dbClient: null, currentUser: null, selectedFiles: [], currentProjectId: null, latestReport: null };
+      const form = document.getElementById("organizerForm");
+      const photoInput = document.getElementById("photoInput");
+      const previewGrid = document.getElementById("previewGrid");
+      const dropzone = document.getElementById("dropzone");
+      const browseBtn = document.getElementById("browseBtn");
+      const demoFillBtn = document.getElementById("demoFillBtn");
+      const sampleGarageBtn = document.getElementById("sampleGarageBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const refreshHistoryBtn = document.getElementById("refreshHistoryBtn");
+      const authPill = document.getElementById("authPill");
+      const userStatusText = document.getElementById("userStatusText");
+      const modePill = document.getElementById("modePill");
+      const loadingState = document.getElementById("loadingState");
+      const loadingText = document.getElementById("loadingText");
+      const reportEmpty = document.getElementById("reportEmpty");
+      const reportContent = document.getElementById("reportContent");
+      const statusPill = document.getElementById("statusPill");
+      const reportMeta = document.getElementById("reportMeta");
+      const scoreValue = document.getElementById("scoreValue");
+      const scoreCaption = document.getElementById("scoreCaption");
+      const progressBar = document.getElementById("progressBar");
+      const detectedObjects = document.getElementById("detectedObjects");
+      const problemsList = document.getElementById("problemsList");
+      const planList = document.getElementById("planList");
+      const blueprintBox = document.getElementById("blueprintBox");
+      const improvementsList = document.getElementById("improvementsList");
+      const historyList = document.getElementById("historyList");
+      const statAuth = document.getElementById("statAuth");
+      const statStorage = document.getElementById("statStorage");
+      const statWebhook = document.getElementById("statWebhook");
+      const statHistory = document.getElementById("statHistory");
+      const projectTitle = document.getElementById("projectTitle");
+      const notes = document.getElementById("notes");
+      const spaceType = document.getElementById("spaceType");
+      const budget = document.getElementById("budget");
+
+      function showToast(message, tone) {
+        const stack = document.getElementById("toastStack");
+        const div = document.createElement("div");
+        div.className = "toast " + (tone || "");
+        div.textContent = message;
+        stack.appendChild(div);
+        setTimeout(() => {
+          div.style.opacity = "0";
+          div.style.transform = "translateY(8px)";
+          div.style.transition = "opacity .2s ease, transform .2s ease";
+          setTimeout(() => div.remove(), 220);
+        }, 3200);
+      }
+
+      function setLoading(isLoading, text) {
+        loadingState.classList.toggle("hidden", !isLoading);
+        if (text) loadingText.textContent = text;
+      }
+
+      function setMode(text, tone) {
+        modePill.textContent = text;
+        modePill.className = "pill" + (tone ? " " + tone : "");
+      }
+
+      function setAuthStateText() {
+        if (state.currentUser) {
+          authPill.textContent = "Signed in";
+          authPill.className = "pill good";
+          userStatusText.textContent = state.currentUser.email || state.currentUser.id;
+          statAuth.textContent = "OK";
+        } else {
+          authPill.textContent = "Sign in required";
+          authPill.className = "pill warn";
+          userStatusText.textContent = "No active session. Use your GenieSphere login flow or magic link sign-in.";
+          statAuth.textContent = "NO";
+        }
+      }
+
+      function fileLabelSize(bytes) {
+        if (bytes < 1024) return bytes + " B";
+        const kb = bytes / 1024;
+        if (kb < 1024) return kb.toFixed(1) + " KB";
+        return (kb / 1024).toFixed(1) + " MB";
+      }
+
+      function renderPreviews() {
+        previewGrid.innerHTML = "";
+        if (!state.selectedFiles.length) {
+          previewGrid.innerHTML = '<div class="preview-empty">No photos uploaded yet.</div>';
+          return;
+        }
+        state.selectedFiles.forEach((file) => {
+          const card = document.createElement("article");
+          card.className = "preview-card";
+          const img = document.createElement("img");
+          img.alt = file.name;
+          card.appendChild(img);
+          const meta = document.createElement("div");
+          meta.className = "preview-meta";
+          meta.innerHTML = '<p class="preview-name"></p><p class="preview-size"></p><p class="preview-path"></p>';
+          meta.querySelector(".preview-name").textContent = file.name;
+          meta.querySelector(".preview-size").textContent = fileLabelSize(file.size);
+          meta.querySelector(".preview-path").textContent = file.uploadedPath || "Pending upload";
+          card.appendChild(meta);
+          const reader = new FileReader();
+          reader.onload = (event) => { img.src = event.target.result; };
+          reader.readAsDataURL(file);
+          previewGrid.appendChild(card);
+        });
+      }
+
+      function setGoal(value) {
+        document.querySelectorAll('input[name="goal"]').forEach((radio) => { radio.checked = radio.value === value; });
+      }
+      function setConstraints(values) {
+        document.querySelectorAll('input[name="constraints"]').forEach((box) => { box.checked = values.includes(box.value); });
+      }
+      function loadDemoText() {
+        spaceType.value = "Garage";
+        budget.value = "Under $50";
+        projectTitle.value = "Main garage cleanup – demo";
+        notes.value = "Need to park one car inside. Want tools easier to reach. Too many random boxes on the floor.";
+        setGoal("Clear floor space");
+        setConstraints(["Need car parking", "Keep walkway clear", "Heavy items stay low"]);
+      }
+      function resetAll() {
+        form.reset();
+        state.selectedFiles = [];
+        state.currentProjectId = null;
+        state.latestReport = null;
+        photoInput.value = "";
+        spaceType.value = "Garage";
+        budget.value = "$0 (rearrange only)";
+        projectTitle.value = "";
+        setGoal("Clear floor space");
+        setConstraints(["Need car parking", "Keep walkway clear"]);
+        renderPreviews();
+        reportEmpty.classList.remove("hidden");
+        reportContent.classList.add("hidden");
+        setMode("Ready");
+      }
+      function updateFiles(files) {
+        state.selectedFiles = files.slice(0, 8);
+        renderPreviews();
+      }
+      function collectFormData() {
+        const goalRadio = document.querySelector('input[name="goal"]:checked');
+        const constraints = Array.from(document.querySelectorAll('input[name="constraints"]:checked')).map((input) => input.value);
+        return {
+          title: projectTitle.value.trim() || `${spaceType.value} project ${new Date().toLocaleDateString()}`,
+          space_type: spaceType.value,
+          budget_preference: budget.value,
+          goal: goalRadio ? goalRadio.value : "Clear floor space",
+          constraints,
+          notes: notes.value.trim()
+        };
+      }
+      async function initClient() {
+        if (!window.supabase || !window.supabase.createClient) throw new Error("Supabase SDK not loaded.");
+        if (!cfg.supabaseUrl || cfg.supabaseUrl.includes("YOUR_PROJECT")) throw new Error("Missing Supabase config. Set window.GS_SPACE_ORGANIZER_CONFIG first.");
+        state.dbClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+      }
+      async function loadSession() {
+        const { data, error } = await state.dbClient.auth.getSession();
+        if (error) throw error;
+        state.currentUser = data.session ? data.session.user : null;
+        setAuthStateText();
+        state.dbClient.auth.onAuthStateChange((_event, session) => {
+          state.currentUser = session ? session.user : null;
+          setAuthStateText();
+          if (state.currentUser) loadHistory().catch(handleError);
+        });
+      }
+      async function ensureSignedIn() { if (!state.currentUser) throw new Error("You must be signed in before uploading and saving a project."); }
+      function storagePathFor(projectId, fileName) {
+        const safeName = fileName.toLowerCase().replace(/[^a-z0-9.\-_]+/g, "-");
+        return `${state.currentUser.id}/${projectId}/${Date.now()}-${safeName}`;
+      }
+      async function createProject(payload) {
+        const { data, error } = await state.dbClient.from("space_organizer_projects").insert({ user_id: state.currentUser.id, title: payload.title, space_type: payload.space_type, budget_preference: payload.budget_preference, goal: payload.goal, constraints: payload.constraints, notes: payload.notes, status: "uploading" }).select("*").single();
+        if (error) throw error;
+        return data;
+      }
+      async function uploadImages(projectId) {
+        const uploaded = [];
+        for (const file of state.selectedFiles) {
+          const path = storagePathFor(projectId, file.name);
+          const { error } = await state.dbClient.storage.from(cfg.bucketName).upload(path, file, { upsert: false, cacheControl: "3600" });
+          if (error) throw error;
+          const { data: pub } = state.dbClient.storage.from(cfg.bucketName).getPublicUrl(path);
+          const publicUrl = pub ? pub.publicUrl : "";
+          const { data: insertedRow, error: imageErr } = await state.dbClient.from("space_organizer_images").insert({ project_id: projectId, storage_path: path, image_url: publicUrl, original_name: file.name, mime_type: file.type, size_bytes: file.size, analysis_status: "uploaded" }).select("*").single();
+          if (imageErr) throw imageErr;
+          file.uploadedPath = path;
+          uploaded.push(insertedRow);
+        }
+        renderPreviews();
+        statStorage.textContent = "OK";
+        return uploaded;
+      }
+      async function callWebhook(project, imageRows, payload) {
+        if (!cfg.webhookUrl || cfg.webhookUrl.includes("YOUR_N8N_DOMAIN")) throw new Error("Missing webhook URL in GS_SPACE_ORGANIZER_CONFIG.");
+        const body = { project: { id: project.id, title: project.title, user_id: state.currentUser.id, space_type: payload.space_type, budget_preference: payload.budget_preference, goal: payload.goal, constraints: payload.constraints, notes: payload.notes }, images: imageRows.map((row) => ({ id: row.id, url: row.image_url, name: row.original_name, mime_type: row.mime_type })) };
+        const res = await fetch(cfg.webhookUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error("Webhook failed: " + res.status + " " + await res.text());
+        statWebhook.textContent = "OK";
+        return res.json();
+      }
+      async function saveResult(projectId, webhookData) {
+        const result = normalizeWebhookResult(webhookData);
+        const { data, error } = await state.dbClient.from("space_organizer_results").insert({ project_id: projectId, organization_score: result.organization_score, detected_objects: result.detected_objects, current_problems: result.current_problems, rearrangement_plan: result.rearrangement_plan, blueprint_layout: result.blueprint_layout, low_cost_improvements: result.low_cost_improvements, raw_response: webhookData }).select("*").single();
+        if (error) throw error;
+        const { error: projErr } = await state.dbClient.from("space_organizer_projects").update({ status: "completed", result_id: data.id, analyzed_at: new Date().toISOString() }).eq("id", projectId);
+        if (projErr) throw projErr;
+        return result;
+      }
+      function normalizeWebhookResult(data) {
+        const fallback = { organization_score: 58, detected_objects: ["storage bins", "tools", "boxes", "shelves"], current_problems: ["Items are spread across multiple zones.", "Floor space is partially blocked.", "Frequently used items are mixed with long-term storage."], rearrangement_plan: ["Clear the center and temporarily move everything to the perimeter.", "Group like items together into one wall-based zone.", "Move low-use items up and daily-use items to easy-reach positions."], blueprint_layout: "FRONT WALL\n  Shelves + long-term storage\n\nLEFT WALL\n  Tools + daily-use items\n\nRIGHT WALL\n  Bulky items + vertical hang zone\n\nCENTER\n  Clear walkway / parking lane", low_cost_improvements: ["Use hooks or a narrow rail to get bulky items off the floor.", "Label bins before buying new storage.", "Use matching temporary containers only in the most visible problem area first."] };
+        if (!data || typeof data !== "object") return fallback;
+        return { organization_score: Number(data.organization_score || data.score || fallback.organization_score), detected_objects: data.detected_objects || data.objects || fallback.detected_objects, current_problems: data.current_problems || data.problems || fallback.current_problems, rearrangement_plan: data.rearrangement_plan || data.plan || fallback.rearrangement_plan, blueprint_layout: data.blueprint_layout || data.blueprint || fallback.blueprint_layout, low_cost_improvements: data.low_cost_improvements || data.improvements || fallback.low_cost_improvements };
+      }
+      function renderReport(result, metaText) {
+        reportEmpty.classList.add("hidden");
+        reportContent.classList.remove("hidden");
+        statusPill.textContent = "Completed";
+        statusPill.className = "pill good";
+        reportMeta.textContent = metaText;
+        scoreValue.textContent = result.organization_score || 0;
+        scoreCaption.textContent = "Saved AI result from n8n / OpenAI vision";
+        progressBar.style.width = `${Math.max(0, Math.min(100, Number(result.organization_score || 0)))}%`;
+        detectedObjects.innerHTML = "";
+        (result.detected_objects || []).forEach((item) => { const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "• " + item; detectedObjects.appendChild(tag); });
+        fillList(problemsList, result.current_problems || []);
+        fillList(planList, result.rearrangement_plan || []);
+        fillList(improvementsList, result.low_cost_improvements || []);
+        blueprintBox.textContent = result.blueprint_layout || "";
+      }
+      function fillList(node, items) { node.innerHTML = ""; items.forEach((item) => { const li = document.createElement("li"); li.textContent = item; node.appendChild(li); }); }
+      async function loadHistory() {
+        if (!state.currentUser) return;
+        const { data, error } = await state.dbClient.from("space_organizer_projects_with_results").select("*").eq("user_id", state.currentUser.id).order("created_at", { ascending: false }).limit(8);
+        if (error) throw error;
+        statHistory.textContent = String(data.length || 0);
+        historyList.innerHTML = "";
+        if (!data.length) { historyList.innerHTML = '<div class="empty-state">No saved projects yet.</div>'; return; }
+        data.forEach((row) => {
+          const item = document.createElement("button");
+          item.type = "button";
+          item.className = "history-item btn-ghost";
+          item.style.display = "block";
+          item.style.textAlign = "left";
+          item.innerHTML = `<div class="history-title">${escapeHtml(row.title || row.space_type || "Untitled project")}</div><p class="history-meta">${escapeHtml(row.space_type || "")} · ${escapeHtml(row.status || "saved")} · ${new Date(row.created_at).toLocaleString()}</p><p class="history-meta">Score: ${row.organization_score ?? "—"}</p>`;
+          item.addEventListener("click", () => {
+            renderReport({ organization_score: row.organization_score, detected_objects: row.detected_objects || [], current_problems: row.current_problems || [], rearrangement_plan: row.rearrangement_plan || [], blueprint_layout: row.blueprint_layout || "", low_cost_improvements: row.low_cost_improvements || [] }, `${row.space_type} · saved ${new Date(row.created_at).toLocaleString()}`);
+            state.currentProjectId = row.id;
+            setMode("Loaded saved project", "good");
+          });
+          historyList.appendChild(item);
+        });
+      }
+      function escapeHtml(str) { return String(str || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
+      async function runAnalyzeAndSave() {
+        await ensureSignedIn();
+        if (!state.selectedFiles.length) throw new Error("Please upload at least one photo.");
+        const payload = collectFormData();
+        setLoading(true, "Creating project…"); setMode("Creating project");
+        const project = await createProject(payload); state.currentProjectId = project.id;
+        setLoading(true, "Uploading photos to Supabase…");
+        const imageRows = await uploadImages(project.id);
+        setLoading(true, "Sending image URLs to n8n webhook…");
+        const webhookResponse = await callWebhook(project, imageRows, payload);
+        setLoading(true, "Saving analysis result…");
+        const result = await saveResult(project.id, webhookResponse); state.latestReport = result;
+        renderReport(result, `${payload.space_type} · ${imageRows.length} photo${imageRows.length === 1 ? "" : "s"} · ${new Date().toLocaleString()}`);
+        await loadHistory(); showToast("Project analyzed and saved successfully.", "good"); setMode("Saved", "good");
+      }
+      async function handleAnalyzeSubmit(event) { event.preventDefault(); try { await runAnalyzeAndSave(); } catch (err) { handleError(err); } finally { setLoading(false); } }
+      function handleError(err) { console.error(err); showToast(err.message || "Something went wrong.", "bad"); setMode("Error", "warn"); }
+      async function boot() {
+        try {
+          statStorage.textContent = cfg.bucketName ? "OK" : "—";
+          statWebhook.textContent = cfg.webhookUrl && !cfg.webhookUrl.includes("YOUR_N8N_DOMAIN") ? "OK" : "—";
+          await initClient(); await loadSession(); await loadHistory(); showToast("Space Organizer connected page loaded.", "good"); setMode("Ready");
+        } catch (err) {
+          handleError(err); authPill.textContent = "Config required"; authPill.className = "pill warn"; userStatusText.textContent = err.message || "Configuration error.";
+        }
+      }
+      browseBtn.addEventListener("click", () => photoInput.click());
+      demoFillBtn.addEventListener("click", loadDemoText);
+      sampleGarageBtn.addEventListener("click", loadDemoText);
+      clearBtn.addEventListener("click", resetAll);
+      refreshHistoryBtn.addEventListener("click", () => loadHistory().catch(handleError));
+      form.addEventListener("submit", handleAnalyzeSubmit);
+      photoInput.addEventListener("change", (event) => updateFiles(Array.from(event.target.files || [])));
+      ["dragenter", "dragover"].forEach((eventName) => { dropzone.addEventListener(eventName, (event) => { event.preventDefault(); dropzone.classList.add("is-dragover"); }); });
+      ["dragleave", "drop"].forEach((eventName) => { dropzone.addEventListener(eventName, (event) => { event.preventDefault(); if (eventName === "drop") { const files = Array.from(event.dataTransfer.files || []).filter((file) => file.type.startsWith("image/")); updateFiles(files); } dropzone.classList.remove("is-dragover"); }); });
+      renderPreviews();
+      boot();
+    })();
+  </script>
+</body>
+</html>

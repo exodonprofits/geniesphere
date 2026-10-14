@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>💳 Credit Card Optimizer | GenieSphere</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="See which credit card to use for personal and business expenses to maximize rewards and keep bookkeeping clean.">
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121a2b;
+      --card-hover:#18233a;
+      --text:#e9f0ff;
+      --muted:#a9b6d9;
+      --accent:#3ee1a1;          /* GenieSphere green */
+      --accent-2:#4aa3ff;        /* Legacy blue */
+      --brand-blue:#4c6ef5;      /* Updated hover blue */
+      --ring:rgba(62,225,161,.35);
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:7px;              /* Global radius */
+      --gap:18px;
+      --btn-radius:999px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:#0a0f1b;
+      color:var(--text);
+      font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+    }
+
+    .container{max-width:1440px;margin:0 auto;padding:24px 24px 32px;}
+
+    /* Header (aligned with personal.html) */
+    .site-header{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+      border-bottom:1px solid rgba(120,155,255,.15);
+      box-shadow:0 8px 22px rgba(0,0,0,.25);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+    .site-header-inner{
+      max-width:1440px;
+      margin:0 auto;
+      padding:16px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--text);
+      text-decoration:none;
+      font-weight:700;
+    }
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+      box-shadow:0 0 0 3px var(--ring),0 8px 24px rgba(62,225,161,.35);
+    }
+    .menu{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      font-size:14px;
+    }
+    .menu a{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 2px;
+      border-radius:0;
+      text-decoration:none;
+      color:var(--muted);
+      font-weight:500;
+      border-bottom:2px solid transparent;
+      box-shadow:none;
+      background:transparent;
+      transition:color .15s ease, border-bottom-color .15s ease;
+    }
+    .menu a:hover{
+      color:var(--text);
+      border-bottom-color:var(--brand-blue);
+    }
+    .menu a.active{
+      color:var(--text);
+      border-bottom-color:var(--accent);
+      font-weight:600;
+    }
+    .hamburger{
+      display:none;
+      border:1px solid rgba(120,155,255,.25);
+      background:#0e1626;
+      color:var(--text);
+      border-radius:8px;
+      padding:8px 10px;
+      cursor:pointer;
+    }
+    @media(max-width:720px){
+      .menu{display:none}
+      .hamburger{display:inline-flex}
+      .site-header-inner{padding:10px 12px}
+    }
+
+    .drawer{
+      position:fixed;
+      inset:60px 12px auto 12px;
+      background:#0e1626;
+      border:1px solid rgba(120,155,255,.2);
+      border-radius:var(--radius);
+      padding:10px;
+      display:none;
+      z-index:1001;
+      box-shadow:0 18px 34px rgba(0,0,0,.45);
+    }
+    .drawer a{
+      display:block;
+      margin:6px 0;
+      padding:10px 12px;
+      border-radius:var(--radius);
+      text-decoration:none;
+      color:var(--text);
+      background:#121a2b;
+      border:1px solid rgba(120,155,255,.15);
+    }
+    .drawer a.active{
+      background:#18233a;
+      border-color:rgba(62,225,161,.35);
+    }
+
+    /* Hero */
+    .hero{text-align:left;padding:18px 0 8px}
+    .title{
+      font-size:clamp(24px,3vw,32px);
+      margin:0 0 4px;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0 0 16px;
+      max-width:1000px;
+      font-size:14px;
+    }
+
+
+    /* Hub tabs (Credit Card Hub navigation) */
+    .hub-tabs{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:8px 0 14px;
+    }
+    .hub-tab{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.35);
+      background:rgba(15,23,42,.75);
+      color:var(--muted);
+      font-size:13px;
+      text-decoration:none;
+      transition:transform .12s ease, border-color .18s ease, color .18s ease, background .18s ease;
+      white-space:nowrap;
+    }
+    .hub-tab:hover{
+      border-color:rgba(76,110,245,.55);
+      color:var(--text);
+    }
+    .hub-tab.active{
+      background:linear-gradient(135deg, rgba(62,225,161,.18), rgba(76,110,245,.14));
+      border-color:rgba(62,225,161,.55);
+      color:var(--text);
+      box-shadow:0 10px 22px rgba(0,0,0,.25);
+    }
+
+    /* Top controls */
+    .top-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:14px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 16px;
+      border-radius:var(--btn-radius);
+      text-decoration:none;
+      border:0;
+      cursor:pointer;
+      font-size:13px;
+      font-weight:600;
+      transition:.18s;
+      white-space:nowrap;
+    }
+    .btn.primary{
+      background:var(--accent);
+      color:#04131a;
+      box-shadow:0 8px 18px rgba(62,225,161,.25);
+    }
+    .btn.secondary{
+      background:#0e1626;
+      color:var(--text);
+      border:1px solid rgba(120,155,255,.35);
+    }
+    .btn:hover{filter:brightness(1.05)}
+
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+
+    /* Layout panels */
+    .grid-panels{
+      display:grid;
+      gap:16px;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    @media(max-width:860px){
+      .grid-panels{
+        grid-template-columns:1fr;
+      }
+    }
+
+    .panel{
+      background:linear-gradient(180deg,rgba(24,35,58,.75),rgba(18,26,43,.95));
+      border-radius:var(--radius);
+      border:1px solid rgba(120,155,255,.22);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+    .panel-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .panel-title{
+      font-size:15px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .panel-subtitle{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .pill-small{
+      font-size:11px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(120,155,255,.5);
+      background:#0b1220;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .legend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-bottom:8px;
+    }
+    .legend-pill{
+      font-size:10px;
+      padding:3px 8px;
+      border-radius:999px;
+      background:#0b1220;
+      border:1px solid rgba(148,163,184,.6);
+      color:var(--muted);
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+    }
+    .legend-dot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:#3fb983;
+    }
+    .legend-dot-blue{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:#4c6ef5;
+    }
+    .legend-dot-red{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:#f97373;
+    }
+
+    .section-divider{
+      border-top:1px dashed rgba(120,155,255,.4);
+      margin:6px 0 10px;
+    }
+
+    .card-grid{
+      display:grid;
+      gap:10px;
+    }
+
+    .card-usage{
+      background:linear-gradient(180deg,rgba(24,35,58,.85),rgba(11,18,32,.98));
+      border-radius:var(--radius);
+      border:1px solid rgba(120,155,255,.3);
+      padding:10px 11px 11px;
+    }
+    .card-header-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:4px;
+    }
+    .card-title{
+      font-size:13px;
+      font-weight:600;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .badge{
+      font-size:10px;
+      padding:3px 7px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.7);
+      background:#020617;
+      color:var(--muted);
+    }
+    .badge-green{
+      border-color:rgba(34,197,94,.7);
+      background:rgba(22,163,74,.18);
+      color:#bbf7d0;
+    }
+    .badge-blue{
+      border-color:rgba(59,130,246,.75);
+      background:rgba(59,130,246,.18);
+      color:#bfdbfe;
+    }
+    .badge-red{
+      border-color:rgba(248,113,113,.8);
+      background:rgba(248,113,113,.15);
+      color:#fecaca;
+    }
+
+    .chip-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:4px;
+      margin-bottom:4px;
+    }
+    .chip{
+      font-size:10px;
+      padding:3px 7px;
+      border-radius:999px;
+      background:#020617;
+      border:1px solid rgba(148,163,184,.55);
+      color:var(--muted);
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+    }
+
+    .card-body-text{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .filter-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-bottom:8px;
+    }
+    .filter-pill{
+      font-size:11px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(120,155,255,.5);
+      background:#0e1626;
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .filter-pill.active{
+      background:rgba(76,110,245,.18);
+      color:#e5e7ff;
+      border-color:var(--brand-blue);
+    }
+
+    .footer-note{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:10px;
+    }
+
+    @media(max-width:600px){
+      .container{padding:18px 12px 26px;}
+      .title{font-size:22px;}
+      .panel{padding:12px;}
+      .card-usage{padding:9px 9px 10px;}
+    }
+  
+    /* Hub Filters (Workspace + Purpose) */
+    .hub-filters{
+      max-width:1440px;
+      margin: 6px 0 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:center;
+    }
+    .hub-filters[hidden]{ display:none !important; }
+    .hub-filter-row{
+      width:100%;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      justify-content:center;
+      align-items:center;
+    }
+    .hub-filter-label{
+      font-size:12px;
+      font-weight:900;
+      color:var(--muted);
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      padding:6px 8px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.25);
+      background: rgba(0,0,0,.04);
+    }
+    .hub-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.35);
+      background:rgba(15,23,42,.75);
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .12s ease, border-color .18s ease, color .18s ease, background .18s ease;
+      white-space:nowrap;
+    }
+    .hub-pill:hover{ border-color:rgba(76,110,245,.55); color:var(--text); }
+    .hub-pill.active{
+      background:linear-gradient(135deg, rgba(62,225,161,.18), rgba(76,110,245,.14));
+      border-color:rgba(62,225,161,.55);
+      color:var(--text);
+      box-shadow:0 10px 22px rgba(0,0,0,.25);
+    }
+    .hub-pill .count{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:22px;
+      height:22px;
+      padding:0 7px;
+      border-radius:999px;
+      background:rgba(76,110,245,.14);
+      border:1px solid rgba(76,110,245,.30);
+      color:var(--text);
+      font-size:12px;
+      font-weight:900;
+    }
+
+    /* Optimizer toolbar */
+    .optimizer-toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin: 10px 0 14px;
+    }
+    .toolbar-left,.toolbar-right{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .mini{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .btn.ghost{
+      background:transparent;
+      border:1px solid rgba(120,155,255,.28);
+      color:var(--text);
+    }
+
+    /* Recommendation strip */
+    .reco-strip{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      background:linear-gradient(135deg, rgba(62,225,161,.10), rgba(76,110,245,.08));
+      border:1px solid rgba(120,155,255,.22);
+      border-radius:var(--radius);
+      padding:10px 12px;
+      margin: 10px 0 14px;
+    }
+    .reco-strip .title-sm{
+      font-size:13px;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .reco-strip .chips{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+    .reco-chip{
+      font-size:11px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.55);
+      background:#0e1626;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+  </style>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-init.js"></script>
+
+</head>
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img class="logo" src="../genie-logo.png" alt="GenieSphere">
+        <strong>GenieSphere</strong>
+      </a>
+      <nav class="menu" aria-label="Primary">
+        <a class="active" href="../personal/personal.html">🏡 Personal</a>
+        <a class="ghost" href="../personal/business.html">🏢 Business</a>
+        <a class="ghost" href="../personal/investment.html">📈 Investment</a>
+        <a class="ghost" href="../personal/leisure.html">🏝️ Leisure</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-label="Open navigation">☰</button>
+    </div>
+  </header>
+
+  <!-- Mobile drawer -->
+  <div class="drawer" id="mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+    <a class="active" href="../personal/personal.html">🏡 Personal</a>
+    <a class="ghost" href="../personal/business.html">🏢 Business</a>
+    <a class="ghost" href="../personal/investment.html">📈 Investment</a>
+    <a class="ghost" href="../personal/leisure.html">🏝️ Leisure</a>
+  </div>
+
+  <div class="container">
+    <section class="hero">
+      <h1 class="title">💳 Credit Card Optimizer</h1>
+      <p class="subtitle">
+        See exactly which card to use for each expense — personal and across your businesses — so you maximize rewards and keep taxes and bookkeeping clean.
+      </p>
+    </section>
+
+
+    <div class="hub-tabs" aria-label="Credit Card Hub Navigation">
+      <a class="hub-tab" href="credit-card-hub.html">🏠 Hub</a>
+      <a class="hub-tab" href="credit-card-tracker.html">💳 Cards</a>
+      <a class="hub-tab" href="credit-card-transactions.html">🧾 Transactions</a>
+      <a class="hub-tab" href="credit-card-rewards.html">🎁 Rewards</a>
+      <span class="hub-tab active">🏷️ Best Card</span>
+    </div>
+
+
+    <div class="hub-filters" id="hub-filters" hidden>
+      <div class="hub-filter-row" id="workspace-filter-row" aria-label="Workspace filter">
+        <span class="hub-filter-label">Workspace</span>
+      </div>
+      <div class="hub-filter-row" id="purpose-filter-row" aria-label="Purpose filter">
+        <span class="hub-filter-label">Purpose</span>
+      </div>
+    </div>
+
+    <div class="optimizer-toolbar" aria-label="Optimizer toolbar">
+      <div class="toolbar-left">
+        <button class="btn ghost" id="btnRefresh" type="button">🔄 Refresh</button>
+        <button class="btn ghost" id="btnExport" type="button">⬇️ Export recommendations</button>
+        <span class="mini" id="viewHint">View: All</span>
+      </div>
+      <div class="toolbar-right">
+        <span class="mini" id="dataHint">Tip: add usage rules to see smarter recommendations.</span>
+      </div>
+    </div>
+
+    <div class="reco-strip" id="recoStrip" hidden>
+      <div class="title-sm">✨ Quick Picks</div>
+      <div class="chips" id="recoChips"></div>
+    </div>
+
+
+    <div class="top-row">
+      <div>
+        <button class="btn secondary" id="focusPersonalBtn">👤 Focus: Personal</button>
+        <button class="btn secondary" id="focusBusinessBtn">🏢 Focus: Business</button>
+      </div>
+      <div>
+        <a class="btn secondary" href="credit-card-setup.html">
+          💳 Add / Manage Cards
+        </a>
+        <a class="btn secondary" href="usage-rules-setup.html">
+          ⚙️ Usage Rules Setup
+        </a>
+        <a class="btn primary" id="pdfLink" href="../shared/assets/credit_card_cheatsheet_geniesphere_v2.pdf" target="_blank" rel="noopener">
+          📄 Open Cheatsheet PDF
+        </a>
+        <div class="hint">
+          Flow: 1) Add cards → 2) Set usage rules → 3) Use this Optimizer + PDF cheatsheet.
+        </div>
+      </div>
+    </div>
+
+
+
+
+    <div class="grid-panels">
+      <!-- Personal panel -->
+      <section class="panel" id="panel-personal">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">👤 Personal Map</div>
+            <p class="panel-subtitle">
+              Travel, daily spending, and utilities — all routed through the best personal cards.
+            </p>
+          </div>
+          <span class="pill-small">Mode: Personal</span>
+        </div>
+
+        <div class="legend">
+          <div class="legend-pill"><span class="legend-dot"></span> Best choice</div>
+          <div class="legend-pill"><span class="legend-dot-blue"></span> Situational</div>
+          <div class="legend-pill"><span class="legend-dot-red"></span> Avoid for daily spend</div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="card-grid">
+          <article class="card-usage">
+            <div class="card-header-row">
+              <div class="card-title">
+                ✈️ Amex Platinum
+                <span class="badge badge-green">Travel Only</span>
+              </div>
+              <span class="badge">Personal</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Flights (non-United focus)</span>
+              <span class="chip">Hotels &amp; resorts</span>
+              <span class="chip">Car rentals</span>
+              <span class="chip">Airport lounges</span>
+            </div>
+            <p class="card-body-text">
+              Use Platinum only when traveling: flights (except when you specifically want United or AA miles), hotels, and car rentals.
+              This is where you unlock lounge access, travel credits, and 5× points. Avoid using it for groceries, gas, or utilities.
+            </p>
+          </article>
+
+          <article class="card-usage">
+            <div class="card-header-row">
+              <div class="card-title">
+                💙 Amex Blue Cash Preferred
+                <span class="badge badge-green">Daily Driver</span>
+              </div>
+              <span class="badge">Personal</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Groceries (6%)</span>
+              <span class="chip">Streaming (6%)</span>
+              <span class="chip">Gas (3%)</span>
+              <span class="chip">Internet</span>
+              <span class="chip">Most utilities</span>
+            </div>
+            <p class="card-body-text">
+              Make this your default daily personal card. Use it for groceries, streaming services, gas, home internet, and most household
+              utilities unless Chase Freedom is offering a 5% bonus category that fits.
+            </p>
+          </article>
+
+          <article class="card-usage">
+            <div class="card-header-row">
+              <div class="card-title">
+                🔁 Chase Freedom
+                <span class="badge badge-blue">5% Rotating</span>
+              </div>
+              <span class="badge">Personal</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Gas (bonus quarters)</span>
+              <span class="chip">Groceries / Amazon</span>
+              <span class="chip">PayPal / Wholesale clubs</span>
+            </div>
+            <p class="card-body-text">
+              Only use Freedom when the current quarter offers 5% on something you already spend on (gas, groceries, Amazon, PayPal,
+              wholesale clubs). Activate the bonus each quarter. Otherwise, keep this card mostly parked.
+            </p>
+          </article>
+
+          <article class="card-usage">
+            <div class="card-header-row">
+              <div class="card-title">
+                ✈️ United &amp; AA Personal Flights
+                <span class="badge badge-blue">Situational</span>
+              </div>
+            </div>
+            <p class="card-body-text">
+              For personal United flights, you can use your United Club Business card if you want lounge access and free bags. For
+              American Airlines flights, use Citi AAdvantage if you want AA miles and baggage perks. If you just want flexible
+              points and perks, use Amex Platinum instead.
+            </p>
+          </article>
+
+          <article class="card-usage">
+            <div class="card-header-row">
+              <div class="card-title">
+                🧾 Personal Utilities &amp; Bills
+              </div>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Internet &amp; streaming → BCP</span>
+              <span class="chip">Electricity &amp; water → BCP / Freedom</span>
+              <span class="chip">Cell phone → Freedom (for protection)</span>
+            </div>
+            <p class="card-body-text">
+              Use Blue Cash Preferred for internet and streaming (6%) and for most home utilities. If Freedom has a 5% quarter that
+              covers utilities or PayPal and you can route the bill through, switch to Freedom for that quarter. For phone protection,
+              consider paying your cell bill with a Chase card that includes device coverage.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- Business panel -->
+      <section class="panel" id="panel-business">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">🏢 Business Map</div>
+            <p class="panel-subtitle">
+              Each business has a primary card so bookkeeping stays clean and rewards are maximized.
+            </p>
+          </div>
+          <span class="pill-small">Mode: Business</span>
+        </div>
+
+        <div class="filter-row" id="bizPills">
+          <button class="filter-pill active" data-biz="all">🌐 All businesses</button>
+          <button class="filter-pill" data-biz="victoria">💅 Victoria Nails</button>
+          <button class="filter-pill" data-biz="brows">🎯 3D Brows</button>
+          <button class="filter-pill" data-biz="exodon">🤖 Exodon Profits</button>
+          <button class="filter-pill" data-biz="arowana">📈 Arowana Profits</button>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="card-grid" id="biz-grid">
+          <!-- Victoria Nails -->
+          <article class="card-usage" data-biz-card="victoria">
+            <div class="card-header-row">
+              <div class="card-title">
+                💅 Victoria Nails – Citi Costco Visa
+                <span class="badge badge-green">Primary Ops</span>
+              </div>
+              <span class="badge">S-Corp</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Costco supplies</span>
+              <span class="chip">Gas (4%)</span>
+              <span class="chip">Utilities</span>
+              <span class="chip">Cleaning &amp; snacks</span>
+            </div>
+            <p class="card-body-text">
+              Use this for almost all Victoria Nails operations: Costco runs, salon gas, utilities, and general supplies. One card =
+              very clean books at tax time.
+            </p>
+          </article>
+
+          <article class="card-usage" data-biz-card="victoria">
+            <div class="card-header-row">
+              <div class="card-title">
+                💅 Victoria Nails – Sam’s Club Mastercard
+                <span class="badge badge-blue">Wholesale Only</span>
+              </div>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Sam’s Club runs</span>
+              <span class="chip">Bulk cleaning &amp; paper</span>
+            </div>
+            <p class="card-body-text">
+              Use this card only at Sam’s Club for Victoria Nails. This keeps Costco and Sam’s spending separated and easy to track.
+            </p>
+          </article>
+
+          <article class="card-usage" data-biz-card="victoria">
+            <div class="card-header-row">
+              <div class="card-title">
+                💅 Victoria Nails – United Club Business
+                <span class="badge badge-blue">Travel</span>
+              </div>
+            </div>
+            <p class="card-body-text">
+              For salon-related trips on United (conventions, training, etc.), book with this card to get lounge access, free bags,
+              and priority boarding. Keep the receipts tagged to Victoria Nails.
+            </p>
+          </article>
+
+          <!-- 3D Brows -->
+          <article class="card-usage" data-biz-card="brows">
+            <div class="card-header-row">
+              <div class="card-title">
+                🎯 3D Brows – Chase Business Unlimited
+                <span class="badge badge-green">All Spend</span>
+              </div>
+              <span class="badge">S-Corp</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Supplies</span>
+              <span class="chip">Utilities</span>
+              <span class="chip">Marketing</span>
+              <span class="chip">Training &amp; classes</span>
+            </div>
+            <p class="card-body-text">
+              Treat this as the single “everything” card for 3D Brows. It earns 1.5% on all spend and keeps every microblading expense
+              in one clean lane.
+            </p>
+          </article>
+
+          <!-- Exodon Profits -->
+          <article class="card-usage" data-biz-card="exodon">
+            <div class="card-header-row">
+              <div class="card-title">
+                🤖 Exodon Profits – Chase Ink Business Cash
+                <span class="badge badge-green">AI &amp; SaaS Hub</span>
+              </div>
+              <span class="badge">LLC</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Internet (5%)</span>
+              <span class="chip">Phone (5%)</span>
+              <span class="chip">Software / APIs / SaaS (5%)</span>
+              <span class="chip">Marketing &amp; ads</span>
+              <span class="chip">Gas for ATM service (2%)</span>
+            </div>
+            <p class="card-body-text">
+              Put every Exodon subscription, telecom bill, and online tool on this card. It’s your highest-earning card for software
+              and AI costs. Never use any credit card for ATM vault cash – always use your business checking.
+            </p>
+          </article>
+
+          <article class="card-usage" data-biz-card="exodon">
+            <div class="card-header-row">
+              <div class="card-title">
+                🤖 Exodon Profits – Travel on United
+                <span class="badge badge-blue">Situational</span>
+              </div>
+            </div>
+            <p class="card-body-text">
+              When you travel for Exodon (client visits, conferences), book United flights with United Club Business to earn miles and
+              enjoy lounge access and baggage benefits.
+            </p>
+          </article>
+
+          <!-- Arowana Profits -->
+          <article class="card-usage" data-biz-card="arowana">
+            <div class="card-header-row">
+              <div class="card-title">
+                📈 Arowana Profits – Amex Blue Business Plus
+                <span class="badge badge-green">Core Card</span>
+              </div>
+              <span class="badge">LLC</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Trading software</span>
+              <span class="chip">Market data</span>
+              <span class="chip">AI tools</span>
+              <span class="chip">Hosting &amp; coaching platforms</span>
+            </div>
+            <p class="card-body-text">
+              Use (or open) this card as Arowana’s dedicated card. It earns 2× Membership Rewards points on all trading and coaching
+              expenses, which you can redeem for travel with United, American partners, or other airlines.
+            </p>
+          </article>
+
+          <article class="card-usage" data-biz-card="arowana">
+            <div class="card-header-row">
+              <div class="card-title">
+                📈 Arowana Profits – Travel Strategy
+              </div>
+            </div>
+            <p class="card-body-text">
+              For Arowana business travel, you can book United flights with United Club Business for lounge + bags, or use Amex Platinum
+              for premium cabins and non-United routes. Just keep everything labeled under Arowana for clean records.
+            </p>
+          </article>
+        </div>
+
+        <p class="footer-note">
+          Simple rule: each business uses one primary card for operations, plus United Club Business for United travel. This keeps taxes easy and lets you see each business’s spending at a glance.
+        </p>
+      </section>
+    </div>
+  </div>
+<script>
+  // ---------- Mobile drawer (same as before) ----------
+  (function(){
+    const drawer = document.getElementById('mobile-drawer');
+    const btn = document.getElementById('hamburger');
+    if(!drawer || !btn) return;
+    const open = () => { drawer.style.display = 'block'; btn.setAttribute('aria-expanded','true'); };
+    const close = () => { drawer.style.display = 'none'; btn.setAttribute('aria-expanded','false'); };
+    btn.addEventListener('click', () => {
+      btn.getAttribute('aria-expanded') === 'true' ? close() : open();
+    });
+    drawer.addEventListener('click', (e) => {
+      if(e.target.tagName === 'A'){ close(); }
+    });
+  })();
+
+  // ---------- Focus buttons for Personal / Business ----------
+  const panelPersonal = document.getElementById('panel-personal');
+  const panelBusiness = document.getElementById('panel-business');
+  const focusPersonalBtn = document.getElementById('focusPersonalBtn');
+  const focusBusinessBtn = document.getElementById('focusBusinessBtn');
+
+  function setFocus(mode){
+    if(!panelPersonal || !panelBusiness) return;
+    if(mode === 'personal'){
+      panelPersonal.style.opacity = '1';
+      panelPersonal.style.filter = 'none';
+      panelBusiness.style.opacity = '0.65';
+      panelBusiness.style.filter = 'grayscale(0.2)';
+    } else if(mode === 'business'){
+      panelBusiness.style.opacity = '1';
+      panelBusiness.style.filter = 'none';
+      panelPersonal.style.opacity = '0.65';
+      panelPersonal.style.filter = 'grayscale(0.2)';
+    } else {
+      panelPersonal.style.opacity = '1';
+      panelBusiness.style.opacity = '1';
+      panelPersonal.style.filter = 'none';
+      panelBusiness.style.filter = 'none';
+    }
+  }
+
+  if(focusPersonalBtn){
+    focusPersonalBtn.addEventListener('click', () => setFocus('personal'));
+  }
+  if(focusBusinessBtn){
+    focusBusinessBtn.addEventListener('click', () => setFocus('business'));
+  }
+  // ---------- Business filter pills ----------
+
+  function renderBusinessPills(cardsList){
+    const wrap = document.getElementById('bizPills');
+    if(!wrap) return;
+
+    // Keep "All businesses" first, then build from business_profiles if present, else infer from cards.
+    const existing = wrap.querySelectorAll('button.filter-pill');
+    existing.forEach(b=>b.remove());
+
+    const btnAll = document.createElement('button');
+    btnAll.className = 'filter-pill active';
+    btnAll.setAttribute('data-biz','all');
+    btnAll.textContent = '🌐 All businesses';
+    wrap.appendChild(btnAll);
+
+    const map = new Map(); // key -> label
+    // From business_profiles (preferred)
+    for(const p of (OPT_STATE.businessProfiles || [])){
+      const key = String(p.id);
+      const label = p.display_name || p.business_name || p.nickname || 'Business';
+      map.set(key, label);
+    }
+    // From cards (fallback)
+    for(const c of cardsList){
+      if(!c.is_business) continue;
+      const key = c.business_profile_id ? String(c.business_profile_id) : (cardWorkspaceKey(c) || deriveBizKeyFromNickname(c.nickname));
+      if(!key || key === 'all') continue;
+      if(!map.has(key)){
+        const label = cardWorkspaceLabel(c) || c.nickname || 'Business';
+        map.set(key, label);
+      }
+    }
+
+    const items = Array.from(map.entries()).slice(0, 8); // keep UI compact
+    for(const [key,label] of items){
+      const b = document.createElement('button');
+      b.className = 'filter-pill';
+      b.setAttribute('data-biz', key);
+      b.textContent = `🏢 ${label}`;
+      wrap.appendChild(b);
+    }
+
+    // Wire events
+    const pills = wrap.querySelectorAll('.filter-pill');
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        pills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const key = pill.getAttribute('data-biz');
+        applyBizFilter(key);
+      });
+    });
+  }
+
+
+
+  // ---------- Hub-style Filters (Workspace + Purpose) ----------
+  const HUB_STATE = {
+    workspace: 'all',
+    purpose: 'all',
+    workspaces: [],
+    purposes: []
+  };
+
+  const PURPOSE_LABELS = {
+    all: 'All',
+    daily: '🛒 Daily',
+    bills: '🧾 Bills',
+    travel: '✈️ Travel',
+    bizops: '🏢 Biz Ops',
+    investing: '📈 Investing',
+    other: '✨ Other'
+  };
+
+  function normalizeCategoryLoose(s){
+    const x = String(s || '').toLowerCase();
+    if(!x) return '';
+    if(x.includes('groc')) return 'grocery';
+    if(x.includes('dining') || x.includes('restaurant') || x.includes('coffee')) return 'dining';
+    if(x.includes('travel') || x.includes('air') || x.includes('hotel') || x.includes('uber') || x.includes('lyft')) return 'travel';
+    if(x.includes('gas') || x.includes('fuel')) return 'gas';
+    if(x.includes('drug') || x.includes('pharm')) return 'drugstore';
+    if(x.includes('stream') || x.includes('netflix') || x.includes('hulu') || x.includes('spotify')) return 'streaming';
+    return x.replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,'_');
+  }
+
+  function purposeFromTxn(t){
+    const cat = normalizeCategoryLoose(t.category || t.description);
+    const desc = String(t.description || '').toLowerCase();
+
+    if(desc.includes('insurance') || desc.includes('electric') || desc.includes('water') || desc.includes('internet') || desc.includes('phone')) return 'bills';
+    if(cat === 'streaming') return 'bills';
+
+    if(cat === 'travel' || desc.includes('airbnb') || desc.includes('hilton') || desc.includes('marriott') || desc.includes('delta') || desc.includes('southwest')) return 'travel';
+
+    if(desc.includes('robinhood') || desc.includes('etrade') || desc.includes('td ameritrade') || desc.includes('interactive brokers') || desc.includes('tradingview')) return 'investing';
+
+    if(desc.includes('quickbooks') || desc.includes('square') || desc.includes('clover') || desc.includes('stripe')) return 'bizops';
+
+    if(['dining','grocery','gas','drugstore'].includes(cat) || desc.includes('amazon')) return 'daily';
+
+    return 'other';
+  }
+
+  function cardWorkspaceKey(card){
+    return (
+      card.business_profile_id ||
+      card.workspace_id ||
+      card.entity_id ||
+      card.owner_entity_id ||
+      card.owner ||
+      card.entity ||
+      card.company ||
+      card.business_name ||
+      ''
+    ) || '';
+  }
+  function cardWorkspaceLabel(card){
+    return (
+      card.business_name ||
+      card.entity ||
+      card.company ||
+      card.owner ||
+      card.nickname_entity ||
+      ''
+    ) || '';
+  }
+
+  function buildWorkspaces(cardsList){
+    const groups = new Map();
+    for(const c of cardsList){
+      const key = cardWorkspaceKey(c);
+      const label = cardWorkspaceLabel(c);
+      if(!key && !label) continue;
+      const gkey = key || label;
+      if(!groups.has(gkey)) groups.set(gkey, { key:gkey, label: label || String(gkey), count:0 });
+      groups.get(gkey).count += 1;
+    }
+    const list = [{ key:'all', label:'All', count: cardsList.length }, { key:'personal', label:'Personal', count: cardsList.length }];
+    const extra = Array.from(groups.values())
+      .filter(g => {
+        const s = (g.label || g.key || '').toString().toLowerCase();
+        return s && !['personal','me','myself'].includes(s);
+      })
+      .sort((a,b)=> (b.count - a.count) || String(a.label).localeCompare(String(b.label)));
+
+    if(extra.length){
+      const extraKeys = new Set(extra.map(e=>e.key));
+      const personalCount = cardsList.filter(c=>{
+        const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+        return !k || !extraKeys.has(k);
+      }).length;
+      list[1].count = personalCount;
+      return list.concat(extra.map(e=>({ key:e.key, label:e.label || e.key, count:e.count })));
+    }
+    return list;
+  }
+
+  function buildPurposes(txnsList){
+    const counts = new Map();
+    for(const t of txnsList){
+      if(!(Number(t.amount) > 0)) continue;
+      const p = purposeFromTxn(t);
+      counts.set(p, (counts.get(p)||0)+1);
+    }
+    const list = [{ key:'all', label:PURPOSE_LABELS.all, count: txnsList.length }];
+    const keys = Array.from(counts.keys()).sort((a,b)=> (counts.get(b)-counts.get(a)));
+    for(const k of keys){
+      list.push({ key:k, label: PURPOSE_LABELS[k] || k, count: counts.get(k) });
+    }
+    return list;
+  }
+
+  function renderPills(container, items, activeKey, onClick){
+    container.querySelectorAll('.hub-pill').forEach(n=>n.remove());
+    items.forEach(item=>{
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'hub-pill' + (item.key === activeKey ? ' active' : '');
+      btn.setAttribute('data-key', item.key);
+      btn.innerHTML = `${escapeHtml(item.label)} <span class="count">${Number(item.count||0)}</span>`;
+      btn.addEventListener('click', ()=> onClick(item.key));
+      container.appendChild(btn);
+    });
+  }
+
+  function applyHubFilters(cardsList, txnsList){
+    const ws = HUB_STATE.workspace;
+
+    let filteredCards = cardsList;
+    if(ws === 'personal'){
+      const known = new Set(HUB_STATE.workspaces.slice(2).map(x=>x.key));
+      filteredCards = cardsList.filter(c=>{
+        const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+        return !k || !known.has(k);
+      });
+    }else if(ws !== 'all'){
+      filteredCards = cardsList.filter(c=>{
+        const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+        return k === ws;
+      });
+    }
+
+    const cardIds = new Set(filteredCards.map(c=>c.id).filter(Boolean));
+    let filteredTxns = txnsList.filter(t=> !t.credit_card_id || cardIds.has(t.credit_card_id));
+
+    if(HUB_STATE.purpose !== 'all'){
+      filteredTxns = filteredTxns.filter(t => purposeFromTxn(t) === HUB_STATE.purpose);
+    }
+
+    return { cards: filteredCards, txns: filteredTxns };
+  }
+
+  function mountHubFilters(allCards, allTxns){
+    const wrap = document.getElementById('hub-filters');
+    const wsRow = document.getElementById('workspace-filter-row');
+    const pRow = document.getElementById('purpose-filter-row');
+    if(!wrap || !wsRow || !pRow) return;
+
+    HUB_STATE.workspaces = buildWorkspaces(allCards);
+    const scoped = applyHubFilters(allCards, allTxns);
+    HUB_STATE.purposes = buildPurposes(scoped.txns);
+
+    const showWorkspaces = HUB_STATE.workspaces.length > 2;
+    const showPurposes = HUB_STATE.purposes.length > 1;
+
+    if(!showWorkspaces && !showPurposes){
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    wsRow.style.display = showWorkspaces ? 'flex' : 'none';
+    pRow.style.display = showPurposes ? 'flex' : 'none';
+
+    renderPills(wsRow, HUB_STATE.workspaces, HUB_STATE.workspace, (key)=>{
+      HUB_STATE.workspace = key;
+      // rebuild purposes scoped to workspace
+      const scoped2 = applyHubFilters(allCards, allTxns);
+      HUB_STATE.purposes = buildPurposes(scoped2.txns);
+      if(!HUB_STATE.purposes.find(x=>x.key===HUB_STATE.purpose)) HUB_STATE.purpose = 'all';
+      mountHubFilters(allCards, allTxns);
+      renderOptimizerView();
+    });
+
+    renderPills(pRow, HUB_STATE.purposes, HUB_STATE.purpose, (key)=>{
+      HUB_STATE.purpose = key;
+      renderOptimizerView();
+    });
+  }
+
+  function csvDownload(filename, rows){
+    const headers = Object.keys(rows[0] || {});
+    const lines = [];
+    lines.push(headers.map(h=>`"${String(h).replace(/"/g,'""')}"`).join(','));
+    for(const r of rows){
+      lines.push(headers.map(h=>`"${String(r[h] ?? '').replace(/"/g,'""')}"`).join(','));
+    }
+    const blob = new Blob([lines.join('\\n')], { type:'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  }
+
+
+  // ---------- Supabase-powered dynamic rendering ----------
+  async function initCreditCardOptimizer(force){
+    if (!window.supabase) {
+      console.error('Supabase client not found (window.supabase missing).');
+      return;
+    }
+
+    // 1) Current user
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError) {
+      console.error('Error fetching user:', userError);
+      return;
+    }
+    const user = userData?.user;
+    if (!user) {
+      console.warn('No logged-in user. You may want to redirect to login.');
+      return;
+    }
+    OPT_STATE.user = user;
+
+    // 2) Cards + nested rules
+    const { data: cardsData, error: cardsError } = await supabase
+      .from('credit_cards')
+      .select(`
+        id,
+        user_id,
+        nickname,
+        card_name,
+        issuer,
+        product_name,
+        is_business,
+        business_profile_id,
+        business_name,
+        entity,
+        company,
+        owner,
+        workspace_id,
+        entity_id,
+        card_usage_rules (
+          id,
+          scope,
+          business_profile_id,
+          category,
+          priority,
+          description
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('nickname', { ascending: true });
+
+    if (cardsError) {
+      console.error('Error fetching cards:', cardsError);
+      return;
+    }
+    OPT_STATE.cards = cardsData || [];
+
+    // 3) Transactions (optional but helps purpose filter + quick picks)
+    // If the table doesn't exist or RLS blocks it, we gracefully continue.
+    try{
+      const since = new Date();
+      since.setDate(since.getDate() - 180);
+      const iso = since.toISOString().slice(0,10);
+
+      const { data: txData, error: txErr } = await supabase
+        .from('credit_card_transactions')
+        .select('id, credit_card_id, posted_date, description, category, amount')
+        .eq('user_id', user.id)
+        .gte('posted_date', iso)
+        .order('posted_date', { ascending:false })
+        .limit(5000);
+
+      if(!txErr) OPT_STATE.txns = txData || [];
+      else OPT_STATE.txns = [];
+    }catch(_){
+      OPT_STATE.txns = [];
+    }
+
+    // 4) Business profiles (best-effort) to label pills
+    try{
+      const { data: bp, error: bpErr } = await supabase
+        .from('business_profiles')
+        .select('id, business_name, display_name, nickname')
+        .eq('user_id', user.id)
+        .order('business_name', { ascending:true });
+      if(!bpErr) OPT_STATE.businessProfiles = bp || [];
+    }catch(_){
+      OPT_STATE.businessProfiles = [];
+    }
+
+    // 5) Mount hub filters + render
+    mountHubFilters(OPT_STATE.cards, OPT_STATE.txns);
+    renderOptimizerView();
+
+    // default focus = show both fully
+    setFocus();
+  }
+
+  // ---------- Render Personal Panel ----------
+  function renderPersonalCards(cards) {
+    const panel = document.querySelector('#panel-personal .card-grid');
+    if (!panel) return;
+    panel.innerHTML = '';
+
+    if (!cards.length) {
+      panel.innerHTML = '<p class="card-body-text">No personal cards saved yet. Add cards in your profile or admin tools.</p>';
+      return;
+    }
+
+    cards.forEach(card => {
+      const rules = (card.card_usage_rules || []).filter(r => r.scope === 'personal').sort((a,b) => a.priority - b.priority);
+      if (!rules.length) return; // skip cards with no personal rules
+
+      const mainRule = rules[0];
+      const chipHtml = rules.map(r => {
+        const label = prettyCategoryLabel(r.category, 'personal');
+        return `<span class="chip">${escapeHtml(label)} (p${r.priority})</span>`;
+      }).join('');
+
+      const description = mainRule.description || 'No description set for this personal rule yet.';
+
+      const wrapper = document.createElement('article');
+      wrapper.className = 'card-usage';
+      wrapper.innerHTML = `
+        <div class="card-header-row">
+          <div class="card-title">
+            ${resolvePersonalIcon(card.nickname)} ${escapeHtml(card.nickname)}
+            <span class="badge badge-green">Personal</span>
+          </div>
+          <span class="badge">${escapeHtml(card.issuer)}</span>
+        </div>
+        <div class="chip-row">
+          ${chipHtml}
+        </div>
+        <p class="card-body-text">${escapeHtml(description)}</p>
+      `;
+      panel.appendChild(wrapper);
+    });
+
+    if (!panel.children.length) {
+      panel.innerHTML = '<p class="card-body-text">You have personal cards but no personal usage rules yet. Add rules in the database to see them here.</p>';
+    }
+  }
+
+  // ---------- Render Business Panel ----------
+  function renderBusinessCards(cards) {
+    if (!bizGrid) return;
+    bizGrid.innerHTML = '';
+
+    if (!cards.length) {
+      bizGrid.innerHTML = '<p class="card-body-text">No business cards saved yet. Add cards in your profile or admin tools.</p>';
+      return;
+    }
+
+    cards.forEach(card => {
+      const rules = (card.card_usage_rules || []).filter(r => r.scope === 'business').sort((a,b) => a.priority - b.priority);
+      if (!rules.length) return;
+
+      const mainRule = rules[0];
+      const chipHtml = rules.map(r => {
+        const label = prettyCategoryLabel(r.category, 'business');
+        return `<span class="chip">${escapeHtml(label)} (p${r.priority})</span>`;
+      }).join('');
+
+      const description = mainRule.description || 'No description set for this business rule yet.';
+
+      // For now, since we have not wired business_profile_id into business_profiles,
+      // we map based on nickname so your existing pills still work.
+      const bizKey = card.business_profile_id ? String(card.business_profile_id) : deriveBizKeyFromNickname(card.nickname);
+
+      const wrapper = document.createElement('article');
+      wrapper.className = 'card-usage';
+      wrapper.setAttribute('data-biz-card', bizKey); // used by filter pills
+      wrapper.innerHTML = `
+        <div class="card-header-row">
+          <div class="card-title">
+            ${resolveBusinessIcon(bizKey)} ${escapeHtml(card.nickname)}
+            <span class="badge badge-green">Business</span>
+          </div>
+          <span class="badge">${escapeHtml(card.issuer)}</span>
+        </div>
+        <div class="chip-row">
+          ${chipHtml}
+        </div>
+        <p class="card-body-text">${escapeHtml(description)}</p>
+      `;
+
+      bizGrid.appendChild(wrapper);
+    });
+
+    if (!bizGrid.children.length) {
+      bizGrid.innerHTML = '<p class="card-body-text">You have business cards but no business usage rules yet. Add rules in the database to see them here.</p>';
+    }
+
+    // reset filter to "all" after render
+    applyBizFilter('all');
+  }
+
+  // ---------- Helper: map category codes to nicer labels ----------
+  function prettyCategoryLabel(category, scope) {
+  // New PERSONAL categories from usage-rules-setup.html
+  if (scope === 'personal') {
+    switch (category) {
+      case 'groceries': return 'Groceries & Wholesale (Personal)';
+      case 'gas': return 'Gas / Fuel (Personal)';
+      case 'dining': return 'Dining & Restaurants';
+      case 'travel_flights': return 'Travel – Flights (Personal)';
+      case 'travel_hotels': return 'Travel – Hotels & Lodging (Personal)';
+      case 'streaming': return 'Streaming & Entertainment';
+      case 'utilities': return 'Home Utilities & Internet';
+      case 'online_shopping': return 'Online Shopping & Marketplaces';
+      case 'general_everyday': return 'General Everyday Spend';
+    }
+  }
+
+  // New BUSINESS categories from usage-rules-setup.html
+  if (scope === 'business') {
+    switch (category) {
+      case 'software_saas': return 'Business Software & SaaS';
+      case 'internet_phone': return 'Business Internet & Phone';
+      case 'ads_marketing': return 'Business Ads & Marketing';
+      case 'office_supplies': return 'Office / Salon Supplies';
+      case 'wholesale_club': return 'Wholesale & Bulk (Costco/Sam\'s)';
+      case 'fuel_business': return 'Fuel & Travel (Business)';
+      case 'education_training': return 'Education & Training (Business)';
+      case 'general_business': return 'General Business Spend';
+    }
+  }
+
+  // Legacy / custom categories we already used in SQL
+  switch (category) {
+    case 'travel': return 'Travel (flights/hotels)';
+    case 'groceries_streaming_gas_utilities': return 'Groceries / Streaming / Gas / Utilities';
+    case 'rotating_5_percent': return '5% Rotating Categories';
+    case 'aa_travel': return 'American Airlines Travel';
+    case 'cruise': return 'Cruise Purchases';
+    case 'store_clothing': return 'Store Clothing (TJX)';
+    case 'electronics': return 'Electronics / Best Buy';
+
+    case 'united_travel': return 'United Flights (Business)';
+    case 'victoria_ops': return 'Victoria Nails – Ops & Supplies';
+    case 'victoria_wholesale': return 'Victoria Nails – Sam\'s Wholesale';
+    case '3d_brows_all': return '3D Brows – All Expenses';
+    case 'exodon_software_internet_phone': return 'Exodon – Software / Internet / Phone';
+    case 'exodon_gas_marketing': return 'Exodon – Gas & Marketing';
+    default:
+      return category;
+  }
+}
+
+  // ---------- Helper: derive business key from nickname (for your filters) ----------
+  function deriveBizKeyFromNickname(nickname) {
+    const n = (nickname || '').toLowerCase();
+    if (n.includes('victoria')) return 'victoria';
+    if (n.includes('3d') || n.includes('brows')) return 'brows';
+    if (n.includes('exodon')) return 'exodon';
+    if (n.includes('arowana')) return 'arowana';
+    // Unknown business or shared business travel
+    return 'all';
+  }
+
+  // ---------- Helper: icons ----------
+  function resolvePersonalIcon(nickname) {
+    const n = (nickname || '').toLowerCase();
+    if (n.includes('platinum')) return '✈️';
+    if (n.includes('cash preferred')) return '💙';
+    if (n.includes('freedom')) return '🔁';
+    if (n.includes('aadvantage')) return '🛫';
+    if (n.includes('royal caribbean')) return '🚢';
+    if (n.includes('tjmaxx')) return '🛍️';
+    if (n.includes('bestbuy')) return '🖥️';
+    return '💳';
+  }
+
+  function resolveBusinessIcon(bizKey) {
+    switch (bizKey) {
+      case 'victoria': return '💅';
+      case 'brows': return '🎯';
+      case 'exodon': return '🤖';
+      case 'arowana': return '📈';
+      default: return '🏢';
+    }
+  }
+
+  // ---------- Helper: basic HTML escaping ----------
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+
+  const OPT_STATE = {
+    user: null,
+    cards: [],
+    txns: [],
+    businessProfiles: []
+  };
+
+  function setViewHint(){
+    const wsLabel = HUB_STATE.workspaces.find(x=>x.key===HUB_STATE.workspace)?.label || 'All';
+    const pLabel = PURPOSE_LABELS[HUB_STATE.purpose] || HUB_STATE.purpose;
+    const el = document.getElementById('viewHint');
+    if(el) el.textContent = `View: ${wsLabel} • ${pLabel}`;
+  }
+
+  function buildQuickPicks(scopedTxns){
+    // Simple "Quick Picks": top categories in this view -> show best rule-based card (if available).
+    const chips = document.getElementById('recoChips');
+    const strip = document.getElementById('recoStrip');
+    if(!chips || !strip) return;
+
+    chips.innerHTML = '';
+
+    // If no rules yet, hide.
+    const hasAnyRules = OPT_STATE.cards.some(c => (c.card_usage_rules || []).length);
+    if(!hasAnyRules){
+      strip.hidden = true;
+      return;
+    }
+
+    const spend = new Map(); // cat -> total
+    for(const t of scopedTxns){
+      if(!(Number(t.amount) > 0)) continue;
+      const cat = normalizeCategoryLoose(t.category || t.description) || 'other';
+      spend.set(cat, (spend.get(cat)||0) + Number(t.amount||0));
+    }
+    const top = Array.from(spend.entries()).sort((a,b)=>b[1]-a[1]).slice(0,4);
+    if(!top.length){
+      strip.hidden = true;
+      return;
+    }
+
+    top.forEach(([cat,total])=>{
+      const best = bestCardForCategoryFromRules(cat);
+      const chip = document.createElement('span');
+      chip.className = 'reco-chip';
+      chip.textContent = `${cat.replace(/_/g,' ')} → ${best || 'set rules'}`;
+      chips.appendChild(chip);
+    });
+
+    strip.hidden = false;
+  }
+
+  function bestCardForCategoryFromRules(catKey){
+    // Prefer highest priority rule across cards for the category, within hub scope.
+    const scoped = applyHubFilters(OPT_STATE.cards, OPT_STATE.txns);
+    const cards = scoped.cards;
+
+    const matches = [];
+    for(const c of cards){
+      const rules = (c.card_usage_rules || [])
+        .filter(r => (r.category || '').toLowerCase() === catKey.toLowerCase())
+        .sort((a,b)=> (a.priority ?? 999) - (b.priority ?? 999));
+      if(rules.length){
+        matches.push({ card: c, rule: rules[0] });
+      }
+    }
+    if(!matches.length) return '';
+    // Lower priority number = higher priority
+    matches.sort((a,b)=> (a.rule.priority ?? 999) - (b.rule.priority ?? 999));
+    return matches[0].card.nickname || matches[0].card.product_name || matches[0].card.card_name || 'Card';
+  }
+
+  function renderOptimizerView(){
+    // Apply hub filters to the underlying data, then render the cards normally (rules already filtered by scope in render functions).
+    setViewHint();
+
+    const scoped = applyHubFilters(OPT_STATE.cards, OPT_STATE.txns);
+    const personalCards = scoped.cards.filter(c => !c.is_business);
+    const businessCards = scoped.cards.filter(c => c.is_business);
+
+    renderPersonalCards(personalCards);
+    renderBusinessCards(businessCards);
+
+    buildQuickPicks(scoped.txns);
+    renderBusinessPills(scoped.cards);
+  }
+
+
+
+  // ---------- Toolbar ----------
+  (function(){
+    const btnR = document.getElementById('btnRefresh');
+    const btnE = document.getElementById('btnExport');
+    if(btnR){
+      btnR.addEventListener('click', async ()=>{
+        await initCreditCardOptimizer(true);
+      });
+    }
+    if(btnE){
+      btnE.addEventListener('click', ()=>{
+        // Export a compact "cheatsheet" view from current rendered rules.
+        const scoped = applyHubFilters(OPT_STATE.cards, OPT_STATE.txns);
+        const rows = [];
+
+        for(const c of scoped.cards){
+          const rules = (c.card_usage_rules || []).slice().sort((a,b)=>(a.priority??999)-(b.priority??999));
+          for(const r of rules){
+            rows.push({
+              card: c.nickname || c.card_name || c.product_name || '',
+              issuer: c.issuer || '',
+              scope: r.scope || '',
+              business_profile_id: r.business_profile_id || c.business_profile_id || '',
+              category: r.category || '',
+              priority: r.priority ?? '',
+              description: r.description || ''
+            });
+          }
+        }
+        if(!rows.length){ alert('No rules found to export. Add usage rules first.'); return; }
+        const stamp = new Date().toISOString().slice(0,10);
+        csvDownload(`credit_card_optimizer_${stamp}.csv`, rows);
+      });
+    }
+  })();
+
+
+  // ---------- Kick everything off ----------
+  initCreditCardOptimizer();
+</script>
+
+</body>
+</html>

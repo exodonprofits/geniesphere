@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Day Trading Suite - Arowana Profits</title>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@3.7.0/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        :root {
+            --primary-green: #00ff88;
+            --alert-red: #ff4444;
+            --background-dark: #0a0e14;
+            --market-depth-bid: #003300;
+            --market-depth-ask: #330000;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Roboto Mono', monospace;
+            background: var(--background-dark);
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 8px;
+            height: 100vh;
+            padding: 8px;
+        }
+
+        .chart-container {
+            background: #12181f;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .trading-panel {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 8px;
+        }
+
+        .order-machine {
+            background: #12181f;
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .market-depth {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.8em;
+        }
+
+        .hft-controls {
+            background: #12181f;
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .bid-row, .ask-row {
+            padding: 2px 5px;
+            margin: 1px 0;
+        }
+
+        .bid-row { background: var(--market-depth-bid); }
+        .ask-row { background: var(--market-depth-ask); }
+
+        .execution-panel {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        button {
+            background: #2a2f36;
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button.buy { background: var(--primary-green); }
+        button.sell { background: var(--alert-red); }
+
+        .performance-stats {
+            display: grid;
+            gap: 5px;
+            font-size: 0.9em;
+        }
+
+        .indicator-label {
+            position: absolute;
+            right: 10px;
+            font-size: 0.8em;
+            padding: 2px 5px;
+            background: rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Main Chart Area -->
+        <div class="chart-container">
+            <div id="priceChart"></div>
+            <div class="indicator-label" id="fastMA">Fast MA (5)</div>
+            <div class="indicator-label" id="slowMA">Slow MA (15)</div>
+        </div>
+
+        <!-- Trading Panel -->
+        <div class="trading-panel">
+            <div class="order-machine">
+                <div class="market-depth">
+                    <div class="bids">
+                        <h4>Bids</h4>
+                        <div id="bidLevels"></div>
+                    </div>
+                    <div class="asks">
+                        <h4>Asks</h4>
+                        <div id="askLevels"></div>
+                    </div>
+                </div>
+                
+                <div class="execution-panel">
+                    <input type="number" id="qty" value="100" step="100">
+                    <button class="buy" data-hotkey="F1">BUY MKT</button>
+                    <button class="sell" data-hotkey="F2">SELL MKT</button>
+                </div>
+            </div>
+
+            <div class="hft-controls">
+                <h4>Algorithmic Scalping</h4>
+                <div class="strategy-params">
+                    <label>Spread Capture (bps): <input type="number" id="spreadCapture" value="2"></label>
+                    <label>Order Duration (ms): <input type="number" id="orderDuration" value="50"></label>
+                    <label>Max Position: <input type="number" id="maxPos" value="1000"></label>
+                </div>
+                <div class="strategy-controls">
+                    <button id="startHFT">Start HFT Bot</button>
+                    <button id="flushPositions">Flat Position</button>
+                </div>
+            </div>
+
+            <div class="performance-stats">
+                <div>Position: <span id="currentPosition">0</span></div>
+                <div>P&L: <span id="pnl">$0.00</span></div>
+                <div>Latency: <span id="latency">17ms</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart and Indicator Setup
+        const chart = LightweightCharts.createChart(document.getElementById('priceChart'), {
+            width: document.getElementById('priceChart').clientWidth,
+            height: document.getElementById('priceChart').clientHeight,
+            layout: {
+                backgroundColor: '#12181f',
+                textColor: 'rgba(255, 255, 255, 0.7)',
+            },
+            grid: {
+                vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+                horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+            },
+            timeScale: {
+                timeVisible: true,
+                secondsVisible: true,
+            },
+        });
+
+        const candlestickSeries = chart.addCandlestickSeries();
+        const fastMA = chart.addLineSeries({ color: '#00ff88', lineWidth: 1 });
+        const slowMA = chart.addLineSeries({ color: '#ff4444', lineWidth: 1 });
+        const signals = chart.addLineSeries({
+            lineWidth: 0,
+            crosshairMarkerVisible: false,
+            lastValueVisible: false,
+            priceLineVisible: false,
+        });
+
+        // Trading Engine
+        class TradingEngine {
+            constructor() {
+                this.position = 0;
+                this.pnl = 0;
+                this.hftActive = false;
+                this.priceHistory = [];
+                this.maHistory = { fast: [], slow: [] };
+                this.fastPeriod = 5;  // 5-period MA (5 minutes)
+                this.slowPeriod = 15; // 15-period MA
+            }
+
+            calculateMA(period) {
+                if(this.priceHistory.length < period) return null;
+                const slice = this.priceHistory.slice(-period);
+                return slice.reduce((a,b) => a + b.close, 0) / period;
+            }
+
+            updateIndicators(price) {
+                // Store price history
+                this.priceHistory.push({
+                    time: Date.now()/1000,
+                    close: price,
+                    open: price,
+                    high: price,
+                    low: price,
+                });
+                
+                // Trim history
+                if(this.priceHistory.length > 50) this.priceHistory.shift();
+
+                // Calculate MAs
+                const fastMA = this.calculateMA(this.fastPeriod);
+                const slowMA = this.calculateMA(this.slowPeriod);
+                
+                if(fastMA) {
+                    this.maHistory.fast.push(fastMA);
+                    this.maHistory.fast = this.maHistory.fast.slice(-50);
+                }
+                if(slowMA) {
+                    this.maHistory.slow.push(slowMA);
+                    this.maHistory.slow = this.maHistory.slow.slice(-50);
+                }
+
+                // Update chart series
+                const time = Date.now()/1000;
+                if(fastMA) this.fastMA.update({ time, value: fastMA });
+                if(slowMA) this.slowMA.update({ time, value: slowMA });
+
+                // Generate signals
+                if(this.maHistory.fast.length > 1 && this.maHistory.slow.length > 1) {
+                    const prevFast = this.maHistory.fast[this.maHistory.fast.length-2];
+                    const prevSlow = this.maHistory.slow[this.maHistory.slow.length-2];
+                    const currFast = this.maHistory.fast[this.maHistory.fast.length-1];
+                    const currSlow = this.maHistory.slow[this.maHistory.slow.length-1];
+
+                    if(prevFast < prevSlow && currFast > currSlow) {
+                        signals.update({
+                            time,
+                            value: price - 0.5,
+                            shape: 'arrowUp',
+                            color: '#00ff00',
+                            text: 'BUY',
+                            position: 'belowBar',
+                        });
+                    }
+
+                    if(prevFast > prevSlow && currFast < currSlow) {
+                        signals.update({
+                            time,
+                            value: price + 0.5,
+                            shape: 'arrowDown',
+                            color: '#ff0000',
+                            text: 'SELL',
+                            position: 'aboveBar',
+                        });
+                    }
+                }
+            }
+
+            marketOrder(side, quantity) {
+                const executionPrice = side === 'buy' 
+                    ? this.orderBook.asks[0].price
+                    : this.orderBook.bids[0].price;
+
+                this.position += side === 'buy' ? quantity : -quantity;
+                this.pnl += (this.currentPrice - executionPrice) * quantity * (side === 'sell' ? 1 : -1);
+                this.updatePerformanceDisplay();
+            }
+
+            startHFT() {
+                this.hftActive = true;
+                this.hftInterval = setInterval(() => {
+                    if (Math.random() > 0.5) this.marketOrder('buy', 100);
+                    else this.marketOrder('sell', 100);
+                }, document.getElementById('orderDuration').value);
+            }
+
+            stopHFT() {
+                clearInterval(this.hftInterval);
+                this.hftActive = false;
+            }
+
+            updatePerformanceDisplay() {
+                document.getElementById('currentPosition').textContent = this.position;
+                document.getElementById('pnl').textContent = `$${this.pnl.toFixed(2)}`;
+            }
+        }
+
+        // Market Simulation
+        const tradingEngine = new TradingEngine();
+        tradingEngine.currentPrice = 150.00;
+
+        function generateMarketData() {
+            // Update price
+            tradingEngine.currentPrice += (Math.random() - 0.5) * 0.1;
+            tradingEngine.currentPrice = Math.round(tradingEngine.currentPrice * 100) / 100;
+
+            // Update order book
+            tradingEngine.orderBook = {
+                bids: Array(5).fill().map((_, i) => ({
+                    price: tradingEngine.currentPrice - 0.05 * (i + 1),
+                    size: Math.floor(Math.random() * 1000)
+                })),
+                asks: Array(5).fill().map((_, i) => ({
+                    price: tradingEngine.currentPrice + 0.05 * (i + 1),
+                    size: Math.floor(Math.random() * 1000)
+                }))
+            };
+
+            // Update chart and indicators
+            candlestickSeries.update({
+                time: Date.now()/1000,
+                open: tradingEngine.currentPrice,
+                high: tradingEngine.currentPrice + 0.05,
+                low: tradingEngine.currentPrice - 0.05,
+                close: tradingEngine.currentPrice,
+            });
+
+            tradingEngine.updateIndicators(tradingEngine.currentPrice);
+            updateOrderBookDisplay();
+            requestAnimationFrame(generateMarketData);
+        }
+
+        function updateOrderBookDisplay() {
+            document.getElementById('bidLevels').innerHTML = tradingEngine.orderBook.bids
+                .map(b => `<div class="bid-row">${b.price.toFixed(2)} × ${b.size}</div>`)
+                .join('');
+            
+            document.getElementById('askLevels').innerHTML = tradingEngine.orderBook.asks
+                .map(a => `<div class="ask-row">${a.price.toFixed(2)} × ${a.size}</div>`)
+                .join('');
+        }
+
+        // Event Listeners
+        document.querySelector('.buy').addEventListener('click', () => tradingEngine.marketOrder('buy', 100));
+        document.querySelector('.sell').addEventListener('click', () => tradingEngine.marketOrder('sell', 100));
+        
+        document.getElementById('startHFT').addEventListener('click', () => {
+            if (!tradingEngine.hftActive) {
+                tradingEngine.startHFT();
+                document.getElementById('startHFT').textContent = 'Stop HFT Bot';
+            } else {
+                tradingEngine.stopHFT();
+                document.getElementById('startHFT').textContent = 'Start HFT Bot';
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F1') tradingEngine.marketOrder('buy', 100);
+            if (e.key === 'F2') tradingEngine.marketOrder('sell', 100);
+        });
+
+        // Initialize
+        generateMarketData();
+    </script>
+</body>
+</html>

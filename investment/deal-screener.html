@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🧮 Deal Screener — Side‑by‑Side ROI & Risk</title>
+  <meta name="description" content="Screen multiple properties at once. Compare Cap Rate, Cash‑on‑Cash, DSCR, breakeven, and score. Export CSV and jump to analyzers.">
+  <style>
+    :root{--bg:#f7f9fb;--ink:#0f172a;--muted:#64748b;--card:#fff;--accent:#0f3b82;--brand:#10b981;--info:#3b82f6;--warn:#f59e0b;--danger:#ef4444;--radius:14px;--shadow:0 10px 24px rgba(0,0,0,.06)}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;background:linear-gradient(120deg,#ffffff,#eef6ff);border-bottom:1px solid #e5e7eb;z-index:10}
+    .wrap{max-width:1200px;margin:0 auto;padding:14px 16px}
+    h1{margin:0;color:var(--accent)} .sub{color:var(--muted);margin-top:4px}
+
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin:16px 0}
+    .card h2{margin:0 0 8px;color:var(--accent)}
+    .row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    @media(max-width:980px){.row{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.row{grid-template-columns:1fr}}
+    label{display:block;font-size:13px;color:#334155;margin:8px 0 6px}
+    input,select,textarea{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px}
+
+    .bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .btn{border:0;border-radius:999px;padding:10px 14px;background:#3b82f6;color:#fff;display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none}
+    .btn.save{background:var(--brand)} .btn.ghost{background:#e5e7eb;color:#111}
+    .btn.warn{background:var(--warn)} .btn.danger{background:var(--danger)}
+
+    .tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{display:inline-block;background:#eef2ff;color:#273391;border-radius:999px;padding:4px 10px;font-size:12px}
+
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    th{text-align:left;font-size:12px;color:var(--muted);white-space:nowrap;cursor:pointer}
+    td{background:#fff;padding:10px;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;vertical-align:top;font-size:14px}
+    td:first-child{border-left:1px solid #e5e7eb;border-top-left-radius:10px;border-bottom-left-radius:10px}
+    td:last-child{border-right:1px solid #e5e7eb;border-top-right-radius:10px;border-bottom-right-radius:10px}
+
+    .num{font-variant-numeric:tabular-nums}
+    .kpi{font-weight:800}
+    .ok{color:#065f46} .meh{color:#92400e} .bad{color:#991b1b}
+    .tags{display:flex;gap:6px;flex-wrap:wrap}
+    .tag{font-size:11px;border:1px solid #d1d5db;border-radius:999px;padding:2px 8px;color:#374151;background:#fff}
+
+    .empty{padding:14px;border:1px dashed #cbd5e1;border-radius:12px;background:#fff;color:#64748b}
+    .hint{color:#64748b;font-size:13px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>🧮 Deal Screener</h1>
+      <div class="sub">Paste listings or import CSV. We’ll compute Cap, CoC, DSCR, and a score using your global assumptions. Sort, filter, and jump to analyzers.</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- 1) Global assumptions -->
+    <section class="card">
+      <h2>Assumptions</h2>
+      <div class="row">
+        <div>
+          <label>Down Payment (%)</label><input id="downPct" type="number" step="0.01" value="20">
+          <label>Interest Rate (%)</label><input id="rate" type="number" step="0.01" value="6.75">
+          <label>Term (years)</label><input id="term" type="number" step="1" value="30">
+        </div>
+        <div>
+          <label>Closing Costs (% of price)</label><input id="closePct" type="number" step="0.01" value="3">
+          <label>PMI Rate (% / yr if &lt;20% down)</label><input id="pmiPct" type="number" step="0.01" value="0.6">
+          <label>Mgmt (% of income)</label><input id="mgmtPct" type="number" step="0.01" value="8">
+        </div>
+        <div>
+          <label>Fixed Opex ($/mo) <span class="pill">tax/ins/HOA</span></label><input id="fixedOpex" type="number" step="0.01" value="650">
+          <label>Variable Opex (% of income)</label><input id="varOpexPct" type="number" step="0.01" value="8">
+          <label>Vacancy (%)</label><input id="vacancyPct" type="number" step="0.01" value="5">
+        </div>
+      </div>
+      <div class="bar">
+        <button class="btn" id="applyAll">✅ Apply to All</button>
+        <button class="btn ghost" id="resetAssump">↺ Reset</button>
+        <button class="btn" id="saveAssump">⭐ Save Defaults</button>
+      </div>
+      <p class="hint">Saved defaults persist locally. You can override per‑row values in the table if needed.</p>
+    </section>
+
+    <!-- 2) Input methods -->
+    <section class="card">
+      <h2>Add Listings</h2>
+      <div class="tools">
+        <button class="btn save" id="addRow">➕ Add Row</button>
+        <button class="btn" id="sample">🎯 Sample Data</button>
+        <input type="file" id="file" accept=".csv"/>
+        <button class="btn" id="exportCsv">💾 Export CSV</button>
+        <button class="btn ghost" id="clearAll">🧹 Clear</button>
+      </div>
+      <details style="margin-top:10px"><summary>Paste CSV (address,price,rent,sf,notes)</summary>
+        <textarea id="paste" placeholder="123 Main St, City, ST,350000,2900,1800,Corner lot..." rows="4"></textarea>
+        <div class="bar"><button class="btn" id="ingest">📥 Ingest</button></div>
+      </details>
+    </section>
+
+    <!-- 3) The table -->
+    <section class="card">
+      <h2>Deals</h2>
+      <div id="empty" class="empty">No rows yet. Add a row, ingest CSV, or load sample data.</div>
+      <div style="overflow:auto">
+      <table id="tbl">
+        <thead><tr>
+          <th data-k="name">Name / Address</th>
+          <th data-k="price">Price</th>
+          <th data-k="rent">Rent/mo</th>
+          <th data-k="sf">Sqft</th>
+          <th data-k="cap">Cap</th>
+          <th data-k="coc">CoC</th>
+          <th data-k="dscr">DSCR</th>
+          <th data-k="score">Score</th>
+          <th>Actions</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+      </div>
+    </section>
+
+    <!-- 4) Filters -->
+    <section class="card">
+      <h2>Filters</h2>
+      <div class="row">
+        <div><label>Min Cap %</label><input id="fCap" type="number" step="0.1" value="5"></div>
+        <div><label>Min CoC %</label><input id="fCoc" type="number" step="0.1" value="8"></div>
+        <div><label>Min DSCR</label><input id="fDscr" type="number" step="0.01" value="1.20"></div>
+      </div>
+      <div class="bar"><button class="btn" id="applyFilters">🔎 Apply</button><button class="btn ghost" id="clearFilters">Clear</button></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id)=>document.getElementById(id);
+    const KEY='gs_screener_rows_v1';
+    const AKEY='gs_screener_assump_v1';
+
+    function pmt(rate, nper, pv){ if(rate===0) return (pv/nper); const r=rate; return (pv*r)/(1-Math.pow(1+r,-nper)); }
+    const money = n => isFinite(n)? '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0}) : '—';
+    const pct = (n,d=1) => isFinite(n)? (n*100).toFixed(d)+'%' : '—';
+
+    let rows = [];
+    let sortK = 'score'; let sortDir=-1;
+
+    function assumptions(){
+      return {
+        downPct:(+$('downPct').value||0)/100,
+        rate:(+$('rate').value||0)/100,
+        term:+$('term').value||30,
+        closePct:(+$('closePct').value||0)/100,
+        pmiPct:(+$('pmiPct').value||0)/100,
+        mgmtPct:(+$('mgmtPct').value||0)/100,
+        fixed:+$('fixedOpex').value||0,
+        varPct:(+$('varOpexPct').value||0)/100,
+        vacancy:(+$('vacancyPct').value||0)/100
+      };
+    }
+
+    function compute(r, a){
+      const price=+r.price||0, rent=+r.rent||0, other=+r.other||0;
+      const down=price*a.downPct; const loan=Math.max(0, price-down);
+      const mRate=a.rate/12; const nper=(a.term||30)*12;
+      const pAndI = pmt(mRate, nper, loan);
+      const pmiMonthly = (a.downPct<0.20)? (loan*a.pmiPct)/12 : 0;
+      const gpi = rent + other;
+      const vacancyLoss = gpi * a.vacancy; const egi = gpi - vacancyLoss;
+      const varOpex = gpi * a.varPct; const mgmt = gpi * a.mgmtPct;
+      const opexNoRes = a.fixed + varOpex + mgmt;
+      const noiMo = egi - opexNoRes; const noiYr = noiMo*12;
+      const opexWithRes = opexNoRes + pmiMonthly + (+r.capex||0);
+      const cashMo = egi - opexWithRes - pAndI; const cashYr = cashMo*12;
+      const cap = price>0? (noiYr/price):0; const dscr = (pAndI>0)? (noiYr/(pAndI*12)) : 0;
+      const closeCost = price*a.closePct; const cashIn = down + closeCost + (+r.rehab||0);
+      const coc = cashIn>0? (cashYr/cashIn):0;
+      // score (0-100): weight cap 35, coc 45, dscr 20 vs targets
+      const tCap=(+$('fCap').value||0)/100, tCoc=(+$('fCoc').value||0)/100, tD=+$('fDscr').value||0;
+      const sCap=Math.min(1, cap/(tCap||0.0001)); const sCoc=Math.min(1, coc/(tCoc||0.0001)); const sD=Math.min(1, dscr/(tD||0.0001));
+      const score=Math.round((sCap*35 + sCoc*45 + sD*20));
+      return { cap, coc, dscr, cashMo, cashYr, noiYr, pAndI, pmiMonthly, egi, opexNoRes, price, rent, score };
+    }
+
+    function render(){
+      const a=assumptions();
+      const tb=document.querySelector('#tbl tbody');
+      const filtered=rows.map(r=>({ r, m: compute(r,a) }))
+        .filter(x=> x.m.cap >= (+$('fCap').value||0)/100 && x.m.coc >= (+$('fCoc').value||0)/100 && x.m.dscr >= (+$('fDscr').value||0) );
+      filtered.sort((x,y)=> ( (y.m[sortK]??0) - (x.m[sortK]??0) ) * (sortDir));
+      $('empty').style.display = filtered.length? 'none':'block';
+      tb.innerHTML = filtered.map(({r,m},i)=> rowHtml(r,m,i)).join('');
+      bindRowInputs();
+    }
+
+    function rowHtml(r,m,i){
+      const linkDeal = `deal-analyzer.html?price=${encodeURIComponent(r.price||'')}&rent=${encodeURIComponent(r.rent||'')}&fixedOpex=${encodeURIComponent($('fixedOpex').value)}&varOpexPct=${encodeURIComponent($('varOpexPct').value)}&mgmtPct=${encodeURIComponent($('mgmtPct').value)}&vacancyPct=${encodeURIComponent($('vacancyPct').value)}&downPct=${encodeURIComponent($('downPct').value)}&rate=${encodeURIComponent($('rate').value)}&term=${encodeURIComponent($('term').value)}&closePct=${encodeURIComponent($('closePct').value)}&pmiPct=${encodeURIComponent($('pmiPct').value)}`;
+      const linkComps = `market-comps.html?addr=${encodeURIComponent(r.name||'')}`;
+      return `<tr>
+        <td>
+          <input data-i="${i}" data-k="name" placeholder="Address / Label" value="${r.name||''}">
+          <div class="tags">${r.notes? `<span class="tag">${r.notes}</span>`:''}</div>
+        </td>
+        <td class="num"><input type="number" step="0.01" data-i="${i}" data-k="price" value="${r.price||''}"></td>
+        <td class="num"><input type="number" step="0.01" data-i="${i}" data-k="rent" value="${r.rent||''}"></td>
+        <td class="num"><input type="number" step="1" data-i="${i}" data-k="sf" value="${r.sf||''}"></td>
+        <td class="num kpi ${klass(m.cap,0.06,0.05)}">${pct(m.cap,2)}</td>
+        <td class="num kpi ${klass(m.coc,0.10,0.08)}">${pct(m.coc,2)}</td>
+        <td class="num kpi ${klass(m.dscr,1.25,1.10,true)}">${(m.dscr||0).toFixed(2)}</td>
+        <td class="num"><b>${m.score}</b></td>
+        <td>
+          <div class="bar">
+            <a class="btn" href="${linkDeal}">📐 Analyze</a>
+            <a class="btn info" href="${linkComps}">🧭 Comps</a>
+            <button class="btn ghost" data-del="${i}">🗑️</button>
+          </div>
+        </td>
+      </tr>`;
+    }
+
+    function klass(v, good, warn, isAbs){
+      if(isAbs){ return v>=good? 'ok' : (v>=warn? 'meh':'bad'); }
+      return v>=good? 'ok' : (v>=warn? 'meh':'bad');
+    }
+
+    function bindRowInputs(){
+      document.querySelectorAll('#tbl tbody input').forEach(inp=>{
+        inp.addEventListener('input', e=>{ const i=+e.target.dataset.i; const k=e.target.dataset.k; rows[i][k]=e.target.value; persist(); render(); });
+      });
+      document.querySelectorAll('[data-del]').forEach(btn=>btn.addEventListener('click',()=>{ const i=+btn.dataset.del; rows.splice(i,1); persist(); render(); }));
+    }
+
+    // Sorting
+    document.querySelectorAll('th[data-k]').forEach(th=>{
+      th.addEventListener('click', ()=>{ const k=th.dataset.k; if(sortK===k) sortDir*=-1; else { sortK=k; sortDir=-1; } render(); });
+    });
+
+    // CRUD
+    $('addRow').onclick = ()=>{ rows.push({ name:'', price:'', rent:'', sf:'', notes:'' }); persist(); render(); };
+    $('clearAll').onclick = ()=>{ if(confirm('Clear all rows?')){ rows=[]; persist(); render(); } };
+
+    // CSV ingest/export
+    $('ingest').onclick = ()=>{
+      const txt=$('paste').value.trim(); if(!txt) return; const lines=txt.split(/\n+/); lines.forEach(line=>{
+        const [addr, price, rent, sf, notes] = line.split(/,(.+)?/)[0]? line.split(',') : [];
+        if(addr){ rows.push({ name:addr.trim(), price:+(price||0), rent:+(rent||0), sf:+(sf||0), notes:(notes||'').trim() }); }
+      }); persist(); render(); };
+    $('file').addEventListener('change', e=>{
+      const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{
+        const txt=r.result; txt.split(/\n/).slice(1).forEach(line=>{ const parts=line.split(','); if(parts.length>=3){ rows.push({ name:parts[0], price:+parts[1], rent:+parts[2], sf:+(parts[3]||0), notes:(parts[4]||'').trim() }); } }); persist(); render(); };
+      r.readAsText(f);
+    });
+    $('exportCsv').onclick = ()=>{
+      const header=['name','price','rent','sf','cap','coc','dscr','score'];
+      const out = rows.map(r=>{ const m=compute(r,assumptions()); return [r.name,r.price,r.rent,r.sf,m.cap,m.coc,m.dscr,m.score].join(','); }).join('\n');
+      const csv = header.join(',')+'\n'+out; const a=document.createElement('a'); a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(csv); a.download='deals.csv'; a.click();
+    };
+
+    // Filters
+    $('applyFilters').onclick = render; $('clearFilters').onclick = ()=>{ $('fCap').value=''; $('fCoc').value=''; $('fDscr').value=''; render(); };
+
+    // Assumptions persistence
+    function saveAssump(){ localStorage.setItem(AKEY, JSON.stringify(assumptions())); }
+    function loadAssump(){ try{ const a=JSON.parse(localStorage.getItem(AKEY)||'{}'); if(Object.keys(a).length){ $('downPct').value=a.downPct*100; $('rate').value=a.rate*100; $('term').value=a.term; $('closePct').value=a.closePct*100; $('pmiPct').value=a.pmiPct*100; $('mgmtPct').value=a.mgmtPct*100; $('fixedOpex').value=a.fixed; $('varOpexPct').value=a.varPct*100; $('vacancyPct').value=a.vacancy*100; } }catch{} }
+    $('applyAll').onclick = render; $('saveAssump').onclick = ()=>{ saveAssump(); alert('Defaults saved.'); }; $('resetAssump').onclick = ()=>{ localStorage.removeItem(AKEY); location.reload(); };
+
+    function persist(){ localStorage.setItem(KEY, JSON.stringify(rows)); }
+    function restore(){ try{ rows = JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ rows=[]; } }
+
+    // Sample
+    $('sample').onclick = ()=>{
+      rows = [
+        { name:'12 Oak St, Springfield', price:315000, rent:2450, sf:1580, notes:'SFR, newer roof' },
+        { name:'45 Pine Ave, Riverton', price:389000, rent:2850, sf:1710, notes:'HOA $45/mo' },
+        { name:'78 Maple Dr, Lakeview', price:420000, rent:3100, sf:1820, notes:'Good schools' },
+        { name:'22 Birch Ct, Brookside', price:275000, rent:2100, sf:1400, notes:'Needs paint' }
+      ]; persist(); render();
+    };
+
+    // Boot
+    loadAssump(); restore(); render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Time Zone Helper – Voyage Genie</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<style>
+  :root{
+    --vg-blue:#60a5fa; --vg-indigo:#4c6ef5; --vg-bg:#f4f8fb; --panel:#fff; --border:#e5e7eb;
+    --muted:#6b7280; --text:#333; --radius:12px; --shadow:0 4px 12px rgba(0,0,0,.08);
+  }
+  body{ font-family:'Segoe UI',system-ui,-apple-system,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif; background:var(--vg-bg); color:var(--text); }
+
+  /* Voyage header */
+  .nav-icon{ height:30px; width:auto; margin-right:8px; }
+  .nav-brand{ display:flex; align-items:center; }
+  .hamburger{ display:none; flex-direction:column; justify-content:space-between; width:24px; height:18px; cursor:pointer; }
+  .hamburger span{ width:100%; height:3px; background:#fff; transition:all .3s; }
+  .hamburger.active span:nth-child(1){ transform:rotate(45deg) translate(5px,5px); }
+  .hamburger.active span:nth-child(2){ opacity:0; }
+  .hamburger.active span:nth-child(3){ transform:rotate(-45deg) translate(7px,-7px); }
+  @media (max-width:640px){
+    .hamburger{ display:flex; }
+    .nav-links{ display:none; flex-direction:column; position:absolute; top:100%; right:0;
+      background:linear-gradient(to bottom, var(--vg-blue), var(--vg-indigo)); width:100%; padding:1rem; box-shadow:0 4px 12px rgba(0,0,0,.1); }
+    .nav-links.active{ display:flex; }
+    .nav-links li{ margin:.5rem 0; }
+    .nav-links a{ font-size:1.1rem; padding:.5rem; display:block; text-align:center; }
+    .nav-brand h1{ font-size:1.125rem; }
+  }
+
+  .vg-card{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .vg-input{ width:100%; border:1px solid var(--border); border-radius:10px; padding:.7rem .9rem; background:#fff; }
+  .vg-select{ width:100%; border:1px solid var(--border); border-radius:10px; padding:.7rem .9rem; background:#fff; }
+  .vg-btn{ display:inline-flex; align-items:center; gap:.5rem; border-radius:999px; padding:.6rem .95rem; border:1px solid var(--border); background:#fff; transition:.15s; }
+  .vg-btn:hover{ background:#f9fafb; transform:translateY(-1px); }
+  .vg-btn-blue{ background:var(--vg-blue); color:#fff; border-color:transparent; }
+  .pill{ display:inline-flex; align-items:center; gap:.45rem; border:1px solid var(--border); border-radius:999px; padding:.35rem .7rem; background:#fff; }
+  .sub{ color:var(--muted); }
+  .mono{ font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+  .tz-grid{ display:grid; grid-template-columns:repeat(12,1fr); gap:12px; }
+  .tz-card{ grid-column:span 12; padding:14px; }
+  @media(min-width:640px){ .tz-card{ grid-column:span 6; } }
+  @media(min-width:1024px){ .tz-card{ grid-column:span 4; } }
+
+  .badge{ display:inline-flex; align-items:center; gap:.35rem; border:1px solid var(--border);
+          border-radius:999px; padding:.2rem .55rem; font-size:.75rem; background:#fff; color:#374151; }
+
+  /* --- alignment for top controls --- */
+  .form-row { display:grid; grid-template-columns: repeat(12, 1fr); gap:12px; align-items:end; }
+  @media (min-width:640px){ .form-row > * { grid-column: span 6; } }
+  @media (min-width:1024px){ .form-row > * { grid-column: span 4; } }
+  .ctrl { min-height:48px; }
+  .vg-input.ctrl, .vg-select.ctrl { padding:.7rem .9rem; }
+  .pill.ctrl { height:48px; }
+  .form-label { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+
+  /* ===== Analog dial clocks for Live Now ===== */
+  .clock-card{ display:flex; align-items:center; gap:12px; }
+  .clock-canvas{ width:110px; height:110px; border-radius:50%; background:#fff; }
+  .clock-meta{ flex:1; min-width:0 }
+  .clock-title{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .clock-date{ color:#6b7280; font-size:.85rem }
+
+  @media print{
+    nav, .no-print, footer { display:none !important; }
+    body{ background:#fff; }
+    .vg-card{ box-shadow:none; border:1px solid #ddd; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center nav-menu">
+    <a href="../index.html" class="nav-brand" aria-label="Go to Home">
+      <img src="../images/nav-icon.png" alt="Voyage Genie Icon" class="nav-icon">
+      <h1 class="text-2xl font-bold">Voyage Genie</h1>
+    </a>
+    <div class="hamburger" aria-label="Toggle navigation menu" role="button" tabindex="0">
+      <span></span><span></span><span></span>
+    </div>
+    <ul class="nav-links flex space-x-6">
+      <li><a href="../index.html" class="hover:underline">Home</a></li>
+      <li><a href="../trip-dashboard.html" class="hover:underline">📋 My Trips</a></li>
+      <li><a href="../features.html" class="hover:underline">Features</a></li>
+      <li><a href="../contact.html" class="hover:underline">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="max-w-6xl mx-auto px-4 py-6">
+  <header class="mb-5">
+    <h2 class="text-2xl font-bold">🕒 Time Zone Helper</h2>
+    <p class="sub mt-1">Add cities, pick a base time, and compare across the world. Auto-saves to your browser—no account needed.</p>
+  </header>
+
+  <!-- Controls -->
+  <section class="vg-card p-4 sm:p-5">
+    <div class="form-row">
+      <!-- Date -->
+      <div>
+        <label class="form-label text-sm text-gray-600">Base Date</label>
+        <input id="baseDate" type="date" class="vg-input ctrl">
+      </div>
+
+      <!-- Time -->
+      <div>
+        <label class="form-label text-sm text-gray-600">
+          <span>Base Time</span>
+          <button class="pill ctrl" onclick="setNow()" title="Set to current time">⏱️ Now</button>
+        </label>
+        <input id="baseTime" type="time" step="60" class="vg-input ctrl">
+      </div>
+
+      <!-- Zone -->
+      <div>
+        <label class="form-label text-sm text-gray-600">Base Zone</label>
+        <select id="baseZone" class="vg-select ctrl"></select>
+      </div>
+    </div>
+
+    <div class="mt-3 flex flex-wrap gap-2">
+      <label class="pill cursor-pointer">
+        <input id="fmt24" type="checkbox" class="mr-2"> 24-hour clock
+      </label>
+      <button class="pill" onclick="swapBase()">⇄ Swap Base with First City</button>
+      <button class="pill" onclick="shareLink()">🔗 Share</button>
+      <button class="pill" onclick="window.print()">🖨️ Print</button>
+      <span class="sub" id="saveNote"></span>
+    </div>
+  </section>
+
+  <!-- Add city -->
+  <section class="vg-card p-4 sm:p-5 mt-4">
+    <div class="grid sm:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Add City / Time Zone</label>
+        <select id="citySelect" class="vg-select"></select>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Or Custom IANA Zone</label>
+        <input id="customTZ" class="vg-input" placeholder="e.g., America/Chicago">
+      </div>
+      <div class="flex items-end gap-2">
+        <button class="vg-btn vg-btn-blue w-full" onclick="addZone()">➕ Add</button>
+      </div>
+    </div>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <div class="sub">Favorites:</div>
+      <div id="favWrap" class="flex flex-wrap gap-2"></div>
+      <button class="pill" onclick="addFavoriteFromBase()">⭐ Star Base</button>
+    </div>
+  </section>
+
+  <!-- Live dial clocks -->
+  <section class="vg-card p-4 sm:p-5 mt-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="font-semibold">Live Now</div>
+      <div class="sub">Ticks every second (your device clock)</div>
+    </div>
+    <div id="liveBar" class="mt-2 grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+  </section>
+
+  <!-- Cities grid (conversion for chosen base datetime) -->
+  <section class="mt-4">
+    <div class="tz-grid" id="tzGrid"></div>
+  </section>
+
+  <section class="mt-6 text-sm text-gray-600">
+    <p>Tip: Enter a date/time in the base controls to convert that exact moment across all cities. “Now” locks the base to your current time.</p>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer class="bg-gradient-to-r from-blue-400 to-indigo-600 text-center py-8 text-sm text-white">
+  <p class="mb-2">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍</p>
+  <form class="flex flex-col sm:flex-row justify-center items-center gap-2 mt-4 no-print">
+    <input class="px-4 py-2 rounded bg-white shadow border text-gray-800" placeholder="Enter your email" type="email"/>
+    <button class="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600">Subscribe</button>
+  </form>
+  <div class="mt-4">
+    <a class="mx-2 hover:underline text-white" href="../index.html">Home</a>
+    <a class="mx-2 hover:underline text-white" href="../features.html">Features</a>
+    <a class="mx-2 hover:underline text-white" href="../contact.html">Contact</a>
+  </div>
+</footer>
+
+<script>
+/* Voyage hamburger */
+document.addEventListener('DOMContentLoaded', () => {
+  const burger = document.querySelector('.hamburger');
+  const navLinks = document.querySelector('.nav-links');
+  burger?.addEventListener('click', () => {
+    burger.classList.toggle('active');
+    navLinks?.classList.toggle('active');
+  });
+});
+
+const $ = (id)=>document.getElementById(id);
+
+/* ===== Time zone helper ===== */
+const STORAGE = {
+  zones: 'vg_tz_zones_v1',
+  favs:  'vg_tz_favs_v1',
+  base:  'vg_tz_base_v1',
+  fmt24: 'vg_tz_fmt24_v1'
+};
+
+// Curated city list (name → IANA zone)
+const CITIES = [
+  ['New York, USA','America/New_York'],
+  ['Chicago, USA','America/Chicago'],
+  ['Denver, USA','America/Denver'],
+  ['Los Angeles, USA','America/Los_Angeles'],
+  ['London, UK','Europe/London'],
+  ['Paris, France','Europe/Paris'],
+  ['Berlin, Germany','Europe/Berlin'],
+  ['Madrid, Spain','Europe/Madrid'],
+  ['Rome, Italy','Europe/Rome'],
+  ['Zurich, Switzerland','Europe/Zurich'],
+  ['Athens, Greece','Europe/Athens'],
+  ['Dubai, UAE','Asia/Dubai'],
+  ['Istanbul, Türkiye','Europe/Istanbul'],
+  ['Mumbai, India','Asia/Kolkata'],
+  ['Singapore','Asia/Singapore'],
+  ['Hong Kong','Asia/Hong_Kong'],
+  ['Tokyo, Japan','Asia/Tokyo'],
+  ['Seoul, South Korea','Asia/Seoul'],
+  ['Sydney, Australia','Australia/Sydney'],
+  ['Auckland, New Zealand','Pacific/Auckland'],
+  ['Mexico City, Mexico','America/Mexico_City'],
+  ['São Paulo, Brazil','America/Sao_Paulo'],
+  ['Buenos Aires, Argentina','America/Argentina/Buenos_Aires'],
+  ['Cape Town, South Africa','Africa/Johannesburg'],
+  ['Cairo, Egypt','Africa/Cairo'],
+];
+
+// Populate selects
+function buildZoneSelect(el){
+  el.innerHTML = CITIES.map(([label,zone])=>`<option value="${zone}">${label} — ${zone}</option>`).join('');
+}
+function buildBaseZoneSelect(){
+  const el = $('baseZone');
+  const options = [...new Set(CITIES.map(c=>c[1]))].sort()
+    .map(z=>`<option value="${z}">${z}</option>`).join('');
+  el.innerHTML = options;
+  try{
+    const guess = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if(guess) el.value = guess;
+  }catch{}
+}
+function buildCitySelect(){ buildZoneSelect($('citySelect')); }
+
+// State
+let zones = []; // [{label, zone}]
+let fmt24 = false;
+
+// Load/save
+function loadState(){
+  try{ zones = JSON.parse(localStorage.getItem(STORAGE.zones)||'[]') || []; }catch{}
+  try{ fmt24 = JSON.parse(localStorage.getItem(STORAGE.fmt24)||'false'); }catch{}
+  $('fmt24').checked = !!fmt24;
+}
+function saveZones(){ try{ localStorage.setItem(STORAGE.zones, JSON.stringify(zones)); }catch{} }
+function saveFmt(){ try{ localStorage.setItem(STORAGE.fmt24, JSON.stringify(!!$('fmt24').checked)); }catch{} }
+
+// Favorites
+function getFavs(){ try{ return JSON.parse(localStorage.getItem(STORAGE.favs)||'[]'); }catch{ return []; } }
+function setFavs(arr){ try{ localStorage.setItem(STORAGE.favs, JSON.stringify(arr)); }catch{}; renderFavs(); }
+function addFavoriteFromBase(){
+  const z = $('baseZone').value; const favs = new Set(getFavs());
+  favs.add(z); setFavs([...favs]); note('Starred base zone');
+}
+function toggleFav(z){
+  const favs = new Set(getFavs());
+  if(favs.has(z)) favs.delete(z); else favs.add(z);
+  setFavs([...favs]);
+}
+function renderFavs(){
+  const w = $('favWrap'); w.innerHTML = '';
+  getFavs().forEach(z=>{
+    const b = document.createElement('button');
+    b.className = 'pill';
+    b.textContent = '⭐ ' + z;
+    b.onclick = ()=>{ addZoneById(z); };
+    w.appendChild(b);
+  });
+}
+
+// Utilities (formatting/offset)
+function fmtDate(d, zone){
+  const opts = { year:'numeric', month:'short', day:'2-digit', timeZone:zone };
+  return new Intl.DateTimeFormat(undefined, opts).format(d);
+}
+function fmtTime(d, zone){
+  const opts = { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:!$('fmt24').checked, timeZone:zone };
+  return new Intl.DateTimeFormat(undefined, opts).format(d);
+}
+function offsetStr(zone, d=new Date()){
+  const fmt = new Intl.DateTimeFormat('en-US',{ timeZone:zone, timeZoneName:'shortOffset', hour:'2-digit' });
+  const parts = fmt.formatToParts(d);
+  const o = parts.find(p=>p.type==='timeZoneName')?.value || '';
+  return o.replace('GMT','UTC');
+}
+function isDST(zone, d=new Date()){
+  const jan = new Date(d.getFullYear(), 0, 1);
+  const jul = new Date(d.getFullYear(), 6, 1);
+  const off = (z,dt)=> {
+    const f = new Intl.DateTimeFormat('en-US', { timeZone:z, timeZoneName:'shortOffset', hour:'2-digit' }).formatToParts(dt);
+    const name = f.find(p=>p.type==='timeZoneName')?.value || 'UTC';
+    const m = name.match(/UTC([+-]\d{1,2})(?::(\d{2}))?/);
+    const h = m ? parseInt(m[1],10) : 0, min = m && m[2] ? parseInt(m[2],10) : 0;
+    return h*60 + (h>=0?min:-min);
+  };
+  const std = Math.max(off(zone, jan), off(zone, jul));
+  const cur = off(zone, d);
+  return cur !== std;
+}
+
+// Build base datetime (UTC instant) from controls
+function getBaseDateTime(){
+  const ds = $('baseDate').value;
+  const ts = $('baseTime').value;
+  const zone = $('baseZone').value;
+  if(!ds || !ts || !zone) return null;
+  const [y,m,dr] = ds.split('-').map(Number);
+  const [hh,mm] = ts.split(':').map(Number);
+
+  const offMin = (()=>{
+    const f = new Intl.DateTimeFormat('en-US',{ timeZone:zone, timeZoneName:'shortOffset', hour:'2-digit' }).formatToParts(new Date(Date.UTC(y, m-1, dr, hh, mm, 0)));
+    const name = f.find(p=>p.type==='timeZoneName')?.value || 'UTC';
+    const m = name.match(/UTC([+-]\d{1,2})(?::(\d{2}))?/);
+    const h = m ? parseInt(m[1],10) : 0, min = m && m[2] ? parseInt(m[2],10) : 0;
+    return h*60 + (h>=0?min:-min);
+  })();
+
+  const utcMs = Date.UTC(y, m-1, dr, hh, mm, 0) - offMin*60000;
+  return new Date(utcMs);
+}
+
+function setNow(){
+  const now = new Date();
+  const pad = n=> String(n).padStart(2,'0');
+  $('baseDate').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  $('baseTime').value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  convertAll();
+}
+
+function shareLink(){
+  const u = new URL(location.href);
+  const zonesParam = zones.map(z=>encodeURIComponent(z.zone)).join(',');
+  u.searchParams.set('zones', zonesParam);
+  u.searchParams.set('base', $('baseZone').value);
+  u.searchParams.set('fmt24', $('fmt24').checked ? '1':'0');
+  const ds=$('baseDate').value, ts=$('baseTime').value;
+  if(ds && ts){ u.searchParams.set('dt', ds+'T'+ts); }
+  navigator.clipboard?.writeText(u.toString())
+    .then(()=>note('Link copied'))
+    .catch(()=>alert(u.toString()));
+}
+function note(msg){ $('saveNote').textContent = msg; setTimeout(()=>{ $('saveNote').textContent=''; }, 1500); }
+
+// Manage zones list
+function addZone(){
+  const sel = $('citySelect').value;
+  const custom = $('customTZ').value.trim();
+  const z = custom || sel;
+  if(!z) return;
+  addZoneById(z);
+  $('customTZ').value='';
+}
+function addZoneById(z){
+  try{ new Intl.DateTimeFormat(undefined,{ timeZone:z }); }catch{ alert('Invalid IANA time zone: '+z); return; }
+  if(zones.some(it=>it.zone===z)) return;
+  const label = CITIES.find(c=>c[1]===z)?.[0] || z;
+  zones.push({ label, zone:z });
+  saveZones();
+  renderGrid();
+  renderLive();
+}
+function removeZone(idx){ zones.splice(idx,1); saveZones(); renderGrid(); renderLive(); }
+function moveUp(idx){ if(idx<1) return; const t=zones[idx]; zones.splice(idx,1); zones.splice(idx-1,0,t); saveZones(); renderGrid(); }
+function moveDown(idx){ if(idx>=zones.length-1) return; const t=zones[idx]; zones.splice(idx,1); zones.splice(idx+1,0,t); saveZones(); renderGrid(); }
+
+// Swap base with first city
+function swapBase(){
+  if(!zones.length) return;
+  const first = zones[0].zone;
+  const cur = $('baseZone').value;
+  $('baseZone').value = first;
+  zones[0].zone = cur;
+  zones[0].label = CITIES.find(c=>c[1]===cur)?.[0] || cur;
+  saveZones();
+  renderGrid();
+  convertAll();
+}
+
+/* ===== LIVE SECTION: analog dial clocks ===== */
+
+/* Break down a Date in a specific zone */
+function zonedParts(zone, d=new Date()){
+  const parts = new Intl.DateTimeFormat(undefined, {
+    timeZone: zone,
+    hour:'2-digit', minute:'2-digit', second:'2-digit',
+    year:'numeric', month:'2-digit', day:'2-digit', hour12:false
+  }).formatToParts(d).reduce((acc,p)=>{ acc[p.type]=p.value; return acc; },{});
+  return {
+    y:+parts.year, m:+parts.month, d:+parts.day,
+    H:+parts.hour, M:+parts.minute, S:+parts.second
+  };
+}
+
+/* Draw an analog clock on a canvas */
+function drawClock(canvas, zone, now=new Date()){
+  const scale = window.devicePixelRatio || 1;
+  const css = 110, pad = 6;
+  const px = css * scale;
+  if(canvas.width !== px || canvas.height !== px){ canvas.width = px; canvas.height = px; }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(scale,0,0,scale,0,0);
+  const w=css, h=css, cx=w/2, cy=h/2, r=cx-pad;
+
+  const Z = zonedParts(zone, now);
+  const sec = Z.S, min = Z.M + sec/60, hr = (Z.H%12) + min/60;
+
+  ctx.clearRect(0,0,w,h);
+
+  // Face
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.lineWidth=2; ctx.strokeStyle='#e5e7eb'; ctx.stroke();
+
+  // Hour ticks
+  ctx.save(); ctx.translate(cx,cy);
+  for(let i=0;i<12;i++){
+    ctx.rotate(Math.PI/6);
+    ctx.beginPath(); ctx.moveTo(0,-r+8); ctx.lineTo(0,-r+2);
+    ctx.lineWidth=2.2; ctx.strokeStyle='#9ca3af'; ctx.stroke();
+  }
+  ctx.restore();
+
+  // Minute ticks
+  ctx.save(); ctx.translate(cx,cy);
+  for(let i=0;i<60;i++){
+    if(i%5===0){ ctx.rotate(Math.PI/30); continue; }
+    ctx.rotate(Math.PI/30);
+    ctx.beginPath(); ctx.moveTo(0,-r+6); ctx.lineTo(0,-r+3);
+    ctx.lineWidth=1; ctx.strokeStyle='#e5e7eb'; ctx.stroke();
+  }
+  ctx.restore();
+
+  function hand(angle,len,width,color){
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(angle);
+    ctx.beginPath(); ctx.moveTo(0,4); ctx.lineTo(0,-len);
+    ctx.lineWidth=width; ctx.lineCap='round'; ctx.strokeStyle=color; ctx.stroke();
+    ctx.restore();
+  }
+
+  const aHr  = hr  * Math.PI/6;
+  const aMin = min * Math.PI/30;
+  const aSec = sec * Math.PI/30;
+
+  hand(aHr,  r*0.55, 4, '#111827');
+  hand(aMin, r*0.78, 3, '#1f2937');
+  hand(aSec, r*0.85, 1.5, '#ef4444');
+
+  ctx.beginPath(); ctx.arc(cx,cy,3,0,Math.PI*2); ctx.fillStyle='#111827'; ctx.fill();
+}
+
+/* Render the Live dial clocks */
+function renderLive(){
+  const bar = document.getElementById('liveBar'); 
+  if(!bar) return;
+
+  const base = document.getElementById('baseZone').value;
+  const zonesLive = [base, ...zones.map(z=>z.zone).filter(z=>z!==base)];
+  const uniq = [...new Set(zonesLive)];
+
+  const needsBuild = bar.childElementCount !== uniq.length;
+  if(needsBuild){
+    bar.innerHTML='';
+    uniq.forEach((z, i)=>{
+      const card = document.createElement('div');
+      card.className = 'vg-card p-3 clock-card';
+      card.innerHTML = `
+        <canvas class="clock-canvas" id="clk-${i}" width="110" height="110" aria-label="Clock ${z}"></canvas>
+        <div class="clock-meta">
+          <div class="clock-title">${z}</div>
+          <div class="mono text-xl" id="txt-${i}">--:--:--</div>
+          <div class="clock-date" id="dat-${i}">—</div>
+        </div>
+      `;
+      bar.appendChild(card);
+    });
+  }
+
+  const now = new Date();
+  uniq.forEach((z, i)=>{
+    const canvas = document.getElementById(`clk-${i}`);
+    if(canvas) drawClock(canvas, z, now);
+
+    const parts = zonedParts(z, now);
+    const hh = String(parts.H).padStart(2,'0');
+    const mm = String(parts.M).padStart(2,'0');
+    const ss = String(parts.S).padStart(2,'0');
+
+    const timeTxt = document.getElementById(`txt-${i}`);
+    const dateTxt = document.getElementById(`dat-${i}`);
+
+    if(timeTxt){
+      if(document.getElementById('fmt24').checked){
+        timeTxt.textContent = `${hh}:${mm}:${ss}`;
+      }else{
+        const H12 = ((parts.H+11)%12)+1;
+        const ampm = parts.H>=12 ? 'PM':'AM';
+        timeTxt.textContent = `${String(H12).padStart(2,'0')}:${mm}:${ss} ${ampm}`;
+      }
+    }
+    if(dateTxt){
+      dateTxt.textContent = new Intl.DateTimeFormat(undefined, {
+        weekday:'short', month:'short', day:'2-digit', year:'numeric', timeZone:z
+      }).format(now);
+    }
+  });
+}
+
+/* ===== Cities conversion grid ===== */
+function renderGrid(){
+  const grid = $('tzGrid'); grid.innerHTML='';
+  if(!zones.length){
+    grid.innerHTML = `<div class="vg-card tz-card">
+      <div class="text-center sub">No cities added yet. Use “Add City / Time Zone” above.</div>
+    </div>`;
+    return;
+  }
+  const baseInstant = getBaseDateTime(); // may be null
+  zones.forEach((it, idx)=>{
+    const d = baseInstant || new Date();
+    const card = document.createElement('div');
+    card.className = 'vg-card tz-card';
+
+    const dateStr = fmtDate(d, it.zone);
+    const timeStr = fmtTime(d, it.zone);
+    const off = offsetStr(it.zone, d);
+    const dst = isDST(it.zone, d);
+
+    card.innerHTML = `
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <div class="font-semibold">${it.label}</div>
+          <div class="sub">${it.zone}</div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <span class="badge">${off}</span>
+          ${dst ? '<span class="badge">DST</span>' : ''}
+        </div>
+      </div>
+
+      <div class="mt-2 grid grid-cols-2 gap-2 items-end">
+        <div>
+          <div class="sub text-sm">Date</div>
+          <div class="mono text-lg">${dateStr}</div>
+        </div>
+        <div>
+          <div class="sub text-sm">Time</div>
+          <div class="mono text-2xl">${timeStr}</div>
+        </div>
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button class="pill" title="Move up" onclick="moveUp(${idx})">⬆️</button>
+        <button class="pill" title="Move down" onclick="moveDown(${idx})">⬇️</button>
+        <button class="pill" title="Favorite toggle" onclick="toggleFav('${it.zone}')">⭐</button>
+        <button class="pill" title="Remove" onclick="removeZone(${idx})">🗑️</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function convertAll(){ renderGrid(); }
+
+/* Deep link in */
+function applyFromURL(){
+  const url = new URL(location.href);
+  const zonesParam = url.searchParams.get('zones');
+  const base = url.searchParams.get('base');
+  const fmt = url.searchParams.get('fmt24')==='1';
+  const dt = url.searchParams.get('dt');
+
+  if(base){ $('baseZone').value = base; }
+  $('fmt24').checked = fmt;
+
+  if(dt && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dt)){
+    const [d,t] = dt.split('T');
+    $('baseDate').value = d; $('baseTime').value = t;
+  } else {
+    setNow();
+  }
+
+  if(zonesParam){
+    zones = [];
+    zonesParam.split(',').forEach(raw=>{
+      const z = decodeURIComponent(raw);
+      if(z){ addZoneById(z); }
+    });
+  }else{
+    if(!zones.length){
+      const guess = (()=>{ try{return Intl.DateTimeFormat().resolvedOptions().timeZone;}catch{return 'UTC';} })();
+      $('baseZone').value = guess || 'UTC';
+      zones = [
+        {label:'New York, USA','zone':'America/New_York'},
+        {label:'London, UK','zone':'Europe/London'},
+        {label:'Tokyo, Japan','zone':'Asia/Tokyo'}
+      ];
+    }
+  }
+  saveZones();
+  renderFavs();
+  renderLive();
+  renderGrid();
+}
+
+/* Tick loop */
+function tick(){ renderLive(); }
+setInterval(tick, 1000);
+
+/* Events */
+$('baseDate').addEventListener('input', convertAll);
+$('baseTime').addEventListener('input', convertAll);
+$('baseZone').addEventListener('change', ()=>{ convertAll(); note('Base changed'); });
+$('fmt24').addEventListener('change', ()=>{ saveFmt(); convertAll(); renderLive(); });
+
+/* Init */
+function init(){
+  buildBaseZoneSelect();
+  buildCitySelect();
+  loadState();
+  applyFromURL();
+}
+init();
+</script>
+</body>
+</html>

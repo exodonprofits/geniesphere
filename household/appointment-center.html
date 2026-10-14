@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Appointments Center • GenieSphere</title>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- GenieSphere shared auth/client -->
+  <script src="/shared/js/app-config.js"></script>
+  <script src="/shared/js/gs-client.js"></script>
+  <script src="/shared/js/auth-header.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:rgba(255,255,255,.04);
+      --border:rgba(255,255,255,.12);
+      --muted:rgba(255,255,255,.72);
+      --muted2:rgba(255,255,255,.55);
+      --accent:#4c6ef5;
+      --danger:#ff7878;
+      --ok:#3cdc78;
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;background:var(--bg);color:#fff;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+    h1{font-size:1.2rem;margin:0}
+    .sub{color:var(--muted);font-size:.92rem;margin-top:4px;max-width:68ch}
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 12px;border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:#fff;cursor:pointer;text-decoration:none;
+      white-space:nowrap;
+    }
+    .btn:hover{background:rgba(255,255,255,.10)}
+    .btn.primary{background:rgba(76,110,245,.25);border-color:rgba(76,110,245,.45)}
+    .btn.ok{background:rgba(60,220,120,.14);border-color:rgba(60,220,120,.36)}
+    .btn.danger{background:rgba(255,120,120,.12);border-color:rgba(255,120,120,.32)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+    .card{
+      border:1px solid var(--border);
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:14px;
+      overflow:hidden;
+    }
+
+    h3{margin:0 0 8px;font-size:1rem}
+    .small{font-size:.85rem;color:var(--muted2)}
+    label{display:block;margin:10px 0 6px;color:var(--muted);font-size:.85rem}
+    input,select,textarea{
+      width:100%;padding:10px 12px;border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+    }
+    textarea{min-height:70px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row > *{flex:1;min-width:150px}
+    .split{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .list{display:grid;gap:10px;margin-top:10px}
+    .item{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      padding:12px;
+      display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      align-items:flex-start;
+    }
+    .item h4{margin:0;font-size:1rem}
+    .meta{margin-top:4px;font-size:.85rem;color:var(--muted)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{
+      display:inline-flex;align-items:center;
+      padding:3px 8px;border-radius:999px;
+      font-size:.72rem;border:1px solid rgba(255,255,255,.2);
+      margin-left:6px;
+    }
+    .pill.scheduled{background:rgba(255,200,80,.15);border-color:rgba(255,200,80,.4)}
+    .pill.completed{background:rgba(60,220,120,.15);border-color:rgba(60,220,120,.4)}
+    .pill.canceled{background:rgba(255,120,120,.15);border-color:rgba(255,120,120,.4)}
+
+    .notice{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+    }
+
+    .task-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .task-title strong{font-size:.98rem}
+    .task-meta{font-size:.85rem;color:var(--muted)}
+    .task-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:.72rem;
+      padding:3px 8px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+    }
+
+    @media(max-width:760px){
+      .grid{grid-template-columns:1fr}
+      header{flex-direction:column;align-items:stretch}
+      .btn{width:100%;justify-content:center}
+      .split .actions{width:100%}
+      .split .actions > *{flex:1}
+      #filter{width:100% !important}
+      .actions .btn{width:auto}
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>📆 Appointments Center</h1>
+      <div class="sub">
+        Keep appointments in one place. Add follow-up tasks (prep, calls, paperwork) so nothing slips through.
+      </div>
+    </div>
+    <a class="btn" href="/dashboard/household.html">⬅️ Back to Household Hub</a>
+  </header>
+
+  <div class="grid">
+
+    <!-- Add Appointment -->
+    <section class="card">
+      <div class="split">
+        <h3 style="margin:0;">➕ Add appointment</h3>
+        <button class="btn" id="btnSeed" type="button">✨ Add starter appointments</button>
+      </div>
+      <div class="small">Optional starters so your Hub badge becomes useful right away.</div>
+
+      <label>Title</label>
+      <input id="title" placeholder="Dentist, Parent conference, Vet visit…" />
+
+      <div class="row">
+        <div>
+          <label>Category</label>
+          <select id="category">
+            <option value="general">General</option>
+            <option value="medical">Medical</option>
+            <option value="school">School</option>
+            <option value="work">Work</option>
+            <option value="personal">Personal</option>
+            <option value="pet">Pet</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Who (optional)</label>
+          <input id="person" placeholder="Katie, Jaden, Jimmy…" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Start</label>
+          <input id="start" type="datetime-local" />
+        </div>
+        <div>
+          <label>End (optional)</label>
+          <input id="end" type="datetime-local" />
+        </div>
+      </div>
+
+      <label>Location (optional)</label>
+      <input id="location" placeholder="Office address, school, Zoom link…" />
+
+      <label>Provider (optional)</label>
+      <input id="provider" placeholder="Dr. Nguyen, Cordova Dental…" />
+
+      <label>Notes (optional)</label>
+      <textarea id="notes" placeholder="Bring insurance card, arrive 15 mins early, paperwork link…"></textarea>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="btnSave" type="button">Save appointment</button>
+        <button class="btn" id="btnClear" type="button">Clear</button>
+      </div>
+
+      <div class="notice" id="seedNotice" style="display:none;"></div>
+
+      <div class="notice">
+        💡 Your Household Hub badge reads from Supabase directly — no need to open this page first.
+      </div>
+    </section>
+
+    <!-- Tasks + Upcoming -->
+    <section class="card">
+      <div class="split">
+        <h3 style="margin:0;">✅ Follow-up tasks</h3>
+        <button class="btn" id="btnRefreshAll" type="button">🔄 Refresh</button>
+      </div>
+      <div class="small">Use tasks for prep + calls + paperwork. Your Hub can prefer tasks later.</div>
+
+      <div class="card" style="margin-top:10px;padding:12px;border-radius:12px;">
+        <div class="small" style="margin-bottom:6px;">Create a task</div>
+        <div class="row">
+          <div style="flex:2;min-width:220px">
+            <label style="margin-top:0;">Linked appointment (optional)</label>
+            <select id="taskAppt">
+              <option value="">— Not linked —</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:160px">
+            <label style="margin-top:0;">Due date</label>
+            <input id="taskDue" type="date" />
+          </div>
+        </div>
+
+        <label>Task title</label>
+        <input id="taskTitle" placeholder="Call office, bring insurance card, prepare documents…" />
+
+        <label>Notes (optional)</label>
+        <input id="taskNotes" placeholder="Any details you want to remember…" />
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="btnAddTask" type="button">Add task</button>
+          <button class="btn" id="btnClearTask" type="button">Clear</button>
+        </div>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="split">
+        <h3 style="margin:0;">📌 Open tasks</h3>
+        <span class="small" id="taskCount">—</span>
+      </div>
+      <div class="list" id="taskList"></div>
+
+      <div style="height:16px;"></div>
+
+      <div class="split">
+        <h3 style="margin:0;">📅 Upcoming appointments</h3>
+        <div class="actions">
+          <select id="filter" style="width:auto;min-width:180px">
+            <option value="all">All</option>
+            <option value="medical">Medical</option>
+            <option value="school">School</option>
+            <option value="work">Work</option>
+            <option value="personal">Personal</option>
+            <option value="pet">Pet</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="list" id="upcomingList"></div>
+
+      <div style="height:12px;"></div>
+
+      <div class="split">
+        <h3 style="margin:0;">🕘 Past (last 30 days)</h3>
+        <button class="btn" id="btnTogglePast" type="button">Show</button>
+      </div>
+      <div class="list" id="pastList" style="display:none;"></div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+const APPT_TABLE = "user_appointments";
+const TASK_TABLE = "user_appointment_tasks";
+
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function toISO(dtLocal){
+  if(!dtLocal) return null;
+  const d = new Date(dtLocal);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+function fmtLocal(iso){
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return "—";
+  return d.toLocaleString([], { weekday:"short", month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+}
+function fmtDate(d){
+  if(!d) return "—";
+  const x = new Date(d + "T00:00:00");
+  return isNaN(x.getTime()) ? "—" : x.toLocaleDateString([], {month:"short", day:"numeric"});
+}
+
+async function getClient(){
+  const client = await window.GSClient.getAsync();
+  const { data:{user} } = await client.auth.getUser();
+  return {client,user};
+}
+
+function clearApptForm(){
+  ["title","person","start","end","location","provider","notes"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("category").value = "general";
+}
+function clearTaskForm(){
+  document.getElementById("taskAppt").value = "";
+  document.getElementById("taskDue").value = "";
+  document.getElementById("taskTitle").value = "";
+  document.getElementById("taskNotes").value = "";
+}
+
+function pill(status){
+  const cls = status === "completed" ? "completed" : status === "canceled" ? "canceled" : "scheduled";
+  const label = status === "completed" ? "Completed" : status === "canceled" ? "Canceled" : "Scheduled";
+  return `<span class="pill ${cls}">${label}</span>`;
+}
+
+async function saveAppointment(){
+  const t = document.getElementById("title").value.trim();
+  if(!t) return alert("Enter a title");
+
+  const startISO = toISO(document.getElementById("start").value);
+  if(!startISO) return alert("Choose a start time");
+
+  const endISO = toISO(document.getElementById("end").value);
+
+  const {client,user} = await getClient();
+  if(!user) return alert("Please log in.");
+
+  const payload = {
+    user_id: user.id,
+    title: t,
+    category: document.getElementById("category").value,
+    person: document.getElementById("person").value.trim() || null,
+    location: document.getElementById("location").value.trim() || null,
+    provider: document.getElementById("provider").value.trim() || null,
+    start_time: startISO,
+    end_time: endISO,
+    notes: document.getElementById("notes").value.trim() || null,
+    status: "scheduled"
+  };
+
+  const { error } = await client.from(APPT_TABLE).insert(payload);
+  if(error) return alert("Could not save. Check user_appointments table + RLS.");
+
+  clearApptForm();
+  await refreshAll();
+  alert("Saved. Your Household Hub will update automatically.");
+}
+
+async function updateAppointmentStatus(id, status){
+  const {client,user} = await getClient();
+  if(!user) return;
+
+  const { error } = await client
+    .from(APPT_TABLE)
+    .update({ status })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if(error) return alert("Could not update.");
+  await refreshAll();
+}
+
+async function deleteAppointment(id){
+  if(!confirm("Delete this appointment?")) return;
+  const {client,user} = await getClient();
+  if(!user) return;
+
+  const { error } = await client
+    .from(APPT_TABLE)
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if(error) return alert("Could not delete.");
+  await refreshAll();
+}
+
+async function loadUpcomingAppointments(){
+  const list = document.getElementById("upcomingList");
+  list.innerHTML = "";
+
+  const {client,user} = await getClient();
+  if(!user){
+    list.innerHTML = "<div class='small'>Please log in.</div>";
+    return [];
+  }
+
+  const filter = document.getElementById("filter").value;
+  const now = new Date();
+
+  let q = client
+    .from(APPT_TABLE)
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("status", "scheduled")
+    .gte("start_time", now.toISOString())
+    .order("start_time", { ascending:true })
+    .limit(80);
+
+  if(filter !== "all") q = q.eq("category", filter);
+
+  const { data, error } = await q;
+  if(error){
+    list.innerHTML = "<div class='small'>Couldn’t load appointments.</div>";
+    return [];
+  }
+
+  if(!data || !data.length){
+    list.innerHTML = "<div class='small'>No upcoming appointments.</div>";
+    return [];
+  }
+
+  data.forEach(a=>{
+    const title = esc(a.title);
+    const who = a.person ? ` • ${esc(a.person)}` : "";
+    const loc = a.location ? ` • ${esc(a.location)}` : "";
+    const prov = a.provider ? ` • ${esc(a.provider)}` : "";
+    const notes = a.notes ? `<div class="small" style="margin-top:6px;">${esc(a.notes)}</div>` : "";
+
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div>
+        <h4>${title}${who} ${pill(a.status)}</h4>
+        <div class="meta">
+          ${fmtLocal(a.start_time)}
+          ${a.end_time ? " → " + fmtLocal(a.end_time) : ""}
+          ${loc}${prov}
+        </div>
+        ${notes}
+      </div>
+      <div class="actions">
+        <button class="btn" data-act="addtask" data-id="${a.id}" data-title="${esc(a.title)}">➕ Task</button>
+        <button class="btn ok" data-act="complete" data-id="${a.id}">✅ Complete</button>
+        <button class="btn danger" data-act="cancel" data-id="${a.id}">🚫 Cancel</button>
+        <button class="btn danger" data-act="delete" data-id="${a.id}">🗑️ Delete</button>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+
+  return data;
+}
+
+function startOfDay(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+
+async function loadPastAppointments(){
+  const list = document.getElementById("pastList");
+  list.innerHTML = "";
+
+  const {client,user} = await getClient();
+  if(!user){
+    list.innerHTML = "<div class='small'>Please log in.</div>";
+    return;
+  }
+
+  const today = startOfDay(new Date());
+  const from = addDays(today, -30).toISOString();
+  const now = new Date().toISOString();
+
+  const { data, error } = await client
+    .from(APPT_TABLE)
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("start_time", from)
+    .lte("start_time", now)
+    .neq("status", "scheduled")
+    .order("start_time", { ascending:false })
+    .limit(80);
+
+  if(error){
+    list.innerHTML = "<div class='small'>Couldn’t load past items.</div>";
+    return;
+  }
+
+  if(!data || !data.length){
+    list.innerHTML = "<div class='small'>No completed/canceled items in the last 30 days.</div>";
+    return;
+  }
+
+  data.forEach(a=>{
+    const title = esc(a.title);
+    const who = a.person ? ` • ${esc(a.person)}` : "";
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div>
+        <h4>${title}${who} ${pill(a.status)}</h4>
+        <div class="meta">${fmtLocal(a.start_time)}</div>
+      </div>
+      <div class="actions">
+        <button class="btn danger" data-pact="delete" data-id="${a.id}">🗑️ Delete</button>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+async function loadTaskApptDropdown(appts){
+  const sel = document.getElementById("taskAppt");
+  const current = sel.value || "";
+  sel.innerHTML = '<option value="">— Not linked —</option>';
+  (appts || []).slice(0, 40).forEach(a=>{
+    const d = new Date(a.start_time);
+    const date = isNaN(d.getTime()) ? "" : d.toLocaleDateString([], {month:"short", day:"numeric"});
+    const who = a.person ? ` (${a.person})` : "";
+    const opt = document.createElement("option");
+    opt.value = a.id;
+    opt.textContent = `${a.title}${who} • ${date}`;
+    sel.appendChild(opt);
+  });
+  sel.value = current;
+}
+
+function ymdFromISO(iso){
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
+async function addTask(){
+  const title = document.getElementById("taskTitle").value.trim();
+  const due = document.getElementById("taskDue").value;
+  if(!title) return alert("Enter a task title");
+  if(!due) return alert("Pick a due date");
+
+  const apptId = document.getElementById("taskAppt").value || null;
+  const notes = document.getElementById("taskNotes").value.trim() || null;
+
+  const {client,user} = await getClient();
+  if(!user) return alert("Please log in.");
+
+  const payload = {
+    user_id: user.id,
+    appointment_id: apptId,
+    title,
+    due_date: due,
+    notes,
+    status: "open",
+    source: "manual"
+  };
+
+  const { error } = await client.from(TASK_TABLE).insert(payload);
+  if(error) return alert("Could not add task. Check user_appointment_tasks table + RLS.");
+
+  clearTaskForm();
+  await loadTasks();
+  alert("Task added.");
+}
+
+async function loadTasks(){
+  const list = document.getElementById("taskList");
+  const count = document.getElementById("taskCount");
+  list.innerHTML = "";
+
+  const {client,user} = await getClient();
+  if(!user){
+    list.innerHTML = "<div class='small'>Please log in.</div>";
+    count.textContent = "—";
+    return;
+  }
+
+  const today = startOfDay(new Date());
+  const soon = addDays(today, 14);
+  const from = today.toISOString().slice(0,10);
+  const to = soon.toISOString().slice(0,10);
+
+  // Load open tasks due in next 14 days, include appointment title/person if linked
+  const { data, error } = await client
+    .from(TASK_TABLE)
+    .select("id,title,due_date,notes,status,appointment_id, user_appointments(title,person,start_time)")
+    .eq("user_id", user.id)
+    .eq("status", "open")
+    .gte("due_date", from)
+    .lte("due_date", to)
+    .order("due_date", { ascending:true })
+    .limit(120);
+
+  if(error){
+    list.innerHTML = "<div class='small'>Couldn’t load tasks.</div>";
+    count.textContent = "—";
+    return;
+  }
+
+  const tasks = data || [];
+  count.textContent = tasks.length ? `${tasks.length} due in next 14 days` : "No tasks due soon";
+
+  if(!tasks.length){
+    list.innerHTML = "<div class='small'>No follow-up tasks due soon.</div>";
+    return;
+  }
+
+  tasks.forEach(t=>{
+    const ap = t.user_appointments || null;
+    const apLabel = ap ? `${ap.title}${ap.person ? " ("+ap.person+")" : ""}` : null;
+
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div>
+        <div class="task-title">
+          <strong>${esc(t.title)}</strong>
+          ${apLabel ? `<span class="task-badge">📌 ${esc(apLabel)}</span>` : `<span class="task-badge">📝 Unlinked</span>`}
+        </div>
+        <div class="task-meta">Due: ${fmtDate(t.due_date)}${t.notes ? " • " + esc(t.notes) : ""}</div>
+      </div>
+      <div class="actions">
+        <button class="btn ok" data-tact="done" data-id="${t.id}">✅ Done</button>
+        <button class="btn danger" data-tact="skip" data-id="${t.id}">⏭️ Skip</button>
+        <button class="btn danger" data-tact="delete" data-id="${t.id}">🗑️ Delete</button>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+async function updateTaskStatus(id, status){
+  const {client,user} = await getClient();
+  if(!user) return;
+
+  const { error } = await client
+    .from(TASK_TABLE)
+    .update({ status })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if(error) return alert("Could not update task.");
+  await loadTasks();
+}
+
+async function deleteTask(id){
+  if(!confirm("Delete this task?")) return;
+  const {client,user} = await getClient();
+  if(!user) return;
+
+  const { error } = await client
+    .from(TASK_TABLE)
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if(error) return alert("Could not delete task.");
+  await loadTasks();
+}
+
+async function seedStarterAppointments(){
+  const btn = document.getElementById("btnSeed");
+  const notice = document.getElementById("seedNotice");
+  btn.disabled = true;
+  notice.style.display = "block";
+  notice.textContent = "Adding starter appointments…";
+
+  const {client,user} = await getClient();
+  if(!user){
+    notice.textContent = "Please log in first.";
+    btn.disabled = false;
+    return;
+  }
+
+  const now = new Date();
+  const mk = (days, hour, min, title, category, person, provider) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() + days);
+    d.setHours(hour, min, 0, 0);
+    return {
+      user_id: user.id,
+      title,
+      category,
+      person: person || null,
+      provider: provider || null,
+      location: null,
+      start_time: d.toISOString(),
+      end_time: null,
+      notes: "Starter item — edit or delete anytime.",
+      status: "scheduled"
+    };
+  };
+
+  const starters = [
+    mk(2, 9, 0,  "Annual checkup", "medical", "Jimmy", "Primary Care"),
+    mk(5, 15, 30,"Dentist",        "medical", "Katie", "Dental Office"),
+    mk(7, 18, 0, "School meeting", "school",  "Jaden", "School"),
+  ];
+
+  const windowEnd = new Date(now);
+  windowEnd.setDate(windowEnd.getDate() + 14);
+
+  const { data: existing, error: exErr } = await client
+    .from(APPT_TABLE)
+    .select("id,title,start_time,status")
+    .eq("user_id", user.id)
+    .eq("status", "scheduled")
+    .gte("start_time", now.toISOString())
+    .lte("start_time", windowEnd.toISOString());
+
+  if(exErr){
+    notice.textContent = "Could not check existing appointments.";
+    btn.disabled = false;
+    return;
+  }
+
+  const existsTitle = new Set((existing || []).map(x => (x.title || "").toLowerCase().trim()));
+  const toInsert = starters.filter(s => !existsTitle.has((s.title || "").toLowerCase().trim()));
+
+  if(!toInsert.length){
+    notice.textContent = "Starter appointments already exist (nothing to add).";
+    btn.disabled = false;
+    return;
+  }
+
+  const { error } = await client.from(APPT_TABLE).insert(toInsert);
+
+  if(error){
+    notice.textContent = "Could not add starters. Check RLS/table.";
+    btn.disabled = false;
+    return;
+  }
+
+  notice.textContent = `Added ${toInsert.length} starter appointment(s). Your Hub badge will update automatically.`;
+  await refreshAll();
+  btn.disabled = false;
+}
+
+function isPastVisible(){
+  return document.getElementById("pastList").style.display !== "none";
+}
+
+async function refreshAll(){
+  const appts = await loadUpcomingAppointments();
+  await loadTaskApptDropdown(appts);
+
+  // set task due default to next appointment date if empty
+  if(!document.getElementById("taskDue").value && appts && appts[0]){
+    document.getElementById("taskDue").value = ymdFromISO(appts[0].start_time);
+  }
+
+  if(isPastVisible()) await loadPastAppointments();
+  await loadTasks();
+}
+
+document.getElementById("btnSeed").addEventListener("click", seedStarterAppointments);
+document.getElementById("btnSave").addEventListener("click", saveAppointment);
+document.getElementById("btnClear").addEventListener("click", clearApptForm);
+
+document.getElementById("btnAddTask").addEventListener("click", addTask);
+document.getElementById("btnClearTask").addEventListener("click", clearTaskForm);
+
+document.getElementById("btnRefreshAll").addEventListener("click", refreshAll);
+document.getElementById("filter").addEventListener("change", refreshAll);
+
+document.getElementById("btnTogglePast").addEventListener("click", async ()=>{
+  const past = document.getElementById("pastList");
+  const btn = document.getElementById("btnTogglePast");
+  const show = past.style.display === "none";
+  past.style.display = show ? "grid" : "none";
+  btn.textContent = show ? "Hide" : "Show";
+  if(show) await loadPastAppointments();
+});
+
+document.getElementById("upcomingList").addEventListener("click", async (e)=>{
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  const act = btn.dataset.act;
+  const id = btn.dataset.id;
+
+  if(act === "addtask"){
+    // Prefill task form linked to this appointment
+    document.getElementById("taskAppt").value = id;
+    const title = btn.dataset.title ? btn.dataset.title : "Appointment";
+    document.getElementById("taskTitle").value = `Prep for: ${title}`;
+    // set due date = appointment date
+    try{
+      const row = btn.closest(".item");
+      // no easy iso; we'll just keep current due if exists
+    }catch(e){}
+    window.scrollTo({top:0, behavior:"smooth"});
+    return;
+  }
+  if(act === "complete") return updateAppointmentStatus(id, "completed");
+  if(act === "cancel") return updateAppointmentStatus(id, "canceled");
+  if(act === "delete") return deleteAppointment(id);
+});
+
+document.getElementById("pastList").addEventListener("click", async (e)=>{
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  if(btn.dataset.pact === "delete") return deleteAppointment(btn.dataset.id);
+});
+
+document.getElementById("taskList").addEventListener("click", async (e)=>{
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  const act = btn.dataset.tact;
+  const id = btn.dataset.id;
+  if(act === "done") return updateTaskStatus(id, "done");
+  if(act === "skip") return updateTaskStatus(id, "skipped");
+  if(act === "delete") return deleteTask(id);
+});
+
+refreshAll();
+</script>
+</body>
+</html>

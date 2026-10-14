@@ -1,0 +1,225 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation – Voyage Genie</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+    .confirmation-section {
+      max-width: 4xl;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+    }
+    .confirmation-section h1 {
+      color: #2c3e50;
+      font-size: 2.25rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .confirmation-section p {
+      text-align: center;
+      color: #555;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      font-style: italic;
+    }
+    .itinerary {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333333;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin: 2rem 0;
+      color: #0096c7;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+      color: #0077b6;
+    }
+    .nav-icon {
+      height: 30px;
+      width: auto;
+      margin-right: 8px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+    }
+    /* Hamburger Menu Styles */
+    .hamburger {
+      display: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .nav-links {
+      display: flex;
+    }
+    @media (max-width: 640px) {
+      .hamburger {
+        display: block;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: linear-gradient(to bottom, #60a5fa, #4c6ef5);
+        width: 100%;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .nav-links.active {
+        display: flex;
+      }
+      .nav-links li {
+        margin: 0.5rem 0;
+      }
+      .nav-links a {
+        font-size: 1.1rem;
+        padding: 0.5rem;
+        display: block;
+        text-align: center;
+      }
+      .nav-brand h1 {
+        font-size: 1.125rem; /* Reduced from 2xl (2rem) to 1.125rem on mobile */
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html#home" class="nav-brand" aria-label="Go to Home">
+        <img src="nav-icon.png" alt="Voyage Genie Icon" class="nav-icon">
+        <h1 class="text-2xl font-bold">Voyage Genie</h1>
+      </a>
+      <div class="hamburger">☰</div>
+      <ul class="nav-links space-x-6">
+        <li><a href="index.html#home" class="hover:underline" aria-label="Go to Home">Home</a></li>
+        <li><a href="features.html" class="hover:underline" aria-label="Go to Features">Features</a></li>
+        <li><a href="contact.html" class="hover:underline" aria-label="Go to Contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="main-content">
+    <section class="confirmation-section">
+      <h1>🎉 Your Adventure Itinerary is Ready!</h1>
+      <p>Here’s your personalized travel plan. We’ve also sent a copy to your email.</p>
+      <itinerary id="itinerary"></itinerary>
+      <a href="index.html" class="back-link">← Back to Home</a>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-200 text-center py-8">
+    <p class="text-sm">© 2025 VoyageGenie.com – Plan Less, Explore More ✈️🌍</p>
+    <div class="mt-4 flex justify-center space-x-6">
+      <a href="#" class="text-blue-500 hover:underline" aria-label="Visit our Facebook page">Facebook</a>
+      <a href="#" class="text-blue-500 hover:underline" aria-label="Visit our Instagram page">Instagram</a>
+      <a href="contact.html" class="text-blue-500 hover:underline" aria-label="Contact Us">Contact Us</a>
+    </div>
+    <div class="mt-4">
+      <a href="index.html#home" class="text-blue-500 hover:underline mx-2" aria-label="Go to Home">Home</a>
+      <a href="features.html" class="text-blue-500 hover:underline mx-2" aria-label="Go to Features">Features</a>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Retrieve the itinerary HTML from localStorage
+      const itineraryHtml = localStorage.getItem('itineraryHtml');
+
+      if (itineraryHtml) {
+        // Set the itinerary HTML in the <itinerary> element
+        document.getElementById('itinerary').innerHTML = itineraryHtml;
+        // Clear localStorage to prevent stale data
+        localStorage.removeItem('itineraryHtml');
+      } else {
+        document.getElementById('itinerary').innerHTML = '<p>No itinerary found. Please try again.</p>';
+      }
+
+      // Hamburger Menu Toggle
+      const hamburger = document.querySelector('.hamburger');
+      const navLinks = document.querySelector('.nav-links');
+
+      hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+      });
+
+      // Close menu when a link is clicked
+      navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          navLinks.classList.remove('active');
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Categories | GenieSphere</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(45deg, #2BFFD9, #7C3AED);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #cbd5e1;
+      margin-bottom: 2rem;
+      text-align: center;
+      max-width: 500px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      max-width: 600px;
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+
+    input[type="checkbox"] {
+      display: none;
+    }
+
+    .option {
+      background-color: #1e293b;
+      border-radius: 1rem;
+      border: 2px solid transparent;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    input[type="checkbox"]:checked + label.option {
+      border-color: #2BFFD9;
+      background-color: #334155;
+    }
+
+    button {
+      background: linear-gradient(45deg, #2BFFD9, #7C3AED);
+      color: #0f172a;
+      font-weight: bold;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      cursor: pointer;
+    }
+
+  </style>
+</head>
+<body>
+
+  <h1>Choose Your Categories</h1>
+  <p>Select the categories GenieSphere should help you with.</p>
+
+  <form id="categoryForm">
+    <input type="checkbox" id="personal" name="categories" value="Personal">
+    <label for="personal" class="option">🧠 Personal</label>
+
+    <input type="checkbox" id="business" name="categories" value="Business">
+    <label for="business" class="option">💼 Business</label>
+
+    <input type="checkbox" id="leisure" name="categories" value="Leisure">
+    <label for="leisure" class="option">🏖️ Leisure</label>
+
+    <input type="checkbox" id="investment" name="categories" value="Investment">
+    <label for="investment" class="option">📈 Investment</label>
+  </form>
+
+  <button onclick="submitCategories()">Next</button>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+
+    async function submitCategories() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) return alert("You must be logged in.");
+
+      const selected = Array.from(document.querySelectorAll('input[name="categories"]:checked')).map(cb => cb.value);
+
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: userId,
+          categories: selected,
+          updated_at: new Date().toISOString()
+        }, { onConflict: ['user_id'] });
+
+      if (error) {
+        alert("Supabase Error: " + error.message);
+      } else {
+        window.location.href = "select-agents.html";
+      }
+    }
+  </script>
+
+</body>
+</html>

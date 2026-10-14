@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Role Permissions — Salon Genie</title>
+<meta name="gs-config" content="/shared/config.json"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<script type="module">
+import { requireAuth } from "/shared/js/core/auth.js";
+window.__requireAuth = requireAuth;
+</script>
+<style>
+:root{
+  --bg:#FDFAF6;--s1:#FFFFFF;--s2:#F5F0E8;--s3:#EDE6D8;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.11);
+  --ink:#1C1814;--mid:#6A6058;--muted:#A89A8E;
+  --blush:#C4856A;--blush-dim:rgba(196,133,106,0.12);
+  --amber:#C4993A;--amber-dim:rgba(196,153,58,0.12);
+  --teal:#3D7A72;--teal-dim:rgba(61,122,114,0.12);
+  --rose:#C45A4A;--rose-dim:rgba(196,90,74,0.10);
+  --violet:#7A4EA8;--violet-dim:rgba(122,78,168,0.10);
+  --shadow:0 2px 14px rgba(28,24,20,0.07);
+  --shadow-lg:0 8px 32px rgba(28,24,20,0.10);
+  --r:10px;--r2:14px;--header-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;line-height:1.5;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+
+/* ── HEADER (owner-area pattern) ── */
+header{position:sticky;top:0;z-index:100;height:var(--header-h);background:var(--s2);border-bottom:1px solid var(--border);box-shadow:0 1px 8px rgba(28,24,20,0.06)}
+.ap-header{max-width:1440px;margin:0 auto;display:flex;align-items:center;height:100%;padding:0 28px;gap:16px}
+.ap-brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ap-logo-gem{width:30px;height:30px;background:linear-gradient(135deg,var(--blush),var(--amber));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.ap-brandname{font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink)}
+.ap-brandname span{color:var(--blush)}
+.ap-brandtag{font-size:10px;color:var(--muted);margin-top:1px;letter-spacing:.5px}
+.ap-nav{display:flex;margin-left:8px}
+.nav-item{padding:0 16px;height:var(--header-h);display:flex;align-items:center;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;text-decoration:none}
+.nav-item.active{color:var(--blush);border-bottom-color:var(--blush);font-weight:600}
+.nav-item:hover:not(.active){color:var(--mid)}
+.ap-right{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:auto}
+.ap-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'DM Sans',sans-serif}
+.ap-btn-ghost{background:rgba(255,255,255,0.6);border:1px solid var(--border2);color:var(--mid)}
+.ap-btn-ghost:hover{border-color:var(--blush);color:var(--blush)}
+.ap-btn-primary{background:var(--blush);color:white;box-shadow:0 2px 12px rgba(196,133,106,0.3)}
+.ap-btn-primary:hover{background:#B5745A;transform:translateY(-1px)}
+.ap-btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.ap-user-btn{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--border2);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:500;color:var(--ink);cursor:pointer;font-family:'DM Sans',sans-serif}
+.ap-user-avatar{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--blush),var(--amber));display:flex;align-items:center;justify-content:center;font-size:11px;color:white;font-weight:700;flex-shrink:0}
+
+/* ── PAGE LAYOUT ── */
+main{max-width:960px;margin:0 auto;padding:32px 24px 80px;flex:1;width:100%}
+
+/* ── PAGE HEAD ── */
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+.page-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--muted)}
+.head-actions{display:flex;gap:8px}
+
+/* ── NOTICE ── */
+.notice{border-radius:var(--r);padding:10px 14px;font-size:13px;font-weight:500;display:none;margin-bottom:20px;align-items:center;gap:8px}
+.notice.ok{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(61,122,114,.25);display:flex}
+.notice.err{background:var(--rose-dim);color:var(--rose);border:1px solid rgba(196,90,74,.25);display:flex}
+.notice.warn{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(196,153,58,.25);display:flex}
+
+/* ── ROLE HEADER ROW ── */
+.perm-table{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--shadow);overflow:hidden;margin-bottom:28px}
+.perm-header{display:grid;grid-template-columns:1fr repeat(3,100px);background:var(--s2);border-bottom:1px solid var(--border)}
+.ph-cell{padding:12px 10px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);text-align:center}
+.ph-cell.label{text-align:left;padding-left:18px}
+.role-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700;margin-bottom:4px;border:1px solid transparent}
+.rb-receptionist{background:var(--blush-dim);color:var(--blush);border-color:rgba(196,133,106,.25)}
+.rb-nail_tech{background:var(--teal-dim);color:var(--teal);border-color:rgba(61,122,114,.25)}
+.rb-cleaning{background:var(--s3);color:var(--mid);border-color:var(--border2)}
+
+/* ── SECTION DIVIDER ── */
+.sec-divider{padding:8px 18px;background:var(--s2);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+
+/* ── PERMISSION ROW ── */
+.perm-row{display:grid;grid-template-columns:1fr repeat(3,100px);border-bottom:1px solid var(--border);transition:background .12s}
+.perm-row:last-child{border-bottom:none}
+.perm-row:hover{background:var(--s2)}
+.perm-label{padding:12px 18px;font-size:13px;color:var(--ink);display:flex;align-items:center;gap:8px}
+.perm-label small{font-size:11px;color:var(--muted);display:block;margin-top:2px}
+.perm-cell{display:flex;align-items:center;justify-content:center;padding:10px}
+
+/* ── TOGGLE SWITCH ── */
+.toggle{position:relative;width:38px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;border-radius:11px;background:var(--s3);border:1.5px solid var(--border2);transition:all .18s;cursor:pointer}
+.toggle input:checked + .toggle-track{background:var(--teal);border-color:var(--teal)}
+.toggle-track::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:white;transition:transform .18s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.toggle input:checked + .toggle-track::after{transform:translateX(16px)}
+.toggle.locked .toggle-track{opacity:.35;cursor:not-allowed}
+.toggle.owner-only .toggle-track{background:var(--violet);border-color:var(--violet);opacity:.5;cursor:not-allowed}
+.toggle.owner-only .toggle-track::after{transform:translateX(16px)}
+
+/* ── INFO CARD ── */
+.info-card{background:var(--amber-dim);border:1px solid rgba(196,153,58,.25);border-radius:var(--r2);padding:14px 18px;font-size:13px;color:var(--amber);margin-bottom:20px;display:flex;align-items:flex-start;gap:10px}
+.info-card strong{color:#8B6A1A}
+
+/* ── FOOTER ── */
+.site-footer{background:var(--s2);border-top:1px solid var(--border);padding:20px 0;margin-top:auto}
+.sf-inner{max-width:1440px;margin:0 auto;padding:0 28px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.sf-title{font-weight:700;color:var(--ink);margin-bottom:4px;font-size:13px}
+.sf-sub,.sf-meta{font-size:12px;color:var(--muted)}
+.sf-links{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.sf-link{font-size:12px;color:var(--mid)}
+.sf-link:hover{color:var(--blush)}
+.sf-badges{display:flex;gap:8px}
+.sf-badge{font-size:10px;padding:3px 10px;border-radius:20px;background:var(--s1);border:1px solid var(--border2);color:var(--muted)}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:500;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--ink);color:white;border-radius:10px;padding:11px 15px;font-size:12px;display:flex;align-items:flex-start;gap:10px;opacity:0;transform:translateY(8px);transition:all .2s;min-width:200px;max-width:300px;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast .t1{font-weight:600;margin-bottom:1px}
+.toast .t2{opacity:.75;font-size:11px}
+.toast .x{background:none;border:none;color:white;cursor:pointer;font-size:14px;opacity:.6;flex-shrink:0}
+
+@media(max-width:700px){
+  .perm-header,.perm-row{grid-template-columns:1fr repeat(3,72px)}
+  .perm-label{padding:10px 12px;font-size:12px}
+  .ap-nav{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="ap-header">
+    <a class="ap-brand" href="salon-dashboard.html">
+      <div class="ap-logo-gem">✦</div>
+      <div>
+        <div class="ap-brandname">Salon <span>Genie</span></div>
+        <div class="ap-brandtag">Owner · Staff · AI Agents</div>
+      </div>
+    </a>
+    <nav class="ap-nav" aria-label="Primary">
+      <a class="nav-item" href="salon-dashboard.html">Dashboard</a>
+      <a class="nav-item" href="salon-briefing-agent.html">Briefing</a>
+      <a class="nav-item" href="salon-booking-agent.html">Bookings</a>
+      <a class="nav-item" href="customers.html">Customers</a>
+      <a class="nav-item" href="manage-employees.html">Employees</a>
+      <a class="nav-item active" href="role-permissions.html">Role Setup</a>
+      <a class="nav-item" href="salon-payroll-agent.html">Payroll</a>
+    </nav>
+    <div class="ap-right">
+      <button class="ap-btn ap-btn-ghost" onclick="resetDefaults()">↩ Reset defaults</button>
+      <button class="ap-btn ap-btn-primary" id="btnSave" onclick="savePermissions()">💾 Save Changes</button>
+      <div id="userBtnWrap"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Role Permissions</h1>
+      <p class="page-sub">Control what each role can see and do. Owner and Manager always have full access.</p>
+    </div>
+  </div>
+
+  <div class="notice" id="pageNotice"></div>
+
+  <div class="info-card">
+    <span style="font-size:18px;flex-shrink:0">⚠️</span>
+    <div><strong>Owner & Manager are not shown here</strong> — they always have full access to everything and cannot be restricted. Changes here only affect Receptionist, Nail Tech, and Cleaning roles.</div>
+  </div>
+
+  <!-- Permission table -->
+  <div class="perm-table" id="permTable">
+    <div class="perm-header">
+      <div class="ph-cell label">Permission</div>
+      <div class="ph-cell">
+        <span class="role-badge rb-receptionist">🛎️ Receptionist</span>
+      </div>
+      <div class="ph-cell">
+        <span class="role-badge rb-nail_tech">💅 Nail Tech</span>
+      </div>
+      <div class="ph-cell">
+        <span class="role-badge rb-cleaning">🧼 Cleaning</span>
+      </div>
+    </div>
+    <div id="permBody">
+      <div style="padding:40px;text-align:center;color:var(--muted);font-size:13px">Loading permissions…</div>
+    </div>
+  </div>
+
+  <p style="font-size:12px;color:var(--muted);margin-top:-16px">
+    🔒 Permissions marked with a lock are permanently restricted to Owner/Manager and cannot be changed.
+  </p>
+</main>
+
+<footer class="site-footer">
+  <div class="sf-inner">
+    <div>
+      <div class="sf-title">Salon Genie</div>
+      <div class="sf-sub">Built for real salon teams — simple, fast, and reliable.</div>
+      <div class="sf-meta">© <span id="year"></span> Salon Genie. All rights reserved.</div>
+    </div>
+    <div>
+      <div class="sf-links">
+        <a class="sf-link" href="manage-employees.html">Employees</a>
+        <a class="sf-link" href="salon-dashboard.html">Dashboard</a>
+        <a class="sf-link" href="help.html">Help</a>
+      </div>
+      <div class="sf-badges">
+        <span class="sf-badge">🔒 Secure</span>
+        <span class="sf-badge">⚡ Fast</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+<script>
+'use strict';
+document.getElementById('year').textContent = new Date().getFullYear();
+
+let sg = null, currentUser = null, businessId = null;
+
+/* ══ PERMISSION DEFINITIONS ══════════════════════════════════════
+   key            - stored in DB, used in enforcement
+   label          - shown in the table
+   desc           - optional sub-description
+   defaults       - [receptionist, nail_tech, cleaning]  1=ON 0=OFF
+   locked         - true = owner/manager only, toggle disabled
+   ownerOnly      - shows purple "owner only" lock indicator
+════════════════════════════════════════════════════════════════ */
+const SECTIONS = [
+  {
+    label: '👥 Clients & appointments',
+    perms: [
+      { key:'view_all_clients',       label:'View full client directory',          desc:'Browse all salon clients',                  defaults:[1,0,0] },
+      { key:'view_own_clients',       label:'View own assigned clients',           desc:'Only clients from their appointments',       defaults:[1,1,0] },
+      { key:'view_client_contact',    label:'View client phone & email',           desc:'Access contact info on client profiles',     defaults:[1,0,0] },
+      { key:'add_edit_clients',       label:'Add or edit client profiles',         desc:'Create new clients, update information',     defaults:[1,0,0] },
+      { key:'make_appointments',      label:'Create appointments',                 desc:'Book new appointments for clients',          defaults:[1,0,0] },
+      { key:'move_appointments',      label:'Move or reassign appointments',       desc:'Change time, date, or assigned tech',        defaults:[1,0,0] },
+      { key:'delete_appointments',    label:'Delete appointments',                 desc:'Remove appointments from the schedule',      defaults:[1,0,0] },
+      { key:'add_client_notes',       label:'Add notes to client profiles',        desc:'Record service notes, preferences',          defaults:[1,1,0] },
+    ]
+  },
+  {
+    label: '💳 POS & tickets',
+    perms: [
+      { key:'open_own_ticket',        label:'Open and edit own ticket',            desc:'Work on tickets assigned to themselves',     defaults:[1,1,0] },
+      { key:'open_any_ticket',        label:'Open any staff ticket',               desc:'Access tickets belonging to other staff',    defaults:[1,0,0] },
+      { key:'change_price',           label:'Change service price',                desc:'Override the default price on a ticket',     defaults:[1,0,0] },
+      { key:'add_discount',           label:'Add discounts',                       desc:'Apply percentage or dollar discounts',       defaults:[1,1,0] },
+      { key:'process_refund',         label:'Process refunds',                     desc:'Issue full or partial refunds',              defaults:[1,0,0] },
+      { key:'void_ticket',            label:'Void a ticket',                       desc:'Cancel and void a completed ticket',         defaults:[1,0,0] },
+      { key:'record_tip',             label:'Record tip amount',                   desc:'Enter tip on their own tickets',             defaults:[1,1,0] },
+      { key:'retrieve_closed_ticket', label:'Retrieve closed ticket',              desc:'Reopen a previously closed ticket',          defaults:[1,0,0] },
+    ]
+  },
+  {
+    label: '💰 Pay & commission',
+    perms: [
+      { key:'view_own_pay',           label:'View own commission & tips',          desc:'See their weekly earnings summary',          defaults:[0,1,0] },
+      { key:'view_all_payroll',       label:'View all staff payroll',              desc:'',                                           defaults:[0,0,0], locked:true },
+      { key:'approve_payroll',        label:'Approve payroll',                     desc:'',                                           defaults:[0,0,0], locked:true },
+    ]
+  },
+  {
+    label: '✅ Queue & check-in',
+    perms: [
+      { key:'view_queue',             label:'View check-in queue',                 desc:'See waiting clients and queue status',       defaults:[1,1,0] },
+      { key:'manage_queue',           label:'Manage queue (assign, move)',          desc:'Assign clients to techs, reorder queue',    defaults:[1,0,0] },
+      { key:'open_kiosk',             label:'Open self check-in kiosk',            desc:'Launch the client-facing check-in screen',  defaults:[1,0,0] },
+      { key:'clock_in_others',        label:'Clock in/out other staff',            desc:'Use the shared kiosk to clock others',       defaults:[1,0,0] },
+    ]
+  },
+  {
+    label: '📊 Reports & data',
+    perms: [
+      { key:'view_daily_summary',     label:'View daily summary',                  desc:'See end-of-day totals for the salon',        defaults:[1,0,0] },
+      { key:'view_full_reports',      label:'View full reports & analytics',       desc:'',                                           defaults:[0,0,0], locked:true },
+      { key:'export_data',            label:'Export data (CSV, Excel)',            desc:'',                                           defaults:[0,0,0], locked:true },
+    ]
+  },
+  {
+    label: '🎁 Loyalty & promotions',
+    perms: [
+      { key:'view_loyalty',           label:'View client loyalty points',          desc:'See points balance on client profile',       defaults:[1,1,0] },
+      { key:'adjust_loyalty',         label:'Adjust loyalty points',               desc:'Manually add or remove loyalty points',      defaults:[1,0,0] },
+      { key:'apply_promotion',        label:'Apply promotions & coupons',          desc:'Apply discount promotions at checkout',      defaults:[1,1,0] },
+    ]
+  },
+  {
+    label: '🔔 Communication',
+    perms: [
+      { key:'send_client_message',    label:'Send message to client',              desc:'Text or email a client directly',            defaults:[1,0,0] },
+      { key:'send_survey',            label:'Send satisfaction survey',            desc:'Trigger post-visit survey to client',        defaults:[1,0,0] },
+      { key:'view_reviews',           label:'View client reviews',                 desc:'Read Google and internal reviews',           defaults:[1,0,0] },
+    ]
+  },
+  {
+    label: '⚙️ Settings & staff',
+    perms: [
+      { key:'manage_employees',       label:'Manage employee profiles',            desc:'',                                           defaults:[0,0,0], locked:true },
+      { key:'manage_services',        label:'Manage service catalog',              desc:'',                                           defaults:[0,0,0], locked:true },
+      { key:'manage_settings',        label:'Manage salon settings',               desc:'',                                           defaults:[0,0,0], locked:true },
+    ]
+  },
+];
+
+const ROLES = ['receptionist','nail_tech','cleaning'];
+
+// Current state: {permKey: [receptionist, nail_tech, cleaning]}
+let state = {};
+
+function getDefaults() {
+  const d = {};
+  SECTIONS.forEach(s => s.perms.forEach(p => { d[p.key] = [...p.defaults]; }));
+  return d;
+}
+
+function resetDefaults() {
+  state = getDefaults();
+  renderTable();
+  showNotice('pageNotice', 'Defaults restored — click Save to apply.', 'warn');
+}
+
+/* ── render ─────────────────────────────────────────────────── */
+function renderTable() {
+  let html = '';
+  SECTIONS.forEach(sec => {
+    html += `<div class="sec-divider">${sec.label}</div>`;
+    sec.perms.forEach((p, i) => {
+      const isLast = i === sec.perms.length - 1;
+      html += `<div class="perm-row">
+        <div class="perm-label">
+          <div>
+            ${p.locked ? '<span title="Owner / Manager only" style="font-size:14px;margin-right:4px">🔒</span>' : ''}
+            ${esc(p.label)}
+            ${p.desc ? `<small>${esc(p.desc)}</small>` : ''}
+          </div>
+        </div>
+        ${ROLES.map((role, ri) => {
+          const on = state[p.key]?.[ri] ?? p.defaults[ri];
+          const id = `tog_${p.key}_${ri}`;
+          if (p.locked) {
+            return `<div class="perm-cell">
+              <label class="toggle locked" title="Owner / Manager only">
+                <input type="checkbox" disabled/>
+                <div class="toggle-track"></div>
+              </label>
+            </div>`;
+          }
+          return `<div class="perm-cell">
+            <label class="toggle" title="${on ? 'On — click to disable' : 'Off — click to enable'}">
+              <input type="checkbox" id="${id}" ${on ? 'checked' : ''}
+                onchange="onToggle('${p.key}',${ri},this.checked)"/>
+              <div class="toggle-track"></div>
+            </label>
+          </div>`;
+        }).join('')}
+      </div>`;
+    });
+  });
+  document.getElementById('permBody').innerHTML = html;
+}
+
+function onToggle(key, roleIdx, checked) {
+  if (!state[key]) state[key] = getDefaults()[key];
+  state[key][roleIdx] = checked ? 1 : 0;
+
+  // Enforce dependency: if nail_tech gets view_all_clients, also give view_own_clients
+  if (key === 'view_all_clients' && checked) {
+    state['view_own_clients'] = state['view_own_clients'] || getDefaults()['view_own_clients'];
+    state['view_own_clients'][roleIdx] = 1;
+    const ownEl = document.getElementById(`tog_view_own_clients_${roleIdx}`);
+    if (ownEl) ownEl.checked = true;
+  }
+}
+
+/* ── save & load ─────────────────────────────────────────────── */
+async function savePermissions() {
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    if (!sg || !businessId) throw new Error('Not authenticated');
+    const payload = {
+      business_id: businessId,
+      permissions: state,
+      updated_at:  new Date().toISOString(),
+    };
+    const { error } = await sg.from('salon.role_permissions')
+      .upsert(payload, { onConflict: 'business_id' });
+    if (error) throw error;
+    showNotice('pageNotice', '✅ Permissions saved successfully!', 'ok');
+    toast('Saved', 'Role permissions updated.');
+  } catch(e) {
+    console.error('Save failed:', e);
+    showNotice('pageNotice', '❌ Could not save: ' + (e.message||'Unknown error'), 'err');
+    toast('Error', e.message || 'Save failed.');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Save Changes';
+  }
+}
+
+async function loadPermissions() {
+  if (!sg || !businessId) { state = getDefaults(); renderTable(); return; }
+  try {
+    const { data } = await sg.from('salon.role_permissions')
+      .select('permissions')
+      .eq('business_id', businessId)
+      .maybeSingle();
+    if (data?.permissions) {
+      // Merge with defaults so new permissions added later still appear
+      const merged = getDefaults();
+      Object.keys(data.permissions).forEach(k => {
+        if (merged[k]) merged[k] = data.permissions[k];
+      });
+      state = merged;
+    } else {
+      state = getDefaults();
+    }
+  } catch(e) {
+    console.warn('Could not load permissions:', e);
+    state = getDefaults();
+  }
+  renderTable();
+}
+
+/* ── helpers ─────────────────────────────────────────────────── */
+function esc(s){ return String(s??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+function showNotice(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'notice ' + type;
+  if (type === 'ok') setTimeout(() => { el.className = 'notice'; el.textContent = ''; }, 4000);
+}
+
+function toast(title, msg) {
+  const wrap = document.getElementById('toastWrap'); if (!wrap) return;
+  const el = document.createElement('div'); el.className = 'toast';
+  el.innerHTML = `<div><div class="t1">${esc(title)}</div>${msg?`<div class="t2">${esc(msg)}</div>`:''}</div><button class="x" type="button">✕</button>`;
+  wrap.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  const kill = () => { el.classList.remove('show'); setTimeout(() => el.remove(), 200); };
+  el.querySelector('.x').addEventListener('click', kill);
+  setTimeout(kill, 4000);
+}
+
+/* ── init ─────────────────────────────────────────────────────── */
+(async function init() {
+  let waited = 0;
+  while (!window.__requireAuth && waited < 4000) {
+    await new Promise(r => setTimeout(r, 100));
+    waited += 100;
+  }
+  if (!window.__requireAuth) {
+    location.replace('/login.html?agent=salon&next=' + encodeURIComponent(location.pathname));
+    return;
+  }
+
+  try {
+    const { client, user } = await window.__requireAuth({ agent: 'salon' });
+    sg = client; currentUser = user;
+
+    // Resolve business + check role (owner/manager only)
+    const { data: pref } = await sg.from('user_preferences')
+      .select('selected_business_id, active_business_id, display_name, role')
+      .eq('user_id', user.id).maybeSingle();
+
+    if (pref) {
+      businessId = pref.selected_business_id || pref.active_business_id;
+      const role = String(pref.role || '').toLowerCase();
+      if (!['owner','manager','admin'].includes(role)) {
+        // Not an owner/manager — redirect away
+        showNotice('pageNotice', '⛔ Access denied. This page is for owners and managers only.', 'err');
+        setTimeout(() => location.replace('/staff-dashboard.html'), 2500);
+        return;
+      }
+      const name = pref.display_name || user.email?.split('@')[0] || 'Owner';
+      const initials = name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';
+      const wrap = document.getElementById('userBtnWrap');
+      if (wrap) wrap.innerHTML = `<button class="ap-user-btn">
+        <div class="ap-user-avatar">${initials}</div>
+        <span>${name.split(' ')[0]}</span>
+      </button>`;
+    }
+  } catch(e) {
+    console.warn('Auth failed:', e);
+    // Render with defaults so page is still functional for local dev
+  }
+
+  await loadPermissions();
+})();
+</script>
+</body>
+</html>

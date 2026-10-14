@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Group Travel Expense Splitter · GenieSphere</title>
+
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Component layer -->
+<style type="text/tailwindcss">
+  @layer base {
+    :root {
+      /* Use hex values instead of theme(...) for CDN mode */
+      --gs-green: #16a34a;
+      --gs-green-hover: #15803d;
+      --gs-blue: #2563eb;
+      --gs-blue-hover: #1d4ed8;
+      --gs-border: #e2e8f0;
+      --gs-muted: #64748b;
+    }
+    html { scroll-behavior: smooth; }
+    body { @apply bg-slate-50 text-slate-900; }
+  }
+
+  @layer components {
+    .gs-container { @apply max-w-6xl mx-auto px-4 sm:px-6 py-6; }
+    .gs-card { @apply bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-6; }
+    .gs-title { @apply text-xl sm:text-2xl font-semibold; }
+    .gs-subtitle { @apply text-sm text-slate-500; }
+
+    .gs-input { @apply w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500; }
+    .gs-select { @apply w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500; }
+    .gs-num { @apply w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500; }
+
+    .gs-btn { @apply inline-flex items-center gap-2 rounded-full px-4 sm:px-5 py-2.5 text-sm font-medium transition; }
+    /* Use CSS vars directly (arbitrary values don’t work in @apply) */
+    .gs-btn-primary { @apply gs-btn text-white; background-color: var(--gs-green); }
+    .gs-btn-primary:hover { background-color: var(--gs-green-hover); }
+    .gs-btn-blue { @apply gs-btn text-white; background-color: var(--gs-blue); }
+    .gs-btn-blue:hover { background-color: var(--gs-blue-hover); }
+    .gs-btn-ghost { @apply gs-btn border border-slate-200 text-slate-700 bg-white hover:bg-slate-50; }
+
+    .gs-chip { @apply inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm bg-white; }
+    .gs-tag { @apply inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700; }
+
+    .gs-table { @apply w-full text-sm; }
+    .gs-th { @apply pb-2.5 pt-1 text-left text-slate-500 font-medium border-b border-slate-200; }
+    .gs-td { @apply py-2.5 align-top border-b border-slate-100; }
+
+    .gs-money { font-variant-numeric: tabular-nums; }
+    .gs-bad { @apply text-red-700; }
+    .gs-good { @apply text-emerald-700; }
+
+    .gs-scroll { @apply max-h-[380px] overflow-auto; }
+    .gs-nav { @apply sticky top-0 z-10 bg-white/90 backdrop-blur border border-slate-200 rounded-2xl shadow-sm; }
+    .gs-nav a { @apply px-3 sm:px-4 py-2 rounded-full text-sm text-slate-600 hover:bg-slate-100; }
+  }
+</style>
+</head>
+<body>
+  <main class="gs-container">
+    <header class="mb-4 sm:mb-6">
+      <h1 class="gs-title">🧮 Group Travel Expense Splitter</h1>
+      <p class="gs-subtitle mt-1">Add people, log expenses, choose who splits each item, and get suggested settlements.</p>
+    </header>
+
+    <!-- Jump Bar -->
+    <nav class="gs-nav p-2 mb-4 sm:mb-6 flex flex-wrap items-center gap-2">
+      <a href="#panel-people">👥 People</a>
+      <a href="#panel-expenses">🧾 Expenses</a>
+      <a href="#panel-summary">📊 Summary</a>
+      <a href="#panel-settlements">🤝 Settlements</a>
+      <div class="ml-auto flex gap-2">
+        <button class="gs-btn-ghost !py-2" onclick="exportExpensesCSV()">⬇️ Export Expenses CSV</button>
+        <button class="gs-btn-ghost !py-2" onclick="exportSummaryCSV()">⬇️ Export Summary CSV</button>
+      </div>
+    </nav>
+
+    <!-- Row 1: People -->
+    <section class="gs-card mb-4 sm:mb-6" id="panel-people">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 class="font-semibold text-lg">👥 People</h2>
+        <p class="gs-subtitle">Add/remove names. All tables update automatically.</p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <input id="personName" class="gs-input" placeholder="Add name (e.g., Alice)">
+        <button class="gs-btn-primary" onclick="addPerson()">➕ Add Person</button>
+      </div>
+
+      <div id="peopleList" class="flex flex-wrap gap-2 mt-4"></div>
+
+      <div class="border-t border-slate-200 my-4"></div>
+
+      <div class="flex flex-wrap gap-2">
+        <button class="gs-btn-blue" onclick="addExpenseRow()">➕ Add Expense</button>
+        <button class="gs-btn-ghost" onclick="saveData()">💾 Save</button>
+        <button class="gs-btn-ghost" onclick="loadData()">📂 Load</button>
+        <button class="gs-btn-ghost" onclick="clearData()">🧹 Clear</button>
+        <button class="gs-btn-ghost" onclick="resetDemo()">🔁 Reset Demo</button>
+      </div>
+    </section>
+
+    <!-- Row 2: Expenses -->
+    <section class="gs-card mb-4 sm:mb-6" id="panel-expenses">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <h2 class="font-semibold text-lg">🧾 Expenses</h2>
+        <p class="gs-subtitle">Select only the people who share each expense.</p>
+      </div>
+
+      <div class="gs-scroll">
+        <table class="gs-table">
+          <thead>
+            <tr>
+              <th class="gs-th w-[8rem]">📆 Date</th>
+              <th class="gs-th w-[14rem]">📝 Description</th>
+              <th class="gs-th w-[12rem]">💳 Paid By</th>
+              <th class="gs-th w-[8rem]">💵 Amount</th>
+              <th class="gs-th">👥 Split Between</th>
+              <th class="gs-th w-[8rem]">➗ Per-Person</th>
+              <th class="gs-th w-[3rem]"></th>
+            </tr>
+          </thead>
+          <tbody id="expensesBody"></tbody>
+        </table>
+      </div>
+
+      <p class="gs-subtitle mt-2">Tip: If only 1–2 people used an item, check only those names — the split adjusts automatically.</p>
+    </section>
+
+    <!-- Row 3: Summary -->
+    <section class="gs-card mb-4 sm:mb-6" id="panel-summary">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="font-semibold text-lg">📊 Summary</h2>
+        <div class="flex gap-2">
+          <button class="gs-btn-ghost" onclick="recalculate()">🔄 Refresh</button>
+          <button class="gs-btn-ghost" onclick="exportSummaryCSV()">⬇️ Export Summary CSV</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="gs-table min-w-[520px]">
+          <thead>
+            <tr>
+              <th class="gs-th">Person</th>
+              <th class="gs-th">Total Paid</th>
+              <th class="gs-th">Fair Share</th>
+              <th class="gs-th">Balance (Owes + / Gets −)</th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Row 4: Suggested Settlements -->
+    <section class="gs-card" id="panel-settlements">
+      <h2 class="font-semibold text-lg mb-2">🤝 Suggested Settlements</h2>
+      <div id="settlements" class="text-sm text-slate-600">No settlements yet.</div>
+    </section>
+  </main>
+
+  <script>
+    // ------- Data model -------
+    let people = ["Alice", "Bob", "Carol", "David"];
+    let expenses = []; // {date, desc, paidBy, amount, included: {name:bool}}
+
+    // ------- Persistence -------
+    function saveData(){
+      localStorage.setItem("gsExpenseSplitter", JSON.stringify({people, expenses}));
+      alert("Saved to your browser.");
+    }
+    function loadData(){
+      const raw = localStorage.getItem("gsExpenseSplitter");
+      if(!raw) return alert("No saved data found.");
+      try{
+        const data = JSON.parse(raw);
+        people = data.people || [];
+        expenses = data.expenses || [];
+        renderPeople(); renderExpenses(); recalculate();
+      }catch(e){ alert("Could not load saved data."); }
+    }
+    function clearData(){
+      if(!confirm("Clear saved data and current entries?")) return;
+      localStorage.removeItem("gsExpenseSplitter");
+      people = []; expenses = [];
+      renderPeople(); renderExpenses(); recalculate();
+    }
+    function resetDemo(){
+      if(!confirm("Replace with demo names and clear expenses?")) return;
+      people = ["Alice","Bob","Carol","David"]; expenses = [];
+      renderPeople(); renderExpenses(); recalculate();
+    }
+
+    // ------- People -------
+    function addPerson(){
+      const input = document.getElementById("personName");
+      const name = (input.value || "").trim();
+      if(!name) return;
+      if(people.includes(name)) return alert("That name already exists.");
+      people.push(name);
+      expenses.forEach(ex => ex.included[name] = true); // default include new person
+      input.value = "";
+      renderPeople(); renderExpenses(); recalculate();
+    }
+    function removePerson(name){
+      if(!confirm(`Remove ${name}? This will also remove them from all expenses.`)) return;
+      people = people.filter(p => p !== name);
+      expenses.forEach(ex => {
+        delete ex.included[name];
+        if(ex.paidBy === name) ex.paidBy = "";
+      });
+      renderPeople(); renderExpenses(); recalculate();
+    }
+    function renderPeople(){
+      const wrap = document.getElementById("peopleList");
+      wrap.innerHTML = "";
+      people.forEach(p => {
+        const el = document.createElement("div");
+        el.className = "gs-chip";
+        el.innerHTML = `<span>👤 ${p}</span>
+          <button class="gs-btn-ghost !px-3 !py-1" onclick="removePerson('${p.replace(/'/g, "\\'")}')">Remove</button>`;
+        wrap.appendChild(el);
+      });
+    }
+
+    // ------- Expenses -------
+    function addExpenseRow(){
+      const ex = { date:"", desc:"", paidBy:people[0]||"", amount:0, included:{} };
+      people.forEach(p => ex.included[p] = true); // default split among all
+      expenses.push(ex);
+      renderExpenses(); recalculate();
+    }
+    function removeExpenseRow(idx){
+      expenses.splice(idx,1);
+      renderExpenses(); recalculate();
+    }
+    function renderExpenses(){
+      const body = document.getElementById("expensesBody");
+      body.innerHTML = "";
+
+      expenses.forEach((ex, idx) => {
+        // Ensure include map aligns with current people
+        people.forEach(p => { if(!(p in ex.included)) ex.included[p] = false; });
+        Object.keys(ex.included).forEach(k => { if(!people.includes(k)) delete ex.included[k]; });
+
+        const tr = document.createElement("tr");
+
+        // Date
+        const tdDate = document.createElement("td"); tdDate.className = "gs-td";
+        tdDate.innerHTML = `<input type="date" class="gs-input" value="${ex.date}" onchange="expenses[${idx}].date=this.value">`;
+        tr.appendChild(tdDate);
+
+        // Desc
+        const tdDesc = document.createElement("td"); tdDesc.className = "gs-td";
+        tdDesc.innerHTML = `<input class="gs-input" placeholder="e.g., Dinner" value="${ex.desc}" onchange="expenses[${idx}].desc=this.value">`;
+        tr.appendChild(tdDesc);
+
+        // Paid by
+        const tdPaid = document.createElement("td"); tdPaid.className = "gs-td";
+        const options = ['<option value=""></option>'].concat(people.map(p => `<option value="${p}" ${ex.paidBy===p?'selected':''}>${p}</option>`)).join("");
+        tdPaid.innerHTML = `<select class="gs-select" onchange="expenses[${idx}].paidBy=this.value;recalculate()">${options}</select>`;
+        tr.appendChild(tdPaid);
+
+        // Amount
+        const tdAmt = document.createElement("td"); tdAmt.className = "gs-td";
+        tdAmt.innerHTML = `<input type="number" step="0.01" min="0" class="gs-num" value="${ex.amount}" oninput="expenses[${idx}].amount=parseFloat(this.value||0);recalculate()">`;
+        tr.appendChild(tdAmt);
+
+        // Split checkboxes
+        const tdSplit = document.createElement("td"); tdSplit.className = "gs-td";
+        const boxWrap = document.createElement("div");
+        boxWrap.className = "flex flex-wrap gap-2";
+        people.forEach(p => {
+          const lbl = document.createElement("label");
+          lbl.className = "inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-1.5 bg-white";
+          const cb = document.createElement("input");
+          cb.type = "checkbox"; cb.checked = !!ex.included[p];
+          cb.onchange = (e)=>{ ex.included[p] = e.target.checked; recalculate(); };
+          const span = document.createElement("span"); span.textContent = p;
+          lbl.appendChild(cb); lbl.appendChild(span); boxWrap.appendChild(lbl);
+        });
+        tdSplit.appendChild(boxWrap); tr.appendChild(tdSplit);
+
+        // Per person
+        const tdShare = document.createElement("td"); tdShare.className = "gs-td";
+        const divShare = document.createElement("div"); divShare.className = "gs-money text-right";
+        divShare.textContent = fmtCurrency(perPersonShare(ex));
+        tdShare.appendChild(divShare); tr.appendChild(tdShare);
+
+        // Delete
+        const tdDel = document.createElement("td"); tdDel.className = "gs-td";
+        const btn = document.createElement("button");
+        btn.className = "gs-btn-ghost !px-3 !py-1.5"; btn.textContent = "🗑️";
+        btn.title = "Remove expense"; btn.onclick = () => removeExpenseRow(idx);
+        tdDel.appendChild(btn); tr.appendChild(tdDel);
+
+        body.appendChild(tr);
+      });
+    }
+
+    // ------- Calculations -------
+    function perPersonShare(ex){
+      const inc = Object.entries(ex.included).filter(([p,v]) => v).map(([p])=>p);
+      const n = inc.length;
+      if(n === 0) return 0;
+      return (ex.amount || 0) / n;
+    }
+    function summarize(){
+      const totals = {}, share = {};
+      people.forEach(p => { totals[p] = 0; share[p] = 0; });
+
+      expenses.forEach(ex => {
+        if(ex.paidBy && (ex.amount||0)>0) totals[ex.paidBy] += ex.amount || 0;
+        const each = perPersonShare(ex);
+        Object.entries(ex.included).forEach(([p, v]) => { if(v) share[p] += each; });
+      });
+
+      const balance = {};
+      people.forEach(p => balance[p] = (share[p]||0) - (totals[p]||0));
+      return { totals, share, balance };
+    }
+    function recalculate(){
+      // Update per-person cells live
+      const rows = document.querySelectorAll("#expensesBody tr");
+      rows.forEach((row, idx) => {
+        const td = row.children[5];
+        if(!td) return;
+        td.querySelector("div").textContent = fmtCurrency(perPersonShare(expenses[idx]));
+      });
+
+      const { totals, share, balance } = summarize();
+      const tbody = document.getElementById("summaryBody");
+      tbody.innerHTML = "";
+      people.forEach(p => {
+        const tr = document.createElement("tr");
+        const bal = (balance[p]||0);
+        tr.innerHTML = `
+          <td class="gs-td">${p}</td>
+          <td class="gs-td gs-money">${fmtCurrency(totals[p]||0)}</td>
+          <td class="gs-td gs-money">${fmtCurrency(share[p]||0)}</td>
+          <td class="gs-td gs-money ${bal>0?'gs-bad':(bal<0?'gs-good':'')}">${fmtCurrency(bal)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      suggestSettlements(balance);
+    }
+    function suggestSettlements(balanceMap){
+      const creditors = []; // should receive (balance < 0)
+      const debtors = [];   // owes (balance > 0)
+      Object.entries(balanceMap).forEach(([p, bal]) => {
+        if(bal < -0.005) creditors.push({ p, amt: -bal });
+        else if(bal > 0.005) debtors.push({ p, amt: bal });
+      });
+      creditors.sort((a,b)=>b.amt-a.amt);
+      debtors.sort((a,b)=>b.amt-a.amt);
+
+      const rows = [];
+      let i=0,j=0;
+      while(i<debtors.length && j<creditors.length){
+        const pay = Math.min(debtors[i].amt, creditors[j].amt);
+        rows.push({ from: debtors[i].p, to: creditors[j].p, amt: pay });
+        debtors[i].amt -= pay; creditors[j].amt -= pay;
+        if(debtors[i].amt <= 0.005) i++;
+        if(creditors[j].amt <= 0.005) j++;
+      }
+
+      const wrap = document.getElementById("settlements");
+      wrap.innerHTML = "";
+      if(rows.length === 0){
+        wrap.textContent = "All square! No settlements needed.";
+        return;
+      }
+      const list = document.createElement("div");
+      list.className = "space-y-2";
+      rows.forEach(r => {
+        const line = document.createElement("div");
+        line.className = "flex items-center gap-2 text-sm";
+        line.innerHTML = `
+          <span class="gs-tag">💸 ${r.from}</span>
+          <span class="text-slate-500">pays</span>
+          <span class="gs-tag">🧾 ${r.to}</span>
+          <span class="text-slate-500">→</span>
+          <strong class="gs-money">${fmtCurrency(r.amt)}</strong>
+        `;
+        list.appendChild(line);
+      });
+      wrap.appendChild(list);
+    }
+
+    // ------- Export CSV -------
+    function exportExpensesCSV(){
+      const rows = [["Date","Description","Paid By","Amount","Included","Per-Person Share"]];
+      expenses.forEach(ex => {
+        const included = Object.entries(ex.included).filter(([p,v])=>v).map(([p])=>p);
+        rows.push([
+          ex.date || "",
+          ex.desc || "",
+          ex.paidBy || "",
+          (ex.amount||0).toFixed(2),
+          included.join("; "),
+          perPersonShare(ex).toFixed(2)
+        ]);
+      });
+      downloadCSV(rows, "expenses.csv");
+    }
+
+    function exportSummaryCSV(){
+      const { totals, share, balance } = summarize();
+      const rows = [["Person","Total Paid","Fair Share","Balance"]];
+      people.forEach(p => rows.push([
+        p,
+        (totals[p]||0).toFixed(2),
+        (share[p]||0).toFixed(2),
+        (balance[p]||0).toFixed(2)
+      ]));
+      downloadCSV(rows, "summary.csv");
+    }
+
+    function downloadCSV(rows, filename){
+      const csv = rows.map(r => r.map(cell => {
+        const s = String(cell ?? "");
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+      }).join(",")).join("\n");
+      const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+    // ------- Helpers -------
+    function fmtCurrency(n){
+      return (n||0).toLocaleString(undefined, { style: "currency", currency: "USD" });
+    }
+
+    // Init
+    function init(){
+      renderPeople();
+      renderExpenses();
+      addExpenseRow();
+      recalculate();
+    }
+    init();
+  </script>
+</body>
+</html>

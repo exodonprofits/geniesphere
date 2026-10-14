@@ -1,0 +1,497 @@
+{
+  "name": "Airbnb_Trip_Planner_V1",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "airbnb-travel-agent",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "871c7992-757f-4c9f-a8da-54f76bed29f8",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        2760,
+        1500
+      ],
+      "webhookId": "ce47869c-ac4f-4b7b-90c0-42fc06143480"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "method-condition-options",
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2960,
+        1500
+      ],
+      "id": "a0300651-369c-4ad6-b92b-282e58792682",
+      "name": "If OPTIONS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        3160,
+        1360
+      ],
+      "id": "9c84ba8b-0cd2-4fd1-9c59-b96e3d3c3333"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Request Details:', JSON.stringify($json, null, 2)); let method = $json.method; if (!method) { method = $json.headers[':method'] || 'POST'; } return [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3160,
+        1580
+      ],
+      "id": "e0745de0-62c4-478c-872c-ecf165871637"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "method-condition-post",
+              "leftValue": "={{ String($json.method).toUpperCase() }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3380,
+        1580
+      ],
+      "id": "80df741c-aa95-40d6-8887-a52d844fa7a9",
+      "name": "If Method"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.body; return [{ json: { departureLocation: data.departureLocation || 'Not provided', destinationCity: data.destinationCity || 'Not specified', accommodationType: data.accommodationType || 'Entire Home', amenities: data.amenities || [], bedrooms: data.bedrooms || '1', bathrooms: data.bathrooms || '1', budget: data.budget || '~', tripType: data.tripType || 'N/A', groupSize: data.groupSize || '1', ageRange: data.ageRange || '~', startDate: data.startDate || 'N/A', endDate: data.endDate || 'N/A', email: data.email || 'unknown', display: String(data.display || 'false').toLowerCase() } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3580,
+        1440
+      ],
+      "id": "dd4fa511-2ad7-4e3c-bcda-2812ff323d00",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { departureLocation, destinationCity, accommodationType, amenities, bedrooms, bathrooms, startDate, endDate, budget, tripType, groupSize, ageRange, email, display } = $json; return [{ json: { email, departureLocation, destinationCity, accommodationType, amenities, bedrooms, bathrooms, startDate, endDate, groupSize, budget, display, prompt: `You are a helpful travel agent specializing in Airbnb and hotel stays. Your goal is to create exciting, practical, and well-organized travel itineraries tailored to each user's preferences. Be friendly, informative, and concise. - Departure location: ${departureLocation || 'Not provided'} - Destination: ${destinationCity} - Accommodation type: ${accommodationType} - Key amenities: ${Array.isArray(amenities) ? amenities.join(', ') : amenities || 'None specified'} - Number of bedrooms: ${bedrooms} - Number of bathrooms: ${bathrooms} - Travel dates: ${startDate} to ${endDate} - Budget: $${budget} - Trip type: ${tripType} - Group size: ${groupSize} - Age ranges: ${Array.isArray(ageRange) ? ageRange.join(', ') : ageRange || 'not specified'}\\n\\nCreate a complete itinerary for this trip focusing on an Airbnb or hotel stay. Include recommendations for:\\n1. Flights (airlines and routes from ${departureLocation || 'the nearest major airport'})\\n2. Accommodation options (specific Airbnb listings or hotels matching the accommodation type, amenities, and room preferences; include estimated cost per night and total cost for the trip, and provide alternatives)\\n3. Daily schedule with activities, dining options, and sights\\n4. Estimated food budget (daily cost and recommendations for dining)\\n5. A cost summary table (flights, accommodation, activities, food, total, and remaining budget)\\n6. Travel tips specific to the destination and Airbnb/hotel experience\\n\\nRespond in a clean and organized layout with sections. Include hyperlinks to Airbnb listings, hotels, attractions, or dining options where relevant.` } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3780,
+        1440
+      ],
+      "id": "f110ec51-f5ae-4f91-83cf-732431846e4e",
+      "name": "Prepare Airbnb Data"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "You are an experienced and helpful AI travel agent specializing in Airbnb and hotel stays. Your goal is to create exciting, practical, and well-organized travel itineraries tailored to each user's preferences. Be friendly, informative, and concise.\\n\\nWhen suggesting Airbnb listings, hotels, attractions, restaurants, or activities, include relevant hyperlinks so users can easily click through to book or learn more. Ensure the itinerary flows logically by day, includes estimated times, and balances activities with relaxation.\\n\\nAlways provide valuable travel tips and local insights to enhance the experience. Format your responses in a clean and organized layout with bullet points, headings, and emojis where appropriate to improve readability and engagement.",
+              "role": "system"
+            },
+            {
+              "content": "={{$json.prompt}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        3980,
+        1440
+      ],
+      "id": "5ccaaf83-8a55-4878-8cee-90a047bd478f",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const airbnb = $node['Prepare Airbnb Data'].json; const ai = $node['OpenAI'].json.message?.content || 'No itinerary found.'; const displayValue = String(airbnb.display); return [{ json: { destinationCity: airbnb.destinationCity, departureLocation: airbnb.departureLocation, accommodationType: airbnb.accommodationType, amenities: airbnb.amenities, bedrooms: airbnb.bedrooms, bathrooms: airbnb.bathrooms, startDate: airbnb.startDate, endDate: airbnb.endDate, groupSize: airbnb.groupSize, budget: airbnb.budget, email: airbnb.email, itinerary: ai, display: displayValue } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4360,
+        1440
+      ],
+      "id": "d7d20cbc-8907-4456-a322-82d342d0a0b5",
+      "name": "Airbnb Info"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "display-condition",
+              "leftValue": "={{ $json.display }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4600,
+        1440
+      ],
+      "id": "b34c8146-04cc-41bf-8f4f-0d3fbbba42ff",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Data at Gmail Node:', JSON.stringify($json, null, 2)); return [$json];"
+      },
+      "name": "Debug Gmail Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4780,
+        1580
+      ],
+      "id": "3e142ded-389a-4ca5-b0c5-c88e8d9f303b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const destination = $json.destinationCity || 'Your Destination'; \nconst travelDates = `${$json.startDate || 'N/A'} to ${$json.endDate || 'N/A'}`; \nconst departure = $json.departureLocation || 'Not specified'; \nconst budget = $json.budget || 'N/A'; \nconst groupSize = $json.groupSize || 'N/A'; \nconst itineraryRaw = $json.itinerary || 'Itinerary details not available.'; \n// Preprocess itinerary to clean up Markdown and add HTML formatting\nconst itineraryLines = itineraryRaw.split('\\n'); \nlet itinerary = ''; \nlet inTable = false; \nlet tableRows = []; \nfor (let line of itineraryLines) {\n  line = line.trim();\n  // Skip empty lines or separator lines\n  if (!line || line === '---' || line.startsWith('-------------------')) continue;\n  // Handle table\n  if (line.startsWith('Flights (2 people)') || line.includes('Flights (2 people)')) {\n    inTable = true;\n    tableRows = [];\n    continue;\n  }\n  if (inTable && (line.startsWith('**Total**') || line.startsWith('**Remaining Budget**') || line.includes('Total') || line.includes('Remaining Budget'))) {\n    const [category, cost] = line.replace(/\\*\\*/g, '').split('\\t').map(item => item.trim());\n    tableRows.push(`<tr><td style=\"border: 1px solid #e0e0e0; padding: 5px;\"><strong>${category}</strong></td><td style=\"border: 1px solid #e0e0e0; padding: 5px;\"><strong>${cost}</strong></td></tr>`);\n    continue;\n  }\n  if (inTable && line.includes('\\t')) {\n    const [category, cost] = line.split('\\t').map(item => item.trim());\n    tableRows.push(`<tr><td style=\"border: 1px solid #e0e0e0; padding: 5px;\">${category}</td><td style=\"border: 1px solid #e0e0e0; padding: 5px;\">${cost}</td></tr>`);\n    continue;\n  }\n  if (inTable && !line.includes('\\t')) {\n    inTable = false;\n    itinerary += `<table style=\"border-collapse: collapse; width: 100%;\">${tableRows.join('')}</table><br>`;\n  }\n  // Convert Markdown headings to HTML\n  if (!inTable) {\n    if (line.startsWith('### ')) {\n      itinerary += `<h3 style=\"color: #2a4a6e; font-size: 18px; margin: 15px 0 5px 0;\">${line.replace('### ', '')}</h3>`;\n    } else if (line.startsWith('#### **Day')) {\n      itinerary += `<strong>${line.replace('#### **', '').replace('**', '')}</strong><br>`;\n    } else if (line.startsWith('#### ')) {\n      itinerary += `<strong>${line.replace('#### ', '')}</strong><br>`;\n    } else {\n      // Replace **bold** with <strong>bold</strong>\n      line = line.replace(/\\*\\*/g, '');\n      // Add line break if the line isn’t empty\n      itinerary += line + (line ? '<br>' : '');\n    }\n  }\n}\n// Add the table if we ended in table mode\nif (inTable) {\n  itinerary += `<table style=\"border-collapse: collapse; width: 100%;\">${tableRows.join('')}</table><br>`;\n}\nconst subject = `Your Travel Itinerary for ${destination} - Voyage Genie`; \nconst message = `<div style=\"font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f7f7f7; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">\n  <div style=\"background-color: #2a4a6e; padding: 15px; border-radius: 8px 8px 0 0; text-align: center;\">\n    <h1 style=\"color: #ffffff; margin: 0; font-size: 24px;\">✈️ Your Travel Itinerary</h1>\n  </div>\n  <div style=\"padding: 20px; background-color: #ffffff; border-radius: 0 0 8px 8px;\">\n    <h2 style=\"color: #2a4a6e; font-size: 20px; margin-top: 0;\">Destination: ${destination}</h2>\n    <p style=\"color: #333333; font-size: 16px; margin: 10px 0;\"><strong>Travel Dates:</strong> ${travelDates}</p>\n    <p style=\"color: #333333; font-size: 16px; margin: 10px 0;\"><strong>Departing From:</strong> ${departure}</p>\n    <p style=\"color: #333333; font-size: 16px; margin: 10px 0;\"><strong>Budget:</strong> $${budget} (for ${groupSize} travelers)</p>\n    <hr style=\"border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;\">\n    <h3 style=\"color: #2a4a6e; font-size: 18px; margin-top: 0;\">Itinerary Details</h3>\n    <div style=\"background-color: #f9f9f9; padding: 15px; border-radius: 4px; font-size: 14px; line-height: 1.6; color: #333333;\">\n      ${itinerary}\n    </div>\n    <hr style=\"border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;\">\n    <p style=\"color: #666666; font-size: 12px; text-align: center; margin: 0;\">Generated by <strong>Voyage Genie</strong> 🌟</p>\n  </div>\n</div>`; \nreturn [{ json: { ...$json, resolvedEmail: $json.email || 'jtran112675@gmail.com', resolvedSubject: subject, resolvedMessage: message } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4940,
+        1580
+      ],
+      "id": "63a734c0-60f7-4dec-a213-24fcf10bdcaa",
+      "name": "Resolve Email Content"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.resolvedEmail }}",
+        "subject": "={{ $json.resolvedSubject }}",
+        "message": "={{ $json.resolvedMessage }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        5100,
+        1580
+      ],
+      "id": "a4a512d8-c6c4-48d2-a4de-9b5acca3cbe8",
+      "name": "Gmail",
+      "webhookId": "5bada7bb-3d4b-4c39-bf74-4861fb0f29dc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bBXXYTmxaLHTskHO",
+          "name": "Gmail account 12"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "if (!global.itineraries) { global.itineraries = {}; } const trip = $json; const itineraryId = Date.now().toString(); global.itineraries[itineraryId] = { tripTitle: `🏠 Airbnb Plan: ${trip.destinationCity}`, departure: trip.departureLocation, dates: `${trip.startDate} to ${trip.endDate}`, groupSize: trip.groupSize, budget: `$${trip.budget}`, itinerary: trip.itinerary }; return [{ json: { itineraryId: itineraryId, redirectUrl: `http://localhost:80/workflow_confirmation.html?itineraryId=${itineraryId}` } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        1300
+      ],
+      "id": "ae49209d-635c-489f-98d5-a47751764b0b",
+      "name": "Store and Redirect"
+    },
+    {
+      "parameters": {
+        "jsCode": "const itineraryId = $json.query.itineraryId; if (!global.itineraries || !global.itineraries[itineraryId]) { return [{ json: { error: 'Itinerary not found' } }]; } return [{ json: global.itineraries[itineraryId] }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3580,
+        1680
+      ],
+      "id": "b06cd451-ac18-4c3b-8b3f-4d299aff0569",
+      "name": "Retrieve Itinerary"
+    },
+    {
+      "parameters": {
+        "responseCode": 302,
+        "setHeaders": {
+          "entries": [
+            {
+              "name": "Location",
+              "value": "={{ $json.redirectUrl }}"
+            }
+          ]
+        }
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        5000,
+        1300
+      ],
+      "id": "1ef5b75e-e39b-4722-b573-62c5ecc6afc7"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Method": {
+      "main": [
+        [
+          {
+            "node": "If Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retrieve Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Prepare Airbnb Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Airbnb Data": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Airbnb Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airbnb Info": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Store and Redirect",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Gmail Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Gmail Data": {
+      "main": [
+        [
+          {
+            "node": "Resolve Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Email Content": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store and Redirect": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "87a71658-b8bb-43d1-b17e-2bf692afaba9",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "nK3F8WlltmdvO5JQ",
+  "tags": []
+}

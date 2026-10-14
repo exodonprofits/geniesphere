@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "insurance-policy-submit",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const policies = [];
+
+const keys = [
+  'name', 'email', 'policy_type', 'ownership', 'business_name',
+  'provider', 'monthly_premium', 'yearly_premium', 'coverage_amount',
+  'deductible', 'effective_date', 'expiration_date', 'bundled', 'notes'
+];
+
+const length = $json['policy_type[]'].length;
+
+for (let i = 0; i < length; i++) {
+  const policy = {};
+  for (const key of keys) {
+    const arr = $json[`${key}[]`] || [];
+    policy[key] = arr[i] || '';
+  }
+  policies.push({ json: policy });
+}
+
+return policies;"
+      },
+      "id": "2",
+      "name": "Format Policies",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "sheetId": "<your-google-sheet-id>",
+        "range": "InsurancePolicies!A1",
+        "options": {
+          "valueInputMode": "USER_ENTERED"
+        },
+        "valueData": [
+          [
+            "={{$json.name}}",
+            "={{$json.email}}",
+            "={{$json.policy_type}}",
+            "={{$json.ownership}}",
+            "={{$json.business_name}}",
+            "={{$json.provider}}",
+            "={{$json.monthly_premium}}",
+            "={{$json.yearly_premium}}",
+            "={{$json.coverage_amount}}",
+            "={{$json.deductible}}",
+            "={{$json.effective_date}}",
+            "={{$json.expiration_date}}",
+            "={{$json.bundled}}",
+            "={{$json.notes}}"
+          ]
+        ]
+      },
+      "id": "3",
+      "name": "Add to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [740, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "your-credential-id",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Format Policies", "type": "main", "index": 0}]]
+    },
+    "Format Policies": {
+      "main": [[{"node": "Add to Google Sheet", "type": "main", "index": 0}]]
+    }
+  }
+}

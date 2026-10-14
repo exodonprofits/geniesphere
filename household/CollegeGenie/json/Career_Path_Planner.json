@@ -1,0 +1,142 @@
+{
+  "name": "Career-Path-Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "career-analysis",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        760,
+        200
+      ],
+      "id": "6cdc4425-1e92-4395-b75c-b0860f8aceeb",
+      "webhookId": "2c027fd0-9b77-49d6-8639-15ff291f2327"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        200
+      ],
+      "id": "647f149f-ba2c-4707-8061-2f76d9faf0aa"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "GPT-4"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You're an AI career advisor helping high school students (Grades 9\u201312) discover inspiring career paths and college majors.\n\nUsing the student's answers below, suggest:\n- \u2705 3 career paths that align with their interests and strengths\n- \u2705 3 relevant college majors to help them reach those careers\n\nSpeak directly to the student in a positive, encouraging tone. Make the suggestions age-appropriate, engaging, and easy to understand.\n\nReturn your suggestions in a **clear bulleted list format**, using emojis for fun and friendliness.\n\n---\nStudent Profile:\n\nName: {{$json.body.fullName}}\nGrade: {{$json.body.gradeLevel}}\nDream Career: {{$json.body.dreamCareer}}\nMotivators: {{$json.body.motivators}}\nPreferred Environment: {{$json.body.environment}}\nStrengths: {{$json.body.strengths}}\nFavorite Subjects: {{$json.body.subjects}}\n\n---\n\n\ud83c\udfaf Now suggest 3 exciting careers and 3 relevant college majors that would be a great fit!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1000,
+        200
+      ],
+      "name": "OpenAI",
+      "id": "b13e9235-c27d-4590-9e8d-321f27856de1",
+      "credentials": {
+        "openAiApi": {
+          "id": "a4svfLWSt9DRE9y5",
+          "name": "GenieSphere"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "13e1a7a8-a5a0-4e8f-8215-6ef47aab387a",
+              "name": "suggestions",
+              "value": "={{$json.message.content}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1340,
+        200
+      ],
+      "id": "89b5803a-e296-44c8-8e52-e080d670593f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{\n  json: {\n    suggestions: $json.message.content\n  }\n}];"
+      },
+      "name": "Format Suggestions",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": [
+      [
+        {
+          "node": "OpenAI",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "OpenAI": [
+      [
+        {
+          "node": "Format Suggestions",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Format Suggestions": [
+      [
+        {
+          "node": "Response",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "988c3706-3010-4fe0-a6af-ca50ae8ac17b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "1lrk93OaKuASOOjC",
+  "tags": []
+}

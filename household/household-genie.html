@@ -1,0 +1,2546 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>🏡 Household Genie | GenieSphere</title>
+<meta content="Household Genie command center — suggestions and tasks across bills, appointments, meals, cars, and home." name="description"/>
+<meta name="gs-config" content="/shared/config.json" />
+<style>
+
+  /* =========================================================
+     GenieSphere Theme System (shared)
+     - Toggle via ⚙️ Appearance (saved in localStorage)
+     ========================================================= */
+
+  :root{
+    --ring: rgba(76,110,245,.25);
+
+    /* layout */
+    --container: 1440px;
+    --radius: 7px;
+    --radius-lg: 14px;
+    --btn-radius: 999px;
+
+    /* spacing */
+    --space-1: 6px;
+    --space-2: 10px;
+    --space-3: 14px;
+    --space-4: 18px;
+    --space-5: 24px;
+    --space-6: 32px;
+
+    /* motion/shadow */
+    --shadow: 0 16px 38px rgba(15,23,42,.16);
+    --shadow-soft: 0 10px 24px rgba(15,23,42,.10);
+
+    /* focus */
+    --focus: 0 0 0 4px rgba(76,110,245,.18);
+  }
+
+  /* Theme A: Calm Future (default) */
+  body.theme-calm{
+    --bg: #f5f7fb;
+    --panel: #ffffff;
+    --panel-2: #f1f4ff;
+    --text: #111827;
+    --muted: #4b5563;
+
+    --primary: #4c6ef5;
+    --accent: #22c55e;
+
+    --border: rgba(148,163,184,.70);
+    --border-strong: rgba(148,163,184,.92);
+
+    --shadow: 0 18px 38px rgba(15,23,42,.14);
+    --shadow-soft: 0 10px 26px rgba(15,23,42,.10);
+    --focus: 0 0 0 4px rgba(76,110,245,.18);
+  }
+
+  /* Theme B: Soft Futuristic */
+  body.theme-future{
+    --bg: #0f172a;
+    --panel: #111c36;
+    --panel-2: #162447;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+
+    --primary: #6366f1;
+    --accent: #22d3ee;
+
+    --border: rgba(71,85,105,.65);
+    --border-strong: rgba(71,85,105,.95);
+
+    --shadow: 0 18px 44px rgba(0,0,0,.52);
+    --shadow-soft: 0 10px 26px rgba(0,0,0,.34);
+    --focus: 0 0 0 4px rgba(34,211,238,.16);
+  }
+
+  /* Theme C: Nature + Tech */
+  body.theme-nature{
+    --bg: #f6f9f7;
+    --panel: #ffffff;
+    --panel-2: #eef5f1;
+    --text: #0f172a;
+    --muted: #475569;
+
+    --primary: #16a34a;
+    --accent: #38bdf8;
+
+    --border: rgba(148,163,184,.70);
+    --border-strong: rgba(148,163,184,.92);
+
+    --shadow: 0 18px 38px rgba(15,23,42,.12);
+    --shadow-soft: 0 10px 26px rgba(15,23,42,.09);
+    --focus: 0 0 0 4px rgba(22,163,74,.16);
+  }
+
+  /* Theme D: Pro Dark */
+  body.theme-dark{
+    --bg: #0b1220;
+    --panel: #121a2b;
+    --panel-2: #0e1626;
+    --text: #e9f0ff;
+    --muted: #a9b6d9;
+
+    --primary: #4c6ef5;
+    --accent: #3ee1a1;
+
+    --border: rgba(120,155,255,.22);
+    --border-strong: rgba(120,155,255,.42);
+
+    --shadow: 0 18px 44px rgba(0,0,0,.50);
+    --shadow-soft: 0 10px 26px rgba(0,0,0,.30);
+    --focus: 0 0 0 4px rgba(76,110,245,.22);
+  }
+
+  /* Household page variable mapping */
+  body{
+    --card: var(--panel);
+    --card-hover: var(--panel-2);
+    --accent: var(--accent);
+    --accent-2: var(--primary);
+    --brand-blue: var(--primary);
+    --ring: rgba(62,225,161,.35);
+    --shadow: var(--shadow-soft);
+    --radius: var(--radius);
+    --gap: 18px;
+    --btn-radius: 999px;
+  }
+
+*{box-sizing:border-box}
+  html,body{height:100%}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background: var(--bg);
+    color:var(--text);
+    font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+  }
+
+  .sr-only{
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+
+  .container{max-width:1440px;margin:0 auto;padding:24px}
+
+  /* Header (aligned with index.html) */
+  .site-header{
+    position:sticky;
+    top:0;
+    z-index:1000;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    box-shadow:0 8px 22px rgba(0,0,0,.25);
+    backdrop-filter:saturate(120%) blur(10px);
+  }
+  .site-header-inner{
+    max-width:1440px;
+    margin:0 auto;
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:700;
+  }
+  .logo{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+    box-shadow:0 0 0 3px var(--ring),0 8px 24px rgba(62,225,161,.35);
+  }
+  .menu{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    font-size:14px;
+  }
+  .menu a{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 2px;
+    border-radius:0;
+    text-decoration:none;
+    color:var(--muted);
+    font-weight:500;
+    border-bottom:2px solid transparent;
+    box-shadow:none;
+    background:transparent;
+    transition:color .15s ease, border-bottom-color .15s ease;
+  }
+  .menu a:hover{
+    color:var(--text);
+    border-bottom-color:var(--brand-blue);
+  }
+  .menu a.active{
+    color:var(--text);
+    border-bottom-color:var(--accent);
+    font-weight:600;
+  }
+  .menu a.ghost{
+    color:var(--muted);
+  }
+
+  /* User menu (desktop + mobile) */
+  .user-menu{
+    position:relative;
+    display:flex;
+    align-items:center;
+    margin-left:auto;
+  }
+  .user-menu-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:999px;
+    border:1px solid var(--border-strong);
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:14px;
+    cursor:pointer;
+  }
+  .user-menu-toggle:hover{
+    border-color:var(--accent);
+  }
+  .user-menu-dropdown{
+    position:absolute;
+    right:0;
+    top:calc(100% + 6px);
+    min-width:220px;
+    background:var(--panel-2);
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    box-shadow:0 14px 34px rgba(0,0,0,.55);
+    padding:6px 0;
+    display:none;
+    z-index:1002;
+    margin-right:4px;
+  }
+  .user-menu-dropdown a,
+  .user-menu-dropdown button{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:8px 14px;
+    background:none;
+    border:none;
+    color:var(--text);
+    font-size:14px;
+    text-decoration:none;
+    cursor:pointer;
+  }
+  .user-menu-dropdown a:hover,
+  .user-menu-dropdown button:hover{
+    background:var(--panel);
+  }
+  .user-menu-divider{
+    height:1px;
+    margin:4px 0;
+    background:rgba(148,163,184,.4);
+  }
+  .dropdown-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    opacity:.7;
+    padding:4px 14px 2px;
+  }
+  .auth-only{ }
+
+  .hamburger{
+    display:none;
+  }
+  .theme-gear{
+    display:none;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    border-radius:999px;
+    border:1px solid var(--border-strong);
+    background:var(--panel-2);
+    color:var(--text);
+    cursor:pointer;
+  }
+  .theme-gear:hover{ border-color: var(--accent); }
+
+  .hamburger{
+    display:none;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 10px;
+    cursor:pointer;
+  }
+  @media(max-width:720px){
+    /* Mobile behavior:
+       - Hide top header links/buttons
+       - Use username dropdown as the main navigation menu
+       - Use bottom tabs for the 4 main areas
+    */
+    .menu{display:none}
+    .hamburger{display:none}
+    .drawer{display:none}
+    .theme-gear{display:none}
+    .site-header-inner{padding:10px 12px}
+    .user-menu-toggle{padding-inline:10px;}
+  }
+
+  .drawer{
+    position:fixed;
+    inset:60px 12px auto 12px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:10px;
+    display:none;
+    z-index:1001;
+    box-shadow:0 18px 34px rgba(0,0,0,.45);
+  }
+  .drawer a{
+    display:block;
+    margin:6px 0;
+    padding:10px 12px;
+    border-radius:var(--radius);
+    text-decoration:none;
+    color:var(--text);
+    background:var(--panel);
+    border:1px solid var(--border);
+  }
+  .drawer a.active{
+    background:var(--card-hover);
+    border-color:rgba(62,225,161,.35);
+  }
+
+  /* Hero */
+  .hero{text-align:center;padding:16px 0 8px}
+  .title{
+    font-size:clamp(26px,4vw,40px);
+    margin:0 0 6px;
+    font-weight:900;
+  }
+  .subtitle{
+    color:var(--muted);
+    margin:0 auto 18px;
+    max-width:820px;
+    font-size:15px;
+  }
+
+  /* Ask Household Genie */
+  .ask{
+    max-width:1440px;
+    margin:0 auto 22px;
+    background:linear-gradient(180deg,rgba(24,35,58,.75),rgba(18,26,43,.75));
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:var(--shadow);
+    border:1px solid var(--border);
+  }
+  .ask-row{display:flex;gap:12px}
+  .input{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:var(--btn-radius);
+    padding:10px 16px;
+    color:var(--text);
+    font-size:14px;
+  }
+  .input:focus{
+    outline:none;
+    border-color:rgba(74,163,255,.45);
+    box-shadow:0 0 0 3px rgba(74,163,255,.15);
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 18px;
+    border-radius:var(--btn-radius);
+    text-decoration:none;
+    color:#03101f;
+    background:var(--accent-2);
+    font-weight:700;
+    border:0;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(74,163,255,.25);
+    font-size:14px;
+    white-space:nowrap;
+  }
+  .btn.primary{
+    background:var(--accent);
+    color:#04131a;
+    box-shadow:0 8px 18px rgba(62,225,161,.25);
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .hint{
+    margin-top:10px;
+    color:var(--muted);
+    font-size:13px;
+  }
+  @media(max-width:640px){
+    .ask-row{flex-direction:column}
+    .btn{width:100%}
+  }
+
+  /* Today strip */
+  .today-strip{
+    margin:0 auto 16px;
+    max-width:1440px;
+    border-radius:var(--radius);
+    border:1px dashed var(--border-strong);
+    background:rgba(12,19,35,.95);
+    padding:8px 12px;
+    font-size:13px;
+    color:var(--muted);
+    display:none;
+  }
+  .today-strip strong{color:var(--text)}
+
+  /* Quick Peek */
+  details.overview{
+    max-width:1440px;
+    margin:12px auto 16px;
+    background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.85));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+  details.overview>summary{
+    list-style:none;
+    cursor:pointer;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  details.overview[open]>summary{
+    border-bottom:1px solid var(--border);
+  }
+  .summary-title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:900;
+  }
+  .summary-badges{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .summary-badge{
+    font-size:12px;
+    font-weight:800;
+    border-radius:999px;
+    padding:4px 10px;
+    background:var(--brand-blue);
+    color:#03101f;
+  }
+
+  .overview-content{
+    display:grid;
+    gap:14px;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    padding:12px;
+  }
+  .mini-card{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:12px;
+    min-height:110px;
+  }
+  .mini-title{
+    margin:0 0 8px;
+    font-size:14px;
+    color:#d7e4ff;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .mini-list{
+    margin:0;
+    padding-left:18px;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  /* Sections */
+  .section-title{
+    margin:0;
+    font-size:clamp(17px,2.1vw,20px);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:700;
+  }
+  details.section{
+    margin:18px 0 6px;
+    background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.9));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+  details.section>summary{
+    list-style:none;
+    cursor:pointer;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  details.section[open]>summary{
+    border-bottom:1px solid var(--border);
+  }
+  .section-summary-right{
+    color:var(--muted);
+    font-size:13px;
+  }
+  .section-body{padding:14px}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:18px;
+  }
+  @media(max-width:1020px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media(max-width:640px){.grid{grid-template-columns:1fr; gap:12px;}}
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px;
+    text-decoration:none;
+    color:var(--text);
+    position:relative;
+    overflow:hidden;
+    min-height:140px;
+    box-shadow:0 14px 26px rgba(0,0,0,.25);
+    transition:transform .12s ease, border-color .12s ease, background .12s ease;
+  }
+  .card:hover{
+    transform:translateY(-2px);
+    border-color:rgba(76,110,245,.55);
+    background:var(--card-hover);
+  }
+  .icon{
+    font-size:24px;
+    filter:drop-shadow(0 8px 20px rgba(0,0,0,.25));
+  }
+  .card h3{margin:10px 0 6px;font-size:18px}
+  .card p{margin:0;color:var(--muted);font-size:14px;max-width:52ch}
+
+  /* Footer */
+  .site-footer{
+    margin-top:30px;
+    padding:22px 0 34px;
+    border-top:1px solid var(--border);
+    background:rgba(10,16,28,.9);
+    color:var(--muted);
+  }
+  .site-footer-inner{
+    max-width:1440px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+  .footer-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:16px;
+  }
+  .footer-col h4{margin:0 0 10px;color:var(--text);font-size:14px}
+  .footer-col a{
+    display:block;
+    color:var(--muted);
+    text-decoration:none;
+    margin:6px 0;
+    font-size:13px;
+  }
+  .footer-col a:hover{color:var(--text)}
+  .footer-bottom{
+    margin-top:18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    font-size:12px;
+  }
+  .social{
+    display:flex;
+    gap:10px;
+  }
+  .social a{
+    width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    text-decoration:none;
+  }
+
+  /* Theme modal */
+  .theme-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.62);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:2000;
+    padding:18px;
+  }
+  .theme-modal{
+    width:min(720px, 96vw);
+    border-radius:var(--radius-lg);
+    border:1px solid var(--border);
+    background:var(--panel);
+    box-shadow:0 30px 90px rgba(0,0,0,.55);
+    overflow:hidden;
+  }
+  .theme-modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .theme-modal-title{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  .theme-modal-title strong{ font-size:15px; }
+  .theme-modal-title span{ font-size:13px; color:var(--muted); }
+  .theme-close{
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    border-radius:999px;
+    padding:8px 10px;
+    cursor:pointer;
+  }
+  .theme-close:hover{ border-color: var(--accent); }
+  .theme-modal-body{ padding: 14px; }
+  .theme-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+  @media (max-width: 560px){
+    .theme-grid{ grid-template-columns:1fr; }
+  }
+  .theme-option{
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    padding: 12px;
+    cursor:pointer;
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .theme-option:hover{ border-color: rgba(76,110,245,.55); }
+  .theme-option.selected{
+    border-color: rgba(76,110,245,.85);
+    box-shadow: var(--focus);
+  }
+  .theme-option-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .theme-option-name{
+    margin:0;
+    font-weight:900;
+    font-size:14px;
+  }
+  .theme-option-desc{
+    margin:0;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .theme-option-tag{
+    font-size:11px;
+    font-weight:800;
+    padding:4px 8px;
+    background: rgba(76,110,245,.16);
+    border:1px solid rgba(76,110,245,.35);
+    border-radius: 999px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .theme-modal-footer{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 6px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .card-title .icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+
+  /* ===== Mobile Bottom Nav (4 tabs) ===== */
+  .mobile-nav{
+    position:fixed; left:0; right:0; bottom:0;
+    display:none;
+    z-index:1200;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    background:var(--panel);
+    border-top:1px solid var(--border);
+    box-shadow:0 -10px 24px rgba(0,0,0,.18);
+  }
+  .mobile-nav-inner{
+    max-width:var(--container);
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+  }
+  .mnav{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px;
+    padding:10px 8px;
+    border-radius:14px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--muted);
+    font-weight:800;
+    font-size:11px;
+    text-decoration:none;
+  }
+  .mnav .ico{ font-size:16px; line-height:1; }
+  .mnav.active{
+    color:var(--text);
+    border-color:rgba(76,110,245,.55);
+    box-shadow:var(--focus);
+  }
+  .mobile-pad{ display:none; height:86px; }
+
+  /* Show only on mobile */
+  @media (max-width: 860px){
+    .mobile-nav{ display: block; }
+    .mobile-pad{ display: block; }
+  }
+
+  /* Hide footer on mobile */
+  @media (max-width: 600px) {
+    .site-footer {
+      display: none !important;
+    }
+  
+  }
+
+  /* add space add then bottom of the page */
+  @media (max-width: 860px){
+    main.page{
+      padding-bottom: calc(86px + env(safe-area-inset-bottom));
+    }
+  }
+
+
+/* Hub badge + micro line (used on Household Hub cards) */
+.hub-badge{
+  margin-left:auto;
+  font-size:12px;
+  font-weight:900;
+  padding:4px 10px;
+  border-radius:999px;
+  background:var(--accent);
+  color:#04131a;
+  border:1px solid rgba(0,0,0,.10);
+  white-space:nowrap;
+}
+.micro{
+  margin-top:10px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* =========================
+   Featured (Genie) cards
+   ========================= */
+.grid-featured{
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+@media (max-width: 1020px){
+  .grid-featured{ grid-template-columns: 1fr; }
+}
+
+/* Make Genie cards feel “primary” */
+.card.featured{
+  min-height: 170px;
+  padding: 18px;
+  border-color: rgba(120,155,255,.35);
+  background: linear-gradient(180deg, rgba(22,34,60,.92), rgba(14,22,38,.92));
+}
+
+.card.featured:hover{
+  border-color: rgba(76,110,245,.70);
+}
+
+/* Bigger title + better spacing */
+.card.featured .card-title{
+  font-size: 20px;
+  margin: 4px 0 8px;
+}
+
+.card.featured p{
+  font-size: 14px;
+  max-width: 60ch;
+}
+
+/* Optional: subtle “Genie” tag look */
+.card.featured::after{
+  content: "Genie";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(76,110,245,.14);
+  border: 1px solid rgba(76,110,245,.30);
+  color: var(--muted);
+}
+
+
+
+/* ================= Household Genie additions (page-specific) ================= */
+/* Household Genie page-specific */
+.page-hero{ text-align:center; padding:14px 0 6px; }
+.page-hero .title{ margin:0; font-size:clamp(22px,3.6vw,34px); font-weight:900; }
+.page-hero .subtitle{ margin:8px auto 0; max-width:920px; color:var(--muted); font-size:14px; }
+
+.panel{
+  background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.9));
+  border:1px solid rgba(120,155,255,.18);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:14px;
+  margin-bottom: 20px;
+}
+
+.panel2{
+  background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.9));
+  border:1px solid rgba(120,155,255,.18);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:14px;
+}
+
+.row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+.row.between{ justify-content:space-between; }
+.input-like{
+  background:#0e1626;
+  border:1px solid rgba(120,155,255,.18);
+  border-radius:999px;
+  padding:10px 14px;
+  color:var(--text);
+  outline:none;
+  font-size:14px;
+}
+.input-like:focus{
+  border-color:rgba(74,163,255,.45);
+  box-shadow:0 0 0 3px rgba(74,163,255,.15);
+}
+.select-like{
+  background:#0e1626;
+  border:1px solid rgba(120,155,255,.18);
+  border-radius:999px;
+  padding:10px 14px;
+  color:var(--text);
+  outline:none;
+  font-size:14px;
+}
+
+.section-title-sm{ margin:0 0 10px; font-size:16px; display:flex; align-items:center; gap:8px; }
+.sub{ color:var(--muted); font-size:13px; margin:0 0 10px; }
+
+.glance-grid{
+  display:grid;
+  gap:12px;
+  grid-template-columns:repeat(1,1fr);
+}
+@media(min-width:760px){ .glance-grid{ grid-template-columns:repeat(3,1fr);} }
+
+.stat{
+  background:#0e1626;
+  border:1px solid rgba(120,155,255,.12);
+  border-radius:var(--radius);
+  padding:12px;
+  min-height:96px;
+}
+.stat strong{ display:block; margin-bottom:6px; }
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:12px;
+  background:rgba(74,163,255,.25);
+  color:#d7e4ff;
+  border:1px solid rgba(74,163,255,.35);
+}
+.chip.green{ background:rgba(62,225,161,.18); border-color:rgba(62,225,161,.35); }
+.chip.amber{ background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.35); }
+.chip.red{ background:rgba(239,68,68,.18); border-color:rgba(239,68,68,.35); }
+
+.quick-grid{
+  display:grid;
+  gap:12px;
+  grid-template-columns:repeat(1,1fr);
+}
+@media(min-width:960px){ .quick-grid{ grid-template-columns:repeat(3,1fr);} }
+
+.field{
+  display:grid;
+  gap:10px;
+  grid-template-columns:repeat(1,1fr);
+}
+@media(min-width:720px){ .field.cols-3{ grid-template-columns:1.2fr 1fr auto; } .field.cols-2{ grid-template-columns:1.2fr auto; } }
+
+.control{
+  padding:10px 12px;
+  border:1px solid rgba(120,155,255,.18);
+  border-radius:12px;
+  background:#0e1626;
+  color:var(--text);
+  outline:none;
+}
+.control:focus{
+  border-color:rgba(74,163,255,.45);
+  box-shadow:0 0 0 3px rgba(74,163,255,.15);
+}
+
+.btn-lite{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:9px 16px;
+  border-radius:999px;
+  text-decoration:none;
+  font-weight:800;
+  border:1px solid rgba(120,155,255,.18);
+  background:#0e1626;
+  color:var(--text);
+  cursor:pointer;
+}
+.btn-lite:hover{ border-color:rgba(62,225,161,.35); }
+
+.btn-green{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:9px 16px;
+  border-radius:999px;
+  text-decoration:none;
+  font-weight:900;
+  border:0;
+  background:var(--accent);
+  color:#04131a;
+  cursor:pointer;
+  box-shadow:0 8px 18px rgba(62,225,161,.25);
+}
+.btn-green:hover{ filter:brightness(1.05); }
+
+.tools-grid{
+  display:grid;
+  gap:var(--gap);
+  grid-template-columns:repeat(1,1fr);
+}
+@media(min-width:760px){ .tools-grid{ grid-template-columns:repeat(2,1fr);} }
+@media(min-width:1060px){ .tools-grid{ grid-template-columns:repeat(3,1fr);} }
+
+.tool-card{
+  display:block;
+  text-decoration:none;
+  color:inherit;
+  background:linear-gradient(180deg,rgba(24,35,58,.7),rgba(18,26,43,.9));
+  border:1px solid rgba(120,155,255,.15);
+  border-radius:var(--radius);
+  padding:16px;
+  transition:.18s;
+  box-shadow:var(--shadow);
+  min-height:150px;
+}
+.tool-card:hover{
+  transform:translateY(-2px);
+  background:#18233a;
+  border-color:rgba(62,225,161,.35);
+  box-shadow:0 14px 34px rgba(0,0,0,.45);
+}
+.tool-icon{ font-size:26px; margin-bottom:8px; }
+.tool-card h3{ margin:0 0 4px; font-size:16px; display:flex; align-items:center; gap:6px; }
+.tool-card p{ margin:0; color:var(--muted); font-size:14px; }
+
+.note{ color:var(--muted); font-size:12px; margin-top:8px; }
+
+/* Floating chat button */
+.fab{
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  width:56px;
+  height:56px;
+  border-radius:999px;
+  border:1px solid rgba(120,155,255,.28);
+  background:linear-gradient(180deg,rgba(62,225,161,.95),rgba(38,181,129,.95));
+  color:#04131a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  box-shadow:0 14px 34px rgba(0,0,0,.45);
+  cursor:pointer;
+  z-index:2000;
+}
+.fab:hover{ filter:brightness(1.04); }
+
+.chat-pop{
+  position:fixed;
+  right:14px;
+  bottom:80px;
+  width:min(360px, calc(100vw - 28px));
+  background:#0e1626;
+  border:1px solid rgba(120,155,255,.22);
+  border-radius:var(--radius);
+  box-shadow:0 18px 40px rgba(0,0,0,.55);
+  padding:12px;
+  display:none;
+  z-index:2000;
+}
+.chat-pop h4{ margin:0 0 6px; font-size:14px; }
+.chat-pop .tiny{ color:var(--muted); font-size:12px; margin:0 0 10px; }
+.chat-pop .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.chat-pop .chip-btn{
+  border:1px solid rgba(120,155,255,.22);
+  background:#121a2b;
+  color:var(--text);
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:12px;
+  cursor:pointer;
+}
+.chat-pop .chip-btn:hover{ border-color:rgba(62,225,161,.35); }
+
+
+  /* Suggestion rows (Today at a Glance actions) */
+  .sug-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;flex-wrap:wrap}
+  .sug-text{opacity:.92}
+
+
+/* ===== Permission-aware action row (mobile-friendly) ===== */
+.gs-action-row{
+  margin-top:10px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.gs-hint{opacity:.78; font-size:13px}
+.gs-preview{
+  margin-top:6px;
+  padding:10px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  background:rgba(255,255,255,.04);
+}
+.gs-note{margin-top:8px; opacity:.78; font-size:13px}
+.btn-blue{
+  background:rgba(76,110,245,.18);
+  border:1px solid rgba(76,110,245,.35);
+  color:#fff;
+}
+@media (max-width: 560px){
+  .gs-action-row{flex-direction:column; align-items:stretch}
+  .gs-action-row button{width:100%}
+  .gs-hint{display:block}
+  .field.cols-3{grid-template-columns:1fr !important;}
+  .field.cols-3 .btn-green{width:100%;}
+}
+
+
+/* ===== Household Genie: Assistance level cards (desktop 3-up, mobile stacked) ===== */
+.genie-settings .gs-options{
+  display:grid;
+  gap:14px;
+  grid-template-columns:1fr;
+  margin-top:10px;
+}
+@media (min-width: 980px){
+  .genie-settings .gs-options{
+    grid-template-columns:repeat(3, minmax(0,1fr));
+    align-items:stretch;
+  }
+}
+.genie-settings .gs-option{
+  position:relative;
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  padding:14px 14px;
+  border-radius:14px;
+  border:1px solid rgba(120,155,255,.18);
+  background:linear-gradient(180deg,rgba(14,22,38,.9),rgba(10,16,28,.92));
+  box-shadow:0 10px 26px rgba(0,0,0,.28);
+  cursor:pointer;
+  transition:transform .15s ease, border-color .15s ease, background .15s ease;
+  min-height:120px;
+}
+.genie-settings .gs-option:hover{
+  transform:translateY(-2px);
+  border-color:rgba(62,225,161,.28);
+  background:linear-gradient(180deg,rgba(24,35,58,.72),rgba(14,22,38,.92));
+}
+.genie-settings .gs-option input[type="radio"]{
+  margin-top:4px;
+  accent-color: var(--accent);
+  transform:scale(1.05);
+}
+.genie-settings .gs-option-title{
+  font-weight:950;
+  font-size:16px;
+  letter-spacing:.2px;
+}
+.genie-settings .gs-option-desc{
+  color:var(--muted);
+  font-size:13px;
+  margin-top:4px;
+  line-height:1.45;
+}
+.genie-settings .gs-option:has(input[type="radio"]:checked){
+  border-color:rgba(62,225,161,.45);
+  box-shadow:0 0 0 3px rgba(62,225,161,.12), 0 14px 34px rgba(0,0,0,.38);
+}
+.genie-settings .gs-option:has(input[type="radio"]:checked)::after{
+  content:"Selected";
+  position:absolute;
+  top:12px;
+  right:12px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(62,225,161,.18);
+  border:1px solid rgba(62,225,161,.35);
+  color:#d9fff0;
+}
+.genie-settings .gs-card{ padding:16px; }
+.genie-settings .gs-links{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-top:12px;
+}
+.genie-settings .gs-link{
+  color:var(--accent-2);
+  text-decoration:none;
+  font-weight:800;
+}
+.genie-settings .gs-link:hover{ text-decoration:underline; }
+.genie-settings .gs-dot{ color:rgba(255,255,255,.35); }
+
+
+/* ===== Household Genie UX upgrades ===== */
+.panel-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.panel-sub{color:var(--muted);font-size:13px;line-height:1.35}
+.stat-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sug-actions{display:flex;gap:8px;flex-wrap:wrap}
+.sug-actions .btn, .sug-actions .btn-blue{padding:8px 10px;border-radius:10px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.panel-command .command-box{display:flex;flex-direction:column;gap:10px}
+.textarea{min-height:92px;resize:vertical}
+.command-actions{display:flex;gap:10px;flex-wrap:wrap}
+.command-actions button{min-height:40px}
+.genie-output{margin-top:6px}
+.genie-bubble{border:1px solid rgba(120,155,255,.22);background:rgba(18,26,43,.65);border-radius:14px;padding:12px}
+.genie-bubble-title{font-weight:700;margin-bottom:6px}
+.genie-bubble-q{color:rgba(255,255,255,.88);font-size:13px;margin-bottom:8px}
+.genie-bubble-list{margin:0 0 8px 18px;color:rgba(255,255,255,.88)}
+.genie-bubble-foot{color:var(--muted);font-size:12px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+@media (max-width: 860px){
+  .panel-head{align-items:flex-start}
+  .command-actions{flex-direction:column}
+  .command-actions button{width:100%}
+}
+
+/* ===== Household Genie: Quick Jump buttons (mobile-first) ===== */
+.gs-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.gs-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:14px;
+  text-decoration:none;
+  font-weight:700;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  flex:1;
+  min-width: 160px;
+}
+.gs-btn:hover{ background:rgba(255,255,255,.10); }
+.gs-btn-outline{
+  background:rgba(255,255,255,.04);
+}
+@media (max-width: 520px){
+  .gs-btn{ min-width: 100%; }
+}
+
+
+/* ===== Household Genie: Quick Jump section ===== */
+.gs-section{ margin:18px 0 0; }
+.gs-section-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+.gs-section-title{ margin:0; font-size:clamp(18px,2.4vw,22px); font-weight:900; display:flex; align-items:center; gap:10px; }
+.gs-section-sub{ color:var(--muted); font-size:13px; line-height:1.35; }
+
+
+/* ===== Approval Queue + Activity ===== */
+.panel-head-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+.approve-list{ display:grid; gap:10px; margin-top:10px; }
+.approve-card{
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  border-radius:14px;
+  padding:12px;
+}
+.approve-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.approve-title{ font-weight:900; margin:0; font-size:14px; }
+.approve-desc{ margin:6px 0 0; color:var(--muted); font-size:12px; line-height:1.35; }
+.approve-meta{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 9px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+}
+.badge.dim{ color:var(--muted); }
+.approve-actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.btn-small{
+  padding:9px 12px;
+  border-radius:12px;
+  font-weight:900;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color:#fff;
+}
+.btn-small.primary{
+  background: rgba(76,110,245,.20);
+  border-color: rgba(76,110,245,.28);
+}
+.btn-small.danger{
+  background: rgba(239,68,68,.16);
+  border-color: rgba(239,68,68,.22);
+}
+
+.activity-list{ margin-top:10px; display:grid; gap:10px; }
+.activity-item{
+  display:flex;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+}
+.activity-ico{
+  width:34px; height:34px;
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(76,110,245,.14);
+  border:1px solid rgba(76,110,245,.20);
+  flex:0 0 auto;
+}
+.activity-main{ flex:1; min-width:0; }
+.activity-title{ margin:0; font-weight:900; font-size:13px; }
+.activity-sub{ margin:4px 0 0; color:var(--muted); font-size:12px; }
+
+
+  /* =========================================================
+     Household Genie — Preferences / Queue / Activity layout
+     (Fixes modal + improves mobile/desktop layout)
+     ========================================================= */
+
+  .genie-top-grid{
+    display:grid;
+    gap: var(--space-4);
+    align-items: stretch;
+  }
+  @media (min-width: 980px){
+    .genie-top-grid{
+      grid-template-columns: 1.15fr 1fr 1fr;
+    }
+  }
+
+  .memory-head, .panel-head-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+  .memory-chips{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    border-radius: 999px;
+    font-weight: 650;
+    font-size: 13px;
+    color: var(--text);
+    max-width: 100%;
+  }
+  body.theme-calm .chip{
+    background: linear-gradient(180deg, rgba(76,110,245,.08), rgba(34,197,94,.05));
+  }
+  .chip .k{ opacity:.85; font-weight:600; }
+  .chip .v{ opacity:.95; font-weight:700; }
+
+  .approve-list, .activity-list{
+    margin-top: 12px;
+    display:flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  @media (min-width: 980px){
+    .approve-list, .activity-list{
+      max-height: 320px;
+      overflow:auto;
+      padding-right: 6px;
+    }
+  }
+
+  /* Buttons (ensure btn-secondary exists) */
+  .btn{
+    appearance:none;
+    border: 0;
+    cursor:pointer;
+    font-weight: 750;
+    border-radius: var(--btn-radius);
+    padding: 10px 14px;
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 10px 22px rgba(0,0,0,.18);
+  }
+  .btn:hover{ filter: brightness(1.04); }
+  .btn:focus{ outline:none; box-shadow: var(--focus); }
+  .btn.btn-secondary{
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    box-shadow: none;
+  }
+  body.theme-calm .btn.btn-secondary{
+    background: #fff;
+  }
+  .icon-btn{
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    cursor:pointer;
+    display:grid;
+    place-items:center;
+  }
+
+  /* Modal (was previously unstyled, so it rendered inline) */
+  .modal[aria-hidden="true"]{ display:none; }
+  /* Scroll-safe modal: header always visible, content scrolls inside card */
+  .modal{
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display:flex;
+    align-items:flex-start; /* avoid top cutoff; allow natural scroll */
+    justify-content:center;
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+    background: rgba(2,6,23,.62);
+    backdrop-filter: blur(6px);
+    overflow:auto; /* allow scrolling when content is taller than viewport */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  body.theme-calm .modal{
+    background: rgba(15,23,42,.46);
+  }
+  .modal-card{
+    width: min(720px, 100%);
+    max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .modal-head{
+    display:flex;
+    justify-content: space-between;
+    align-items:flex-start;
+    gap: var(--space-3);
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+  }
+  .modal-title{
+    font-size: 16px;
+    font-weight: 850;
+    color: var(--text);
+  }
+  .modal-sub{
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .form{
+    padding: 14px 16px 16px;
+    overflow:auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto;
+  }
+  .form-row{
+    padding: 12px 0;
+    border-bottom: 1px dashed rgba(148,163,184,.25);
+  }
+  .form-row:last-child{ border-bottom: 0; }
+  .label{
+    display:block;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .choices{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    align-items:center;
+  }
+  .choice{
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+    font-weight: 650;
+    color: var(--text);
+    opacity: .95;
+  }
+  .input{
+    width: 100%;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.04);
+    padding: 10px 12px;
+    color: var(--text);
+  }
+  body.theme-calm .input{ background: #fff; }
+  .two{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 520px){
+    .two{ grid-template-columns: 1fr; }
+  }
+  .help{
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap: 10px;
+    padding-top: 12px;
+
+    position: sticky;
+    bottom: 0;
+    padding-bottom: 6px;
+    background: linear-gradient(180deg, rgba(0,0,0,0), rgba(15,23,42,.35) 28%, rgba(15,23,42,.55));
+    backdrop-filter: blur(6px);
+  }
+
+</style>
+<link rel="stylesheet" href="../shared/css/genie-settings.css"/>
+<script defer src="../shared/js/genie-settings.js"></script>
+</head>
+<body class="theme-dark">
+<!-- Header -->
+<header class="site-header">
+<div class="site-header-inner">
+<a class="brand" href="../index.html">
+<img alt="GenieSphere" class="logo" src="../genie-logo.png"/>
+<strong>GenieSphere</strong>
+</a>
+<nav aria-label="Primary" class="menu">
+<a class="active" href="../dashboard/household.html">🏠 Household</a>
+<a class="ghost" href="../dashboard/business.html">🏢 Business</a>
+<a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+<a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+</nav>
+<button aria-expanded="false" aria-label="Open navigation" class="hamburger" id="hamburger">☰</button>
+<button class="theme-gear" id="openThemeBtn" type="button" aria-label="Open appearance settings">⚙️</button>
+<!-- User menu / login dropdown -->
+<div class="user-menu" id="user-menu">
+<button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle">
+<span id="user-name-label">Log in</span>
+<span aria-hidden="true">▾</span>
+</button>
+<div class="user-menu-dropdown" id="user-menu-dropdown">
+<div class="dropdown-label">Areas</div>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/household.html">🏠 Household</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/business.html">🏢 Business</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/investment.html">📈 Investment</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/leisure.html">🏝️ Leisure</button>
+
+          <div class="user-menu-divider"></div>
+<div class="dropdown-label">Account</div>
+<button class="dropdown-nav" data-target="../onboarding/user_profile_form.html" type="button">👤 User profile</button>
+<button class="dropdown-nav" data-target="../onboarding/display_settings.html" type="button">⚙️ Settings</button>
+<button id="dropdown-open-appearance" type="button">🎨 Appearance</button>
+<div class="user-menu-divider"></div>
+<button id="user-auth-action" type="button">Log in / Sign up</button>
+<button class="auth-only" id="user-signout-btn" type="button">Log out</button>
+</div>
+</div>
+
+</div>
+</header>
+
+<div aria-label="Mobile Navigation" aria-modal="true" class="drawer" id="mobile-drawer" role="dialog">
+<a class="active" href="../dashboard/household.html">🏠 Household</a>
+<a class="ghost" href="../dashboard/business.html">🏢 Business</a>
+<a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+<a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+</div>
+
+<main class="page">
+<div class="container">
+<section class="page-hero">
+<h1 class="title">🏡 Household Genie</h1>
+<p class="subtitle">Pay bills on time, keep the house humming, and sync the family — without the chaos.</p>
+</section>
+
+<section class="panel panel-command" style="margin-top:14px;">
+
+  <div class="panel-head">
+    <h2 class="section-title-sm">🧞 Ask Household Genie</h2>
+    <div class="panel-sub">Describe what you need — Genie suggests options, drafts, and next steps.</div>
+  </div>
+
+  <div class="command-box">
+    <label class="sr-only" for="geniePrompt">Ask Household Genie</label>
+    <textarea id="geniePrompt" class="control textarea" rows="3"
+      placeholder="e.g., What bills are due this week? Create a plan for meal prep. Remind me about car registration."></textarea>
+
+    <div class="command-actions">
+      <button class="btn-green" id="btnSuggest" type="button">✨ Suggest</button>
+      <button class="btn-blue" id="btnPlan" type="button">🗺️ Make a plan</button>
+      <button class="btn" id="btnDraft" type="button">📝 Draft a message</button>
+    </div>
+
+    <div class="chips" aria-label="Quick prompts">
+      <button class="chip-btn" type="button" data-fill="What’s due soon across bills, appointments, and car care?">Due soon</button>
+      <button class="chip-btn" type="button" data-fill="Plan dinners for this week and build a grocery list.">Meals + groceries</button>
+      <button class="chip-btn" type="button" data-fill="Create a weekend household reset checklist (laundry, clean, prep).">Weekend reset</button>
+      <button class="chip-btn" type="button" data-fill="Help me prepare for an upcoming appointment (questions + checklist).">Appointment prep</button>
+    </div>
+
+    <div class="genie-output" id="genieOutput" aria-live="polite"></div>
+  </div>
+</section>
+
+
+<section class="panel genie-settings" aria-label="Genie settings">
+  <div class="gs-head">
+    <div class="gs-title">⚙️ How Household Genie helps you</div>
+    <div class="gs-sub">Default is <strong>Suggest</strong> — nothing happens unless you choose it.</div>
+  </div>
+
+  <div class="gs-card">
+    <div class="gs-row">
+      <div class="gs-label">Assistance level</div>
+      <div class="gs-help">Pick the comfort level that feels right. You can change this anytime.</div>
+    </div>
+
+    <div class="gs-options" role="radiogroup" aria-label="Assistance level">
+      <label class="gs-option">
+        <input type="radio" name="assist_level" value="suggest" checked />
+        <div class="gs-option-main">
+          <div class="gs-option-title">🟢 Suggest only</div>
+          <div class="gs-option-desc">Shows reminders and ideas. No changes are made unless you act.</div>
+        </div>
+      </label>
+
+      <label class="gs-option">
+        <input type="radio" name="assist_level" value="assist" />
+        <div class="gs-option-main">
+          <div class="gs-option-title">🟡 Assist when I approve</div>
+          <div class="gs-option-desc">Prepares drafts and plans for your review before saving.</div>
+        </div>
+      </label>
+
+      <label class="gs-option">
+        <input type="radio" name="assist_level" value="automate" />
+        <div class="gs-option-main">
+          <div class="gs-option-title">🔵 Automate simple things</div>
+          <div class="gs-option-desc">Handles repeat, low-risk actions you allow — always logged and reversible.</div>
+        </div>
+      </label>
+    </div>
+
+    <div class="gs-scope" data-scope>
+      <div class="gs-row">
+        <div class="gs-label">Automation scope</div>
+        <div class="gs-help">Only applies when “Automate” is selected.</div>
+      </div>
+
+      <label class="gs-check">
+        <input type="checkbox" name="auto_scope" value="recurring_reminders" />
+        <span>Auto-add recurring reminders</span>
+      </label>
+      <label class="gs-check">
+        <input type="checkbox" name="auto_scope" value="organize" />
+        <span>Auto-organize similar items</span>
+      </label>
+      <label class="gs-check">
+        <input type="checkbox" name="auto_scope" value="drafts" />
+        <span>Auto-generate drafts for review</span>
+      </label>
+
+      <div class="gs-note">
+        ⚠️ Automation is limited to low-risk actions. Money, legal, health, and tax decisions always require review.
+      </div>
+    </div>
+
+    <div class="gs-links">
+      <a href="#" class="gs-link" onclick="return false;">View recent suggestions</a>
+      <span class="gs-dot">•</span>
+      <a href="#" class="gs-link" onclick="return false;">View actions log</a>
+      <span class="gs-dot">•</span>
+      <a href="#" class="gs-link" onclick="return false;">Undo recent changes</a>
+    </div>
+  </div>
+</section>
+
+<!-- 🧠 Genie Memory Preview -->
+<div class="genie-top-grid">
+<section class="panel2 memory-panel" id="genie-memory">
+  <div class="memory-head">
+    <div>
+      <h2 class="section-title-sm">🧠 Your Preferences</h2>
+      <p class="sub">Household Genie uses these to tailor suggestions (you can change anytime).</p>
+    </div>
+    <button class="btn btn-secondary" type="button" id="btnEditMemory">⚙️ Edit</button>
+  </div>
+
+  <div class="memory-chips" id="memoryChips" aria-live="polite"></div>
+
+  <div class="memory-empty" id="memoryEmpty" hidden>
+    <div class="note">
+      No preferences saved yet. Set a few so suggestions feel more “you”.
+    </div>
+    <button class="btn" type="button" id="btnSetStarters">✨ Set starters</button>
+  </div>
+</section>
+
+<!-- Memory Modal -->
+
+<!-- ✅ Approval Queue -->
+<section class="panel2 approve-panel" id="approval-queue">
+  <div class="panel-head-row">
+    <div>
+      <h2 class="section-title-sm">✅ Approval Queue</h2>
+      <p class="sub">Suggestions waiting for your OK. You stay in control.</p>
+    </div>
+    <button class="btn btn-secondary" type="button" id="btnAddSampleSuggestions">✨ Add samples</button>
+  </div>
+
+  <div class="approve-list" id="approveList" aria-live="polite"></div>
+
+  <div class="note" id="approveEmpty" hidden>
+    Nothing waiting right now. When the Genie notices something important, it will show up here.
+  </div>
+</section>
+
+<!-- 🕒 Recent Activity -->
+<section class="panel2 activity-panel" id="recent-activity">
+  <div class="panel-head-row">
+    <div>
+      <h2 class="section-title-sm">🕒 Recent Activity</h2>
+      <p class="sub">A simple timeline of what you approved and what got created.</p>
+    </div>
+  </div>
+
+  <div class="activity-list" id="activityList"></div>
+  <div class="note" id="activityEmpty" hidden>No activity yet. Approve a suggestion to start building your timeline.</div>
+</section>
+</div>
+
+<div class="modal" id="memoryModal" aria-hidden="true" role="dialog" aria-label="Edit preferences">
+  <div class="modal-card" role="document">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">🧠 Edit Preferences</div>
+        <div class="modal-sub">These stay on this device for now (local). We can sync to your account later.</div>
+      </div>
+      <button class="icon-btn" type="button" id="btnCloseMemory" aria-label="Close">✕</button>
+    </div>
+
+    <form id="memoryForm" class="form">
+      <div class="form-row">
+        <label class="label">🍽️ Food style</label>
+        <div class="choices">
+          <label class="choice"><input type="checkbox" name="foodStyle" value="Diabetic-friendly" /> Diabetic-friendly</label>
+          <label class="choice"><input type="checkbox" name="foodStyle" value="Vietnamese options" /> Vietnamese options</label>
+          <label class="choice"><input type="checkbox" name="foodStyle" value="Hot lunches" /> Hot lunches</label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="label">🔔 Reminder preference</label>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="reminderLead" value="3 days before" /> 3 days before</label>
+          <label class="choice"><input type="radio" name="reminderLead" value="1 week before" /> 1 week before</label>
+          <label class="choice"><input type="radio" name="reminderLead" value="Same day" /> Same day</label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="label">🛡️ Control style</label>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="controlStyle" value="Always ask before creating tasks" /> Always ask before creating tasks</label>
+          <label class="choice"><input type="radio" name="controlStyle" value="Create drafts, I approve" /> Create drafts, I approve</label>
+          <label class="choice"><input type="radio" name="controlStyle" value="Auto-create low-risk tasks" /> Auto-create low-risk tasks</label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="label" for="prefVehicle">🚗 Default vehicle nickname</label>
+        <input class="input" id="prefVehicle" name="vehicleNickname" placeholder='Example: "Tesla" or "Escalade"' />
+      </div>
+
+      <div class="form-row">
+        <label class="label" for="prefQuiet">🌙 Quiet hours</label>
+        <div class="two">
+          <input class="input" id="prefQuiet" name="quietFrom" placeholder="From (e.g. 9:00 PM)" />
+          <input class="input" name="quietTo" placeholder="To (e.g. 8:00 AM)" />
+        </div>
+        <div class="help">Genie avoids notifications during quiet hours (unless urgent).</div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" type="button" id="btnResetMemory">Reset</button>
+        <button class="btn" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+<!-- 🔗 Quick Jump (Tools) -->
+    <section class="panel gs-section" aria-label="Quick jump tools">
+      <div class="gs-section-head">
+        <h2 class="gs-section-title">🔗 Quick Jump</h2>
+        <div class="gs-section-sub">Open a tool when you need details — Household Genie stays your command center.</div>
+      </div>
+
+      <div class="gs-actions">
+        <a class="gs-btn gs-btn-outline" href="/household/bill-reminders.html">💳 Bills Manager</a>
+        <a class="gs-btn gs-btn-outline" href="/household/appointment-center.html">📆 Appointments Center</a>
+        <a class="gs-btn gs-btn-outline" href="/household/cargenie/car-care.html">🚗 Car Care Genie</a>
+        <a class="gs-btn gs-btn-outline" href="/household/nutritiongenie/nutrition-genie.html">🥗 Nutrition Genie</a>
+      </div>
+    </section>
+
+</div>
+
+<div class="mobile-pad" aria-hidden="true"></div>
+</main>
+
+<!-- ===== MOBILE BOTTOM NAV ===== -->
+<nav class="mobile-nav" aria-label="GenieSphere mobile navigation">
+  <div class="mobile-nav-inner">
+    <a class="mnav" href="../dashboard/household.html" data-nav="household">
+      <div class="ico">🏠</div><div>Household</div>
+    </a>
+    <a class="mnav" href="../dashboard/business.html" data-nav="business">
+      <div class="ico">🏢</div><div>Business</div>
+    </a>
+    <a class="mnav" href="../dashboard/investment.html" data-nav="investment">
+      <div class="ico">📈</div><div>Investment</div>
+    </a>
+    <a class="mnav" href="../dashboard/leisure.html" data-nav="leisure">
+      <div class="ico">🏝️</div><div>Leisure</div>
+    </a>
+  </div>
+</nav>
+
+</div>
+<!-- Supabase client loaded at the bottom like business.html -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Force GSConfig to use /shared/config.json (works from /dashboard/* and /onboarding/*)
+  async function loadConfig(){
+    const meta = document.querySelector('meta[name="gs-config"]');
+    const url  = meta?.content || '/shared/config.json';
+    const res  = await fetch(url, { cache: 'no-store' });
+    if(!res.ok) throw new Error('[GSConfig] Failed to load ' + url);
+    const cfg = await res.json();
+    if(!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) throw new Error('[GSConfig] Missing supabaseUrl or supabaseAnonKey in config');
+    return cfg;
+  }
+  const CONFIG_PROMISE = loadConfig();
+
+  async function getClient(){
+    const cfg = await CONFIG_PROMISE;
+    return window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  }
+
+  // Auth UI + dropdown behavior
+  (async function initAuthHeader(){
+    const userMenu = document.getElementById('user-menu');
+    const toggle   = document.getElementById('user-menu-toggle');
+    const dropdown = document.getElementById('user-menu-dropdown');
+    const nameLbl  = document.getElementById('user-name-label');
+    const authBtn  = document.getElementById('user-auth-action');
+    const signout  = document.getElementById('user-signout-btn');
+
+    function closeDropdown(){ dropdown.style.display='none'; toggle.setAttribute('aria-expanded','false'); }
+    function openDropdown(){ dropdown.style.display='block'; toggle.setAttribute('aria-expanded','true'); }
+
+    toggle.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const isOpen = dropdown.style.display === 'block';
+      isOpen ? closeDropdown() : openDropdown();
+    });
+    document.addEventListener('click', ()=> closeDropdown());
+
+    // Nav buttons inside dropdown
+    dropdown.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.dropdown-nav');
+      if(!btn) return;
+      const target = btn.getAttribute('data-target');
+      if(target) window.location.href = target;
+    });
+
+    // Hamburger + drawer (kept for legacy, hidden on mobile)
+    const hamb = document.getElementById('hamburger');
+    const drawer = document.getElementById('mobile-drawer');
+    if(hamb && drawer){
+      hamb.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        const open = drawer.style.display === 'block';
+        drawer.style.display = open ? 'none' : 'block';
+        hamb.setAttribute('aria-expanded', open ? 'false' : 'true');
+      });
+      document.addEventListener('click', ()=>{ drawer.style.display='none'; hamb.setAttribute('aria-expanded','false'); });
+      drawer.addEventListener('click', (e)=> e.stopPropagation());
+    }
+
+    // Supabase session
+    let client;
+    try{
+      client = await getClient();
+    }catch(err){
+      console.warn(err);
+      nameLbl.textContent = 'Log in';
+      authBtn.textContent = 'Log in / Sign up';
+      signout.style.display = 'none';
+      return;
+    }
+
+    async function refreshUser(){
+      const { data } = await client.auth.getUser();
+      const user = data?.user;
+      if(user){
+        const email = user.email || '';
+        const shortEmail = email.includes('@') ? email.split('@')[0] : email;
+        const label = user.user_metadata?.full_name || shortEmail || 'Account';
+
+        nameLbl.textContent = label;
+        authBtn.style.display = 'none';
+        signout.style.display = 'block';
+      }
+      else{
+        nameLbl.textContent = 'Log in';
+        authBtn.style.display = 'block';
+        signout.style.display = 'none';
+      }
+    }
+    await refreshUser();
+
+    client.auth.onAuthStateChange(async ()=> refreshUser());
+
+    // Login / signup
+    authBtn.addEventListener('click', ()=>{
+      window.location.href = '../login.html?redirect=' + encodeURIComponent(window.location.pathname);
+    });
+
+    // Logout
+    signout.addEventListener('click', async ()=>{
+      await client.auth.signOut();
+      window.location.href = '../login.html?redirect=' + encodeURIComponent(window.location.pathname);
+    });
+  })();
+
+  // Footer year
+  var y=document.getElementById('year'); if(y){ y.textContent = new Date().getFullYear(); }
+</script>
+
+<script>
+  // Ask routing helper (simple heuristic)
+  const HOUSEHOLD_ROUTES = [
+    { kws:["bill","due","payment","mortgage","rent","utility"], id:"card-bills" },
+    { kws:["budget","spend","expense"], id:"card-budget" },
+    { kws:["credit","card","rewards"], id:"card-creditcards" },
+
+    { kws:["meal","dinner","lunch","breakfast","diabetic"], id:"card-nutrition" },
+    { kws:["grocery","shopping","list"], id:"card-grocery" },
+    { kws:["pantry"], id:"card-pantry" },
+
+    { kws:["appointment","doctor","dentist"], id:"card-appointments" },
+    { kws:["medication","blood","sugar","vitals"], id:"card-medication" },
+    { kws:["health","records","vaccin"], id:"card-healthdocs" },
+
+    { kws:["car","oil","tire","service","registration","insurance card"], id:"card-car" },
+    { kws:["toll","parking"], id:"card-tolls" },
+    { kws:["vehicle","documents","registration"], id:"card-vehicle-docs" },
+
+    { kws:["document","passport","id"], id:"card-docs" },
+    { kws:["gift","present"], id:"card-gifts" },
+    { kws:["birthday","party","celebrate"], id:"card-birthdays" },
+
+    { kws:["schedule","calendar","event"], id:"card-scheduler" },
+    { kws:["chore","chores"], id:"card-chores" },
+    { kws:["family"], id:"card-household" },
+
+    { kws:["travel","trip","flight","hotel","passport"], id:"card-travel-docs" },
+
+    { kws:["emergency","911","plan","earthquake","fire"], id:"card-emergency" },
+    { kws:["insurance","policy","deductible"], id:"card-personal-insurance" },
+
+    { kws:["birthday","anniversary","party","celebration"], id:"card-birthdays" },
+    { kws:["photo","memory","pictures"], id:"card-photos" },
+
+    { kws:["learn","study","coach","tutor"], id:"card-learning" },
+    { kws:["vietnamese","english","language"], id:"card-vietnamese" }
+  ];
+
+  document.getElementById('ask-form-household').addEventListener('submit',e=>{
+    e.preventDefault();
+    const input = document.getElementById('ask-input-household');
+    const q = (input.value || "").toLowerCase().trim();
+    try { localStorage.setItem("geniesphere_household_last_query", q); } catch(_){}
+    if (!q) {
+      document.getElementById('card-household')?.click();
+      return;
+    }
+    for(const route of HOUSEHOLD_ROUTES){
+      if(route.kws.some(k => q.includes(k))){
+        const el = document.getElementById(route.id);
+        if(el){ el.click(); return; }
+      }
+    }
+    // default: Household Genie hub
+    document.getElementById('card-household')?.click();
+  });
+
+  // Quick Peek aggregator (unchanged)
+  const P_KEY='gs_household_reminders_v1';
+  const $ = (id)=>document.getElementById(id);
+
+  function loadHousehold(){
+    try{return JSON.parse(localStorage.getItem(P_KEY))||[]}catch{return []}
+  }
+  function fillList(id, arr, map){
+    const el=$(id); if(!el) return;
+    el.innerHTML='';
+    if(!arr.length){ el.innerHTML='<li>None</li>'; return;}
+    arr.slice(0,6).forEach(r=>{
+      const li=document.createElement('li');
+      li.textContent = map(r);
+      el.appendChild(li);
+    });
+  }
+  function updateQuickPeek(){
+    const rows = loadHousehold();
+    const now = new Date();
+    const plus7 = new Date(now); plus7.setDate(now.getDate()+7);
+    const todayStr = now.toDateString();
+
+    const bills   = rows.filter(r=> r.type==='bill'   && r.due_at && new Date(r.due_at)<=plus7);
+    const events  = rows.filter(r=> r.type==='event'  && r.when   && new Date(r.when).toDateString()===todayStr);
+    const errands = rows.filter(r=> r.type==='grocery' || r.type==='errand');
+    const car     = rows.filter(r=> r.type==='car');
+    const health  = rows.filter(r=> r.type==='health');
+
+    fillList('list-bills', bills, r=> `${r.title} • ${new Date(r.due_at).toLocaleDateString()}`);
+    fillList('list-events', events, r=> `${r.title} • ${new Date(r.when).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`);
+    fillList('list-groceries', errands, r=> r.title);
+    fillList('list-car-health', car.concat(health), r=>{
+      if(r.when){
+        return `${r.title} • ${new Date(r.when).toLocaleDateString()} ${new Date(r.when).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+      }
+      return r.title;
+    });
+
+    $('badge-bills').textContent     = `Bills: ${bills.length}`;
+    $('badge-groceries').textContent = `Groceries: ${errands.length}`;
+    $('badge-events').textContent    = `Family Events: ${events.length}`;
+    $('badge-car').textContent       = `Car: ${car.length}`;
+    $('badge-health').textContent    = `Health: ${health.length}`;
+
+    const todayStrip = $('today-strip');
+    const todayText  = $('today-text');
+    const pieces = [];
+    if(bills.length) pieces.push(`🧾 ${bills.length} bill(s) due this week`);
+    if(events.length) pieces.push(`📅 ${events.length} event(s) today`);
+    if(car.length) pieces.push(`🚗 ${car.length} car item(s) coming up`);
+    if(health.length) pieces.push(`💊 ${health.length} health item(s)`);
+
+    if(pieces.length){
+      todayStrip.style.display='block';
+      todayText.textContent = `Today: ${pieces.join(' • ')}`;
+    }else{
+      todayStrip.style.display='none';
+      todayText.textContent = '';
+    }
+  }
+  updateQuickPeek();
+  window.addEventListener('storage',(e)=>{ if(e.key===P_KEY) updateQuickPeek(); });
+  </script>
+
+  <!-- Theme Modal (shared) -->
+  <div class="theme-overlay" id="themeOverlay" role="dialog" aria-modal="true" aria-labelledby="themeTitle" style="display:none;">
+    <div class="theme-modal">
+      <div class="theme-modal-header">
+        <div class="theme-modal-title">
+          <strong id="themeTitle">⚙️ Appearance</strong>
+          <span>Choose a theme. We’ll remember your preference.</span>
+        </div>
+        <button class="theme-close" id="closeThemeBtn" type="button" aria-label="Close appearance settings">✕</button>
+      </div>
+
+      <div class="theme-modal-body">
+        <div class="theme-grid" id="themeGrid">
+          <button class="theme-option" type="button" data-theme="theme-calm">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌿 Calm Future</p>
+                <p class="theme-option-desc">Bright, calm, and easy.</p>
+              </div>
+              <span class="theme-option-tag">Default</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-future">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌌 Soft Futuristic</p>
+                <p class="theme-option-desc">Indigo + cyan glow.</p>
+              </div>
+              <span class="theme-option-tag">Futuristic</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-nature">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌱 Nature + Tech</p>
+                <p class="theme-option-desc">Calm green + sky blue trust.</p>
+              </div>
+              <span class="theme-option-tag">Household</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-dark">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌑 Pro Dark</p>
+                <p class="theme-option-desc">Best for night use.</p>
+              </div>
+              <span class="theme-option-tag">Dark</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="theme-modal-footer">
+        <button class="btn" id="resetThemeBtn" type="button">Reset</button>
+        <button class="btn primary" id="doneThemeBtn" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+  // Dropdown "Appearance" -> open the same theme modal (mobile-friendly)
+  (function(){
+    const openFromDropdown = document.getElementById('dropdown-open-appearance');
+    const openThemeBtn = document.getElementById('openThemeBtn');
+    if(openFromDropdown && openThemeBtn){
+      openFromDropdown.addEventListener('click', ()=>{
+        openThemeBtn.click();
+      });
+    }
+  })();
+</script>
+
+<script>
+  // Mobile bottom nav: highlight current tab
+  (function(){
+    const path = (location.pathname || "").toLowerCase();
+    let key = "household";
+    if(path.includes("business")) key = "business";
+    else if(path.includes("investment")) key = "investment";
+    else if(path.includes("leisure")) key = "leisure";
+
+    document.querySelectorAll('.mobile-nav .mnav').forEach(a=>{
+      a.classList.toggle('active', a.getAttribute('data-nav') === key);
+    });
+  })();
+</script>
+
+<script>
+  // Theme Switcher (shared)
+  (function ThemeSwitcher(){
+    const STORAGE_KEY = 'geniesphere_theme';
+    const THEMES = ['theme-calm','theme-future','theme-nature','theme-dark'];
+    const DEFAULT_THEME = 'theme-dark';
+
+    const overlay = document.getElementById('themeOverlay');
+    const openBtn = document.getElementById('openThemeBtn');
+    const closeBtn = document.getElementById('closeThemeBtn');
+    const doneBtn = document.getElementById('doneThemeBtn');
+    const resetBtn = document.getElementById('resetThemeBtn');
+    const themeGrid = document.getElementById('themeGrid');
+
+    function saveTheme(theme){ try { localStorage.setItem(STORAGE_KEY, theme); } catch(_){ } }
+    function getTheme(){ try { return localStorage.getItem(STORAGE_KEY); } catch(_){ return null; } }
+
+    function updateSelected(theme){
+      if(!themeGrid) return;
+      themeGrid.querySelectorAll('.theme-option').forEach(btn => {
+        btn.classList.toggle('selected', btn.getAttribute('data-theme') === theme);
+      });
+    }
+
+    function applyTheme(theme){
+      THEMES.forEach(t => document.body.classList.remove(t));
+      document.body.classList.add(theme);
+      updateSelected(theme);
+    }
+
+    function openModal(){
+      if(!overlay) return;
+      overlay.classList.add('open');
+      overlay.style.display = 'flex';
+      const first = themeGrid?.querySelector('.theme-option');
+      setTimeout(()=> first && first.focus(), 40);
+    }
+    function closeModal(){
+      if(!overlay) return;
+      overlay.classList.remove('open');
+      overlay.style.display = 'none';
+      openBtn && openBtn.focus();
+    }
+
+    const saved = getTheme();
+    const theme = (saved && THEMES.includes(saved)) ? saved : DEFAULT_THEME;
+    applyTheme(theme);
+
+    if(openBtn) openBtn.addEventListener('click', openModal);
+    if(closeBtn) closeBtn.addEventListener('click', closeModal);
+    if(doneBtn) doneBtn.addEventListener('click', closeModal);
+
+    if(overlay){
+      overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal(); });
+    }
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && overlay?.classList.contains('open')) closeModal(); });
+
+    if(themeGrid){
+      themeGrid.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.theme-option');
+        if(!btn) return;
+        const next = btn.getAttribute('data-theme');
+        if(!THEMES.includes(next)) return;
+        applyTheme(next);
+        saveTheme(next);
+      });
+    }
+
+    if(resetBtn){
+      resetBtn.addEventListener('click', ()=>{
+        applyTheme(DEFAULT_THEME);
+        saveTheme(DEFAULT_THEME);
+      });
+    }
+  })();
+</script>
+
+<script src="http://localhost/shared/js/hub-badges.js"></script>
+
+    
+<script>
+  (function(){
+    // ===== GenieSphere: Household preferences (Supabase + local cache) =====
+    const CACHE_KEY = 'gs_household_memory_v2';
+    const GENIE_KEY = 'household';
+
+    const chipsEl = document.getElementById('memoryChips');
+    const emptyEl = document.getElementById('memoryEmpty');
+
+    const modal = document.getElementById('memoryModal');
+    const btnEdit = document.getElementById('btnEditMemory');
+    const btnClose = document.getElementById('btnCloseMemory');
+    const btnStarters = document.getElementById('btnSetStarters');
+    const btnReset = document.getElementById('btnResetMemory');
+    const form = document.getElementById('memoryForm');
+
+    // Scroll-lock helpers (prevents page jumping on iOS)
+    let __scrollY = 0;
+
+    // Prefer your existing GS client wrapper if present
+    async function getClient(){
+      // many GenieSphere pages expose one of these helpers:
+      if (window.GSClient && typeof window.GSClient.getAsync === 'function') {
+        return await window.GSClient.getAsync();
+      }
+      if (typeof window.createClient === 'function') {
+        return await window.createClient();
+      }
+      throw new Error('Client not available (gs-client.js not loaded).');
+    }
+
+    function cacheLoad(){
+      try{ return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); }catch(e){ return {}; }
+    }
+    function cacheSave(obj){
+      localStorage.setItem(CACHE_KEY, JSON.stringify(obj || {}));
+    }
+
+    function openMemoryModal(){
+      __scrollY = window.scrollY || 0;
+      modal.setAttribute('aria-hidden','false');
+
+      // lock background without breaking modal scroll (iOS-safe)
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${__scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.width = '100%';
+
+      // ensure modal starts at top
+      modal.scrollTop = 0;
+      const firstField = modal.querySelector('input, select, textarea, button');
+      if(firstField) firstField.focus({preventScroll:true});
+    }
+    function closeMemoryModal(){
+      modal.setAttribute('aria-hidden','true');
+
+      // unlock background and restore scroll position
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.width = '';
+      window.scrollTo(0, __scrollY || 0);
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function render(pref){
+      const data = pref || {};
+      const items = [];
+
+      const food = Array.isArray(data.foodStyle) ? data.foodStyle : [];
+      if(food.length) items.push({k:'Food', v: food.join(', ')});
+
+      if(data.reminderLead) items.push({k:'Reminders', v: data.reminderLead});
+      if(data.controlStyle) items.push({k:'Control', v: data.controlStyle});
+      if(data.vehicleNickname) items.push({k:'Vehicle', v: data.vehicleNickname});
+
+      if(data.quietFrom || data.quietTo){
+        const q = (data.quietFrom || '—') + ' → ' + (data.quietTo || '—');
+        items.push({k:'Quiet', v:q});
+      }
+
+      chipsEl.innerHTML = '';
+      if(items.length === 0){
+        emptyEl.hidden = false;
+        return;
+      }
+      emptyEl.hidden = true;
+
+      for(const it of items){
+        const chip = document.createElement('span');
+        chip.className = 'mchip';
+        chip.innerHTML = '<span class="k">'+escapeHtml(it.k)+':</span> ' + escapeHtml(it.v);
+        chipsEl.appendChild(chip);
+      }
+    }
+
+    function fillForm(data){
+      const foods = new Set(Array.isArray(data.foodStyle) ? data.foodStyle : []);
+      form.querySelectorAll('input[name="foodStyle"]').forEach(i => i.checked = foods.has(i.value));
+
+      const setRadio = (name, val) => {
+        form.querySelectorAll('input[name="'+name+'"]').forEach(i => i.checked = (i.value === val));
+      };
+      setRadio('reminderLead', data.reminderLead || '');
+      setRadio('controlStyle', data.controlStyle || '');
+
+      form.vehicleNickname.value = data.vehicleNickname || '';
+      form.quietFrom.value = data.quietFrom || '';
+      form.quietTo.value = data.quietTo || '';
+    }
+
+    function starters(){
+      return {
+        foodStyle: ['Diabetic-friendly','Vietnamese options'],
+        reminderLead: '3 days before',
+        controlStyle: 'Create drafts, I approve',
+        vehicleNickname: 'Tesla',
+        quietFrom: '9:00 PM',
+        quietTo: '8:00 AM'
+      };
+    }
+
+    async function fetchFromServer(){
+      try{
+        const client = await getClient();
+        const { data, error } = await client
+          .from('user_preferences')
+          .select('preferences')
+          .maybeSingle();
+
+        if(error && error.code !== 'PGRST116'){ // not found is OK
+          console.warn('[Memory] load error:', error);
+          return null;
+        }
+        const prefs = (data && data.preferences) ? data.preferences : {};
+        const household = prefs[GENIE_KEY] || {};
+        return household;
+      }catch(err){
+        console.warn('[Memory] client not ready:', err);
+        return null;
+      }
+    }
+
+    async function upsertToServer(householdPrefs){
+      const client = await getClient();
+      // Read existing, then merge (so other categories remain intact)
+      const { data, error } = await client
+        .from('user_preferences')
+        .select('preferences')
+        .maybeSingle();
+
+      if(error && error.code !== 'PGRST116'){
+        throw error;
+      }
+      const existing = (data && data.preferences) ? data.preferences : {};
+      const merged = Object.assign({}, existing, { [GENIE_KEY]: householdPrefs });
+
+      // Upsert with user_id inferred by RLS (we still must provide user_id on insert)
+      const user = (client.auth && client.auth.getUser) ? (await client.auth.getUser()).data.user : null;
+      if(!user){
+        throw new Error('Not signed in.');
+      }
+
+      const payload = { user_id: user.id, preferences: merged };
+
+      const { error: upErr } = await client
+        .from('user_preferences')
+        .upsert(payload, { onConflict: 'user_id' });
+
+      if(upErr) throw upErr;
+    }
+
+    async function init(){
+      // 1) show cached immediately
+      const cached = cacheLoad();
+      const cachedHousehold = cached[GENIE_KEY] || {};
+      render(cachedHousehold);
+
+      // 2) pull from server and replace cache if found
+      const serverHousehold = await fetchFromServer();
+      if(serverHousehold){
+        cacheSave(Object.assign({}, cached, { [GENIE_KEY]: serverHousehold }));
+        render(serverHousehold);
+      }
+    }
+
+    // Wire up
+    if(btnEdit) btnEdit.addEventListener('click', () => { fillForm((cacheLoad()[GENIE_KEY] || {})); openMemoryModal(); });
+    if(btnClose) btnClose.addEventListener('click', closeMemoryModal);
+    modal && modal.addEventListener('click', (e) => { if(e.target === modal) closeMemoryModal(); });
+
+    if(btnStarters) btnStarters.addEventListener('click', async () => {
+      const s = starters();
+      const cache = cacheLoad();
+      cacheSave(Object.assign({}, cache, { [GENIE_KEY]: s }));
+      render(s);
+      fillForm(s);
+      openMemoryModal();
+      try{ await upsertToServer(s); }catch(e){ console.warn('[Memory] save starters failed:', e); }
+    });
+
+    if(btnReset) btnReset.addEventListener('click', async () => {
+      const cache = cacheLoad();
+      delete cache[GENIE_KEY];
+      cacheSave(cache);
+      render({});
+      fillForm({});
+      closeMemoryModal();
+      try{
+        const client = await getClient();
+        const user = (await client.auth.getUser()).data.user;
+        if(user){
+          // set household empty but keep other prefs
+          const { data } = await client.from('user_preferences').select('preferences').maybeSingle();
+          const existing = (data && data.preferences) ? data.preferences : {};
+          const merged = Object.assign({}, existing);
+          delete merged[GENIE_KEY];
+          await client.from('user_preferences').upsert({ user_id: user.id, preferences: merged }, { onConflict: 'user_id' });
+        }
+      }catch(e){ console.warn('[Memory] reset server failed:', e); }
+    });
+
+    if(form) form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const household = {};
+
+      const foods = [];
+      form.querySelectorAll('input[name="foodStyle"]:checked').forEach(i => foods.push(i.value));
+      household.foodStyle = foods;
+
+      const r1 = form.querySelector('input[name="reminderLead"]:checked');
+      household.reminderLead = r1 ? r1.value : '';
+
+      const r2 = form.querySelector('input[name="controlStyle"]:checked');
+      household.controlStyle = r2 ? r2.value : '';
+
+      household.vehicleNickname = (form.vehicleNickname.value || '').trim();
+      household.quietFrom = (form.quietFrom.value || '').trim();
+      household.quietTo = (form.quietTo.value || '').trim();
+
+      // cache first (snappy UX)
+      const cache = cacheLoad();
+      cacheSave(Object.assign({}, cache, { [GENIE_KEY]: household }));
+      render(household);
+
+      // then persist
+      try{
+        await upsertToServer(household);
+      }catch(err){
+        console.warn('[Memory] save failed:', err);
+        // keep UX friendly
+        alert('Saved on this device. Sign in / check connection to sync across devices.');
+      }
+      closeMemoryModal();
+    });
+
+    init();
+  })();
+</script>
+
+</body>
+</html>

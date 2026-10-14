@@ -1,0 +1,125 @@
+{
+  "name": "Meal Planner - Webhook -> OpenAI -> JSON",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "meal-plan-generate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-192, -32],
+      "id": "9de4815d-f2a9-491d-895b-fafdbaadd51d",
+      "webhookId": "f9dfa799-8c94-48e2-89e4-38368f2ee4af"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json;\n\nconst planDays         = Number(b.planDays || 7);\nconst people           = Number(b.people || 1);\nconst mealsPerDay      = Array.isArray(b.mealsPerDay)     ? b.mealsPerDay     : (b.mealsPerDay     ? [b.mealsPerDay]     : [\"breakfast\",\"lunch\",\"dinner\"]);\nconst cuisine          = Array.isArray(b.cuisine)          ? b.cuisine          : (b.cuisine          ? [b.cuisine]          : []);\nconst allergies        = Array.isArray(b.allergies)        ? b.allergies        : (b.allergies        ? [b.allergies]        : []);\nconst avoidIngredients = Array.isArray(b.avoidIngredients) ? b.avoidIngredients : (b.avoidIngredients ? [b.avoidIngredients] : []);\n\nconst goal          = b.goal        || \"balanced\";\nconst budgetLevel   = b.budgetLevel || \"medium\";\nconst budgetTotal   = b.budgetTotal ? `$${b.budgetTotal}/week` : \"\";\nconst timePerMeal   = Number(b.timePerMeal || 30);\nconst calorieTarget = b.calorieTarget ? String(b.calorieTarget) : \"\";\nconst notes         = b.notes || \"\";\n\n// FIX 1: macroTargets was never read — now passed to AI prompt\nconst macroTargets = b.macroTargets || {};\nconst macroLine = [\n  macroTargets.protein ? `${macroTargets.protein}g protein` : \"\",\n  macroTargets.carbs   ? `${macroTargets.carbs}g carbs`     : \"\",\n  macroTargets.fat     ? `${macroTargets.fat}g fat`         : \"\"\n].filter(Boolean).join(\", \");\n\n// FIX 2: dietStyle was ghost field — derive from goal instead\nconst dietStyle = goal.includes(\"diabetic\")   ? \"diabetic-friendly\"\n               : goal.includes(\"vegan\")        ? \"vegan\"\n               : goal.includes(\"vegetarian\")   ? \"vegetarian\"\n               : goal.includes(\"keto\")         ? \"keto\"\n               : goal.includes(\"heart\")        ? \"heart-healthy\"\n               : \"\";\n\n// FIX 3: macroSummary added — genie sidebar reads result.macroSummary\n// FIX 4: days label field added — genie reads d.label for Monday/Tuesday headers\n// FIX 5: groceryList categories aligned to genie grocery planner groupings\nconst schema = {\n  planMeta: {\n    days: planDays,\n    people,\n    goal,\n    dietStyle,\n    mealsPerDay,\n    cuisine,\n    allergies,\n    avoidIngredients,\n    budgetLevel,\n    timePerMealMinutes: timePerMeal,\n    calorieTarget,\n    notes\n  },\n  macroSummary: {\n    protein: 0,\n    carbs: 0,\n    fat: 0,\n    calories: 0,\n    note: \"Average per person per day across all meals\"\n  },\n  groceryList: [\n    {\n      item: \"string\",\n      quantity: \"string\",\n      category: \"Produce|Protein|Dairy|Pantry|Frozen|Bakery|Snacks|Drinks|Household|Other\"\n    }\n  ],\n  days: [\n    {\n      day: 1,\n      label: \"Monday\",\n      meals: [\n        {\n          mealType: \"breakfast|lunch|dinner|snack|morning_snack|afternoon_snack\",\n          title: \"string\",\n          cuisine: \"string\",\n          prepTimeMinutes: 10,\n          cookTimeMinutes: 15,\n          servings: people,\n          ingredients: [{ name: \"string\", amount: \"string\" }],\n          steps: [\"string\"],\n          nutrition: {\n            calories: 0,\n            protein_g: 0,\n            carbs_g: 0,\n            fat_g: 0,\n            fiber_g: 0,\n            sugar_g: 0\n          },\n          diabeticNotes: \"\"\n        }\n      ]\n    }\n  ]\n};\n\nconst userPrompt = `Create a ${planDays}-day meal plan for ${people} ${people === 1 ? \"person\" : \"people\"}.\n\nConstraints:\n- Goal: ${goal}\n- Diet style: ${dietStyle || \"none specified\"}\n- Meals per day: ${mealsPerDay.join(\", \")}\n- Cuisine preferences: ${cuisine.length ? cuisine.join(\", \") : \"no preference\"}\n- Allergies / intolerances: ${allergies.length ? allergies.join(\", \") : \"none\"}\n- Avoid ingredients: ${avoidIngredients.length ? avoidIngredients.join(\", \") : \"none\"}\n- Budget: ${budgetLevel}${budgetTotal ? ` (${budgetTotal} total for ${people} ${people === 1 ? \"person\" : \"people\"})` : \"\"}\n- Max time per meal: ${timePerMeal} minutes\n- Daily calorie target per person: ${calorieTarget || \"not specified\"}\n- Macro targets per person per day: ${macroLine || \"not specified\"}\n- Additional notes: ${notes || \"none\"}\n\nOutput requirements:\n- Return ONLY valid JSON. No markdown. No preamble. No trailing text.\n- The first character must be { and the last must be }.\n- Match this exact JSON structure and fill every field with real values:\n${JSON.stringify(schema, null, 2)}\n\nRules:\n- label field on each day must be the weekday name: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday (repeat cycle if planDays > 7).\n- macroSummary must contain the AVERAGE per-person per-day totals calculated across ALL meals in the plan.\n- groceryList categories must be exactly one of: Produce, Protein, Dairy, Pantry, Frozen, Bakery, Snacks, Drinks, Household, Other.\n- Reuse ingredients across the week to keep the grocery list short and reduce cost.\n- diabeticNotes: fill only when goal is diabetic-friendly, otherwise use empty string \"\".\n- For diabetic-friendly plans: use low-GI ingredients, avoid added sugar, include fibre-rich options.\n- servings on every meal must equal ${people}.\n`;\n\nreturn [{ userPrompt, planDays, people }];"
+      },
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [176, -32],
+      "id": "80f56e3d-2a35-4a68-b18e-f1132fce7f59"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a meal planning assistant. Return ONLY valid JSON. Do NOT include markdown. Do NOT include explanations. Do NOT include code fences. The first character of your response must be { and the last must be }."
+            },
+            {
+              "content": "={{ $json.userPrompt }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 4000,
+          "temperature": 0.6
+        }
+      },
+      "name": "Meal Plan",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [416, -32],
+      "id": "6c7bc6e0-c6dc-45fd-87fe-21522e2f283e",
+      "alwaysOutputData": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage-Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json;\n\n// Langchain v2.1 node outputs to output_text — check that first\nconst content =\n  raw.output_text ||\n  raw.message?.content ||\n  raw.choices?.[0]?.message?.content ||\n  raw.text ||\n  \"\";\n\n// Attempt 1: direct parse\ntry {\n  const parsed = JSON.parse(content);\n  return [{ ok: true, result: parsed }];\n} catch (e) {}\n\n// Attempt 2: strip markdown fences\nconst stripped = content.replace(/```json|```/gi, \"\").trim();\ntry {\n  const parsed = JSON.parse(stripped);\n  return [{ ok: true, result: parsed }];\n} catch (e) {}\n\n// Attempt 3: extract outermost JSON object\nconst match = stripped.match(/\\{[\\s\\S]*\\}/);\nif (match) {\n  try {\n    const parsed = JSON.parse(match[0]);\n    return [{ ok: true, result: parsed }];\n  } catch (e) {}\n}\n\n// All attempts failed — return diagnostic\nreturn [{\n  ok: false,\n  result: {\n    error: \"Model output was not valid JSON\",\n    hint: \"Check maxTokens is high enough (try 6000). Confirm system prompt is plain text not JS code.\",\n    rawLength: content.length,\n    rawPreview: content.slice(0, 500)\n  }\n}];"
+      },
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [784, -32],
+      "id": "40c43335-61d0-4697-acb2-cc131ee027b4"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1024, -32],
+      "id": "3922d64a-84aa-48be-a328-eb10fba4793f"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [{ "node": "Build Prompt", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [{ "node": "Meal Plan", "type": "main", "index": 0 }]
+      ]
+    },
+    "Meal Plan": {
+      "main": [
+        [{ "node": "Parse JSON", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [{ "node": "Return Response", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2af51012-3846-42fa-9106-92638927aaaa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "Nrpfhf4UcaQOWMO4",
+  "tags": []
+}

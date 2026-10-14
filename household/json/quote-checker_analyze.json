@@ -1,0 +1,108 @@
+{
+  "name": "Quote Checker — Analyze (Upload/Paste/Chat → Detect → Evaluate)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "quote-checker/analyze",
+        "responseMode": "responseNode",
+        "options": {},
+        "binaryData": true
+      },
+      "id": "Webhook_Analyze",
+      "name": "Webhook (Analyze)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [280, 260]
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\n\n// Optional text input (paste/chat)\nconst rawText = ($input.item.json.quote_text_raw || '').toString().trim();\n\n// Optional hints\nconst zip = ($input.item.json.zip || '').toString().trim();\nconst trade = ($input.item.json.trade || '').toString().trim();\nconst lat = ($input.item.json.lat || '').toString().trim();\nconst lng = ($input.item.json.lng || '').toString().trim();\n\nconst analysis_id = crypto.randomBytes(12).toString('hex');\n\n// If user provided text, no file is required\nif (rawText) {\n  return [{\n    json: {\n      analysis_id,\n      filename: 'pasted-text',\n      mime: 'text/plain',\n      inputs: { zip, trade, lat, lng },\n      quote_text: rawText,\n      image_data_url: ''\n    }\n  }];\n}\n\n// Otherwise expect a binary upload named \"file\"\nconst bin = $input.item.binary?.file;\nif (!bin) {\n  throw new Error('No quote_text_raw provided and no binary file found. Expected multipart field name \"file\" or JSON field \"quote_text_raw\".');\n}\n\nconst mime = bin.mimeType || 'application/octet-stream';\nconst filename = bin.fileName || 'upload';\n\nlet image_data_url = '';\nif (mime.startsWith('image/')) {\n  image_data_url = `data:${mime};base64,${bin.data}`;\n}\n\nlet quote_text = '';\nif (mime === 'application/pdf') {\n  // Self-hosted recommended: requires pdf-parse module.\n  // If you are on n8n Cloud, replace this with a PDF extraction service.\n  const pdfParse = require('pdf-parse');\n  const buf = Buffer.from(bin.data, 'base64');\n  const parsed = await pdfParse(buf);\n  quote_text = (parsed.text || '').trim();\n}\n\nreturn [{\n  json: {\n    analysis_id,\n    filename,\n    mime,\n    inputs: { zip, trade, lat, lng },\n    quote_text,\n    image_data_url\n  }\n}];"
+      },
+      "id": "Prep_Input",
+      "name": "Prep Input (ID + Text/Image)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{'Bearer ' + $env.OPENAI_API_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"input\": [\n    {\n      \"role\": \"system\",\n      \"content\": [\n        {\"type\":\"input_text\",\"text\":\"You are an expert construction quote analyst. Return ONLY valid JSON (no markdown). Be conservative: if key info is missing, set confidence Low and ask for the single best missing detail.\"}\n      ]\n    },\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\"type\":\"input_text\",\"text\":\"You will receive either quote_text (from PDF extraction) or an image_data_url (photo scan). Your job is to: (1) Extract structured data, (2) Detect trade + location + total, (3) Evaluate quote quality + price fairness, and (4) Suggest missing critical items and questions.\\n\\nReturn EXACTLY this JSON schema:\\n\\n{\\n  \\\"analysis_id\\\": \\\"\\\",\\n  \\\"inputs\\\": {\\\"zip\\\":\\\"\\\",\\\"trade\\\":\\\"\\\",\\\"lat\\\":\\\"\\\",\\\"lng\\\":\\\"\\\"},\\n  \\\"detected\\\": {\\n    \\\"trade\\\":\\\"\\\",\\n    \\\"trade_category\\\":\\\"\\\",\\n    \\\"trade_confidence\\\":\\\"High|Medium|Low\\\",\\n    \\\"trade_candidates\\\":[{\\\"trade\\\":\\\"\\\",\\\"confidence\\\":\\\"High|Medium|Low\\\"}],\\n    \\\"location\\\":\\\"\\\",\\n    \\\"location_confidence\\\":\\\"High|Medium|Low\\\",\\n    \\\"total\\\": null,\\n    \\\"total_text\\\":\\\"\\\",\\n    \\\"total_confidence\\\":\\\"High|Medium|Low\\\",\\n    \\\"needs_confirmation\\\": false,\\n    \\\"next_question\\\": \\\"\\\"\\n  },\\n  \\\"evaluation\\\": {\\n    \\\"quote_quality\\\": {\\\"score\\\": 0, \\\"notes\\\": []},\\n    \\\"price_fairness\\\": {\\\"label\\\": \\\"Likely Fair|Possibly High|Possibly Low|Unclear\\\", \\\"confidence\\\": \\\"High|Medium|Low\\\", \\\"notes\\\": []},\\n    \\\"red_flags\\\": [],\\n    \\\"missing_critical_items\\\": [],\\n    \\\"questions_to_ask\\\": [],\\n    \\\"summary_bullets\\\": []\\n  },\\n  \\\"extracted\\\": {\\n    \\\"contractor\\\": {\\\"name\\\":\\\"\\\",\\\"phone\\\":\\\"\\\",\\\"email\\\":\\\"\\\",\\\"license\\\":\\\"\\\",\\\"address\\\":\\\"\\\"},\\n    \\\"job\\\": {\\\"address\\\":\\\"\\\",\\\"city\\\":\\\"\\\",\\\"state\\\":\\\"\\\",\\\"zip\\\":\\\"\\\"},\\n    \\\"money\\\": {\\\"subtotal\\\": null, \\\"tax\\\": null, \\\"deposit\\\": null, \\\"payment_terms\\\": \\\"\\\"},\\n    \\\"schedule\\\": {\\\"start\\\":\\\"\\\",\\\"duration\\\":\\\"\\\",\\\"notes\\\":\\\"\\\"},\\n    \\\"warranty\\\": \\\"\\\",\\n    \\\"scope\\\": {\\\"included\\\":[],\\\"excluded\\\":[],\\\"allowances\\\":[{\\\"item\\\":\\\"\\\",\\\"amount\\\":null}],\\\"line_items\\\":[{\\\"desc\\\":\\\"\\\",\\\"qty\\\":\\\"\\\",\\\"unit\\\":\\\"\\\",\\\"unit_price\\\":null,\\\"total\\\":null}]}\\n  }\\n}\\n\\nTrade taxonomy:\\n- trade_category MUST be one of: [\\\"Remodel\\\",\\\"Exterior\\\",\\\"MEP\\\",\\\"Structural\\\",\\\"Surfaces\\\",\\\"Outdoor\\\",\\\"Specialty\\\",\\\"Other\\\"].\\n- If trade_confidence is not High, provide trade_candidates (up to 3).\\n\\nEvaluation rules:\\n- ALWAYS produce Quote Quality score even if price fairness is unclear.\\n- Price fairness may be \\\"Unclear\\\" with Low confidence if missing job ZIP/location or measurable scope/quantities.\\n- If missing ZIP/location, set needs_confirmation=true and next_question=\\\"What ZIP code is the job in?\\\".\\n- If trade is unclear, set needs_confirmation=true and next_question=\\\"Which trade is this? (Roofing, HVAC, Plumbing, Electrical, Remodel, etc.)\\\".\\n\\nTrade-specific critical checklist (use final detected trade):\\n- Roofing: underlayment, flashing, drip edge, decking terms, ventilation, cleanup, warranty\\n- HVAC: model/sizing, SEER2/HSPF2/AFUE, duct scope, permits, commissioning, warranty\\n- Electrical: permit/inspection, panel/amp, GFCI/AFCI, circuit scope, patching, material specs\\n- Plumbing: permit/inspection, shutoffs, venting/drain scope, fixture specs/allowances, patching, leak testing\\n- Remodel: waterproofing (wet areas), ventilation, substrate/backer, allowances realism, permits if moving MEP, cleanup\\n- Concrete: thickness, base prep, reinforcement, joints, slope/drainage, cure/seal\\n- Windows/Doors: flashing/tape, insulation/foam, trim scope, performance specs if present, warranty\\n- Painting/Drywall: prep, primer/coats, patch scope, protection/masking, paint line, cleanup\\n- Deck/Fence/Landscape: materials/grade, footing depth, hardware, stain/seal, irrigation tie-ins, permits\\n\\nOptional user hints (may be blank):\\nzip={{$json.inputs.zip}} trade={{$json.inputs.trade}} lat={{$json.inputs.lat}} lng={{$json.inputs.lng}}\\nanalysis_id={{$json.analysis_id}}\\n\\nNow read the quote and fill the schema.\"}\n      ]\n    },\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\"type\":\"input_text\",\"text\":\"quote_text (may be empty):\\n<<<\"},\n        {\"type\":\"input_text\",\"text\":\"={{$json.quote_text || ''}}\"},\n        {\"type\":\"input_text\",\"text\":\">>>\\n\"}\n      ]\n    },\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\"type\":\"input_text\",\"text\":\"If image_data_url is present, read it as the quote scan.\"},\n        {\"type\":\"input_image\",\"image_url\":\"={{$json.image_data_url}}\"}\n      ]\n    }\n  ]\n}",
+        "options": { "timeout": 300000 }
+      },
+      "id": "OpenAI_Analyze",
+      "name": "OpenAI (Analyze via Responses API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [780, 260]
+    },
+    {
+      "parameters": {
+        "jsCode": "function pickText(resp) {\n  const out = resp?.body?.output || resp?.output;\n  if (!Array.isArray(out)) return '';\n  for (const item of out) {\n    const content = item?.content;\n    if (!Array.isArray(content)) continue;\n    for (const c of content) {\n      if ((c?.type === 'output_text' || c?.type === 'text') && typeof c?.text === 'string') return c.text;\n    }\n  }\n  return '';\n}\n\nconst raw = $input.item.json;\nconst text = pickText(raw);\nif (!text) throw new Error('No text returned from OpenAI Responses API.');\n\nlet parsed;\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  const start = text.indexOf('{');\n  const end = text.lastIndexOf('}');\n  if (start === -1 || end === -1) throw e;\n  parsed = JSON.parse(text.slice(start, end + 1));\n}\n\nreturn [{ json: parsed }];"
+      },
+      "id": "Parse_OpenAI_JSON",
+      "name": "Parse OpenAI JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1020, 260]
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{$json.analysis_id}}",
+        "value": "={{$json}}"
+      },
+      "id": "Store_Result",
+      "name": "Data Store (Save analysis_id → result)",
+      "type": "n8n-nodes-base.dataStore",
+      "typeVersion": 1,
+      "position": [1260, 260]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "Respond_Analyze",
+      "name": "Respond to Webhook (Analyze)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1500, 260]
+    }
+  ],
+  "connections": {
+    "Webhook (Analyze)": {
+      "main": [[{ "node": "Prep Input (ID + Text/Image)", "type": "main", "index": 0 }]]
+    },
+    "Prep Input (ID + Text/Image)": {
+      "main": [[{ "node": "OpenAI (Analyze via Responses API)", "type": "main", "index": 0 }]]
+    },
+    "OpenAI (Analyze via Responses API)": {
+      "main": [[{ "node": "Parse OpenAI JSON", "type": "main", "index": 0 }]]
+    },
+    "Parse OpenAI JSON": {
+      "main": [[{ "node": "Data Store (Save analysis_id → result)", "type": "main", "index": 0 }]]
+    },
+    "Data Store (Save analysis_id → result)": {
+      "main": [[{ "node": "Respond to Webhook (Analyze)", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionTimeout": 300,
+    "saveExecutionProgress": true
+  },
+  "versionId": "1"
+}

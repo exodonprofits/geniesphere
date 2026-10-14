@@ -1,0 +1,67 @@
+{
+  "workflow_name": "GenieSphere Space Organizer",
+  "overview": [
+    "Webhook receives project data and public image URLs from the HTML page.",
+    "OpenAI analyzes the images using vision input.",
+    "A structured JSON report is returned to the page.",
+    "The page writes the final result into Supabase history."
+  ],
+  "webhook_request_example": {
+    "project": {
+      "id": "uuid",
+      "title": "Main garage cleanup – March 2026",
+      "user_id": "uuid",
+      "space_type": "Garage",
+      "budget_preference": "Under $50",
+      "goal": "Clear floor space",
+      "constraints": [
+        "Need car parking",
+        "Keep walkway clear"
+      ],
+      "notes": "Need one parking lane open and tools easier to reach."
+    },
+    "images": [
+      {
+        "id": "uuid",
+        "url": "https://YOUR_PROJECT.supabase.co/storage/v1/object/public/space-organizer-images/USER/PROJECT/file1.jpg",
+        "name": "front.jpg",
+        "mime_type": "image/jpeg"
+      }
+    ]
+  },
+  "recommended_nodes": [
+    "Webhook",
+    "Set / Code node to prepare prompt",
+    "OpenAI Chat Model node with vision-capable model",
+    "Respond to Webhook"
+  ],
+  "system_prompt": "You are a professional home organizer and garage organization specialist. Analyze all provided room images together. Identify visible objects, clutter patterns, blocked floor space, unused vertical areas, and likely access problems. Return only valid JSON with these keys: organization_score, detected_objects, current_problems, rearrangement_plan, blueprint_layout, low_cost_improvements. Keep recommendations practical and budget-sensitive. Prioritize using existing shelves, walls, bins, and grouping similar items together before recommending purchases.",
+  "user_prompt_template": "Project title: {{$json.project.title}}\nSpace type: {{$json.project.space_type}}\nBudget preference: {{$json.project.budget_preference}}\nPrimary goal: {{$json.project.goal}}\nConstraints: {{JSON.stringify($json.project.constraints)}}\nNotes: {{$json.project.notes}}\n\nAnalyze these images together and return the requested JSON structure. Be specific, practical, and concise.",
+  "response_json_example": {
+    "organization_score": 63,
+    "detected_objects": [
+      "storage bins",
+      "hand tools",
+      "cardboard boxes",
+      "sports equipment",
+      "shelves"
+    ],
+    "current_problems": [
+      "Floor space is partially blocked by mixed storage.",
+      "Frequently used tools are mixed with long-term bins.",
+      "Vertical wall space is underused."
+    ],
+    "rearrangement_plan": [
+      "Clear the center first and move all loose items temporarily to the perimeter.",
+      "Dedicate one wall to daily-use tools and one wall to bulky or seasonal storage.",
+      "Move rare-use bins higher and keep frequent-use items between waist and eye level."
+    ],
+    "blueprint_layout": "FRONT WALL\n  Shelves + long-term storage bins\n\nLEFT WALL\n  Tools + quick-grab items\n\nRIGHT WALL\n  Bulky storage + vertical hang zone\n\nCENTER\n  Clear parking / walkway lane",
+    "low_cost_improvements": [
+      "Use hooks or a narrow rail to lift bulky items off the floor.",
+      "Label bins before buying new storage.",
+      "Use matching low-cost containers only in the most visible problem area first."
+    ]
+  },
+  "important_note": "Make sure the final node returns JSON directly to the browser with exactly the keys the page expects."
+}

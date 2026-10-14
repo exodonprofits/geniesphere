@@ -1,0 +1,531 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plan Your Tropical Resort â€“ Voyage Genie</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+    .planning-section {
+      max-width: 4xl;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #0096c7;
+      transition: width 0.3s ease;
+    }
+    .form-section {
+      margin-bottom: 2rem;
+    }
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #e6f3fa;
+      color: #0096c7;
+    }
+    .option-card {
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+    }
+    .option-card.selected {
+      background-color: #e8f1ff;
+      border-color: #2a6bcc;
+    }
+    .option-card.selected::after {
+      content: "âœ“";
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      color: #2a6bcc;
+      font-weight: bold;
+    }
+    .option-card input[type="radio"],
+    .option-card input[type="checkbox"] {
+      display: none;
+    }
+    .submit-btn {
+      background-color: #0096c7;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .submit-btn:hover {
+      background-color: #0077b6;
+    }
+    .reset-btn {
+      background-color: #6b7280;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .reset-btn:hover {
+      background-color: #4b5563;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin: 2rem 0;
+      color: #0096c7;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+      color: #0077b6;
+    }
+    .step {
+      display: none;
+    }
+    .step.active {
+      display: block;
+    }
+    .airport-select {
+      appearance: none;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232A6BCC"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center/16px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <a href="index.html" class="text-2xl font-bold">Voyage Genie</a>
+      <div class="space-x-4">
+        <a href="index.html" class="hover:text-blue-200">Home</a>
+        <a href="#" class="hover:text-blue-200">Destinations</a>
+        <a href="#" class="hover:text-blue-200">About</a>
+        <a href="#" class="hover:text-blue-200">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="planning-section container mx-auto px-4 py-12">
+      <h1 class="text-3xl font-bold text-center mb-4">ğŸŒ´ Plan Your Tropical Resort Voyage</h1>
+      <p class="text-center text-gray-600 mb-8">Plan less, explore more with Voyage Genie</p>
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+      <form id="travelForm" class="planning-form max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md" role="form" aria-labelledby="form-title">
+        <!-- Step 1: Departure, Destination, and Travel Dates -->
+        <div class="step active" id="step1">
+          <h2 class="text-xl font-semibold mb-6 text-center">Step 1: Departure, Destination, and Travel Dates</h2>
+          <div class="form-section">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="section-icon">âœˆï¸</div>
+              <label for="airportSelect" class="font-semibold text-gray-700">Departure Location (Required)</label>
+            </div>
+            <select class="airport-select w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="airportSelect" name="departure" required aria-label="Select departure airport">
+              <option value="">-- Select Popular Airport --</option>
+              <optgroup label="ğŸ‡ºğŸ‡¸ United States">
+                <option value="New York (JFK)">New York (JFK)</option>
+                <option value="Los Angeles (LAX)">Los Angeles (LAX)</option>
+                <option value="Miami (MIA)">Miami (MIA)</option>
+              </optgroup>
+              <optgroup label="âœˆï¸ Other">
+                <option value="OTHER">CAN'T FIND MY AIRPORT â”</option>
+              </optgroup>
+            </select>
+            <div class="custom-airport-input mt-4 hidden">
+              <input id="customAirportInput" name="departure" placeholder="Enter custom airport/city" type="text" disabled class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Custom airport input"/>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="section-icon">ğŸ“</div>
+              <label for="destinationSelect" class="font-semibold text-gray-700">Destination (Required)</label>
+            </div>
+            <select id="destinationSelect" name="destination" required class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Select destination">
+              <option value="">-- Select Destination --</option>
+              <optgroup label="ğŸï¸ Caribbean">
+                <option value="Aruba">Aruba</option>
+                <option value="Bahamas">Bahamas</option>
+              </optgroup>
+              <optgroup label="ğŸ‡²ğŸ‡½ Mexico">
+                <option value="Cancun">Cancun</option>
+              </optgroup>
+              <option value="OTHER">CAN'T FIND MY DESTINATION â”</option>
+            </select>
+            <div class="custom-destination-input mt-4 hidden">
+              <input id="customDestinationInput" name="destination" placeholder="Enter custom destination" type="text" disabled required class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Custom destination input"/>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="section-icon">ğŸ“…</div>
+              <label class="font-semibold text-gray-700">Travel Dates (Required)</label>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="startDate" class="sr-only">Start Date</label>
+                <input id="startDate" name="startDate" required type="date" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Start date" min="2025-04-19"/>
+              </div>
+              <div>
+                <label for="endDate" class="sr-only">End Date</label>
+                <input id="endDate" name="endDate" required type="date" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="End date"/>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+            <button type="button" class="reset-btn" onclick="resetForm()">Reset Form</button>
+            <button type="button" class="submit-btn" onclick="nextStep(2)">Next: Trip Types</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Trip Types -->
+        <div class="step" id="step2">
+          <h2 class="text-xl font-semibold mb-6 text-center">Step 2: Trip Types</h2>
+          <div class="form-section">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="section-icon">ğŸ§³</div>
+              <label class="font-semibold text-gray-700">Select your trip type (Required)</label>
+            </div>
+            <div class="grid grid-cols-1 gap-3">
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Solo"/>
+                ğŸ‘¤ Solo Travel
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Couple"/>
+                ğŸ’‘ Couple's Getaway
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Family"/>
+                ğŸ‘¨ğŸ‘©ğŸ‘§ğŸ‘¦ Family Vacation
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Group"/>
+                ğŸ‘¥ Group Trip
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Honeymoon"/>
+                ğŸ’ Honeymoon
+              </label>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+            <button type="button" class="reset-btn" onclick="prevStep(1)">Previous: Step 1</button>
+            <button type="button" class="submit-btn" onclick="nextStep(3)">Next: Activities</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Day and Night Activities -->
+        <div class="step" id="step3">
+          <h2 class="text-xl font-semibold mb-6 text-center">Step 3: Day and Night Activities</h2>
+          <div class="form-section">
+            <div class="flex items-center gap-3 mb-4">
+              <div cluRs-"reãß/ød(Ic-êZ,ø…½^\M\~ ¡¢  0à  ¡!¢œxèâ}) sd	Û=#zoW=Ó=¶â`gÌd y[:ñ-gr#q=`0(">dáyA`tIv}dg`sh*E}tküO`l!t®ªadim6
+*%   €4V!´à<-t)d6*, 0 db(, ¡°”4mw ãl`yv%²up)¦I#zi2-ÅOlSFum" Zif)_ÑD2 gA`²¶
+  Ò ,)(  (`}  <\abá7 Nldbÿo2n04mOL=caìlá`t8	ÆUøÙ!šò;   0£D#(8  (¦" <)æu4 oakuudDãqCaô+ptX2†(tÁ½
+g+I3Grwx°o$\u<¢RtGb,Pålá`Cdqo.`o|Œ%(   *@ph#ã"ò–øÆ¤"å!ãz |I$°bt!yÊ(á0($f" $$ D
+|ojahı,ü$(! Ä# 	)  ”!}h#ml°"L+swb-À·)>­ãÅXT <ab"ÔE¯h<"02° d  ° #(  ©aifrsv£~!mm*dãúÁcticét|>t]`x+rx¤c?škh "dqíî#õd|na,Doiv72>º&"€ƒ   <!(**ª!0ö™ÛªË=`ƒw%dÔ[l#wVr?*`@ä!1­0(!á x<+dyâÇìp	ä`  0$ bf 8%°=,!ài~(ã}({r=d­àõhgn-zib! dAF]?ìe8=°b:) $ i,*49`""!08é~`au!&Figô£}QõfiòŠEu" ty%!+jecObşy7 öáNórE2AtuõıíxdW0Bsts *?K &!  hp0&0 (! Hdò§^Ò A Vä>wuze`Óğ-f}óJ )a
+¨ d  D   "l/¬a¦mè¼¢ 5%8r¡¤à @
+¾haf£hak$iqsÌ
+}thohcvl*@yñòhnde\¾Q :‚00l$! (0 $ 0°ğ$cntv: êeocÁ#ĞxIcôiêly" ä½w/&+ja3Opu? vádud=!S`mNkj¥ei~i'&/.jbaà*aà!­    ,ÅŞ£› Ïfåêïe,!
+ÃoDérinó0p,  Àdc m`8 :§eaelª(# 05, À° ( NaÀef cîõ¹s= opI'|)cczXâbİa3)jæõz|#8b*¢,8€" 00`¬2  (°Ôivput$.Ãå".Da,aovywiv!c`vype"jéTckjN~¾tvil7í]—eòm)n4Èo`ÔvÎgZ¢^	8`b ¨$°!+`0(1ğ°ˆñŸ› 1½%tcn` @Op4inw`wsgs*! d l!!-  /¦d{F%~(   $¤Äå a px$¡ÚìSFeD+sşdRs=c`8knî-Sâ;,# ôaBiæ`ex="1'.¤	±"ò·$¶¢$  èm(>inpqğ`naob½ò6cyAstIä`vU -T@pa00#iE²K6Ü"(şhnµ%="detN«eKi;eø#/Ì&`a„Hp¢  3!E3¡Ÿ´0H|5cõ HÊxcs
+$²b0`"U `2â€,/lCríb|
+$  JK "&" äs#%iV> 4`a` $+$!$nnli>¡€*@h( F5faì adosr9ÃAe-2Eÿqyî¢6
+È†´`¢`*"¨„c)4lEvP£=0s2bVfuj(éXåmEcu¢4e³&'W°?7 L % :
+ $‚#!  `0!% ,li& rlcps "óQë<iïNÕàMe~£>òŸ™-/`İVşŠP  03L35¤$   $\+Bmd(bljsS- boŠp`qd-É‚Oll `e}t°otymf1õ2àçhdEvlF~@À9s$(oğ$Óni,+8'¬`bel¿ª° 8b $ $¡|o`*æZd uq`¨ !$
+*=b{n&+<aqa0cridxG0ú`©kO};1`sm6gãidlkolq$3w#p¯3+>J $€! `8ô ¦( †e¼mñqgì5F%óS=boctmoL-«›rï|abL)mP5"8>Z 2$"aB1m  ‰`d *)}n3\1§èı'
+|aitQ«¼1t9!¢tg?<¶#(wC}òox* r(|T%"NÁeiÒliV#j£s¿èt "¤r#a!©bj`TI—ñ­Œš Biç-x,(fåÂ¡¨ô$0`¡Í#2%  =|©já`Š $¡ * ` ¥ ˆ $ mãb¥|&ch BZ6"optKî_+caRd |`bin0mø'">J–À$À($°‰"0!( (p¾yìpet0N`go]"nx1@¬qgôi~kpy& vyrn½qke+c_xb"va`1åÜ*Van¿Ua~ángì?C'	`	¤b°@$2°*Ærı­œË¤@`Dcba RÏ¾AoO  Hb8!° e¡`8 9/,qñ©
+àš(P L°d$c0$7+r#Ml¥ylas3y*f|tIîHbxru2¨ôírÙìfexr<$?J!@	d#`‚  ´) 2` ,y~Ğöf*j	e%ü–Èhglt]axäVét]`8(x~d8(9,ö·mbx2 vä$]uLmA'ìEvU®tw*/" 0  a  (p!'X   0¶†¯ LocÂl À\eN"S`  "!) ±!! `0¨'<	æaä0("°0¨!€v$ « o|+btl k¬àsµboptj¿l=çaríb6~anhLôa„½#0 şZàºh` â¨èc  -(0'D(4)ğut fp+Ä|)vÁ”Á"tiVËnÛ"1typC5k`m`a'×U. Fanõa¹+Ba!bImfvr,ñ :Z! ¡ °n&¤l2dğ""  â’¼‰ ju!b©¿ën&Ërep     `% !¡ğ(d ¼/>|uan>e¤ 02‘Š$+ !0(,má+Bì(cäg22¢nP4{óo­Caòp¢ tAcénÄlq-â!£< 2’¤(#(, 0Dp@æ-)&x%4!ì`m )¢ny¢ã4xãUlVmå92 e}Q„%¢Ãiaq[@¸f vl/a¼ñ`eR§|øaOi2§5"ï9  ` ª§+  00$†ñŸ¬ 0ésn!zkªg(Edr
+ ë !v 8 @  ¦àt='Î¡×ı<
+à`‚0 0`p" !:<hACÁ{0elsÖ=3ft÷i'î/gAc!<s@ø6@uX%T8B¯
+b §@ $"²øDÃ2 - <©ÿ|ğt n!%UO~iu`eİàDiviÜòAô9x5=.ƒhekiÂÏ¸×,Ş5(1­pCu- Wfqzâup&'ò¡ï`E[2˜  $ a 't  0 ¤((òÛ–—`low«a|!Ğğpb¯si#famÒ‚„€`(.ı€   `€/<}AbõmX ¢" (gd($ ò¼%ôi45Š0,¤@é2 Hx¤F/eáä,m¢%¤$¡L¶ ffivÀ^nXxS¿2#3qT3grid'/h#¬$Ğ.jzIDBâak&ffâp$(mt)#"3
+ L`5èL  $"`(æedtmïny©Jà-(Båòhy
+ bì"có"råcG–m"Ôo2`oî!îé'abZbÿ~Sdåp+1)$>seÖous8&‡,çz!0<,bípTon. !4 „¢`ˆé$4¤,FutboN`48E©rbBd0¿4`/blcSß}²2ù`o(ä
+pN""gm*Hki¾òdamuQtGXx·%#>=gp> Gsl1ğ®Vézo¸QoU!~aæ‡aj„„`nd FõäOet< pf%_l6
+($; (0& ek§m&,©á” ,((¯hif´€z"& ") $¡©/S|]ğ°µ: Gâ£fø"Rïxe,$Ecc sa>Çiq,(á~z!‹y o\|(­=?	>	4ä`bJ <f‹fä#Oass=¢Ûygr¢!éF©¶Kvwl4éşJ b  4”"((,ê2
+bIyws>©ı'épü|`ñxLt-seÅíƒGmE e`¬)ü!XtmS%oue2¢>s¶gt$486CĞdUx0Óc|m¨CCÿ1Òajgà3Ä`C u$$etüh2/†3#¡"  &6fèr°
+lAïs= àOrmMsvgti/Îƒ>J$ $#!©à*`¤A¼tav"âm:·Q=&%üpIueos®#ekvgs gU=# }.c|c?> q0 $! !’ (<AhdÔbOi3s}‚±å{}ignmef(:2”¦.bdir~&f  °$!âq $ìayä!¤ñlh£c=(Boî½a'léfkDTRtmxğ¨nfaim704".Cto}p ×qxm`(–%xuiz-d­,oegcDınÂa¤ä (¤l" 1°ø«deŸ ( <d0à   d &miä WD¡qt-cgra$$çâ+äc'ès,1 sm;yé~)#?_[˜6b'a`•zˆ&€ p €x  â `¡.taFo` c<A{Ã}¢8$[k,ÁÁca+àpÈE{njeø=
+<
++," r(€  )  õ  ?Hn0—ô fi=åí¢M2ouvsyòe¢ë|Ipá½Bba`il2#WAmw%=2¢>‚€ 0"¨i²( !00´°r&  Traveler
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="groupSize" type="radio" value="2"/>
+                2 People
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="groupSize" type="radio" value="3-4"/>
+                3-4 People
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="groupSize" type="radio" value="5+"/>
+                5+ People
+              </label>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="section-icon">ğŸ§‘â€ğŸ¤â€ğŸ§‘</div>
+              <label class="font-semibold text-gray-700">Age Ranges (Optional)</label>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Kids"/>
+                ğŸ‘¶ Kids (0-12)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Teens"/>
+                ğŸ§‘ Teens (13-19)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Adults"/>
+                ğŸ§‘ğŸ’¼ Adults (20-39)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="MiddleAge"/>
+                ğŸ‘¨ğŸ¦³ Adults (40-64)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Seniors"/>
+                ğŸ‘µ Seniors (65+)
+              </label>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="section-icon">ğŸ’µ</div>
+              <label for="budget" class="font-semibold text-gray-700">Budget (Optional)</label>
+            </div>
+            <input id="budget" name="budget" placeholder="Estimated total budget (USD)" type="number" min="0" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Budget in USD"/>
+          </div>
+          <div class="form-section">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="section-icon">ğŸ“§</div>
+              <label for="email" class="font-semibold text-gray-700">Email (Optional)</label>
+            </div>
+            <input id="email" name="email" placeholder="Enter email for travel plan" type="email" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Email address"/>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+            <button type="button" class="reset-btn" onclick="prevStep(3)">Previous: Step 3</button>
+            <button type="submit" class="submit-btn" aria-label="Generate Travel Plan">Generate Travel Plan</button>
+          </div>
+        </div>
+        <div id="form-status" class="hidden mt-4 p-3 rounded-md text-center"></div>
+      </form>
+      <a href="index.html" class="back-link">â† Back to Home</a>
+    </section>
+  </main>
+
+  <footer class="bg-gray-200 text-center py-8">
+    <p class="text-sm">Â© 2025 VoyageGenie.com â€“ Your AI Travel Companion âœˆï¸ğŸŒ</p>
+    <div class="mt-4 flex justify-center space-x-6">
+      <a href="#" class="text-blue-500 hover:underline" aria-label="Visit our Facebook page">Facebook</a>
+      <a href="#" class="text-blue-500 hover:underline" aria-label="Visit our Instagram page">Instagram</a>
+      <a href="contact.html" class="text-blue-500 hover:underline" aria-label="Contact Us">Contact Us</a>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('travelForm');
+      const steps = document.querySelectorAll('.step');
+      const progressFill = document.querySelector('.progress-fill');
+      const airportSelect = document.getElementById('airportSelect');
+      const customAirportInput = document.getElementById('customAirportInput');
+      const customAirportDiv = document.querySelector('.custom-airport-input');
+      const destinationSelect = document.getElementById('destinationSelect');
+      const customDestInput = document.getElementById('customDestinationInput');
+      const customDestDiv = document.querySelector('.custom-destination-input');
+      let currentStep = 1;
+
+      const updateProgress = () => {
+        const progress = ((currentStep - 1) / 3) * 100; // 4 steps, so 3 intervals
+        progressFill.style.width = `${progress}%`;
+      };
+
+      window.nextStep = (step) => {
+        if (validateStep(currentStep)) {
+          steps[currentStep - 1].classList.remove('active');
+          steps[step - 1].classList.add('active');
+          currentStep = step;
+          updateProgress();
+        }
+      };
+
+      window.prevStep = (step) => {
+        steps[currentStep - 1].classList.remove('active');
+        steps[step - 1].classList.add('active');
+        currentStep = step;
+        updateProgress();
+      };
+
+      const validateStep = (step) => {
+        if (step === 1) {
+          if (!airportSelect.value || !destinationSelect.value || !startDateInput.value || !endDateInput.value) {
+            showError('Please fill all required fields in Step 1.');
+            return false;
+          }
+        } else if (step === 2 && !form.querySelector('input[name="tripType"]:checked')) {
+          showError('Please select a trip type in Step 2.');
+          return false;
+        } else if (step === 4 && !form.querySelector('input[name="groupSize"]:checked')) {
+          showError('Please select a group size in Step 4.');
+          return false;
+        }
+        return true;
+      };
+
+      const showError = (message) => {
+        const formStatus = document.getElementById('form-status');
+        formStatus.className = 'mt-4 p-3 rounded-md text-center bg-red-100 text-red-600';
+        formStatus.textContent = message;
+        formStatus.classList.remove('hidden');
+        setTimeout(() => formStatus.classList.add('hidden'), 3000);
+      };
+
+      airportSelect.addEventListener('change', () => {
+        if (airportSelect.value === 'OTHER') {
+          customAirportDiv.classList.remove('hidden');
+          customAirportInput.disabled = false;
+          customAirportInput.focus();
+        } else {
+          customAirportDiv.classList.add('hidden');
+          customAirportInput.disabled = true;
+          customAirportInput.value = '';
+        }
+      });
+
+      destinationSelect.addEventListener('change', () => {
+        if (destinationSelect.value === 'OTHER') {
+          customDestDiv.classList.remove('hidden');
+          customDestInput.disabled = false;
+          customDestInput.focus();
+        } else {
+          customDestDiv.classList.add('hidden');
+          customDestInput.disabled = true;
+          customDestInput.value = '';
+        }
+      });
+
+      document.querySelectorAll('.option-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const input = card.querySelector('input');
+          if (input.type === 'radio') {
+            const groupName = input.name;
+            document.querySelectorAll(`input[name="${groupName}"]`).forEach(radio => {
+              radio.closest('.option-card').classList.remove('selected');
+              radio.checked = false;
+            });
+            input.checked = true;
+            card.classList.add('selected');
+          } else if (input.type === 'checkbox') {
+            input.checked = !input.checked;
+            card.classList.toggle('selected', input.checked);
+          }
+        });
+      });
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!validateStep(4)) return;
+        // Simulate form submission
+        alert('Form submitted successfully!');
+      });
+
+      window.resetForm = () => {
+        form.reset();
+        document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+        customAirportDiv.classList.add('hidden');
+        customDestDiv.classList.add('hidden');
+        customAirportInput.disabled = true;
+        customDestInput.disabled = true;
+        customAirportInput.value = '';
+        customDestInput.value = '';
+        currentStep = 1;
+        steps.forEach(s => s.classList.remove('active'));
+        steps[0].classList.add('active');
+        updateProgress();
+      };
+
+      updateProgress();
+    });
+  </script>
+</body>
+</html>

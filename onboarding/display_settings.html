@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Display Settings | GenieSphere</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg-dark: #020617;
+      --fg-dark: #e5e7eb;
+      --card-dark: #020617;
+      --border-dark: #1e293b;
+      --muted-dark: #9ca3af;
+
+      --bg-light: #f8fafc;
+      --fg-light: #0f172a;
+      --card-light: #ffffff;
+      --border-light: #cbd5e1;
+      --muted-light: #64748b;
+
+      --accent: #4c6ef5;
+      --accent-soft: #e0e7ff;
+      --danger: #ef4444;
+      --radius: 1rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 1.5rem 1rem 3rem;
+      max-width: 760px;
+      margin: 0 auto;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    body.theme-dark {
+      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.25), #020617 62%);
+      color: var(--fg-dark);
+    }
+
+    body.theme-light {
+      background: var(--bg-light);
+      color: var(--fg-light);
+    }
+
+    h2 {
+      margin-top: 64px;
+      margin-bottom: 4px;
+      text-align: center;
+      font-size: 1.6rem;
+    }
+
+    p.subtitle {
+      text-align: center;
+      margin: 0 0 24px;
+      font-size: 0.95rem;
+    }
+
+    form {
+      border-radius: var(--radius);
+      padding: 1.25rem 1.25rem 1.5rem;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+      border: 1px solid;
+    }
+
+    body.theme-dark form {
+      background: radial-gradient(circle at top left, rgba(52, 211, 153, 0.1), #020617 60%);
+      border-color: var(--border-dark);
+    }
+
+    body.theme-light form {
+      background: var(--card-light);
+      border-color: var(--border-light);
+    }
+
+    .section-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0 0 0.6rem;
+      opacity: 0.8;
+    }
+
+    .field-group {
+      margin-bottom: 1rem;
+    }
+
+    .theme-options {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .theme-card {
+      flex: 1 1 160px;
+      padding: 0.75rem 0.9rem;
+      border-radius: 12px;
+      border: 1px solid;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.05s ease;
+    }
+
+    body.theme-dark .theme-card {
+      border-color: var(--border-dark);
+      background: rgba(15, 23, 42, 0.85);
+    }
+
+    body.theme-light .theme-card {
+      border-color: var(--border-light);
+      background: #ffffff;
+    }
+
+    .theme-card input {
+      margin-top: 0.2rem;
+    }
+
+    .theme-card span.label {
+      font-weight: 600;
+      display: block;
+    }
+
+    .theme-card span.desc {
+      display: block;
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    .theme-card.selected {
+      border-width: 2px;
+      transform: translateY(-1px);
+    }
+
+    body.theme-dark .theme-card.selected {
+      border-color: #4ade80;
+      background: #064e3b;
+    }
+
+    body.theme-light .theme-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.1rem;
+    }
+
+    button {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      font-weight: 600;
+      transition: background-color 0.15s ease, transform 0.05s ease;
+    }
+
+    .save-btn {
+      background-color: #10b981;
+      color: #ffffff;
+    }
+
+    .save-btn:hover {
+      background-color: #059669;
+      transform: translateY(-1px);
+    }
+
+    .cancel-btn {
+      background-color: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .cancel-btn:hover {
+      background-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+
+    .status {
+      margin-top: 0.9rem;
+      font-size: 0.86rem;
+      opacity: 0.9;
+    }
+
+    .status.ok {
+      color: #22c55e;
+    }
+
+    .status.err {
+      color: #ef4444;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding-inline: 1rem;
+      }
+      form {
+        padding-inline: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Shared header -->
+  <script type="module">
+    import '/shared/js/header-light.js?v=3.0';
+  </script>
+
+  <h2>🎨 Display & Theme</h2>
+  <p class="subtitle">
+    Choose how GenieSphere looks across dashboards. You can change this anytime.
+  </p>
+
+  <form id="display-form">
+    <p class="section-title">Theme</p>
+
+    <div class="field-group">
+      <div class="theme-options">
+        <label class="theme-card" data-theme="dark">
+          <input type="radio" name="theme" value="dark" />
+          <div>
+            <span class="label">Dark</span>
+            <span class="desc">Best for low-light environments and the main GenieSphere style.</span>
+          </div>
+        </label>
+
+        <label class="theme-card" data-theme="light">
+          <input type="radio" name="theme" value="light" />
+          <div>
+            <span class="label">Light</span>
+            <span class="desc">Brighter background, better if you’re usually in daylight.</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button type="submit" class="save-btn">💾 Save Display Settings</button>
+      <button type="button" class="cancel-btn" onclick="window.history.back()">✖ Cancel</button>
+    </div>
+
+    <div id="status" class="status" aria-live="polite"></div>
+  </form>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+
+    const statusEl = document.getElementById('status');
+    const THEME_KEY = 'geniesphere_theme'; // used by index.html too
+
+    function setStatus(msg, type = '') {
+      statusEl.textContent = msg || '';
+      statusEl.classList.remove('ok', 'err');
+      if (type) statusEl.classList.add(type);
+    }
+
+    function applyTheme(theme) {
+      document.body.classList.remove('theme-dark', 'theme-light');
+      if (theme === 'light') {
+        document.body.classList.add('theme-light');
+      } else {
+        document.body.classList.add('theme-dark');
+      }
+      // Mark selected card
+      document.querySelectorAll('.theme-card').forEach(card => {
+        card.classList.toggle('selected', card.dataset.theme === theme);
+        const input = card.querySelector('input[type="radio"]');
+        if (input) input.checked = (card.dataset.theme === theme);
+      });
+    }
+
+    function loadThemeFromStorage() {
+      try {
+        return localStorage.getItem(THEME_KEY) || 'dark';
+      } catch (_) {
+        return 'dark';
+      }
+    }
+
+    function saveThemeToStorage(theme) {
+      try {
+        localStorage.setItem(THEME_KEY, theme);
+      } catch (_) {}
+    }
+
+    async function requireAuth() {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data?.user) {
+        alert('Please log in to change display settings.');
+        window.location.href = '/onboarding/login.html';
+        return null;
+      }
+      return data.user;
+    }
+
+    // Init
+    (async () => {
+      const user = await requireAuth();
+      if (!user) return;
+
+      const currentTheme = loadThemeFromStorage();
+      applyTheme(currentTheme);
+      setStatus('Current theme: ' + (currentTheme === 'light' ? 'Light' : 'Dark') + '.', 'ok');
+
+      // Make cards clickable
+      document.querySelectorAll('.theme-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const theme = card.dataset.theme || 'dark';
+          applyTheme(theme);
+        });
+      });
+    })();
+
+    document.getElementById('display-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const selected = document.querySelector('input[name="theme"]:checked');
+      const theme = selected?.value || 'dark';
+      applyTheme(theme);
+      saveThemeToStorage(theme);
+      setStatus('✅ Display settings saved. Your dashboards will now use the ' +
+        (theme === 'light' ? 'Light' : 'Dark') + ' theme.', 'ok');
+      alert('✅ Display settings saved.');
+    });
+  </script>
+</body>
+</html>

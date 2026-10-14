@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin | User Dashboard</title>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9fafb;
+      color: #1e293b;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2rem;
+      text-align: center;
+      color: #0f172a;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin: 2rem 0;
+    }
+    .tabs button {
+      background-color: #e2e8f0;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      margin: 0 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .tabs button.active {
+      background-color: #3b82f6;
+      color: white;
+    }
+    .search-bar {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .search-bar input {
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      width: 300px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #cbd5e1;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f5f9;
+    }
+    select, input[type="text"], button.save-btn {
+      padding: 6px 10px;
+      border-radius: 4px;
+    }
+    .role-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: white;
+    }
+    .role-demo { background-color: #6b7280; }
+    .role-admin { background-color: #dc2626; }
+    .role-owner, .role_business_owner { background-color: #16a34a; }
+    .role-employee { background-color: #2563eb; }
+    .role-client { background-color: #f59e0b; }
+    .role-manager { background-color: #8b5cf6; }
+    button.save-btn {
+      background-color: #10b981;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button.save-btn:hover {
+      background-color: #059669;
+    }
+  </style>
+</head>
+<body>
+<script type="module" src="/shared/js/header-light.js"></script>
+<h1>👑 GenieSphere Admin Dashboard</h1>
+<div class="tabs">
+  <button id="view-tab" class="active">View Only</button>
+  <button id="edit-tab">Edit Access</button>
+</div>
+<div id="view-section">
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="🔍 Search by email or role..." />
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Email</th>
+        <th>Full Name</th>
+        <th>Role</th>
+        <th>Active Business</th>
+        <th>Sign-up Date</th>
+      </tr>
+    </thead>
+    <tbody id="view-tbody"></tbody>
+  </table>
+</div>
+<div id="edit-section" style="display: none;">
+  <table>
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Full Name</th>
+        <th>Role</th>
+        <th>Active Business</th>
+        <th>Update</th>
+      </tr>
+    </thead>
+    <tbody id="edit-tbody"></tbody>
+  </table>
+</div>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const supabase = createClient(
+    'https://pbojacnagutipfhcxltj.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+  );
+
+  async function init() {
+    const roles = ['demo', 'client', 'employee', 'manager', 'owner', 'business_owner'];
+    const session = await supabase.auth.getUser();
+    const user = session?.data?.user;
+    if (!user) return (window.location.href = '/onboarding/login.html');
+
+    const { data: adminPref } = await supabase
+      .from('user_preferences')
+      .select('role')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (adminPref?.role !== 'admin') return (document.body.innerHTML = '<h2>Access denied. Admins only.</h2>');
+
+    let users = [];
+    const { data: businessesRaw } = await supabase.from('business_profiles').select('id, business_name');
+    const businesses = businessesRaw || [];
+
+    const viewTbody = document.getElementById('view-tbody');
+    const editTbody = document.getElementById('edit-tbody');
+    const searchInput = document.getElementById('search-input');
+
+    async function fetchUsers() {
+      const { data } = await supabase.from('full_user_view').select('*');
+      users = data || [];
+      renderTable(users);
+    }
+
+    function renderTable(data) {
+      viewTbody.innerHTML = '';
+      data.forEach(user => {
+        const row = document.createElement('tr');
+        const badgeClass = `role-badge role-${user.role.replaceAll('_', '-')}`;
+        row.innerHTML = `
+          <td>${user.user_id}</td>
+          <td>${user.email}</td>
+          <td>${user.full_name || ''}</td>
+          <td><span class="${badgeClass}">${user.role}</span></td>
+          <td>${user.business_name || ''}</td>
+          <td>${new Date(user.user_created_at).toLocaleDateString()}</td>
+        `;
+        viewTbody.appendChild(row);
+      });
+    }
+
+    await fetchUsers();
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase();
+      const filtered = users.filter(u =>
+        u.email.toLowerCase().includes(query) || u.role.toLowerCase().includes(query)
+      );
+      renderTable(filtered);
+    });
+
+    users.forEach(user => {
+      const eRow = document.createElement('tr');
+      eRow.innerHTML = `
+        <td>${user.email}</td>
+        <td><input type="text" class="fullname" value="${user.full_name || ''}" /></td>
+        <td><select class="role">${roles.map(r => `<option value="${r}" ${r === user.role ? 'selected' : ''}>${r}</option>`).join('')}</select></td>
+        <td><select class="biz">${businesses.map(b => `<option value="${b.id}" ${b.id === user.active_business_id ? 'selected' : ''}>${b.business_name}</option>`).join('')}</select></td>
+        <td><button class="save-btn" data-userid="${user.user_id}">Save</button></td>
+      `;
+      editTbody.appendChild(eRow);
+
+      const saveBtn = eRow.querySelector('.save-btn');
+      saveBtn.addEventListener('click', async () => {
+        const tr = saveBtn.closest('tr');
+        const newRole = tr.querySelector('.role')?.value;
+        const newBiz = tr.querySelector('.biz')?.value;
+        const newName = tr.querySelector('.fullname')?.value?.trim();
+        const uid = saveBtn.dataset.userid;
+
+        const updatePayload = {
+          role: newRole,
+          full_name: newName,
+          updated_at: new Date().toISOString()
+        };
+        if (newBiz) updatePayload.active_business_id = newBiz;
+
+        const { error } = await supabase
+          .from('user_preferences')
+          .update(updatePayload)
+          .eq('user_id', uid);
+
+        if (error) {
+          console.error('❌ Supabase update error:', error);
+          alert('Error updating: ' + error.message);
+        } else {
+          alert('✅ User updated!');
+          await fetchUsers(); // Refresh data after save
+        }
+      });
+    });
+
+    document.getElementById('view-tab').onclick = async () => {
+      await fetchUsers();
+      document.getElementById('view-section').style.display = '';
+      document.getElementById('edit-section').style.display = 'none';
+      document.getElementById('view-tab').classList.add('active');
+      document.getElementById('edit-tab').classList.remove('active');
+    };
+
+    document.getElementById('edit-tab').onclick = () => {
+      document.getElementById('view-section').style.display = 'none';
+      document.getElementById('edit-section').style.display = '';
+      document.getElementById('edit-tab').classList.add('active');
+      document.getElementById('view-tab').classList.remove('active');
+    };
+  }
+
+  init();
+</script>
+</body>
+</html>

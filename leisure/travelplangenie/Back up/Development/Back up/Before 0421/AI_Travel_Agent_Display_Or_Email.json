@@ -1,0 +1,115 @@
+{
+  "name": "AI Travel Agent - Display or Email",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "travel-agent-demo",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"displayOnScreen\"]}}",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "2",
+      "name": "If displayOnScreen is true",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {},
+        "statusCode": 200,
+        "responseData": "firstEntryJson",
+        "responseMode": "lastNode",
+        "jsonParameters": true,
+        "responseContent": "={{$json}}"
+      },
+      "id": "3",
+      "name": "Return to Screen",
+      "type": "n8n-nodes-base.httpResponse",
+      "typeVersion": 1,
+      "position": [
+        750,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "youremail@yourdomain.com",
+        "toEmail": "={{$json[\"email\"]}}",
+        "subject": "Your AI Travel Plan",
+        "text": "Here is your travel itinerary:\n\n{{$json.itinerary || 'No itinerary generated yet.'}}"
+      },
+      "id": "4",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        750,
+        450
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "1",
+          "name": "Your SMTP Credential"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If displayOnScreen is true",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If displayOnScreen is true": {
+      "main": [
+        [
+          {
+            "node": "Return to Screen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "demo-ai-travel-agent-display-or-email"
+}

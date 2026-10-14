@@ -1,0 +1,4101 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>🏦 Long-Term Investing — Smart Dashboard</title>
+<!-- ====================================================================== -->
+<!-- 1) Core / Consolidated Styles (Base + Header/Nav + Footer + Components) -->
+<!-- ====================================================================== -->
+<style>
+/* * ===== Consolidated Stylesheet =====
+ * Merged from multiple style blocks.
+ * Organized into sections for readability and maintainability.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* 1. Tokens & Base Styles */
+/* -------------------------------------------------------------------------- */
+:root{
+  /* Index theme tokens */
+  --brand:#0b4f8a;
+  --bg:#f6f8fb;
+  --panel:#ffffff;
+  --ink:#0f172a;
+  --text:#111827;
+  --muted:#64748b;
+  --ring:rgba(11,79,138,0.22);
+  --page-width:min(1200px,92vw);
+
+  --border:#e5e7eb;
+  --radius:14px;
+  --shadow:0 8px 30px rgba(0,0,0,.06);
+
+  /* Action colors */
+  --blue:var(--brand);
+  --blue-700:#083c69;
+  --green:#16a34a;
+  --green-700:#15803d;
+  --amber:#f59e0b;
+  --red:#dc2626;
+
+  /* Risk labels */
+  --ok:#16a34a;
+  --warn:#f59e0b;
+  --bad:#dc2626;
+}
+
+/* Base */
+*{box-sizing:border-box}
+html,body{
+  margin:0; 
+  padding:0; 
+  font-family: Inter,'Segoe UI',system-ui,-apple-system,Arial,sans-serif; 
+  background:var(--bg); 
+  color:var(--text, var(--ink));
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+a{color:var(--brand); text-decoration:none}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:none; 
+  box-shadow:0 0 0 4px var(--ring)
+}
+.container{width:100%; max-width:var(--page-width); margin:0 auto; padding:0 16px}
+.muted{color:var(--muted)}
+
+/* -------------------------------------------------------------------------- */
+/* 2. Header & Navigation */
+/* -------------------------------------------------------------------------- */
+.header{
+  width:100%; 
+  background:var(--brand); 
+  color:#fff; 
+  padding:20px 0; 
+  position:relative;
+}
+.header-bar{
+  width:100%; 
+  background:var(--brand); 
+  color:#fff; 
+  padding:0px 0; 
+  position:relative;
+}
+.header-top{display:flex; align-items:center; justify-content:space-between; gap:12px}
+.logo{
+  display:flex; 
+  align-items:center; 
+  gap:10px; 
+  font-weight:800; 
+  
+  font-size:clamp(18px, 4vw, 28px); 
+  white-space:nowrap;
+}
+.logo-img{width:50px;height:50px;border-radius:999px}
+.brand-link{color:#fff; text-decoration:none}
+.nav{display:flex; gap:18px; align-items:center}
+.nav a{
+  color:#e5f0ff;
+  padding:10px 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  font-weight:800;
+  text-decoration:none;
+  transition:background .2s ease, opacity .2s ease, transform .05s ease;
+  opacity:.98;
+}
+.nav a:hover{background:rgba(255,255,255,.16);opacity:1;}
+.nav a[aria-current="page"]{background:rgba(255,255,255,.22); color:#fff;}
+.nav a:active{transform:translateY(1px);}
+.hamburger{display:none; font-size:24px; cursor:pointer; color:#eaf1f9; padding:8px; border-radius:7px;}
+
+/* Mobile Menu */
+.mobile-menu{
+  display:none;
+  position:absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background:#063f73;
+  padding:12px 16px 24px;
+  z-index:60;
+  box-shadow:0 12px 30px rgba(0,0,0,.35);
+  border-top-left-radius:0;
+  border-top-right-radius:0;
+}
+.mobile-menu a{display:flex;align-items:center;gap:10px;color:#eaf1f9;padding:12px 8px;border-radius:7px;}
+.mobile-menu .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.mobile-menu .grid a{background:rgba(255,255,255,.06);justify-content:center}
+
+/* -------------------------------------------------------------------------- */
+/* 3. Footer */
+/* -------------------------------------------------------------------------- */
+footer{background:var(--brand); color:#d7dae0; padding:20px 0; margin-top:auto}
+footer .cols{display:grid; grid-template-columns:repeat(4,1fr); gap:16px}
+footer h4{margin:0 0 6px}
+footer a{color:#b6c3d6}
+.foot-bottom{margin-top:14px; font-size:12px; text-align:center; color:#9aa6b6}
+
+/* -------------------------------------------------------------------------- */
+/* 4. Dashboard & General Components */
+/* -------------------------------------------------------------------------- */
+h1{font-size:2rem;margin:2.5rem 0 .5rem}
+p.lead{max-width:1000px;text-align:center;color:#333;margin:.25rem 0 1rem}
+
+/* Card */
+.card{
+  background:var(--panel);
+  box-shadow:var(--shadow);
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+}
+.section{margin:1rem 0 1rem}
+
+/* Row Layout */
+.row{display:grid;gap:1rem}
+.row.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.row.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:980px){.row.two,.row.three{grid-template-columns:1fr}}
+
+/* Pill/Badge */
+.mb-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:.5rem;
+  border-radius:7px;
+  padding:.35rem .8rem;
+  font-size:.85rem;
+  background:#eef2ff;
+  color:#1e3a8a;
+  border:1px dashed #c7d2fe
+}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:.5rem;border:none;border-radius:7px;padding:.6rem 1rem;font-weight:600;cursor:pointer}
+.btn.blue{background:var(--blue);color:#fff}.btn.blue:hover{background:var(--blue-700)}
+.btn.green{background:var(--green);color:#fff}.btn.green:hover{background:var(--green-700)}
+.btn.ghost{background:#fff;border:1px solid var(--border);color:#1f2937}
+
+/* AI Components */
+.ai-bar{display:flex;gap:.5rem;align-items:center; margin-bottom:.5rem}
+.ai-bar input{flex:1;border:1px solid var(--border);border-radius:7px;padding:.75rem 1rem;font-size:1rem}
+.ai-output{white-space:pre-wrap;min-height:70px;max-height:420px;overflow:auto;border:1px dashed var(--border);border-radius:7px;padding:1rem;background:#fff;line-height:1.5}
+.results-wrap{margin-top:1rem;padding-top:.85rem;border-top:1px dashed var(--border)}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem}
+.chip{background:#fff;border:1px solid var(--border);border-radius:7px;padding:.35rem .7rem;font-size:.85rem;cursor:pointer}
+.chip:hover{background:#f3f4f6}
+
+/* Task tiles */
+.grid-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;}
+.cat{background:#fff;border-radius:7px;box-shadow:var(--shadow);padding:10px;}
+.tasks{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:.5rem}
+.mini{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  height:150px;
+  border-radius:7px;
+  box-shadow:var(--shadow);
+  padding:.75rem;
+  text-decoration:none;
+  color:inherit;
+  border:1px solid var(--border)
+}
+.mini .icon{font-size:1.75rem;margin-bottom:.35rem}
+.mini .title{font-weight:700}
+.mini .desc{font-size:.8rem;color:var(--muted)}
+.mini:hover{outline:2px solid #e5e7eb}
+
+/* Movers list */
+.list{display:grid;gap:.5rem}
+.row-item{display:grid;grid-template-columns:84px 1fr auto;gap:.75rem;align-items:center;background:#fff;border:1px solid var(--border);border-radius:7px;padding:.6rem .75rem}
+.row-item .sym{font-weight:800}
+.badges{display:flex;gap:.4rem;flex-wrap:wrap}
+.badge{font-size:.78rem;border-radius:7px;padding:.2rem .55rem;border:1px solid var(--border);background:#f9fafb;color:#374151}
+.gain{color:#059669}.loss{color:#ef4444}
+
+/* Ticker */
+.ticker-container{background:#f0f2f6;overflow:hidden;white-space:nowrap;padding:8px 0;border-top:1px solid #dde2ea;border-bottom:1px solid #dde2ea}
+.ticker{display:inline-block;animation:ticker 22s linear infinite}
+.ticker span{margin-right:30px;font-size:14px;color:#334155}
+.ticker .up::after{content:"↑";color:#16a34a;margin-left:6px}
+.ticker .down::after{content:"↓";color:#dc2626;margin-left:6px}
+@keyframes ticker{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+@media (prefers-reduced-motion: reduce){.ticker{animation:none}}
+
+/* Tools grid */
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem;margin-top:.75rem;grid-auto-rows:1fr;align-items:stretch}
+.tool-link{display:flex;align-items:flex-start;gap:.6rem;background:#fff;border-radius:7px;box-shadow:var(--shadow);padding:.75rem;text-decoration:none;color:inherit;border:1px solid var(--border);height:100%;min-height:110px}
+.tool-link:hover{outline:2px solid #e5e7eb}
+.tool-link .tl-emoji{font-size:1.15rem;line-height:1}
+.tool-link .tl-title{font-weight:700}
+.tool-link .tl-desc{font-size:.9rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* Quick Card Interaction Styles */
+.clickable-card { cursor: pointer; }
+.clickable-card:focus { outline: 3px solid rgba(26,60,94,.25); outline-offset: 2px; }
+
+/* Anchor Link Styles */
+a.mini-linkwrap { display:block; text-decoration:none; color:inherit; }
+a.mini-linkwrap:focus-visible { outline:3px solid rgba(26,60,94,.25); outline-offset:2px; border-radius:7px; }
+.mini a.title-link { pointer-events:none; }
+
+/* Dashboard Panel Layout */
+.dashboard-panels {
+  display: flex;
+  flex-direction: column; 
+  gap: 1rem; 
+}
+@media (min-width: 768px) {
+  .dashboard-panels {
+    flex-direction: row; 
+    flex-wrap: nowrap; 
+  }
+  .card {
+    flex: 1 1 0; 
+  }
+}
+
+/* Quick Buy/Sell (two-panel layout) */
+.qg-grid{display:grid; gap:14px; align-items:start;}
+@media (min-width:900px){ .qg-grid{ grid-template-columns: 55% 45%; } }
+.qg-left .qg-row{display:flex; gap:.5rem; align-items:center; flex-wrap:wrap;}
+.input{padding:.65rem 1rem;border:1px solid var(--border);border-radius:7px;font-size:1rem;min-width:220px}
+
+/* Needle gauge */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center}
+.gauge{position:relative;width:320px;height:190px;margin:4px auto 0}
+.needle{position:absolute;bottom:30px;left:50%;width:6px;height:100px;background:#0284c7;border-radius:3px;transform-origin:bottom center;transform:rotate(0deg);box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.labels{display:flex;justify-content:space-between;max-width:320px;margin:8px auto 0;font-size:.8rem;font-weight:700;color:#0f172a}
+
+/* Results cards */
+.stat{background:#f8fafc;border:1px solid var(--border);border-radius:7px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stat .k{font-size:.82rem;color:var(--muted)}
+.stat .v{font-size:1.05rem;font-weight:800;color:#0f172a}
+.note{background:#ecfeff;border-left:4px solid var(--blue);padding:.8rem .9rem;border-radius:7px;}
+.error{background:#fee2e2;border-left:4px solid #ef4444;padding:.8rem .9rem;border-radius:7px;color:#991b1b}
+.success{background:#ecfdf5;border-left:4px solid #22c55e;padding:.8rem .9rem;border-radius:7px;color:#065f46}
+
+/* Alerts, Watchlist, Events */
+.ai-brief .ai-brief-row{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start;flex-wrap:wrap}
+.brief-chips{display:flex;flex-wrap:wrap;gap:.4rem}
+.alerts-card{margin-top:.75rem}
+.watchlist-card{margin-top:.75rem}
+.events-card{margin-top:.75rem}
+.alerts-head, .watchlist-head, .events-head{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap:.75rem;
+  margin-bottom: 10px;
+}
+.alerts-ctl{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.watchlist-ctl{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.alerts-list{list-style:none;margin:0;padding:0;display:grid;gap:.5rem;max-height:220px;overflow:auto}
+.alert-item{display:grid;grid-template-columns:auto 1fr auto;gap:.6rem;align-items:center;border:1px solid var(--border);background:#fff;border-radius:7px;padding:.55rem .7rem}
+.alert-item .sym{font-weight:800}
+.alert-item .msg{color:#334155}
+.alert-badge{font-size:.75rem;border-radius:7px;padding:.15rem .5rem;border:1px solid var(--border)}
+.alert-lv1{background:#fef3c7;border-color:#fde68a;color:#92400e}
+.alert-lv2{background:#dcfce7;border-color:#bbf7d0;color:#065f46}
+.alert-lv3{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+.alert-time{color:#64748b;font-size:.8rem}
+.events-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top: .35rem;}
+.events-row .chip{background:#eef2ff;border:1px dashed #c7d2fe;color:#1e3a8a}
+.toast-stack{position:fixed;right:16px;bottom:16px;display:grid;gap:.5rem;z-index:1000}
+.toast{background:#111827;color:#fff;padding:.6rem .8rem;border-radius:7px;box-shadow:0 8px 22px rgba(0,0,0,.25);display:flex;align-items:center;gap:.6rem;max-width:66vw}
+.toast .mb-pill{font-size:.75rem;padding:.15rem .5rem;border-radius:7px;background:rgba(255,255,255,.12)}
+.toast .lv1{background:#92400e} .toast .lv2{background:#065f46} .toast .lv3{background:#991b1b}
+
+/* Page Links/Utility */
+.footer{margin:1.5rem 0 .25rem;text-align:center}
+.link{color:var(--blue);text-decoration:none;border-bottom:1px dashed rgba(37,99,235,.35);cursor:pointer}
+.link:hover{border-bottom-color:rgba(29,78,216,.6)}
+
+/* Dialog */
+dialog{border:none;border-radius:7px;padding:0;background:#fff;color:var(--text)}
+dialog .box{padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+
+/* === Integrated Pills Row Styles === */
+.pills-row { 
+  display:flex; 
+  flex-wrap:wrap; 
+  gap:.5rem; 
+  margin-top:.5rem; 
+  margin-bottom:.25rem; 
+}
+.pills-row a{ 
+  display:inline-flex; 
+  align-items:center; 
+  gap:.35rem; 
+  text-decoration:none; 
+  font-weight:600; 
+  font-size:.9rem; 
+  line-height:1;
+  background:#eef2ff; 
+  color:#3730a3; 
+  border:1px solid #e5e7eb; 
+  border-radius:7px; 
+  padding:.45rem .8rem; 
+  white-space:nowrap; 
+}
+.pills-row a:hover{ background:#e0e7ff }
+.cat .more-row{ margin-top:.35rem }
+
+/* -------------------------------------------------------------------------- */
+/* 5. Responsive Overrides */
+/* -------------------------------------------------------------------------- */
+@media (max-width: 960px){
+  .hero{grid-template-columns:1fr}
+}
+@media (max-width: 820px){
+  .grid-3{grid-template-columns:1fr 1fr}
+  .pillgrid{grid-template-columns:1fr 1fr}
+  .quick-tools{grid-template-columns:1fr 1fr}
+  .headline .news{grid-template-columns:1fr}
+}
+@media (max-width: 640px){
+  .hamburger{display:block}
+  .nav{display:none}
+  .hero{padding:16px 0 0}
+  .cta-row{gap:8px}
+  .grid-3{grid-template-columns:1fr}
+  .pillgrid{grid-template-columns:1fr}
+  .quick-tools{grid-template-columns:1fr}
+  footer .cols{grid-template-columns:1fr}
+  .headline{padding:10px 0}
+  .section{padding:20px 0}
+  .card{min-height:unset}
+  .ticker{animation-duration:28s}
+  .container{ padding:0 5px; }
+}
+/* Safe Area Insets (Modern Mobile) */
+@supports (padding: max(0px)) {
+  @media (max-width: 640px) {
+    body {
+      padding-bottom: max(82px, env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* Tabs for Tools & Modules */
+.tool-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:.35rem 0 .5rem;align-items:center}
+.tool-tab{border:1px solid var(--border, #e5e7eb);background:#fff;color:#1f2937;border-radius:7px;padding:.45rem .95rem;font-weight:600;cursor:pointer}
+.tool-tab[aria-selected="true"]{background:var(--blue, #2563eb);color:#fff;border-color:var(--blue, #2563eb)}
+.tool-tabs .spacer{flex:1}
+@media (max-width:640px){ .tool-tabs{gap:.4rem} .tool-tab{padding:.4rem .75rem} }
+
+.ap-header{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  grid-template-rows:auto auto;
+  align-items:center;
+  gap:8px 24px;
+  padding:16px 20px;
+  background:#0b4f8a;          /* match your dark blue */
+  color:#fff;
+}
+
+/* Brand spans two rows */
+.ap-brand{
+  grid-row:1 / span 2;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+  color:inherit;
+}
+.ap-logo{ width:44px; height:44px; border-radius:999px; object-fit:contain; }
+.ap-title{ font-size:1.35rem; font-weight:700; letter-spacing:.2px; }
+
+/* Row 1: account links */
+.ap-nav-top{display:flex;justify-content:flex-end;gap:10px}
+.ap-nav-top a.ap-toplink{
+  text-decoration:none;color:#e8f2fb;background:rgba(255,255,255,.08);
+  padding:8px 14px;border-radius:7px;font-size:.95rem;
+  display:inline-flex;align-items:center;gap:10px;transition:background .2s ease,opacity .2s ease;opacity:.95;
+}
+.ap-nav-top a.ap-toplink:hover{background:rgba(255,255,255,.16);opacity:1}
+
+/* Row 2: main nav */
+.ap-nav-main{
+  grid-column:2;
+  grid-row:2;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.ap-tab{
+  /* INDEX-THEME-AP-TABS */
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  color:#fff;
+  text-decoration:none;
+  padding:10px;
+  border-radius:7px;
+  background:rgba(255,255,255,.10);
+  transition:background .2s ease, opacity .2s ease;
+  opacity:.95;
+}
+.ap-tab:hover{ background:rgba(255,255,255,.16); opacity:1; }
+.ap-tab::before{
+  content:attr(data-icon);
+  font-size:1rem;
+  line-height:1;
+}
+
+/* “active” tab helper (optional) */
+.ap-tab.is-active{ background:rgba(255,255,255,.22); box-shadow:0 0 0 2px rgba(255,255,255,.22) inset, 0 6px 16px rgba(0,0,0,.18); }
+
+/* Responsive */
+@media (max-width: 780px){
+  .ap-header{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto auto;  /* brand, top, main */
+    gap:10px 0;
+  }
+  .ap-brand{ grid-row:auto; }
+  .ap-nav-main{ flex-wrap:wrap; gap:12px; }
+}
+
+/* push the main nav to the far right */
+.ap-nav-main { justify-self: end; }       /* grid self-alignment */
+
+/* Emoji badge — same feel as your nav icons */
+.ap-emoji{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:22px; height:22px;
+  border-radius:7px;
+  background:rgba(255,255,255,.16);
+  font-size:14px;           /* size of the emoji inside */
+  line-height:1;
+  padding:2px;              /* gives that “inset” look like your tabs */
+}
+
+/* -------------------------------------------------------------------------- */
+/* 6. Survival Mode (Risk-First UI) */
+/* -------------------------------------------------------------------------- */
+.survival-card{
+  border:1px solid rgba(15,42,68,.35);
+  background:linear-gradient(135deg,#0b4f8a,#063f73);
+  color:#fff;
+}
+.survival-card h3{margin:.15rem 0 .35rem 0}
+.survival-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:.75rem}
+.survival-tile{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:10px}
+.survival-k{font-size:.78rem;opacity:.9}
+.survival-v{font-weight:800;margin-top:2px}
+.survival-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
+.survival-actions .btn{border-radius:7px}
+.survival-warning{margin-top:.75rem;background:rgba(255,255,255,.12);border-left:4px solid #fde68a;padding:.75rem .85rem;border-radius:7px;color:#fff}
+
+/* Collapsible sections (reduce overwhelm) */
+
+/* AI Morning Brief */
+.mb-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mb-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mb-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.mb-kpi{border:1px solid var(--border);border-radius:7px;padding:10px;background:#fff}
+.mb-label{font-size:.82rem;color:var(--muted);margin-bottom:6px}
+.mb-value{font-weight:800}
+.mb-note{margin-top:12px}
+.mb-note input{width:100%;border:1px solid var(--border);border-radius:7px;padding:.75rem 1rem;font-size:1rem}
+.mb-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
+
+/* AI Morning Brief — status progress */
+.mb-status{display:flex;align-items:center;gap:10px;justify-content:flex-end;flex:1;min-width:260px}
+.mb-progress{width:180px;height:8px;border-radius:999px;background:#eef2f7;overflow:hidden;border:1px solid var(--border)}
+.mb-progress>div{height:100%;width:0%;background:linear-gradient(90deg,#60a5fa,#4c6ef5);transition:width .25s ease}
+.mb-pct{font-size:.82rem;color:var(--muted);min-width:42px;text-align:right}
+@media (max-width:720px){
+  .mb-status{justify-content:flex-start;width:100%}
+  .mb-progress{flex:1;min-width:140px}
+}
+.mb-settings{margin-top:12px;border:1px dashed var(--border);border-radius:7px;padding:12px;background:#fff}
+.mb-settings-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mb-settings-row input{flex:1;min-width:240px;border:1px solid var(--border);border-radius:7px;padding:.65rem .85rem}
+.mb-results{margin-top:14px}
+.mb-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:7px;background:#fff}
+.mb-table{width:100%;border-collapse:separate;border-spacing:0;min-width:860px}
+.mb-table th,.mb-table td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;font-size:.95rem}
+.mb-table th{position:sticky;top:0;background:#f9fafb;z-index:1}
+.mb-table tr:last-child td{border-bottom:none}
+.mb-pre{border:1px solid var(--border);border-radius:7px;padding:10px;background:#fff;overflow:auto;max-height:420px}
+.mb-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .55rem;border-radius:999px;font-weight:800;font-size:.82rem;border:1px solid var(--border);background:#fff}
+.mb-pill.mb-neutral{color:var(--muted)}
+.mb-pill.mb-bull{border-color:rgba(22,163,74,.35);background:rgba(22,163,74,.08);color:#15803d}
+.mb-pill.mb-bear{border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.08);color:#b91c1c}
+.mb-pill.mb-chop{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.10);color:#92400e}
+.mb-pill.mb-low{border-color:rgba(22,163,74,.35);background:rgba(22,163,74,.08);color:#15803d}
+.mb-pill.mb-normal{border-color:rgba(11,79,138,.25);background:rgba(11,79,138,.06);color:var(--brand)}
+.mb-pill.mb-high{border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.08);color:#b91c1c}
+
+@media (max-width: 920px){
+  .mb-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+
+.sm-block{margin:1rem 0}
+.sm-toggle{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:.75rem .9rem;
+  border-radius:7px;
+  background:#fff;
+  border:1px solid var(--border);
+  cursor:pointer;
+  font-weight:800;
+  color:#0f172a;
+}
+.sm-toggle .sm-meta{display:inline-flex;align-items:center;gap:.5rem;font-weight:700;color:var(--muted);font-size:.85rem}
+.sm-toggle .sm-caret{transition:transform .18s ease;font-size:.9rem;color:#334155}
+.sm-block[data-collapsed="true"] .sm-caret{transform:rotate(-90deg)}
+.sm-body{margin-top:.75rem}
+.sm-block[data-collapsed="true"] .sm-body{display:none}
+
+/* Tools library: "Top 6" default */
+.tools-actions{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;margin-top:.75rem}
+
+@media (max-width: 900px){
+  .survival-grid{grid-template-columns:1fr}
+}
+
+
+/* ===== Dropdown Nav (template behavior) ===== */
+.ap-nav{max-width:1200px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.ap-left{display:flex;align-items:center;gap:18px;min-width:0;}
+.ap-nav-main{display:flex;align-items:center;gap:10px;}
+.ap-right{display:flex;align-items:center;gap:18px}
+
+.header-bar{width:100%;background:var(--brand);color:#fff;position:relative;z-index:40;}
+.dropdown{position:relative;display:inline-flex;align-items:center;}
+.dropdown-toggle{cursor:pointer;}
+
+/* ===== Mobile Menu ===== */
+.ap-hamburger{display:none;font-size:20px;cursor:pointer;color:#eaf1f9;padding:8px 10px;border-radius:7px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.12);}
+.mobile-menu{
+  display:none;
+  position:absolute;
+  top:100%;
+  left:0;right:0;
+  background:#0f2a44;
+  border-top:1px solid rgba(255,255,255,.12);
+  padding:14px 0 18px;
+  z-index:1200;
+  box-shadow:0 18px 40px rgba(0,0,0,.35);
+}
+.mobile-menu-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.mobile-menu-title{font-weight:900;color:#fff;font-size:14px;letter-spacing:.02em;}
+.mobile-menu-sub{color:rgba(255,255,255,.75);font-size:12px;}
+.mobile-auth-grid{
+  margin:14px 0 0;
+  padding-top:14px;
+  border-top:1px solid rgba(255,255,255,.12);
+}
+.mobile-auth-grid a{justify-content:flex-start;}
+.mobile-auth-link{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  border-radius:0;
+  background:transparent;
+  text-decoration:none;
+  color:#eaf1f9;
+  font-size:.95rem;
+  font-weight:700;
+  border:0;
+}
+.mobile-auth-link:hover{ background:rgba(255,255,255,.06); }
+.mobile-auth-link .ap-emoji{
+  width:34px; height:34px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:10px;
+  background:rgba(255,255,255,.08);
+  flex:0 0 34px;
+}
+.mobile-auth-link:hover{background:rgba(255,255,255,.12);}
+.mobile-auth-link .ap-emoji{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;background:rgba(255,255,255,.12);}
+
+.mobile-sections{display:grid;grid-template-columns:1fr;gap:12px;}
+.mobile-section{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:7px;padding:10px;}
+.mobile-section-title{color:#fff;font-weight:900;font-size:13px;margin:2px 2px 8px;}
+.mobile-links{display:grid;grid-template-columns:1fr;gap:8px;}
+.mobile-links a{display:flex;align-items:center;gap:10px;color:#eaf1f9;padding:10px 10px;border-radius:7px;background:rgba(255,255,255,.06);text-decoration:none;font-weight:700;}
+.mobile-links a:hover{background:rgba(255,255,255,.12);}
+
+@media (max-width: 900px){
+  #navMain{display:none;}
+  #navTop{display:none;}
+  .ap-hamburger{display:inline-flex;align-items:center;justify-content:center;}
+}
+
+
+.watchlist-empty{list-style:none;padding:.35rem 0;}
+.watchlist-item{list-style:none;}
+
+  /* ===== Page Header (Template) ===== */
+  .ap-pagehead{margin:18px 0 10px;}
+  .ap-pagehead h1{margin:0;font-size:1.6rem;letter-spacing:.2px;}
+  .ap-pagehead p{margin:6px 0 0;}
+  .ap-placeholder{
+    padding:16px;
+    border:1px dashed var(--border);
+    border-radius:7px;
+    background:var(--panel);
+  }
+
+  .ap-placeholder p{margin:0;}
+
+  /* ===== Account dropdown (Username) — match short-term-dashboard ===== */
+  .user-dropdown{ position:relative; }
+  .user-dropdown .dropdown-content{
+    left:auto;
+    right:0;
+    min-width:220px;
+    margin-top:0px;
+    background:#063f73;
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:7px;
+    padding:8px 0;
+    box-shadow:0 18px 40px rgba(0,0,0,.35);
+  }
+  .user-toggle{
+    appearance:none;
+    -webkit-appearance:none;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.08);
+    color:#e8f2fb;
+    cursor:pointer;
+
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+
+    padding:7px 10px;     /* match .ap-tab */
+    border-radius:7px;
+    font-size:.95rem;
+    line-height:1;
+    opacity:.95;
+    transition:background .2s ease, opacity .2s ease;
+  }
+  .user-toggle:hover{ background:rgba(255,255,255,.16); opacity:1; }
+  .user-toggle:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(26,60,94,0.22); }
+  .user-toggle::after{ content:'▼'; font-size:8px; margin-left:6px; opacity:.85; }
+
+  .user-toggle .ap-emoji{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:22px;height:22px;
+    border-radius:7px;
+    background:rgba(255,255,255,.16);
+    font-size:14px;
+    line-height:1;
+    padding:2px;
+  }
+
+  .user-dropdown .dropdown-content a{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    color:#eaf1f9;
+    text-decoration:none;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .user-dropdown .dropdown-content a:hover{
+    background:rgba(255,255,255,0.10);
+  }
+  .user-dropdown .user-sep{
+    height:1px;
+    background:rgba(255,255,255,0.12);
+    margin:6px 0;
+  }
+
+  /* ===== Auth dropdown ===== */
+  .user-menu{ position:relative; }
+  .user-menu-toggle{
+    display:inline-flex; align-items:center; gap:.5rem;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.08);
+    color:#fff;
+    padding:7px 10px;
+    border-radius:7px;
+    cursor:pointer;
+    font-weight:700;
+    line-height:1;
+  }
+  .user-menu-toggle:hover{ background:rgba(255,255,255,.16); }
+  .user-menu-toggle:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(26,60,94,0.22); }
+  .user-menu-toggle::after{ content:'▼'; font-size:8px; margin-left:6px; opacity:.85; }
+
+  .user-menu-dropdown{
+    position:absolute; right:0; top:calc(100% + 10px);
+    min-width:220px;
+    background:#063f73;
+    color:#eaf1f9;
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:7px;
+    box-shadow:0 18px 40px rgba(0,0,0,.35);
+    padding:8px;
+    display:none;
+    z-index:2000;
+  }
+  .user-menu-dropdown button{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:10px;
+    padding:10px 10px;
+    background:transparent;
+    border:0;
+    color:#eaf1f9;
+    cursor:pointer;
+    font-weight:700;
+    border-radius:7px;
+    text-align:left;
+  }
+  .user-menu-dropdown button:hover{ background:rgba(255,255,255,0.10); }
+  .user-menu-dropdown button::before{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.08);flex:0 0 34px;}
+  #user-auth-action::before{content:"👤";}
+  #user-signout-btn::before{content:"🚪";}
+  #user-login-btn::before{content:"🔐";}
+
+  .user-menu-dropdown .user-sep{
+    height:1px;
+    background:rgba(255,255,255,0.12);
+    margin:6px 0;
+  }
+
+
+
+/* -------------------------------------------------------------------------- */
+/* Wealth Engine Snapshot */
+/* -------------------------------------------------------------------------- */
+.engine-grid{
+  display:grid;
+  grid-template-columns:repeat(12, 1fr);
+  gap:14px;
+  margin-top:14px;
+}
+.engine-card{
+  grid-column:span 4;
+  background:var(--card, rgba(255,255,255,0.92));
+  border:1px solid var(--border, rgba(0,0,0,0.10));
+  border-radius:18px;
+  padding:16px 16px 14px;
+  box-shadow:0 10px 24px rgba(0,0,0,0.06);
+}
+.engine-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:10px;
+}
+.engine-title{
+  font-weight:800;
+  letter-spacing:0.2px;
+  font-size:16px;
+  color:var(--text, #0d1b2a);
+}
+.engine-meta{
+  font-size:13px;
+  color:var(--muted, rgba(13,27,42,0.70));
+}
+.engine-value{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  font-size:30px;
+  font-weight:900;
+  letter-spacing:-0.4px;
+  color:var(--text, #0d1b2a);
+  margin-top:4px;
+}
+.engine-value small{
+  font-size:13px;
+  font-weight:800;
+  color:var(--muted, rgba(13,27,42,0.65));
+}
+.engine-actions{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+@media (max-width: 1100px){
+  .engine-card{ grid-column:span 6; }
+}
+@media (max-width: 640px){
+  .engine-grid{ gap:12px; }
+  .engine-card{ grid-column:span 12; }
+  .engine-value{ font-size:28px; }
+}
+
+
+/* Latest Review Summary card */
+.review-summary{
+  background: rgba(255,255,255,.96);
+  border: 1px solid rgba(17,24,39,.10);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(17,24,39,.06);
+}
+.review-summary-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.review-title{
+  margin:0;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:.2px;
+}
+.review-sub{
+  margin:6px 0 0;
+  color: var(--muted, #6b7280);
+  line-height:1.35;
+}
+.review-actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.review-kpis{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap:12px;
+  margin-top:14px;
+}
+.review-kpis .kpi{
+  background: rgba(17,24,39,.03);
+  border: 1px solid rgba(17,24,39,.08);
+  border-radius: 14px;
+  padding: 12px 12px;
+}
+.review-kpis .kpi .k{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color: var(--muted, #6b7280);
+  font-size:13px;
+  font-weight:800;
+}
+.review-kpis .kpi .v{
+  margin-top:6px;
+  font-size:18px;
+  font-weight:900;
+  color: var(--text, #0f172a);
+}
+.review-bullets{
+  margin: 14px 0 0;
+  padding-left: 18px;
+}
+.review-bullets li{
+  margin: 6px 0;
+}
+.review-bullets li.muted{
+  color: var(--muted, #6b7280);
+}
+@media (max-width: 720px){
+  .review-kpis{ grid-template-columns: 1fr; }
+  .review-actions{ width:100%; }
+}
+
+</style>
+
+<!-- =============================================== -->
+<!-- 2) Dashboard Customizer - readability fixes      -->
+<!-- =============================================== -->
+<style>
+  /* ---- Dashboard Customizer readability fixes (light background) ---- */
+  #gs-customize-panel .box {               /* make sure dialog content is dark-on-light */
+    background: #fff;
+    color: #111827;
+  }
+  #gs-customize-panel #gs-customize-list .gs-row { 
+    border-bottom: 1px dashed #e5e7eb;    /* visible divider on white */
+  }
+  #gs-customize-panel #gs-customize-list .gs-row > div:first-child > div:first-child {
+    /* the main row title (e.g., "AI Brief") */
+    color: #4b5563;                        /* light grey for good contrast */
+  }
+  #gs-customize-panel #gs-customize-list .gs-chip {
+    color: #6b7280;                        /* id line under the title */
+  }
+  #gs-customize-panel .gs-btn.ghost {
+    border-color: #e5e7eb;                 /* visible ghost buttons on white */
+    color: #374151;
+  }
+</style>
+
+<!-- =============================================== -->
+<!-- 3) Dashboard Customizer - switch visibility      -->
+<!-- =============================================== -->
+<style>
+  /* Make the Customize dialog light and the switches visible on white */
+  #gs-customize-panel #gs-customize-card{
+    background:#fff;             /* light panel */
+    color:#111827;
+    border:1px solid #e5e7eb;
+  }
+
+  /* Off state: light gray track + white knob with subtle outline */
+  #gs-customize-panel #gs-customize-card .gs-switch{
+    background:#e5e7eb;          /* <-- light gray so it shows on white */
+  }
+  #gs-customize-panel #gs-customize-card .gs-switch .knob{
+    background:#fff;
+    box-shadow:0 0 0 1px #d1d5db inset;  /* tiny outline so the knob is visible */
+  }
+
+  /* On state stays blue (already defined) */
+  #gs-customize-panel #gs-customize-card .gs-switch.on{
+    background:#2563eb;
+  }
+
+  /* Row title legibility */
+  #gs-customize-panel #gs-customize-card .gs-row > div:first-child > div:first-child{
+    color:#4b5563;               /* readable grey for titles like “AI Brief” */
+  }
+
+  /* Keep the dashed divider visible on white */
+  #gs-customize-panel #gs-customize-card .gs-row{
+    border-bottom:1px dashed #e5e7eb;
+  }
+</style>
+
+<!-- =============================================================== -->
+<!-- 4) Dashboard Customizer (full dialog + reorder + header override) -->
+<!-- =============================================================== -->
+<style>
+/* Dialog look + readable on white backgrounds */
+#gs-customize-btn{
+  position:fixed; right:1rem; bottom:1rem; z-index:9999;
+  background:#2563eb; color:#000; border:none; border-radius:7px;
+  padding:.65rem 1rem; font-weight:700; cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+#gs-customize-panel{
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:10000;
+  background:rgba(0,0,0,.55);
+}
+#gs-customize-panel.show{ display:flex; }
+#gs-customize-card{
+  width:min(720px,92vw); max-height:80vh; overflow:auto;
+  background:#fff; color:#111827;
+  border:1px solid #e5e7eb; border-radius:7px; padding:1rem;
+}
+#gs-customize-card h3{ margin:0 0 .5rem 0; font-size:1.1rem }
+#gs-customize-note{ font-size:.85rem; color:#6b7280; margin:.25rem 0 .75rem }
+.gs-row{
+  display:grid; grid-template-columns:auto 1fr auto; align-items:center;
+  gap:.5rem; padding:.55rem .4rem; border-bottom:1px dashed #e5e7eb;
+  background:#fff; border-radius:7px;
+}
+.gs-row:last-child{ border-bottom:none }
+.gs-chip{ font-size:.78rem; color:#6b7280 }
+.gs-switch{ width:42px; height:24px; border-radius:7px; position:relative; background:#e5e7eb; cursor:pointer; flex:none }
+.gs-switch input{ display:none }
+.gs-switch .knob{ position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:7px; background:#fff; box-shadow:0 0 0 1px #d1d5db inset; transition:transform .18s }
+.gs-switch.on{ background:#2563eb }
+.gs-switch input:checked + .knob{ transform:translateX(18px) }
+
+/* Reorder controls */
+.gs-handle{
+  width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center;
+  background:#f3f4f6; color:#374151; cursor:grab; user-select:none; border:1px solid #e5e7eb;
+}
+.gs-handle:active{ cursor:grabbing }
+.gs-move{
+  display:flex; gap:.35rem; align-items:center;
+}
+.gs-move button{
+  border:1px solid #e5e7eb; background:#fff; color:#374151; border-radius:7px; padding:.25rem .5rem; cursor:pointer
+}
+.gs-move button:disabled{ opacity:.45; cursor:default }
+.gs-row.dragging{ opacity:.55 }
+.gs-row.drop-before{ box-shadow: inset 0 3px 0 #2563eb22; }
+.gs-row.drop-after{  box-shadow: inset 0 -3px 0 #2563eb22; }
+
+.gs-actions{ display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem }
+.gs-btn{ border:none; border-radius:7px; padding:.5rem 1rem; cursor:pointer; font-weight:700 }
+.gs-btn.primary{ background:#16a34a; color:#04120a }
+.gs-btn.ghost{ background:transparent; color:#374151; border:1px dashed #e5e7eb }
+
+  /* ===== Header (match trip-dashboard) ===== */
+.ap-header{
+  position:sticky; top:0; z-index:40;
+  color:#fff; background:linear-gradient(90deg,#60a5fa,#4f46e5);
+  box-shadow:0 2px 12px rgba(0,0,0,.08);
+}
+/*
+.ap-nav{
+  max-width:1200px; margin:0 auto; padding:12px 16px;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+}
+.ap-left{display:flex; align-items:center; gap:18px; min-width:0;}
+.ap-right{display:flex; align-items:center; gap:18px;}
+*/
+.ap-brand{display:flex; align-items:center; gap:10px; color:#fff; text-decoration:none; white-space:nowrap;}
+.ap-brand img{width:50px; height:50px; border-radius:999px; object-fit:contain; background:rgba(255,255,255,.2);}
+.ap-title{font-weight:800; font-size:1.35rem; letter-spacing:.2px}
+.nav-link{ color:#fff; text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
+.nav-link:hover{ text-decoration:underline; }
+</style>
+
+<!-- =============================================================== -->
+<!-- 5) Dropdown Menus + Mobile Menu (user dropdown + mobileMenu)      -->
+<!-- =============================================================== -->
+<style>
+/* Dropdown Container */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  /* Retains the button's active state if it is the current page */
+}
+
+/* Dropdown Toggle Button (the Short-Term/Long-Term link) */
+.ap-tab.dropdown-toggle{
+  cursor: pointer;
+  /* Add padding for a small caret icon */
+  padding-right: 18px; 
+}
+.ap-tab.dropdown-toggle::after{
+  content: '▼';
+  font-size: 8px;
+  margin-left: 6px;
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.8;
+}
+
+/* Dropdown Content */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    min-width: 300px;
+    z-index: 100;
+    top: 100%;
+    left: 0;
+    margin-top: 0px; 
+    
+    background: #063f73; 
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 7px;
+    padding: 8px 0;
+    
+    overflow: visible; 
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+
+    /* ------------------------------------------- */
+    /* 🚀 ADD SCROLLBAR HERE 🚀 */
+    /* ------------------------------------------- */
+    
+    /* 1. Set a Maximum Height */
+    /* The 'vh' (viewport height) unit ensures it never exceeds 85% of the screen height */
+    max-height: 85vh; 
+    
+    /* 2. Enable Vertical Scrolling */
+    /* 'auto' shows the scrollbar only when content exceeds max-height */
+    overflow-y: auto; 
+    
+    /* Ensure the content is visible when scrolling */
+    overflow-x: hidden;
+}
+
+/* Dropdown Links */
+.dropdown-content a {
+  color: #eaf1f9; /* Light text */
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  white-space: nowrap;
+  font-weight: 400;
+  line-height: 1.25;
+}
+.dropdown-content a:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+/* Show state */
+.dropdown.show .dropdown-content {
+  display: block;
+}
+/* -------------------------------------------------------------------------- */
+/* Dropdown Header & Separator Styles */
+/* -------------------------------------------------------------------------- */
+
+/* Section Heading inside the Dropdown */
+.dropdown-header {
+    /* Uses a muted color token for sub-headings */
+    color: #ffffff; 
+    font-size: 0.75rem; /* Smaller font size */
+    font-weight: 700;
+    padding: 10px 16px 5px 16px; /* Padding to match link horizontal padding, but less vertical spacing */
+    text-transform: uppercase;
+    /* Prevents hover state on the header itself */
+    pointer-events: none; 
+}
+
+/* Horizontal line between sections */
+.dropdown-separator {
+    height: 1px;
+    /* Light, translucent line for subtle division */
+    background-color: rgba(255,255,255,0.1); 
+    margin: 5px 0; /* Small margin above and below the line */
+}
+
+/* * Optional: You may also want to remove icon padding from links 
+* that already have an emoji (if you use them): 
+*/
+.dropdown-content a {
+    /* Keep existing link styles, but ensure you override the padding 
+       if your base link styles apply excessive padding for non-icon links */
+    padding: 10px 16px; 
+}
+
+/* Desktop hover + keyboard access for dropdowns */
+@media (hover: hover) and (pointer: fine){
+  .dropdown:hover > .dropdown-content,
+  .dropdown:focus-within > .dropdown-content{
+    display: block;
+  }
+}
+
+/* Mobile menu — restyled to match user dropdown look */
+#mobileMenu{
+  display:none;
+  position:fixed;
+  top:64px; left:0; right:0;
+  z-index:35;
+
+  /* match user dropdown */
+  background:#063f73;
+  border:1px solid rgba(255,255,255,0.10);
+  border-left:none;
+  border-right:none;
+  box-shadow:0 18px 40px rgba(0,0,0,.35);
+  color:#eaf1f9;
+}
+
+#mobileMenu[data-open="true"]{ display:block; }
+
+/* keep your layout wrapper */
+.mobile-menu-panel{
+  max-width:1200px;
+  margin:0 auto;
+  padding:8px 12px 10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* links look like dropdown items */
+.mobile-main-links{
+  display:flex;
+  flex-direction:column;
+  gap:0;                 /* dropdown style: no card gaps */
+}
+
+/* apply same feel as .user-dropdown .dropdown-content a */
+.mobile-main-links a{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  border-radius:0;       /* dropdown list item */
+  background:transparent;
+  color:#eaf1f9;
+  text-decoration:none;
+  font-size:.95rem;
+  font-weight:600;
+  white-space:nowrap;
+}
+
+.mobile-main-links a:hover{
+  background:rgba(255,255,255,0.10);
+}
+
+/* divider matches user dropdown separator */
+.mobile-divider{
+  height:1px;
+  background:rgba(255,255,255,0.12);
+  margin:6px 0;
+  width:100%;
+}
+
+/* auth grid items styled like dropdown items too */
+#mobileMenu .grid{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  margin-top:0;
+}
+
+#mobileMenu .ap-toplink{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  border-radius:0;
+  background:transparent;
+  color:#eaf1f9;
+  font-size:.95rem;
+  text-decoration:none;
+  font-weight:600;
+  opacity:1;
+}
+
+#mobileMenu .ap-toplink:hover{
+  background:rgba(255,255,255,0.10);
+}
+
+/* burger visibility stays the same */
+.ap-burger{
+  display:none;
+  border:none;
+  background:rgba(255,255,255,0.08);
+  color:#f9fafb;
+  border-radius:7px;
+  padding:6px 10px;
+  font-size:1.1rem;
+  cursor:pointer;
+}
+
+@media (max-width:768px){
+  .ap-nav-main{display:none}
+  .ap-nav-top{display:none}
+  .ap-burger{display:inline-flex}
+}
+
+/* FORCE mobile menu hover to match user dropdown hover */
+#mobileMenu .mobile-main-links a:hover,
+#mobileMenu .mobile-main-links a:focus,
+#mobileMenu .ap-toplink:hover,
+#mobileMenu .ap-toplink:focus{
+  background: rgba(255,255,255,0.10) !important;
+  color: #eaf1f9 !important;
+}
+
+/*-------------------------------------------*/
+/* Mobile footer: make it shorter/simpler    */
+/*-------------------------------------------*/
+@media (max-width: 640px){
+  footer{ padding:10px 0; }
+
+  footer .cols{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  /* Hide the two link columns on mobile */
+  footer .cols > div:nth-child(2),
+  footer .cols > div:nth-child(3){
+    display:none;
+  }
+
+  footer h4{
+    font-size:1rem;
+    margin:0 0 4px;
+  }
+
+  footer p{
+    margin:0;
+    font-size:.95rem;
+    line-height:1.35;
+  }
+
+  .foot-bottom{
+    margin-top:10px;
+    font-size:11px;
+  }
+}
+
+</style>
+
+
+<script>
+(function(){
+  const VIS_KEY   = 'gs_card_visibility_v1';
+  const ORDER_KEY = 'gs_card_order_v1';
+
+  const $  = (s,r=document)=>r.querySelector(s);
+  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+
+
+  // Debug logging toggle: add ?debug=1 to URL or set localStorage gs_debug=1
+  const GS_DEBUG = /(?:\?|&)debug=1(?:&|$)/.test(location.search) || localStorage.getItem('gs_debug') === '1';
+  const dbgWarn = (...args) => { if (GS_DEBUG) console.warn(...args); };
+  const dbgInfo = (...args) => { if (GS_DEBUG) console.info(...args); };
+
+  function loadJSON(key, fallback){ try{ return JSON.parse(localStorage.getItem(key)||'') ?? fallback }catch{ return fallback } }
+  function saveJSON(key, val){ localStorage.setItem(key, JSON.stringify(val||null)) }
+
+  function slugify(txt){ return (txt||'card').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') }
+
+  function cardTitle(el){
+    const h = el.querySelector('h2, h3, [data-title]');
+    if(h) return (h.getAttribute('data-title') || h.textContent || '').trim();
+    const ar = el.getAttribute('aria-label') || el.getAttribute('data-card') || '';
+    if(ar) return ar.trim();
+    return (el.textContent||'Card').trim().slice(0,32);
+  }
+  function ensureId(el){
+    if(el.id) return el.id;
+    const id = 'card-' + slugify(cardTitle(el) || ('untitled-' + Math.random().toString(36).slice(2,6)));
+    el.id = id; return id;
+  }
+
+  function findCards(){
+    // Limit to visible dashboard content areas
+    const roots = $$('main, section, article');
+    const out   = [];
+    const seen  = new Set();
+    roots.forEach(r=>{
+      $$('.card', r).forEach(el=>{
+        // skip nested cards inside dialogs if any
+        if ($('#gs-customize-card', el)) return;
+        if (!seen.has(el)) { seen.add(el); out.push(el); }
+      });
+    });
+    return out;
+  }
+
+  function loadVisibility(){ return loadJSON(VIS_KEY, {}) }
+  function saveVisibility(v){ saveJSON(VIS_KEY, v || {}) }
+
+  function loadOrder(){ return loadJSON(ORDER_KEY, []) }
+  function saveOrder(list){ saveJSON(ORDER_KEY, Array.isArray(list)? list : []) }
+
+  /** Apply saved visibility immediately */
+  function applyVisibility(){
+    const state = loadVisibility();
+    findCards().forEach(el=>{
+      const id = ensureId(el);
+      const visible = state[id] !== false;
+      el.style.display = visible ? '' : 'none';
+    });
+  }
+
+  /**
+   * Apply saved order while keeping each card in its original parent container.
+   * This avoids breaking columns/grids; only the relative order among siblings changes.
+   */
+  function applyOrder(){
+    const order = loadOrder();
+    if (!order || !order.length) return;
+
+    // Build quick lookup
+    const idx = Object.create(null);
+    order.forEach((id,i)=>{ idx[id] = i; });
+
+    // group cards by parent element
+    const byParent = new Map();
+    findCards().forEach(el=>{
+      const id = ensureId(el);
+      const p  = el.parentElement;
+      if (!byParent.has(p)) byParent.set(p, []);
+      byParent.get(p).push(el);
+    });
+
+    // within each parent, sort children by desired index, falling back to current order
+    byParent.forEach((children, parent)=>{
+      const withIndex = children.map((el, i)=>({el, desired:(idx[el.id] ?? 1e9), fallback:i}));
+      withIndex.sort((a,b)=> (a.desired - b.desired) || (a.fallback - b.fallback));
+      withIndex.forEach(({el})=> parent.appendChild(el));
+    });
+  }
+
+  function openPanel(){
+    const vis  = loadVisibility();
+    const ord  = loadOrder();
+    const cards = findCards().map(el=>{
+      return {
+        el,
+        id: ensureId(el),
+        title: cardTitle(el),
+        emoji: (el.querySelector('.tl-emoji')?.textContent || '').trim()
+      };
+    });
+
+    // sort rows by current saved order; otherwise by current DOM order
+    const orderIdx = Object.create(null); ord.forEach((id,i)=>{ orderIdx[id]=i; });
+    cards.sort((a,b)=>(orderIdx[a.id]??1e9)-(orderIdx[b.id]??1e9));
+
+    // create dialog
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <button id="gs-customize-btn" title="Customize dashboard">⚙️ Customize</button>
+      <div id="gs-customize-panel" role="dialog" aria-modal="true" aria-label="Customize dashboard">
+        <div id="gs-customize-card">
+          <h3>Customize dashboard</h3>
+          <div id="gs-customize-note">Show or hide cards. Drag rows (or use ▲/▼) to reorder. Your choices are saved on this device.</div>
+          <div id="gs-customize-list"></div>
+          <div class="gs-actions">
+            <button class="gs-btn ghost" id="gs-cancel">Close</button>
+            <button class="gs-btn primary" id="gs-save">Save</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+    const panel = document.getElementById('gs-customize-panel');
+    const list  = document.getElementById('gs-customize-list');
+
+    // populate rows
+    cards.forEach((c, i)=>{
+      const visible = vis[c.id] !== false;
+      const row = document.createElement('div');
+      row.className = 'gs-row';
+      row.setAttribute('draggable', 'true');
+      row.dataset.id = c.id;
+      row.innerHTML = `
+        <div class="gs-move">
+          <span class="gs-handle" title="Drag to reorder" aria-label="Drag to reorder">⋮⋮</span>
+          <button type="button" class="up" title="Move up" aria-label="Move up">▲</button>
+          <button type="button" class="down" title="Move down" aria-label="Move down">▼</button>
+        </div>
+        <div>
+          <div style="font-weight:700;color:#4b5563">${c.emoji? `<span style="margin-right:6px">${c.emoji}</span>`:''}${c.title}</div>
+          <div class="gs-chip">${c.id}</div>
+        </div>
+        <label class="gs-switch ${visible ? 'on':''}">
+          <input type="checkbox" ${visible?'checked':''} data-target="${c.id}">
+          <span class="knob"></span>
+        </label>`;
+      list.appendChild(row);
+    });
+
+    // simple keyboard up/down move
+    function moveRow(row, dir){
+      if(!row) return;
+      if (dir < 0 && row.previousElementSibling) {
+        row.parentElement.insertBefore(row, row.previousElementSibling);
+      } else if (dir > 0 && row.nextElementSibling) {
+        row.parentElement.insertBefore(row.nextElementSibling, row);
+      }
+      updateButtons();
+    }
+
+    function updateButtons(){
+      const rows = $$('.gs-row', list);
+      rows.forEach((r, i)=>{
+        r.querySelector('.up').disabled = (i===0);
+        r.querySelector('.down').disabled = (i===rows.length-1);
+      });
+    }
+    updateButtons();
+
+    list.addEventListener('click', (e)=>{
+      const row = e.target.closest('.gs-row');
+      if (!row) return;
+      if (e.target.classList.contains('up'))   moveRow(row, -1);
+      if (e.target.classList.contains('down')) moveRow(row, +1);
+    });
+
+    // Drag & drop
+    let dragRow = null;
+    list.addEventListener('dragstart', (e)=>{
+      dragRow = e.target.closest('.gs-row');
+      if(!dragRow) return;
+      dragRow.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragRow.dataset.id);
+    });
+    list.addEventListener('dragend', ()=>{ if(dragRow){ dragRow.classList.remove('dragging'); dragRow=null; $$('.gs-row',list).forEach(r=>r.classList.remove('drop-before','drop-after')); }});
+    list.addEventListener('dragover', (e)=>{
+      e.preventDefault();
+      const over = e.target.closest('.gs-row');
+      if (!dragRow || !over || over===dragRow) return;
+      const rect = over.getBoundingClientRect();
+      const before = (e.clientY - rect.top) < rect.height/2;
+      $$('.gs-row',list).forEach(r=>r.classList.remove('drop-before','drop-after'));
+      over.classList.add(before? 'drop-before':'drop-after');
+    });
+    list.addEventListener('drop', (e)=>{
+      e.preventDefault();
+      const over = e.target.closest('.gs-row');
+      if (!dragRow || !over || over===dragRow) return;
+      const before = over.classList.contains('drop-before');
+      over.classList.remove('drop-before','drop-after');
+      if (before) list.insertBefore(dragRow, over);
+      else        list.insertBefore(dragRow, over.nextElementSibling);
+      updateButtons();
+    });
+
+    // open/close
+    const btn = document.getElementById('gs-customize-btn');
+    btn.addEventListener('click', ()=> panel.classList.add('show'));
+    document.getElementById('gs-cancel').addEventListener('click', ()=> panel.classList.remove('show'));
+    panel.addEventListener('click', (e)=>{ if(e.target===panel) panel.classList.remove('show'); });
+
+    // Save
+    document.getElementById('gs-save').addEventListener('click', ()=>{
+      // visibility: store false only when hidden
+      const v = loadVisibility();
+      $$('#gs-customize-list input[type="checkbox"]').forEach(chk=>{
+        v[chk.dataset.target] = chk.checked ? true : false;
+      });
+      // compress: only keep false
+      const compact = {};
+      Object.keys(v).forEach(k=>{ if(v[k] === false) compact[k]=false; });
+      saveVisibility(compact);
+
+      // order: rows top → bottom
+      const newOrder = $$('.gs-row', list).map(r => r.dataset.id);
+      saveOrder(newOrder);
+
+      // Apply & close
+      applyVisibility();
+      applyOrder();
+      panel.classList.remove('show');
+    });
+  }
+
+  // Boot once
+  document.addEventListener('DOMContentLoaded', ()=>{
+    // if we haven't injected yet, do it
+    if (!document.getElementById('gs-customize-btn')) openPanel();
+    // apply saved prefs
+    applyVisibility();
+    applyOrder();
+  });
+})();
+</script>
+
+</head>
+<body>
+  <!-- ═══ V1 NAV ═══ -->
+<div class="nav-wrap" style="position:sticky;top:0;z-index:90;background:var(--brand);box-shadow:0 2px 20px rgba(0,0,0,.2)">
+<nav style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 20px;max-width:1200px;margin:0 auto">
+  <a href="index.html" style="display:flex;align-items:center;gap:10px;font-family:'Inter Tight',sans-serif;font-weight:800;font-size:18px;color:#fff;white-space:nowrap;flex:0 0 auto;text-decoration:none">
+    <img src="images/arowanalogo.png?v=20260117" alt="Arowana Profits" style="width:40px;height:40px;border-radius:50%;object-fit:contain;background:rgba(255,255,255,.12);padding:2px" onerror="this.style.display='none'">
+    Arowana Profits
+  </a>
+  <div id="ltNavLinks" style="display:flex;align-items:center;gap:3px;flex:1;justify-content:center;overflow-x:auto">
+    <a href="arowana-trader.html" style="color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);text-decoration:none">&#9889; Arowana Trader</a>
+    <a href="portfolio-advisor.html" style="color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);text-decoration:none">&#127974; Portfolio Advisor</a>
+    <div style="width:1px;height:16px;background:rgba(255,255,255,.18);flex:0 0 1px;margin:0 4px"></div>
+    <a href="short-term-dashboard.html" style="color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;text-decoration:none">&#9889; Short-Term</a>
+    <a href="long-term-dashboard.html" style="color:#fff;font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;background:rgba(255,255,255,.18);text-decoration:none">&#128200; Long-Term</a>
+    <a href="learn-investing.html" style="color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;text-decoration:none">&#128218; Learn</a>
+    <a href="features.html" style="color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;text-decoration:none">&#128296; Features</a>
+    <a href="pricing.html" style="color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;text-decoration:none">&#128179; Plans</a>
+    <a href="learn-investing.html" style="color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;text-decoration:none">&#128218; Learn</a>
+    <a href="features.html" style="color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;text-decoration:none">&#128296; Features</a>
+    <a href="pricing.html" style="color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;text-decoration:none">&#128179; Plans</a>
+    <a href="long-term-dashboard.html" style="color:#fff;font-size:.76rem;font-weight:600;padding:6px 11px;border-radius:8px;white-space:nowrap;background:rgba(255,255,255,.18);text-decoration:none">&#128200; Long-Term</a>
+  </div>
+  <button id="ltBurger" style="display:none;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;border-radius:8px;padding:6px 10px;font-size:1rem;cursor:pointer">&#9776;</button>
+  <div style="display:flex;align-items:center;gap:7px;flex:0 0 auto">
+    <a href="login.html" id="ltSignIn" style="padding:6px 14px;border-radius:8px;font-size:.76rem;font-weight:600;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);text-decoration:none">Sign In</a>
+    <div id="ltUserDrop" style="position:relative;display:none">
+      <button id="ltUserBtn" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:.76rem;font-weight:600;cursor:pointer">&#128100; <span id="ltUserName">Account</span></button>
+      <div id="ltUserMenu" style="position:absolute;right:0;top:calc(100% + 8px);min-width:180px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.15);padding:6px;display:none;z-index:200">
+        <a href="account.html" style="display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:7px;color:#64748b;font-size:.82rem;font-weight:500;text-decoration:none">&#128282; My Account</a>
+        <a href="arowana-trader.html" style="display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:7px;color:#64748b;font-size:.82rem;font-weight:500;text-decoration:none">&#9889; Arowana Trader</a>
+        <a href="portfolio-advisor.html" style="display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:7px;color:#64748b;font-size:.82rem;font-weight:500;text-decoration:none">&#127974; Portfolio Advisor</a>
+        <div style="height:1px;background:#e2e8f0;margin:3px 0"></div>
+        <a href="short-term-dashboard.html" style="display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:7px;color:#64748b;font-size:.82rem;font-weight:500;text-decoration:none">&#9889; Short-Term Dashboard</a>
+        <a href="long-term-dashboard.html" style="display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:7px;color:#64748b;font-size:.82rem;font-weight:500;text-decoration:none">&#128200; Long-Term Dashboard</a>
+        <div style="height:1px;background:#e2e8f0;margin:3px 0"></div>
+        <button id="ltSignOutBtn" style="display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:7px;color:#64748b;font-size:.82rem;font-weight:500;background:none;border:none;width:100%;text-align:left;cursor:pointer">&#128682; Sign Out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+</div>
+<!-- Mobile nav -->
+<div id="ltMobileMenu" data-open="false" style="display:none;position:fixed;top:60px;left:0;right:0;z-index:80;background:#083c69;border-top:1px solid rgba(255,255,255,.12)">
+  <div style="padding:10px 20px 16px;display:flex;flex-direction:column;gap:2px">
+    <a href="arowana-trader.html" style="padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none">&#9889; Arowana Trader</a>
+    <a href="portfolio-advisor.html" style="padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none">&#127974; Portfolio Advisor</a>
+    <a href="short-term-dashboard.html" style="padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none">&#9889; Short-Term Dashboard</a>
+    <a href="long-term-dashboard.html" style="padding:10px 12px;color:#fff;font-size:.88rem;font-weight:700;border-radius:8px;text-decoration:none">&#128200; Long-Term Dashboard</a>
+    <div style="height:1px;background:rgba(255,255,255,.12);margin:4px 0"></div>
+    <a href="learn-investing.html" style="padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none">&#128218; Learn</a>
+    <a href="features.html" style="padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none">&#128296; Features</a>
+    <a href="pricing.html" style="padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none">&#128179; Plans</a>
+    <div style="height:1px;background:rgba(255,255,255,.12);margin:4px 0"></div>
+    <div id="ltMobileAuth"></div>
+  </div>
+</div>
+
+<!-- UPGRADE MODAL -->
+<div id="ltUpgModal" style="display:none;position:fixed;inset:0;background:rgba(13,27,42,.55);z-index:9999;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)">
+  <div style="background:#fff;border-radius:20px;padding:36px 32px 28px;max-width:400px;width:100%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.2);position:relative">
+    <button onclick="document.getElementById('ltUpgModal').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.1rem;color:#94a3b8;cursor:pointer;line-height:1">&#10005;</button>
+    <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;background:rgba(11,79,138,.08);border:1px solid rgba(11,79,138,.15);font-size:.7rem;font-weight:700;color:#0b4f8a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">&#128200; Pro Feature</div>
+    <div style="font-family:'Inter Tight',sans-serif;font-size:1.15rem;font-weight:800;color:#0d1b2a;margin-bottom:8px" id="ltUpgTitle">Unlock this feature</div>
+    <div style="font-size:.86rem;color:#64748b;line-height:1.7;margin-bottom:22px" id="ltUpgBody">Upgrade to Pro to access this feature.</div>
+    <div style="background:#f6f8fb;border-radius:12px;padding:14px 16px;text-align:left;margin-bottom:20px">
+      <div style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Pro includes</div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:.83rem;color:#0d1b2a"><span style="color:#16a34a;font-weight:800">&#10003;</span> Unlimited AI portfolio coaching</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.83rem;color:#0d1b2a"><span style="color:#16a34a;font-weight:800">&#10003;</span> Wealth Engine quarterly reviews</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.83rem;color:#0d1b2a"><span style="color:#16a34a;font-weight:800">&#10003;</span> Holdings &amp; goals synced across devices</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.83rem;color:#0d1b2a"><span style="color:#16a34a;font-weight:800">&#10003;</span> Long-Term Dashboard (coming soon)</div>
+      </div>
+    </div>
+    <a href="pricing.html" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 24px;border-radius:999px;background:#0b4f8a;color:#fff;font-weight:700;font-size:.95rem;text-decoration:none;margin-bottom:10px">&#128640; Upgrade to Pro &mdash; $19/mo</a>
+    <div style="font-size:.73rem;color:#94a3b8">30-day money-back guarantee &bull; Cancel anytime</div>
+  </div>
+</div>
+
+<header class="header-bar" style="display:none">
+    <div class="ap-nav">
+      <!-- Left: brand + Plan a Trip -->
+      <div class="ap-left">
+        <a class="ap-brand" href="index.html" aria-label="Arowana Profits Home">
+          <img src="images/arowanalogo.png?v=20260117" alt="Arowana Profits" class="ap-logo">
+          <span class="ap-title">Arowana Profits</span>
+        </a>
+
+               <!-- Row 2: Main nav -->
+        <nav class="ap-nav-main" id="navMain" aria-label="Primary">
+          <div class="ap-nav-main">
+
+            <div class="dropdown">
+              <a href="short-term-dashboard.html" class="ap-tab dropdown-toggle" data-icon="⚡">Short-Term</a>
+              <div class="dropdown-content">
+                  
+                  <div class="dropdown-header">Intraday Momentum & Reversal</div>
+                  <a href="orb-scanner.html">⚡ Opening Range Breakout</a>
+                  <a href="rvol-scanner.html">📈 Relative Volume Surge</a>
+                  <a href="hod-scanner.html">⏫ HOD Continuation</a>
+                  <a href="vwap-pullback.html">📉 VWAP Pullback</a>
+                  <a href="gap-fade-scanner.html">🕳️ Gap Fade</a>
+                  <a href="rsi-reversal-scanner.html">🔁 RSI Reversal</a>
+                  <a href="bb-snapback.html">🎯 BB Snapback</a>
+                  <a href="money-flow-alert.html">🔁 Money Flow Alert</a>
+                  
+                  <div class="dropdown-separator"></div>
+                  
+                  <div class="dropdown-header">Short-Term Signals & Specialty</div>
+                  <a href="buy-sell-signal.html">🧭 Buy/Sell Signal</a>
+                  <a href="rsi-screener.html">📉 RSI Screener</a>
+                  <a href="intrinsic-value.html">🧮 Intrinsic Value Calculator</a>
+                  <a href="short-entry-screener.html">📉 Short Entry Screener</a>
+                  <a href="short-squeeze-scanner.html">🔥 Short Squeeze Scanner</a>
+
+                  <div class="dropdown-separator"></div>
+                  
+                  <div class="dropdown-header">Swing / Multi-Day</div>
+                  <a href="swing-breakout-pb.html">🧱 Breakout Pullback</a>
+                  <a href="sma-cross-scanner.html">📐 50/200 SMA Cross</a>
+                  <a href="pattern-scanner.html">🚩 Flag / Asc. Triangle</a>
+                  <a href="post-earnings-drift.html">📊 Post-Earnings Drift</a>
+                  
+                  <div class="dropdown-separator"></div>
+
+                  <div class="dropdown-header">Options & Risk Tools</div>
+                  <a href="options-analyzer.html">📊 Options Analyzer</a>
+                  <a href="credit-spread-planner.html">🧮 Credit-Spread Planner</a>
+                  <a href="option-roll-tracker.html">🔁 Option Roll Tracker</a>
+                  <a href="position-sizer.html">🧮 Position Sizer</a>
+                  <a href="kelly-calculator.html">🧠 Kelly Calculator</a>
+                  <a href="atr-stop-planner.html">📏 ATR Stop Planner</a>
+                  <a href="trade-journal-pro.html">📓 Trade Journal</a>
+                  <a href="options-journal.html">🧩 Option Journal</a>
+                  <a href="wheel-strategy.html">🎡 Wheel Strategy</a>
+                  
+              </div>            
+            </div>
+
+            <div class="dropdown">
+              <a href="long-term-dashboard.html" class="ap-tab is-active dropdown-toggle" data-icon="💰">Long-Term</a>
+              <div class="dropdown-content">
+                <a href="intrinsic-value.html">🧮 Intrinsic Value Calc</a>
+                <a href="strategy-backtester.html">📊 Strategy Backtester</a>
+                <a href="kelly-sizer.html">➗ Kelly Criterion Sizer</a>
+                <a href="economic-calendar.html">📅 Economic Calendar</a>
+              </div>
+            </div>
+            
+          </div>        
+        </nav>
+        
+      </div>
+
+      <div class="ap-right">
+        <nav class="ap-nav-top" id="navTop" aria-label="Account actions">
+          <div class="user-menu">
+            <button id="user-menu-toggle" class="user-menu-toggle" type="button" aria-haspopup="menu" aria-expanded="false">
+              <span class="ap-emoji">🪪</span>
+              <span id="user-name-label">Log in</span>
+            </button>
+            <div id="user-menu-dropdown" class="user-menu-dropdown" role="menu" aria-hidden="true">
+              <button id="user-auth-action" type="button">Log in / Sign up</button>
+              <div class="user-sep"></div>
+              <button id="user-signout-btn" type="button" style="display:none;">Sign out</button>
+            </div>
+          </div>
+        </nav>
+        <button class="ap-burger" id="apBurger" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Mobile hamburger menu -->
+  <!-- old mobile menu hidden -->
+<div style="display:none"><div id="mobileMenu" data-open="false" aria-hidden="true">
+    <div class="mobile-menu-panel">
+      <div class="mobile-main-links">
+        <a href="short-term-dashboard.html" class="ap-ix"><span class="ap-emoji" aria-hidden="true">⚡</span><span>Short-Term</span></a>
+        <a href="long-term-dashboard.html" class="ap-ix"><span class="ap-emoji" aria-hidden="true">📈</span><span>Long-Term</span></a>
+        <a href="learn-investing.html" class="ap-ix"><span class="ap-emoji" aria-hidden="true">📚</span><span>Learn</span></a>
+        <a href="features.html" class="ap-ix"><span class="ap-emoji" aria-hidden="true">🧰</span><span>Features</span></a>
+        <a href="pricing.html" class="ap-ix"><span class="ap-emoji" aria-hidden="true">💳</span><span>Plans</span></a>
+      </div>
+      <div class="mobile-divider"></div>
+      <div class="grid mobile-auth-grid" id="mobileAuthGrid"></div>
+    </div>
+  </div></div>
+
+<!--div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <div class="container">
+    <div class="mobile-menu-head">
+      <div class="mobile-menu-title">Menu</div>
+      <div class="mobile-menu-sub">Short-Term tools, Long-Term tools, and account.</div>
+    </div>
+
+    <div class="mobile-auth-grid grid" id="mobileAuthGrid"></div>
+
+    <div class="mobile-sections">
+      <div class="mobile-section">
+        <div class="mobile-section-title">⚡ Short-Term</div>
+        <div class="mobile-links">
+          <a href="short-term-dashboard.html">⚡ Short-Term Dashboard</a>
+          <a href="short-term-watchlist.html">👀 Watchlist</a>
+          <a href="orb-scanner.html">⚡ Opening Range Breakout</a>
+          <a href="rvol-scanner.html">📈 Relative Volume Surge</a>
+          <a href="hod-scanner.html">⏫ HOD Continuation</a>
+          <a href="vwap-pullback.html">📉 VWAP Pullback</a>
+          <a href="gap-fade-scanner.html">🕳️ Gap Fade</a>
+          <a href="rsi-reversal-scanner.html">🔁 RSI Reversal</a>
+          <a href="bb-snapback.html">🎯 BB Snapback</a>
+          <a href="money-flow-alert.html">🔁 Money Flow Alert</a>
+          <a href="buy-sell-signal.html">🧭 Buy/Sell Signal</a>
+          <a href="rsi-screener.html">📉 RSI Screener</a>
+          <a href="short-entry-screener.html">📉 Short Entry Screener</a>
+          <a href="short-squeeze-scanner.html">🔥 Short Squeeze Scanner</a>
+          <a href="options-analyzer.html">📊 Options Analyzer</a>
+          <a href="position-sizer.html">🧮 Position Sizer</a>
+          <a href="atr-stop-planner.html">📏 ATR Stop Planner</a>
+          <a href="trade-journal-pro.html">📓 Trade Journal</a>
+        </div>
+      </div>
+
+      <div class="mobile-section">
+        <div class="mobile-section-title">💰 Long-Term</div>
+        <div class="mobile-links">
+          <a href="long-term-dashboard.html">💰 Long-Term Dashboard</a>
+          <a href="intrinsic-value.html">🧮 Intrinsic Value Calc</a>
+          <a href="strategy-backtester.html">📊 Strategy Backtester</a>
+          <a href="economic-calendar.html">📅 Economic Calendar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div-->
+
+
+  <!-- Real-time scrolling ticker -->
+  <!--section class="ticker-container">
+    <div class="ticker" id="tickerStrip"></div>
+  </section-->
+
+  <main class="container">
+
+    <!-- ── PAGE HEADER ── -->
+    <div style="margin-top:20px; display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <h1>🏦 Long-Term Investing</h1>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+          <span class="badge" id="badgeStatus"><span class="dot"></span><span id="badgeText">No portfolio connected yet</span></span>
+          <span class="badge" title="How often you review">🗓️ <strong>Review:</strong> <span id="reviewFreq">Quarterly</span></span>
+          <span class="badge" title="Last saved review">🕒 <strong>Last:</strong> <span id="lastReview">—</span></span>
+        </div>
+        <p class="muted" style="margin:.6rem 0 0">
+          Arowana Wealth Engine — calm quarterly portfolio tours, allocation coaching, and AI guidance for long-term investors.
+        </p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn ghost" href="portfolio-setup.html">⚙️ Setup</a>
+        <a class="btn ghost" href="portfolio-holdings.html">📥 Holdings</a>
+        <a class="btn blue" href="portfolio-review.html">▶ Run Review</a>
+        <a class="btn ghost" href="long-term-portfolio.html">📒 My Portfolio</a>
+      </div>
+    </div>
+
+    <!-- ── 1. WHERE ARE YOU? — onboarding strip (position 1) ── -->
+    <section class="section" id="whereAreYou">
+      <div class="card survival-card">
+        <h3>🧭 Where are you on your investing journey?</h3>
+        <div class="muted" style="color:rgba(255,255,255,.88)">Pick your stage — we'll focus the dashboard on what matters most right now.</div>
+        <div class="survival-grid" style="margin-top:.75rem">
+          <div class="survival-tile" id="stageNew" style="cursor:pointer" onclick="setStage('new')">
+            <div class="survival-k">🌱 Just Starting Out</div>
+            <div class="survival-v" style="font-size:.9rem;margin-top:4px">I haven't invested yet or just opened my first account.</div>
+          </div>
+          <div class="survival-tile" id="stageBuilding" style="cursor:pointer" onclick="setStage('building')">
+            <div class="survival-k">📈 Building Wealth</div>
+            <div class="survival-v" style="font-size:.9rem;margin-top:4px">I invest regularly and want to grow smarter.</div>
+          </div>
+          <div class="survival-tile" id="stageOptimizing" style="cursor:pointer" onclick="setStage('optimizing')">
+            <div class="survival-k">🏛️ Optimizing Portfolio</div>
+            <div class="survival-v" style="font-size:.9rem;margin-top:4px">I have a portfolio and want quarterly reviews + rebalancing.</div>
+          </div>
+        </div>
+        <div id="stageHint" class="survival-warning" style="display:none"></div>
+      </div>
+    </section>
+
+    <!-- ── 2. GOLDEN RULES STRIP (always visible) ── -->
+    <section class="section" id="ltSafetyStrip">
+      <div style="background:#fff7ed;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-weight:700;color:#92400e;white-space:nowrap">🛡️ Long-Term Principles:</span>
+        <span class="chip" style="background:#fff;border:1px solid #fde68a;color:#92400e">Stay invested — time in market beats timing</span>
+        <span class="chip" style="background:#fff;border:1px solid #fde68a;color:#92400e">DCA: invest a fixed amount monthly</span>
+        <span class="chip" style="background:#fff;border:1px solid #fde68a;color:#92400e">Keep fees below 0.20%</span>
+        <span class="chip" style="background:#fff;border:1px solid #fde68a;color:#92400e">Rebalance once a year</span>
+        <span class="chip" style="background:#fff;border:1px solid #fde68a;color:#92400e">Don't panic-sell in a downturn</span>
+        <a href="intrinsic-value.html" style="margin-left:auto;font-size:.82rem;font-weight:700;color:#92400e;white-space:nowrap">🧮 Value a stock →</a>
+      </div>
+    </section>
+
+    <!-- ── 3. ASK AI COACH (position 3 — beginner's first action) ── -->
+    <div class="card section" id="aiCoachCard">
+      <div class="row two">
+        <div>
+          <h3>🤖 Ask AI Coach</h3>
+          <div class="ai-bar">
+            <input id="aiPrompt" placeholder="I can save $500/month for 20 years. Make me a simple plan and budget." />
+            <button class="btn blue" id="askBtn">Get a Simple Plan</button>
+          </div>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:.82rem;color:var(--muted)">💡 Try: "I'm 35, moderate risk, $10k now + $400/month — what ETF mix?"</div>
+            <div style="font-size:.82rem;color:var(--muted)">💡 Try: "Explain dollar-cost averaging like I'm new to investing."</div>
+            <div style="font-size:.82rem;color:var(--muted)">💡 Try: "Am I on track for retirement at 65 if I save $600/month?"</div>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:10px" id="quickPromptBtns">
+            <button class="btn ghost" style="font-size:.82rem" onclick="quickAsk('Make me a simple 3-fund ETF plan for a beginner. Ask me my risk level first.')">🧭 Simple Plan</button>
+            <button class="btn ghost" style="font-size:.82rem" onclick="quickAsk('Am I on track for retirement if I invest $500/month starting now? Show a projection.')">📈 Retirement Check</button>
+            <button class="btn ghost" style="font-size:.82rem" onclick="quickAsk('Explain how to rebalance a portfolio in plain English with a step-by-step example.')">🔄 Rebalance Guide</button>
+            <button class="btn ghost" style="font-size:.82rem" onclick="quickAsk('What is a good ETF mix for a 30-year-old with moderate risk tolerance?')">🎯 Pick My Mix</button>
+          </div>
+        </div>
+        <div>
+          <h3>📝 AI Response</h3>
+          <div id="aiOut" class="ai-output" data-placeholder="Ready">Ready. I'll suggest a simple ETF mix, a monthly amount, and next steps in plain English.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 4. BEGINNER TASK TILES (position 4) ── -->
+    <div class="grid-cats" id="taskTilesSection">
+      <div class="cat">
+        <h3>🚀 Getting Started</h3>
+        <div class="tasks" id="tasksStart"></div>
+      </div>
+      <div class="cat">
+        <h3>💵 Grow My Money</h3>
+        <div class="tasks" id="tasksGrow"></div>
+      </div>
+      <div class="cat">
+        <h3>🎯 My Goals</h3>
+        <div class="tasks" id="tasksGoals"></div>
+      </div>
+      <div class="cat">
+        <h3>🛡️ Stay Safe</h3>
+        <div class="tasks" id="tasksSafe"></div>
+      </div>
+    </div>
+
+    <!-- Wealth Engine Snapshot -->
+    <div class="card section" aria-label="Wealth Engine Snapshot">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <h3>🏛️ Wealth Engine Snapshot</h3>
+          <p class="muted" style="margin:0">A quick peek at your latest health metrics (updates after each review).</p>
+        </div>
+        <div class="engine-actions">
+          <button class="btn green sm" id="runReviewBtn" type="button">🧭 Run Quarterly Review</button>
+          <button class="btn ghost sm" id="openSettingsTop" type="button">⚙️ Webhook Settings</button>
+        </div>
+      </div>
+
+      <div class="engine-grid">
+        <div class="engine-card">
+          <div class="engine-top">
+            <div>
+              <div class="engine-title">🩺 Portfolio Health</div>
+              <div class="engine-meta">Allocation + diversification</div>
+            </div>
+            <div class="engine-meta" id="healthUpdated">—</div>
+          </div>
+          <div class="engine-value"><span id="healthScore">—</span><small>/100</small></div>
+          <div class="engine-meta" id="healthNote">Run a review to generate your first score.</div>
+        </div>
+
+        <div class="engine-card">
+          <div class="engine-top">
+            <div>
+              <div class="engine-title">🌎 Macro Regime</div>
+              <div class="engine-meta">Cycle + risk environment</div>
+            </div>
+            <div class="engine-meta" id="macroUpdated">—</div>
+          </div>
+          <div class="engine-value" id="macroRegime">—</div>
+          <div class="engine-meta" id="macroNote">Saved from the latest scan.</div>
+        </div>
+
+        <div class="engine-card">
+          <div class="engine-top">
+            <div>
+              <div class="engine-title">🔄 Sector Exposure</div>
+              <div class="engine-meta">Overweight / overlap risk</div>
+            </div>
+            <div class="engine-meta" id="sectorUpdated">—</div>
+          </div>
+          <div class="engine-value" id="topSector">—</div>
+          <div class="engine-meta" id="sectorNote">Top sector and concentration (if available).</div>
+        </div>
+
+        <div class="engine-card">
+          <div class="engine-top">
+            <div>
+              <div class="engine-title">🛡️ Risk Stability</div>
+              <div class="engine-meta">Drawdown sensitivity</div>
+            </div>
+            <div class="engine-meta" id="riskUpdated">—</div>
+          </div>
+          <div class="engine-value"><span id="riskGrade">—</span> <small id="riskScoreMeta"></small></div>
+          <div class="engine-meta" id="riskNote">Balance risk with your retirement timeline.</div>
+        </div>
+
+        <div class="engine-card">
+          <div class="engine-top">
+            <div>
+              <div class="engine-title">📑 Latest Review</div>
+              <div class="engine-meta">Quarterly tour summary</div>
+            </div>
+            <div class="engine-meta" id="reviewUpdated">—</div>
+          </div>
+          <div class="engine-value" id="reviewHeadline">—</div>
+          <div class="engine-actions">
+            <a class="btn ghost sm" href="portfolio-review.html">Open Review</a>
+            <a class="btn ghost sm" href="portfolio-holdings.html">Edit Holdings</a>
+          </div>
+        </div>
+
+        <div class="engine-card">
+          <div class="engine-top">
+            <div>
+              <div class="engine-title">🧩 Next Steps</div>
+              <div class="engine-meta">What to do this week</div>
+            </div>
+            <div class="engine-meta">Simple</div>
+          </div>
+          <div class="engine-meta" style="margin-top:-6px">
+            <div>1) Confirm your holdings &amp; %</div>
+            <div>2) Run quarterly review</div>
+            <div>3) Apply 1–3 small allocation tweaks</div>
+          </div>
+          <div class="engine-actions">
+            <a class="btn blue sm" href="portfolio-setup.html">Start Setup</a>
+          </div>
+        </div>
+      </div>
+
+
+<!-- Latest Review Summary (auto-loads from ltWealthReport) -->
+<div class="review-summary" id="latestReviewSummaryCard" aria-label="Latest Review Summary">
+  <div class="review-summary-head">
+    <div>
+      <p class="review-title">📌 Latest Review Summary</p>
+      <p class="review-sub" id="latestReviewSub">No review found yet. Run <strong>Quarterly Review</strong> to generate a summary.</p>
+    </div>
+    <div class="review-actions">
+      <a class="btn ghost sm" href="portfolio-review.html?view=latest">Open Full Review</a>
+      <button class="btn blue sm" id="runReviewBtn2" type="button">▶ Run Again</button>
+    </div>
+  </div>
+
+  <div class="review-kpis" role="group" aria-label="Review quick metrics">
+    <div class="kpi">
+      <div class="k">🌎 Macro</div>
+      <div class="v" id="kpiMacro">—</div>
+    </div>
+    <div class="kpi">
+      <div class="k">🩺 Health</div>
+      <div class="v" id="kpiHealth">—</div>
+    </div>
+    <div class="kpi">
+      <div class="k">🛡 Risk</div>
+      <div class="v" id="kpiRisk">—</div>
+    </div>
+  </div>
+
+  <ul class="review-bullets" id="latestReviewBullets" aria-label="Top recommendations">
+    <li class="muted">No recommendations yet.</li>
+  </ul>
+</div>
+
+
+      <div class="callout">
+        <div class="c-emoji">🧭</div>
+        <div>
+          <p class="c-title">Quarterly Optimization Tour</p>
+          <p class="c-desc">
+            You’ll get: (1) current health, (2) macro regime, (3) sector overlay, (4) risk guardrails, (5) simple allocation adjustments — educational only.
+          </p>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- ── 6. LESSON OF THE DAY ── -->
+    <section class="section" id="ltLessonBlock">
+      <div class="card" style="border-left:4px solid var(--brand)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+          <div>
+            <h3 style="margin:0">📚 Lesson of the Day</h3>
+            <div class="muted" style="font-size:.85rem;margin-top:2px">One investing concept. 60 seconds. A new one every day.</div>
+          </div>
+          <button class="btn ghost" id="ltLessonNextBtn" style="font-size:.82rem">Next lesson →</button>
+        </div>
+        <div id="ltLessonBody" style="background:#f8fafc;border-radius:8px;padding:14px">
+          <div id="ltLessonTitle" style="font-weight:800;font-size:1rem;margin-bottom:6px">Loading…</div>
+          <div id="ltLessonText" style="font-size:.9rem;color:#374151;line-height:1.65"></div>
+          <div id="ltLessonExample" style="margin-top:10px;background:#eff6ff;border-left:3px solid var(--brand);padding:8px 12px;border-radius:0 6px 6px 0;font-size:.85rem;color:#1e40af;display:none"></div>
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:10px;flex-wrap:wrap">
+          <button class="btn ghost" id="ltLessonExBtn" style="font-size:.82rem">💡 Show example</button>
+          <button class="btn ghost" id="ltLessonAskBtn" style="font-size:.82rem">🤖 Ask AI about this</button>
+          <a href="learn-investing.html" class="btn ghost" style="font-size:.82rem;margin-left:auto">📖 Full learning center →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 7. TOOLS & MODULES (long-term only) ── -->
+    <div class="section card">
+      <h3>🔧 Tools & Modules</h3>
+      <div class="tool-tabs" role="tablist" aria-label="Tool categories">
+        <button class="tool-tab" role="tab" data-filter="all" aria-selected="true">All</button>
+        <button class="tool-tab" role="tab" data-filter="research">Research</button>
+        <button class="tool-tab" role="tab" data-filter="portfolio">Portfolio</button>
+        <button class="tool-tab" role="tab" data-filter="retirement">Retirement</button>
+        <button class="tool-tab" role="tab" data-filter="taxes">Taxes</button>
+      </div>
+      <div class="tools-grid" id="toolsGrid"></div>
+    </div>
+
+    <!-- ── 8. LEARN THE BASICS ── -->
+    <div class="section card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <h3 style="margin:0">📚 Key Investing Concepts</h3>
+        <a href="learn-investing.html" class="btn ghost" style="font-size:.82rem">Full learning center →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:12px">
+          <div style="font-weight:700;margin-bottom:4px">📦 ETF vs Stock</div>
+          <div style="font-size:.85rem;color:#374151;line-height:1.55">ETFs are baskets of stocks. One buy = instant diversification across many companies. Lower risk than picking individual stocks.</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:12px">
+          <div style="font-weight:700;margin-bottom:4px">📆 Dollar-Cost Averaging</div>
+          <div style="font-size:.85rem;color:#374151;line-height:1.55">Invest a fixed amount on a schedule (e.g. $500/month). You buy more shares when prices are low and fewer when high — smooths out volatility over time.</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:12px">
+          <div style="font-weight:700;margin-bottom:4px">🔄 Rebalancing</div>
+          <div style="font-size:.85rem;color:#374151;line-height:1.55">Once or twice a year, sell a little of what grew and buy what lagged to return to your target mix. Keeps your risk level steady automatically.</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:12px">
+          <div style="font-weight:700;margin-bottom:4px">🏦 Tax-Advantaged Accounts</div>
+          <div style="font-size:.85rem;color:#374151;line-height:1.55">401(k), IRA, and HSA let your money grow without paying taxes each year. Always max these before investing in a regular brokerage.</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:12px">
+          <div style="font-weight:700;margin-bottom:4px">🛡️ Don't Panic in a Crash</div>
+          <div style="font-size:.85rem;color:#374151;line-height:1.55">The S&amp;P 500 has recovered from every crash in history. Selling in a downturn locks in your losses. The best move is usually: do nothing, or buy more.</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:12px">
+          <div style="font-weight:700;margin-bottom:4px">⏱️ Compound Interest</div>
+          <div style="font-size:.85rem;color:#374151;line-height:1.55">$10k growing at 8%/year becomes $46k in 20 years without adding a single dollar. Time is your biggest advantage — start early, stay invested.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer muted">
+      Webhook URLs are configured in <a href="account.html#webhookSettings" style="color:var(--blue);font-weight:700">Account → Webhook Settings</a>. &nbsp;|&nbsp; <span class="link" id="openSettings" style="cursor:pointer">Webhook Settings →</span>
+    </div>
+  <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="cols">
+        <div>
+          <h4>Arowana Profits</h4>
+          <p>AI-powered tools and education for traders and investors.</p>
+        </div>
+        <div>
+          <h4>Solutions</h4>
+          <ul>
+            <li><a href="short-term-dashboard.html">Trading Dashboard</a></li>
+            <li><a href="long-term-dashboard.html">Long-Term Dashboard</a></li>
+            <li><a href="learn-investing.html">Learning Center</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="careers.html">Careers</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <p><strong>Disclaimer:</strong> We do not provide investment advice. Investing involves risk, including loss of principal.</p>
+        </div>
+      </div>
+      <div class="foot-bottom">© 2025 Arowana Profit LLC. All rights reserved.</div>
+    </div>
+  </footer>
+<script>
+  // debug helpers (safe in all pages)
+  window.GS_DEBUG = window.GS_DEBUG || false;
+  function dbgWarn(){ try{ if(window.GS_DEBUG) console.warn.apply(console, arguments); }catch(e){} }
+  function dbgLog(){ try{ if(window.GS_DEBUG) console.log.apply(console, arguments); }catch(e){} }
+</script>
+<script>
+  // ===== Real-time ticker using Twelve Data =====
+  const TICKER_SYMBOLS = ["AAPL","MSFT","GOOGL","AMZN","TSLA","NVDA","META"];
+  const TICKER_API_KEY = localStorage.getItem("td_api_key") || ""; // set in localStorage key "td_api_key" (do not hardcode)
+  const TICKER_INTERVAL_MS = 60_000; // refresh every 60s
+  // If no Twelve Data key is set, disable ticker quietly.
+  if (!TICKER_API_KEY) {
+    dbgWarn("Ticker disabled: missing Twelve Data API key (localStorage td_api_key).");
+  }
+
+
+  async function fetchTickerData() {
+    if (!TICKER_API_KEY) return;
+    try {
+      const url = new URL("https://api.twelvedata.com/quote");
+      url.searchParams.set("symbol", TICKER_SYMBOLS.join(","));
+      url.searchParams.set("apikey", TICKER_API_KEY);
+
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error("HTTP " + res.status);
+
+      const data = await res.json();
+      if (data?.status === 'error') {
+        dbgWarn("Ticker error:", data.message);
+      } else {
+        console.log("Ticker raw response:", data);
+      }
+
+
+      let quotes = [];
+
+      // Case 1: Twelve Data returns { data: [...] }
+      if (Array.isArray(data.data)) {
+        quotes = data.data;
+      }
+      // Case 2: It returns an array directly
+      else if (Array.isArray(data)) {
+        quotes = data;
+      }
+      // Case 3: It returns an object keyed by symbol
+      else if (data && typeof data === "object") {
+        quotes = TICKER_SYMBOLS.map(sym => ({
+          symbol: sym,
+          ...(data[sym] || data)
+        }));
+      }
+
+      if (!quotes.length) {
+        dbgWarn("No quotes parsed from API, falling back to static.");
+        quotes = TICKER_SYMBOLS.map(sym => ({ symbol: sym, price: 0, change: 0 }));
+      }
+
+      renderTicker(quotes);
+    } catch (err) {
+      console.error("Ticker error:", err);
+
+      // Fallback: show symbols with placeholder prices
+      const fallback = TICKER_SYMBOLS.map(sym => ({ symbol: sym, price: 0, change: 0 }));
+      renderTicker(fallback);
+    }
+  }
+
+  function renderTicker(quotes) {
+    const strip = document.getElementById("tickerStrip");
+    if (!strip) return;
+
+    strip.innerHTML = "";
+    quotes.forEach(q => {
+      if (!q || !q.symbol) return;
+
+      // Try different possible fields
+      const rawPrice = q.price ?? q.close ?? q.last ?? q.previous_close ?? 0;
+      const price = Number(rawPrice);
+      const change = Number(q.change ?? q.percent_change ?? 0);
+
+      const span = document.createElement("span");
+      span.textContent = `${q.symbol} $${isFinite(price) ? price.toFixed(2) : "—"}`;
+
+      if (change > 0) span.classList.add("up");
+      else if (change < 0) span.classList.add("down");
+
+      strip.appendChild(span);
+    });
+  }
+
+  function initTicker() {
+    fetchTickerData();
+    setInterval(fetchTickerData, TICKER_INTERVAL_MS);
+  }
+
+  // Run immediately if DOM is ready, otherwise wait
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initTicker);
+  } else {
+    initTicker();
+  }
+</script>
+
+
+<!-- ===== Scripts ===== -->
+ <script>
+(function () {
+  const ham = document.getElementById('hamburger');
+  const menu = document.getElementById('mobileMenu');
+  if (!ham || !menu) return;
+
+  function setOpen(open) {
+    ham.setAttribute('aria-expanded', String(open));
+    menu.setAttribute('aria-hidden', String(!open));
+    // Use block for the wrapper; the inner .grid handles layout
+    menu.style.display = open ? 'block' : 'none';
+  }
+
+  if(ham) ham.addEventListener('click', () => {
+    const open = ham.getAttribute('aria-expanded') === 'true';
+    setOpen(!open);
+  });
+
+  // Close menu if we grow past mobile breakpoint
+  const mq = window.matchMedia('(min-width: 641px)');
+  const syncOnResize = () => { if (mq.matches) setOpen(false); };
+  mq.addEventListener ? mq.addEventListener('change', syncOnResize) : mq.addListener(syncOnResize);
+
+  // Ensure menu starts closed
+  setOpen(false);
+})();
+</script>
+
+
+<!-- Alerts polling -->
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+
+  function levelClass(l){ return l>=3?'alert-lv3':(l>=2?'alert-lv2':'alert-lv1'); }
+
+  function toast(a){
+    const box = document.createElement('div'); box.className='toast';
+    const lv = a.level>=3?'lv3':(a.level>=2?'lv2':'lv1');
+    box.innerHTML = `<span class="pill ${lv}">${a.type}</span><b>${a.symbol||''}</b> ${a.msg||''}`;
+    document.getElementById('toastStack').appendChild(box);
+    setTimeout(()=> box.remove(), 5500);
+  }
+
+  function pushAlert(a){
+    const li = document.createElement('li'); li.className='alert-item';
+    li.innerHTML = `<span class="alert-badge ${levelClass(a.level||1)}">${a.type||'ALERT'}</span>
+      <div><div><span class="sym">${a.symbol||''}</span> <span class="msg">${a.msg||''}</span></div>
+      <div class="alert-time">${new Date(a.ts||Date.now()).toLocaleTimeString()}</div></div>
+      <button class="btn ghost" data-clear="${a.id||''}">Dismiss</button>`;
+    document.getElementById('alertsList').prepend(li);
+
+    if (!document.getElementById('muteToasts').checked) toast(a);
+
+    const items = document.getElementById('alertsList').querySelectorAll('.alert-item');
+    if (items.length>30) items[items.length-1].remove();
+  }
+
+  const demo = {
+    alerts: [
+      { id: 1, level: 2, type: 'PULLBACK', symbol: 'AAPL', msg: 'VWAP bounce near support', ts: Date.now()-600000 },
+      { id: 2, level: 3, type: 'BREAKOUT', symbol: 'NVDA', msg: 'New HOD on RVOL 2.1x',    ts: Date.now()-300000 }
+    ]
+  };
+
+  let lastId = 0;
+
+  async function fetchAlerts(){
+    const s = (window.S && S.get ? S.get() : {});
+    const url = WH.brief || WH.main;
+    const payload = { kind:'shortterm_alerts', since:lastId };
+
+    // Prefer callWebhook() helper if present (so headers/retries are consistent)
+    const res = url && window.callWebhook ? await callWebhook(url, payload) : null;
+
+    if (!res) {
+      // Demo fallback if not configured
+      applyPayload(demo);
+      return;
+    }
+    applyPayload(res);
+  }
+
+  function applyPayload(data){
+    if (Array.isArray(data?.alerts)){
+      data.alerts.forEach(a=>{
+        lastId=Math.max(lastId, a.id||0);
+        pushAlert(a);
+      });
+    }
+  }
+
+  document.getElementById('clearAlerts').addEventListener('click', ()=> document.getElementById('alertsList').innerHTML='');
+  document.getElementById('alertsList').addEventListener('click', (e)=>{
+    const id = e.target?.dataset?.clear;
+    if(!id) return;
+    e.target.closest('.alert-item')?.remove();
+  });
+
+  fetchAlerts();
+  setInterval(fetchAlerts, 15000);
+})();
+</script>
+<!-- ===== NEW: Quick Buy/Sell Logic (needle + results) ===== -->
+<script>
+(function(){
+  const $ = s=>document.querySelector(s);
+  const needle  = $('#qgNeedle');
+  const scoreT  = $('#qgScore');
+  const msgT    = $('#qgMsg');
+  const details = $('#qgDetails');
+  const bodyEl  = $('#qgResultBody');
+
+  const angleMap = { 'strong sell': -90, 'sell': -45, 'neutral': 0, 'buy': 45, 'strong buy': 90 };
+  const clamp = (n,min,max)=> Math.max(min, Math.min(max, n));
+
+  function rotateNeedle(signal){
+    if(!needle) return;
+    const key = String(signal||'neutral').toLowerCase();
+    const deg = key in angleMap ? angleMap[key] : 0;
+    needle.style.transform = `rotate(${deg}deg)`;
+  }
+
+  function labelFromScore(v){
+    const s = Number(v)||0;
+    if (s >= 80) return 'Strong Buy';
+    if (s >= 60) return 'Buy';
+    if (s >  40) return 'Neutral';
+    if (s >  20) return 'Sell';
+    return 'Strong Sell';
+  }
+
+  function setGaugeScore(v=50, label='Neutral'){
+    if(scoreT) scoreT.textContent = clamp(Math.round(v), 0, 100);
+    msgT.textContent   = `${label} signal`;
+  }
+
+  function toPrice(n){ const v = Number(n); return isFinite(v) ? `$${v.toFixed(2)}` : '--'; }
+
+  function setResultHtml(html){ bodyEl.innerHTML = html; }
+
+  function renderRecommendationTable(data){
+    const rows = [
+      ["Reason", data.reason||'' ],
+      ["Signal", (data.signal||'').toUpperCase() ],
+      ["Explanation", data.explanation||'' ],
+      ["Trend", data.trend||'' ],
+      ["Support", toPrice(data.support || data.support_level) ],
+      ["Resistance", toPrice(data.resistance || data.resistance_level) ],
+      ["Stop Loss", toPrice(data.stop_loss) ]
+    ];
+    const tr = (k,v)=> `<tr><td style="color:#475569;width:160px">${k}</td><td>${v}</td></tr>`;
+    const html = `
+      <div class="success" style="margin-bottom:.75rem">${data.recommendation||'Recommendation available'}</div>
+      <div class="table-wrap"><table style="width:100%;border-collapse:separate;border-spacing:0 6px;font-size:1rem">${rows.map(r=>tr(r[0],r[1])).join('')}</table></div>`;
+    setResultHtml(html);
+  }
+
+  function renderLevelCards(data){
+    const cur = data.current_price;
+    const html = `
+      <div class="row two" style="margin-top:.25rem">
+        <div><div class="stat"><div class="k">Signal</div><div class="v">${(data.signal||'').toUpperCase()}</div></div></div>
+        <div><div class="stat"><div class="k">Trend</div><div class="v">${data.trend||''}</div></div></div>
+      </div>
+      <div class="row two" style="margin-top:.5rem">
+        <div><div class="stat"><div class="k">Entry</div><div class="v">${toPrice(data.entry_price)}</div></div></div>
+        <div><div class="stat"><div class="k">Target</div><div class="v">${toPrice(data.target_price)}</div></div></div>
+      </div>
+      <div class="row two" style="margin-top:.5rem">
+        <div><div class="stat"><div class="k">Stop</div><div class="v">${toPrice(data.stop_loss)}</div></div></div>
+        <div><div class="stat"><div class="k">Support / Resist</div><div class="v">${toPrice(data.support||data.support_level)} / ${toPrice(data.resistance||data.resistance_level)}</div></div></div>
+      </div>
+      ${cur!=null ? `
+        <div class="row" style="margin-top:.5rem">
+          <div class="stat"><div class="k">Current</div><div class="v">${toPrice(cur)}</div></div>
+        </div>` : ``}
+    `;
+    setResultHtml(html);
+  }
+
+  async function fetchSignal(sym, opts={}){
+    const s = (sym||'').trim().toUpperCase();
+    const timeframe = String(opts.timeframe || $('#qgTimeframe')?.value || '1d');
+    const deep = Boolean(opts.deep ?? $('#qgDeep')?.checked);
+    const demo = Boolean(opts.demo);
+
+    if(!s){
+      setResultHtml('<div class="note">Enter a ticker to see AI guidance and levels.</div>');
+      setGaugeScore(50,'Neutral');
+      details.textContent='';
+      rotateNeedle('neutral');
+      return;
+    }
+
+    // Match buy-sell-signal.html payload structure
+    const payload = { ticker: s, timeframe, quick: !deep };
+
+    let data = null;
+
+    if(!demo){
+      try{
+        const cfg2 = (window.S && S.get) ? S.get() : {};
+        const WEBHOOK_URL = WH.main;
+        if (!WEBHOOK_URL) throw new Error('no_url');
+        const ctrl = new AbortController();
+        const timer = setTimeout(()=>ctrl.abort(), 16000);
+
+        const res = await fetch(WEBHOOK_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload),
+          signal: ctrl.signal
+        });
+
+        clearTimeout(timer);
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        data = await res.json();
+      }catch(err){
+        // fall through to demo
+        data = null;
+      }
+    }
+
+    // Demo fallback (also used if webhook fails)
+    if (!data || typeof data !== 'object'){
+      const seed = s.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%100;
+      data = {
+        signal: labelFromScore(seed).replace('Strong ',''),
+        entry_price: 100.25, target_price: 105.5, stop_loss: 97.8,
+        support_level: 99.0, resistance_level: 104.75, trend:'Uptrend',
+        current_price: 101.1,
+        recommendation: demo ? '(demo) Recommendation available' : '(demo) Configure webhook in Settings.',
+        reason:'(demo) Momentum + support hold',
+        explanation:'(demo) This is a simulated response.'
+      };
+    }
+
+    // Gauge & label
+    rotateNeedle(data?.signal || 'neutral');
+    const scoreGuess = { 'strong sell':15, 'sell':30, 'neutral':50, 'buy':70, 'strong buy':90 }[String(data?.signal||'neutral').toLowerCase()] ?? 50;
+    setGaugeScore(scoreGuess, (data?.signal||'neutral').toString().replace(/^\w/,m=>m.toUpperCase()));
+
+    // Results
+    if (data?.recommendation){ renderRecommendationTable(data); return; }
+    if (data?.signal){ renderLevelCards(data); return; }
+    if (data?.message){ setResultHtml(`<div class="note">${data.message}</div>`); return; }
+    setResultHtml('<div class="error">❌ Invalid response from server.</div>');
+  }
+
+  // Wire up
+  document.getElementById('qgCheck')?.addEventListener('click', ()=> fetchSignal(document.getElementById('qgTicker').value));
+  document.getElementById('qgDemo') ?.addEventListener('click', ()=> fetchSignal( (document.getElementById('qgTicker').value||'AAPL') ));
+  document.getElementById('qgTicker')?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); fetchSignal(e.target.value); }});
+
+  // Prefill ?ticker=XYZ
+  const pre = new URLSearchParams(location.search).get('ticker');
+  if(pre){ document.getElementById('qgTicker').value = pre.toUpperCase(); fetchSignal(pre); }
+
+  // Init view
+  rotateNeedle('neutral'); setGaugeScore(50,'Neutral');
+})();
+</script>
+
+
+<!-- Make tiles clickable + helpful links -->
+<script>
+function norm(s){ return (s||'').toLowerCase().replace(/[^a-z0-9\s]/gi,' ').replace(/\s+/g,' ').trim(); }
+function findPanel(heading){
+  const target = norm(heading);
+  const cats = Array.from(document.querySelectorAll('.cat'));
+  for(const cat of cats){ const h = cat.querySelector('h2, h3'); if(h && norm(h.textContent) === target) return cat; }
+  return null;
+}
+function findTile(panel, title){
+  if(!panel) return null;
+  const target = norm(title);
+  const tiles = panel.querySelectorAll('.mini, .task, button.mini');
+  for(const t of tiles){ const label = t.querySelector('.title')?.textContent || t.textContent; if(norm(label) === target) return t; }
+}
+function linkifyTile(tile, href){
+  if(!tile || !href) return;
+  if (tile.matches('a.mini-linkwrap')) { tile.href = href; return; }
+  const a = document.createElement('a'); a.className = (tile.className||'').trim() + ' mini-linkwrap'; a.href = href; a.setAttribute('role','link'); a.setAttribute('tabindex','0');
+  const innerA = tile.querySelector('a'); if(innerA) innerA.classList.add('title-link');
+  while (tile.firstChild) a.appendChild(tile.firstChild); tile.replaceWith(a);
+}
+
+const LINKS = {
+  "intraday momentum": {
+    "gap & go": "gap-and-go.html",
+    "breakout": "intraday-breakout.html",
+    "opening drive": "opening-drive.html",
+    "trendline break": "trendline-break.html"
+  },
+  "mean reversion": {
+    "rsi bounce": "rsi-bounce.html",
+    "vwap fade": "vwap-fade.html",
+    "band snapback": "bb-snapback.html",
+    "vwap reversion": "vwap-reversion.html"
+  },
+  "swing setups": {
+    "pullback buy": "swing-pullback.html",
+    "breakout alerts": "swing-breakout.html",
+    "trendline break": "trendline-break.html",
+    "retest & go": "retest-and-go.html"
+  },
+  "risk & sizing": {
+    "sizer": "position-sizer.html",
+    "my rules": "my-rules.html",
+    "r-multiple calc": "r-multiple.html",
+    "expectancy & risk matrix": "expectancy-matrix.html"
+  }
+};
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  Object.entries(LINKS).forEach(([panelName, map])=>{
+    const panel = findPanel(panelName);
+    if(!panel) return;
+    Object.entries(map).forEach(([title, href])=>{
+      const tile = findTile(panel, title);
+      if (tile) linkifyTile(tile, href);
+    });
+  });
+});
+</script>
+<script>
+function norm2(s){ return (s||"").replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu,"").replace(/\s+/g," ").trim().toLowerCase(); }
+function findPanelByHeading(heading){
+  const target = norm2(heading);
+  const nodes = Array.from(document.querySelectorAll('h2,h3'));
+  const h = nodes.find(n => norm2(n.textContent) === target);
+  return h ? (h.closest('.cat') || h.parentElement) : null;
+}
+function mountPills(panel, links){
+  if(!panel || !links?.length) return;
+  if(panel.querySelector('.pills-row')) return;
+  const pills = document.createElement('div'); pills.className = 'pills-row';
+  links.forEach(({label,href,title})=>{ const a = document.createElement('a'); a.textContent = label; a.href = href; if(title) a.title = title; pills.appendChild(a); });
+  const more = panel.querySelector('.more-row'); if(more) panel.insertBefore(pills, more); else panel.appendChild(pills);
+}
+const PANEL_LINKS = { /* intentionally empty */ };
+document.addEventListener('DOMContentLoaded', () => {
+  Object.entries(PANEL_LINKS).forEach(([heading, links])=>{
+    let panel = findPanelByHeading(heading);
+    if(!panel){
+      const idMap = { "Intraday Momentum":"tasksMomentum", "Mean Reversion":"tasksReversion", "Swing Setups":"tasksSwing", "Risk & Sizing":"tasksRisk" };
+      const el = document.getElementById(idMap[heading]); panel = el ? el.closest('.cat') : null;
+    }
+    mountPills(panel, links);
+  });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+});  // tools grid handled by long-term script below
+</script>
+<script>
+  async function runScan(kind, prompt){
+    const cfg = S.get();
+    const payload = {
+      kind: 'shortterm_task',
+      subtype: kind || 'scan',
+      prompt,
+      risk: { acct: cfg.acct || 25000, riskPct: cfg.riskPct || 0.7 },
+      context: collectContext()
+    };
+    try {
+      const url = WH.main;   // reads from account.html settings
+      const res = url ? await callWebhook(url, payload) : null;
+      const ideas = Array.isArray(res?.ideas) ? res.ideas : demoIdeas();
+      renderIdeas(ideas);
+    } catch (e){
+      console.error(e);
+      renderIdeas(demoIdeas());
+    }
+  }
+
+(function(){
+  function onReady(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  onReady(function(){
+    var tabs = document.querySelectorAll('.tool-tab');
+    var grid = document.getElementById('toolsGrid') || document.querySelector('.tools-grid');
+
+    function setSelected(btn){
+      tabs.forEach(function(b){ b.setAttribute('aria-selected', String(b===btn)); });
+    }
+    function filterStatic(filter){
+      if(!grid) return;
+      var cards = grid.querySelectorAll('a, .tool-link, .card, .tool-card, li');
+      cards.forEach(function(el){
+        var cat = el.getAttribute('data-cat');
+        if(!cat){ // try to infer by title text
+          var titleEl = el.querySelector('.tl-title') || el.querySelector('h4') || el;
+          var t = (titleEl.textContent || '').toLowerCase();
+          // crude mapping of known option tools
+          var isOption = /option|options|credit|spread|roll|greek|iv|vol(atility)?/.test(t);
+          var isBoth   = /position\s*sizer|kelly|atr|journal/.test(t);
+          cat = isBoth ? 'both' : (isOption ? 'option' : 'stock');
+          el.setAttribute('data-cat', cat);
+        }
+        var show = (filter==='all') || (cat==='both') || (cat===filter);
+        el.style.display = show ? '' : 'none';
+      });
+    }
+
+    function filterTools(filter){
+      // If a global render exists that uses TOOLS, we let it run as-is then filter DOM.
+      filterStatic(filter);
+    }
+
+    tabs.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        setSelected(btn);
+        filterTools(btn.getAttribute('data-filter'));
+      });
+      btn.addEventListener('keydown', function(e){
+        if(e.key==='Enter' || e.key===' '){
+          e.preventDefault();
+          setSelected(btn);
+          filterTools(btn.getAttribute('data-filter'));
+        }
+      });
+    });
+
+    // initial filter
+    filterTools('all');
+  });
+})();
+</script>
+
+
+
+
+
+<script>
+/* Survival Mode script (mission: risk-first, reduce overwhelm) */
+(function(){
+  const LS_MODE = 'ap_risk_mode_v1';
+  const LS_COLL = 'ap_sm_collapsed_v1';
+
+  function $(s, r=document){ return r.querySelector(s); }
+  function $$(s, r=document){ return Array.from(r.querySelectorAll(s)); }
+
+  function setMode(mode){
+    localStorage.setItem(LS_MODE, mode);
+    updateModeUI(mode);
+  }
+
+  function updateModeUI(mode){
+    const hint = $('#riskModeHint');
+    const banner = $('#noTradeBanner');
+    const buttons = $$('[data-riskmode]');
+    buttons.forEach(b=>{
+      const on = b.getAttribute('data-riskmode') === mode;
+      b.style.borderStyle = on ? 'solid' : 'dashed';
+      b.style.borderColor = on ? 'rgba(255,255,255,.65)' : 'rgba(255,255,255,.30)';
+      b.style.background = on ? 'rgba(255,255,255,.18)' : 'rgba(255,255,255,.10)';
+      b.style.color = '#fff';
+    });
+
+    if (mode === 'notrade') {
+      banner && (banner.style.display = 'block');
+      hint && (hint.textContent = 'No-Trade: protect capital. Only review, journal, and learn.');
+      // Keep non-essential sections collapsed
+      $$('#askAiBlock,#moversBlock,#playbooksBlock,#toolsBlock').forEach(el=>{
+        if (el) { el.dataset.collapsed = 'true'; syncToggle(el); }
+      });
+    } else if (mode === 'cautious') {
+      banner && (banner.style.display = 'none');
+      hint && (hint.textContent = 'Cautious: smaller size, fewer trades, higher standards.');
+    } else {
+      banner && (banner.style.display = 'none');
+      hint && (hint.textContent = 'Normal: still capped risk. One setup at a time.');
+    }
+  }
+
+  function syncToggle(block){
+    const btn = block.querySelector('.sm-toggle');
+    const collapsed = block.dataset.collapsed === 'true';
+    if (btn) btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  }
+
+  function initCollapsibles(){
+    const saved = (()=>{
+      try { return JSON.parse(localStorage.getItem(LS_COLL) || '{}'); } catch { return {}; }
+    })();
+
+    $$('.sm-block').forEach(block=>{
+      const id = block.id || ('sm-' + Math.random().toString(36).slice(2,7));
+      if (!block.id) block.id = id;
+
+      // Apply saved state if present
+      if (typeof saved[id] === 'boolean') {
+        block.dataset.collapsed = saved[id] ? 'true' : 'false';
+      }
+
+      syncToggle(block);
+
+      const btn = block.querySelector('.sm-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', ()=>{
+        const next = !(block.dataset.collapsed === 'true');
+        block.dataset.collapsed = next ? 'true' : 'false';
+        syncToggle(block);
+        saved[id] = (block.dataset.collapsed === 'true');
+        localStorage.setItem(LS_COLL, JSON.stringify(saved));
+      });
+    });
+  }
+
+  function initToolsTopSix(){
+    const grid = document.getElementById('toolsGrid');
+    const toggle = document.getElementById('toolsToggle');
+    if (!grid || !toggle) return;
+
+    let expanded = false;
+
+    function apply(){
+      const cards = Array.from(grid.querySelectorAll('.tool-link'));
+      cards.forEach((el, idx)=>{
+        el.style.display = (expanded || idx < 6) ? '' : 'none';
+      });
+      toggle.textContent = expanded ? '📕 Show top tools only' : '📚 View full library';
+    }
+
+    toggle.addEventListener('click', ()=>{
+      expanded = !expanded;
+      apply();
+      // If expanding, also open the tools block (gentle)
+      const toolsBlock = document.getElementById('toolsBlock');
+      if (toolsBlock && expanded){ toolsBlock.dataset.collapsed = 'false'; syncToggle(toolsBlock); }
+    });
+
+    // Re-apply when tool category filters change
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.tool-tab');
+      if (!btn) return;
+      // When user intentionally filters, show all matches (less confusing)
+      const filter = btn.getAttribute('data-filter');
+      if (filter && filter !== 'all') {
+        expanded = true;
+      }
+      // JS above uses filterStatic that sets display. We wait a tick then apply top6 only if not expanded
+      setTimeout(apply, 0);
+    });
+
+    // Initial apply after tools render
+    setTimeout(apply, 0);
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    // Risk mode buttons
+    $$('[data-riskmode]').forEach(btn=>{
+      btn.addEventListener('click', ()=> setMode(btn.getAttribute('data-riskmode')));
+    });
+
+    initCollapsibles();
+
+    // tools render happens on DOMContentLoaded too, but we still defer
+    setTimeout(initToolsTopSix, 0);
+
+    const mode = localStorage.getItem(LS_MODE) || 'normal';
+    updateModeUI(mode);
+  });
+
+  /* =========================
+   * AI Morning Brief (webhook-driven)
+   * Contract expects JSON:
+   * { asOf, marketBias, mode, riskToday, watch:[], topSetups:[], notes:[] }
+   * ========================= */
+  const LS_MB_URL  = 'ap_st_morning_brief_url_v1';
+  const LS_MB_LAST = 'ap_st_morning_brief_last_v1';
+
+  const mbEls = {
+    bias: $('#mbBias'),
+    mode: $('#mbMode'),
+    risk: $('#mbRisk'),
+    upd:  $('#mbUpdated'),
+    status: $('#mbStatus'),
+    progFill: $('#mbProgFill'),
+    pct: $('#mbPct'),
+    results: $('#mbResults'),
+    tableBody: $('#mbTable tbody'),
+    raw: $('#mbRaw'),
+    note: $('#mbNote'),
+    toggle: $('#mbToggleSettings'),
+    settings: $('#mbSettings'),
+    webhook: $('#mbWebhook'),
+    saveWebhook: $('#mbSaveWebhook'),
+    run: $('#mbRunBtn'),
+    reset: $('#mbResetBtn'),
+    meta: $('#mbMeta'),
+  };
+
+  function pill(text, cls='neutral'){
+    const span = document.createElement('span');
+    span.className = `mb-pill mb-${cls}`;
+    span.textContent = text || '—';
+    return span;
+  }
+
+  function setPill(container, text, cls){
+    if(!container) return;
+    container.innerHTML = '';
+    container.appendChild(pill(text, cls));
+  }
+
+  function mbSetProgress(p){
+    const pct = Math.max(0, Math.min(100, Number(p)||0));
+    if(mbEls.progFill) mbEls.progFill.style.width = pct + '%';
+    if(mbEls.pct){
+      mbEls.pct.style.display = (pct>0 && pct<100) ? 'block' : (pct===100 ? 'block' : 'none');
+      mbEls.pct.textContent = Math.round(pct) + '%';
+    }
+  }
+
+  function mbSetStatus(msg, pct){
+    if(mbEls.status) mbEls.status.textContent = msg;
+    if(pct!=null) mbSetProgress(pct);
+  }
+
+  function mbGuessDefaultUrl(){
+    return localStorage.getItem(LS_MB_URL) || WH.brief || WH.main || '';
+  }
+
+  function mbLoadSettings(){
+    const url = mbGuessDefaultUrl();
+    if(mbEls.webhook) mbEls.webhook.value = url || '';
+    // attempt render last cached brief (fast UX)
+    const cached = localStorage.getItem(LS_MB_LAST);
+    if(cached){
+      try{ mbRender(JSON.parse(cached), {cached:true}); }catch(e){}
+    }
+  }
+
+  function mbNormalize(data){
+    // tolerate wrappers
+    if(!data) return null;
+    if(typeof data === 'string'){
+      try{ data = JSON.parse(data); }catch(e){}
+    }
+    if(data && data.data) data = data.data;
+    return data;
+  }
+
+  function mbRender(data, opts={}){
+    data = mbNormalize(data);
+    if(!data || typeof data !== 'object'){
+      mbSetStatus('No brief data returned.');
+      return;
+    }
+    // KPIs
+    const bias = (data.marketBias || '—').toLowerCase();
+    const mode = (data.mode || '—').toLowerCase();
+    const risk = (data.riskToday || '—').toLowerCase();
+
+    const biasCls = bias.includes('bull') ? 'bull' : bias.includes('bear') ? 'bear' : bias.includes('chop') ? 'chop' : 'neutral';
+    setPill(mbEls.bias, data.marketBias || '—', biasCls);
+
+    setPill(mbEls.mode, data.mode || '—', (mode === 'scalp' || mode === 'day' || mode === 'swing' || mode === 'mixed') ? 'normal' : 'neutral');
+
+    const riskCls = risk.includes('low') ? 'low' : risk.includes('high') ? 'high' : risk.includes('normal') ? 'normal' : 'neutral';
+    setPill(mbEls.risk, data.riskToday || '—', riskCls);
+
+    if(mbEls.upd){
+      mbEls.upd.textContent = data.asOf ? String(data.asOf) : (opts.cached ? 'Cached' : '—');
+    }
+
+    // Table
+    const rows = Array.isArray(data.topSetups) ? data.topSetups : [];
+    if(mbEls.tableBody){
+      mbEls.tableBody.innerHTML = '';
+      rows.slice(0, 25).forEach(r=>{
+        const tr = document.createElement('tr');
+        const td = (v)=>{ const x=document.createElement('td'); x.textContent = (v==null?'':String(v)); return x; };
+        tr.appendChild(td((r.ticker||'').toUpperCase()));
+        tr.appendChild(td(r.setup || ''));
+        tr.appendChild(td(r.direction || ''));
+        tr.appendChild(td(r.entryZone || r.entry || ''));
+        tr.appendChild(td(r.stop || ''));
+        tr.appendChild(td(Array.isArray(r.targets)? r.targets.join(', ') : (r.targets||'')));
+        tr.appendChild(td(r.timeframe || r.tf || ''));
+        tr.appendChild(td((r.confidence!=null)? Math.round(Number(r.confidence)*100)+'%' : ''));
+        mbEls.tableBody.appendChild(tr);
+      });
+    }
+
+    if(mbEls.raw) mbEls.raw.textContent = JSON.stringify(data, null, 2);
+
+
+    if(mbEls.results) mbEls.results.style.display = 'block';
+
+    // Survival Mode helpers (uses Morning Brief instead of old AI Brief card)
+    const sc = document.getElementById('survivalClimate');
+    const sb = document.getElementById('survivalBias');
+    if (sc) {
+      const climate = biasCls==='bull' ? '🌤️ Favorable (risk-on)' :
+                      biasCls==='bear' ? '⛈️ Defensive (risk-off)' :
+                      biasCls==='chop' ? '🌥️ Choppy (selective)' : '🌥️ Mixed';
+      sc.textContent = climate;
+    }
+    if (sb) {
+      const line = `${data.marketBias || 'Mixed'} • ${data.mode || 'Mixed'} • Risk: ${data.riskToday || 'Normal'}`;
+      sb.textContent = line;
+    }
+
+    // status
+    if(opts.cached) mbSetStatus('Showing cached brief. Tap “Run Now” to refresh.');
+    else mbSetStatus('Brief ready.');
+  }
+
+  async function mbRun(){
+    const url = (mbEls.webhook && mbEls.webhook.value ? mbEls.webhook.value.trim() : '') || mbGuessDefaultUrl();
+    if(!url){
+      mbSetStatus('Set your Morning Brief webhook (⚙️ Webhook).', 0);
+      mbEls.settings && (mbEls.settings.style.display='block');
+      return;
+    }
+
+    mbSetStatus('Running morning brief…', 10);
+    if(mbEls.run){ mbEls.run.disabled = true; mbEls.run.textContent = 'Running…'; }
+
+    const payload = {
+      kind: 'shortterm_morning_brief',
+      action: 'run',
+      timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Chicago'),
+      maxSetups: 12,
+      note: (mbEls.note && mbEls.note.value ? mbEls.note.value.trim() : ''),
+      tools: (typeof TOOLS !== 'undefined' && Array.isArray(TOOLS)) ? TOOLS.map(t=>t.id) : undefined,
+      source: 'short-term-dashboard'
+    };
+
+    try{
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      mbSetStatus('Fetching data…', 35);
+      const txt = await res.text();
+      mbSetStatus('Analyzing…', 60);
+      let data = txt;
+      try{ data = JSON.parse(txt); }catch(e){}
+      if(!res.ok){
+        mbSetStatus(`Webhook error (${res.status}). Check n8n logs.`, 100);
+        if(mbEls.raw) mbEls.raw.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        mbEls.results && (mbEls.results.style.display = 'block');
+        return;
+      }
+      mbSetStatus('Formatting plan…', 80);
+      localStorage.setItem(LS_MB_LAST, JSON.stringify(data));
+      mbRender(data);
+      mbSetStatus('Brief ready.', 100);
+    }catch(err){
+      mbSetStatus('Network error calling webhook.', 100);
+      if(mbEls.raw) mbEls.raw.textContent = String(err);
+      mbEls.results && (mbEls.results.style.display = 'block');
+    }finally{
+      if(mbEls.run){ mbEls.run.disabled = false; mbEls.run.textContent = '✨ Run Now'; }
+    }
+  }
+
+  function mbReset(){
+    localStorage.removeItem(LS_MB_LAST);
+    // reset UI
+    setPill(mbEls.bias, '—', 'neutral');
+    setPill(mbEls.mode, '—', 'neutral');
+    setPill(mbEls.risk, '—', 'neutral');
+    if(mbEls.upd) mbEls.upd.textContent = '—';
+    if(mbEls.note) mbEls.note.value = '';
+    if(mbEls.results) mbEls.results.style.display = 'none';
+    mbSetStatus('Ready.', 0);
+  }
+
+  // Bind events
+  if(mbEls.toggle){
+    if(mbEls.toggle) mbEls.toggle.addEventListener('click', ()=>{
+      const open = mbEls.settings && mbEls.settings.style.display !== 'none';
+      if(mbEls.settings) mbEls.settings.style.display = open ? 'none' : 'block';
+      if(!open){
+        mbLoadSettings();
+        mbSetStatus('Webhook settings opened.');
+      }else{
+        mbSetStatus('Ready.');
+      }
+    });
+  }
+
+  if(mbEls.saveWebhook){
+    if(mbEls.saveWebhook) mbEls.saveWebhook.addEventListener('click', ()=>{
+      const url = mbEls.webhook ? mbEls.webhook.value.trim() : '';
+      if(url) localStorage.setItem(LS_MB_URL, url);
+      mbSetStatus(url ? 'Webhook saved.' : 'Webhook cleared.');
+    });
+  }
+
+  if(mbEls.run) mbEls.run.addEventListener('click', mbRun);
+  if(mbEls.reset) mbEls.reset.addEventListener('click', mbReset);
+
+  // init
+  mbLoadSettings();
+
+})();
+
+
+  // "Full Analyzer" link: pass current inputs via querystring (safe even if the target page ignores them)
+  const adv = document.getElementById('qgAdvanced');
+  if (adv){
+    adv.addEventListener('click', (e)=>{
+      const t = (document.getElementById('qgTicker')?.value||'').trim().toUpperCase();
+      const tf = document.getElementById('qgTimeframe')?.value || '1d';
+      const deep = document.getElementById('qgDeep')?.checked ? '1' : '0';
+      const url = new URL(adv.getAttribute('href') || 'buy-sell-signal.html', location.href);
+      if (t) url.searchParams.set('ticker', t);
+      if (tf) url.searchParams.set('timeframe', tf);
+      url.searchParams.set('deep', deep);
+      adv.href = url.href;
+    });
+  }
+</script>
+
+
+<!-- ===== Mobile burger toggle ===== -->
+<script>
+  (function(){
+    const KEY_USER = "gs_auth_user_v1";
+    const burger = document.getElementById("apBurger");
+    const mobileMenu = document.getElementById("mobileMenu");
+    const mobileAuthGrid = document.getElementById("mobileAuthGrid");
+    if (!burger || !mobileMenu) return;
+
+    function readCachedUser(){
+      try{ return JSON.parse(localStorage.getItem(KEY_USER) || "null"); }catch(_){ return null; }
+    }
+
+    function syncMobileAuth(){
+      if (!mobileAuthGrid) return;
+      const u = readCachedUser();
+      const loginUrl = window.GS_AUTH_LOGIN_URL || "login.html";
+      const accountUrl = window.GS_AUTH_ACCOUNT_URL || "account.html";
+
+      mobileAuthGrid.innerHTML = "";
+
+      if (u && (u.email || u.name || u.username || u.user)) {
+        const a1 = document.createElement("a");
+        a1.href = accountUrl;
+        a1.innerHTML = `<span class="ap-emoji" aria-hidden="true">🧑‍💼</span><span> Account</span>`;
+        a1.className = "mobile-auth-link";
+
+        const a2 = document.createElement("a");
+        a2.href = "#";
+        a2.innerHTML = `<span class="ap-emoji" aria-hidden="true">🚪</span><span> Log out</span>`;
+        a2.className = "mobile-auth-link"; 
+        a2.addEventListener("click", (e) => {
+          e.preventDefault();
+          // Prefer the existing header sign-out behavior (redirect, etc.)
+          const btn = document.getElementById("user-signout-btn");
+          if (btn) btn.click();
+          else {
+            try{ localStorage.removeItem(KEY_USER); }catch(_){ }
+            if (window.GSAuthHeader && typeof window.GSAuthHeader.refreshHeader === "function") {
+              window.GSAuthHeader.refreshHeader();
+            }
+            window.location.href = (window.GS_AUTH_AFTER_LOGOUT_URL || "index.html");
+          }
+        });
+
+        mobileAuthGrid.appendChild(a1);
+        mobileAuthGrid.appendChild(a2);
+      } else {
+        const a = document.createElement("a");
+        a.href = loginUrl;
+        a.innerHTML = `<span class="ap-emoji" aria-hidden="true">🪪</span><span>Log in</span>`;
+        a.className = "mobile-auth-link";
+        mobileAuthGrid.appendChild(a);
+      }
+    }
+
+    function setOpen(open){
+      mobileMenu.setAttribute("data-open", open ? "true" : "false");
+      mobileMenu.setAttribute("aria-hidden", open ? "false" : "true");
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) syncMobileAuth();
+    }
+
+    burger.addEventListener("click", () => {
+      const isOpen = mobileMenu.getAttribute("data-open") === "true";
+      setOpen(!isOpen);
+      if (!isOpen) syncMobileAuth();
+    });
+
+    // keep mobile auth up-to-date if another tab logs in/out
+    window.addEventListener("storage", (e) => {
+      if (e.key === KEY_USER) syncMobileAuth();
+    });
+
+    // close on resize up
+    const mq = window.matchMedia("(min-width: 769px)");
+    if (mq && mq.addEventListener){
+      mq.addEventListener("change", (e) => { if (e.matches) setOpen(false); });
+    }
+  })();
+</script>
+
+
+
+<!-- ===== Long-Term Dashboard Scripts ===== -->
+<script>
+    // Settings store
+    const S = {
+      get(){ try{return JSON.parse(localStorage.getItem('ltSettings')||'{}')}catch{ return {} } },
+      set(x){ localStorage.setItem('ltSettings', JSON.stringify(x||{})) }
+    };
+    // Webhook keys — managed centrally in account.html
+    const WH = {
+      // Reads from Supabase arowana.webhooks via app-config.js (window.AP_WEBHOOKS)
+      // Falls back to localStorage keys for offline/dev, then empty string → demo mode
+      get main()   { return window.AP_WEBHOOKS?.lt_main        || localStorage.getItem('arowana_lt_main_webhook')  || ''; },
+      get brief()  { return window.AP_WEBHOOKS?.morning_brief   || localStorage.getItem('ap_morning_brief_webhook') || ''; },
+      get signal() { return window.AP_WEBHOOKS?.signal          || localStorage.getItem('ap_wh_signal')             || ''; },
+    };
+    const el = s=>document.querySelector(s);
+    const aiOut = el('#aiOut');
+    function toast(msg, type='ok'){
+      let stack = document.getElementById('toastStack');
+      if(!stack){
+        stack = document.createElement('div');
+        stack.id = 'toastStack';
+        stack.className = 'toast-stack';
+        document.body.appendChild(stack);
+      }
+      const el = document.createElement('div');
+      el.className = 'toast';
+      const colors = {ok:'#16a34a', err:'#ef4444', warn:'#f59e0b', info:'#0369a1'};
+      el.style.cssText = `border-left:4px solid ${colors[type]||colors.ok};padding:.6rem .9rem;background:#111827;color:#fff;border-radius:7px;font-size:.88rem;box-shadow:0 4px 12px rgba(0,0,0,.25);max-width:320px`;
+      el.textContent = msg;
+      stack.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+    function setAiStatus(msg){
+      const out = document.getElementById('aiOut');
+      if(out && (!out.textContent || out.textContent === out.getAttribute('data-placeholder') || out.textContent.startsWith('Ready'))) {
+        out.innerHTML = `<span style="color:var(--muted)">${msg}</span>`;
+      }
+    }
+
+
+    function fmtDate(d){
+      try{
+        const dt = new Date(d);
+        if (isNaN(dt.getTime())) return '—';
+        return dt.toLocaleString([], {year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+      }catch{ return '—'; }
+    }
+
+    function loadSnapshot(){
+      const snap = JSON.parse(localStorage.getItem('ltWealthSnapshot')||'{}');
+      const has = !!snap && Object.keys(snap).length>0;
+
+      const badge = document.getElementById('badgeStatus');
+      const badgeText = document.getElementById('badgeText');
+      const lastReview = document.getElementById('lastReview');
+      const reviewFreq = document.getElementById('reviewFreq');
+
+      if (reviewFreq && snap.review_frequency) reviewFreq.textContent = snap.review_frequency;
+
+      if (lastReview) lastReview.textContent = fmtDate(snap.review_updated_at || snap.updated_at || snap.last_review_at);
+
+      const setBadge = (cls, txt)=>{
+        if(!badge || !badgeText) return;
+        badge.classList.remove('ok','warn','bad');
+        if(cls) badge.classList.add(cls);
+        badgeText.textContent = txt;
+      };
+
+      if (!has){
+        setBadge('warn','No portfolio connected yet');
+      } else {
+        setBadge('ok', snap.status_text || 'Portfolio connected');
+      }
+
+      // Scores
+      const setText = (id, val)=>{ const n=document.getElementById(id); if(n) n.textContent = (val ?? '—'); };
+      const setHtml = (id, val)=>{ const n=document.getElementById(id); if(n) n.innerHTML = (val ?? '—'); };
+
+      setText('healthScore', snap.health_score ?? '—');
+      setText('healthUpdated', fmtDate(snap.health_updated_at || snap.review_updated_at || snap.updated_at));
+      setText('healthNote', snap.health_note || (has ? 'Saved from your latest review.' : 'Run a review to generate your first score.'));
+
+      setText('macroRegime', snap.macro_regime || '—');
+      setText('macroUpdated', fmtDate(snap.macro_updated_at || snap.review_updated_at || snap.updated_at));
+      setText('macroNote', snap.macro_note || 'Saved from the latest scan.');
+
+      setText('topSector', snap.top_sector || '—');
+      setText('sectorUpdated', fmtDate(snap.sector_updated_at || snap.review_updated_at || snap.updated_at));
+      setText('sectorNote', snap.sector_note || 'Top sector and concentration (if available).');
+
+      setText('riskGrade', snap.risk_grade || '—');
+      setText('riskUpdated', fmtDate(snap.risk_updated_at || snap.review_updated_at || snap.updated_at));
+      setText('riskScoreMeta', snap.risk_score != null ? `(${snap.risk_score}/100)` : '');
+      setText('riskNote', snap.risk_note || 'Balance risk with your retirement timeline.');
+
+      setText('reviewHeadline', snap.review_headline || '—');
+      setText('reviewUpdated', fmtDate(snap.review_updated_at || snap.updated_at));
+    }
+
+    function saveSnapshotFromResponse(res){
+      // Accept either a structured JSON (recommended) or a plain string
+      if(!res || typeof res === 'string') return;
+
+      const snap = JSON.parse(localStorage.getItem('ltWealthSnapshot')||'{}');
+
+      // Common fields we’ll try to read (future-proof)
+      const nowIso = new Date().toISOString();
+      const health = res.health_score ?? res.risk_score ?? res.scores?.health;
+      const macro = res.macro_regime ?? res.macro?.regime ?? res.regime;
+      const topSector = res.top_sector ?? res.sectors?.top ?? res.sector_top;
+
+      const riskGrade = res.risk_grade ?? res.risk?.grade ?? res.grade;
+      const riskScore = res.risk_score ?? res.risk?.score ?? res.scores?.risk;
+
+      const headline =
+        res.review_headline
+        ?? res.summary_headline
+        ?? (Array.isArray(res.recommended_adjustments) ? `✅ ${res.recommended_adjustments.length} suggested adjustment(s)` : null)
+        ?? res.macro_summary
+        ?? null;
+
+      const updated = res.updated_at || nowIso;
+
+      const next = {
+        ...snap,
+        status_text: 'Portfolio connected',
+        updated_at: updated,
+        review_updated_at: updated,
+        health_score: (health != null ? Math.round(Number(health)) : snap.health_score),
+        macro_regime: (macro ?? snap.macro_regime),
+        top_sector: (topSector ?? snap.top_sector),
+        risk_grade: (riskGrade ?? snap.risk_grade),
+        risk_score: (riskScore != null ? Math.round(Number(riskScore)) : snap.risk_score),
+        review_headline: (headline ?? snap.review_headline),
+      };
+
+      localStorage.setItem('ltWealthSnapshot', JSON.stringify(next));
+      loadSnapshot();
+    }
+
+
+function loadLatestReviewSummary(){
+  const sub = document.getElementById('latestReviewSub');
+  const kMacro = document.getElementById('kpiMacro');
+  const kHealth = document.getElementById('kpiHealth');
+  const kRisk = document.getElementById('kpiRisk');
+  const bullets = document.getElementById('latestReviewBullets');
+
+  const raw = localStorage.getItem('ltWealthReport');
+  if(!raw){
+    if (bullets) bullets.innerHTML = '<li class="muted">No recommendations yet.</li>';
+    return;
+  }
+
+  let rep = null;
+  try{ rep = JSON.parse(raw); }catch{ rep = raw; }
+
+  // Default values
+  let headline = '';
+  let macro = '';
+  let health = '';
+  let risk = '';
+  let recs = [];
+
+  if (typeof rep === 'string'){
+    headline = rep.slice(0, 220) + (rep.length > 220 ? '…' : '');
+  } else if (rep && typeof rep === 'object'){
+    headline =
+      rep.review_headline
+      ?? rep.summary_headline
+      ?? rep.macro_summary
+      ?? rep.risk_assessment
+      ?? '';
+    macro = rep.macro_regime ?? rep.macro?.regime ?? rep.regime ?? '';
+    const hs = rep.health_score ?? rep.scores?.health;
+    health = (hs != null ? `${Math.round(Number(hs))}/100` : '');
+    const rg = rep.risk_grade ?? rep.risk?.grade ?? rep.grade ?? '';
+    const rs = rep.risk_score ?? rep.risk?.score ?? rep.scores?.risk;
+    risk = rg ? `${rg}${rs!=null ? ` (${Math.round(Number(rs))}/100)` : ''}` : (rs!=null ? `${Math.round(Number(rs))}/100` : '');
+    recs = Array.isArray(rep.recommended_adjustments) ? rep.recommended_adjustments : (Array.isArray(rep.recommendations) ? rep.recommendations : []);
+  }
+
+  if (sub){
+    const when = (rep && typeof rep === 'object' && (rep.updated_at || rep.created_at)) ? fmtDate(rep.updated_at || rep.created_at) : null;
+    const prefix = when ? `Last updated ${when}. ` : '';
+    sub.innerHTML = `${prefix}${headline ? headline : 'Saved from your latest quarterly review.'}`;
+  }
+
+  if (kMacro) kMacro.textContent = macro || '—';
+  if (kHealth) kHealth.textContent = health || '—';
+  if (kRisk) kRisk.textContent = risk || '—';
+
+  if (bullets){
+    const top = (recs || []).slice(0, 3).filter(Boolean);
+    if (top.length){
+      bullets.innerHTML = top.map(x => `<li>${String(x).replace(/</g,'&lt;').replace(/>/g,'&gt;')}</li>`).join('');
+    } else {
+      bullets.innerHTML = '<li class="muted">No recommendations found in the latest review.</li>';
+    }
+  }
+}
+
+    async function callWebhook(payload){
+      const cfg = S.get();
+      if(!WH.main){ toast('Add your Long-Term webhook URL in Account → Webhook Settings.', 'warn'); return null }
+      try{
+        const resp = await fetch(WH.main, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        if(!resp.ok) throw new Error('HTTP '+resp.status);
+        return await resp.json().catch(()=>resp.text());
+      }catch(e){
+        toast('Webhook error: '+e.message, 'err');
+        return null;
+      }
+    }
+
+    el('#runReviewBtn')?.addEventListener('click', async()=>{
+      setAiStatus('🧭 Running quarterly review…'); toast('Running quarterly review…');
+      const res = await callWebhook({ kind:'wealth_engine', subtype:'quarterly_review', prompt:'Run my quarterly portfolio optimization tour.', context: collectContext() });
+      if(res==null) return;
+      renderAnswer(res);
+    });
+
+// Secondary "Run Again" button in Latest Review Summary
+document.getElementById('runReviewBtn2')?.addEventListener('click', ()=>{
+  document.getElementById('runReviewBtn')?.click();
+});
+
+
+    document.getElementById('openSettingsTop')?.addEventListener('click', ()=>{
+      document.querySelector('.footer .link#openSettings')?.click();
+    });
+
+    el('#askBtn')?.addEventListener('click', async()=>{
+      const q = el('#aiPrompt').value.trim();
+      if(!q){ toast('Type a request first.', 'warn'); return }
+      setAiStatus('🧠 Thinking…'); toast('Thinking…');
+      const res = await callWebhook({ kind:'longterm_task', subtype:'ask', prompt:q, context: collectContext() });
+      if(res==null) return;
+      renderAnswer(res);
+    });
+
+    function renderAnswer(res){
+      const txt = typeof res==='string' ? res : (res.answer || JSON.stringify(res,null,2));
+      aiOut.innerHTML = `<div>${txt}</div>`;
+
+      // If this is a structured wealth-engine response, keep a copy for the dashboard summary card
+      if (res && typeof res === 'object' && !Array.isArray(res)){
+        try{ localStorage.setItem('ltWealthReport', JSON.stringify(res)); }catch{}
+      }
+
+      saveSnapshotFromResponse(res);
+      loadLatestReviewSummary();
+    }
+
+    const TASKS_START = [
+      {icon:'🧭', title:'Simple Plan Wizard', subtype:'getting_started', prompt:'Make me a simple 3-fund ETF plan. I am a beginner. Ask me 3 quick questions if needed, then show monthly amount and why.', href:'invest-helper.html'},
+      {icon:'🧮', title:'Pick My Mix', subtype:'getting_started', prompt:'Suggest an easy % mix for stocks/bonds/cash for a beginner. Explain in plain English.', href:'pick-my-mix.html'},
+      {icon:'💳', title:'Check My Fees', subtype:'getting_started', prompt:'Explain how fund fees affect my long-term returns. Show a quick example with $10k over 20 years.', href:'fee-analyzer.html'},
+    ];
+    const TASKS_GROW = [
+      {icon:'📆', title:'DCA Plan', subtype:'growing', prompt:'Create a monthly auto-invest plan for $___/month with a simple ETF mix. Include a 12-month schedule and milestones.', href:'dca-planner.html'},
+      {icon:'💸', title:'Dividend Builder', subtype:'growing', prompt:'If I use dividend ETFs, estimate yearly income growth over 10 years. Keep it simple.', href:'dividend-tracker.html'},
+      {icon:'🔁', title:'Rebalance Reminder', subtype:'growing', prompt:'Set a plain-language rule for rebalancing (calendar or threshold) and show how to do it step by step.', href:'ips-builder.html'},
+    ];
+    const TASKS_GOALS = [
+      {icon:'📈', title:'Retirement Check', subtype:'goals', prompt:'Am I on track for retirement by age ___ if I invest $___/mo? Show a simple projection and what to adjust.', href:'retirement-calculator.html'},
+      {icon:'🎓', title:'College Savings', subtype:'goals', prompt:'Help me plan for college in ___ years with 529 basics and a simple monthly target.', href:'college-savings.html'},
+      {icon:'🏠', title:'Buy a Home', subtype:'goals', prompt:'I want a down payment in ___ years. Suggest an investing/savings mix and monthly target.', href:'buy-a-home.html'},
+    ];
+    const TASKS_SAFE = [
+      {icon:'⚖️', title:'Risk Comfort', subtype:'safety', prompt:'Ask me 5 friendly questions to gauge my comfort with ups/downs, then suggest a mix and example ETFs.', href:'risk-comfort.html'},
+      {icon:'✅', title:'My Rules', subtype:'safety', prompt:'Write my investing rules in plain English (what to buy, how often, when to rebalance, when NOT to react).', href:'my-rules.html'},
+      {icon:'🧯', title:'Volatility Guardrails', subtype:'safety', prompt:'Explain simple guardrails for down markets (e.g., cash buffer, do not sell at lows, rebalance rules).', href:'volatility-guardrails.html'},
+    ];
+
+    const TOOLS = [
+      {emoji:'🧭', title:'AI Moat Finder', href:'ai-moat-finder.html',soon:true, desc:'Find the best fundemental stock.'},  
+      {emoji:'🧮', title:'Intrinsic Value Calculator', href:'intrinsic-value.html', desc:'DCF, DDM, Residual Income, EPV, Graham.'},
+      {emoji:'🧭', title:'Asset Allocation Builder', href:'asset-allocation-builder.html', desc:'Pick a simple long-term mix.'},
+      {emoji:'📊', title:'ETF Core Screener', href:'etf-core-screener.html',soon:true, desc:'Find broad, low-fee core ETFs.'},
+      {emoji:'🧮', title:'DCF Analyzer', href:'dcf-analyzer.html',soon:true, desc:'Estimate intrinsic value (advanced).'},
+      {emoji:'🧰', title:'Factor-Tilt Planner', href:'factor-tilt-planner.html',soon:true, desc:'Explore quality/value/size tilts.'},
+      {emoji:'🏦', title:'Withdrawal Planner', href:'withdrawal-planner.html',soon:true, desc:'Plan tax-efficient withdrawals.'},
+      {emoji:'🛡️', title:'Tax-Advantaged Guide', href:'tax-advantaged-guide.html',soon:true, desc:'401(k), IRA, HSA, 529 basics.'},
+      {emoji:'✅', title:'Quality Screener', href:'quality-screener.html',soon:true, desc:'Screen for fundamentals quality.'},
+      {emoji:'👵', title:'Retirement Calculator', href:'retirement-calculator.html', desc:'Am I on track?'},
+    ];
+
+    const UNBUILT_TILES = ['invest-helper.html','pick-my-mix.html','fee-analyzer.html',
+      'dca-planner.html','dividend-tracker.html','ips-builder.html',
+      'college-savings.html','buy-a-home.html',
+      'risk-comfort.html','my-rules.html','volatility-guardrails.html'];
+
+    function mount(list, rootId){
+      const root = document.getElementById(rootId);
+      root.innerHTML = list.map((t,i)=>{
+        const soon = t.href && UNBUILT_TILES.includes(t.href);
+        const soonBadge = soon ? ' <span style="font-size:.68rem;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:999px;font-weight:700;vertical-align:middle">Soon</span>' : '';
+        const base = `
+          <div class="icon">${t.icon}</div>
+          <div class="title">${t.title}${soonBadge}</div>
+          <div class="desc">${(t.prompt||'').slice(0,64)}${(t.prompt||'').length>64?'…':''}</div>`;
+        if(t.href && !soon){
+          return `<a class="mini" href="${t.href}" data-i="${i}" data-subtype="${t.subtype}" aria-label="${t.title}">${base}</a>`;
+        }else{
+          return `<button class="mini" data-i="${i}" data-subtype="${t.subtype}" aria-label="${t.title}" ${soon?'style="opacity:.6"':''}>${base}</button>`;
+        }
+      }).join('');
+
+      root.querySelectorAll('button.mini').forEach(btn=>{
+        const i = Number(btn.dataset.i);
+        const subtype = btn.dataset.subtype;
+        const task = (rootId==='tasksStart'?TASKS_START:rootId==='tasksGrow'?TASKS_GROW:rootId==='tasksGoals'?TASKS_GOALS:TASKS_SAFE)[i];
+        btn.addEventListener('click', ()=> runTask(subtype, task.prompt, task.title));
+      });
+    }
+
+    async function runTask(subtype, prompt, title){
+      setAiStatus('▶️ '+title+'…'); toast(title+'…');
+      const res = await callWebhook({ kind:'longterm_task', subtype, prompt, context: collectContext() });
+      if(res==null) return;
+      renderAnswer(res);
+    }
+
+    function collectContext(){
+      return { time: new Date().toISOString(), user: JSON.parse(localStorage.getItem('ltUser')||'{}') };
+    }
+
+    // Webhooks configured in account.html — no local dialog needed
+    document.querySelector('.footer .link#openSettings')?.addEventListener('click', ()=>{
+      window.location.href = 'account.html#webhookSettings';
+    });
+
+    // Boot
+    loadSnapshot();
+    loadLatestReviewSummary();
+    mount(TASKS_START,'tasksStart');
+    mount(TASKS_GROW,'tasksGrow');
+    mount(TASKS_GOALS,'tasksGoals');
+    mount(TASKS_SAFE,'tasksSafe');
+
+    const toolsGrid = document.getElementById('toolsGrid');
+    toolsGrid.innerHTML = TOOLS.map(t => t.soon ? `
+      <div class="tool-link" style="opacity:.55;cursor:default">
+        <div class="tl-emoji">${t.emoji}</div>
+        <div class="tl-text">
+          <div class="tl-title">${t.title} <span style="font-size:.7rem;background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:999px;font-weight:700;vertical-align:middle">Soon</span></div>
+          <div class="tl-desc">${t.desc}</div>
+        </div>
+      </div>` : `
+      <a class="tool-link" href="${t.href}">
+        <div class="tl-emoji">${t.emoji}</div>
+        <div class="tl-text">
+          <div class="tl-title">${t.title}</div>
+          <div class="tl-desc">${t.desc}</div>
+        </div>
+      </a>`).join('');
+  </script>
+<script>
+    (function(){
+      function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+      ready(function(){
+        var tabsBar = document.querySelector('.section.card .tool-tabs');
+        if(!tabsBar) return;
+
+        var card = tabsBar.closest('.section.card');
+        var grid = card.querySelector('.tools-grid') || card;
+
+        var items = Array.from(grid.querySelectorAll('a.tool-link, .tool-link, .tool-card, li, a'));
+
+        function title(el){
+          var t = (el.querySelector('.tl-title') || el.querySelector('h4') || el).textContent || '';
+          return t.trim().toLowerCase();
+        }
+        function categorize(el){
+          var t = title(el);
+          if (/^ai moat finder/.test(t) || /^etf core screener/.test(t) || /^dcf analyzer/.test(t) || /^quality screener/.test(t)) return 'research';
+          if (/^asset allocation builder/.test(t) || /^factor-tilt planner/.test(t)) return 'portfolio';
+          if (/^retirement calculator/.test(t) || /^withdrawal planner/.test(t)) return 'retirement';
+          if (/^tax-advantaged guide/.test(t)) return 'taxes';
+          return 'research';
+        }
+
+        items.forEach(function(el){
+          if(!el.getAttribute('data-cat')){
+            el.setAttribute('data-cat', categorize(el));
+          }
+        });
+
+        var tabs = Array.from(tabsBar.querySelectorAll('.tool-tab'));
+        var indicator = tabsBar.querySelector('.seg-indicator'); // hidden but kept for compatibility
+
+        function render(filter){
+          items.forEach(function(el){
+            var cat = el.getAttribute('data-cat') || 'research';
+            el.style.display = (filter==='all' || cat===filter) ? '' : 'none';
+          });
+          moveIndicator();
+        }
+
+        function selectTab(btn){
+          tabs.forEach(function(b){ b.setAttribute('aria-selected', String(b===btn)); });
+          render(btn.getAttribute('data-filter'));
+        }
+
+        function moveIndicator(){
+          if(!indicator) return;
+          var active = tabsBar.querySelector('.tool-tab[aria-selected="true"]') || tabs[0];
+          if(!active) return;
+          var r = active.getBoundingClientRect();
+          var p = tabsBar.getBoundingClientRect();
+          indicator.style.left = (r.left - p.left + tabsBar.scrollLeft) + 'px';
+          indicator.style.width = r.width + 'px';
+        }
+
+        tabs.forEach(function(btn){
+          btn.addEventListener('click', function(){ selectTab(btn); });
+          btn.addEventListener('keydown', function(e){
+            if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectTab(btn); }
+          });
+        });
+        window.addEventListener('resize', moveIndicator);
+
+        render('all');
+        setTimeout(moveIndicator, 50);
+      });
+    })();
+  </script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggles = document.querySelectorAll('.dropdown-toggle');
+      const dropdownWrappers = document.querySelectorAll('.dropdown');
+
+      const isMobile = () => window.matchMedia('(max-width: 980px)').matches;
+
+      function closeAll(){
+        dropdownWrappers.forEach(d => d.classList.remove('show'));
+      }
+
+      toggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e){
+          // Desktop: allow normal navigation (matches short-term-dashboard behavior)
+          if (!isMobile()) return;
+
+          // Mobile: tap toggles dropdown instead of navigating
+          e.preventDefault();
+          e.stopPropagation();
+
+          const parentDropdown = this.closest('.dropdown');
+          const wasOpen = parentDropdown.classList.contains('show');
+          closeAll();
+          if (!wasOpen) parentDropdown.classList.add('show');
+        });
+      });
+
+      // Close dropdowns when tapping outside
+      document.addEventListener('click', closeAll);
+
+      // If resizing to desktop, ensure dropdown state is reset
+      window.addEventListener('resize', () => {
+        if (!isMobile()) closeAll();
+      });
+    });
+</script>
+<script>
+  // Configure login/logout routes for this folder
+  window.addEventListener("DOMContentLoaded", () => {
+    if (window.GSAuthHeader && typeof window.GSAuthHeader.init === "function") {
+      window.GSAuthHeader.init({
+        loginUrl: "login.html",
+        afterLogoutUrl: "index.html"
+      });
+    }
+  });
+</script>
+
+<!-- ===== Auth (local /js) ===== -->
+<script src="/js/supabase.min.js"></script>
+<script>
+  window.GS_CONFIG_URL = "/js/config.json";
+  window.GS_CONFIG_PATH = "/js/config.json";
+</script>
+<script src="/js/app-config.js"></script>
+<script src="/js/auth-header.js"></script>
+<script>
+  // Initialize header auth (login.html is in the same folder as this dashboard)
+  window.GSAuthHeader && window.GSAuthHeader.init({
+    loginUrl: "./login.html",
+    afterLogoutUrl: "./index.html"
+  });
+</script>
+
+
+<script>
+/* ── Stage Selector ── */
+(function(){
+  const LS_STAGE = 'lt_investor_stage_v1';
+  const STAGE_HINTS = {
+    new: '🌱 Great — we'll start with the basics. Use the "Getting Started" tiles and "Ask AI Coach" to build your first plan.',
+    building: '📈 Nice — focus on DCA, goal planning, and quarterly reviews. Use the AI Coach to stress-test your mix.',
+    optimizing: '🏛️ Welcome back — your Wealth Engine Snapshot and quarterly review are the most important sections for you.'
+  };
+  const STAGE_FOCUS = {
+    new: 'taskTilesSection',
+    building: 'taskTilesSection',
+    optimizing: 'wealthEngineSnapshot'
+  };
+
+  window.setStage = function(stage){
+    localStorage.setItem(LS_STAGE, stage);
+    // Update tile styles
+    ['new','building','optimizing'].forEach(s=>{
+      const tile = document.getElementById('stage'+s.charAt(0).toUpperCase()+s.slice(1));
+      if(tile){
+        tile.style.background = s===stage ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.10)';
+        tile.style.borderColor = s===stage ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.14)';
+      }
+    });
+    const hint = document.getElementById('stageHint');
+    if(hint){ hint.textContent = STAGE_HINTS[stage]||''; hint.style.display='block'; }
+    // Scroll to most relevant section
+    const focusId = STAGE_FOCUS[stage];
+    if(focusId){ setTimeout(()=>document.getElementById(focusId)?.scrollIntoView({behavior:'smooth',block:'start'}), 400); }
+  };
+
+  // Restore saved stage on load
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const saved = localStorage.getItem(LS_STAGE);
+    if(saved) window.setStage(saved);
+  });
+})();
+
+/* ── Quick prompt helper ── */
+window.quickAsk = function(prompt){
+  const input = document.getElementById('aiPrompt');
+  const btn   = document.getElementById('askBtn');
+  if(input){ input.value = prompt; }
+  if(btn)  { btn.click(); }
+  document.getElementById('aiCoachCard')?.scrollIntoView({behavior:'smooth',block:'start'});
+};
+</script>
+
+<script>
+/* ── Lesson of the Day — Long-Term Edition ── */
+(function(){
+  const LESSONS = [
+    {
+      title: 'What is an Index Fund?',
+      text: 'An index fund tracks a market index like the S&P 500. Instead of picking stocks, you own a tiny slice of hundreds of companies at once. They have lower fees and historically outperform most actively managed funds.',
+      example: 'VTI (Vanguard Total Market ETF) holds over 3,500 US stocks. One purchase = exposure to the entire US economy. Annual fee: 0.03%.'
+    },
+    {
+      title: 'What is Dollar-Cost Averaging?',
+      text: 'DCA means investing a fixed dollar amount on a regular schedule regardless of price. When prices are low, your money buys more shares. When prices are high, you buy fewer. Over time this lowers your average cost per share.',
+      example: 'You invest $500/month into VTI. In January it's $220 (you buy 2.27 shares). In March it drops to $200 (you buy 2.5 shares). Your average cost is lower than if you had bought all at once.'
+    },
+    {
+      title: 'What is Asset Allocation?',
+      text: 'Asset allocation is how you divide your money between stocks, bonds, and cash. Stocks grow faster but drop more. Bonds are steadier but grow less. Your allocation should match your timeline and risk tolerance.',
+      example: 'Age 30: 90% stocks, 10% bonds. Age 55: 70% stocks, 30% bonds. Age 70: 50% stocks, 50% bonds. The older you get, the more you shift toward stability.'
+    },
+    {
+      title: 'What is Rebalancing?',
+      text: 'If stocks grow faster than bonds, your portfolio drifts away from your target. Rebalancing means selling a bit of what grew and buying what lagged to restore your original mix. Most people do this once a year.',
+      example: 'Target: 80% stocks, 20% bonds. After a bull run: 88% stocks, 12% bonds. You sell 8% of stocks and buy bonds to get back to 80/20.'
+    },
+    {
+      title: 'What is Expense Ratio?',
+      text: 'The expense ratio is the annual fee a fund charges, expressed as a percentage of assets. A 0.03% expense ratio on $100k costs $30/year. A 1% expense ratio costs $1,000/year. Over 30 years, high fees compound into massive losses.',
+      example: '$100k growing at 7% for 30 years: with 0.03% fees → $747k. With 1% fees → $574k. The fee difference alone costs you $173,000.'
+    },
+    {
+      title: 'What is a Roth IRA?',
+      text: 'A Roth IRA lets you invest after-tax money now and withdraw it tax-free in retirement — including all the growth. There is a yearly contribution limit ($7,000 in 2024). Best for people who expect to be in a higher tax bracket later.',
+      example: 'You invest $7,000/year from age 25 to 65 in a Roth IRA. At 7% average return, you'd have ~$1.4M — all of it tax-free to withdraw in retirement.'
+    },
+    {
+      title: 'What is a 3-Fund Portfolio?',
+      text: 'The 3-fund portfolio is a simple, low-cost strategy using just three ETFs: US total market, international total market, and US bonds. It covers virtually every publicly traded company on Earth with minimal fees.',
+      example: 'Simple mix: 60% VTI (US), 30% VXUS (International), 10% BND (Bonds). That's it. Rebalance once a year. Historically beats 90% of actively managed funds.'
+    },
+    {
+      title: 'What is Sequence of Returns Risk?',
+      text: 'If the market crashes right when you retire and start withdrawing money, you lock in losses before your portfolio can recover. This is the biggest financial risk retirees face — even if long-run returns are good.',
+      example: 'Two retirees both average 5% returns over 20 years. But Retiree A had good years early; Retiree B had bad years early. Retiree A ends with $1.2M. Retiree B runs out of money at year 14.'
+    }
+  ];
+
+  const dayIndex = Math.floor(Date.now() / 86400000);
+  let current = dayIndex % LESSONS.length;
+
+  function showLesson(idx){
+    const L = LESSONS[idx % LESSONS.length];
+    const title   = document.getElementById('ltLessonTitle');
+    const text    = document.getElementById('ltLessonText');
+    const example = document.getElementById('ltLessonExample');
+    if(title)   title.textContent = L.title;
+    if(text)    text.textContent  = L.text;
+    if(example){ example.textContent = '📌 Example: ' + L.example; example.style.display = 'none'; }
+    const exBtn = document.getElementById('ltLessonExBtn');
+    if(exBtn) exBtn.textContent = '💡 Show example';
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    showLesson(current);
+
+    const nextBtn = document.getElementById('ltLessonNextBtn');
+    if(nextBtn) nextBtn.addEventListener('click', ()=>{ current = (current+1)%LESSONS.length; showLesson(current); });
+
+    const exBtn = document.getElementById('ltLessonExBtn');
+    if(exBtn) exBtn.addEventListener('click', ()=>{
+      const ex = document.getElementById('ltLessonExample');
+      if(!ex) return;
+      const hidden = ex.style.display === 'none';
+      ex.style.display = hidden ? 'block' : 'none';
+      exBtn.textContent = hidden ? '💡 Hide example' : '💡 Show example';
+    });
+
+    const askBtn = document.getElementById('ltLessonAskBtn');
+    if(askBtn) askBtn.addEventListener('click', async ()=>{
+      const L = LESSONS[current % LESSONS.length];
+      const url = (window.WH && WH.main) ? WH.main : '';
+      const prompt = `I am a beginner investor. Explain "${L.title}" in simple terms with a real-world example. Keep it under 150 words and avoid jargon.`;
+      const ex = document.getElementById('ltLessonExample');
+      if(!ex) return;
+      ex.style.display = 'block';
+      ex.textContent = 'Asking AI…';
+      askBtn.disabled = true;
+      try {
+        const res = url ? await (await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'lesson',topic:L.title,prompt})})).json() : null;
+        ex.textContent = res?.explanation || res?.text || res?.output || ('📌 Example: ' + L.example);
+      } catch(e) { ex.textContent = '📌 Example: ' + L.example; }
+      askBtn.disabled = false;
+    });
+  });
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     V1 NAV + PRO GATING + TOOLS TIER SYSTEM
+     ═══════════════════════════════════════════════════ -->
+<script>
+(function(){
+'use strict';
+
+/* ── 1. NAV AUTH ── */
+var KEY='gs_auth_user_v1';
+var authKeys=[KEY,'gs_session','ap_session','sb-access-token'];
+var u=JSON.parse(localStorage.getItem(KEY)||'null');
+var hasSession=u||authKeys.some(function(k){try{var v=localStorage.getItem(k);return v&&v.length>10;}catch(e){return false;}});
+
+var signIn=document.getElementById('ltSignIn');
+var userDrop=document.getElementById('ltUserDrop');
+var userName=document.getElementById('ltUserName');
+var userBtn=document.getElementById('ltUserBtn');
+var userMenu=document.getElementById('ltUserMenu');
+var mobileAuth=document.getElementById('ltMobileAuth');
+
+if(hasSession){
+  if(signIn)signIn.style.display='none';
+  if(userDrop)userDrop.style.display='block';
+  var displayName=u&&(u.name||u.full_name||(u.email?u.email.split('@')[0]:null))||'Account';
+  if(userName)userName.textContent=displayName;
+  if(mobileAuth)mobileAuth.innerHTML='<a href="account.html" style="padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none">&#128282; My Account</a><a id="ltMobOut" href="#" style="padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none">&#128682; Sign Out</a>';
+  var mobOut=document.getElementById('ltMobOut');
+  if(mobOut)mobOut.addEventListener('click',function(e){e.preventDefault();doSignOut();});
+}else{
+  if(mobileAuth)mobileAuth.innerHTML='<a href="login.html" style="padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none">&#128272; Sign In</a><a href="signup.html" style="padding:10px 12px;color:rgba(255,255,255,.85);font-size:.88rem;font-weight:500;border-radius:8px;text-decoration:none">&#128640; Start Free</a>';
+}
+
+if(userBtn&&userDrop&&userMenu){
+  userBtn.addEventListener('click',function(e){e.stopPropagation();userMenu.style.display=userMenu.style.display==='block'?'none':'block';});
+  document.addEventListener('click',function(){if(userMenu)userMenu.style.display='none';});
+}
+
+var sob=document.getElementById('ltSignOutBtn');
+function doSignOut(){authKeys.forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});location.href='index.html';}
+if(sob)sob.addEventListener('click',doSignOut);
+
+var burger=document.getElementById('ltBurger');
+var ltMobile=document.getElementById('ltMobileMenu');
+if(burger&&ltMobile){
+  burger.style.display='inline-flex';
+  burger.addEventListener('click',function(){
+    var open=ltMobile.getAttribute('data-open')==='true';
+    ltMobile.setAttribute('data-open',open?'false':'true');
+    ltMobile.style.display=open?'none':'block';
+  });
+}
+
+var ltNavLinks=document.getElementById('ltNavLinks');
+function handleResize(){
+  if(!ltNavLinks||!burger)return;
+  if(window.innerWidth<=700){ltNavLinks.style.display='none';burger.style.display='inline-flex';}
+  else{ltNavLinks.style.display='flex';burger.style.display='none';}
+}
+window.addEventListener('resize',handleResize);
+handleResize();
+
+/* ── 2. PRO DETECTION ── */
+var isPro=(localStorage.getItem('ap_is_pro_v1')==='1');
+
+/* ── 3. UPGRADE MODAL ── */
+window.openLtUpgradeModal=function(title,body){
+  var modal=document.getElementById('ltUpgModal');
+  var t=document.getElementById('ltUpgTitle');
+  var b=document.getElementById('ltUpgBody');
+  if(t)t.textContent=title||'Pro Feature';
+  if(b)b.textContent=body||'Upgrade to Pro to unlock this feature.';
+  if(modal)modal.style.display='flex';
+};
+var ltModal=document.getElementById('ltUpgModal');
+if(ltModal){
+  ltModal.addEventListener('click',function(e){if(e.target===ltModal)ltModal.style.display='none';});
+}
+
+/* ── 4. PRO SECTION LOCKING ──
+   Per pricing.html:
+   FREE: AI Coach (5/day via Portfolio Advisor), Lesson of Day, Tools (free tools), Learning Concepts
+   PRO: Wealth Engine Snapshot + Quarterly Review, full AI coaching unlimited
+
+   Strategy — same as short-term:
+   - Collapsible sections: badge the toggle, intercept click → modal
+   - Inline card sections: replace with a clean locked row
+*/
+var LT_PRO_SECTIONS=[
+  /* The Wealth Engine Snapshot card is the main Pro-gated section */
+  {id:'wealthEngineCard', toggle:false, title:'Wealth Engine Snapshot', body:'The Wealth Engine runs a quarterly portfolio review using your live data feed. Available on Pro — includes portfolio health, macro regime, sector exposure, and risk grade.'},
+  /* AI Coach is free but limited — 5/day via Portfolio Advisor. Full unlimited = Pro */
+];
+
+/* Find Wealth Engine card — it doesn't have an ID, find by heading */
+function findSectionByHeading(heading){
+  var nodes=Array.from(document.querySelectorAll('h2,h3'));
+  var h=nodes.find(function(n){return n.textContent.trim().indexOf(heading)>=0;});
+  return h?h.closest('.card')||h.closest('section')||h.parentElement:null;
+}
+
+/* Pro pill builder */
+function ltProPill(){
+  var span=document.createElement('span');
+  span.innerHTML='&#128200; Pro';
+  span.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;background:linear-gradient(135deg,#0b4f8a,#1a6bbb);color:#fff;font-size:.68rem;font-weight:700;letter-spacing:.03em;white-space:nowrap;flex-shrink:0';
+  return span;
+}
+
+if(!isPro){
+  /* Lock Wealth Engine Snapshot */
+  var weCard=findSectionByHeading('Wealth Engine Snapshot');
+  if(weCard){
+    weCard.innerHTML='';
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;flex-wrap:wrap';
+    var left=document.createElement('div');
+    left.style.cssText='display:flex;align-items:center;gap:10px';
+    left.innerHTML='<span style="font-size:1.1rem">&#128274;</span><span style="font-size:.86rem;font-weight:600;color:#64748b">Wealth Engine Snapshot &amp; Quarterly Review &mdash; available on Pro</span>';
+    var btn=document.createElement('a');
+    btn.href='pricing.html';
+    btn.innerHTML='&#128640; Upgrade to Pro &mdash; $19/mo';
+    btn.style.cssText='padding:7px 16px;border-radius:999px;background:#0b4f8a;color:#fff;font-size:.78rem;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0';
+    row.appendChild(left);
+    row.appendChild(btn);
+    weCard.appendChild(row);
+  }
+
+  /* Lock Latest Review Summary */
+  var reviewCard=document.getElementById('latestReviewSummaryCard');
+  if(reviewCard){
+    reviewCard.innerHTML='';
+    var rrow=document.createElement('div');
+    rrow.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;flex-wrap:wrap';
+    var rleft=document.createElement('div');
+    rleft.style.cssText='display:flex;align-items:center;gap:10px';
+    rleft.innerHTML='<span style="font-size:1.1rem">&#128274;</span><span style="font-size:.86rem;font-weight:600;color:#64748b">Latest Review Summary &mdash; available on Pro</span>';
+    var rbtn=document.createElement('a');
+    rbtn.href='pricing.html';
+    rbtn.innerHTML='&#128640; Upgrade to Pro &mdash; $19/mo';
+    rbtn.style.cssText='padding:7px 16px;border-radius:999px;background:#0b4f8a;color:#fff;font-size:.78rem;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0';
+    rrow.appendChild(rleft);
+    rrow.appendChild(rbtn);
+    reviewCard.appendChild(rrow);
+  }
+
+  /* AI Coach — show 5/day limit note, dim Run Review buttons */
+  var askBtn=document.getElementById('askBtn');
+  if(askBtn){
+    var limitNote=document.createElement('div');
+    limitNote.style.cssText='font-size:.75rem;color:#64748b;margin-top:6px;padding:6px 10px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;gap:6px';
+    limitNote.innerHTML='&#8505;&#65039; Free plan: 5 AI analyses/day via Portfolio Advisor. <a href="pricing.html" style="color:#0b4f8a;font-weight:700;margin-left:4px">Upgrade for unlimited &#8594;</a>';
+    askBtn.parentElement&&askBtn.parentElement.insertAdjacentElement('afterend',limitNote);
+  }
+
+  /* Add Pro badge + intercept Run Review buttons */
+  ['runReviewBtn','runReviewBtn2'].forEach(function(id){
+    var btn=document.getElementById(id);
+    if(!btn)return;
+    var orig=btn.textContent;
+    btn.innerHTML='&#128274; '+orig+' (Pro)';
+    btn.addEventListener('click',function(e){
+      e.preventDefault();e.stopImmediatePropagation();
+      window.openLtUpgradeModal('Quarterly Portfolio Review','Running a Wealth Engine review requires an active portfolio webhook connection. Available on Pro.');
+    },true);
+  });
+}
+
+/* ── 5. TOOLS TIER SYSTEM ──
+   Same pattern as short-term. Add tier field via AP_LT_TOOL_TIERS.
+   To add a new tool: one line here — that's it.
+   
+   TIERS:
+     'free'  → green Free badge, always clickable
+     'pro'   → blue Pro badge, locked for free users  
+     'soon'  → amber Coming Soon badge, disabled
+*/
+window.AP_LT_TOOL_TIERS={
+  /* Free tools */
+  'intrinsic-value.html':           'free',
+  'retirement-calculator.html':     'free',
+  'asset-allocation-builder.html':  'free',
+  'learn-investing.html':           'free',
+  'economic-calendar.html':         'free',
+  'kelly-sizer.html':               'free',
+  'strategy-backtester.html':       'free',
+  /* Pro tools */
+  'dcf-analyzer.html':              'pro',
+  'ai-moat-finder.html':            'pro',
+  'factor-tilt-planner.html':       'pro',
+  'withdrawal-planner.html':        'pro',
+  'quality-screener.html':          'pro',
+  /* Coming soon */
+  'etf-core-screener.html':         'soon',
+  'tax-advantaged-guide.html':      'soon',
+  'portfolio-setup.html':           'soon',
+  'portfolio-holdings.html':        'soon',
+  'portfolio-review.html':          'soon',
+};
+
+function patchLtToolsGrid(){
+  var grid=document.getElementById('toolsGrid');
+  if(!grid)return;
+  var observer=new MutationObserver(function(){
+    grid.querySelectorAll('a[href],button').forEach(function(item){
+      if(item.getAttribute('data-lt-tiered'))return;
+      item.setAttribute('data-lt-tiered','1');
+      var href=item.getAttribute('href')||'';
+      var fname=href.split('/').pop().split('?')[0];
+      var tier=window.AP_LT_TOOL_TIERS[fname];
+      if(!tier)return;
+
+      var badge=document.createElement('span');
+      if(tier==='free'){
+        badge.textContent='Free';
+        badge.style.cssText='display:inline-flex;padding:1px 7px;border-radius:999px;font-size:.6rem;font-weight:700;background:#dcfce7;color:#166534;margin-left:5px;vertical-align:middle';
+      }else if(tier==='pro'){
+        badge.textContent='Pro';
+        badge.style.cssText='display:inline-flex;padding:1px 7px;border-radius:999px;font-size:.6rem;font-weight:700;background:#dbeafe;color:#1e40af;margin-left:5px;vertical-align:middle';
+        if(!isPro){
+          item.style.opacity='.65';
+          var captured=fname.replace('.html','').replace(/-/g,' ');
+          item.addEventListener('click',function(e){
+            e.preventDefault();
+            window.openLtUpgradeModal('Pro Tool',captured+' is a Pro feature. Upgrade to unlock it.');
+          });
+        }
+      }else if(tier==='soon'){
+        badge.textContent='Soon';
+        badge.style.cssText='display:inline-flex;padding:1px 7px;border-radius:999px;font-size:.6rem;font-weight:700;background:#fef9c3;color:#854d0e;margin-left:5px;vertical-align:middle';
+      }
+      var titleEl=item.querySelector('.title,strong,h4,.tool-title');
+      if(titleEl)titleEl.appendChild(badge);
+    });
+  });
+  observer.observe(grid,{childList:true,subtree:true});
+}
+document.addEventListener('DOMContentLoaded',patchLtToolsGrid);
+
+/* ── 6. FORCE LOGIN ── */
+(function(){
+  if(hasSession)return;
+  setTimeout(function(){
+    var stillNo=!authKeys.some(function(k){try{var v=localStorage.getItem(k);return v&&v.length>10;}catch(e){return false;}});
+    if(stillNo)location.replace('login.html?next='+encodeURIComponent(location.pathname+location.search));
+  },300);
+})();
+
+})();
+</script>
+
+</body>
+</html>

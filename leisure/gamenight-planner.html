@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Night Planner – GenieSphere</title>
+  <style>
+    :root{
+      --bg:#0b1220; /* deep blue */
+      --panel:#121a2b;
+      --muted:#1b2740;
+      --accent:#4ade80; /* green */
+      --accent-2:#3b82f6; /* blue */
+      --text:#e6edf5;
+      --sub:#b7c3d6;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --radius:18px;
+      --shadow:0 8px 24px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 800px at 10% -10%,#1a2440 0%,#0b1220 45%),radial-gradient(900px 600px at 110% 0%,#15213b 0%,#0b1220 55%);color:var(--text);font:16px/1.45 system-ui,Segoe UI,Roboto,Arial,sans-serif}
+
+    /* Header */
+    .header{position:sticky;top:0;z-index:50;backdrop-filter: blur(8px);background:rgba(11,18,32,.6);border-bottom:1px solid rgba(255,255,255,.06)}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{ display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); }
+    .logo{
+        width:40px; height:40px; border-radius:50%;
+        background: radial-gradient(circle at 30% 30%, #6af0c4, #3ee1a1 40%, #1c9369 75%);
+        box-shadow: 0 0 0 4px var(--ring), 0 8px 24px rgba(62,225,161,.35);
+    }
+    .brand-name{font-weight:800; letter-spacing:.2px;}
+    .nav{display:flex;gap:10px;flex-wrap:wrap}
+    .pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);text-decoration:none;color:var(--text);transition:.2s}
+    .pill:hover{transform:translateY(-1px);background:rgba(255,255,255,.1)}
+    .pill.primary{background:var(--accent-2);border-color:transparent;color:white}
+    .pill.success{background:var(--accent);border-color:transparent;color:#06250f}
+    
+    /* Layout */
+    .grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:18px}
+    @media (max-width: 900px){.grid{grid-template-columns:1fr}}
+
+    /* Cards */
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card h2{margin:0 0 10px;font-size:20px}
+    .card .head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+    .content{padding:16px}
+
+    /* Inputs */
+    label{display:block;margin:8px 0 6px;color:var(--sub);font-size:14px}
+    input,select,textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0f1627;color:var(--text);outline:none}
+    textarea{min-height:96px;resize:vertical}
+
+    /* Sections */
+    .section{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width: 700px){.section{grid-template-columns:1fr}}
+
+    /* Lists */
+    .list{display:grid;gap:10px}
+    .list .row{justify-content:flex-start}
+
+    /* Buttons – global default style per user's preferences */
+    .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:10px 16px;cursor:pointer;background:var(--muted);color:var(--text);transition:.2s;text-decoration:none}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.green{background:var(--accent);color:#06250f}
+    .btn.blue{background:var(--accent-2);color:#fff}
+    .btn.red{background:var(--danger);color:#fff}
+    .btn.yellow{background:var(--warning);color:#111827}
+
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+
+    /* Game cards */
+    .games{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    @media (max-width: 700px){.games{grid-template-columns:1fr}}
+    .game{background:#0f1627;border:1px solid rgba(255,255,255,.08);padding:12px;border-radius:14px}
+    .game h4{margin:2px 0 6px}
+    .game small{color:var(--sub)}
+
+    /* Footer */
+    footer{margin:24px 0 40px;color:var(--sub);text-align:center}
+
+    /* Utilities */
+    .flex{display:flex;gap:8px;align-items:center}
+    .right{justify-content:flex-end}
+    .space{height:8px}
+
+    /* Timer/leaderboard */
+    .leaderboard table{width:100%;border-collapse:collapse}
+    .leaderboard th,.leaderboard td{border-bottom:1px solid rgba(255,255,255,.08);padding:10px;text-align:left}
+
+    /* Print */
+    @media print{
+      .header,.no-print{display:none !important}
+      body{background:white;color:black}
+      .card{box-shadow:none;border-color:#ddd}
+      a::after{content:" (" attr(href) ")";font-size:12px;color:#555}
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="../index.html" aria-label="Back to GenieSphere Home">
+            <img src="../genie-logo.png" alt="GenieSphere Logo" class="logo"/>
+            <span class="brand-name">GenieSphere</span>
+        </a>
+        <nav class="nav">
+          <a class="pill" href="../dashboard/personal.html">👤 Personal</a>
+          <a class="pill" href="../dashboard/business.html">🏢 Business</a>
+          <a class="pill" href="../dashboard/investment.html">📈 Investing</a>
+          <a class="pill primary" href="../dashboard/leisure.html">🎉 Leisure</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="row">
+      <h1 style="margin:18px 0 0">🎲 Game Night Planner</h1>
+      <div class="flex right no-print">
+        <a class="btn blue" href="leisure.html">⬅️ Back to Leisure</a>
+        <button class="btn green" id="saveBtn">💾 Save</button>
+        <button class="btn" id="loadBtn">📂 Load</button>
+        <button class="btn yellow" id="exportBtn">📤 Export</button>
+        <button class="btn" id="printBtn">🖨️ Print</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT COLUMN -->
+      <section class="card">
+        <div class="content">
+          <div class="head">
+            <h2>🗓️ Event Details</h2>
+            <div class="chips no-print">
+              <span class="chip" id="autosaveBadge">Auto‑saved</span>
+            </div>
+          </div>
+          <div class="section">
+            <div>
+              <label for="title">🎉 Event Name</label>
+              <input id="title" placeholder="Friday Game Night" />
+            </div>
+            <div>
+              <label for="host">👑 Host</label>
+              <input id="host" placeholder="Jimmy & Friends" />
+            </div>
+            <div>
+              <label for="date">📅 Date</label>
+              <input id="date" type="date" />
+            </div>
+            <div>
+              <label for="time">⏰ Start Time</label>
+              <input id="time" type="time" />
+            </div>
+            <div>
+              <label for="location">📍 Location</label>
+              <input id="location" placeholder="123 Party Ln, Chicago, IL"/>
+            </div>
+            <div>
+              <label for="notes">📝 Notes</label>
+              <input id="notes" placeholder="Theme, parking, elevator code, etc." />
+            </div>
+            
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>👥 Players & RSVP</h2>
+            <button class="btn no-print" id="addPlayer">➕ Add Player</button>
+          </div>
+          <div id="players" class="list"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="content">
+          <div class="head">
+            <h2>🎮 Game Library & Voting</h2>
+            <button class="btn no-print" id="addGame">➕ Add Game</button>
+          </div>
+          <div id="games" class="games"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>🍕 Potluck Planner</h2>
+            <button class="btn no-print" id="addItem">➕ Add Item</button>
+          </div>
+          <div id="potluck" class="list"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>🏁 Rounds & Timer</h2></div>
+          <div class="section">
+            <div>
+              <label for="roundLength">⏱️ Minutes per Round</label>
+              <input id="roundLength" type="number" min="1" value="20" />
+            </div>
+            <div>
+              <label for="breakLength">☕ Break (min)</label>
+              <input id="breakLength" type="number" min="0" value="5" />
+            </div>
+            <div>
+              <label for="rounds">🔁 Number of Rounds</label>
+              <input id="rounds" type="number" min="1" value="3" />
+            </div>
+            <div class="no-print" style="display:flex;align-items:flex-end;gap:8px">
+              <button class="btn green" id="startTimer">▶️ Start</button>
+              <button class="btn red" id="stopTimer">⏹️ Stop</button>
+              <strong id="timer">00:00</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="content leaderboard">
+          <div class="head"><h2>🏆 Leaderboard</h2>
+            <button class="btn no-print" id="addScoreRow">➕ Add Score Row</button>
+          </div>
+          <div class="section">
+            <div>
+              <label for="teamSize">👫 Team Size (0 = solo)</label>
+              <input id="teamSize" type="number" min="0" value="0" />
+            </div>
+            <div class="no-print" style="display:flex;align-items:flex-end;gap:8px">
+              <button class="btn" id="randomTeams">🎲 Randomize Teams</button>
+              <button class="btn" id="clearScores">🧹 Clear Scores</button>
+            </div>
+          </div>
+          <div class="space"></div>
+          <table id="scoreTable">
+            <thead><tr><th>Player/Team</th><th>R1</th><th>R2</th><th>R3</th><th>Total</th><th class="no-print">Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <footer>
+      <p>© <span id="year"></span> GenieSphere · Game Night Planner. Built to make life easier 💫</p>
+    </footer>
+  </main>
+
+  <script>
+    // Helpers
+    const $ = (s,ctx=document)=>ctx.querySelector(s);
+    const $$ = (s,ctx=document)=>Array.from(ctx.querySelectorAll(s));
+    const stateKey = 'gamenight_planner_v1';
+
+    const defaultGames = [
+      {name:'Codenames', min:4, max:8, duration:15},
+      {name:'Ticket to Ride', min:2, max:5, duration:45},
+      {name:'Just One', min:3, max:7, duration:20},
+      {name:'Skull', min:3, max:6, duration:10}
+    ];
+
+    const el = {
+      autosaveBadge: $('#autosaveBadge'),
+      players: $('#players'),
+      games: $('#games'),
+      potluck: $('#potluck'),
+      scoreBody: $('#scoreTable tbody'),
+      rounds: $('#rounds')
+    };
+
+    // ---- Players ----
+    function playerRow(p={name:'', status:'Invited', bringing:''}){
+      const row = document.createElement('div');
+      row.className = 'card';
+      row.style.padding = '12px';
+      row.innerHTML = `
+        <div class="section">
+          <div>
+            <label>🙋 Name</label>
+            <input value="${p.name}" placeholder="e.g., Alex" />
+          </div>
+          <div>
+            <label>📩 RSVP</label>
+            <select>
+              <option ${p.status==='Invited'?'selected':''}>Invited</option>
+              <option ${p.status==='Going'?'selected':''}>Going</option>
+              <option ${p.status==='Maybe'?'selected':''}>Maybe</option>
+              <option ${p.status==='Declined'?'selected':''}>Declined</option>
+            </select>
+          </div>
+          <div>
+            <label>🎁 Bringing</label>
+            <input value="${p.bringing}" placeholder="Chips, drinks…" />
+          </div>
+          <div class="no-print" style="display:flex;align-items:flex-end">
+            <button class="btn red remove">🗑️ Remove</button>
+          </div>
+        </div>`;
+      row.querySelector('.remove').onclick=()=>{row.remove(); save(); refreshScoresHeaders()};
+      return row;
+    }
+
+    $('#addPlayer').onclick=()=>{ el.players.appendChild(playerRow()); save(); refreshScoresHeaders() };
+
+    // ---- Games ----
+    function gameCard(g={name:'', min:2, max:4, duration:30, votes:0}){
+      const c = document.createElement('div');
+      c.className='game';
+      c.innerHTML = `
+        <h4>${g.name||'New Game'}</h4>
+        <small>👥 ${g.min}-${g.max} · ⏱️ ${g.duration}m</small>
+        <div class="section" style="margin-top:8px">
+          <div><label>Name</label><input value="${g.name}" class="g-name" placeholder="Game name"/></div>
+          <div><label>Min</label><input type="number" min="1" value="${g.min}" class="g-min"/></div>
+          <div><label>Max</label><input type="number" min="1" value="${g.max}" class="g-max"/></div>
+          <div><label>Duration</label><input type="number" min="1" value="${g.duration}" class="g-dur"/></div>
+        </div>
+        <div class="flex" style="margin-top:8px">
+          <button class="btn vote">🗳️ Vote</button>
+          <span class="chip votes">Votes: ${g.votes||0}</span>
+          <button class="btn red del no-print">🗑️</button>
+        </div>`;
+      c.querySelector('.vote').onclick=()=>{ g.votes=(g.votes||0)+1; c.querySelector('.votes').textContent='Votes: '+g.votes; save() };
+      c.querySelector('.del').onclick=()=>{ c.remove(); save() };
+      // keep fields synced
+      c.querySelectorAll('input').forEach(inp=> inp.addEventListener('input',()=>{ c.querySelector('h4').textContent = c.querySelector('.g-name').value || 'New Game'; save() }));
+      return c;
+    }
+
+    $('#addGame').onclick=()=>{ el.games.appendChild(gameCard({name:'',min:2,max:4,duration:30,votes:0})); save() };
+
+    // ---- Potluck ----
+    function potluckRow(item={what:'Snacks', who:''}){
+      const row = document.createElement('div');
+      row.className='card';
+      row.style.padding='12px';
+      row.innerHTML = `
+        <div class="section">
+          <div>
+            <label>🥗 Item</label>
+            <input value="${item.what}" placeholder="Snacks / Drinks / Plates"/>
+          </div>
+          <div>
+            <label>👤 Assigned To</label>
+            <input value="${item.who}" placeholder="e.g., Jamie"/>
+          </div>
+          <div class="no-print" style="display:flex;align-items:flex-end">
+            <button class="btn red remove">🗑️ Remove</button>
+          </div>
+        </div>`;
+      row.querySelector('.remove').onclick=()=>{row.remove(); save() };
+      return row;
+    }
+
+    $('#addItem').onclick=()=>{ el.potluck.appendChild(potluckRow()); save() };
+
+    // ---- Leaderboard ----
+    function refreshScoresHeaders(){
+      const r = parseInt($('#rounds').value||3,10);
+      const thead = $('#scoreTable thead tr');
+      // reset headers keeping first and last two cells
+      thead.innerHTML = '<th>Player/Team</th>'+Array.from({length:r},(_,i)=>`<th>R${i+1}</th>`).join('')+'<th>Total</th><th class="no-print">Actions</th>';
+      // update each row columns
+      $$('#scoreTable tbody tr').forEach(tr=>{
+        const nameCell = tr.querySelector('td');
+        const cells = Array.from(tr.querySelectorAll('td'));
+        // Remove old round cells except name/total/actions
+        while(cells.length>3){ tr.removeChild(tr.children[1]); cells.splice(1,1); }
+        for(let i=0;i<r;i++){
+          const td = document.createElement('td');
+          const input = document.createElement('input');
+          input.type='number'; input.style.width='90px';
+          input.addEventListener('input',()=>computeTotals(tr));
+          td.appendChild(input); tr.insertBefore(td, tr.children[tr.children.length-2]);
+        }
+      });
+    }
+
+    function addScoreRow(name=''){ 
+      const r = parseInt($('#rounds').value||3,10);
+      const tr = document.createElement('tr');
+      const nameTd = document.createElement('td');
+      const nameIn = document.createElement('input');
+      nameIn.placeholder='Name or Team'; nameIn.value=name; nameTd.appendChild(nameIn);
+      tr.appendChild(nameTd);
+      for(let i=0;i<r;i++){ const td=document.createElement('td'); const inp=document.createElement('input'); inp.type='number'; inp.style.width='90px'; inp.addEventListener('input',()=>computeTotals(tr)); td.appendChild(inp); tr.appendChild(td); }
+      const totalTd = document.createElement('td'); totalTd.textContent='0'; tr.appendChild(totalTd);
+      const act = document.createElement('td'); act.className='no-print';
+      const del = document.createElement('button'); del.className='btn red'; del.textContent='🗑️'; del.onclick=()=>{tr.remove(); save()};
+      act.appendChild(del); tr.appendChild(act);
+      el.scoreBody.appendChild(tr);
+    }
+    function computeTotals(tr){
+      const nums = Array.from(tr.querySelectorAll('td input[type="number"]')).map(i=>parseFloat(i.value||0));
+      const total = nums.reduce((a,b)=>a+b,0); tr.children[tr.children.length-2].textContent = String(total); save();
+    }
+
+    $('#addScoreRow').onclick=()=>{ addScoreRow(); };
+    $('#clearScores').onclick=()=>{ el.scoreBody.innerHTML=''; save() };
+
+    // Random teams based on Players marked Going
+    $('#randomTeams').onclick=()=>{
+      const teamSize = Math.max(0, parseInt($('#teamSize').value||0,10));
+      const going = $$('#players .card').map(c=>{
+        const [nameEl, statusSel] = [c.querySelector('input'), c.querySelector('select')];
+        return {name:nameEl.value.trim(), status:statusSel.value}
+      }).filter(p=>p.name && p.status==='Going').map(p=>p.name);
+      if(teamSize<=0 || going.length===0){ alert('Set Team Size > 0 and add players with RSVP = Going.'); return; }
+      // shuffle
+      for(let i=going.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [going[i],going[j]]=[going[j],going[i]]; }
+      // chunk
+      const teams=[]; for(let i=0;i<going.length;i+=teamSize){ teams.push(going.slice(i,i+teamSize)); }
+      el.scoreBody.innerHTML='';
+      teams.forEach((t,idx)=> addScoreRow('Team '+(idx+1)+': '+t.join(', ')) );
+      save();
+    }
+
+    // ---- Timer ----
+    let timerId=null, timeLeft=0;
+    function fmt(s){const m=Math.floor(s/60).toString().padStart(2,'0');const sec=(s%60).toString().padStart(2,'0');return `${m}:${sec}`}
+    $('#startTimer').onclick=()=>{
+      const mins = parseInt($('#roundLength').value||20,10);
+      timeLeft = mins*60; $('#timer').textContent = fmt(timeLeft);
+      clearInterval(timerId);
+      timerId=setInterval(()=>{
+        timeLeft--; $('#timer').textContent = fmt(Math.max(0,timeLeft));
+        if(timeLeft<=0){ clearInterval(timerId); new AudioContext(); alert('Round complete! Take a '+($('#breakLength').value||0)+' min break.'); }
+      },1000);
+    }
+    $('#stopTimer').onclick=()=>{ clearInterval(timerId); };
+
+    // ---- Save / Load ----
+    function snapshot(){
+      return {
+        event:{
+          title: $('#title').value, host: $('#host').value, date: $('#date').value,
+          time: $('#time').value, location: $('#location').value, notes: $('#notes').value,
+          roundLength: $('#roundLength').value, breakLength: $('#breakLength').value, rounds: $('#rounds').value, teamSize: $('#teamSize').value
+        },
+        players: $$('#players .card').map(c=>({ name:c.querySelector('input').value, status:c.querySelector('select').value, bringing:c.querySelectorAll('input')[1].value })),
+        games: $$('#games .game').map(g=>({ name:g.querySelector('.g-name').value, min:+g.querySelector('.g-min').value, max:+g.querySelector('.g-max').value, duration:+g.querySelector('.g-dur').value, votes: parseInt(g.querySelector('.votes').textContent.replace(/\D/g,'')) })),
+        potluck: $$('#potluck .card').map(c=>({ what:c.querySelectorAll('input')[0].value, who:c.querySelectorAll('input')[1].value })),
+        scores: $$('#scoreTable tbody tr').map(tr=>({
+          name: tr.querySelector('td input')?.value || '',
+          rounds: Array.from(tr.querySelectorAll('td input[type="number"]')).map(i=>i.value||'0')
+        }))
+      }
+    }
+
+    function hydrate(s){
+      if(!s) return;
+      // Event
+      $('#title').value=s.event.title||''; $('#host').value=s.event.host||''; $('#date').value=s.event.date||''; $('#time').value=s.event.time||''; $('#location').value=s.event.location||''; $('#notes').value=s.event.notes||'';
+      $('#roundLength').value=s.event.roundLength||20; $('#breakLength').value=s.event.breakLength||5; $('#rounds').value=s.event.rounds||3; $('#teamSize').value=s.event.teamSize||0;
+      // Players
+      el.players.innerHTML=''; (s.players||[]).forEach(p=> el.players.appendChild(playerRow(p)) );
+      // Games
+      el.games.innerHTML=''; (s.games||[]).forEach(g=> el.games.appendChild(gameCard(g)) );
+      // Potluck
+      el.potluck.innerHTML=''; (s.potluck||[]).forEach(i=> el.potluck.appendChild(potluckRow(i)) );
+      // Scores
+      el.scoreBody.innerHTML=''; refreshScoresHeaders();
+      (s.scores||[]).forEach(row=>{ addScoreRow(row.name); const tr=el.scoreBody.lastElementChild; const inputs=tr.querySelectorAll('td input[type="number"]'); row.rounds.forEach((val,i)=>{ if(inputs[i]) inputs[i].value=val; }); computeTotals(tr); });
+    }
+
+    function save(){
+      try{
+        localStorage.setItem(stateKey, JSON.stringify(snapshot()));
+        el.autosaveBadge.textContent = 'Auto‑saved \u2713';
+      }catch(e){ console.error(e); el.autosaveBadge.textContent = 'Save error'; }
+    }
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(stateKey);
+        if(!raw){ seed(); return; }
+        hydrate(JSON.parse(raw));
+      }catch(e){ console.error(e); seed(); }
+    }
+
+    function seed(){
+      // First‑time defaults
+      el.players.innerHTML=''; ['Alex','Jamie','Chris','Taylor'].forEach(n=> el.players.appendChild(playerRow({name:n,status:'Invited',bringing:''})) );
+      el.games.innerHTML=''; defaultGames.forEach(g=> el.games.appendChild(gameCard(g)) );
+      el.potluck.appendChild(potluckRow({what:'Drinks', who:'Alex'}));
+      el.potluck.appendChild(potluckRow({what:'Snacks', who:'Jamie'}));
+      refreshScoresHeaders();
+      addScoreRow('Player 1'); addScoreRow('Player 2');
+      save();
+    }
+
+    // Export / Import / Print
+    $('#saveBtn').onclick=save;
+    $('#loadBtn').onclick=()=>{ load(); alert('Loaded saved plan.'); };
+    $('#exportBtn').onclick=()=>{
+      const blob = new Blob([JSON.stringify(snapshot(), null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href=URL.createObjectURL(blob); a.download='gamenight-plan.json'; a.click(); URL.revokeObjectURL(a.href);
+    };
+    $('#printBtn').onclick=()=>window.print();
+
+    // Autosave on input changes
+    document.addEventListener('input', (e)=>{
+      if(e.target.closest('.no-auto')) return; // escape hatch
+      save();
+    });
+
+    // Init
+    $('#year').textContent = new Date().getFullYear();
+    load();
+    $('#rounds').addEventListener('input', refreshScoresHeaders);
+  </script>
+</body>
+</html>

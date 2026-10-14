@@ -1,0 +1,268 @@
+{
+  "name": "Explore Destination Proxy",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "explore-destination",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        128
+      ],
+      "id": "2b5e8c66-40d9-4c94-810c-ec39b91fa2e7",
+      "webhookId": "017fe804-d7c3-4927-aaf0-ce85d604f411"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -208,
+        128
+      ],
+      "id": "b7b359f8-f60a-480f-88ff-b0db716cb626"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        16,
+        0
+      ],
+      "id": "8626324f-24c5-4251-8275-8b9c79ed3c58"
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 Parse & validate incoming request \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nconst body = $json.body;\n\nif (!body || typeof body !== 'object') {\n  throw new Error('400: Request body is missing');\n}\n\nconst destination  = (body.destination  || '').trim();\nconst location     = (body.location     || '').trim();\nconst startDate    = (body.startDate    || '').trim();\nconst endDate      = (body.endDate      || '').trim();\nconst style        = (body.style        || '').trim();\nconst dailyBudget  = (body.dailyBudget  || '').trim();\nconst tripDays     = body.tripDays      || 1;\nconst interests    = Array.isArray(body.interests)\n  ? body.interests\n  : (body.interests ? [body.interests] : []);\n\nif (!destination) {\n  throw new Error('400: destination is required');\n}\n\n// Use the pre-built prompt from the frontend if provided (it already contains\n// the correct day-count itinerary instruction). Fall back to building one here\n// only if the prompt is missing (e.g. direct API calls or older clients).\nlet prompt = (body.prompt || '').trim();\n\nif (!prompt) {\n  // Fallback: build prompt server-side for backwards compatibility\n  const dateStr = startDate && endDate\n    ? `Visit dates: ${startDate} to ${endDate}.`\n    : startDate ? `Arriving: ${startDate}.` : '';\n\n  let dayPlanInstruction;\n  if (startDate && endDate) {\n    const ms   = new Date(endDate) - new Date(startDate);\n    const days = Math.max(1, Math.round(ms / 86400000) + 1);\n    if (days === 1) {\n      dayPlanInstruction = `A morning \u2192 afternoon \u2192 evening flow for ${startDate}.`;\n    } else if (days <= 7) {\n      dayPlanInstruction = `A full day-by-day itinerary covering all ${days} days (${startDate} to ${endDate}). For each day provide a morning \u2192 afternoon \u2192 evening plan. Label each day clearly (Day 1: [date], Day 2: [date], etc.).`;\n    } else {\n      dayPlanInstruction = `A day-by-day itinerary for the first 7 days (${startDate} onwards), then a brief overview of how to fill the remaining days. Label each day clearly.`;\n    }\n  } else {\n    dayPlanInstruction = `A morning \u2192 afternoon \u2192 evening flow for one perfect day${startDate ? ` on ${startDate}` : ''}. Include estimated times.`;\n  }\n\n  prompt = `You are a local travel expert and destination guide. Create a rich, practical exploration guide for a traveller visiting ${destination}.\n\n${ location     ? `Their current base/location: ${location}.`     : '' }\n${ dateStr }\n${ style        ? `Travel style: ${style}.`                        : '' }\n${ interests.length ? `Interests: ${interests.join(', ')}.`        : '' }\n${ dailyBudget  ? `Daily budget: ${dailyBudget}.`                  : '' }\n\nCreate a detailed exploration guide with these sections:\n\n**Top Attractions:**\nList 5-6 must-see places with a brief description and why it's worth visiting. Include a booking or info link where relevant using <a href=\"URL\">Name</a> format.\n\n**Hidden Gems:**\n3-4 lesser-known spots that most tourists miss. Make these feel like insider tips.\n\n**Food & Dining:**\n5-6 specific restaurant or food experience recommendations. Include cuisine type, price range, and what to order.\n\n**Day Plan (Sample Itinerary):**\n${dayPlanInstruction}\n\n**Getting Around:**\nBest local transport options, tips on taxis vs rideshare vs walking, and any app recommendations.\n\n**Local Tips:**\n4-5 practical tips a local would tell you \u2014 customs, etiquette, safety, best times to visit sites, what to avoid.\n\nFormat each section heading in bold. Use bullet points for lists. Include real, working hyperlinks where possible. Keep the tone friendly and enthusiastic.`;\n}\n\nreturn [{ json: { destination, tripDays, prompt } }];"
+      },
+      "name": "Parse & Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        240
+      ],
+      "id": "39d340ec-2de5-4d1c-beed-25d6764b8fbb"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "You are a local travel expert and destination guide. You give practical, enthusiastic, and specific recommendations. Always include real hyperlinks to booking pages, Google Maps, or official tourism sites where relevant. Format responses with bold section headings and bullet points for easy reading.",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 4000
+        }
+      },
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        192,
+        240
+      ],
+      "id": "01b7681b-9180-4636-8f28-0807e4664b06",
+      "credentials": {
+        "openAiApi": {
+          "id": "a3k4PaLdtRKABoos",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// \u2500\u2500 Validate OpenAI response & format output \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nconst raw = $node['OpenAI'].json?.message?.content;\n\nif (!raw || raw.trim() === '') {\n  const reason = $node['OpenAI'].json?.message?.finish_reason || 'unknown';\n  throw new Error(`OpenAI returned empty content. Finish reason: ${reason}`);\n}\n\n// Light HTML formatting for the frontend renderer\nconst html = raw\n  .trim()\n  .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')\n  .replace(/\\n\\n/g, '<br><br>')\n  .replace(/\\n- /g, '<br>\u2022 ')\n  .replace(/\\n/g, '<br>');\n\nreturn [{ json: {\n  result:      raw.trim(),\n  resultHtml:  html,\n  destination: $node['Parse & Build Prompt'].json.destination\n}}];"
+      },
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        240
+      ],
+      "id": "b7c7577f-dbf6-4124-a28e-0f2663220da0"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ result: $json.result, resultHtml: $json.resultHtml, destination: $json.destination }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        688,
+        240
+      ],
+      "id": "b8448459-b443-4aeb-a11f-b4948c3e3919"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\":\"Method not allowed\",\"status\":405}",
+        "options": {
+          "responseCode": 405,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond 405",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        0
+      ],
+      "id": "63647fe0-94b0-4531-aaae-234422893cd4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse & Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b58878eb-54b7-410a-8717-02b9ec0a7268",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "ANQu27g9HRN4yxdI",
+  "tags": []
+}

@@ -1,0 +1,732 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Travel Plan Submitted – VoyageGenie</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    .card {
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 700px;
+      width: 100%;
+    }
+    h1 {
+      color: #0077b6;
+    }
+    p {
+      font-size: 1.1rem;
+    }
+    .button {
+      margin-top: 30px;
+      padding: 12px 24px;
+      background-color: #0096c7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #0077b6;
+    }
+    /* Itinerary Section */
+    .itinerary-section {
+      max-width: 700px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .itinerary-section h2 {
+      color: #2c3e50;
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .itinerary-container {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #f7f7f7;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .itinerary-header {
+      background-color: #2a4a6e;
+      padding: 20px;
+      border-radius: 10px 10px 0 0;
+      text-align: center;
+    }
+    .itinerary-header h3 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 28px;
+    }
+    .itinerary-content {
+      padding: 25px;
+      background-color: #ffffff;
+      border-radius: 0 0 10px 10px;
+    }
+    .itinerary-content h4 {
+      color: #2a4a6e;
+      font-size: 22px;
+      margin: 0 0 15px 0;
+    }
+    .itinerary-content h5 {
+      color: #2a4a6e;
+      font-size: 18px;
+      margin: 0 0 15px 0;
+    }
+    .itinerary-content p {
+      color: #333333;
+      font-size: 16px;
+      margin: 10px 0;
+      line-height: 1.5;
+    }
+    .itinerary-content hr {
+      border: 0;
+      border-top: 1px solid #e0e0e0;
+      margin: 25px 0;
+    }
+    .itinerary-content .sub-heading {
+      font-size: 16px;
+      color: #2a4a6e;
+      display: block;
+      margin: 15px 0 5px 0;
+    }
+    .itinerary-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 10px 0;
+    }
+    .itinerary-content table td {
+      border: 1px solid #e0e0e0;
+      padding: 8px;
+    }
+    .itinerary-content table tr:last-child td,
+    .itinerary-content table tr:nth-last-child(2) td {
+      background-color: #f0f0f0;
+    }
+    .itinerary-content .itinerary-details {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333333;
+      white-space: pre-wrap;
+    }
+    .itinerary-content .footer-text {
+      color: #666666;
+      font-size: 12px;
+      text-align: center;
+      margin: 0;
+    }
+    .download-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-block;
+    }
+    .download-button:hover {
+      background-color: #218838;
+    }
+    /* Resources Section */
+    .resources-section {
+      max-width: 700px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .resources-section h2 {
+      color: #2c3e50;
+      font-size: 1.75rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .resources-section h3 {
+      color: #34495e;
+      font-size: 1.25rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+    .resources-section ul {
+      list-style-type: disc;
+      padding-left: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .resources-section li {
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+      color: #555;
+      line-height: 1.5;
+    }
+    .resources-section a {
+      color: #0096c7;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .resources-section a:hover {
+      text-decoration: underline;
+      color: #0077b6;
+    }
+    /* Error Message */
+    .error-message {
+      color: #e53e3e;
+      font-size: 1rem;
+      margin: 1rem 0;
+      text-align: center;
+    }
+    /* Navigation Bar */
+    .nav-icon {
+      height: 30px;
+      width: auto;
+      margin-right: 8px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+    }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+    }
+    .hamburger div {
+      width: 25px;
+      height: 3px;
+      background-color: white;
+      margin: 2px 0;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+    }
+    .nav-links.active {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 4rem;
+      right: 1rem;
+      background-color: #4a90e2;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      .hamburger {
+        display: flex;
+      }
+      .nav-links.active {
+        display: flex;
+      }
+      .nav-links li {
+        margin: 0.5rem 0;
+      }
+    }
+    /* Footer */
+    footer a {
+      color: #0096c7;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    footer a:hover {
+      text-decoration: underline;
+      color: #0077b6;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html#home" class="nav-brand" aria-label="Go to Voyage Genie Home Page">
+        <img src="nav-icon.png" alt="Voyage Genie Icon" class="nav-icon" onerror="this.style.display='none'">
+        <h1 class="text-2xl font-bold text-white">Voyage Genie</h1>
+      </a>
+      <div class="hamburger" onclick="toggleMenu()">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      <ul class="nav-links space-x-6">
+        <li><a href="index.html#home" class="hover:underline text-white" aria-label="Go to Home">Home</a></li>
+        <li><a href="index.html#features" class="hover:underline text-white" aria-label="Go to Features">Features</a></li>
+        <li><a href="index.html#contact" class="hover:underline text-white" aria-label="Go to Contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <div class="card">
+      <h1>✅ Your Travel Plan Request Was Submitted</h1>
+      <p>Your itinerary details are displayed below.</p>
+      <p>If you'd like to plan another trip, you can go back to the form.</p><br>
+      <a href="index.html" class="button" aria-label="Back to Trip Planning Form">🔙 Back to Trip Form</a>
+    </div>
+  </main>
+
+  <!-- Itinerary Section -->
+  <section class="itinerary-section" id="itinerary-section">
+    <h2>Your Itinerary</h2>
+    <div id="itinerary-details"></div>
+    <p id="itinerary-error" class="error-message" style="display: none;">Unable to load itinerary details. Please check your email for the itinerary or try again.</p>
+  </section>
+
+  <!-- Resources Section -->
+  <section class="resources-section">
+    <h2>Explore Your Destination</h2>
+    <p class="text-center text-gray-600 mb-6">While you wait for your itinerary, here are some ideas for your trip to <span id="destination-name">your destination</span>.</p>
+
+    <div id="eating-recommendations">
+      <h3>🍽️ Dining Recommendations</h3>
+      <ul id="eating-list"></ul>
+    </div>
+
+    <div id="shopping-recommendations">
+      <h3>🛍️ Shopping Spots</h3>
+      <ul id="shopping-list"></ul>
+    </div>
+
+    <div id="excursions-recommendations">
+      <h3>🌴 Excursions & Activities</h3>
+      <ul id="excursions-list"></ul>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-200 text-center py-8">
+    <p class="text-sm">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍</p>
+    <div class="mt-4 flex justify-center space-x-6">
+      <a href="#" aria-label="Visit our Facebook page">Facebook</a>
+      <a href="#" aria-label="Visit our Instagram page">Instagram</a>
+      <a href="index.html#contact" aria-label="Contact Us">Contact Us</a>
+    </div>
+    <div class="mt-4">
+      <a href="index.html#home" class="mx-2" aria-label="Go to Home">Home</a>
+      <a href="index.html#features" class="mx-2" aria-label="Go to Features">Features</a>
+      <a href="index.html#plan" class="mx-2" aria-label="Plan Another Trip">Plan Trip</a>
+    </div>
+  </footer>
+
+  <script>
+    // Toggle hamburger menu for mobile
+    function toggleMenu() {
+      const navLinks = document.querySelector('.nav-links');
+      navLinks.classList.toggle('active');
+    }
+
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    // Fetch itinerary details using itineraryId
+    async function fetchItinerary(itineraryId) {
+      try {
+        const response = await fetch(`/webhook/airbnb-travel-agent?itineraryId=${itineraryId}`);
+        if (!response.ok) throw new Error('Failed to fetch itinerary');
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        return data;
+      } catch (error) {
+        console.error('Error fetching itinerary:', error);
+        return null;
+      }
+    }
+
+    // Display itinerary details in the same format as the email
+    function displayItinerary(itinerary) {
+      const itineraryDetails = document.getElementById('itinerary-details');
+      const itineraryError = document.getElementById('itinerary-error');
+      if (!itinerary) {
+        itineraryError.style.display = 'block';
+        return;
+      }
+      itineraryError.style.display = 'none';
+
+      // Process the itinerary text to match email formatting (convert tabs to HTML table, etc.)
+      const itineraryLines = itinerary.itinerary ? itinerary.itinerary.split('\n') : ['No itinerary details available.'];
+      let formattedItinerary = '';
+      let inTable = false;
+      let tableRows = [];
+      for (let line of itineraryLines) {
+        line = line.trim();
+        if (!line) {
+          formattedItinerary += '<br>';
+          continue;
+        }
+        if (line.startsWith('Flights (2 people)') || line.includes('Flights (2 people)')) {
+          inTable = true;
+          tableRows = [];
+          formattedItinerary += `<strong class="sub-heading">${line}</strong><br>`;
+          continue;
+        }
+        if (inTable && (line.startsWith('Total') || line.startsWith('Remaining Budget'))) {
+          const [category, cost] = line.split('\t').map(item => item.trim());
+          tableRows.push(`<tr><td style="border: 1px solid #e0e0e0; padding: 8px; background-color: #f0f0f0;"><strong>${category}</strong></td><td style="border: 1px solid #e0e0e0; padding: 8px; background-color: #f0f0f0;"><strong>${cost}</strong></td></tr>`);
+          continue;
+        }
+        if (inTable && line.includes('\t')) {
+          const [category, cost] = line.split('\t').map(item => item.trim());
+          tableRows.push(`<tr><td style="border: 1px solid #e0e0e0; padding: 8px;">${category}</td><td style="border: 1px solid #e0e0e0; padding: 8px;">${cost}</td></tr>`);
+          continue;
+        }
+        if (inTable && !line.includes('\t')) {
+          inTable = false;
+          formattedItinerary += `<table>${tableRows.join('')}</table><br>`;
+        }
+        if (!inTable) {
+          if (line.endsWith(':')) {
+            formattedItinerary += `<strong class="sub-heading">${line}</strong>`;
+          } else {
+            formattedItinerary += line + '<br>';
+          }
+        }
+      }
+      if (inTable) {
+        formattedItinerary += `<table>${tableRows.join('')}</table><br>`;
+      }
+
+      const html = `
+        <div class="itinerary-container">
+          <div class="itinerary-header">
+            <h3>✈️ Your Travel Itinerary</h3>
+          </div>
+          <div class="itinerary-content">
+            <h4>Destination: ${itinerary.tripTitle ? itinerary.tripTitle.replace('🏠 Airbnb Plan: ', '') : 'N/A'}</h4>
+            <p><strong>Travel Dates:</strong> ${itinerary.dates || 'N/A'}</p>
+            <p><strong>Departing From:</strong> ${itinerary.departure || 'N/A'}</p>
+            <p><strong>Budget:</strong> ${itinerary.budget || 'N/A'} (for ${itinerary.groupSize || 'N/A'} travelers)</p>
+            <hr>
+            <h5>Itinerary Details</h5>
+            <div class="itinerary-details">${formattedItinerary}</div>
+            <hr>
+            <p class="footer-text">Generated by <strong>Voyage Genie</strong> 🌟</p>
+            <button class="download-button" onclick="downloadItinerary(this.parentElement)">Download Itinerary 📥</button>
+          </div>
+        </div>
+      `;
+      itineraryDetails.innerHTML = html;
+    }
+
+    // Function to download the itinerary as an HTML file
+    function downloadItinerary(itineraryContent) {
+      // Extract the HTML content of the itinerary
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Voyage Genie Itinerary</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .itinerary-container {
+      max-width: 600px;
+      width: 100%;
+      background-color: #f7f7f7;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .itinerary-header {
+      background-color: #2a4a6e;
+      padding: 20px;
+      border-radius: 10px 10px 0 0;
+      text-align: center;
+    }
+    .itinerary-header h3 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 28px;
+    }
+    .itinerary-content {
+      padding: 25px;
+      background-color: #ffffff;
+      border-radius: 0 0 10px 10px;
+    }
+    .itinerary-content h4 {
+      color: #2a4a6e;
+      font-size: 22px;
+      margin: 0 0 15px 0;
+    }
+    .itinerary-content h5 {
+      color: #2a4a6e;
+      font-size: 18px;
+      margin: 0 0 15px 0;
+    }
+    .itinerary-content p {
+      color: #333333;
+      font-size: 16px;
+      margin: 10px 0;
+      line-height: 1.5;
+    }
+    .itinerary-content hr {
+      border: 0;
+      border-top: 1px solid #e0e0e0;
+      margin: 25px 0;
+    }
+    .itinerary-content .sub-heading {
+      font-size: 16px;
+      color: #2a4a6e;
+      display: block;
+      margin: 15px 0 5px 0;
+    }
+    .itinerary-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 10px 0;
+    }
+    .itinerary-content table td {
+      border: 1px solid #e0e0e0;
+      padding: 8px;
+    }
+    .itinerary-content table tr:last-child td,
+    .itinerary-content table tr:nth-last-child(2) td {
+      background-color: #f0f0f0;
+    }
+    .itinerary-content .itinerary-details {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333333;
+      white-space: pre-wrap;
+    }
+    .itinerary-content .footer-text {
+      color: #666666;
+      font-size: 12px;
+      text-align: center;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  ${itineraryContent.outerHTML}
+</body>
+</html>
+      `;
+
+      // Create a Blob from the HTML content
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary link to trigger the download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'VoyageGenie_Itinerary.html';
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
+
+    // Destination-specific recommendations
+    const recommendations = {
+      Cancun: {
+        eating: [
+          { name: "La Habichuela", description: "A romantic spot with Mayan-inspired cuisine.", link: "https://www.tripadvisor.com/Restaurant_Review-g150807-d799741-Reviews-La_Habichuela-Cancun_Yucatan_Peninsula.html" },
+          { name: "Harry's Steakhouse", description: "Upscale dining with premium steaks and seafood.", link: "https://www.tripadvisor.com/Restaurant_Review-g150807-d1519325-Reviews-Harry_s-Cancun_Yucatan_Peninsula.html" },
+          { name: "Tacun Mexican Taqueria", description: "Authentic tacos with a casual vibe.", link: "https://www.yelp.com/biz/tacun-cancun" }
+        ],
+        shopping: [
+          { name: "La Isla Shopping Village", description: "Open-air mall with luxury brands and dining.", link: "https://www.tripadvisor.com/Attraction_Review-g150807-d153849-Reviews-La_Isla_Shopping_Village-Cancun_Yucatan_Peninsula.html" },
+          { name: "Mercado 28", description: "A vibrant market for souvenirs and local crafts.", link: "https://www.tripadvisor.com/Attraction_Review-g150807-d155686-Reviews-Mercado_28-Cancun_Yucatan_Peninsula.html" },
+          { name: "Plaza Las Americas", description: "A large mall with a mix of stores and entertainment.", link: "https://www.tripadvisor.com/Attraction_Review-g150807-d152624-Reviews-Plaza_Las_Americas-Cancun_Yucatan_Peninsula.html" }
+        ],
+        excursions: [
+          { name: "Chichen Itza Tour", description: "Explore the iconic Mayan ruins with a guided tour.", link: "https://www.viator.com/tours/Cancun/Chichen-Itza-Day-Trip-from-Cancun/d631-3206CUN_CHI" },
+          { name: "Isla Mujeres Catamaran", description: "Sail to Isla Mujeres and snorkel coral reefs.", link: "https://www.viator.com/tours/Cancun/Isla-Mujeres-Catamaran-Tour/d631-3206CUN_IM" },
+          { name: "Xcaret Park", description: "Swim in underground rivers and enjoy cultural shows.", link: "https://www.xcaret.com/en/" }
+        ]
+      },
+      Hawaii: {
+        eating: [
+          { name: "Duke's Waikiki", description: "Oceanfront dining with Hawaiian cuisine.", link: "https://www.tripadvisor.com/Restaurant_Review-g60982-d465934-Reviews-Duke_s_Waikiki-Honolulu_Oahu_Hawaii.html" },
+          { name: "Mama's Fish House", description: "Fresh seafood with a Polynesian flair on Maui.", link: "https://www.tripadvisor.com/Restaurant_Review-g60634-d479648-Reviews-Mama_s_Fish_House-Paia_Maui_Hawaii.html" },
+          { name: "Haleiwa Joe's", description: "Casual dining with North Shore vibes.", link: "https://www.tripadvisor.com/Restaurant_Review-g60652-d522649-Reviews-Haleiwa_Joe_s-Haleiwa_Oahu_Hawaii.html" }
+        ],
+        shopping: [
+          { name: "Ala Moana Center", description: "Hawaii's largest shopping mall with luxury brands.", link: "https://www.tripadvisor.com/Attraction_Review-g60982-d104857-Reviews-Ala_Moana_Center-Honolulu_Oahu_Hawaii.html" },
+          { name: "Waikiki Beach Walk", description: "Outdoor shopping with local boutiques.", link: "https://www.tripadvisor.com/Attraction_Review-g60982-d108625-Reviews-Waikiki_Beach_Walk-Honolulu_Oahu_Hawaii.html" },
+          { name: "International Market Place", description: "A mix of global and Hawaiian shops.", link: "https://www.tripadvisor.com/Attraction_Review-g60982-d117149-Reviews-International_Market_Place-Honolulu_Oahu_Hawaii.html" }
+        ],
+        excursions: [
+          { name: "Hanauma Bay Snorkeling", description: "Snorkel in a protected marine embayment.", link: "https://www.viator.com/tours/Oahu/Hanauma-Bay-Snorkeling/d672-6652HANAUMA" },
+          { name: "Road to Hana Tour", description: "Scenic drive with waterfalls and black sand beaches.", link: "https://www.viator.com/tours/Maui/Road-to-Hana-Adventure/d671-2360MAUI2" },
+          { name: "Pearl Harbor Tour", description: "Visit the historic USS Arizona Memorial.", link: "https://www.viator.com/tours/Oahu/Pearl-Harbor-Tour/d672-6652PEARL" }
+        ]
+      },
+      Tokyo: {
+        eating: [
+          { name: "Sushi Saito", description: "World-class sushi in an intimate setting.", link: "https://www.tripadvisor.com/Restaurant_Review-g1066443-d1679914-Reviews-Sushi_Saito-Minato_Tokyo_Prefecture_Kanto.html" },
+          { name: "Ichiran Shibuya", description: "Famous tonkotsu ramen in a unique booth setup.", link: "https://www.tripadvisor.com/Restaurant_Review-g1066441-d1679915-Reviews-Ichiran_Shibuya-Shibuya_Tokyo_Prefecture_Kanto.html" },
+          { name: "Afuri Ramen", description: "Light yuzu-flavored ramen in Harajuku.", link: "https://www.tripadvisor.com/Restaurant_Review-g1066441-d1679916-Reviews-Afuri_Harajuku-Shibuya_Tokyo_Prefecture_Kanto.html" }
+        ],
+        shopping: [
+          { name: "Ginza Six", description: "Luxury shopping mall with top brands.", link: "https://www.tripadvisor.com/Attraction_Review-g1066444-d12693839-Reviews-Ginza_Six-Chuo_Tokyo_Prefecture_Kanto.html" },
+          { name: "Shibuya 109", description: "Trendy fashion for young shoppers.", link: "https://www.tripadvisor.com/Attraction_Review-g1066441-d321150-Reviews-Shibuya_109-Shibuya_Tokyo_Prefecture_Kanto.html" },
+          { name: "Akihabara Electric Town", description: "Electronics, anime, and manga stores.", link: "https://www.tripadvisor.com/Attraction_Review-g1066445-d321151-Reviews-Akihabara-Chiyoda_Tokyo_Prefecture_Kanto.html" }
+        ],
+        excursions: [
+          { name: "Tokyo Disneyland", description: "A magical theme park experience.", link: "https://www.tokyodisneyresort.jp/en/tdl/" },
+          { name: "Asakusa and Senso-ji Temple", description: "Explore Tokyo's historic district.", link: "https://www.viator.com/tours/Tokyo/Asakusa-and-Senso-ji-Temple-Tour/d334-2142TYO" },
+          { name: "Mount Fuji Day Trip", description: "Visit Japan's iconic mountain and nearby lakes.", link: "https://www.viator.com/tours/Tokyo/Mount-Fuji-Day-Trip/d334-2142FUJI" }
+        ]
+      },
+      default: {
+        eating: [
+          { name: "Local Dining", description: "Search for top-rated restaurants on TripAdvisor.", link: "https://www.tripadvisor.com/Restaurants" },
+          { name: "Hidden Gems", description: "Find local favorites on Yelp.", link: "https://www.yelp.com" }
+        ],
+        shopping: [
+          { name: "Local Markets", description: "Explore markets and malls on TripAdvisor.", link: "https://www.tripadvisor.com/Attractions" },
+          { name: "Specialty Stores", description: "Find unique shops on Google Maps.", link: "https://maps.google.com" }
+        ],
+        excursions: [
+          { name: "Top Activities", description: "Discover popular activities on Viator.", link: "https://www.viator.com" },
+          { name: "Cultural Experiences", description: "Find local tours on GetYourGuide.", link: "https://www.getyourguide.com" }
+        ]
+      }
+    };
+
+    // Populate recommendations and itinerary on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Fetch itinerary details
+      const itineraryId = getUrlParameter('itineraryId');
+      let itineraryData = null;
+      if (itineraryId) {
+        itineraryData = await fetchItinerary(itineraryId);
+        displayItinerary(itineraryData);
+      }
+
+      // Populate recommendations
+      const destination = getUrlParameter('destination') || 'default';
+      const destinationName = document.getElementById('destination-name');
+      const eatingList = document.getElementById('eating-list');
+      const shoppingList = document.getElementById('shopping-list');
+      const excursionsList = document.getElementById('excursions-list');
+
+      // Normalize destination for lookup
+      const normalizedDestination = destination.charAt(0).toUpperCase() + destination.slice(1).toLowerCase();
+      const recs = recommendations[normalizedDestination] || recommendations.default;
+
+      // Update destination name
+      destinationName.textContent = normalizedDestination === 'default' ? 'your destination' : normalizedDestination;
+
+      // Populate eating recommendations
+      recs.eating.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${item.link}" target="_blank" rel="noopener noreferrer" aria-label="Learn more about ${item.name}">${item.name}</a> – ${item.description}`;
+        eatingList.appendChild(li);
+      });
+
+      // Populate shopping recommendations
+      recs.shopping.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${item.link}" target="_blank" rel="noopener noreferrer" aria-label="Learn more about ${item.name}">${item.name}</a> – ${item.description}`;
+        shoppingList.appendChild(li);
+      });
+
+      // Populate excursions recommendations
+      recs.excursions.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${item.link}" target="_blank" rel="noopener noreferrer" aria-label="Learn more about ${item.name}">${item.name}</a> – ${item.description}`;
+        excursionsList.appendChild(li);
+      });
+    });
+  </script>
+</body>
+</html>

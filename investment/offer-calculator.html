@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>✍️ Offer Calculator — MAO by Rule, Profit & Strategy</title>
+  <meta name="description" content="Compute Maximum Allowable Offer from ARV, repairs, fees, profit targets, and strategy. See 70% rule, net‑profit, BRRRR targets, and wholesaler margins side‑by‑side.">
+  <style>
+    :root{--bg:#f7f9fb;--ink:#0f172a;--muted:#64748b;--card:#fff;--accent:#0f3b82;--brand:#10b981;--info:#3b82f6;--warn:#f59e0b;--danger:#ef4444;--radius:14px;--shadow:0 10px 24px rgba(0,0,0,.06)}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;background:linear-gradient(120deg,#ffffff,#eef6ff);border-bottom:1px solid #e5e7eb;z-index:10}
+    .wrap{max-width:1180px;margin:0 auto;padding:14px 16px}
+    h1{margin:0;color:var(--accent)} .sub{color:var(--muted);margin-top:4px}
+
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;margin:16px auto}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .card h2{margin:0 0 8px;color:var(--accent)}
+    .pill{display:inline-block;background:#eef2ff;color:#273391;border-radius:999px;padding:4px 10px;font-size:12px}
+
+    label{display:block;font-size:13px;color:#334155;margin:10px 0 6px}
+    input,select{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px}
+    .row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    @media(max-width:640px){.row{grid-template-columns:1fr}}
+
+    .bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+    .btn{border:0;border-radius:999px;padding:10px 14px;background:#3b82f6;color:#fff;display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none}
+    .btn.save{background:var(--brand)} .btn.ghost{background:#e5e7eb;color:#111}
+
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    th{text-align:left;font-size:12px;color:var(--muted)}
+    td{background:#fff;padding:10px;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb}
+    td:first-child{border-left:1px solid #e5e7eb;border-top-left-radius:10px;border-bottom-left-radius:10px}
+    td:last-child{border-right:1px solid #e5e7eb;border-top-right-radius:10px;border-bottom-right-radius:10px;text-align:right}
+
+    .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:6px}
+    .kpi .box{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px}
+    .kpi .label{font-size:12px;color:#6b7280}
+    .kpi .value{font-weight:900;font-size:20px}
+
+    details{border:1px solid #e5e7eb;border-radius:12px;padding:8px 10px;background:#fff}
+    details>summary{cursor:pointer;font-weight:700;color:#0f172a}
+
+    .small{font-size:12px;color:#6b7280}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>✍️ Offer Calculator</h1>
+      <div class="sub">Get a defensible **Maximum Allowable Offer (MAO)** using multiple methods: 70% rule, net‑profit target, BRRRR refi‑target, and wholesaler fee. Export, print, and share.</div>
+    </div>
+  </header>
+
+  <main class="wrap grid">
+    <!-- LEFT: Inputs -->
+    <section class="card">
+      <h2>Inputs</h2>
+      <div class="row">
+        <div>
+          <label>After‑Repair Value (ARV) $</label><input id="arv" type="number" step="0.01" value="420000">
+          <label>Repairs / Renovation $</label><input id="repairs" type="number" step="0.01" value="65000">
+          <label>Holding Months</label><input id="holdMonths" type="number" step="1" value="6">
+          <label>Holding Cost $/mo <span class="pill">interest, utilities, etc.</span></label><input id="holdPerMo" type="number" step="0.01" value="900">
+        </div>
+        <div>
+          <label>Selling Costs (% of ARV) <span class="pill">agent, seller credits</span></label><input id="sellPct" type="number" step="0.01" value="8">
+          <label>Buy‑Side Closing Costs $</label><input id="buyClose" type="number" step="0.01" value="6500">
+          <label>Desired Profit $ (net)</label><input id="profit$" type="number" step="0.01" value="30000">
+          <label>Wholesale / Assignment Fee $ (if any)</label><input id="whFee" type="number" step="0.01" value="0">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>70% Rule Multiplier (%)</label><input id="rulePct" type="number" step="0.01" value="70">
+          <label>Alt Rule Multiplier (%) <span class="pill">optional</span></label><input id="altRulePct" type="number" step="0.01" value="75">
+        </div>
+        <div>
+          <label>BRRRR Target DSCR</label><input id="bdscr" type="number" step="0.01" value="1.20">
+          <label>Estimated Rent $/mo</label><input id="rent" type="number" step="0.01" value="2900">
+          <label>P&I+Taxes+Ins+PMI $/mo (post‑refi)</label><input id="pitia" type="number" step="0.01" value="2200">
+        </div>
+      </div>
+
+      <div class="bar">
+        <button class="btn" id="calc">✅ Calculate</button>
+        <button class="btn save" id="save">⭐ Save</button>
+        <button class="btn ghost" id="reset">↺ Reset</button>
+        <button class="btn" id="share">🔗 Share Link</button>
+      </div>
+      <details style="margin-top:10px"><summary>Saved</summary>
+        <div id="saves" class="small"></div>
+      </details>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0" />
+      <h2>Results</h2>
+      <div class="kpi">
+        <div class="box"><div class="label">70% Rule MAO</div><div class="value" id="k70">—</div></div>
+        <div class="box"><div class="label">Alt‑Rule MAO</div><div class="value" id="kAlt">—</div></div>
+        <div class="box"><div class="label">Net‑Profit MAO</div><div class="value" id="kProfit">—</div></div>
+        <div class="box"><div class="label">BRRRR MAO (by DSCR)</div><div class="value" id="kBrrr">—</div></div>
+      </div>
+      <h3 style="margin:14px 0 6px">Detail</h3>
+      <table><tbody id="rows"></tbody></table>
+      <div class="bar" style="margin-top:10px">
+        <button class="btn" id="exportCsv">💾 Export CSV</button>
+        <button class="btn" onclick="window.print()">🖨️ Print / PDF</button>
+      </div>
+      <p class="small">Net‑Profit MAO backs out repairs, holding, selling & closing from ARV, then subtracts your profit and any wholesale fee.</p>
+    </section>
+  </main>
+
+  <section class="wrap card" style="margin-bottom:20px">
+    <h2>📈 Sensitivity</h2>
+    <div class="row">
+      <div>
+        <label>ARV Step ($)</label><input id="arvStep" type="number" value="5000">
+        <label>Repairs Step ($)</label><input id="repStep" type="number" value="5000">
+        <label>Steps (±)</label><input id="steps" type="number" value="3">
+        <div class="bar"><button class="btn" id="buildSens">🔎 Build Tables</button></div>
+      </div>
+      <div>
+        <details>
+          <summary>ARV Sensitivity (Net‑Profit MAO)</summary>
+          <table><thead><tr><th>ARV</th><th>MAO</th></tr></thead><tbody id="sensArv"></tbody></table>
+        </details>
+        <details style="margin-top:8px">
+          <summary>Repairs Sensitivity (Net‑Profit MAO)</summary>
+          <table><thead><tr><th>Repairs</th><th>MAO</th></tr></thead><tbody id="sensRep"></tbody></table>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const $ = id=>document.getElementById(id);
+    const KEY='gs_offer_calc_v1';
+
+    const money = n=> isFinite(n)? '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0}) : '—';
+
+    function read(){
+      return {
+        arv:+$('arv').value||0,
+        repairs:+$('repairs').value||0,
+        holdMonths:+$('holdMonths').value||0,
+        holdPerMo:+$('holdPerMo').value||0,
+        sellPct:(+$('sellPct').value||0)/100,
+        buyClose:+$('buyClose').value||0,
+        profit:+$('profit$').value||0,
+        whFee:+$('whFee').value||0,
+        rulePct:(+$('rulePct').value||0)/100,
+        altRulePct:(+$('altRulePct').value||0)/100,
+        bdscr:+$('bdscr').value||0,
+        rent:+$('rent').value||0,
+        pitia:+$('pitia').value||0,
+      };
+    }
+
+    function compute(o){
+      const sellCost = o.arv*o.sellPct;
+      const holding = o.holdMonths * o.holdPerMo;
+
+      // 70% rule style
+      const mao70 = Math.max(0, o.arv*o.rulePct - o.repairs - o.buyClose - o.whFee);
+      const maoAlt = Math.max(0, o.arv*o.altRulePct - o.repairs - o.buyClose - o.whFee);
+
+      // Net profit approach: Offer = ARV - repairs - sellCost - holding - buyClose - desiredProfit - whFee
+      const maoProfit = Math.max(0, o.arv - o.repairs - sellCost - holding - o.buyClose - o.profit - o.whFee);
+
+      // BRRRR: ensure DSCR >= target using provided rent & PITI(A) post‑refi
+      // If rent/DSCR limit the loan that can be supported, we back into max all‑in cost before refi → offer
+      // Conservative simplification: NOI_month = rent; required debt svc = PITIA; DSCR = NOI / DebtSvc
+      // If rent / PITIA >= bdscr, ok; otherwise MAO is reduced until PITIA <= rent/target → here represented as a multiplier on arv
+      let maoBrrr = maoProfit; // base from profit logic
+      if(o.pitia>0 && o.rent>0 && o.bdscr>0){
+        const maxDebtSvc = o.rent / o.bdscr;
+        if(o.pitia > maxDebtSvc){
+          const ratio = maxDebtSvc / o.pitia; // <1 means reduce
+          maoBrrr = Math.max(0, maoProfit * ratio);
+        }
+      }
+
+      return { sellCost, holding, mao70, maoAlt, maoProfit, maoBrrr };
+    }
+
+    function render(out,o){
+      $('k70').textContent = money(out.mao70);
+      $('kAlt').textContent = money(out.maoAlt);
+      $('kProfit').textContent = money(out.maoProfit);
+      $('kBrrr').textContent = money(out.maoBrrr);
+
+      const rows = [
+        ['ARV', money(o.arv)],
+        ['Repairs', money(o.repairs)],
+        ['Holding ('+o.holdMonths+' mo)', money(out.holding)],
+        ['Selling Costs ('+(o.sellPct*100).toFixed(1)+'%)', money(out.sellCost)],
+        ['Buy‑Side Closing', money(o.buyClose)],
+        ['Desired Profit', money(o.profit)],
+        ['Wholesale/Assignment Fee', money(o.whFee)],
+      ];
+      $('rows').innerHTML = rows.map(([k,v])=>`<tr><td>${k}</td><td style="text-align:right;font-weight:800">${v}</td></tr>`).join('');
+    }
+
+    function calc(){ const o=read(); const out=compute(o); render(out,o); window._last={o,out}; }
+
+    function buildSens(){
+      const o=read(); const steps=+$('steps').value||0; const arvStep=+$('arvStep').value||0; const repStep=+$('repStep').value||0;
+      const tbA=$('sensArv'); const tbR=$('sensRep');
+      const rowsA=[]; for(let i=-steps;i<=steps;i++){ const x={...o, arv: o.arv + i*arvStep}; const m=compute(x); rowsA.push(`<tr><td>${money(x.arv)}</td><td>${money(m.maoProfit)}</td></tr>`);} tbA.innerHTML=rowsA.join('');
+      const rowsR=[]; for(let i=-steps;i<=steps;i++){ const x={...o, repairs: Math.max(0, o.repairs + i*repStep)}; const m=compute(x); rowsR.push(`<tr><td>${money(x.repairs)}</td><td>${money(m.maoProfit)}</td></tr>`);} tbR.innerHTML=rowsR.join('');
+    }
+
+    function toCSV(){ const o=read(); const m=compute(o); const rows=[
+      ['Metric','Value'], ['ARV',o.arv], ['Repairs',o.repairs], ['Holding',m.holding], ['SellingCosts',m.sellCost], ['BuyClose',o.buyClose], ['Profit',o.profit], ['WholesaleFee',o.whFee], ['MAO_70',m.mao70], ['MAO_Alt',m.maoAlt], ['MAO_Profit',m.maoProfit], ['MAO_BRRRR',m.maoBrrr]
+    ]; const csv=rows.map(r=>r.join(',')).join('\n'); const a=document.createElement('a'); a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(csv); a.download='offer_calculator.csv'; a.click(); }
+
+    function toQuery(){ const o=read(); const q=new URLSearchParams(); Object.entries(o).forEach(([k,v])=>q.set(k,v)); return q.toString(); }
+    function fromQuery(){ const q=new URLSearchParams(location.search); if(!q.size) return; q.forEach((v,k)=>{ const el=$(k); if(!el) return; el.value=v; }); }
+
+    function save(){ const name=prompt('Save name:','My Offer'); if(!name) return; const list=JSON.parse(localStorage.getItem(KEY)||'[]'); list.unshift({name, ts:Date.now(), params:read()}); localStorage.setItem(KEY, JSON.stringify(list.slice(0,50))); renderSaves(); }
+    function renderSaves(){ const list=JSON.parse(localStorage.getItem(KEY)||'[]'); $('saves').innerHTML=list.map((s,i)=>`<div><button class="btn ghost" data-i="${i}">Load</button> ${s.name}</div>`).join(''); document.querySelectorAll('button[data-i]').forEach(b=>b.addEventListener('click',()=>{ const i=+b.dataset.i; const s=JSON.parse(localStorage.getItem(KEY)||'[]')[i]; if(!s) return; Object.entries(s.params).forEach(([k,v])=>{ const el=$(k); if(el) el.value=v; }); calc(); })); }
+
+    $('calc').onclick=calc; $('buildSens').onclick=buildSens; $('exportCsv').onclick=toCSV; $('save').onclick=save; $('reset').onclick=()=>{ document.querySelectorAll('input').forEach(i=> i.value=i.defaultValue); calc(); };
+    $('share').onclick=()=>{ const url=location.origin+location.pathname+'?'+toQuery(); navigator.clipboard.writeText(url).then(()=>alert('Copied link!')).catch(()=>prompt('Copy link:',url)); };
+
+    fromQuery(); renderSaves(); calc();
+  </script>
+</body>
+</html>

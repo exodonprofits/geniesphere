@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bill Manager • Household • GenieSphere</title>
+<meta name="description" content="Track recurring bills, upcoming due dates, and payment tasks — part of GenieSphere Household."/>
+<meta name="gs-config" content="/shared/config.json"/>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   BILL MANAGER — Household teal identity
+   Tokens aligned with household.html
+═══════════════════════════════════════════════════════════ */
+:root{
+  --area-accent:#22D3EE; --area-dim:rgba(34,211,238,.10); --area-dark:#0E7490;
+  --bg:#F5F7FA; --panel:#FFFFFF; --panel-soft:#F0F4F8;
+  --text:#111827; --muted:#6B7280; --muted-2:#9CA3AF;
+  --line:#E5EAF0; --line-2:#D1D9E0;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.08);
+  --radius:16px; --radius-sm:10px; --max:1440px;
+  --teal:#22D3EE; --teal-dark:#0891B2; --teal-deep:#0E7490;
+  --teal-dim:rgba(34,211,238,.10); --teal-bd:rgba(34,211,238,.28);
+  --ok-bg:#F0FDFA; --ok-bd:#99F6E4; --ok-txt:#0F766E;
+  --warn-bg:#FFFBEB; --warn-bd:#FCD34D; --warn-txt:#92400E;
+  --err-bg:#FEF2F2; --err-bd:#FECACA; --err-txt:#B91C1C;
+  --info-bg:#F0F9FF; --info-bd:#BAE6FD; --info-txt:#0369A1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ── TOPBAR — identical to household.html ── */
+.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(14px) saturate(180%);border-bottom:1px solid var(--line);box-shadow:0 1px 0 var(--line),0 2px 10px rgba(0,0,0,.04)}
+.topbar-inner{max-width:var(--max);margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+.brand-mark{width:36px;height:36px;border-radius:50%;flex:0 0 auto;background:radial-gradient(circle at 30% 30%,#7ef1c7 0%,#34d399 45%,#0f9f68 100%);box-shadow:0 0 0 3px rgba(52,211,153,.18),0 4px 12px rgba(52,211,153,.14)}
+.brand-name{font-size:18px;font-weight:800;letter-spacing:-.03em}
+.nav{display:flex;align-items:center;gap:2px;flex-wrap:wrap;margin-left:12px}
+.nav-link{color:var(--muted);font-weight:500;font-size:13px;padding:6px 10px;border-radius:8px;border-bottom:2px solid transparent;transition:background .14s,color .14s;text-decoration:none}
+.nav-link:hover{background:var(--area-dim);color:var(--area-dark)}
+.nav-link.active{background:var(--area-dim);color:var(--area-dark);font-weight:700;border-bottom-color:var(--area-accent)}
+.userbox{display:flex;align-items:center;gap:10px;margin-left:auto}
+.search{width:220px;max-width:24vw;border:1px solid var(--line-2);border-radius:999px;background:var(--panel-soft);padding:8px 14px;color:var(--text);outline:none;font-size:13px;font-family:inherit;transition:border-color .14s}
+.search:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim)}
+.search::placeholder{color:var(--muted-2)}
+.user-menu{position:relative;display:flex;align-items:center}
+.user-menu-toggle{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 1px 2px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.06);transition:border-color .14s;white-space:nowrap}
+.user-menu-toggle:hover{border-color:var(--area-accent)}
+.user-menu-toggle .avatar{width:26px;height:26px;border-radius:50%;background:var(--teal-dim);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--teal-dark);flex-shrink:0}
+.user-menu-dropdown{position:absolute;right:0;top:calc(100% + 8px);min-width:240px;background:var(--panel);border-radius:var(--radius);border:1px solid var(--line);box-shadow:0 4px 6px rgba(0,0,0,.04),0 20px 48px rgba(0,0,0,.13);padding:6px 0;display:none;z-index:2005}
+.user-menu.open .user-menu-dropdown{display:block}
+.user-menu-dropdown a,.user-menu-dropdown button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 14px;background:none;border:none;color:var(--text);font-size:13px;cursor:pointer;transition:background .12s;font-family:inherit;text-decoration:none}
+.user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:var(--panel-soft)}
+.user-menu-divider{height:1px;margin:4px 8px;background:var(--line)}
+.dropdown-label{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted-2);padding:8px 14px 3px;font-weight:700}
+.dropdown-nav{display:flex;align-items:center;gap:9px}
+.mobile-only{display:none}
+.auth-only{display:none}
+@media(max-width:820px){.nav{display:none}.mobile-only{display:block}}
+@media(max-width:640px){.search{display:none}.topbar-inner{padding:0 14px}}
+
+/* ── BREADCRUMB ── */
+.breadcrumb{max-width:var(--max);margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.breadcrumb a{color:var(--teal-dark);font-weight:600;text-decoration:none}
+.breadcrumb a:hover{text-decoration:underline}
+.breadcrumb-sep{color:var(--muted-2)}
+
+/* ── PAGE ── */
+.page{max-width:var(--max);margin:0 auto;padding:20px 24px 56px}
+@media(max-width:640px){.page{padding:16px 14px 40px}}
+
+/* ── PAGE HEADER ── */
+.page-header{margin-bottom:22px}
+.page-eyebrow{display:inline-flex;align-items:center;gap:7px;margin-bottom:10px;border:1px solid var(--teal-bd);background:var(--teal-dim);color:var(--teal-dark);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.page-title{margin:0 0 6px;font-size:clamp(24px,3.5vw,36px);font-weight:800;letter-spacing:-.04em;color:var(--text)}
+.page-sub{margin:0;color:var(--muted);font-size:15px;line-height:1.6;max-width:680px}
+.page-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+
+/* ── STATUS PILLS ── */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-soft);font-size:12px;font-weight:700;color:var(--muted)}
+.pill.good{border-color:var(--ok-bd);background:var(--ok-bg);color:var(--ok-txt)}
+.pill.warn{border-color:var(--warn-bd);background:var(--warn-bg);color:var(--warn-txt)}
+.pill.bad{border-color:var(--err-bd);background:var(--err-bg);color:var(--err-txt)}
+
+/* ── QUICK ADD BANNER ── */
+.quick-add-banner{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:20px}
+.quick-add-inner{display:flex;gap:10px;align-items:center}
+.quick-add-inner input{flex:1;padding:10px 14px;border-radius:999px;border:1.5px solid var(--line-2);background:var(--panel-soft);color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .14s}
+.quick-add-inner input:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim)}
+.quick-add-inner input::placeholder{color:var(--muted-2)}
+.quick-add-hint{font-size:12px;color:var(--muted);margin-top:8px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;border-radius:999px;padding:9px 18px;font-weight:700;font-size:13px;transition:filter .15s,transform .12s;font-family:inherit;white-space:nowrap}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.5;cursor:not-allowed;filter:none;transform:none}
+.btn-primary{background:var(--teal);color:#012e38;box-shadow:0 3px 10px rgba(34,211,238,.25)}
+.btn-ghost{background:var(--panel-soft);color:var(--text);border:1.5px solid var(--line-2)}
+.btn-ghost:hover{border-color:var(--teal-bd);background:var(--teal-dim);color:var(--teal-deep)}
+.btn-sm{padding:7px 13px;font-size:12px}
+.btn-danger{background:var(--err-bg);color:var(--err-txt);border:1px solid var(--err-bd)}
+.btn-danger:hover{filter:brightness(.95)}
+
+/* ── TOOL GRID ── */
+.tool-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-bottom:22px}
+@media(max-width:1000px){.tool-grid{grid-template-columns:1fr}}
+
+/* ── CARDS ── */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card-head{padding:16px 20px 12px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,rgba(34,211,238,.05),rgba(255,255,255,0))}
+.card-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-title{margin:0 0 3px;font-size:16px;font-weight:800;letter-spacing:-.02em}
+.card-sub{margin:0;font-size:13px;color:var(--muted)}
+.card-body{padding:16px 20px}
+
+/* ── FORM ── */
+.form{display:flex;flex-direction:column;gap:14px}
+.form-row{display:flex;flex-direction:column;gap:5px}
+.form-row label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:10px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--line-2);background:var(--panel-soft);color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .14s,box-shadow .14s}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim);background:var(--panel)}
+.form-row input::placeholder,.form-row textarea::placeholder{color:var(--muted-2)}
+.form-row select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239CA3AF' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
+.form-split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.form-split{grid-template-columns:1fr}}
+.form-actions{display:flex;gap:8px;flex-wrap:wrap;padding-top:4px}
+.form-foot{font-size:12px;color:var(--muted-2);padding-top:2px}
+.prefill-hint{display:none;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;width:max-content}
+
+/* ── STATS GRID ── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+@media(max-width:560px){.stats-grid{grid-template-columns:1fr 1fr}}
+.stat-card{border:1px solid var(--line);border-radius:14px;background:var(--panel-soft);padding:13px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.stat-value{font-size:26px;font-weight:800;letter-spacing:-.03em;margin-top:5px;color:var(--teal-dark)}
+.stat-help{font-size:11px;color:var(--muted-2);margin-top:3px}
+
+/* ── BILL LIST ── */
+.next-due-banner{padding:10px 20px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px}
+.bill-list{display:flex;flex-direction:column;gap:0;padding:10px 12px}
+.bill-item{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:13px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;transition:box-shadow .15s}
+.bill-item:hover{box-shadow:var(--shadow-md)}
+.bill-item:last-child{margin-bottom:0}
+.bill-left h4{margin:0 0 5px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bill-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.bill-meta span{display:flex;align-items:center;gap:3px}
+.bill-right{display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex-shrink:0}
+.source-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--teal-dim);border:1px solid var(--teal-bd);color:var(--teal-dark);text-transform:uppercase;letter-spacing:.05em}
+.source-badge.local{background:var(--panel-soft);border-color:var(--line-2);color:var(--muted)}
+.empty-state{padding:28px 20px;text-align:center;color:var(--muted);font-size:13px}
+.empty-state-icon{font-size:32px;margin-bottom:8px}
+
+/* ── HISTORY TABLE ── */
+.section-block{margin-bottom:18px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.section-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;background:none;border:none;border-bottom:1px solid var(--line);cursor:pointer;text-align:left;font-family:inherit;color:var(--text)}
+.section-toggle[aria-expanded="false"] + .section-content{display:none}
+.section-toggle-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.section-toggle-meta{font-size:13px;color:var(--muted)}
+.section-toggle-chevron{color:var(--muted-2);font-size:12px;transition:transform .2s}
+.section-toggle[aria-expanded="true"] .section-toggle-chevron{transform:rotate(180deg)}
+.section-content{padding:0}
+.table-wrap{overflow:auto}
+.table{width:100%;border-collapse:collapse;font-size:13px}
+.table th{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;background:var(--panel-soft)}
+.table td{padding:10px 14px;border-bottom:1px solid var(--line);color:var(--text)}
+.table tr:last-child td{border-bottom:none}
+.table tr:hover td{background:var(--panel-soft)}
+
+/* ── TIPS ── */
+.tips-grid{display:grid;gap:10px;padding:16px 20px}
+.tip-item{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-radius:10px;background:var(--panel-soft);border:1px solid var(--line)}
+.tip-icon{font-size:17px;flex-shrink:0;margin-top:1px}
+.tip-text strong{display:block;font-size:13px;font-weight:700;margin-bottom:2px}
+.tip-text span{font-size:12px;color:var(--muted)}
+
+/* ── DATA SOURCE BANNER ── */
+.data-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px}
+.data-banner.live{background:var(--ok-bg);border:1px solid var(--ok-bd);color:var(--ok-txt)}
+.data-banner.local{background:var(--info-bg);border:1px solid var(--info-bd);color:var(--info-txt)}
+.data-banner.loading{background:var(--panel-soft);border:1px solid var(--line);color:var(--muted)}
+
+/* ── FOOTER ── */
+.site-footer{margin-top:40px;padding:26px 0 34px;border-top:1px solid var(--line);background:var(--panel)}
+.site-footer-inner{max-width:var(--max);margin:0 auto;padding:0 24px}
+.footer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+@media(max-width:860px){.footer-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.site-footer{display:none!important}}
+.footer-col h4{margin:0 0 10px;color:var(--text);font-size:13px;font-weight:700}
+.footer-col a{display:block;color:var(--muted);text-decoration:none;margin:5px 0;font-size:13px;transition:color .13s}
+.footer-col a:hover{color:var(--teal-dark)}
+.footer-bottom{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted-2)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--panel);padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:9000;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR — standard GenieSphere -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/index.html">
+      <div class="brand-mark"></div>
+      <div class="brand-name">GenieSphere</div>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-link" href="/dashboard/overview.html">🧭 Overview</a>
+      <a class="nav-link active" href="/dashboard/household.html">🏡 Household</a>
+      <a class="nav-link" href="/dashboard/business.html">🏢 Business</a>
+      <a class="nav-link" href="/dashboard/investment.html">📈 Investment</a>
+      <a class="nav-link" href="/dashboard/leisure.html">🌴 Leisure</a>
+      <a class="nav-link" href="/dashboard/finance.html">💼 Finance</a>
+    </nav>
+    <div class="userbox">
+      <input class="search" type="search" placeholder="Search bills, tasks…" aria-label="Search"/>
+      <div class="user-menu" id="user-menu">
+        <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle" type="button">
+          <span class="avatar" aria-hidden="true">👤</span>
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="user-menu-dropdown" id="user-menu-dropdown" aria-hidden="true">
+          <!-- Identity row -->
+          <div class="auth-only" id="dropdown-identity" style="display:none;padding:10px 14px 8px;border-bottom:1px solid var(--line);margin-bottom:4px">
+            <div style="font-size:13px;font-weight:700;color:var(--text)" id="dropdown-fullname">—</div>
+            <div style="font-size:11px;color:var(--muted-2)" id="dropdown-email">—</div>
+          </div>
+          <div class="dropdown-label">Account</div>
+          <button class="dropdown-nav" data-target="/onboarding/user_profile_form.html" type="button">👤 My profile</button>
+          <button class="dropdown-nav" data-target="/onboarding/display_settings.html" type="button">⚙️ Settings</button>
+          <!-- Mobile areas -->
+          <div class="mobile-only">
+            <div class="user-menu-divider"></div>
+            <div class="dropdown-label">Areas</div>
+            <button class="dropdown-nav" data-target="/dashboard/overview.html" type="button">🧭 Overview</button>
+            <button class="dropdown-nav" data-target="/dashboard/household.html" type="button">🏡 Household</button>
+            <button class="dropdown-nav" data-target="/dashboard/business.html" type="button">🏢 Business</button>
+            <button class="dropdown-nav" data-target="/dashboard/investment.html" type="button">📈 Investment</button>
+            <button class="dropdown-nav" data-target="/dashboard/leisure.html" type="button">🌴 Leisure</button>
+            <button class="dropdown-nav" data-target="/dashboard/finance.html" type="button">💼 Finance</button>
+          </div>
+          <div class="user-menu-divider"></div>
+          <button class="dropdown-nav" id="user-auth-action" type="button">🔐 Log in / Sign up</button>
+          <button class="dropdown-nav auth-only" id="user-signout-btn" type="button" style="display:none">🚪 Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- BREADCRUMB -->
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <a href="/dashboard/household.html">🏡 Household</a>
+  <span class="breadcrumb-sep">›</span>
+  <span>Bill Manager</span>
+</nav>
+
+<main class="page">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-eyebrow">🏡 Household Tool</div>
+    <h1 class="page-title">🧾 Bill Manager</h1>
+    <p class="page-sub">Track recurring bills, create payment tasks, and see exactly what's due — pulled from your GenieSphere account when signed in.</p>
+    <div class="page-meta">
+      <span class="pill" id="pillTracked">0 tracked</span>
+      <span class="pill warn" id="pillDueSoon">0 due soon</span>
+      <span class="pill bad" id="pillOverdue" style="display:none">0 overdue</span>
+      <span class="pill" id="pillDataSource">Local storage</span>
+    </div>
+  </div>
+
+  <!-- DATA SOURCE BANNER -->
+  <div class="data-banner loading" id="dataBanner">
+    <span>⏳</span><span id="dataBannerText">Connecting to your GenieSphere account…</span>
+  </div>
+
+  <!-- QUICK ADD -->
+  <div class="quick-add-banner">
+    <form id="tool-prompt-form">
+      <label class="sr-only" for="tool-prompt-input">Quick add a bill</label>
+      <div class="quick-add-inner">
+        <input id="tool-prompt-input" autocomplete="off" placeholder="Try: electric bill on the 15th for $220 monthly" type="text"/>
+        <button class="btn btn-primary" type="submit">✨ Quick Fill</button>
+      </div>
+    </form>
+    <div class="quick-add-hint">Fills the form below — nothing saves until you click Save bill.</div>
+  </div>
+
+  <!-- TOOL GRID -->
+  <div class="tool-grid">
+
+    <!-- LEFT: Add bill form -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-row">
+          <div>
+            <h2 class="card-title">➕ Add a bill</h2>
+            <p class="card-sub">Save recurring or one-time bills to your tracker.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="prefill-hint pill warn" id="prefillHint">Prefilled from another page — review and save.</div>
+        <form class="form" id="tool-form" novalidate>
+
+          <div class="form-row">
+            <label for="billName">Bill name</label>
+            <input id="billName" type="text" placeholder="e.g. Internet, HOA, Car Insurance" autocomplete="off"/>
+          </div>
+
+          <div class="form-split">
+            <div class="form-row">
+              <label for="billDue">Due date</label>
+              <input id="billDue" type="date"/>
+            </div>
+            <div class="form-row">
+              <label for="billAmount">Amount ($)</label>
+              <input id="billAmount" type="number" step="0.01" min="0" placeholder="0.00"/>
+            </div>
+          </div>
+
+          <div class="form-split">
+            <div class="form-row">
+              <label for="billFrequency">Frequency</label>
+              <select id="billFrequency">
+                <option value="once">One-time</option>
+                <option value="monthly" selected>Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="billCategory">Category</label>
+              <select id="billCategory">
+                <option value="Utilities">Utilities</option>
+                <option value="Housing">Housing</option>
+                <option value="Insurance">Insurance</option>
+                <option value="Vehicle">Vehicle</option>
+                <option value="Subscriptions">Subscriptions</option>
+                <option value="Other" selected>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="billNotes">Notes (optional)</label>
+            <textarea id="billNotes" rows="3" placeholder="Autopay on, account ending 4431, split with spouse…"></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="btnClear">🧹 Clear</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnCreateTask">🧩 Payment task</button>
+            <button type="submit" class="btn btn-primary btn-sm" id="btnSave">✅ Save bill</button>
+          </div>
+          <div class="form-foot">
+            <strong>Save bill</strong> — stores to your account (or local if offline).<br>
+            <strong>Payment task</strong> — adds a checklist reminder. Neither makes a real payment.
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- RIGHT: Snapshot + list -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-row">
+          <div>
+            <h2 class="card-title">📌 Bill snapshot</h2>
+            <p class="card-sub">All tracked bills sorted by due date.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Tracked</div>
+          <div class="stat-value" id="statBills">0</div>
+          <div class="stat-help">Bills saved</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Due soon</div>
+          <div class="stat-value" id="statDueSoon">0</div>
+          <div class="stat-help">Within 7 days</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tasks</div>
+          <div class="stat-value" id="statTasks">0</div>
+          <div class="stat-help">Open payment tasks</div>
+        </div>
+      </div>
+
+      <div class="next-due-banner" id="nextDueBanner">
+        <span>📅</span><span id="nextDueText">No upcoming bill.</span>
+      </div>
+
+      <div class="bill-list" id="billList">
+        <div class="empty-state">
+          <div class="empty-state-icon">🧾</div>
+          <div>No bills yet. Add one to get started.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tool-grid -->
+
+  <!-- BILL HISTORY -->
+  <div class="section-block">
+    <button class="section-toggle" aria-expanded="true" id="historyToggle" type="button">
+      <span class="section-toggle-title">🗃️ Bill history</span>
+      <span style="display:flex;align-items:center;gap:10px">
+        <span class="section-toggle-meta">All saved bills and payment tasks</span>
+        <span class="section-toggle-chevron">▼</span>
+      </span>
+    </button>
+    <div class="section-content" id="historyContent">
+      <div class="table-wrap">
+        <table class="table" aria-label="Bill history">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Due date</th>
+              <th>Amount</th>
+              <th>Frequency</th>
+              <th>Category</th>
+              <th>Source</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="7" style="color:var(--muted);padding:16px 14px">No bill history yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIPS -->
+  <div class="section-block">
+    <button class="section-toggle" aria-expanded="false" id="tipsToggle" type="button">
+      <span class="section-toggle-title">💡 How to use Bill Manager</span>
+      <span style="display:flex;align-items:center;gap:10px">
+        <span class="section-toggle-meta">Tips and best practices</span>
+        <span class="section-toggle-chevron">▼</span>
+      </span>
+    </button>
+    <div class="section-content" id="tipsContent" style="display:none">
+      <div class="tips-grid">
+        <div class="tip-item">
+          <div class="tip-icon">✅</div>
+          <div class="tip-text"><strong>Save bill</strong><span>For recurring bills you want to track every month, quarter, or year. Stored to your GenieSphere account when signed in.</span></div>
+        </div>
+        <div class="tip-item">
+          <div class="tip-icon">🧩</div>
+          <div class="tip-text"><strong>Payment task</strong><span>Creates a reminder-style checklist item — useful when you just need a "Pay this" nudge without a full bill record.</span></div>
+        </div>
+        <div class="tip-item">
+          <div class="tip-icon">✨</div>
+          <div class="tip-text"><strong>Quick Fill</strong><span>Type naturally: "electric bill on the 15th for $220 monthly" — the form fills automatically. You still review and save.</span></div>
+        </div>
+        <div class="tip-item">
+          <div class="tip-icon">🔗</div>
+          <div class="tip-text"><strong>Connected to Household</strong><span>Bills you save here appear in the Household dashboard's attention count and get picked up by the Finance area.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Household</h4>
+        <a href="/dashboard/household.html">← Back to Household</a>
+        <a href="/household/nutritiongenie/nutrition-engine-hub.html">Nutrition Engine</a>
+        <a href="/household/family-scheduler.html">Family Scheduler</a>
+      </div>
+      <div class="footer-col">
+        <h4>Finance &amp; Money</h4>
+        <a href="/dashboard/finance.html">Finance Dashboard</a>
+        <a href="/household/household-budget.html">Household Budget</a>
+        <a href="/business/expense-receipt-scanner.html">Receipt Scanner</a>
+      </div>
+      <div class="footer-col">
+        <h4>Other Areas</h4>
+        <a href="/dashboard/investment.html">📈 Investment</a>
+        <a href="/dashboard/leisure.html">🌴 Leisure</a>
+        <a href="/dashboard/business.html">🏢 Business</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="/onboarding/api-key-settings.html">API Keys</a>
+        <a href="/about.html">About</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+      <div>Bill Manager · Household</div>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<!-- SCRIPTS -->
+<script>
+window.GS_CONFIG_URL = "/shared/config.json";
+window.GS_CONFIG_PATH = "/shared/config.json";
+</script>
+<script src="/shared/js/app-config.js?v=20260401"></script>
+<script src="/shared/js/gs-client.js?v=20260401"></script>
+<script src="/shared/js/auth-header.js?v=20260401"></script>
+<script src="/shared/js/hub-badges.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   BILL MANAGER — Full logic
+   Data flow:
+     1. On load: try Supabase user_bills table (real data)
+     2. Merge with localStorage (hm_bills) for offline/local items
+     3. Save: write to Supabase if signed in, always write localStorage
+     4. Bills share the same localStorage keys as household.html
+        so the Household hub shows live counts without extra work
+══════════════════════════════════════════════════════════════ */
+
+const KEY_BILLS = 'hm_bills';   // shared with household.html
+const KEY_TASKS = 'hg_tasks';   // shared with household.html
+
+const $ = (id) => document.getElementById(id);
+const nowISO = () => new Date().toISOString();
+const uid = (p='id') => `${p}_${Math.random().toString(16).slice(2)}_${Date.now()}`;
+const esc = (v) => String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+const fmtMoney = (v) => { const n=Number(v||0); return '$'+n.toFixed(2); };
+const fmtDate = (s) => { if(!s) return '—'; try{ return new Date(s+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }catch{ return s; } };
+const daysUntil = (s) => { if(!s) return null; const d=new Date(s+'T00:00:00'); const now=new Date(); const start=new Date(now.getFullYear(),now.getMonth(),now.getDate()); return Math.round((d-start)/86400000); };
+function readJSON(key,fb){ try{ return JSON.parse(localStorage.getItem(key)||'')?? fb; }catch{ return fb; } }
+function writeJSON(key,val){ try{ localStorage.setItem(key,JSON.stringify(val)); }catch(_){} }
+function qs(name){ return new URLSearchParams(location.search).get(name); }
+
+function toast(msg){
+  const el=$('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2400);
+}
+
+// ── Auth / client state ────────────────────────────────────────────
+let _sbClient = null;
+let _currentUser = null;
+
+async function getClient(){
+  if(_sbClient) return _sbClient;
+  if(window.GSClient && typeof window.GSClient.getAsync==='function'){
+    _sbClient = await window.GSClient.getAsync();
+    return _sbClient;
+  }
+  return null;
+}
+
+// ── Supabase bill operations ───────────────────────────────────────
+
+async function loadSupabaseBills(){
+  try{
+    const client = await getClient();
+    if(!client) return [];
+    const { data:sess } = await client.auth.getSession();
+    _currentUser = sess?.session?.user || null;
+    if(!_currentUser) return [];
+    const { data, error } = await client
+      .from('user_bills')
+      .select('id,title,due_date,amount,status,category,frequency,notes,created_at')
+      .eq('user_id', _currentUser.id)
+      .neq('status','paid')
+      .order('due_date',{ascending:true})
+      .limit(50);
+    if(error) throw error;
+    // Map Supabase columns → internal format and tag as 'cloud'
+    return (data||[]).map(r => ({
+      id: r.id,
+      name: r.title,           // Supabase uses 'title', UI uses 'name'
+      due: r.due_date,         // Supabase uses 'due_date', UI uses 'due'
+      amount: r.amount,
+      status: r.status || 'open',
+      category: r.category || 'Other',
+      frequency: r.frequency || 'monthly',
+      notes: r.notes || '',
+      created_at: r.created_at,
+      _source: 'cloud',
+      _sbId: r.id
+    }));
+  }catch(err){
+    console.warn('[BillManager] Supabase load failed:', err?.message);
+    return [];
+  }
+}
+
+async function saveToSupabase(bill){
+  try{
+    const client = await getClient();
+    if(!client || !_currentUser) return null;
+    const payload = {
+      user_id: _currentUser.id,
+      title: bill.name,
+      due_date: bill.due || null,
+      amount: bill.amount ?? null,
+      status: 'open',
+      category: bill.category || 'Other',
+      frequency: bill.frequency || 'monthly',
+      notes: bill.notes || ''
+    };
+    const { data, error } = await client.from('user_bills').insert(payload).select().single();
+    if(error) throw error;
+    return data?.id || null;
+  }catch(err){
+    console.warn('[BillManager] Supabase save failed:', err?.message);
+    return null;
+  }
+}
+
+async function markPaidSupabase(sbId){
+  try{
+    const client = await getClient();
+    if(!client || !_currentUser || !sbId) return false;
+    const { error } = await client
+      .from('user_bills')
+      .update({ status:'paid', updated_at: nowISO() })
+      .eq('id', sbId)
+      .eq('user_id', _currentUser.id);
+    return !error;
+  }catch{ return false; }
+}
+
+async function deleteFromSupabase(sbId){
+  try{
+    const client = await getClient();
+    if(!client || !_currentUser || !sbId) return false;
+    const { error } = await client
+      .from('user_bills')
+      .delete()
+      .eq('id', sbId)
+      .eq('user_id', _currentUser.id);
+    return !error;
+  }catch{ return false; }
+}
+
+// ── Data merge: cloud + local ──────────────────────────────────────
+
+function getAllItems(){
+  const localBills = readJSON(KEY_BILLS,[]).map(b=>({...b,_source:'local'}));
+  const localTasks = readJSON(KEY_TASKS,[]).filter(t=>t.type==='bill_payment').map(t=>({...t,_source:'local',kind:'task'}));
+  return { localBills, localTasks };
+}
+
+function mergeItems(cloudBills){
+  const { localBills, localTasks } = getAllItems();
+  // Deduplicate: skip local bills that came from cloud (have matching _sbId in local)
+  const localOnly = localBills.filter(b => !b._sbId);
+  const all = [
+    ...cloudBills.map(b=>({kind:'bill',...b})),
+    ...localOnly.map(b=>({kind:'bill',...b})),
+    ...localTasks.map(t=>({kind:'task',...t}))
+  ];
+  all.sort((a,b)=>(a.due||a.due_date||'9999').localeCompare(b.due||b.due_date||'9999'));
+  return all;
+}
+
+// ── Render ─────────────────────────────────────────────────────────
+
+let _allItems = [];
+
+function render(cloudBills = []){
+  _allItems = mergeItems(cloudBills);
+  const { localBills, localTasks } = getAllItems();
+
+  const unpaid = _allItems.filter(it=>(it.status||'open')!=='paid');
+  const bills  = _allItems.filter(it=>it.kind==='bill');
+  const tasks  = _allItems.filter(it=>it.kind==='task' && (it.status||'open')!=='paid');
+  const dueSoon = unpaid.filter(it=>{ const d=daysUntil(it.due||it.due_date); return d!==null && d>=0 && d<=7; });
+  const overdue = unpaid.filter(it=>{ const d=daysUntil(it.due||it.due_date); return d!==null && d<0; });
+
+  // Stats
+  $('statBills').textContent = String(bills.length);
+  $('statDueSoon').textContent = String(dueSoon.length);
+  $('statTasks').textContent = String(tasks.length);
+
+  // Header pills
+  $('pillTracked').textContent = `${bills.length} tracked`;
+  $('pillDueSoon').textContent = `${dueSoon.length} due soon`;
+  $('pillDueSoon').className = 'pill ' + (dueSoon.length ? 'warn' : '');
+  const overdueEl = $('pillOverdue');
+  overdueEl.textContent = `${overdue.length} overdue`;
+  overdueEl.style.display = overdue.length ? '' : 'none';
+
+  // Next due
+  const nextDue = unpaid.find(it=>it.due||it.due_date);
+  $('nextDueText').textContent = nextDue
+    ? `Next: ${nextDue.name||nextDue.title} · ${fmtDate(nextDue.due||nextDue.due_date)}`
+    : 'No upcoming unpaid bills.';
+
+  // Bill list
+  const listEl = $('billList');
+  if(!_allItems.length){
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🧾</div><div>No bills yet — add one using the form.</div></div>`;
+    renderHistory([]);
+    return;
+  }
+
+  listEl.innerHTML = '';
+  for(const it of _allItems){
+    const name   = it.name || it.title || 'Untitled';
+    const due    = it.due || it.due_date || '';
+    const status = it.status || 'open';
+    const days   = daysUntil(due);
+    const pillClass = status==='paid' ? 'good' : days===null ? '' : days<0 ? 'bad' : days<=3 ? 'bad' : 'warn';
+    const pillText  = status==='paid' ? '✅ Paid'
+      : days===null ? 'No date'
+      : days<0 ? `${Math.abs(days)}d overdue`
+      : days===0 ? 'Due today'
+      : `Due in ${days}d`;
+    const amount = it.amount!=null && it.amount!=='' ? fmtMoney(it.amount) : '';
+    const category = it.category || (it.kind==='task' ? 'Payment task' : 'Uncategorised');
+    const sourceLabel = it._source==='cloud' ? 'Account' : 'Local';
+    const sourceClass = it._source==='cloud' ? '' : 'local';
+
+    const el = document.createElement('div');
+    el.className = 'bill-item';
+    el.innerHTML = `
+      <div class="bill-left">
+        <h4>
+          ${esc(name)}
+          <span class="pill ${pillClass}" style="font-size:11px;padding:3px 8px">${esc(pillText)}</span>
+        </h4>
+        <div class="bill-meta">
+          ${due ? `<span>📅 ${fmtDate(due)}</span>` : '<span style="color:var(--muted-2)">No date</span>'}
+          ${amount ? `<span>💵 ${esc(amount)}</span>` : ''}
+          ${category ? `<span>🗂️ ${esc(category)}</span>` : ''}
+          ${it.frequency ? `<span>🔁 ${esc(it.frequency)}</span>` : ''}
+          <span class="source-badge ${sourceClass}">${sourceLabel}</span>
+        </div>
+        ${it.notes ? `<div style="font-size:12px;color:var(--muted);margin-top:5px">📝 ${esc(it.notes)}</div>` : ''}
+      </div>
+      <div class="bill-right">
+        ${status!=='paid' ? `<button class="btn btn-ghost btn-sm" data-act="paid" data-id="${it.id}" data-sbid="${it._sbId||''}">✅ Mark paid</button>` : ''}
+        <button class="btn btn-ghost btn-sm" data-act="delete" data-id="${it.id}" data-kind="${it.kind||'bill'}" data-sbid="${it._sbId||''}">🗑️</button>
+      </div>`;
+    listEl.appendChild(el);
+  }
+  renderHistory(_allItems);
+}
+
+function renderHistory(items){
+  const rows = items.map(it=>{
+    const name = esc(it.name||it.title||'Untitled');
+    const due  = esc(fmtDate(it.due||it.due_date));
+    const amt  = it.amount!=null&&it.amount!=='' ? fmtMoney(it.amount) : '—';
+    const freq = esc(it.frequency||'—');
+    const cat  = esc(it.category||'—');
+    const src  = it._source==='cloud' ? '<span class="source-badge">Account</span>' : '<span class="source-badge local">Local</span>';
+    const status = esc(it.status||'open');
+    return `<tr><td>${name}</td><td>${due}</td><td>${amt}</td><td>${freq}</td><td>${cat}</td><td>${src}</td><td>${status}</td></tr>`;
+  }).join('');
+  $('historyBody').innerHTML = rows || '<tr><td colspan="7" style="color:var(--muted);padding:16px 14px">No bills yet.</td></tr>';
+}
+
+// ── Cloud bills cache ──────────────────────────────────────────────
+let _cloudBills = [];
+
+async function refresh(){
+  _cloudBills = await loadSupabaseBills();
+  updateDataBanner();
+  render(_cloudBills);
+}
+
+function updateDataBanner(){
+  const banner = $('dataBanner');
+  const text   = $('dataBannerText');
+  const pillSrc = $('pillDataSource');
+  if(_currentUser){
+    banner.className = 'data-banner live';
+    banner.querySelector('span').textContent = '✅';
+    text.textContent = `Showing bills from your GenieSphere account (${_currentUser.email}) + any local entries.`;
+    pillSrc.textContent = 'Synced with account';
+  } else {
+    banner.className = 'data-banner local';
+    banner.querySelector('span').textContent = 'ℹ️';
+    text.textContent = 'Showing locally saved bills. Sign in to sync with your GenieSphere account.';
+    pillSrc.textContent = 'Local storage';
+  }
+}
+
+// ── Form actions ───────────────────────────────────────────────────
+
+function clearForm(){
+  $('tool-form').reset();
+  $('billFrequency').value = 'monthly';
+  $('billCategory').value  = 'Other';
+  $('prefillHint').style.display = 'none';
+}
+
+function applyPrefill(){
+  const title = qs('title') || qs('bill');
+  const due   = qs('due');
+  if(title) $('billName').value = decodeURIComponent(title);
+  if(due)   $('billDue').value  = due;
+  if(title||due) $('prefillHint').style.display = 'inline-flex';
+}
+
+function parseQuickFill(text){
+  const lower = text.toLowerCase();
+  const amtMatch = text.match(/\$?\s*(\d+(?:\.\d{1,2})?)/);
+  const dayMatch  = lower.match(/on the (\d{1,2})/);
+  const freq = /year/.test(lower)?'yearly':/quarter/.test(lower)?'quarterly':/once|one[- ]time/.test(lower)?'once':'monthly';
+  const name = text.replace(/for\s+\$?\d+(?:\.\d{1,2})?.*$/i,'').replace(/on the\s+\d{1,2}.*/i,'').replace(/monthly|quarterly|yearly|once|one-time/ig,'').trim();
+  if(name) $('billName').value = name.replace(/\s+/g,' ').trim();
+  if(amtMatch) $('billAmount').value = amtMatch[1];
+  $('billFrequency').value = freq;
+  if(dayMatch){
+    const day = Math.min(28,Math.max(1,Number(dayMatch[1])));
+    const now = new Date();
+    const d = new Date(now.getFullYear(),now.getMonth(),day);
+    if(d<now) d.setMonth(d.getMonth()+1);
+    $('billDue').value = d.toISOString().slice(0,10);
+  }
+  // Auto-detect category
+  const cats = {utilities:/electric|gas|water|internet|phone|cable/i, housing:/rent|mortgage|hoa/i, insurance:/insurance/i, vehicle:/car|auto|vehicle/i, subscriptions:/netflix|spotify|amazon|apple|subscription/i};
+  for(const [cat,rx] of Object.entries(cats)){
+    if(rx.test(name)){ $('billCategory').value = cat.charAt(0).toUpperCase()+cat.slice(1); break; }
+  }
+}
+
+async function saveBill(evt){
+  if(evt) evt.preventDefault();
+  const name     = $('billName').value.trim();
+  const due      = $('billDue').value;
+  const amount   = $('billAmount').value;
+  const freq     = $('billFrequency').value;
+  const category = $('billCategory').value;
+  const notes    = $('billNotes').value.trim();
+
+  if(!name){ toast('⚠️ Please enter a bill name.'); return; }
+
+  const btn = $('btnSave'); btn.disabled=true; btn.textContent='Saving…';
+
+  const newBill = {
+    id: uid('bill'),
+    name, due, frequency:freq, category, notes,
+    amount: amount ? Number(amount) : null,
+    status: 'open',
+    created_at: nowISO()
+  };
+
+  // Try Supabase first
+  const sbId = await saveToSupabase(newBill);
+  if(sbId){
+    newBill._sbId = sbId;
+    newBill._source = 'cloud';
+    toast('✅ Bill saved to your account.');
+    await refresh(); // reload from cloud
+  } else {
+    // Fallback: localStorage only
+    newBill._source = 'local';
+    const bills = readJSON(KEY_BILLS,[]);
+    bills.push(newBill);
+    writeJSON(KEY_BILLS,bills);
+    toast('💾 Bill saved locally (sign in to sync).');
+    render(_cloudBills);
+  }
+
+  btn.disabled=false; btn.textContent='✅ Save bill';
+  clearForm();
+}
+
+function createPaymentTask(){
+  const title = $('billName').value.trim();
+  const due   = $('billDue').value;
+  if(!title){ toast('⚠️ Please enter a bill name first.'); return; }
+  if(!due)  { toast('⚠️ Please choose a due date.'); return; }
+  const tasks = readJSON(KEY_TASKS,[]);
+  tasks.push({
+    id: uid('task'), type:'bill_payment',
+    title: `Pay ${title}`, due_date: due,
+    amount: $('billAmount').value ? Number($('billAmount').value) : null,
+    status: 'open', created_at: nowISO()
+  });
+  writeJSON(KEY_TASKS,tasks);
+  toast('🧩 Payment task added to your checklist.');
+  render(_cloudBills);
+}
+
+async function markPaid(id, sbId){
+  // Cloud
+  if(sbId){ await markPaidSupabase(sbId); }
+  // Local
+  const bills = readJSON(KEY_BILLS,[]);
+  const bill  = bills.find(b=>b.id===id);
+  if(bill){ bill.status='paid'; bill.paid_at=nowISO(); writeJSON(KEY_BILLS,bills); }
+  const tasks = readJSON(KEY_TASKS,[]);
+  const task  = tasks.find(t=>t.id===id);
+  if(task){ task.status='paid'; task.paid_at=nowISO(); writeJSON(KEY_TASKS,tasks); }
+  toast('✅ Marked as paid.');
+  if(sbId) await refresh(); else render(_cloudBills);
+}
+
+async function removeItem(id, kind, sbId){
+  if(!confirm('Remove this bill?')) return;
+  if(sbId){ await deleteFromSupabase(sbId); }
+  if(kind==='task'){
+    writeJSON(KEY_TASKS, readJSON(KEY_TASKS,[]).filter(t=>t.id!==id));
+  } else {
+    writeJSON(KEY_BILLS, readJSON(KEY_BILLS,[]).filter(b=>b.id!==id));
+  }
+  toast('🗑️ Removed.');
+  if(sbId) await refresh(); else render(_cloudBills);
+}
+
+// ── Event wiring ───────────────────────────────────────────────────
+
+$('tool-prompt-form').addEventListener('submit',(e)=>{ e.preventDefault(); const t=$('tool-prompt-input').value.trim(); if(t){ parseQuickFill(t); $('tool-prompt-input').value=''; } });
+$('tool-form').addEventListener('submit', saveBill);
+$('btnCreateTask').addEventListener('click', createPaymentTask);
+$('btnClear').addEventListener('click', clearForm);
+
+$('billList').addEventListener('click',(e)=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  const { act, id, kind, sbid } = btn.dataset;
+  if(act==='paid')   markPaid(id, sbid||null);
+  if(act==='delete') removeItem(id, kind||'bill', sbid||null);
+});
+
+// Section toggles
+['historyToggle','tipsToggle'].forEach(tid=>{
+  const toggle = $(tid);
+  if(!toggle) return;
+  const contentId = tid.replace('Toggle','Content');
+  toggle.addEventListener('click',()=>{
+    const open = toggle.getAttribute('aria-expanded')==='true';
+    toggle.setAttribute('aria-expanded', String(!open));
+    const content = $(contentId);
+    if(content) content.style.display = open ? 'none' : '';
+  });
+});
+
+// ── User menu — same retry pattern as household.html ──────────────
+(function(){
+  const wrap=$('user-menu'),toggle=$('user-menu-toggle'),menu=$('user-menu-dropdown');
+  if(!wrap||!toggle||!menu) return;
+  function openM(){wrap.classList.add('open');toggle.setAttribute('aria-expanded','true');menu.setAttribute('aria-hidden','false');}
+  function closeM(){wrap.classList.remove('open');toggle.setAttribute('aria-expanded','false');menu.setAttribute('aria-hidden','true');}
+  closeM();
+  toggle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();wrap.classList.contains('open')?closeM():openM();});
+  document.addEventListener('click',e=>{if(wrap&&!wrap.contains(e.target))closeM();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
+  menu.querySelectorAll('.dropdown-nav[data-target]').forEach(b=>{
+    b.addEventListener('click',()=>{const t=b.getAttribute('data-target');closeM();if(t)window.location.href=t;});
+  });
+  const authBtn=$('user-auth-action');
+  const signoutBtn=$('user-signout-btn');
+  if(authBtn) authBtn.addEventListener('click',()=>{closeM();window.location.href='/onboarding/login.html?next='+encodeURIComponent(location.pathname);});
+  if(signoutBtn) signoutBtn.addEventListener('click',()=>{closeM();try{getClient().then(c=>c&&c.auth.signOut());}catch(e){}setTimeout(()=>window.location.href='/index.html',300);});
+
+  // Default: logged out
+  if(authBtn) authBtn.style.display='flex';
+  if(signoutBtn) signoutBtn.style.display='none';
+
+  (function syncDropdownAuth(){
+    let attempts=0, maxAttempts=25;
+    function applyLoggedIn(user){
+      const meta=user.user_metadata||{};
+      const fullName=(meta.full_name||meta.name||'').trim();
+      const displayName=(meta.display_name||fullName||user.email||'').split(/\s+/)[0]||'';
+      const lbl=$('user-name-label');
+      if(lbl&&(lbl.textContent==='Log in'||!lbl.textContent))lbl.textContent=displayName||'Account';
+      const dn=$('dropdown-fullname'); const de=$('dropdown-email');
+      if(dn)dn.textContent=fullName||displayName||user.email||'';
+      if(de)de.textContent=user.email||'';
+      if(authBtn)authBtn.style.display='none';
+      const id=$('dropdown-identity'); if(id)id.style.display='block';
+      if(signoutBtn)signoutBtn.style.display='flex';
+    }
+    function trySync(){
+      attempts++;
+      if(window.GSClient&&typeof window.GSClient.getAsync==='function'){
+        window.GSClient.getAsync().then(c=>c.auth.getSession())
+          .then(r=>{const user=r?.data?.session?.user;if(user)applyLoggedIn(user);})
+          .catch(()=>{});
+        return;
+      }
+      const lbl=$('user-name-label');
+      if(lbl&&lbl.textContent&&lbl.textContent!=='Log in'&&lbl.textContent!=='Account'){
+        if(authBtn)authBtn.style.display='none';
+        if(signoutBtn)signoutBtn.style.display='flex';
+        return;
+      }
+      if(attempts<maxAttempts)setTimeout(trySync,200);
+    }
+    setTimeout(trySync,100);
+  })();
+})();
+
+// ── Init ───────────────────────────────────────────────────────────
+(async function init(){
+  $('year').textContent = new Date().getFullYear();
+  applyPrefill();
+
+  // Show local bills immediately while cloud loads
+  render([]);
+
+  // Then load cloud + merge
+  await refresh();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>🧾 Credit Card Transactions | GenieSphere</title>
+  <meta name="description" content="Import, add, browse, and filter credit card transactions."/>
+  <meta name="gs-config" content="/shared/config.json" />
+
+  <style>
+    :root{
+      --ring: rgba(76,110,245,.25);
+      --container: 1440px;
+      --radius: 7px;
+      --radius-lg: 14px;
+      --btn-radius: 999px;
+      --shadow: 0 16px 38px rgba(15,23,42,.16);
+      --shadow-soft: 0 10px 24px rgba(15,23,42,.10);
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+
+    /* Theme A: Calm Future (default) */
+    body.theme-calm{
+      --bg:#f5f7fb; --panel:#ffffff; --panel-2:#f1f4ff;
+      --text:#111827; --muted:#4b5563;
+      --primary:#4c6ef5; --accent:#22c55e;
+      --border:rgba(148,163,184,.70); --border-strong:rgba(148,163,184,.92);
+      --shadow:0 18px 38px rgba(15,23,42,.14);
+      --shadow-soft:0 10px 26px rgba(15,23,42,.10);
+      --focus:0 0 0 4px rgba(76,110,245,.18);
+    }
+
+    /* Theme B: Soft Futuristic */
+    body.theme-future{
+      --bg:#0f172a; --panel:#111c36; --panel-2:#162447;
+      --text:#e5e7eb; --muted:#9ca3af;
+      --primary:#6366f1; --accent:#22d3ee;
+      --border:rgba(71,85,105,.65); --border-strong:rgba(71,85,105,.95);
+      --shadow:0 18px 44px rgba(0,0,0,.52);
+      --shadow-soft:0 10px 26px rgba(0,0,0,.34);
+      --focus:0 0 0 4px rgba(34,211,238,.16);
+    }
+
+    /* Theme C: Nature + Tech */
+    body.theme-nature{
+      --bg:#f6f9f7; --panel:#ffffff; --panel-2:#eef5f1;
+      --text:#0f172a; --muted:#475569;
+      --primary:#16a34a; --accent:#38bdf8;
+      --border:rgba(148,163,184,.70); --border-strong:rgba(148,163,184,.92);
+      --shadow:0 18px 38px rgba(15,23,42,.12);
+      --shadow-soft:0 10px 26px rgba(15,23,42,.09);
+      --focus:0 0 0 4px rgba(22,163,74,.16);
+    }
+
+    /* Theme D: Pro Dark */
+    body.theme-dark{
+      --bg:#0b1220; --panel:#121a2b; --panel-2:#0e1626;
+      --text:#e9f0ff; --muted:#a9b6d9;
+      --primary:#4c6ef5; --accent:#3ee1a1;
+      --border:rgba(120,155,255,.22); --border-strong:rgba(120,155,255,.42);
+      --shadow:0 18px 44px rgba(0,0,0,.50);
+      --shadow-soft:0 10px 26px rgba(0,0,0,.30);
+      --focus:0 0 0 4px rgba(76,110,245,.22);
+    }
+
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+      --card: var(--panel);
+      --card-hover: var(--panel-2);
+      --brand-blue: var(--primary);
+      --gap: 18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+
+    .sr-only{
+      position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+      clip:rect(0,0,0,0);white-space:nowrap;border:0
+    }
+    .container{max-width:var(--container);margin:0 auto;padding:24px}
+
+    /* Header */
+    .site-header{
+      position:sticky;top:0;z-index:1000;
+      margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);
+      background:var(--panel);
+      border-bottom:1px solid var(--border);
+      box-shadow:0 8px 22px rgba(0,0,0,.25);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+    .site-header-inner{
+      max-width:var(--container);margin:0 auto;
+      padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .brand{
+      display:flex;align-items:center;gap:10px;
+      color:var(--text);text-decoration:none;font-weight:800;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+      box-shadow:0 0 0 3px rgba(62,225,161,.35),0 8px 24px rgba(62,225,161,.35);
+    }
+    .menu{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px}
+    .menu a{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 2px;border-radius:0;text-decoration:none;
+      color:var(--muted);font-weight:500;border-bottom:2px solid transparent;
+      transition:color .15s ease, border-bottom-color .15s ease;
+    }
+    .menu a:hover{color:var(--text);border-bottom-color:var(--brand-blue)}
+    .menu a.active{color:var(--text);border-bottom-color:var(--accent);font-weight:700}
+    .menu a.ghost{color:var(--muted)}
+
+    .user-menu{position:relative;display:flex;align-items:center;margin-left:auto}
+    .user-menu-toggle{
+      display:flex;align-items:center;gap:6px;padding:6px 12px;
+      border-radius:999px;border:1px solid var(--border-strong);
+      background:var(--panel-2);color:var(--text);font-size:14px;cursor:pointer;
+    }
+    .user-menu-toggle:hover{border-color:var(--accent)}
+    .user-menu-dropdown{
+      position:absolute;right:0;top:calc(100% + 6px);min-width:220px;
+      background:var(--panel-2);border-radius:var(--radius);border:1px solid var(--border);
+      box-shadow:0 14px 34px rgba(0,0,0,.55);
+      padding:6px 0;display:none;z-index:1002;margin-right:4px;
+    }
+    .user-menu-dropdown a,.user-menu-dropdown button{
+      display:block;width:100%;text-align:left;padding:8px 14px;background:none;border:none;
+      color:var(--text);font-size:14px;text-decoration:none;cursor:pointer;
+    }
+    .user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:var(--panel)}
+    .user-menu-divider{height:1px;margin:4px 0;background:rgba(148,163,184,.4)}
+    .dropdown-label{
+      font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.7;padding:4px 14px 2px
+    }
+    .mobile-only{display:none}
+    @media(max-width:720px){
+      .menu{display:none}
+      .site-header-inner{padding:10px 12px}
+      .user-menu-toggle{padding-inline:10px}
+      .mobile-only{display:block}
+    }
+
+    /* Hero */
+    .hero{text-align:center;padding:16px 0 8px}
+    .title{font-size:clamp(26px,4vw,40px);margin:0 0 6px;font-weight:900}
+    .subtitle{color:var(--muted);margin:0 auto 12px;max-width:860px;font-size:15px}
+    .hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      background:rgba(0,0,0,.04);font-size:12px;font-weight:800;
+    }
+    body.theme-future .pill, body.theme-dark .pill{background:rgba(255,255,255,.06)}
+    .pill.ghost{background:transparent;color:var(--muted)}
+
+    /* Hub tabs (match hub) */
+    .hub-tabs{
+      display:flex;flex-wrap:wrap;gap:8px;margin:14px auto 0;justify-content:center;
+      max-width:var(--container);
+    }
+    .hub-tab{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
+      border:1px solid rgba(148,163,184,.35);
+      background:rgba(0,0,0,.06);color:var(--muted);
+      font-size:13px;font-weight:900;text-decoration:none;white-space:nowrap;
+      transition:transform .12s ease, border-color .18s ease, color .18s ease, background .18s ease;
+    }
+    body.theme-future .hub-tab, body.theme-dark .hub-tab{background:rgba(255,255,255,.06)}
+    .hub-tab:hover{border-color:rgba(76,110,245,.55);color:var(--text)}
+    .hub-tab.active{
+      background:linear-gradient(135deg, rgba(62,225,161,.18), rgba(76,110,245,.14));
+      border-color:rgba(62,225,161,.55);
+      color:var(--text);
+      box-shadow:0 10px 22px rgba(0,0,0,.25);
+    }
+
+    /* Panels + layout */
+    .tool-shell{max-width:var(--container);margin:0 auto;padding:0}
+    .grid-2{
+      display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:start;margin-top:14px;
+    }
+    @media(max-width:980px){.grid-2{grid-template-columns:1fr}}
+
+    /* ===== Split Forms (Desktop) ===== */
+    .tx-page{display:flex;flex-direction:column;gap:18px}
+    .tx-split{display:grid;grid-template-columns:1fr;gap:18px}
+    .tx-split .tx-panel{height:100%;display:flex;flex-direction:column}
+    .tx-panel .tx-panel-body{flex:1;min-height:0}
+    @media(min-width:980px){
+      .tx-split{grid-template-columns:1fr 1fr;align-items:stretch}
+    }
+    .tx-grid-bottom{margin-top:0}
+    .panel{
+      background:linear-gradient(180deg, rgba(24,35,58,.65), rgba(18,26,43,.85));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-soft);
+      overflow:hidden;
+    }
+    .panel-head{padding:14px 14px 10px;border-bottom:1px solid var(--border)}
+    .panel-title{margin:0;font-size:16px;font-weight:900}
+    .panel-sub{margin-top:4px;color:var(--muted);font-size:13px}
+    .panel-body{padding:14px}
+
+    .form{display:flex;flex-direction:column;gap:12px}
+    .form-row{display:flex;flex-direction:column;gap:6px}
+    .form-row label{font-size:12px;color:var(--muted);font-weight:900;letter-spacing:.02em}
+    .form-row input,.form-row select,.form-row textarea{
+      width:100%;
+      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+      background:var(--panel-2);color:var(--text);font-size:14px;outline:none;
+    }
+    .form-row input:focus,.form-row select:focus,.form-row textarea:focus{
+      box-shadow:var(--focus);border-color:rgba(76,110,245,.65)
+    }
+    .form-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+    @media(max-width:640px){.form-actions{flex-direction:column}.form-actions .btn{width:100%;justify-content:center}}
+    .form-foot{font-size:12px;color:var(--muted)}
+
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:9px 18px;border-radius:var(--btn-radius);
+      text-decoration:none;color:#03101f;background:var(--primary);
+      font-weight:900;border:0;cursor:pointer;
+      box-shadow:0 8px 18px rgba(74,163,255,.25);
+      font-size:14px;white-space:nowrap;
+      justify-content:center;
+    }
+    .btn.primary{background:var(--accent);color:#04131a;box-shadow:0 8px 18px rgba(62,225,161,.25)}
+    .btn.ghost{background:transparent;border:1px dashed var(--border-strong);color:var(--text);box-shadow:none}
+    .btn.small{padding:6px 12px;font-size:13px}
+    .btn:hover{filter:brightness(1.05)}
+
+    /* KPI strip */
+    .kpis{
+      display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px;
+    }
+    @media(max-width:1080px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:640px){.kpis{grid-template-columns:1fr}}
+    .kpi-card{
+      background:radial-gradient(circle at top left, rgba(31,41,55,.95) 0, rgba(2,6,23,.95) 70%);
+      border-radius:var(--radius-lg);
+      padding:10px 12px;
+      border:1px solid rgba(148,163,184,.22);
+      box-shadow:0 10px 30px rgba(15,23,42,.35);
+      display:flex;flex-direction:column;gap:6px;min-height:92px;
+    }
+    .kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+    .kpi-value{font-size:18px;font-weight:950}
+    .kpi-foot{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:6px;align-items:center}
+
+    /* Table */
+    .table-wrap{overflow:auto;border:1px solid rgba(148,163,184,.22);border-radius:14px;background:rgba(2,6,23,.55)}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:10px 12px;border-bottom:1px solid rgba(148,163,184,.18);text-align:left}
+    th{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+    tr:hover td{background:rgba(255,255,255,.03)}
+    .muted{color:var(--muted)}
+    .right{text-align:right}
+    .nowrap{white-space:nowrap}
+
+    .status-line{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .status-pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      background:rgba(0,0,0,.05);font-size:12px;font-weight:900;
+    }
+    body.theme-future .status-pill, body.theme-dark .status-pill{background:rgba(255,255,255,.06)}
+    .empty{
+      padding:12px;border:1px dashed rgba(148,163,184,.35);border-radius:14px;color:var(--muted);
+      background:rgba(2,6,23,.60);font-size:13px;
+    }
+    /* Mobile record cards (GenieSphere pattern) */
+    .cards-wrap{
+      display:none;
+      gap:12px;
+      margin-top:0;
+    }
+    .tx-card{
+      border:1px solid rgba(148,163,184,.22);
+      border-radius:14px;
+      background:rgba(2,6,23,.55);
+      box-shadow:0 10px 24px rgba(15,23,42,.24);
+      overflow:hidden;
+    }
+    .tx-card-head{
+      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+      padding:12px 12px 10px;
+      border-bottom:1px solid rgba(148,163,184,.18);
+      background:linear-gradient(135deg, rgba(76,110,245,.12), rgba(62,225,161,.08));
+    }
+    .tx-card-title{
+      display:flex;flex-direction:column;gap:4px;min-width:0;
+    }
+    .tx-card-title strong{
+      font-size:14px;font-weight:950;line-height:1.25;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .tx-card-title .sub{
+      display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+      color:var(--muted);font-size:12px;font-weight:800;
+    }
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 8px;border-radius:999px;
+      border:1px solid rgba(148,163,184,.28);
+      background:rgba(255,255,255,.06);
+      font-size:11px;font-weight:950;color:var(--text);
+      max-width:100%;
+    }
+    .badge .dot{width:8px;height:8px;border-radius:999px;background:var(--accent);box-shadow:0 0 0 3px rgba(62,225,161,.18)}
+    .tx-card-body{padding:10px 12px 12px}
+    .tx-kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px}
+    .tx-kv .k{color:var(--muted);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.1em}
+    .tx-kv .v{font-size:13px;font-weight:750;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tx-card-actions{
+      display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;
+      padding:10px 12px 12px;border-top:1px solid rgba(148,163,184,.18);
+      background:rgba(255,255,255,.03);
+    }
+    .tx-card-actions .btn{flex:1}
+    @media(max-width:720px){
+      .table-wrap{display:none}
+      .cards-wrap{display:flex;flex-direction:column}
+      .tx-card-actions{justify-content:stretch}
+      .tx-card-actions .btn{width:100%}
+      .tx-kv{grid-template-columns:95px 1fr}
+    }
+
+
+
+    /* Receipt actions */
+    .receipt-actions{display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap}
+    .receipt-status{font-size:12px;color:var(--muted);display:flex;align-items:center}
+
+    /* Mobile bottom nav */
+    .mobile-nav{
+      position:fixed;left:0;right:0;bottom:0;display:none;z-index:1200;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      background:var(--panel);border-top:1px solid var(--border);
+      box-shadow:0 -10px 24px rgba(0,0,0,.18);
+    }
+    .mobile-nav-inner{
+      max-width:var(--container);margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+    }
+    .mnav{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+      padding:10px 8px;border-radius:14px;border:1px solid var(--border);
+      background:var(--panel-2);color:var(--muted);font-weight:950;font-size:11px;text-decoration:none;
+    }
+    .mnav .ico{font-size:16px;line-height:1}
+    .mnav.active{color:var(--text);border-color:rgba(76,110,245,.55);box-shadow:var(--focus)}
+    .mobile-pad{display:none;height:86px}
+    @media(max-width:860px){
+      .mobile-nav{display:block}
+      .mobile-pad{display:block}
+      main.page{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
+    }
+
+    /* Hide footer on small mobile (consistent) */
+    .site-footer{margin-top:30px;padding:22px 0 34px;border-top:1px solid var(--border);background:rgba(10,16,28,.9);color:var(--muted)}
+    @media(max-width:600px){.site-footer{display:none !important}}
+
+    .site-footer-inner{max-width:var(--container);margin:0 auto;padding:0 24px}
+    .footer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+    @media(max-width:860px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:520px){.footer-grid{grid-template-columns:1fr}}
+    .footer-col h4{margin:0 0 10px;color:var(--text);font-size:14px}
+    .footer-col a{display:block;color:var(--muted);text-decoration:none;margin:6px 0;font-size:13px}
+    .footer-col a:hover{color:var(--text)}
+    .footer-bottom{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px}
+    .social{display:flex;gap:10px}
+    .social a{
+      width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:999px;
+      border:1px solid var(--border);background:var(--panel-2);color:var(--text);text-decoration:none;
+    }
+
+    /* Theme modal */
+    .theme-overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;z-index:2000;padding:18px}
+    .theme-modal{
+      width:min(720px,96vw);border-radius:var(--radius-lg);border:1px solid var(--border);
+      background:var(--panel);box-shadow:0 30px 90px rgba(0,0,0,.55);overflow:hidden;
+    }
+    .theme-modal-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)}
+    .theme-modal-title{display:flex;flex-direction:column;gap:2px}
+    .theme-modal-title strong{font-size:15px}
+    .theme-modal-title span{font-size:13px;color:var(--muted)}
+    .theme-close{border:1px solid var(--border);background:var(--panel-2);color:var(--text);border-radius:999px;padding:8px 10px;cursor:pointer}
+    .theme-close:hover{border-color:var(--accent)}
+    .theme-modal-body{padding:14px}
+    .theme-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    @media(max-width:560px){.theme-grid{grid-template-columns:1fr}}
+    .theme-option{
+      border-radius:var(--radius);border:1px solid var(--border);background:var(--panel-2);color:var(--text);
+      padding:12px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:10px
+    }
+    .theme-option:hover{border-color:rgba(76,110,245,.55)}
+    .theme-option.selected{border-color:rgba(76,110,245,.85);box-shadow:var(--focus)}
+    .theme-option-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .theme-option-name{margin:0;font-weight:950;font-size:14px}
+    .theme-option-desc{margin:0;font-size:12px;color:var(--muted)}
+    .theme-option-tag{font-size:11px;font-weight:950;padding:4px 8px;background:rgba(76,110,245,.16);border:1px solid rgba(76,110,245,.35);border-radius:999px;color:var(--muted);white-space:nowrap}
+    .theme-modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:12px 14px;border-top:1px solid var(--border)}
+  
+    /* Helpers */
+    .mt-14{ margin-top:14px; }
+    .hidden{ display:none !important; }
+    .two-cols{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media(max-width:720px){ .two-cols{ grid-template-columns:1fr; } }
+
+    /* Hub Filters (Workspace + Purpose) */
+    .hub-filters{
+      max-width:var(--container);
+      margin: 12px auto 0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:center;
+    }
+    .filter-row{
+      width:100%;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      justify-content:center;
+      align-items:center;
+    }
+    .filter-label{
+      font-size:12px;
+      font-weight:900;
+      color:var(--muted);
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      padding:6px 8px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.25);
+      background: rgba(0,0,0,.04);
+    }
+    body.theme-future .filter-label, body.theme-dark .filter-label{ background: rgba(255,255,255,.06); }
+    .filter-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.35);
+      background:rgba(0,0,0,.06);
+      color:var(--muted);
+      font-size:13px;
+      font-weight:900;
+      text-decoration:none;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .12s ease, border-color .18s ease, color .18s ease, background .18s ease;
+      white-space:nowrap;
+    }
+    body.theme-future .filter-pill, body.theme-dark .filter-pill{ background:rgba(255,255,255,.06); }
+    .filter-pill:hover{ border-color:rgba(76,110,245,.55); color:var(--text); }
+    .filter-pill.active{
+      background:linear-gradient(135deg, rgba(62,225,161,.18), rgba(76,110,245,.14));
+      border-color:rgba(62,225,161,.55);
+      color:var(--text);
+      box-shadow:0 10px 22px rgba(0,0,0,.25);
+    }
+    .filter-pill .count{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:22px;
+      height:22px;
+      padding:0 7px;
+      border-radius:999px;
+      background:rgba(76,110,245,.14);
+      border:1px solid rgba(76,110,245,.30);
+      color:var(--text);
+      font-size:12px;
+      font-weight:900;
+    }
+    .hub-filters[hidden]{ display:none !important; }
+
+    /* Table toolbar */
+    .table-toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin: 10px 0 12px;
+    }
+    .toolbar-left,.toolbar-right{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .toolbar-hint{ font-size:12px; color:var(--muted); }
+
+    /* Pagination */
+    .pager{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .pager .muted{ font-size:12px; }
+
+    /* Toggle chips */
+    .toggles{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .toggle{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.35);
+      background:rgba(0,0,0,.06);
+      color:var(--text);
+      font-size:13px;
+      font-weight:900;
+    }
+    body.theme-future .toggle, body.theme-dark .toggle{ background:rgba(255,255,255,.06); }
+    .toggle input{ accent-color: var(--accent); }
+    .select-plain{ background:transparent; border:0; color:inherit; font-weight:900; outline:none; }
+
+  </style>
+</head>
+
+<body class="theme-dark">
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img alt="GenieSphere" class="logo" src="../genie-logo.png"/>
+        <strong>GenieSphere</strong>
+      </a>
+
+      <nav aria-label="Primary" class="menu">
+        <a class="active" href="../dashboard/household.html">🏠 Household</a>
+        <a class="ghost" href="../dashboard/business.html">🏢 Business</a>
+        <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+        <a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+      </nav>
+
+      <!-- User menu -->
+      <div class="user-menu" id="user-menu">
+        <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle">
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+
+        <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <div class="mobile-only">
+            <div class="dropdown-label">Areas</div>
+            <button type="button" class="dropdown-nav" data-target="../dashboard/household.html">🏠 Household</button>
+            <button type="button" class="dropdown-nav" data-target="../dashboard/business.html">🏢 Business</button>
+            <button type="button" class="dropdown-nav" data-target="../dashboard/investment.html">📈 Investment</button>
+            <button type="button" class="dropdown-nav" data-target="../dashboard/leisure.html">🏝️ Leisure</button>
+            <div class="user-menu-divider"></div>
+          </div>
+
+          <div class="dropdown-label">Account</div>
+          <button class="dropdown-nav" data-target="../onboarding/user_profile_form.html" type="button">👤 User profile</button>
+          <button class="dropdown-nav" data-target="../onboarding/display_settings.html" type="button">⚙️ Settings</button>
+          <button id="dropdown-open-appearance" type="button">🎨 Appearance</button>
+          <div class="user-menu-divider"></div>
+          <button id="user-auth-action" type="button">Log in / Sign up</button>
+          <button class="auth-only" id="user-signout-btn" type="button">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Hero -->
+    <section class="hero">
+      <h1 class="title">🧾 Credit Card Transactions</h1>
+      <p class="subtitle">Import, add, browse, and filter transactions. This fuels Rewards + Best Card recommendations.</p>
+
+      <div class="hero-meta">
+        <span class="pill">Category: 🏠 Household</span>
+        <span class="pill">Type: 🧰 Tool</span>
+        <span class="pill ghost">Status: Beta</span>
+      </div>
+
+      <div class="hub-tabs" aria-label="Credit Card Hub Navigation">
+        <a class="hub-tab" href="./credit-card-hub.html">🏠 Hub</a>
+        <a class="hub-tab" href="./credit-card-tracker.html">💳 Cards</a>
+        <span class="hub-tab active" aria-current="page">🧾 Transactions</span>
+        <a class="hub-tab" href="./credit-card-rewards.html">🎁 Rewards</a>
+        <a class="hub-tab" href="./credit-card-optimizer.html">🏷️ Best Card</a>
+      </div>
+
+      <div class="hub-filters" id="hub-filters" hidden>
+        <div class="filter-row" id="workspace-filter-row" aria-label="Workspace filter">
+          <span class="filter-label">Workspace</span>
+        </div>
+        <div class="filter-row" id="purpose-filter-row" aria-label="Purpose filter">
+          <span class="filter-label">Purpose</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- KPIs -->
+    <div class="kpis" aria-label="Transactions KPIs">
+      <div class="kpi-card">
+        <div class="kpi-label">Transactions</div>
+        <div class="kpi-value" id="kpi-count">0</div>
+        <div class="kpi-foot"><span class="muted">Current view</span><span id="kpi-count-foot" class="muted">—</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Spend</div>
+        <div class="kpi-value" id="kpi-spend">$0</div>
+        <div class="kpi-foot"><span class="muted">Charges only</span><span id="kpi-spend-foot" class="muted">—</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">This Month</div>
+        <div class="kpi-value" id="kpi-month">$0</div>
+        <div class="kpi-foot"><span class="muted">Charges</span><span id="kpi-month-foot" class="muted">—</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Categories</div>
+        <div class="kpi-value" id="kpi-cats">0</div>
+        <div class="kpi-foot"><span class="muted">Unique</span><span id="kpi-cats-foot" class="muted">—</span></div>
+      </div>
+    </div>
+
+    <main class="page tool-shell" aria-label="Credit card transactions tool">
+      <div class="tx-page">
+        <!-- ===== TOP: Two forms side-by-side on desktop ===== -->
+        <div class="tx-split">
+
+          <!-- (1) Add / Import Transaction -->
+          <section class="panel tx-panel" aria-label="Add and import transactions">
+            <div class="panel-head">
+              <h2 class="panel-title">➕ Add / Import Transaction</h2>
+              <div class="panel-sub">Filters + CSV import. Filters affect the table and KPIs below.</div>
+            </div>
+
+            <div class="panel-body tx-panel-body">
+              <form class="form" id="filtersForm" autocomplete="off">
+              <div class="form-row">
+                <label for="filterMonth">📅 Month</label>
+                <input id="filterMonth" type="month"/>
+              </div>
+              <div class="form-row">
+                <label for="filterCategory">🏷️ Category contains</label>
+                <input id="filterCategory" type="text" placeholder="e.g., grocery, dining, travel"/>
+              </div>
+              <div class="form-row">
+                <label for="filterCard">💳 Card</label>
+                <select id="filterCard">
+                  <option value="">All cards</option>
+                </select>
+              </div>
+
+
+              <div class="form-row">
+                <label>💸 Amount (optional)</label>
+                <div class="two-cols">
+                  <input id="filterAmtMin" type="number" step="0.01" placeholder="Min (e.g., 10)"/>
+                  <input id="filterAmtMax" type="number" step="0.01" placeholder="Max (e.g., 250)"/>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <label>⚡ Quick view</label>
+                <div class="toggles" aria-label="Quick view toggles">
+                  <label class="toggle"><input id="toggleChargesOnly" type="checkbox"/> Charges only</label>
+                  <label class="toggle"><input id="toggleCreditsOnly" type="checkbox"/> Credits only</label>
+                </div>
+                <div class="form-foot">Tip: Charges = amount &gt; 0. Credits/refunds = amount &lt; 0.</div>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn ghost" type="button" id="btnClearFilters">🧹 Clear</button>
+                <button class="btn primary" type="submit">🔍 Apply</button>
+              </div>
+              <div class="form-foot">Filters affect the table and KPIs on the right.</div>
+            </form>
+
+              <div class="panel" aria-label="CSV import" class="panel mt-14">
+              <div class="panel-head">
+                <h3 class="panel-title">📤 CSV Import</h3>
+                <div class="panel-sub">Columns supported: date, posted_date, description, amount, category, card/card_name (best-effort mapping).</div>
+              </div>
+              <div class="panel-body">
+                <form class="form" id="csvForm" autocomplete="off">
+                  <div class="form-row">
+                    <label for="csvFile">Choose CSV</label>
+                    <input id="csvFile" type="file" accept=".csv,text/csv"/>
+                  </div>
+                  <div class="status-line">
+                    <span class="status-pill" id="csvStatus">No file</span>
+                    <span class="muted" id="csvMeta">—</span>
+                  </div>
+                  <div class="form-actions">
+                    <button class="btn ghost" type="button" id="btnCsvPreview">👀 Preview</button>
+                    <button class="btn primary" type="button" id="btnCsvImport">⬆️ Import to Supabase</button>
+                  </div>
+                  <div class="form-foot">Tip: start with a small file to validate mappings.</div>
+                </form>
+              </div>
+            </div>
+            </div>
+          </section>
+
+          <!-- (2) Manual Add + Receipt Extract -->
+          <section class="panel tx-panel" aria-label="Manual add and receipt extract">
+            <div class="panel-head">
+              <h2 class="panel-title">🧾 Manual Add + Extract Receipt</h2>
+              <div class="panel-sub">Manually add a transaction and optionally attach/extract a receipt.</div>
+            </div>
+
+            <div class="panel-body tx-panel-body">
+              <form class="form" id="addForm" autocomplete="off">
+                  <div class="form-row">
+                    <label for="cardSelect">💳 Card</label>
+                    <select id="cardSelect" required>
+                      <option value="">Select a card…</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label for="txDate">📅 Posted date</label>
+                    <input id="txDate" type="date" required/>
+                  </div>
+                  <div class="form-row">
+                    <label for="txDesc">🧾 Description</label>
+                    <input id="txDesc" type="text" placeholder="e.g., Amazon, Costco, Starbucks" required/>
+                  </div>
+                  <div class="form-row">
+                    <label for="txAmount">💲 Amount</label>
+                    <input id="txAmount" type="number" step="0.01" placeholder="e.g., 42.75" required/>
+                  </div>
+                  <div class="form-row">
+                    <label for="txCategory">🏷️ Category (optional)</label>
+                    <input id="txCategory" type="text" placeholder="e.g., grocery, dining, travel"/>
+                  </div>
+
+                  <div class="form-row">
+                    <label for="receiptFile">🧾 Receipt (optional)</label>
+                    <input id="receiptFile" type="file" accept="image/*,application/pdf"/>
+                    <div class="receipt-actions" aria-label="Receipt actions">
+                      <button class="btn" type="button" id="btnSaveReceipt">📥 Save Receipt</button>
+                      <button class="btn primary" type="button" id="btnExtractReceipt">🔎 Extract</button>
+                      <span class="receipt-status" id="receiptStatus"></span>
+                    </div>
+                    <div class="form-foot">Extract is a stub hook for your n8n OCR pipeline. Saving attaches the receipt to your next transaction.</div>
+                  </div>
+
+                  <div class="form-actions">
+                    <button class="btn ghost" type="button" id="btnClearAdd">🧹 Clear</button>
+                    <button class="btn primary" type="submit">💾 Save Transaction</button>
+                  </div>
+                </form>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- ===== BOTTOM: Transactions Grid ===== -->
+        <div class="tx-grid-bottom">
+          <section class="panel" aria-label="Transactions list">
+          <div class="panel-head">
+            <h2 class="panel-title">📋 Transactions</h2>
+            <div class="panel-sub">Browse and manage your transactions (latest first).</div>
+          </div>
+
+          <div class="panel-body">
+            <div class="status-line">
+              <span class="status-pill" id="tableStatus">Loading…</span>
+              <span class="muted" id="tableMeta">—</span>
+            </div>
+
+
+            <div class="table-toolbar" aria-label="Table toolbar">
+              <div class="toolbar-left">
+                <button class="btn small" type="button" id="btnRefresh">🔄 Refresh</button>
+                <button class="btn small ghost" type="button" id="btnExportCsv">⬇️ Export CSV</button>
+                <span class="toolbar-hint" id="viewHint">Showing latest transactions.</span>
+              </div>
+              <div class="toolbar-right">
+                <label class="toggle" title="Show more rows per page">
+                  <span>Rows</span>
+                  <select id="pageSize" class="select-plain">
+                    <option value="25">25</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="pager" aria-label="Pagination">
+              <button class="btn small ghost" type="button" id="btnPrev">⬅️ Prev</button>
+              <span class="muted" id="pageMeta">Page 1</span>
+              <button class="btn small ghost" type="button" id="btnNext">Next ➡️</button>
+            </div>
+
+
+            <div id="tableContainer" class="table-wrap" aria-label="Transactions table"></div>
+
+            <div id="cardsContainer" class="cards-wrap" aria-label="Transactions cards"></div>
+
+            <div id="tableEmpty" class="empty" class="empty hidden">
+              No transactions found for the current filters.
+            </div>
+          </div>
+        </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h4>Home &amp; Family</h4>
+            <a href="/household/householdgenie/household-genie.html">Household Genie</a>
+            <a href="/household/family-scheduler.html">Family Scheduler</a>
+            <a href="/household/kids-school.html">Kids &amp; School Hub</a>
+          </div>
+          <div class="footer-col">
+            <h4>Health &amp; Money</h4>
+            <a href="/household/nutrition-engine.html">Nutrition Engine</a>
+            <a href="/household/medication-logger.html">Medication &amp; Vitals</a>
+            <a href="/household/household-budget.html">Household Budget</a>
+          </div>
+          <div class="footer-col">
+            <h4>Life &amp; Travel</h4>
+            <a href="/household/car-care">Car Care Tracker</a>
+            <a href="/leisure/travelplangenie/index.html">Trip Planner</a>
+            <a href="/household/household-insurance.html">Safety &amp; Insurance</a>
+          </div>
+          <div class="footer-col">
+            <h4>Help</h4>
+            <a href="/onboarding/api-key-settings.html">API Keys</a>
+            <a href="/about.html">About</a>
+            <a href="contact.html">Contact</a>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+          <div aria-label="Social" class="social">
+            <a aria-label="Twitter / X" href="#">🐦</a>
+            <a aria-label="YouTube" href="#">▶️</a>
+            <a aria-label="GitHub" href="#">🐙</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <div class="mobile-pad" aria-hidden="true"></div>
+
+    <!-- Mobile bottom nav -->
+    <nav class="mobile-nav" aria-label="GenieSphere mobile navigation">
+      <div class="mobile-nav-inner">
+        <a class="mnav" href="../dashboard/household.html" data-nav="household">
+          <div class="ico">🏠</div><div>Household</div>
+        </a>
+        <a class="mnav" href="../dashboard/business.html" data-nav="business">
+          <div class="ico">🏢</div><div>Business</div>
+        </a>
+        <a class="mnav" href="../dashboard/investment.html" data-nav="investment">
+          <div class="ico">📈</div><div>Investment</div>
+        </a>
+        <a class="mnav" href="../dashboard/leisure.html" data-nav="leisure">
+          <div class="ico">🏝️</div><div>Leisure</div>
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ✅ Supabase SDK (Edge-safe) -->
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.3";
+    window.supabase = { createClient };
+  </script>
+
+  <!-- Shared scripts (your standard) -->
+  <script>
+    window.GS_CONFIG_URL = "/shared/config.json";
+    window.GS_CONFIG_PATH = "/shared/config.json";
+  </script>
+  <script src="/shared/js/app-config.js?v=20260208a"></script>
+  <script src="/shared/js/auth-header.js?v=20260208a"></script>
+  <script src="/shared/js/hub-badges.js"></script>
+
+  <script>
+    // =========================
+    // Theme modal (shared)
+    // =========================
+    (function ThemeSwitcher(){
+      const STORAGE_KEY = 'geniesphere_theme';
+      const THEMES = ['theme-calm','theme-future','theme-nature','theme-dark'];
+      const DEFAULT_THEME = 'theme-dark';
+
+      function saveTheme(theme){ try { localStorage.setItem(STORAGE_KEY, theme); } catch(_){ } }
+      function getTheme(){ try { return localStorage.getItem(STORAGE_KEY); } catch(_){ return null; } }
+      function applyTheme(theme){
+        THEMES.forEach(t => document.body.classList.remove(t));
+        document.body.classList.add(theme);
+      }
+      const saved = getTheme();
+      applyTheme((saved && THEMES.includes(saved)) ? saved : DEFAULT_THEME);
+    })();
+
+    // Mobile bottom nav highlight
+    (function(){
+      const path = (location.pathname || "").toLowerCase();
+      let key = "household";
+      if(path.includes("business")) key = "business";
+      else if(path.includes("investment")) key = "investment";
+      else if(path.includes("leisure")) key = "leisure";
+      document.querySelectorAll('.mobile-nav .mnav').forEach(a=>{
+        a.classList.toggle('active', a.getAttribute('data-nav') === key);
+      });
+    })();
+
+    // Footer year
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+
+  <script>
+    // =========================================================
+    // Credit Card Transactions v2 (Aligned to Hub spec)
+    // Tables:
+    //   - credit_cards
+    //   - credit_card_transactions (expects: user_id, credit_card_id, posted_date, description, amount, category)
+    //
+    // Optional receipt columns (if present): receipt_path, receipt_url
+    // =========================================================
+
+    const RECEIPT_BUCKET = "receipts"; // create bucket in Supabase Storage
+    const MAX_ROWS_RENDER = 2000;
+    const CSV_IMPORT_CHUNK = 500;
+
+    const state = {
+      client: null,
+      user: null,
+      cards: [],
+      txns: [],
+      receiptDraft: null,
+      csvPreviewRows: [],
+    };
+
+    const el = {
+      filterMonth: document.getElementById('filterMonth'),
+      filterCategory: document.getElementById('filterCategory'),
+      filterCard: document.getElementById('filterCard'),
+      filterAmtMin: document.getElementById('filterAmtMin'),
+      filterAmtMax: document.getElementById('filterAmtMax'),
+      toggleChargesOnly: document.getElementById('toggleChargesOnly'),
+      toggleCreditsOnly: document.getElementById('toggleCreditsOnly'),
+
+      btnRefresh: document.getElementById('btnRefresh'),
+      btnExportCsv: document.getElementById('btnExportCsv'),
+      pageSize: document.getElementById('pageSize'),
+      btnPrev: document.getElementById('btnPrev'),
+      btnNext: document.getElementById('btnNext'),
+      pageMeta: document.getElementById('pageMeta'),
+      viewHint: document.getElementById('viewHint'),
+      btnClearFilters: document.getElementById('btnClearFilters'),
+      filtersForm: document.getElementById('filtersForm'),
+
+      csvFile: document.getElementById('csvFile'),
+      csvStatus: document.getElementById('csvStatus'),
+      csvMeta: document.getElementById('csvMeta'),
+      btnCsvPreview: document.getElementById('btnCsvPreview'),
+      btnCsvImport: document.getElementById('btnCsvImport'),
+
+      addForm: document.getElementById('addForm'),
+      cardSelect: document.getElementById('cardSelect'),
+      txDate: document.getElementById('txDate'),
+      txDesc: document.getElementById('txDesc'),
+      txAmount: document.getElementById('txAmount'),
+      txCategory: document.getElementById('txCategory'),
+      btnClearAdd: document.getElementById('btnClearAdd'),
+
+      receiptFile: document.getElementById('receiptFile'),
+      btnSaveReceipt: document.getElementById('btnSaveReceipt'),
+      btnExtractReceipt: document.getElementById('btnExtractReceipt'),
+      receiptStatus: document.getElementById('receiptStatus'),
+
+      tableStatus: document.getElementById('tableStatus'),
+      tableMeta: document.getElementById('tableMeta'),
+      tableContainer: document.getElementById('tableContainer'),
+      cardsContainer: document.getElementById('cardsContainer'),
+
+      tableEmpty: document.getElementById('tableEmpty'),
+
+      kpiCount: document.getElementById('kpi-count'),
+      kpiCountFoot: document.getElementById('kpi-count-foot'),
+      kpiSpend: document.getElementById('kpi-spend'),
+      kpiSpendFoot: document.getElementById('kpi-spend-foot'),
+      kpiMonth: document.getElementById('kpi-month'),
+      kpiMonthFoot: document.getElementById('kpi-month-foot'),
+      kpiCats: document.getElementById('kpi-cats'),
+      kpiCatsFoot: document.getElementById('kpi-cats-foot'),
+    };
+
+    function money(n){
+      const x = Number(n || 0);
+      return x.toLocaleString(undefined, { style:'currency', currency:'USD' });
+    }
+    function escapeHtml(str){
+      return String(str ?? '').replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    }
+    function setTableStatus(text, meta='—'){
+      el.tableStatus.textContent = text;
+      el.tableMeta.textContent = meta;
+    }
+    function setCsvStatus(text, meta='—'){
+      el.csvStatus.textContent = text;
+      el.csvMeta.textContent = meta;
+    }
+    function setReceiptStatus(text){
+      el.receiptStatus.textContent = text || '';
+    }
+
+    // =========================
+    // Hub-style Filters (Workspace + Purpose) + Paging
+    // =========================
+    const HUB_STATE = {
+      workspace: 'all',
+      purpose: 'all',
+      page: 1,
+      pageSize: 50,
+      workspaces: [],
+      purposes: []
+    };
+
+    function cardWorkspaceKey(card){
+      return (
+        card.business_profile_id ||
+        card.workspace_id ||
+        card.entity_id ||
+        card.owner_entity_id ||
+        card.owner ||
+        card.entity ||
+        card.company ||
+        card.business_name ||
+        ''
+      ) || '';
+    }
+    function cardWorkspaceLabel(card){
+      return (
+        card.business_name ||
+        card.entity ||
+        card.company ||
+        card.owner ||
+        card.nickname_entity ||
+        ''
+      ) || '';
+    }
+
+    function buildWorkspaces(cards){
+      const groups = new Map();
+      for(const c of cards){
+        const key = cardWorkspaceKey(c);
+        const label = cardWorkspaceLabel(c);
+        if(!key && !label) continue;
+        const gkey = key || label;
+        if(!groups.has(gkey)) groups.set(gkey, { key:gkey, label: label || String(gkey), count:0 });
+        groups.get(gkey).count += 1;
+      }
+      const list = [{ key:'all', label:'All', count: cards.length }, { key:'personal', label:'Personal', count: cards.length }];
+
+      const extra = Array.from(groups.values())
+        .filter(g => {
+          const s = (g.label || g.key || '').toString().toLowerCase();
+          return s && !['personal','me','myself'].includes(s);
+        })
+        .sort((a,b)=> (b.count - a.count) || String(a.label).localeCompare(String(b.label)));
+
+      if(extra.length){
+        const extraKeys = new Set(extra.map(e=>e.key));
+        const personalCount = cards.filter(c=>{
+          const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+          return !k || !extraKeys.has(k);
+        }).length;
+        list[1].count = personalCount;
+        return list.concat(extra.map(e=>({ key:e.key, label:e.label || e.key, count:e.count })));
+      }
+      return list;
+    }
+
+    function normalizeCategoryLoose(s){
+      const x = String(s || '').toLowerCase();
+      if(!x) return '';
+      if(x.includes('groc')) return 'grocery';
+      if(x.includes('dining') || x.includes('restaurant') || x.includes('coffee')) return 'dining';
+      if(x.includes('travel') || x.includes('air') || x.includes('hotel') || x.includes('uber') || x.includes('lyft')) return 'travel';
+      if(x.includes('gas') || x.includes('fuel')) return 'gas';
+      if(x.includes('drug') || x.includes('pharm')) return 'drugstore';
+      if(x.includes('stream') || x.includes('netflix') || x.includes('hulu') || x.includes('spotify')) return 'streaming';
+      return x.replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,'_');
+    }
+
+    function purposeFromTxn(t){
+      const cat = normalizeCategoryLoose(t.category || t.description);
+      const desc = String(t.description || '').toLowerCase();
+
+      if(desc.includes('insurance') || desc.includes('electric') || desc.includes('water') || desc.includes('internet') || desc.includes('phone')) return 'bills';
+      if(cat === 'streaming') return 'bills';
+
+      if(cat === 'travel' || desc.includes('airbnb') || desc.includes('hilton') || desc.includes('marriott') || desc.includes('delta') || desc.includes('southwest')) return 'travel';
+
+      if(desc.includes('robinhood') || desc.includes('etrade') || desc.includes('td ameritrade') || desc.includes('interactive brokers') || desc.includes('tradingview')) return 'investing';
+
+      if(desc.includes('quickbooks') || desc.includes('square') || desc.includes('clover') || desc.includes('stripe')) return 'bizops';
+
+      if(['dining','grocery','gas','drugstore'].includes(cat) || desc.includes('amazon')) return 'daily';
+
+      return 'other';
+    }
+
+    const PURPOSE_LABELS = {
+      all: 'All',
+      daily: '🛒 Daily',
+      bills: '🧾 Bills',
+      travel: '✈️ Travel',
+      bizops: '🏢 Biz Ops',
+      investing: '📈 Investing',
+      other: '✨ Other'
+    };
+
+    function buildPurposes(txns){
+      const counts = new Map();
+      for(const t of txns){
+        if(!(Number(t.amount) > 0)) continue;
+        const p = purposeFromTxn(t);
+        counts.set(p, (counts.get(p)||0)+1);
+      }
+      const list = [{ key:'all', label:PURPOSE_LABELS.all, count: txns.length }];
+      const keys = Array.from(counts.keys()).sort((a,b)=> (counts.get(b)-counts.get(a)));
+      for(const k of keys){
+        list.push({ key:k, label: PURPOSE_LABELS[k] || k, count: counts.get(k) });
+      }
+      return list;
+    }
+
+    function renderPills(container, items, activeKey, onClick){
+      container.querySelectorAll('.filter-pill').forEach(n=>n.remove());
+      items.forEach(item=>{
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'filter-pill' + (item.key === activeKey ? ' active' : '');
+        btn.setAttribute('data-key', item.key);
+        btn.innerHTML = `${escapeHtml(item.label)} <span class="count">${Number(item.count||0)}</span>`;
+        btn.addEventListener('click', ()=> onClick(item.key));
+        container.appendChild(btn);
+      });
+    }
+
+    function applyHubFilters(cards, txns){
+      const ws = HUB_STATE.workspace;
+
+      let filteredCards = cards;
+      if(ws === 'personal'){
+        const known = new Set(HUB_STATE.workspaces.slice(2).map(x=>x.key));
+        filteredCards = cards.filter(c=>{
+          const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+          return !k || !known.has(k);
+        });
+      }else if(ws !== 'all'){
+        filteredCards = cards.filter(c=>{
+          const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+          return k === ws;
+        });
+      }
+
+      const cardIds = new Set(filteredCards.map(c=>c.id).filter(Boolean));
+      let filteredTxns = txns.filter(t=> !t.credit_card_id || cardIds.has(t.credit_card_id));
+
+      if(HUB_STATE.purpose !== 'all'){
+        filteredTxns = filteredTxns.filter(t => purposeFromTxn(t) === HUB_STATE.purpose);
+      }
+
+      return { cards: filteredCards, txns: filteredTxns };
+    }
+
+    function mountHubFilters(){
+      const wrap = document.getElementById('hub-filters');
+      const wsRow = document.getElementById('workspace-filter-row');
+      const pRow = document.getElementById('purpose-filter-row');
+      if(!wrap || !wsRow || !pRow) return;
+
+      HUB_STATE.workspaces = buildWorkspaces(state.cards);
+      // Purposes depend on workspace; start with all txns and we rebuild after workspace click
+      HUB_STATE.purposes = buildPurposes(state.txns);
+
+      const showWorkspaces = HUB_STATE.workspaces.length > 2;
+      const showPurposes = HUB_STATE.purposes.length > 1;
+
+      if(!showWorkspaces && !showPurposes){
+        wrap.hidden = true;
+        return;
+      }
+      wrap.hidden = false;
+      wsRow.style.display = showWorkspaces ? 'flex' : 'none';
+      pRow.style.display = showPurposes ? 'flex' : 'none';
+
+      renderPills(wsRow, HUB_STATE.workspaces, HUB_STATE.workspace, (key)=>{
+        HUB_STATE.workspace = key;
+        HUB_STATE.page = 1;
+
+        const scoped = applyHubFilters(state.cards, state.txns);
+        HUB_STATE.purposes = buildPurposes(scoped.txns);
+        if(!HUB_STATE.purposes.find(x=>x.key===HUB_STATE.purpose)) HUB_STATE.purpose = 'all';
+
+        renderPills(wsRow, HUB_STATE.workspaces, HUB_STATE.workspace, ()=>{});
+        renderPills(pRow, HUB_STATE.purposes, HUB_STATE.purpose, ()=>{});
+        renderView();
+      });
+
+      renderPills(pRow, HUB_STATE.purposes, HUB_STATE.purpose, (key)=>{
+        HUB_STATE.purpose = key;
+        HUB_STATE.page = 1;
+        renderView();
+      });
+    }
+
+    function csvDownload(filename, rows){
+      const headers = Object.keys(rows[0] || {});
+      const lines = [];
+      lines.push(headers.map(h=>`"${String(h).replace(/"/g,'""')}"`).join(','));
+      for(const r of rows){
+        lines.push(headers.map(h=>`"${String(r[h] ?? '').replace(/"/g,'""')}"`).join(','));
+      }
+      const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // Force GSConfig to use /shared/config.json (works from /dashboard/* and /onboarding/*)
+    async function loadConfig(){
+      const meta = document.querySelector('meta[name="gs-config"]');
+      const url  = meta?.content || '/shared/config.json';
+      const res  = await fetch(url, { cache: 'no-store' });
+      if(!res.ok) throw new Error('[GSConfig] Failed to load ' + url);
+      const cfg = await res.json();
+      if(!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) throw new Error('[GSConfig] Missing supabaseUrl or supabaseAnonKey in config');
+      return cfg;
+    }
+    const CONFIG_PROMISE = loadConfig();
+
+    async function getClient(){
+      const cfg = await CONFIG_PROMISE;
+
+      function pickAuthStorage(){
+        const looksLikeSbKey = (k)=> typeof k === 'string' && k.startsWith('sb-') && k.includes('-auth-token');
+        try {
+          for (let i = 0; i < localStorage.length; i++){
+            const k = localStorage.key(i);
+            if (looksLikeSbKey(k)) return localStorage;
+          }
+        } catch(_){}
+        try {
+          for (let i = 0; i < sessionStorage.length; i++){
+            const k = sessionStorage.key(i);
+            if (looksLikeSbKey(k)) return sessionStorage;
+          }
+        } catch(_){}
+        return localStorage;
+      }
+
+      const authStorage = pickAuthStorage();
+      return window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+        auth: { persistSession: true, storage: authStorage }
+      });
+    }
+
+    async function requireUser(){
+      const { data, error } = await state.client.auth.getUser();
+      const user = data?.user;
+      if(error || !user){
+        window.location.href = '/onboarding/login.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+        return null;
+      }
+      return user;
+    }
+
+    async function loadCards(){
+      // Best-effort: include workspace-ish columns when they exist.
+      const trySelect = async (cols)=>{
+        const { data, error } = await state.client
+          .from('credit_cards')
+          .select(cols)
+          .eq('user_id', state.user.id)
+          .order('created_at', { ascending:false });
+        return { data, error };
+      };
+
+      let resp = await trySelect('id, card_name, nickname, is_active, business_profile_id, business_name, entity, company, owner, workspace_id, entity_id');
+      if(resp.error){
+        resp = await trySelect('id, card_name, nickname, is_active');
+      }
+      return resp.data || [];
+    }
+
+    function cardLabel(c){
+      return c.card_name || c.nickname || 'Card';
+    }
+
+    function fillCardSelects(cards){
+      const opts = cards.map(c => `<option value="${c.id}">${escapeHtml(cardLabel(c))}</option>`).join('');
+      el.cardSelect.innerHTML = `<option value="">Select a card…</option>` + opts;
+      el.filterCard.innerHTML = `<option value="">All cards</option>` + opts;
+    }
+
+    function buildFilters(){
+      const month = (el.filterMonth.value || '').trim(); // YYYY-MM
+      const cat = (el.filterCategory.value || '').trim().toLowerCase();
+      const cardId = (el.filterCard.value || '').trim();
+      const amtMin = (el.filterAmtMin?.value || '').trim();
+      const amtMax = (el.filterAmtMax?.value || '').trim();
+      const chargesOnly = !!el.toggleChargesOnly?.checked;
+      const creditsOnly = !!el.toggleCreditsOnly?.checked;
+      return { month, cat, cardId, amtMin, amtMax, chargesOnly, creditsOnly };
+    }
+
+    function monthRange(yyyyMM){
+      if(!yyyyMM) return null;
+      const [yStr, mStr] = yyyyMM.split('-');
+      const y = Number(yStr);
+      const m = Number(mStr);
+      if(!y || !m) return null;
+      const start = `${yStr}-${mStr}-01`;
+      const endDate = new Date(y, m, 0); // last day of month
+      const dd = String(endDate.getDate()).padStart(2,'0');
+      const end = `${yStr}-${mStr}-${dd}`;
+      return { start, end };
+    }
+
+    async function loadTxns(){
+      const { month, cat, cardId, amtMin, amtMax, chargesOnly, creditsOnly } = buildFilters();
+
+      let q = state.client
+        .from('credit_card_transactions')
+        .select('id, user_id, credit_card_id, posted_date, description, amount, category, receipt_url')
+        .eq('user_id', state.user.id)
+        .order('posted_date', { ascending:false })
+        .limit(5000);
+
+      const r = monthRange(month);
+      if(r){
+        q = q.gte('posted_date', r.start).lte('posted_date', r.end);
+      }
+      if(cardId){
+        q = q.eq('credit_card_id', cardId);
+      }
+      if(cat){
+        // match category OR description (helpful for sloppy data)
+        q = q.or(`category.ilike.%${cat}%,description.ilike.%${cat}%`);
+      }
+      if(amtMin){
+        const n = Number(amtMin);
+        if(Number.isFinite(n)) q = q.gte('amount', n);
+      }
+      if(amtMax){
+        const n = Number(amtMax);
+        if(Number.isFinite(n)) q = q.lte('amount', n);
+      }
+
+      const { data, error } = await q;
+      if(error){
+        console.warn(error);
+        return [];
+      }
+      let out = data || [];
+      if(chargesOnly && !creditsOnly) out = out.filter(t => Number(t.amount) > 0);
+      if(creditsOnly && !chargesOnly) out = out.filter(t => Number(t.amount) < 0);
+      return out;
+    }
+
+    function computeKPIs(txns){
+      const count = txns.length;
+      const charges = txns.filter(t => Number(t.amount) > 0);
+      const spend = charges.reduce((a,t)=>a + Number(t.amount||0), 0);
+
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth()+1).padStart(2,'0');
+      const monthKey = `${y}-${m}`;
+
+      const monthSpend = charges
+        .filter(t => String(t.posted_date || '').slice(0,7) === monthKey)
+        .reduce((a,t)=>a + Number(t.amount||0), 0);
+
+      const catSet = new Set(txns.map(t => String(t.category||'').trim().toLowerCase()).filter(Boolean));
+      const catCount = catSet.size;
+
+      el.kpiCount.textContent = String(count);
+      el.kpiSpend.textContent = money(spend);
+      el.kpiMonth.textContent = money(monthSpend);
+      el.kpiCats.textContent = String(catCount);
+
+      const f = buildFilters();
+      el.kpiCountFoot.textContent = (f.month || f.cat || f.cardId) ? 'Filtered' : 'All';
+      el.kpiSpendFoot.textContent = (charges.length !== count) ? 'Excludes credits' : 'Charges';
+      el.kpiMonthFoot.textContent = monthKey;
+      el.kpiCatsFoot.textContent = catCount ? 'Tagged' : 'Add categories';
+    }
+
+    function renderCards(txns){
+      if(!el.cardsContainer) return;
+      if(!txns.length){
+        el.cardsContainer.innerHTML = '';
+        return;
+      }
+
+      const cardMap = new Map(state.cards.map(c => [c.id, cardLabel(c)]));
+      const view = txns.slice(0, MAX_ROWS_RENDER);
+
+      el.cardsContainer.innerHTML = view.map(t=>{
+        const card = escapeHtml(cardMap.get(t.credit_card_id) || '—');
+        const date = escapeHtml(t.posted_date || '');
+        const desc = escapeHtml(t.description || '');
+        const cat = escapeHtml(t.category || 'Uncategorized');
+        const amt = money(t.amount);
+        const isCredit = Number(t.amount) < 0;
+        const receiptBtn = t.receipt_url
+          ? `<a class="btn small" href="${escapeHtml(t.receipt_url)}" target="_blank" rel="noopener">🧾 Receipt</a>`
+          : `<button class="btn small ghost" type="button" disabled>🧾 No receipt</button>`;
+
+        return `
+          <article class="tx-card" aria-label="Transaction">
+            <div class="tx-card-head">
+              <div class="tx-card-title">
+                <strong title="${desc}">${desc}</strong>
+                <div class="sub">
+                  <span class="badge"><span class="dot" aria-hidden="true"></span>${card}</span>
+                  <span class="badge">📅 ${date}</span>
+                  <span class="badge">${isCredit ? '➖ Credit' : '➕ Charge'} • ${amt}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="tx-card-body">
+              <div class="tx-kv">
+                <div class="k">Category</div><div class="v" title="${cat}">${cat}</div>
+                <div class="k">Amount</div><div class="v">${amt}</div>
+                <div class="k">Card</div><div class="v" title="${card}">${card}</div>
+                <div class="k">Date</div><div class="v">${date}</div>
+              </div>
+            </div>
+
+            <div class="tx-card-actions">
+              ${receiptBtn}
+              <button class="btn small ghost" type="button" data-del="${t.id}">🗑️ Delete</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      // wire deletes on cards
+      el.cardsContainer.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const id = btn.getAttribute('data-del');
+          if(!id) return;
+          const ok = confirm('Delete this transaction?');
+          if(!ok) return;
+          await deleteTxn(id);
+        });
+      });
+    }
+
+
+    function renderTable(txns){
+      renderCards(txns);
+      if(!txns.length){
+        el.tableContainer.innerHTML = '';
+        el.tableEmpty.classList.remove('hidden');
+        setTableStatus('Ready', '0 transactions');
+        // KPIs handled by renderView()
+        return;
+      }
+      el.tableEmpty.classList.add('hidden');
+
+      const cardMap = new Map(state.cards.map(c => [c.id, cardLabel(c)]));
+      const view = txns.slice(0, MAX_ROWS_RENDER);
+
+      const rowsHtml = view.map(t=>{
+        const card = escapeHtml(cardMap.get(t.credit_card_id) || '—');
+        const date = escapeHtml(t.posted_date || '');
+        const desc = escapeHtml(t.description || '');
+        const cat = escapeHtml(t.category || '—');
+        const amt = money(t.amount);
+        const receipt = t.receipt_url
+          ? `<a class="btn small" href="${escapeHtml(t.receipt_url)}" target="_blank" rel="noopener">🧾 Receipt</a>`
+          : `<span class="muted">—</span>`;
+
+        return `
+          <tr>
+            <td class="nowrap">${date}</td>
+            <td>${card}</td>
+            <td>${desc}</td>
+            <td>${cat}</td>
+            <td class="right nowrap">${amt}</td>
+            <td class="right nowrap">${receipt}</td>
+            <td class="right nowrap">
+              <button class="btn small ghost" type="button" data-del="${t.id}">🗑️ Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      el.tableContainer.innerHTML = `
+        <table aria-label="Transactions">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Card</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th class="right">Amount</th>
+              <th class="right">Receipt</th>
+              <th class="right">Action</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      `;
+
+      const more = txns.length - view.length;
+      setTableStatus('Ready', more > 0 ? `${txns.length} transactions (showing ${view.length})` : `${txns.length} transactions`);
+      // KPIs handled by renderView()
+
+      el.tableContainer.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const id = btn.getAttribute('data-del');
+          if(!id) return;
+          const ok = confirm('Delete this transaction?');
+          if(!ok) return;
+          await deleteTxn(id);
+        });
+      });
+    }
+
+    async function deleteTxn(id){
+      setTableStatus('Deleting…', '—');
+      const { error } = await state.client
+        .from('credit_card_transactions')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', state.user.id);
+
+      if(error){
+        console.warn(error);
+        alert('Delete failed. Check console.');
+      }
+      await refresh();
+    }
+
+    // =========================
+    // Receipt Upload + Extract (stub)
+    // =========================
+    async function uploadReceiptFile(file){
+      setReceiptStatus('Uploading…');
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const safeExt = ['jpg','jpeg','png','webp','pdf'].includes(ext) ? ext : 'jpg';
+      const path = `${state.user.id}/${Date.now()}_${Math.random().toString(16).slice(2)}.${safeExt}`;
+
+      const { error } = await state.client.storage
+        .from(RECEIPT_BUCKET)
+        .upload(path, file, { upsert:false });
+
+      if(error){
+        console.warn(error);
+        setReceiptStatus('Upload failed');
+        alert('Receipt upload failed. Make sure Storage bucket exists and policies allow upload.');
+        return null;
+      }
+
+      const { data: pub } = state.client.storage.from(RECEIPT_BUCKET).getPublicUrl(path);
+      const url = pub?.publicUrl || null;
+      setReceiptStatus('Uploaded ✅');
+      return { path, url };
+    }
+
+    async function onSaveReceipt(){
+      const file = el.receiptFile.files?.[0];
+      if(!file){ alert('Choose a receipt first.'); return; }
+      const uploaded = await uploadReceiptFile(file);
+      if(!uploaded) return;
+      state.receiptDraft = uploaded;
+      alert('Receipt saved ✅ Now click “Save Transaction” to attach it.');
+    }
+
+    async function onExtractReceipt(){
+      const file = el.receiptFile.files?.[0];
+      if(!file){ alert('Choose a receipt first.'); return; }
+      const uploaded = await uploadReceiptFile(file);
+      if(!uploaded) return;
+      state.receiptDraft = uploaded;
+
+      // Stub: replace with n8n webhook call that returns {description, amount, posted_date, category}
+      // Example: await fetch('/api/ocr', { method:'POST', body: formData })
+      alert('Extract is connected as a stub. Wire this to your n8n OCR webhook when ready.');
+    }
+
+    // =========================
+    // CSV Import
+    // =========================
+    function parseCSV(text){
+      // Simple CSV parser with quotes. Good enough for bank exports.
+      const rows = [];
+      let cur = [];
+      let val = '';
+      let inQ = false;
+      for(let i=0;i<text.length;i++){
+        const ch = text[i];
+        const next = text[i+1];
+        if(ch === '"' && inQ && next === '"'){ val += '"'; i++; continue; }
+        if(ch === '"'){ inQ = !inQ; continue; }
+        if(ch === ',' && !inQ){ cur.push(val); val=''; continue; }
+        if((ch === '\n' || ch === '\r') && !inQ){
+          if(ch === '\r' && next === '\n') i++;
+          cur.push(val);
+          if(cur.some(x=>String(x).trim().length)) rows.push(cur);
+          cur=[]; val=''; continue;
+        }
+        val += ch;
+      }
+      if(val.length || cur.length){ cur.push(val); if(cur.some(x=>String(x).trim().length)) rows.push(cur); }
+      return rows;
+    }
+
+    function normalizeHeader(h){
+      return String(h||'').trim().toLowerCase().replace(/\s+/g,'_');
+    }
+
+    function toISODate(s){
+      const raw = String(s||'').trim();
+      if(!raw) return '';
+      // already ISO?
+      if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+
+      // mm/dd/yyyy or m/d/yyyy
+      const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+      if(m){
+        const mm = String(m[1]).padStart(2,'0');
+        const dd = String(m[2]).padStart(2,'0');
+        const yy = m[3].length === 2 ? ('20' + m[3]) : m[3];
+        return `${yy}-${mm}-${dd}`;
+      }
+
+      const d = new Date(raw);
+      if(!isNaN(d.getTime())){
+        const yy = d.getFullYear();
+        const mm = String(d.getMonth()+1).padStart(2,'0');
+        const dd = String(d.getDate()).padStart(2,'0');
+        return `${yy}-${mm}-${dd}`;
+      }
+      return '';
+    }
+
+    function findCardIdByName(name){
+      const n = String(name||'').trim().toLowerCase();
+      if(!n) return '';
+      for(const c of state.cards){
+        const label = cardLabel(c).toLowerCase();
+        if(label === n) return c.id;
+        if(label.includes(n) || n.includes(label)) return c.id;
+      }
+      return '';
+    }
+
+    function mapCsvRows(text){
+      const rawRows = parseCSV(text);
+      if(rawRows.length < 2) return [];
+
+      const headers = rawRows[0].map(normalizeHeader);
+      const idx = (keys)=> {
+        for(const k of keys){
+          const i = headers.indexOf(k);
+          if(i >= 0) return i;
+        }
+        return -1;
+      };
+
+      const iDate = idx(['posted_date','date','transaction_date']);
+      const iDesc = idx(['description','merchant','name','memo']);
+      const iAmt  = idx(['amount','amt','value']);
+      const iCat  = idx(['category','cat']);
+      const iCard = idx(['card','card_name','credit_card','account']);
+
+      const out = [];
+      for(let r=1;r<rawRows.length;r++){
+        const row = rawRows[r];
+        const posted_date = toISODate(row[iDate]);
+        const description = String(iDesc>=0 ? row[iDesc] : '').trim();
+        const amount = Number(String(iAmt>=0 ? row[iAmt] : '').replace(/[^0-9\.\-]/g,''));
+        const category = String(iCat>=0 ? row[iCat] : '').trim();
+        const cardName = String(iCard>=0 ? row[iCard] : '').trim();
+
+        if(!posted_date || !description || !Number.isFinite(amount)) continue;
+
+        const credit_card_id = findCardIdByName(cardName) || (state.cards[0]?.id || '');
+        out.push({ posted_date, description, amount, category, credit_card_id });
+      }
+      return out;
+    }
+
+    async function importCsvRows(rowsToInsert){
+      if(!rowsToInsert.length){
+        alert('No valid rows found to import.');
+        return;
+      }
+      setCsvStatus('Importing…', `${rowsToInsert.length} rows`);
+
+      // attach user_id + receipt fields null
+      const payload = rowsToInsert.map(r=>({
+        user_id: state.user.id,
+        credit_card_id: r.credit_card_id,
+        posted_date: r.posted_date,
+        description: r.description,
+        amount: r.amount,
+        category: r.category || null
+      }));
+
+      // chunk inserts
+      for(let i=0;i<payload.length;i+=CSV_IMPORT_CHUNK){
+        const chunk = payload.slice(i, i+CSV_IMPORT_CHUNK);
+        const { error } = await state.client.from('credit_card_transactions').insert(chunk);
+        if(error){
+          console.warn(error);
+          setCsvStatus('Import failed', 'Check console');
+          alert('Import failed (see console).');
+          return;
+        }
+      }
+
+      setCsvStatus('Imported ✅', `${rowsToInsert.length} rows`);
+      await refresh();
+    }
+
+    // =========================
+    // Add transaction
+    // =========================
+    async function saveTxn(){
+      const credit_card_id = el.cardSelect.value.trim();
+      const posted_date = el.txDate.value;
+      const description = el.txDesc.value.trim();
+      const amount = Number(el.txAmount.value || 0);
+      const category = el.txCategory.value.trim();
+
+      if(!credit_card_id || !posted_date || !description || !Number.isFinite(amount) || amount === 0){
+        alert('Please fill: Card, Date, Description, Amount.');
+        return;
+      }
+
+      setTableStatus('Saving…', '—');
+
+      const receipt = state.receiptDraft;
+      const payload = {
+        user_id: state.user.id,
+        credit_card_id,
+        posted_date,
+        description,
+        amount,
+        category: category || null
+      };
+
+      // Add receipt fields only if you have these columns; harmless if columns exist.
+      if(receipt?.url) payload.receipt_url = receipt.url;
+      if(receipt?.path) payload.receipt_path = receipt.path;
+
+      const { error } = await state.client.from('credit_card_transactions').insert(payload);
+      if(error){
+        console.warn(error);
+        alert('Save failed. Check console.');
+        setTableStatus('Error', 'Save failed');
+        return;
+      }
+
+      state.receiptDraft = null;
+      setReceiptStatus('');
+      el.receiptFile.value = '';
+      el.addForm.reset();
+      setTableStatus('Saved ✅', 'Refreshing…');
+      await refresh();
+    }
+
+
+    function renderView(){
+      const scoped = applyHubFilters(state.cards, state.txns);
+      const txns = scoped.txns;
+
+      const ps = Number(el.pageSize?.value || HUB_STATE.pageSize);
+      HUB_STATE.pageSize = Number.isFinite(ps) ? ps : 50;
+
+      const total = txns.length;
+      const totalPages = Math.max(1, Math.ceil(total / HUB_STATE.pageSize));
+      HUB_STATE.page = Math.min(HUB_STATE.page, totalPages);
+
+      const start = (HUB_STATE.page - 1) * HUB_STATE.pageSize;
+      const end = start + HUB_STATE.pageSize;
+      const pageTxns = txns.slice(start, end);
+
+      if(el.viewHint){
+        const wsLabel = HUB_STATE.workspaces.find(x=>x.key===HUB_STATE.workspace)?.label || 'All';
+        const pLabel = PURPOSE_LABELS[HUB_STATE.purpose] || HUB_STATE.purpose;
+        el.viewHint.textContent = `View: ${wsLabel} • ${pLabel}`;
+      }
+      if(el.pageMeta) el.pageMeta.textContent = `Page ${HUB_STATE.page} of ${totalPages} • ${total.toLocaleString()} txns`;
+      if(el.btnPrev) el.btnPrev.disabled = HUB_STATE.page <= 1;
+      if(el.btnNext) el.btnNext.disabled = HUB_STATE.page >= totalPages;
+
+      renderTable(pageTxns);
+      computeKPIs(txns);
+    }
+
+    // =========================
+    // Refresh pipeline
+    // =========================
+    async function refresh(){
+      const txns = await loadTxns();
+      state.txns = txns;
+      mountHubFilters();
+      renderView();
+    }
+
+    // =========================
+    // Events
+    // =========================
+    el.filtersForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      HUB_STATE.page = 1;
+      setTableStatus('Loading…', 'Applying filters');
+      await refresh();
+    });
+
+    el.btnClearFilters.addEventListener('click', async ()=>{
+      el.filterMonth.value = '';
+      el.filterCategory.value = '';
+      el.filterCard.value = '';
+      HUB_STATE.page = 1;
+      setTableStatus('Loading…', 'Clearing filters');
+      await refresh();
+    });
+
+    el.btnClearAdd.addEventListener('click', ()=>{
+      el.addForm.reset();
+      state.receiptDraft = null;
+      setReceiptStatus('');
+      el.receiptFile.value = '';
+    });
+
+    el.addForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      await saveTxn();
+    });
+
+    el.btnSaveReceipt.addEventListener('click', onSaveReceipt);
+    el.btnExtractReceipt.addEventListener('click', onExtractReceipt);
+
+    el.btnCsvPreview.addEventListener('click', async ()=>{
+      const file = el.csvFile.files?.[0];
+      if(!file){ alert('Choose a CSV first.'); return; }
+      const text = await file.text();
+      const mapped = mapCsvRows(text);
+      state.csvPreviewRows = mapped;
+      setCsvStatus('Preview ready', `${mapped.length} valid row(s)`);
+      alert(`Preview: ${mapped.length} valid row(s) detected.\n\nNext: click “Import to Supabase”.`);
+    });
+
+    el.btnCsvImport.addEventListener('click', async ()=>{
+      if(!state.csvPreviewRows.length){
+        const file = el.csvFile.files?.[0];
+        if(!file){ alert('Choose a CSV first.'); return; }
+        const text = await file.text();
+        state.csvPreviewRows = mapCsvRows(text);
+      }
+      await importCsvRows(state.csvPreviewRows);
+    });
+
+    // =========================
+    // Bootstrap
+    // =========================
+    async function bootstrap(){
+      try{
+        state.client = await getClient();
+      }catch(e){
+        console.warn(e);
+        setTableStatus('Config missing', 'shared/config.json not loaded');
+        el.tableEmpty.classList.remove('hidden');
+        el.tableEmpty.textContent = 'Supabase config missing. Check /shared/config.json.';
+        return;
+      }
+
+      // Header auth
+      try{
+        window.GSAuthHeader?.init?.({
+          loginUrl: '/onboarding/login.html',
+          afterLogoutUrl: '/index.html'
+        });
+      }catch(_){}
+
+      const user = await requireUser();
+      if(!user) return;
+      state.user = user;
+
+      setTableStatus('Loading…', 'Cards');
+      state.cards = await loadCards();
+      fillCardSelects(state.cards);
+
+      setTableStatus('Loading…', 'Transactions');
+      try{ HUB_STATE.pageSize = Number(el.pageSize?.value || 50); }catch(_){ }
+      await refresh();
+    }
+
+    bootstrap();
+  </script>
+
+  <!-- Theme Modal (shared, wired from auth-header dropdown button) -->
+  <div class="theme-overlay" id="themeOverlay" role="dialog" aria-modal="true" aria-labelledby="themeTitle">
+    <div class="theme-modal">
+      <div class="theme-modal-header">
+        <div class="theme-modal-title">
+          <strong id="themeTitle">⚙️ Appearance</strong>
+          <span>Choose a theme. We’ll remember your preference.</span>
+        </div>
+        <button class="theme-close" id="closeThemeBtn" type="button" aria-label="Close appearance settings">✕</button>
+      </div>
+
+      <div class="theme-modal-body">
+        <div class="theme-grid" id="themeGrid">
+          <button class="theme-option" type="button" data-theme="theme-calm">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌿 Calm Future</p>
+                <p class="theme-option-desc">Bright, calm, and easy.</p>
+              </div>
+              <span class="theme-option-tag">Default</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-future">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌌 Soft Futuristic</p>
+                <p class="theme-option-desc">Indigo + cyan glow.</p>
+              </div>
+              <span class="theme-option-tag">Futuristic</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-nature">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌱 Nature + Tech</p>
+                <p class="theme-option-desc">Calm green + sky blue trust.</p>
+              </div>
+              <span class="theme-option-tag">Household</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-dark">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌑 Pro Dark</p>
+                <p class="theme-option-desc">Best for night use.</p>
+              </div>
+              <span class="theme-option-tag">Dark</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="theme-modal-footer">
+        <button class="btn ghost" id="resetThemeBtn" type="button">Reset</button>
+        <button class="btn primary" id="doneThemeBtn" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Wire theme modal open from dropdown button if present
+    (function(){
+      const overlay = document.getElementById('themeOverlay');
+      const grid = document.getElementById('themeGrid');
+      const closeBtn = document.getElementById('closeThemeBtn');
+      const doneBtn = document.getElementById('doneThemeBtn');
+      const resetBtn = document.getElementById('resetThemeBtn');
+      const openFromDropdown = document.getElementById('dropdown-open-appearance');
+
+      const THEMES = ['theme-calm','theme-future','theme-nature','theme-dark'];
+      const STORAGE_KEY = 'geniesphere_theme';
+      const DEFAULT_THEME = 'theme-dark';
+
+      function saveTheme(theme){ try { localStorage.setItem(STORAGE_KEY, theme); } catch(_){ } }
+      function getTheme(){ try { return localStorage.getItem(STORAGE_KEY); } catch(_){ return null; } }
+      function updateSelected(theme){
+        grid?.querySelectorAll('.theme-option').forEach(btn=>{
+          btn.classList.toggle('selected', btn.getAttribute('data-theme') === theme);
+        });
+      }
+      function applyTheme(theme){
+        THEMES.forEach(t => document.body.classList.remove(t));
+        document.body.classList.add(theme);
+        updateSelected(theme);
+      }
+      function openModal(){
+        if(!overlay) return;
+        overlay.style.display = 'flex';
+        overlay.classList.add('open');
+        const saved = getTheme();
+        applyTheme((saved && THEMES.includes(saved)) ? saved : DEFAULT_THEME);
+      }
+      function closeModal(){
+        if(!overlay) return;
+        overlay.style.display = 'none';
+        overlay.classList.remove('open');
+      }
+
+      openFromDropdown?.addEventListener('click', openModal);
+      closeBtn?.addEventListener('click', closeModal);
+      doneBtn?.addEventListener('click', closeModal);
+      overlay?.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal(); });
+      document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && overlay?.classList.contains('open')) closeModal(); });
+
+      grid?.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.theme-option');
+        if(!btn) return;
+        const theme = btn.getAttribute('data-theme');
+        if(!THEMES.includes(theme)) return;
+        applyTheme(theme);
+        saveTheme(theme);
+      });
+
+      resetBtn?.addEventListener('click', ()=>{
+        applyTheme(DEFAULT_THEME);
+        saveTheme(DEFAULT_THEME);
+      });
+    })();
+  </script>
+</body>
+</html>

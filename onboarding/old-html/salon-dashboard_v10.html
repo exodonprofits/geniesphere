@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Salon Genie Dashboard</title>
+  <style>
+    /* GenieSphere / Salon Genie — Dashboard restyle to match NEW index.html
+       Design tokens + components inspired by landing page.
+       (Keep all IDs/classes used by JS intact.) */
+
+    :root{
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --card: rgba(255,255,255,.92);
+      --stroke:#e7edf7;
+      --text:#0b1220;
+      --muted:#5b667a;
+      --muted2: rgba(91,102,122,.82);
+
+      --brand:#3aa7ff;
+      --brandB:#67c5ff;
+
+      --good:#16a34a;
+      --warn:#d97706;
+      --bad:#dc2626;
+
+      --shadow: 0 18px 60px rgba(16,24,40,.10);
+      --shadow2: 0 14px 40px rgba(16,24,40,.08);
+
+      --ring: 0 0 0 4px rgba(103,197,255,.22);
+
+      --r: 7px;
+      --r2: 14px;
+
+      --max: 1440px;
+
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family: var(--font);
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x:hidden;
+      background:
+        radial-gradient(900px 550px at 14% 6%, rgba(103,197,255,.26), rgba(103,197,255,0) 60%),
+        radial-gradient(900px 550px at 86% 10%, rgba(103,197,255,.16), rgba(103,197,255,0) 60%),
+        radial-gradient(900px 650px at 50% 115%, rgba(58,167,255,.08), rgba(58,167,255,0) 60%),
+        linear-gradient(#ffffff, #ffffff);
+      background-attachment: fixed;
+    }
+
+
+    main{ margin-top: 8px; }
+    a{ color:inherit; text-decoration:none; }
+    img{ max-width:100%; display:block; }
+
+    :focus{ outline:none; }
+    :focus-visible{ box-shadow: var(--ring); border-radius: var(--r); }
+
+    .container{ max-width: var(--max); margin:0 auto; padding: 0 20px; }
+    @media (max-width:560px){ .container{ padding: 0 16px; } }
+
+    /* ---- Typography ---- */
+    h1,h2,h3{ margin:0; letter-spacing:-.01em; }
+    h1{ font-size: 1.35rem; font-weight: 1000; }
+    h2{ font-size: 1.25rem; font-weight: 1000; }
+    h3{ font-size: 1.05rem; font-weight: 950; }
+
+    /* ---- Header (preserve existing structure + IDs) ---- */
+    .ap-header{
+      position: sticky;
+      top: 0;
+      z-index: 1200;
+      border-bottom: 1px solid rgba(231,237,247,.9);
+      background: rgba(255,255,255,.84);
+      backdrop-filter: blur(14px);
+    }
+    .ap-nav{
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 10px 20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 14px;
+      min-height: 76px;
+    }
+    .ap-left{
+      display:flex;
+      align-items:center;
+      gap: 14px;
+      min-width: 0;
+      flex: 1;
+    }
+    .ap-brand{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      padding: 8px 10px;
+      border-radius: var(--r);
+      transition: background .18s ease;
+      white-space: nowrap;
+      min-width: 220px;
+    }
+    .ap-brand:hover{ background: rgba(103,197,255,.10); }
+
+    .ap-logo{
+      width:50px; height:50px;
+      border-radius:999px;
+      object-fit:cover;
+      background:
+        radial-gradient(14px 14px at 30% 30%, rgba(255,255,255,.9), rgba(255,255,255,0) 55%),
+        linear-gradient(135deg, rgba(58,167,255,1), rgba(103,197,255,1));
+      box-shadow: 0 16px 40px rgba(58,167,255,.20);
+      border: 1px solid rgba(58,167,255,.22);
+    }
+    .ap-title{
+      font-weight: 1000;
+      font-size: 1.08rem;
+      letter-spacing: -.01em;
+      color: rgba(11,18,32,.95);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width: 240px;
+    }
+
+    .quick{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px;
+      border-radius: var(--r);
+      border: 1px solid rgba(58,167,255,.18);
+      background: rgba(255,255,255,.70);
+      box-shadow: 0 12px 34px rgba(16,24,40,.06);
+      flex-wrap: wrap;
+    }
+
+    .qbtn, .qbtn-login{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-weight: 950;
+      cursor:pointer;
+      user-select:none;
+      border: 1px solid transparent;
+      transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, background .18s ease, border-color .18s ease;
+      white-space: nowrap;
+      font-size: .92rem;
+    }
+    .qbtn:hover{ transform: translateY(-1px); }
+    .qbtn:active{ transform: translateY(0); }
+
+    .q-green, .q-green2{
+      background: linear-gradient(135deg, rgba(22,163,74,1), rgba(103,197,255,1));
+      color: #00150a;
+      box-shadow: 0 16px 38px rgba(22,163,74,.14);
+    }
+    .q-blue{
+      background: linear-gradient(135deg, rgba(58,167,255,1), rgba(103,197,255,1));
+      color: #00121f;
+      box-shadow: 0 18px 40px rgba(58,167,255,.22);
+    }
+    .q-peach{
+      background: rgba(103,197,255,.14);
+      border-color: rgba(58,167,255,.18);
+      color: rgba(11,18,32,.92);
+      box-shadow: 0 12px 28px rgba(16,24,40,.06);
+    }
+    .q-sand{
+      background: rgba(255,255,255,.84);
+      border-color: rgba(231,237,247,1);
+      color: rgba(11,18,32,.92);
+      box-shadow: 0 12px 28px rgba(16,24,40,.06);
+    }
+
+    .ap-right{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap: 10px;
+      position:relative;
+      flex: 0 0 auto;
+    }
+
+    .qbtn-login.q-header{
+      background: rgba(255,255,255,.84);
+      border-color: rgba(231,237,247,1);
+      color: rgba(11,18,32,.92);
+      box-shadow: 0 12px 28px rgba(16,24,40,.08);
+      padding: 10px 12px;
+    }
+
+    .ap-user-label{
+      font-size: .92rem;
+      font-weight: 950;
+      color: rgba(11,18,32,.92);
+      max-width: 160px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .ap-user-label::after{
+      content:" ▾";
+      color: rgba(91,102,122,.92);
+      font-weight: 1000;
+    }
+
+    .ap-signin-btn{
+      background: linear-gradient(135deg, rgba(58,167,255,1), rgba(103,197,255,1));
+      color: #00121f;
+      box-shadow: 0 18px 40px rgba(58,167,255,.22);
+      border-color: transparent;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 1000;
+      cursor:pointer;
+      white-space:nowrap;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .ap-signin-btn:hover{ transform: translateY(-1px); box-shadow: 0 22px 54px rgba(58,167,255,.26); }
+
+    .ap-menu-toggle{
+      width:44px;
+      height:44px;
+      border-radius: 999px;
+      border: 1px solid rgba(231,237,247,1);
+      background: rgba(255,255,255,.90);
+      box-shadow: 0 12px 28px rgba(16,24,40,.08);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: background .18s ease, transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .ap-menu-toggle::before{
+      content:"☰";
+      font-size: 1.05rem;
+      line-height: 1;
+      color: rgba(11,18,32,.92);
+    }
+    .ap-menu-toggle.is-open::before{ content:"✕"; }
+    .ap-menu-toggle:hover{
+      background: rgba(103,197,255,.12);
+      border-color: rgba(58,167,255,.22);
+      transform: translateY(-1px);
+      box-shadow: 0 16px 38px rgba(16,24,40,.10);
+    }
+    .ap-menu-toggle:active{ transform: translateY(0); }
+
+    .ap-menu{
+      position:absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 260px;
+      padding: 8px;
+      border-radius: var(--r);
+      background: rgba(255,255,255,.96);
+      border: 1px solid rgba(231,237,247,1);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      z-index: 1300;
+    }
+    .ap-menu-item{
+      display:block;
+      width:100%;
+      padding: 10px 10px;
+      border-radius: var(--r);
+      font-size: .92rem;
+      font-weight: 900;
+      color: rgba(11,18,32,.92);
+      background: transparent;
+      border: 0;
+      text-align:left;
+      cursor:pointer;
+    }
+    .ap-menu-item:hover{
+      background: rgba(103,197,255,.12);
+    }
+    .ap-menu-section-title{
+      font-size: 12px;
+      font-weight: 1000;
+      color: rgba(91,102,122,.92);
+      padding: 10px 10px 6px;
+      cursor: default;
+    }
+
+    /* ---- Mobile header layout (keep behavior) ---- */
+    @media (max-width: 980px){
+      .quick{ gap: 8px; }
+    }
+    @media (max-width: 768px){
+      .quick{ display:none !important; }
+
+      .ap-header{ position: sticky; }
+      .ap-nav{
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding-right: 64px;
+        min-height: unset;
+      }
+      .ap-left{
+        width: 100%;
+        display:flex;
+        flex-direction: column;
+        align-items:flex-start;
+        gap: 8px;
+      }
+      .ap-right{
+        position:absolute;
+        top: 10px;
+        right: 16px;
+        gap: 10px;
+      }
+      .ap-title{ max-width: 220px; }
+    }
+
+    /* ---- Dashboard hero ---- */
+    .dash-wrap{
+      max-width: var(--max);
+      margin: 18px auto;
+      padding: 0 20px;
+      color: var(--text);
+    }
+    @media (max-width:560px){
+      .dash-wrap{ padding: 0 16px; }
+    }
+
+    #sg-hero{
+      font-size: 14px;
+    }
+    .dash-h1{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-size: 1.2rem;
+      font-weight: 1000;
+      margin: 6px 0 6px;
+    }
+    .sg-role-hint{
+      margin: 0 0 12px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .sg-role-hint strong{ color: rgba(11,18,32,.92); }
+
+    .dash-searchrow{
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .searchbar{
+      flex: 1;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(231,237,247,1);
+      border-radius: 999px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow2);
+      min-width: 260px;
+    }
+    .searchbar input{
+      border:0;
+      background:transparent;
+      outline:0;
+      width:100%;
+      font-size: 14px;
+      color: rgba(11,18,32,.95);
+      font-weight: 750;
+    }
+    .searchbar input::placeholder{
+      color: rgba(91,102,122,.72);
+      font-weight: 650;
+    }
+
+    .role-pills{
+      display:flex;
+      gap: 6px;
+      padding: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(231,237,247,1);
+      background: rgba(255,255,255,.86);
+      box-shadow: var(--shadow2);
+    }
+    .role-pills button{
+      background: transparent;
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: rgba(91,102,122,.92);
+      font-weight: 950;
+      cursor:pointer;
+      transition: background .18s ease, color .18s ease, box-shadow .18s ease;
+      font-size: 13px;
+    }
+    .role-pills button:hover{ background: rgba(103,197,255,.12); color: rgba(11,18,32,.92); }
+
+    /* Role pills are display-only (reflect logged-in role). */
+    .role-pills.is-display .role-pill{ pointer-events:none; cursor: default; }
+    .role-pills.is-display .role-pill{ opacity: .45; }
+    .role-pills.is-display .role-pill.active{ opacity: 1; }
+    .role-pills.is-display .role-pill[aria-disabled="true"]{ pointer-events:none; }
+    .qp-note-text{ margin-left: 8px; display:inline-block; }
+    .role-pills button.active{
+      background: linear-gradient(135deg, rgba(58,167,255,1), rgba(103,197,255,1));
+      color: #00121f;
+      box-shadow: 0 16px 40px rgba(58,167,255,.18);
+    }
+
+    .sec-title{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      margin: 16px 2px 10px;
+      font-weight: 1000;
+      font-size: 1.02rem;
+    }
+    .sec-title small{
+      color: rgba(91,102,122,.92);
+      font-weight: 900;
+      font-size: .88rem;
+    }
+
+    /* ---- KPI cards ---- */
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 10px 0 12px;
+    }
+    @media (max-width: 980px){ .kpis{ grid-template-columns: repeat(2, 1fr); } }
+    .kcard{
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(231,237,247,1);
+      border-radius: var(--r);
+      box-shadow: var(--shadow2);
+      padding: 16px;
+      position: relative;
+      overflow:hidden;
+    }
+    .kcard::after{
+      content:"";
+      position:absolute;
+      inset:-50%;
+      background: radial-gradient(circle at 20% 10%, rgba(103,197,255,.12), transparent 60%);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+    .khead{
+      font-size: 12px;
+      color: rgba(91,102,122,.92);
+      font-weight: 900;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .kmain{
+      font-weight: 1000;
+      font-size: 28px;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+    .ksub{
+      font-size: 12px;
+      color: rgba(91,102,122,.86);
+      margin-top: 6px;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
+    }
+    .kcard.warn .kmain{ color: rgba(217,119,6,.98); }
+    .kcard.bad .kmain{ color: rgba(220,38,38,.98); }
+
+    /* ---- Quick Peek shell ---- */
+    .qp-shell{
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(231,237,247,1);
+      border-radius: var(--r);
+      box-shadow: var(--shadow2);
+      padding: 16px;
+      margin: 12px 0 10px;
+      position: relative;
+      overflow:hidden;
+    }
+    .qp-shell::after{
+      content:"";
+      position:absolute;
+      inset:-55%;
+      background: radial-gradient(circle at 20% 10%, rgba(103,197,255,.10), transparent 60%);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+    .qp-top{ display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; flex-wrap:wrap; position:relative; z-index:1; }
+    .qp-title{ display:flex; align-items:center; gap: 8px; font-weight: 1000; margin:0; font-size: 1.02rem; }
+    .qp-sub{ margin: 6px 0 0; color: rgba(91,102,122,.92); font-size: 12px; font-weight: 800; }
+
+    .qp-split{ display:grid; grid-template-columns: 1fr 360px; gap: 14px; margin-top: 12px; position:relative; z-index:1; }
+    @media (max-width: 980px){ .qp-split{ grid-template-columns: 1fr; } }
+
+    .qp-grid{
+      margin-top: 0;
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      position:relative;
+      z-index:1;
+    }
+    @media (max-width: 980px){ .qp-grid{ grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px){ .qp-grid{ grid-template-columns: 1fr; } }
+
+    .qp-card{
+      border: 1px solid rgba(231,237,247,1);
+      background: rgba(255,255,255,.92);
+      border-radius: var(--r);
+      padding: 14px;
+      box-shadow: var(--shadow2);
+      transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+      position: relative;
+      overflow:hidden;
+    }
+    .qp-card::after{
+      content:"";
+      position:absolute;
+      inset:-50%;
+      background: radial-gradient(circle at 20% 10%, rgba(103,197,255,.12), transparent 60%);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+    .qp-card:hover{
+      transform: translateY(-2px);
+      border-color: rgba(58,167,255,.22);
+      box-shadow: 0 20px 60px rgba(16,24,40,.10);
+    }
+    .qp-card h4{
+      margin:0 0 8px;
+      font-size: 13px;
+      font-weight: 1000;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      position:relative;
+      z-index:1;
+    }
+    .qp-metric{
+      font-size: 16px;
+      font-weight: 1000;
+      letter-spacing:-.2px;
+      margin: 2px 0 4px;
+      position:relative;
+      z-index:1;
+    }
+    .qp-tip{
+      margin: 0;
+      color: rgba(91,102,122,.92);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.4;
+      position:relative;
+      z-index:1;
+    }
+    .qp-actions{
+      display:flex;
+      gap: 8px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+      position:relative;
+      z-index:1;
+    }
+    .qp-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(231,237,247,1);
+      background: rgba(255,255,255,.90);
+      color: rgba(11,18,32,.92);
+      font-weight: 950;
+      cursor:pointer;
+      font-size: 12px;
+      text-decoration:none;
+      white-space:nowrap;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+      box-shadow: 0 10px 22px rgba(16,24,40,.06);
+    }
+    .qp-btn:hover{
+      background: rgba(103,197,255,.12);
+      border-color: rgba(58,167,255,.22);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(16,24,40,.08);
+    }
+    .qp-btn:active{ transform: translateY(0); }
+    .qp-btn.primary{
+      background: linear-gradient(135deg, rgba(22,163,74,1), rgba(103,197,255,1));
+      color: #00150a;
+      border-color: transparent;
+      box-shadow: 0 16px 36px rgba(22,163,74,.14);
+    }
+    .qp-btn.blue{
+      background: linear-gradient(135deg, rgba(58,167,255,1), rgba(103,197,255,1));
+      color: #00121f;
+      border-color: transparent;
+      box-shadow: 0 18px 40px rgba(58,167,255,.20);
+    }
+
+    /* ---- Tasks ---- */
+    .tasks{
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(231,237,247,1);
+      border-radius: var(--r);
+      box-shadow: var(--shadow2);
+      padding: 14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .tasks::after{
+      content:"";
+      position:absolute;
+      inset:-60%;
+      background: radial-gradient(circle at 20% 10%, rgba(103,197,255,.10), transparent 60%);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+    .filters{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 10px 0 6px;
+      position:relative;
+      z-index:1;
+    }
+    .pill{
+      border: 1px solid rgba(231,237,247,1);
+      background: rgba(255,255,255,.88);
+      color: rgba(11,18,32,.86);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-weight: 950;
+      cursor:pointer;
+      font-size: 12px;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+      box-shadow: 0 10px 22px rgba(16,24,40,.06);
+    }
+    .pill:hover{
+      background: rgba(103,197,255,.12);
+      border-color: rgba(58,167,255,.22);
+      transform: translateY(-1px);
+    }
+    .pill.gray{
+      background: rgba(255,255,255,.84);
+      color: rgba(91,102,122,.92);
+    }
+    .pill.active{
+      background: linear-gradient(135deg, rgba(58,167,255,1), rgba(103,197,255,1));
+      color: #00121f;
+      border-color: transparent;
+    }
+
+    .trow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px dashed rgba(231,237,247,1);
+      position:relative;
+      z-index:1;
+    }
+    .trow:first-child{ border-top: 0; }
+    .tdesc{ font-weight: 950; font-size: 13px; color: rgba(11,18,32,.92); }
+    .tdue{ font-size: 12px; color: rgba(91,102,122,.92); margin-top: 2px; font-weight: 800; }
+
+    .done{
+      border: 1px solid rgba(231,237,247,1);
+      background: rgba(255,255,255,.90);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 950;
+      cursor:pointer;
+      font-size: 12px;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+      box-shadow: 0 10px 22px rgba(16,24,40,.06);
+      white-space:nowrap;
+    }
+    .done:hover{
+      background: rgba(103,197,255,.12);
+      border-color: rgba(58,167,255,.22);
+      transform: translateY(-1px);
+    }
+    .done[disabled]{ opacity:.55; cursor: default; transform:none; }
+
+    /* ---- Health bar ---- */
+    .health-bar{
+      border: 1px solid rgba(231,237,247,1);
+      background: rgba(255,255,255,.92);
+      border-radius: var(--r);
+      padding: 12px 14px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      margin-top: 12px;
+      box-shadow: 0 10px 26px rgba(16,24,40,.06);
+      position:relative;
+      z-index:1;
+    }
+    .health-left{ display:flex; gap: 12px; align-items:flex-start; }
+    .health-icon{
+      width: 36px; height: 36px;
+      border-radius: var(--r);
+      display:flex; align-items:center; justify-content:center;
+      font-size: 18px; font-weight: 1000;
+      border: 1px solid rgba(231,237,247,1);
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 10px 22px rgba(16,24,40,.06);
+    }
+    .health-title{ font-weight: 1000; margin:0; font-size: 14px; }
+    .health-sub{ margin: 2px 0 0; color: rgba(91,102,122,.92); font-weight: 800; font-size: 12px; line-height: 1.35; }
+    .health-list{ margin: 10px 0 0; padding-left: 16px; color: rgba(91,102,122,.92); font-weight: 800; font-size: 12px; }
+    .health-right{ display:flex; gap: 8px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+
+    .qp-badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 1000;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(231,237,247,1);
+      background: rgba(255,255,255,.90);
+      color: rgba(91,102,122,.92);
+      box-shadow: 0 10px 22px rgba(16,24,40,.06);
+      white-space:nowrap;
+    }
+    .badge-ok{ background: rgba(34,197,94,.12); color: rgb(21,128,61); border-color: rgba(34,197,94,.25); }
+    .badge-warn{ background: rgba(245,158,11,.12); color: rgb(146,64,14); border-color: rgba(245,158,11,.25); }
+    .badge-bad{ background: rgba(239,68,68,.12); color: rgb(153,27,27); border-color: rgba(239,68,68,.25); }
+
+    .qp-note{
+      margin-top: 12px;
+      font-size: 12px;
+      color: rgba(91,102,122,.92);
+      font-weight: 800;
+      position:relative;
+      z-index:1;
+    }
+
+    /* ---- Icon dashboards (rendered into #dashboardContainer) ---- */
+    .head-title{ margin: 18px 0 14px; }
+    .dashboard-section{ margin-bottom: 26px; }
+    .dashboard-section h2{ font-size: 1.08rem; margin: 0 0 12px; font-weight: 1000; }
+    .dashboard{
+      display:flex;
+      flex-wrap: wrap;
+      justify-content:flex-start;
+      gap: 12px;
+    }
+
+    .icon-card{
+      width: 92px;
+      height: 92px;
+      flex: 0 0 92px;
+      background: rgba(255,255,255,.92);
+      border-radius: var(--r);
+      padding: 12px 10px;
+      text-align:center;
+      border: 1px solid rgba(231,237,247,1);
+      box-shadow: var(--shadow2);
+      transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+      position: relative;
+      overflow:hidden;
+    }
+    .icon-card::after{
+      content:"";
+      position:absolute;
+      inset:-50%;
+      background: radial-gradient(circle at 20% 10%, rgba(103,197,255,.12), transparent 60%);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+    .icon-card:hover{
+      transform: translateY(-2px);
+      border-color: rgba(58,167,255,.22);
+      box-shadow: 0 20px 60px rgba(16,24,40,.10);
+      background: rgba(255,255,255,1);
+    }
+    .icon-card img{
+      width: 34px;
+      height: 34px;
+      margin: 0 auto 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .icon-card p{
+      font-size: 12px;
+      margin: 0;
+      font-weight: 900;
+      color: rgba(11,18,32,.90);
+      position: relative;
+      z-index: 1;
+      line-height: 1.15;
+    }
+
+    /* ---- Footer ---- */
+    .site-footer{
+      border-top: 1px solid rgba(231,237,247,1);
+      background: rgba(255,255,255,.86);
+      padding: 18px 0;
+    }
+    .site-footer-inner{
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 18px 20px;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap: 12px;
+      color: rgba(91,102,122,.92);
+      font-weight: 800;
+      font-size: .95rem;
+    }
+    .site-footer .links{
+      display:flex;
+      gap: 14px;
+      flex-wrap:wrap;
+      margin-left:auto;
+    }
+    .site-footer a{
+      color: rgba(11,18,32,.90);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-weight: 900;
+    }
+
+    .is-hidden{ display:none !important; }
+
+
+    .mt-0{ margin-top: 0 !important; }
+    .ap-menu-heading{ font-weight: 900; cursor: default; color: rgba(91,102,122,.92); }
+    @media (prefers-reduced-motion: reduce){
+      html{ scroll-behavior:auto; }
+      .qbtn, .qbtn-login, .qp-btn, .pill, .icon-card, .ap-menu-toggle{ transition:none !important; }
+      .qbtn:hover, .qp-btn:hover, .pill:hover, .icon-card:hover, .ap-menu-toggle:hover{ transform:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== Header with Salon Genie + Business Combo + User Menu (kept as-is) ===== -->
+  <header class="ap-header">
+    <div class="ap-nav">
+      <div class="ap-left">
+        <a class="ap-brand" href="/index.html" aria-label="Salon Genie Home">
+          <!-- Update path to your logo as needed -->
+          <img src="/images/victoria-logo.png" alt="Victoria Nails Logo" class="ap-logo">
+          <span class="ap-title">Salon Genie</span>
+        </a>
+        <div class="quick">
+          <a class="qbtn q-green" href="view-checkin.html">👋 Check-In</a>
+          <a class="qbtn q-green" href="pos.html">💻 POS</a>
+          <a class="qbtn q-blue" href="appointment.html">🗓️ Appointment</a>
+          <a class="qbtn q-peach" href="social-media.html">🧷 Post to Social</a>
+          <a class="qbtn q-sand" href="inventory.html">📦 Add Inventory</a>
+          <a class="qbtn q-green2" href="payroll.html" data-roles="manager,owner">🧮 Run Payroll</a>
+        </div>
+        <!-- Business switcher (currently hidden) -->
+        <!--div class="ap-business-switch">
+
+          <select id="businessSwitcher" class="ap-biz-select is-hidden">
+
+          </select>
+        </div-->
+      </div>
+
+      <div class="ap-right" id="apRight">
+        <div class="qbtn-login q-header">
+        <span class="ap-user-label" id="userLabel"></span></div>
+        <button class="ap-menu-toggle" id="menuToggle" type="button" aria-label="Open menu"></button>
+        <div class="ap-menu" id="userMenu" hidden></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===== HERO DASHBOARD ===== -->
+    <div class="dash-wrap" id="sg-hero">
+      <h2 class="dash-h1">🔎 What would you like to do?</h2>
+      <!-- NEW: Role hint based on Supabase role; still allows everyone to see everything -->
+      <p id="sgRoleLabel" class="sg-role-hint"></p>
+
+      <div class="dash-searchrow">
+        <div class="searchbar">
+          <span>🔍</span>
+          <input id="sgSearch" type="search" placeholder="Search tools, tasks, or pages…" />
+          <!--span class="kbd">/</span-->
+        </div>
+        <div class="role-pills" role="tablist" aria-label="View as">
+          <button class="role-pill active" data-role="owner" role="tab" aria-selected="true" type="button">Owner</button>
+          <button class="role-pill" data-role="manager" role="tab" type="button">Manager</button>
+          <button class="role-pill" data-role="staff" role="tab" type="button">Staff</button>
+        </div>
+      </div>
+
+      <h3 class="sec-title">📅 Today — <small id="sgDate">—</small></h3>
+      <div class="kpis">
+        <div class="kcard">
+          <div class="khead">Appointments</div>
+          <div class="kmain" id="kAppt">—</div>
+          <div class="ksub" id="kApptSub">Loading…</div>
+        </div>
+        <div class="kcard">
+          <div class="khead">Walk-ins</div>
+          <div class="kmain" id="kWalk">—</div>
+          <div class="ksub">so far</div>
+        </div>
+        <div class="kcard warn">
+          <div class="khead">No-shows</div>
+          <div class="kmain" id="kNoShow">—</div>
+          <div class="ksub">needs outreach</div>
+        </div>
+        <div class="kcard bad">
+          <div class="khead">Low Inventory</div>
+          <div class="kmain" id="kLow">—</div>
+          <div class="ksub">below reorder</div>
+        </div>
+      </div>
+
+<!-- ===== Quick Peek (Screenshot + Tasks) ===== -->
+<div class="qp-shell" id="qpShell" aria-label="Quick Peek">
+  <div class="qp-top">
+    <div>
+      <h3 class="qp-title">⚡ Quick Peek</h3>
+      <div class="health-bar is-hidden" id="qpHealth">
+        <div class="health-left">
+          <div class="health-icon" id="qpHealthIcon">✅</div>
+          <div>
+            <p class="health-title" id="qpHealthTitle">All clear</p>
+            <p class="health-sub" id="qpHealthSub">No urgent issues detected.</p>
+            <ul class="health-list" id="qpHealthList"></ul>
+          </div>
+        </div>
+        <div class="health-right">
+          <span class="qp-badge badge-ok" id="qpHealthBadge">✅ OK</span>
+          <a class="qp-btn" href="manage-agent-tasks.html" data-roles="manager,owner">🧩 Manage Tasks</a>
+        </div>
+      </div>
+      <p class="qp-sub" id="qpSubtitle">Smart, no-brainer actions to run today.</p>
+    </div>
+  </div>
+
+  <div class="qp-split">
+    <!-- LEFT (70%): Dashboard screenshot / live preview placeholder -->
+ 
+    <!-- LEFT: Quick Peek action cards -->
+    <div class="qp-grid" id="qpGrid">
+      <div class="qp-card" data-roles="staff,manager,owner">
+        <h4>🎯 Today’s best move</h4>
+        <div class="qp-metric">Fill open slots</div>
+        <p class="qp-tip">Post a simple same-day offer for the next 2–3 open slots. Keep it limited + easy.</p>
+        <div class="qp-actions">
+          <a class="qp-btn blue" href="post-instagram.html">🧷 Post to Social</a>
+          <a class="qp-btn" href="appointment.html">🗓️ Appointments</a>
+        </div>
+      </div>
+      
+      <div class="qp-card" data-roles="manager,owner">
+        <h4>🎂 Birthdays (7 days)</h4>
+        <div class="qp-metric">Ready when you are</div>
+        <p class="qp-tip">Add birthdays to customer profiles to unlock “happy birthday” messages + easy coupons.</p>
+        <div class="qp-actions">
+          <a class="qp-btn" href="customers.html">👤 Customers</a>
+          <a class="qp-btn" href="marketing.html">🎟️ Coupons</a>
+        </div>
+      </div>
+      
+      <div class="qp-card" data-roles="manager,owner">
+        <h4>⏳ Due soon</h4>
+        <div class="qp-metric">Rebook reminders</div>
+        <p class="qp-tip">Message clients likely due (based on typical visit patterns). Include your booking link.</p>
+        <div class="qp-actions">
+          <a class="qp-btn blue" href="sms.html">💬 Send SMS</a>
+          <a class="qp-btn" href="appointment.html">📆 Bookings</a>
+        </div>
+      </div>
+    
+      <div class="qp-card" data-roles="manager,owner">
+        <h4>🧲 Win-back (60+ days)</h4>
+        <div class="qp-metric">Build list</div>
+        <p class="qp-tip">Friendly check-in works best: “Hey! We miss you — want me to help you book?”</p>
+        <div class="qp-actions">
+          <a class="qp-btn" href="loyalty.html">🎁 Loyalty</a>
+          <a class="qp-btn" href="customer-review-tracker.html">⭐ Reviews</a>
+        </div>
+      </div>
+  
+      <div class="qp-card" data-roles="staff,manager,owner">
+        <h4>⭐ Reviews & complaints</h4>
+        <div class="qp-metric">Follow-up</div>
+        <p class="qp-tip">Reply to 5-stars quickly. Follow up on complaints within 24 hours to protect reputation.</p>
+        <div class="qp-actions">
+          <a class="qp-btn" href="customer-review-tracker.html">📝 Reviews</a>
+          <a class="qp-btn" href="complaints.html">📣 Complaints</a>
+        </div>
+      </div>
+  
+      <div class="qp-card" data-roles="staff,manager,owner">
+        <h4>👩‍🔧 Team snapshot</h4>
+        <div class="qp-metric">Bookings today</div>
+        <p class="qp-tip">See who’s busy (and who needs help). Use it for fair scheduling + coaching.</p>
+        <div class="qp-actions">
+          <a class="qp-btn" href="payroll.html" data-roles="manager,owner">🧮 Payroll</a>
+          <a class="qp-btn" href="pos.html">💻 POS</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT (30%): Tasks panel -->
+    <div class="qp-tasks">
+      <div class="tasks">
+        <h3 class="sec-title mt-0">✅ My Tasks</h3>
+        <div class="filters">
+          <button class="pill active" data-filter="all">All</button>
+          <button class="pill gray" data-filter="today">Today</button>
+          <button class="pill gray" data-filter="overdue">Overdue</button>
+          <button class="pill gray" data-filter="completed">Completed</button>
+        </div>
+        <div id="taskList"></div>
+      </div>
+    </div>
+  </div>
+<div class="qp-note">
+      <span class="qp-badge" id="qpModeNote">Live</span>
+      <span class="qp-note-text">Quick Peek becomes fully automatic once your location is selected.</span>
+    </div>
+  </div>
+</div>
+<!-- ===== /Quick Peek ===== -->
+</div>
+    <!-- ===== /HERO DASHBOARD ===== -->
+
+    <div class="dash-wrap">
+      <div class="container">
+        <div class="head-title">
+          <h1 id="businessHeading">Salon Genie Dashboard</h1>
+        </div>
+        <div id="dashboardContainer"></div>
+      </div>
+    </div>
+
+    <!-- Site Footer (kept as-is) -->
+    <footer class="site-footer" role="contentinfo">
+      <div class="site-footer-inner">
+        <div>© <span id="year"></span> Victoria / Salon Genie • v1.3</div>
+        <div class="links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Support</a>
+          <a href="#">Status</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+<script type="module">
+  
+  const DEBUG = false;
+import { sg } from '/js/supabase-init.js?v=1';
+
+  // Bridge for non-module scripts (Quick Peek RPC / Realtime)
+  window.SG_CLIENT = sg;
+
+  // --- 1. Get current user safely -----------------
+  let user = null;
+  try {
+    const { data, error } = await sg.auth.getUser();
+    if (error) {
+      console.error('Supabase getUser error:', error);
+    }
+    user = data?.user ?? null;
+    if (DEBUG) console.log('Active Supabase user on Salon Genie:', user);
+  } catch (e) {
+    console.error('Supabase getUser threw an exception:', e);
+  }
+
+  const params       = new URLSearchParams(window.location.search);
+  const forcedUserId = params.get("user_id");
+  const activeUserId = forcedUserId || user?.id || null;
+
+  const nextParam = encodeURIComponent(location.pathname + location.search);
+  const userLabel  = document.getElementById('userLabel');
+  const menuToggle = document.getElementById('menuToggle');
+  const userMenu   = document.getElementById('userMenu');
+  const apRight    = document.getElementById('apRight');
+
+  // --- 2. Shared helpers for user menu -----------------------------
+  function closeMenu() {
+    if (!userMenu) return;
+    userMenu.hidden = true;
+    if (menuToggle) menuToggle.classList.remove('is-open');
+  }
+
+  function openMenu() {
+    if (!userMenu) return;
+    userMenu.hidden = false;
+    if (menuToggle) menuToggle.classList.add('is-open');
+  }
+
+  function toggleMenu() {
+    if (!userMenu) return;
+    if (userMenu.hidden) openMenu(); else closeMenu();
+  }
+
+  // --- 3. Basic label state (logged in vs logged out) --------------
+  if (userLabel && menuToggle && userMenu) {
+    if (user) {
+      // Logged in → username becomes dropdown trigger
+      userLabel.classList.remove('ap-signin-btn');
+      userLabel.classList.add('ap-user-label');
+      const username = (user.email || '').split('@')[0] || 'Account';
+      userLabel.textContent = username;
+
+      // Hide separate circle icon, label is the trigger
+      menuToggle.style.display = 'none';
+
+      userLabel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMenu();
+      });
+    } else {
+      // Logged out → Sign in pill
+      userLabel.textContent = 'Sign in';
+      userLabel.classList.remove('ap-user-label');
+      userLabel.classList.add('ap-signin-btn');
+      userLabel.onclick = () => {
+        window.location.href = "/login.html?next=" + nextParam;
+      };
+
+      menuToggle.style.display = 'none';
+      userMenu.hidden = true;
+    }
+  }
+
+  // Also allow the round icon to toggle menu if you ever show it
+  if (menuToggle) {
+    menuToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMenu();
+    });
+  }
+  document.addEventListener('click', (e) => {
+    if (!apRight) return;
+    if (!apRight.contains(e.target)) {
+      closeMenu();
+    }
+  });
+
+  // --- 4. Load businesses + user preferences -----------------------
+  let businesses = [];
+  let role       = 'client';
+  let businessId = null;
+
+  // All locations owned by this user
+  if (activeUserId) {
+    const { data: bizData, error: bizError } = await sg
+      .from('business_profiles')
+      .select('id, business_name, logo_url, location')
+      .eq('owner_id', activeUserId);
+    if (bizError) console.error('business_profiles error:', bizError);
+    businesses = bizData || [];
+  }
+
+  // Role + previously selected active business
+  if (activeUserId) {
+    const { data: rolePref, error: prefError } = await sg
+      .from('user_preferences')
+      .select('role, active_business_id')
+      .eq('user_id', activeUserId)
+      .maybeSingle();
+    if (prefError) console.error('user_preferences error:', prefError);
+    role       = rolePref?.role || 'client';
+    businessId = rolePref?.active_business_id || null;
+  }
+
+  // NEW: expose Supabase role to the non-module hero script
+  window.SG_ROLE = role;
+
+  // If no active_business_id yet, default to first business and save it
+  if (!businessId && businesses?.length && activeUserId) {
+    businessId = businesses[0].id;
+    await sg
+      .from('user_preferences')
+      .update({ active_business_id: businessId })
+      .eq('user_id', activeUserId);
+  }
+
+  // --- 5. Build dropdown menu for logged-in users (with locations) --
+  if (user && userMenu) {
+    let locationsHtml = '';
+
+    // Only show "Locations" section if user has > 1 business
+    if (businesses.length > 1) {
+      locationsHtml =
+        `<div class="ap-menu-item ap-menu-heading">Locations</div>` +
+        businesses.map(b => `
+          <button type="button"
+                  class="ap-menu-item ap-menu-location"
+                  data-biz-id="${b.id}">
+            ${b.id === businessId ? '✅ ' : ''}${b.business_name}
+          </button>
+        `).join('');
+    }
+
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const navHtml = isMobile ? `
+      <div class="ap-menu-section-title">Navigation</div>
+      <a href="view-checkin.html" class="ap-menu-item">👋 Check-In</a>
+      <a href="pos.html" class="ap-menu-item">💻 POS</a>
+      <a href="appointment.html" class="ap-menu-item">🗓️ Appointment</a>
+      <a href="social-media.html" class="ap-menu-item">🧷 Post to Social</a>
+      <a href="inventory.html" class="ap-menu-item">📦 Add Inventory</a>
+      <a href="payroll.html" class="ap-menu-item" data-roles="manager,owner">🧮 Run Payroll</a>
+    ` : '';
+
+    userMenu.innerHTML = `
+      <a href="/onboarding/user_profile_form.html" class="ap-menu-item">Account</a>
+      ${navHtml}
+      ${locationsHtml}
+      <button type="button" class="ap-menu-item" id="menuSignOut">Sign out</button>
+    `;
+
+    // Sign out action
+    const signOutBtn = document.getElementById('menuSignOut');
+    if (signOutBtn) {
+      signOutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { await sg.auth.signOut(); }
+        finally {
+          window.location.href = "/login.html?next=" + nextParam;
+        }
+      });
+    }
+
+    // Location switching
+    document.querySelectorAll('.ap-menu-location').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const newBizId = e.currentTarget.dataset.bizId;
+        if (!activeUserId || !newBizId || newBizId === businessId) return;
+
+        await sg
+          .from('user_preferences')
+          .update({ active_business_id: newBizId })
+          .eq('user_id', activeUserId);
+
+        // Reload so header, dashboards, etc. all respect new location
+        location.reload();
+      });
+    });
+  }
+
+  // --- 6. Update header (logo + title) for active location ----------
+  if (businessId) {
+    const currentBiz = businesses?.find(b => b.id === businessId);
+
+    const headingEl = document.getElementById('businessHeading');
+    const logoEl    = document.querySelector('.ap-logo');
+    const titleEl   = document.querySelector('.ap-title');
+
+    if (headingEl && currentBiz?.business_name) {
+      headingEl.textContent = `Location: ${currentBiz.business_name}`;
+    }
+
+    if (logoEl) {
+      logoEl.src = currentBiz?.logo_url || 'images/victoria-logo.png';
+      logoEl.alt = currentBiz?.business_name || 'Salon Genie';
+    }
+
+    if (titleEl) {
+      // Shows business name in header
+      titleEl.textContent = currentBiz?.business_name || 'Salon Genie';
+    }
+  }
+
+  
+// Expose active business id for other scripts (Quick Peek / My Tasks)
+window.SG_ACTIVE_BIZ_ID = businessId || null;
+
+// ===== Quick Peek + My Tasks (real data when businessId is valid; demo otherwise) =====
+function isValidUUID(v) {
+  if (!v) return false;
+  const s = String(v).trim();
+  if (!s || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
+}
+
+function startOfLocalDay(d) {
+  const x = new Date(d);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function endOfLocalDay(d) {
+  const x = new Date(d);
+  x.setHours(23,59,59,999);
+  return x;
+}
+
+function setText(id, val){
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function renderQuickPeekDemo(){
+  const grid = document.getElementById('qpGrid');
+  // NOTE: Quick Peek cards were replaced by a screenshot panel. Keep functions safe.
+  if (!grid) return;
+  const badge = document.getElementById('qpModeBadge');
+  if (badge) badge.textContent = 'Demo';
+  if (!grid) return;
+
+  grid.innerHTML = `
+    <div class="qp-card">
+      <h4>🎯 Today’s best move</h4>
+      <div class="qp-metric">Fill open slots</div>
+      <p class="qp-tip">Post a simple same-day offer for the next 2–3 open slots. Keep it limited + easy.</p>
+      <div class="qp-actions">
+        <a class="qp-btn blue" href="post-instagram.html">🧷 Post to Social</a>
+        <a class="qp-btn" href="appointment.html">🗓️ Appointments</a>
+      </div>
+    </div>
+
+    <div class="qp-card">
+      <h4>🎂 Birthdays (7 days)</h4>
+      <div class="qp-metric">Ready when you are</div>
+      <p class="qp-tip">Add birthdays to customer profiles to unlock “happy birthday” messages + easy coupons.</p>
+      <div class="qp-actions">
+        <a class="qp-btn" href="customers.html">👤 Customers</a>
+        <a class="qp-btn" href="marketing.html">🎟️ Coupons</a>
+      </div>
+    </div>
+
+    <div class="qp-card">
+      <h4>⏳ Due soon</h4>
+      <div class="qp-metric">Rebook reminders</div>
+      <p class="qp-tip">Message clients likely due (based on typical visit patterns). Include your booking link.</p>
+      <div class="qp-actions">
+        <a class="qp-btn blue" href="sms.html">💬 Send SMS</a>
+        <a class="qp-btn" href="appointment.html">📆 Bookings</a>
+      </div>
+    </div>
+
+    <div class="qp-card">
+      <h4>🧲 Win-back (60+ days)</h4>
+      <div class="qp-metric">Build list</div>
+      <p class="qp-tip">Friendly check-in works best: “Hey! We miss you — want me to help you book?”</p>
+      <div class="qp-actions">
+        <a class="qp-btn" href="loyalty.html">🎁 Loyalty</a>
+        <a class="qp-btn" href="customer-review-tracker.html">⭐ Reviews</a>
+      </div>
+    </div>
+
+    <!--div class="qp-card">
+      <h4>💅 Service mix</h4>
+      <div class="qp-metric">Up / Down</div>
+      <p class="qp-tip">Feature what’s up. Refresh photos + scripts for what’s down.</p>
+      <div class="qp-actions">
+        <a class="qp-btn" href="services.html">📋 Services</a>
+        <a class="qp-btn" href="reports.html">📊 Reports</a>
+      </div>
+    </div-->
+
+    <div class="qp-card">
+      <h4>⭐ Reviews & complaints</h4>
+      <div class="qp-metric">Follow-up</div>
+      <p class="qp-tip">Reply to 5-stars quickly. Follow up on complaints within 24 hours to protect reputation.</p>
+      <div class="qp-actions">
+        <a class="qp-btn" href="customer-review-tracker.html">📝 Reviews</a>
+        <a class="qp-btn" href="complaints.html">📣 Complaints</a>
+      </div>
+    </div>
+
+    <div class="qp-card">
+      <h4>👩‍🔧 Team snapshot</h4>
+      <div class="qp-metric">Bookings today</div>
+      <p class="qp-tip">See who’s busy (and who needs help). Use it for fair scheduling + coaching.</p>
+      <div class="qp-actions">
+        <a class="qp-btn" href="payroll.html" data-roles="manager,owner">🧮 Payroll</a>
+        <a class="qp-btn" href="pos.html">💻 POS</a>
+      </div>
+    </div>
+  `;
+}
+
+async function loadQuickPeekReal(bizId){
+  const grid = document.getElementById('qpGrid');
+  // NOTE: Quick Peek cards were replaced by a screenshot panel. Keep functions safe.
+  if (!grid) return;
+  const badge = document.getElementById('qpModeBadge');
+  if (badge) badge.textContent = 'Live';
+  if (!grid) return;
+
+  const todayStart = startOfLocalDay(new Date());
+  const todayEnd = endOfLocalDay(new Date());
+
+  // --- KPIs (Appointments / No-shows) from appointments table
+  let apptsToday = [];
+  try {
+    const { data, error } = await sg
+      .from('appointments')
+      .select('id, status, service, appointment_time, starts_at, checked_in')
+      .eq('business_id', bizId)
+      .gte('appointment_time', todayStart.toISOString())
+      .lte('appointment_time', todayEnd.toISOString());
+
+    if (error) throw error;
+    apptsToday = data || [];
+  } catch (e) {
+    console.warn('Quick Peek: could not load appointments (keeping demo KPIs).', e);
+    renderQuickPeekDemo();
+    return;
+  }
+
+  const noShows = apptsToday.filter(a => String(a.status || '').toLowerCase().includes('no_show') || String(a.status || '').toLowerCase().includes('noshow') || String(a.status || '').toLowerCase().includes('no-show')).length;
+  const total = apptsToday.length;
+
+  setText('kAppt', total ? `${total}` : '0');
+  setText('kApptSub', total ? `Today` : 'No bookings yet');
+  setText('kNoShow', String(noShows));
+
+  // Walk-ins: use checkins table if it exists (POS uses it). If not, fallback to checked_in=true count.
+  let walkins = 0;
+  try {
+    const { data: chk, error: chkErr } = await sg
+      .from('checkins')
+      .select('id, created_at')
+      .eq('business_id', bizId)
+      .gte('created_at', todayStart.toISOString())
+      .lte('created_at', todayEnd.toISOString());
+
+    if (!chkErr) walkins = (chk || []).length;
+    else throw chkErr;
+  } catch (e) {
+    walkins = apptsToday.filter(a => a.checked_in === true).length;
+  }
+  setText('kWalk', String(walkins));
+
+  // --- Service trends (this week vs last week) using appointments.service
+  const now = new Date();
+  const startThisWeek = new Date(now);
+  startThisWeek.setDate(now.getDate() - 7);
+  const startLastWeek = new Date(now);
+  startLastWeek.setDate(now.getDate() - 14);
+
+  async function fetchServiceCounts(start, end){
+    const { data, error } = await sg
+      .from('appointments')
+      .select('service')
+      .eq('business_id', bizId)
+      .gte('appointment_time', start.toISOString())
+      .lt('appointment_time', end.toISOString());
+    if (error) throw error;
+    const map = {};
+    (data||[]).forEach(row=>{
+      const key = (row.service || 'Unknown').trim();
+      map[key] = (map[key] || 0) + 1;
+    });
+    return map;
+  }
+
+  let thisWeek = {}, lastWeek = {};
+  try {
+    thisWeek = await fetchServiceCounts(startThisWeek, now);
+    lastWeek = await fetchServiceCounts(startLastWeek, startThisWeek);
+  } catch (e) {
+    // ignore trends if not available
+  }
+
+  // --- Low Inventory: if inventory_items table exists use low_stock flag/quantity<=reorder_point
+  let lowInv = 0;
+  try {
+    const { data: inv, error: invErr } = await sg
+      .from('inventory_items')
+      .select('id, quantity, reorder_point, low_stock')
+      .eq('business_id', bizId);
+    if (invErr) throw invErr;
+    lowInv = (inv || []).filter(i => i.low_stock === true || (Number(i.quantity) <= Number(i.reorder_point))).length;
+    setText('kLow', String(lowInv));
+  } catch (e) {
+    // leave demo low inventory
+  }
+}
+
+async function loadTasksReal(bizId){
+  const list = document.getElementById('taskList');
+  if (!list) return;
+
+  // Try to use tasks table if present; else demo fallback
+  try {
+    const { data, error } = await sg
+      .from('tasks')
+      .select('id, title, status, due_date, assigned_to')
+      .eq('business_id', bizId)
+      .order('due_date', { ascending: true })
+      .limit(20);
+
+    if (error) throw error;
+
+    const tasks = (data || []).map(t => {
+      const due = t.due_date ? new Date(t.due_date) : null;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      let dueBucket = 'today';
+      if (!due) dueBucket = 'today';
+      else {
+        const d0 = new Date(due); d0.setHours(0,0,0,0);
+        if (d0.getTime() < today.getTime()) dueBucket = 'overdue';
+        else if (d0.getTime() > today.getTime()) dueBucket = 'today';
+      }
+      return { id: t.id, title: t.title || 'Task', due: dueBucket, status: (t.status || 'open') === 'done' ? 'done' : 'open' };
+    });
+
+    // Render with same UI logic as demo
+    const filters = document.querySelectorAll('.filters .pill');
+    let currentFilter = 'all';
+
+    function row(t){
+      const div = document.createElement('div');
+      div.className = 'trow';
+      div.innerHTML = `
+        <div>
+          <div class="tdesc">${escapeHtml(t.title)}</div>
+          <div class="tdue">${t.status==='done'?'Completed': t.due==='today'?'Due today': t.due==='overdue'?'Due overdue': 'Completed'}</div>
+        </div>
+        <button class="done" ${t.status==='done'?'disabled':''}>${t.status==='done'?'Done':'Mark done'}</button>
+      `;
+      div.querySelector('.done')?.addEventListener('click', async (e)=>{
+        if (t.status === 'done') return;
+        t.status = 'done';
+        try{
+          await sg.from('tasks').update({ status: 'done' }).eq('id', t.id);
+        }catch(_e){}
+        e.currentTarget.setAttribute('disabled',''); e.currentTarget.textContent='Done';
+      });
+      return div;
+    }
+
+    function render(filter='all'){
+      list.innerHTML='';
+      tasks.filter(t=>{
+        if(filter==='all') return true;
+        if(filter==='today') return t.due==='today' && t.status!=='done';
+        if(filter==='overdue') return t.due==='overdue' && t.status!=='done';
+        if(filter==='completed') return t.status==='done';
+      }).forEach(t=>list.appendChild(row(t)));
+    }
+
+    render(currentFilter);
+
+    filters.forEach(p=>{
+      p.addEventListener('click', ()=>{
+        filters.forEach(x=>x.classList.remove('active'));
+        p.classList.add('active');
+        currentFilter = p.dataset.filter || 'all';
+        render(currentFilter);
+      });
+    });
+
+  } catch (e) {
+    // fallback demo tasks already set by hero script
+  }
+}
+
+function escapeHtml(str=""){
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// ===== Render icons dashboard sections =====
+const dashboardContainer = document.getElementById('dashboardContainer');
+
+const sections = [
+  {
+    title: "📊 Business Insights",
+    items: [
+      { label: "Services", icon: "images/icons/briefcase.png", href: "services.html" },
+      { label: "Service Categories", icon: "images/icons/box.png", href: "service-categories.html" },
+      { label: "Sentiment AI", icon: "images/icons/smiley.png", href: "sentiment-ai.html" },
+      { label: "Business Profile", icon: "images/icons/new-contact.png", href: "business-profile.html" },
+      { label: "Reports", icon: "images/icons/chart.png", href: "reports.html" },
+      { label: "Product Sales", icon: "images/icons/sell.png", href: "product-sales.html" },
+      { label: "No-Show Analysis", icon: "images/icons/delete-sign.png", href: "no-show-analysis.html" },
+      { label: "Competitor Watch", icon: "images/icons/competitor2.png", href: "competitor-watch.html" },
+      { label: "AI Stylist", icon: "images/icons/robot-2.png", href: "ai-stylist.html" }
+    ]
+  },
+  {
+    title: "🚀 Customer Journey",
+    items: [
+      { label: "Check-In", icon: "images/icons/check-in.png", href: "view-checkin.html" },
+      { label: "Check-In Queue", icon: "images/icons/user-location.png", href: "check-in-queue.html" },
+      { label: "Appointments", icon: "images/icons/calendar.png", href: "appointment.html" },
+      { label: "Front Desk", icon: "images/icons/conference-call.png", href: "front-desk.html" },
+      { label: "Add Complaint", icon: "images/icons/feedback.png", href: "complaints.html" },
+      { label: "Customer Complaints", icon: "images/icons/speech-bubble.png", href: "customer-complaints.html" },
+      { label: "POS", icon: "images/icons/cash-register.png", href: "pos.html" },
+      { label: "Customer Reviews", icon: "images/icons/star.png", href: "customer-review-tracker.html" },
+      { label: "Loyalty", icon: "images/icons/gift.png", href: "loyalty.html" }
+    ]
+  },
+  {
+    title: "🧑‍💼 Staff Automation",
+    items: [
+      { label: "Certifications", icon: "images/icons/diploma.png", href: "certifications.html" },
+      { label: "Manage Employees", icon: "images/icons/conference-call.png", href: "manage-employees.html" },
+      { label: "Hiring", icon: "images/icons/resume.png", href: "hiring.html" },
+      { label: "Shift Manager", icon: "images/icons/schedule2.png", href: "shift-manager.html" },
+      { label: "Staff Shift", icon: "images/icons/time.png", href: "staff-shift.html" },
+      { label: "Payroll", icon: "images/icons/money.png", href: "payroll.html" },
+      { label: "Chore Spinner", icon: "images/icons/fortune-wheel.png", href: "chore-spinner.html" }
+    ]
+  },
+  {
+    title: "✨ Smart Marketing",
+    items: [
+      { label: "Instagram Post", icon: "images/icons/instagram.png", href: "post-instagram.html" },
+      { label: "Review Templates", icon: "images/icons/review.png", href: "review-templates.html" },
+      { label: "Social Media", icon: "images/icons/hashtag.png", href: "social-media.html" },
+      { label: "Event Planner", icon: "images/icons/event-planning.png", href: "event-planner.html" },
+      { label: "Campaigns", icon: "images/icons/megaphone.png", href: "campaigns.html" }
+    ]
+  },
+  {
+    title: "💵 Operations & Finance",
+    items: [
+      { label: "Payments", icon: "images/icons/money.png", href: "payments.html" },
+      { label: "Inventory", icon: "images/icons/inventory.png", href: "inventory.html" },
+      { label: "Cash Reconciliation", icon: "images/icons/cash-register2.png", href: "cash-reconciliation.html" },
+      { label: "Cleaning Log", icon: "images/icons/cleaning.png", href: "cleaning-log.html" }
+    ]
+  },
+  {
+    title: "🧾 Manual Tasks Still in Use",
+    items: [
+      { label: "Expense Tracker", icon: "images/icons/expense.png", href: "expense-tracker.html" },
+      { label: "New Client Forms", icon: "images/icons/new-contact.png", href: "new-client-forms.html" },
+      { label: "Customer Notes", icon: "images/icons/note.png", href: "customer-notes.html" },
+      { label: "Time Clock", icon: "images/icons/time.png", href: "time-clock.html" },
+      { label: "Staff Chat Log", icon: "images/icons/speech-bubble.png", href: "staff-chat-log.html" },
+      { label: "Supply Orders", icon: "images/icons/purchase-order.png", href: "supply-orders.html" },
+      { label: "Walk-in Conversion", icon: "images/icons/combo-chart.png", href: "walk-in-conversion.html" },
+      { label: "Promo Flyers", icon: "images/icons/icons8-advertising-94.png", href: "promo-flyers.html" }
+    ]
+  }
+];
+
+function renderSections(){
+  if(!dashboardContainer) return;
+  dashboardContainer.innerHTML = "";
+  sections.forEach(sec=>{
+    const wrap = document.createElement('section');
+    wrap.className = 'dashboard-section';
+    wrap.innerHTML = `
+      <h2>${sec.title}</h2>
+      <div class="dashboard">
+        ${sec.items.map(it => `
+          <a href="${it.href}" class="icon-card">
+            <img src="${it.icon}" alt="${it.label} icon">
+            <p>${it.label}</p>
+          </a>
+        `).join('')}
+      </div>
+    `;
+    dashboardContainer.appendChild(wrap);
+  });
+}
+
+renderSections();
+
+// Footer year
+const yearEl = document.getElementById('year');
+if(yearEl) yearEl.textContent = new Date().getFullYear();
+
+// Hero date
+const dateEl = document.getElementById('sgDate');
+if(dateEl){
+  const d = new Date();
+  const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+  dateEl.textContent = d.toLocaleDateString(undefined, opts);
+}
+
+// Simple search filter for icon cards + Quick Peek cards
+const searchInput = document.getElementById('sgSearch');
+if(searchInput){
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    document.querySelectorAll('.icon-card').forEach(card => {
+      const txt = (card.textContent || '').toLowerCase();
+      card.style.display = txt.includes(q) ? '' : 'none';
+    });
+    document.querySelectorAll('.qp-card').forEach(card => {
+      const txt = (card.textContent || '').toLowerCase();
+      card.style.display = txt.includes(q) ? '' : 'none';
+    });
+  });
+}
+
+// Demo tasks (fallback)
+(function initDemoTasks(){
+  const list = document.getElementById('taskList');
+  if(!list) return;
+
+  const tasksData = [
+    { title: "Reply to 5-star reviews (keep the streak going)", due: "today", status: "open" },
+    { title: "Post 1 before/after set (IG/FB) with “Book Now”", due: "today", status: "open" }
+  ];
+
+  let currentFilter = 'all';
+
+  function row(t){
+    const div = document.createElement('div');
+    div.className = 'trow';
+    div.innerHTML = `
+      <div>
+        <div class="tdesc">${escapeHtml(t.title)}</div>
+        <div class="tdue">${t.status==='done'?'Completed': t.due==='today'?'Due today': t.due==='overdue'?'Due overdue': 'Completed'}</div>
+      </div>
+      <button class="done" ${t.status==='done'?'disabled':''}>${t.status==='done'?'Done':'Mark done'}</button>
+    `;
+    div.querySelector('.done')?.addEventListener('click', e=>{
+      t.status='done'; e.currentTarget.setAttribute('disabled',''); e.currentTarget.textContent='Done';
+    });
+    return div;
+  }
+  function render(filter='all'){
+    list.innerHTML='';
+    tasksData.filter(t=>{
+      if(filter==='all') return true;
+      if(filter==='today') return t.due==='today' && t.status!=='done';
+      if(filter==='overdue') return t.due==='overdue' && t.status!=='done';
+      if(filter==='completed') return t.status==='done';
+    }).forEach(t=>list.appendChild(row(t)));
+  }
+  render(currentFilter);
+  document.querySelectorAll('.filters .pill').forEach(p=>{
+    p.addEventListener('click', ()=>{
+      document.querySelectorAll('.filters .pill').forEach(x=>x.classList.remove('active'));
+      p.classList.add('active');
+      currentFilter = p.dataset.filter || 'all';
+      render(currentFilter);
+    });
+  });
+
+  // NEW: show role hint + sync role pills to Supabase role
+  const sgRoleLabel = document.getElementById('sgRoleLabel');
+  const supaRole = window.SG_ROLE || 'client';
+  const roleNiceMap = {
+    owner: 'Owner',
+    manager: 'Manager',
+    receptionist: 'Front Desk',
+    nail_tech: 'Nail Tech',
+    staff: 'Staff',
+    client: 'Client / Demo'
+  };
+  const nice = roleNiceMap[supaRole] || 'Demo';
+  if (sgRoleLabel) {
+    sgRoleLabel.innerHTML = `Viewing Salon Genie as <strong>${nice}</strong>. All tools are visible for now – later we can limit access by role.`;
+  }
+
+  const viewRoleMap = {
+    owner: 'owner',
+    manager: 'manager',
+    receptionist: 'staff',
+    nail_tech: 'staff',
+    staff: 'staff',
+    client: 'owner'
+  };
+  const viewRole = viewRoleMap[supaRole] || 'owner';
+  const roleButtons = document.querySelectorAll('.role-pills button');
+  const pillsWrap = document.querySelector('.role-pills');
+  if(pillsWrap) pillsWrap.classList.add('is-display');
+  roleButtons.forEach(btn => {
+    const isActive = btn.dataset.role === viewRole;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+    btn.setAttribute('aria-disabled','true');
+  });
+
+  // focus search with "/"
+  const sb = document.getElementById('sgSearch');
+  window.addEventListener('keydown', e=>{
+    if(e.key==='/' && document.activeElement!==sb){ e.preventDefault(); sb.focus(); }
+  });
+})();
+
+// =========================
+// Quick Peek (Data-driven) + KPI RPC
+// =========================
+const DASH_RPC = "rpc_sg_dashboard_kpis"; // SQL function name
+
+function getClient(){
+  return window.SG_CLIENT || sg;
+}
+
+function setHealthUI({level="ok", title="All clear", sub="No urgent issues detected.", items=[]}={}){
+  const wrap = document.getElementById("qpHealth");
+  if(!wrap) return;
+  wrap.style.display = "flex";
+  const icon = document.getElementById("qpHealthIcon");
+  const t = document.getElementById("qpHealthTitle");
+  const s = document.getElementById("qpHealthSub");
+  const list = document.getElementById("qpHealthList");
+  const badge = document.getElementById("qpHealthBadge");
+
+  const map = {
+    ok: {emoji:"✅", badge:"✅ OK", cls:"badge-ok"},
+    warn:{emoji:"⚠️", badge:"⚠️ Attention", cls:"badge-warn"},
+    bad:{emoji:"🧯", badge:"🧯 Urgent", cls:"badge-bad"}
+  };
+  const m = map[level] || map.ok;
+  if(icon) icon.textContent = m.emoji;
+  if(t) t.textContent = title;
+  if(s) s.textContent = sub;
+  if(badge){
+    badge.textContent = m.badge;
+    badge.classList.remove("badge-ok","badge-warn","badge-bad");
+    badge.classList.add(m.cls);
+  }
+  if(list){
+    list.innerHTML = "";
+    (items||[]).slice(0,5).forEach(x=>{
+      const li = document.createElement("li");
+      li.textContent = x;
+      list.appendChild(li);
+    });
+    list.style.display = (items && items.length) ? "block" : "none";
+  }
+}
+
+function renderQuickPeekCards(cards){
+  const grid = document.getElementById("qpGrid");
+  if(!grid) return;
+  if(!Array.isArray(cards) || cards.length===0) return; // keep existing HTML fallback
+  grid.innerHTML = "";
+  cards.forEach(c=>{
+    const card = document.createElement("div");
+    card.className = "qp-card";
+    const buttons = (c.actions||[]).map(a=>{
+      const href = a.href || "#";
+      const label = a.label || "Open";
+      const cls = a.variant === "primary" ? "qp-btn blue" : "qp-btn";
+      return `<a class="${cls}" href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
+    }).join("");
+
+    const bullets = (c.bullets||[]).map(b=>`<div class="qp-line">✅ ${escapeHtml(b)}</div>`).join("");
+    const warn = (c.warn||[]).map(b=>`<div class="qp-line">⚠️ ${escapeHtml(b)}</div>`).join("");
+    const info = (c.info||[]).map(b=>`<div class="qp-line">ℹ️ ${escapeHtml(b)}</div>`).join("");
+
+    card.innerHTML = `
+      <div class="qp-kicker">${escapeHtml(c.kicker||"")}</div>
+      <div class="qp-head">
+        <div class="qp-emoji">${escapeHtml(c.icon||"⚡")}</div>
+        <div>
+          <div class="qp-h">${escapeHtml(c.title||"")}</div>
+          <div class="qp-p">${escapeHtml(c.body||"")}</div>
+        </div>
+      </div>
+      <div class="qp-lines">${bullets}${warn}${info}</div>
+      <div class="qp-actions">${buttons}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+async function refreshQuickPeekFromRpc(businessId){
+  if(!businessId) return;
+  try{
+    const res = await getClient().rpc(DASH_RPC, { p_business_id: businessId });
+    if(res.error) throw res.error;
+    const payload = res.data || {};
+    if(payload.health) setHealthUI(payload.health);
+    if(payload.cards) renderQuickPeekCards(payload.cards);
+  }catch(e){
+    console.warn("Quick Peek RPC failed (showing fallback cards).", e);
+    const wrap = document.getElementById("qpHealth");
+    if(wrap) wrap.style.display = "none";
+  }
+}
+
+let qpRefreshTimer = null;
+function startQuickPeekAutoRefresh(businessId){
+  if(qpRefreshTimer) clearInterval(qpRefreshTimer);
+  qpRefreshTimer = setInterval(()=>refreshQuickPeekFromRpc(businessId), 60000);
+
+  try{
+    const channel = getClient().channel(`sg-quickpeek-${businessId}`);
+    const tables = [
+      {schema:"public", table:"appointments"},
+      {schema:"public", table:"checkins"},
+      {schema:"public", table:"customer_complaints"},
+                    ];
+    tables.forEach(t=>{
+      channel.on("postgres_changes", { event:"*", ...t, filter:`business_id=eq.${businessId}` }, () => {
+        refreshQuickPeekFromRpc(businessId);
+      });
+    });
+    channel.subscribe();
+    window.__sgQuickPeekChannel = channel;
+  }catch(e){
+    console.warn("Realtime subscription not active. Using heartbeat only.", e);
+  }
+}
+
+
+// =========================
+// Role-based visibility (UI layer)
+// =========================
+const ROLE_ORDER = { staff: 1, receptionist: 1, tech: 1, technician: 1, manager: 2, owner: 3, admin: 3 };
+
+function normalizeRole(r){
+  if(!r) return "staff";
+  const x = String(r).toLowerCase().trim();
+  if(x === "technician") return "tech";
+  if(x === "reception") return "receptionist";
+  return x;
+}
+
+function roleAtLeast(userRole, minRole){
+  const a = ROLE_ORDER[normalizeRole(userRole)] || 1;
+  const b = ROLE_ORDER[normalizeRole(minRole)] || 1;
+  return a >= b;
+}
+
+function applyRoleVisibility(userRole){
+  const role = normalizeRole(userRole);
+
+  document.querySelectorAll("[data-roles]").forEach(el=>{
+    const allowed = (el.getAttribute("data-roles")||"").split(",").map(s=>s.trim().toLowerCase()).filter(Boolean);
+    if(allowed.length && !allowed.includes(role) && !(role==="admin" && allowed.includes("owner"))){
+      el.classList.add("is-hidden");
+    }else{
+      el.classList.remove("is-hidden");
+    }
+  });
+
+  document.querySelectorAll("[data-min-role]").forEach(el=>{
+    const minRole = el.getAttribute("data-min-role");
+    if(minRole && !roleAtLeast(role, minRole)){
+      el.classList.add("is-hidden");
+    }else{
+      el.classList.remove("is-hidden");
+    }
+  });
+
+  // Make role pills display-only
+  const pillsWrap = document.querySelector(".role-pills");
+  if(pillsWrap) pillsWrap.classList.add("is-display");
+  document.querySelectorAll(".role-pill").forEach(btn=>{
+    const r = btn.getAttribute("data-role");
+    if(r && normalizeRole(r) === role){
+      btn.classList.add("active");
+    }else{
+      btn.classList.remove("active");
+    }
+    btn.setAttribute("aria-disabled","true");
+  });
+}
+
+async function resolveUserRoleAndBusiness(clientRef, user){
+  let role = "staff";
+  let activeBusinessId = null;
+
+  // 1) user_preferences
+  try{
+    const pref = await clientRef.from("user_preferences").select("role,active_business_id").eq("user_id", user.id).maybeSingle();
+    if(!pref.error && pref.data){
+      if(pref.data.role) role = pref.data.role;
+      if(pref.data.active_business_id) activeBusinessId = pref.data.active_business_id;
+    }
+  }catch(e){}
+
+  // 2) employees role for active business (if available)
+  if(activeBusinessId){
+    try{
+      const emp = await clientRef.from("employees").select("role").eq("user_id", user.id).eq("business_id", activeBusinessId).maybeSingle();
+      if(!emp.error && emp.data && emp.data.role) role = emp.data.role;
+    }catch(e){}
+  }
+
+  // 3) owner fallback
+  if(activeBusinessId){
+    try{
+      const bp = await clientRef.from("business_profiles").select("owner_id").eq("id", activeBusinessId).maybeSingle();
+      if(!bp.error && bp.data && bp.data.owner_id === user.id) role = "owner";
+    }catch(e){}
+  }
+
+  return { role: normalizeRole(role), businessId: activeBusinessId };
+}
+
+// ===== Orchestrate: role + Quick Peek + tasks =====
+(async function bootstrap(){
+  try{
+    if(!user || !user.id) return;
+
+    const client = getClient();
+    const resolved = await resolveUserRoleAndBusiness(client, user);
+
+    if(resolved.role) applyRoleVisibility(resolved.role);
+
+    const bizId = window.SG_ACTIVE_BIZ_ID || resolved.businessId;
+    if(isValidUUID(bizId)){
+      // Live data
+      await loadQuickPeekReal(bizId);
+      await loadTasksReal(bizId);
+
+      // Quick Peek RPC refresh + realtime
+      await refreshQuickPeekFromRpc(bizId);
+      startQuickPeekAutoRefresh(bizId);
+    } else {
+      // Demo
+      renderQuickPeekDemo();
+    }
+  }catch(e){
+    console.warn("bootstrap failed", e);
+  }
+})();
+
+</script>
+</body>
+</html>

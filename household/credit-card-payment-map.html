@@ -1,0 +1,2590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>💳 Credit Card Hub | GenieSphere</title>
+<meta content="Credit Card Hub: cards, due dates, transactions, rewards, and best card suggestions." name="description"/>
+<meta name="gs-config" content="/shared/config.json" />
+<style>
+  /* =========================================================
+     GenieSphere Theme System (shared)
+     - Toggle via ⚙️ Appearance (saved in localStorage)
+     ========================================================= */
+
+  :root{
+    --ring: rgba(76,110,245,.25);
+
+    /* layout */
+    --container: 1440px;
+    --radius: 7px;
+    --radius-lg: 7px;
+    --btn-radius: 999px;
+
+    /* spacing */
+    --space-1: 6px;
+    --space-2: 10px;
+    --space-3: 14px;
+    --space-4: 18px;
+    --space-5: 24px;
+    --space-6: 32px;
+
+    /* motion/shadow */
+    --shadow: 0 16px 38px rgba(15,23,42,.16);
+    --shadow-soft: 0 10px 24px rgba(15,23,42,.10);
+
+    /* focus */
+    --focus: 0 0 0 4px rgba(76,110,245,.18);
+  }
+
+  /* Theme A: Calm Future (default) */
+  body.theme-calm{
+    --bg: #f5f7fb;
+    --panel: #ffffff;
+    --panel-2: #f1f4ff;
+    --text: #111827;
+    --muted: #4b5563;
+
+    --primary: #4c6ef5;
+    --accent: #22c55e;
+
+    --border: rgba(148,163,184,.70);
+    --border-strong: rgba(148,163,184,.92);
+
+    --shadow: 0 18px 38px rgba(15,23,42,.14);
+    --shadow-soft: 0 10px 26px rgba(15,23,42,.10);
+    --focus: 0 0 0 4px rgba(76,110,245,.18);
+  }
+
+  /* Theme B: Soft Futuristic */
+  body.theme-future{
+    --bg: #0f172a;
+    --panel: #111c36;
+    --panel-2: #162447;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+
+    --primary: #6366f1;
+    --accent: #22d3ee;
+
+    --border: rgba(71,85,105,.65);
+    --border-strong: rgba(71,85,105,.95);
+
+    --shadow: 0 18px 44px rgba(0,0,0,.52);
+    --shadow-soft: 0 10px 26px rgba(0,0,0,.34);
+    --focus: 0 0 0 4px rgba(34,211,238,.16);
+  }
+
+  /* Theme C: Nature + Tech */
+  body.theme-nature{
+    --bg: #f6f9f7;
+    --panel: #ffffff;
+    --panel-2: #eef5f1;
+    --text: #0f172a;
+    --muted: #475569;
+
+    --primary: #16a34a;
+    --accent: #38bdf8;
+
+    --border: rgba(148,163,184,.70);
+    --border-strong: rgba(148,163,184,.92);
+
+    --shadow: 0 18px 38px rgba(15,23,42,.12);
+    --shadow-soft: 0 10px 26px rgba(15,23,42,.09);
+    --focus: 0 0 0 4px rgba(22,163,74,.16);
+  }
+
+  /* Theme D: Pro Dark */
+  body.theme-dark{
+    --bg: #0b1220;
+    --panel: #121a2b;
+    --panel-2: #0e1626;
+    --text: #e9f0ff;
+    --muted: #a9b6d9;
+
+    --primary: #4c6ef5;
+    --accent: #3ee1a1;
+
+    --border: rgba(120,155,255,.22);
+    --border-strong: rgba(120,155,255,.42);
+
+    --shadow: 0 18px 44px rgba(0,0,0,.50);
+    --shadow-soft: 0 10px 26px rgba(0,0,0,.30);
+    --focus: 0 0 0 4px rgba(76,110,245,.22);
+  }
+
+  /* Household page variable mapping */
+  body{
+    --card: var(--panel);
+    --card-hover: var(--panel-2);
+    --accent: var(--accent);
+    --accent-2: var(--primary);
+    --brand-blue: var(--primary);
+    --ring: rgba(62,225,161,.35);
+    --shadow: var(--shadow-soft);
+    --gap: 18px;
+    --btn-radius: 999px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background: var(--bg);
+    color:var(--text);
+    font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+  }
+
+  .sr-only{
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+
+  .container{max-width:1440px;margin:0 auto;padding:24px}
+
+  /* Header (aligned with index.html) */
+  .site-header{
+    position:sticky;
+    top:0;
+    z-index:1000;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    box-shadow:0 8px 22px rgba(0,0,0,.25);
+    backdrop-filter:saturate(120%) blur(10px);
+  }
+  .site-header-inner{
+    max-width:1440px;
+    margin:0 auto;
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:700;
+  }
+  .logo{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+    box-shadow:0 0 0 3px var(--ring),0 8px 24px rgba(62,225,161,.35);
+  }
+  .menu{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    font-size:14px;
+  }
+  .menu a{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 2px;
+    border-radius:0;
+    text-decoration:none;
+    color:var(--muted);
+    font-weight:500;
+    border-bottom:2px solid transparent;
+    box-shadow:none;
+    background:transparent;
+    transition:color .15s ease, border-bottom-color .15s ease;
+  }
+  .menu a:hover{
+    color:var(--text);
+    border-bottom-color:var(--brand-blue);
+  }
+  .menu a.active{
+    color:var(--text);
+    border-bottom-color:var(--accent);
+    font-weight:600;
+  }
+  .menu a.ghost{
+    color:var(--muted);
+  }
+
+  /* User menu (desktop + mobile) */
+  .user-menu{
+    position:relative;
+    display:flex;
+    align-items:center;
+    margin-left:auto;
+  }
+  .user-menu-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:999px;
+    border:1px solid var(--border-strong);
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:14px;
+    cursor:pointer;
+  }
+  .user-menu-toggle:hover{
+    border-color:var(--accent);
+  }
+  .user-menu-dropdown{
+    position:absolute;
+    right:0;
+    top:calc(100% + 6px);
+    min-width:220px;
+    background:var(--panel-2);
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    box-shadow:0 14px 34px rgba(0,0,0,.55);
+    padding:6px 0;
+    display:none;
+    z-index:1002;
+    margin-right:4px;
+  }
+  .user-menu-dropdown a,
+  .user-menu-dropdown button{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:8px 14px;
+    background:none;
+    border:none;
+    color:var(--text);
+    font-size:14px;
+    text-decoration:none;
+    cursor:pointer;
+  }
+  .user-menu-dropdown a:hover,
+  .user-menu-dropdown button:hover{
+    background:var(--panel);
+  }
+  .user-menu-divider{
+    height:1px;
+    margin:4px 0;
+    background:rgba(148,163,184,.4);
+  }
+  .dropdown-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    opacity:.7;
+    padding:4px 14px 2px;
+  }
+  .auth-only{ }
+
+  .hamburger{
+    display:none;
+  }
+  .theme-gear{
+    display:none;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    border-radius:999px;
+    border:1px solid var(--border-strong);
+    background:var(--panel-2);
+    color:var(--text);
+    cursor:pointer;
+  }
+  .theme-gear:hover{ border-color: var(--accent); }
+
+  .hamburger{
+    display:none;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    border-radius:7px;
+    padding:8px 10px;
+    cursor:pointer;
+  }
+  @media(max-width:720px){
+    .menu{display:none}
+    .hamburger{display:none}
+    .drawer{display:none}
+    .theme-gear{display:none}
+    .site-header-inner{padding:10px 12px}
+    .user-menu-toggle{padding-inline:10px;}
+  }
+
+  .drawer{
+    position:fixed;
+    inset:60px 12px auto 12px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:10px;
+    display:none;
+    z-index:1001;
+    box-shadow:0 18px 34px rgba(0,0,0,.45);
+  }
+  .drawer a{
+    display:block;
+    margin:6px 0;
+    padding:10px 12px;
+    border-radius:var(--radius);
+    text-decoration:none;
+    color:var(--text);
+    background:var(--panel);
+    border:1px solid var(--border);
+  }
+  .drawer a.active{
+    background:var(--card-hover);
+    border-color:rgba(62,225,161,.35);
+  }
+
+  /* Hero */
+  .hero{text-align:center;padding:16px 0 8px}
+  .title{
+    font-size:clamp(26px,4vw,40px);
+    margin:0 0 6px;
+    font-weight:900;
+  }
+  .subtitle{
+    color:var(--muted);
+    margin:0 auto 18px;
+    max-width:820px;
+    font-size:15px;
+  }
+
+  /* Buttons */
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 18px;
+    border-radius:var(--btn-radius);
+    text-decoration:none;
+    color:#03101f;
+    background:var(--accent-2);
+    font-weight:700;
+    border:0;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(74,163,255,.25);
+    font-size:14px;
+    white-space:nowrap;
+    justify-content:center;
+  }
+  .btn.primary{
+    background:var(--accent);
+    color:#04131a;
+    box-shadow:0 8px 18px rgba(62,225,161,.25);
+  }
+  .btn.blue{
+    background: var(--brand-blue);
+    color:#061226;
+    box-shadow:0 8px 18px rgba(76,110,245,.22);
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .btn.ghost{
+    background:transparent;
+    border:1px dashed var(--border-strong);
+    color: var(--text);
+    box-shadow:none;
+  }
+  .btn.small{ padding: 6px 12px; font-size: 13px; }
+
+  /* Chips (you were already using .chip but it wasn't defined) */
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.28);
+    background: rgba(255,255,255,.06);
+    color: var(--muted);
+    font-size:12px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+  .chip.ok{
+    border-color: rgba(62,225,161,.45);
+    background: rgba(62,225,161,.14);
+    color: var(--text);
+  }
+  .chip.warn{
+    border-color: rgba(245,158,11,.40);
+    background: rgba(245,158,11,.14);
+    color: var(--text);
+  }
+  .chip.bad{
+    border-color: rgba(239,68,68,.40);
+    background: rgba(239,68,68,.14);
+    color: var(--text);
+  }
+
+  /* Tool shell + panels */
+  .tool-shell{ max-width: var(--container); margin: 0 auto; padding:0; }
+  @media(max-width:860px){ .tool-shell{ padding: 0; } }
+
+  .panel{
+    background: linear-gradient(180deg, rgba(24,35,58,.65), rgba(18,26,43,.85));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  .panel-head{
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-title{ margin:0; font-size:16px; font-weight:900; }
+  .panel-sub{ margin-top:4px; color: var(--muted); font-size:13px; }
+  .hub-body{ padding: 14px; }
+
+  /* Hub tabs */
+  .hub-tabs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin: 14px auto 0;
+    justify-content:center;
+    max-width: var(--container);
+  }
+  .hub-tab{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.35);
+    background: rgba(0,0,0,.06);
+    color: var(--muted);
+    font-size:13px;
+    font-weight:800;
+    text-decoration:none;
+    transition: transform .12s ease, border-color .18s ease, color .18s ease, background .18s ease;
+    white-space:nowrap;
+  }
+  body.theme-future .hub-tab, body.theme-dark .hub-tab{ background: rgba(255,255,255,.06); }
+  .hub-tab:hover{ border-color: rgba(76,110,245,.55); color: var(--text); }
+  .hub-tab.active{
+    background: linear-gradient(135deg, rgba(62,225,161,.18), rgba(76,110,245,.14));
+    border-color: rgba(62,225,161,.55);
+    color: var(--text);
+    box-shadow: 0 10px 22px rgba(0,0,0,.25);
+  }
+
+  /* Filters */
+  .hub-filters{
+    max-width: var(--container);
+    margin: 12px auto 8px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:center;
+  }
+  .filter-row{
+    width:100%;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+    align-items:center;
+  }
+  .filter-label{
+    font-size:12px;
+    font-weight:900;
+    color: var(--muted);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    padding:6px 8px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.25);
+    background: rgba(0,0,0,.04);
+  }
+  body.theme-future .filter-label, body.theme-dark .filter-label{ background: rgba(255,255,255,.06); }
+  .filter-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,.35);
+    background: rgba(0,0,0,.06);
+    color: var(--muted);
+    font-size:13px;
+    font-weight:900;
+    cursor:pointer;
+    user-select:none;
+    transition: transform .12s ease, border-color .18s ease, color .18s ease, background .18s ease;
+    white-space:nowrap;
+  }
+  body.theme-future .filter-pill, body.theme-dark .filter-pill{ background: rgba(255,255,255,.06); }
+  .filter-pill:hover{ border-color: rgba(76,110,245,.55); color: var(--text); }
+  .filter-pill.active{
+    background: linear-gradient(135deg, rgba(62,225,161,.18), rgba(76,110,245,.14));
+    border-color: rgba(62,225,161,.55);
+    color: var(--text);
+    box-shadow: 0 10px 22px rgba(0,0,0,.22);
+  }
+  .filter-pill .count{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:22px;
+    height:22px;
+    padding:0 7px;
+    border-radius:999px;
+    background: rgba(76,110,245,.14);
+    border:1px solid rgba(76,110,245,.30);
+    color: var(--text);
+    font-size:12px;
+    font-weight:900;
+  }
+  .hub-filters[hidden]{ display:none !important; }
+
+  /* Summary cards */
+  .summary-row{
+    display:grid;
+    grid-template-columns: repeat(6, minmax(0,1fr));
+    gap:12px;
+    margin: 0 auto 14px;
+  }
+  @media(max-width:1080px){ .summary-row{ grid-template-columns: repeat(3, minmax(0,1fr)); } }
+  @media(max-width:640px){ .summary-row{ grid-template-columns: repeat(1, minmax(0,1fr)); } }
+
+  .summary-card{
+    background: radial-gradient(circle at top left, rgba(31,41,55,.95) 0, rgba(2,6,23,.95) 70%);
+    border-radius: var(--radius-lg);
+    padding: 10px 12px;
+    border: 1px solid rgba(148,163,184,.22);
+    box-shadow: 0 10px 30px rgba(15,23,42,.35);
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-height:92px;
+  }
+  .summary-label{ font-size:11px; text-transform:uppercase; letter-spacing:.14em; color: var(--muted); }
+  .summary-value{ font-size:18px; font-weight:900; }
+  .summary-foot{
+    font-size:12px;
+    color: var(--muted);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:6px;
+  }
+
+  .hub-grid{
+    display:grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 18px;
+    align-items:start;
+  }
+  @media(max-width: 980px){ .hub-grid{ grid-template-columns: 1fr; } }
+
+  .hub-spacer{ height: 12px; }
+
+  .hub-subhead{ margin-top: 6px; }
+  .hub-h3{ margin: 0 0 4px; font-size: 14px; font-weight: 900; }
+  .hub-small{ font-size: 13px; }
+
+  .actions-grid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:10px;
+    margin-top:10px;
+  }
+  @media(max-width:640px){ .actions-grid{ grid-template-columns: 1fr; } }
+
+  .action-card{
+    border-radius: var(--radius);
+    border:1px solid rgba(148,163,184,.22);
+    background: linear-gradient(180deg, rgba(18,26,43,.90), rgba(2,6,23,.92));
+    padding:12px;
+    box-shadow: 0 12px 28px rgba(0,0,0,.35);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .action-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .action-top strong{ font-size: 14px; }
+  .action-card p{ margin:0; color: var(--muted); font-size: 13px; }
+
+  .list{ margin-top: 8px; display:flex; flex-direction:column; gap:8px; }
+
+  .row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border:1px solid rgba(148,163,184,.22);
+    background: rgba(2,6,23,.65);
+    padding: 10px 10px;
+    border-radius: var(--radius);
+  }
+  .row strong{ font-size: 13px; }
+  .row .meta{ font-size: 12px; color: var(--muted); }
+  .row .right{
+    display:flex;
+    gap:10px;
+    align-items:baseline;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    text-align:right;
+  }
+  .kpi{ font-weight: 900; }
+
+  .empty{
+    padding:10px;
+    border:1px dashed rgba(148,163,184,.35);
+    border-radius:var(--radius);
+    color: var(--muted);
+    background: rgba(2,6,23,.60);
+    font-size: 13px;
+  }
+
+  /* Monthly snapshot panel */
+  .snapshot-panel{
+    margin: 0 auto 14px;
+    max-width: var(--container);
+  }
+
+  /* ===== Payment Map (new) ===== */
+  .pm-grid{
+    display:grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 18px;
+    align-items:start;
+  }
+  @media(max-width: 980px){ .pm-grid{ grid-template-columns: 1fr; } }
+
+  .pm-kpis{
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap:10px;
+    margin-top:10px;
+  }
+  @media(max-width: 980px){ .pm-kpis{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media(max-width: 520px){ .pm-kpis{ grid-template-columns: 1fr; } }
+
+  .pm-kpi{
+    border:1px solid rgba(148,163,184,.22);
+    background: rgba(2,6,23,.55);
+    border-radius: var(--radius);
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .pm-kpi .lab{ font-size:11px; letter-spacing:.12em; text-transform:uppercase; color: var(--muted); font-weight:900; }
+  .pm-kpi .val{ font-size:16px; font-weight:900; }
+
+  .form{
+    padding: 14px;
+    display:flex;
+    flex-direction:column;
+    gap: 12px;
+  }
+  .form-row{
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+  }
+  .form-row label{
+    font-size:12px;
+    color: var(--muted);
+    font-weight:900;
+    letter-spacing:.02em;
+  }
+  .form-row input, .form-row textarea, .form-row select{
+    width:100%;
+    padding:10px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size:14px;
+    outline:none;
+  }
+  .form-row input:focus, .form-row textarea:focus, .form-row select:focus{
+    box-shadow: var(--focus);
+    border-color: rgba(76,110,245,.65);
+  }
+  .form-actions{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
+  @media(max-width:640px){
+    .form-actions{ flex-direction:column; }
+    .form-actions .btn{ width:100%; }
+  }
+
+  .pm-table-wrap{ overflow:auto; }
+  .pm-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .pm-table th, .pm-table td{
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(148,163,184,.18);
+    text-align:left;
+    vertical-align:top;
+  }
+  .pm-table th{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color: var(--muted);
+    font-weight:900;
+    position:sticky;
+    top:0;
+    background: rgba(18,26,43,.95);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Mobile bottom nav (4 tabs) */
+  .mobile-nav{
+    position:fixed; left:0; right:0; bottom:0;
+    display:none;
+    z-index:1200;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    background:var(--panel);
+    border-top:1px solid var(--border);
+    box-shadow:0 -10px 24px rgba(0,0,0,.18);
+  }
+  .mobile-nav-inner{
+    max-width:var(--container);
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+  }
+  .mnav{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px;
+    padding:10px 8px;
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--muted);
+    font-weight:800;
+    font-size:11px;
+    text-decoration:none;
+  }
+  .mnav .ico{ font-size:16px; line-height:1; }
+  .mnav.active{
+    color:var(--text);
+    border-color:rgba(76,110,245,.55);
+    box-shadow:var(--focus);
+  }
+  .mobile-pad{ display:none; height:86px; }
+  @media (max-width: 860px){
+    .mobile-nav{ display: block; }
+    .mobile-pad{ display: block; }
+    main.page{ padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+  }
+
+  /* Hide footer on small mobile */
+  @media (max-width: 600px) {
+    .site-footer { display: none !important; }
+  }
+
+  /* Footer */
+  .site-footer{
+    margin-top:30px;
+    padding:22px 0 34px;
+    border-top:1px solid var(--border);
+    background:rgba(10,16,28,.9);
+    color:var(--muted);
+  }
+  .site-footer-inner{
+    max-width:1440px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+  .footer-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:16px;
+  }
+  .footer-col h4{margin:0 0 10px;color:var(--text);font-size:14px}
+  .footer-col a{
+    display:block;
+    color:var(--muted);
+    text-decoration:none;
+    margin:6px 0;
+    font-size:13px;
+  }
+  .footer-col a:hover{color:var(--text)}
+  .footer-bottom{
+    margin-top:18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    font-size:12px;
+  }
+  .social{ display:flex; gap:10px; }
+  .social a{
+    width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    text-decoration:none;
+  }
+
+  /* Theme modal (unchanged, shared) */
+  .theme-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.62);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:2000;
+    padding:18px;
+  }
+  .theme-modal{
+    width:min(720px, 96vw);
+    border-radius:var(--radius-lg);
+    border:1px solid var(--border);
+    background:var(--panel);
+    box-shadow:0 30px 90px rgba(0,0,0,.55);
+    overflow:hidden;
+  }
+  .theme-modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .theme-modal-title{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  .theme-modal-title strong{ font-size:15px; }
+  .theme-modal-title span{ font-size:13px; color:var(--muted); }
+  .theme-close{
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    border-radius:999px;
+    padding:8px 10px;
+    cursor:pointer;
+  }
+  .theme-close:hover{ border-color: var(--accent); }
+  .theme-modal-body{ padding: 14px; }
+  .theme-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+  @media (max-width: 560px){
+    .theme-grid{ grid-template-columns:1fr; }
+  }
+  .theme-option{
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    padding: 12px;
+    cursor:pointer;
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .theme-option:hover{ border-color: rgba(76,110,245,.55); }
+  .theme-option.selected{
+    border-color: rgba(76,110,245,.85);
+    box-shadow: var(--focus);
+  }
+  .theme-option-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .theme-option-name{
+    margin:0;
+    font-weight:900;
+    font-size:14px;
+  }
+  .theme-option-desc{
+    margin:0;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .theme-option-tag{
+    font-size:11px;
+    font-weight:800;
+    padding:4px 8px;
+    background: rgba(76,110,245,.16);
+    border:1px solid rgba(76,110,245,.35);
+    border-radius: 999px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .theme-modal-footer{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Mobile-only helpers */
+  .mobile-only{ display:none; }
+  @media(max-width:720px){
+    .mobile-only{ display:block; }
+  }
+</style>
+</head>
+
+<body class="theme-dark" data-page="payment-map">
+<!-- Header -->
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="../index.html">
+      <img alt="GenieSphere" class="logo" src="../genie-logo.png"/>
+      <strong>GenieSphere</strong>
+    </a>
+
+    <nav aria-label="Primary" class="menu">
+      <a class="active" href="../dashboard/household.html">🏠 Household</a>
+      <a class="ghost" href="../dashboard/business.html">🏢 Business</a>
+      <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+      <a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+    </nav>
+
+    <button aria-expanded="false" aria-label="Open navigation" class="hamburger" id="hamburger">☰</button>
+    <button class="theme-gear" id="openThemeBtn" type="button" aria-label="Open appearance settings">⚙️</button>
+
+    <!-- User menu / login dropdown -->
+    <div class="user-menu" id="user-menu">
+      <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle">
+        <span id="user-name-label">Log in</span>
+        <span aria-hidden="true">▾</span>
+      </button>
+
+      <div class="user-menu-dropdown" id="user-menu-dropdown">
+        <div class="mobile-only">
+          <div class="dropdown-label">Areas</div>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/household.html">🏠 Household</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/business.html">🏢 Business</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/investment.html">📈 Investment</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/leisure.html">🏝️ Leisure</button>
+          <div class="user-menu-divider"></div>
+        </div>
+
+        <div class="dropdown-label">Account</div>
+        <button class="dropdown-nav" data-target="../onboarding/user_profile_form.html" type="button">👤 User profile</button>
+        <button class="dropdown-nav" data-target="../onboarding/display_settings.html" type="button">⚙️ Settings</button>
+        <button id="dropdown-open-appearance" type="button">🎨 Appearance</button>
+        <div class="user-menu-divider"></div>
+        <button id="user-auth-action" type="button">Log in / Sign up</button>
+        <button class="auth-only" id="user-signout-btn" type="button">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div aria-label="Mobile Navigation" aria-modal="true" class="drawer" id="mobile-drawer" role="dialog">
+  <a class="active" href="../dashboard/household.html">🏠 Household</a>
+  <a class="ghost" href="../dashboard/business.html">🏢 Business</a>
+  <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+  <a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+</div>
+
+<div class="container">
+  <!-- Hero -->
+  <section class="hero">
+    <h1 class="title">💳 Credit Card Hub</h1>
+    <p class="subtitle">Your one-stop dashboard for cards, due dates, transactions, rewards, and a clean “Payment Map” so you always know which card pays what.</p>
+
+    <div class="hub-tabs" aria-label="Credit Card Hub Navigation">
+      <span class="hub-tab active" aria-current="page">🏠 Hub</span>
+      <a class="hub-tab" href="./credit-card-tracker.html">💳 Cards</a>
+      <a class="hub-tab" href="./credit-card-transactions.html">🧾 Transactions</a>
+      <a class="hub-tab" href="./credit-card-rewards.html">🎁 Rewards</a>
+      <a class="hub-tab" href="./credit-card-optimizer.html">🏷️ Best Card</a>
+      <a class="hub-tab active" href="./credit-card-payment-map.html">📌 Payment Map</a>
+    </div>
+
+    <div class="hub-filters" id="hub-filters" hidden>
+      <div class="filter-row" id="workspace-filter-row" aria-label="Workspace filter">
+        <span class="filter-label">Workspace</span>
+      </div>
+      <div class="filter-row" id="purpose-filter-row" aria-label="Purpose filter">
+        <span class="filter-label">Purpose</span>
+      </div>
+    </div>
+  </section>
+    <!-- Config / Auth errors -->
+    <div id="gs-config-error" class="panel" style="display:none; max-width: var(--container); margin: 14px auto 0;">
+      <div class="panel-head">
+        <h2 class="panel-title">⚠️ Setup needed</h2>
+        <div class="panel-sub" id="gs-config-error-msg">Configuration not loaded.</div>
+      </div>
+      <div class="hub-body">
+        <div class="list">
+          <div class="row">
+            <div>
+              <strong>Fix: ensure <code>/shared/config.json</code> is served</strong>
+              <div class="meta">This page uses the Enterprise config file to connect to Supabase and auth.</div>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <strong>Tip: if you’re testing from a subfolder</strong>
+              <div class="meta">The page also tries <code>../shared/config.json</code> and <code>../../shared/config.json</code> automatically.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  <main class="tool-shell page" aria-label="Credit Card Hub Content">
+    <div class="hub-hero" style="max-width: var(--container); margin: 0 auto 14px;">
+      <div class="hero-title">📌 Payment Map</div>
+      <div class="hero-sub">Map each bill/vendor to the right card — filter by Workspace, and auto-suggest from transactions.</div>
+      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btn" href="./credit-card-hub.html">⬅️ Back to Hub</a>
+        <a class="btn blue" href="./credit-card-transactions.html">🧾 Transactions</a>
+        <a class="btn blue" href="./credit-card-tracker.html">💳 Cards</a>
+      </div>
+    </div>
+
+<!-- NEW: Payment Map -->
+    <div id="payment-map" class="panel" style="margin-top:18px;">
+      <div class="panel-head">
+        <h2 class="panel-title">📌 Payment Map</h2>
+        <div class="panel-sub">Track which card pays what (home utilities, business utilities, phone, subscriptions, annual fees). Minimal typing. Works even if you don’t have a DB table yet.</div>
+      </div>
+
+      <div class="hub-body">
+        <div class="pm-grid">
+          <!-- Left: List -->
+          <div>
+            <div class="pm-kpis" aria-label="Payment Map KPIs">
+              <div class="pm-kpi">
+                <div class="lab">Mapped items</div>
+                <div class="val" id="pm-kpi-total">0</div>
+              </div>
+              <div class="pm-kpi">
+                <div class="lab">Subscriptions</div>
+                <div class="val" id="pm-kpi-subs">0</div>
+              </div>
+              <div class="pm-kpi">
+                <div class="lab">Utilities + phone</div>
+                <div class="val" id="pm-kpi-bills">0</div>
+              </div>
+              <div class="pm-kpi">
+                <div class="lab">Annual fees</div>
+                <div class="val" id="pm-kpi-fees">0</div>
+              </div>
+            </div>
+
+            <div class="hub-spacer"></div>
+            <div class="hub-spacer"></div>
+            <div class="panel" style="box-shadow:none; margin-bottom:12px;">
+              <div class="panel-head">
+                <h3 class="panel-title">✨ Suggested mappings</h3>
+                <div class="panel-sub">Based on recurring vendors in your transactions. One click to add.</div>
+              </div>
+              <div class="hub-body">
+                <div id="pm-suggestions" class="list">
+                  <div class="empty">Loading suggestions…</div>
+                </div>
+              </div>
+            </div>
+
+              <table class="pm-table" aria-label="Payment Map Table">
+                <thead>
+                  <tr>
+                    <th>Workspace</th>
+                    <th>Category</th>
+                    <th>Vendor</th>
+                    <th>Paid By</th>
+                    <th>Notes</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="pm-tbody">
+                  <tr><td colspan="6"><div class="empty">Loading…</div></td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="hub-spacer"></div>
+            <div class="empty" id="pm-storage-note" style="display:none;"></div>
+          </div>
+
+          <!-- Right: Add form -->
+          <div class="panel" style="box-shadow:none;">
+            <div class="panel-head">
+              <h3 class="panel-title">➕ Add a mapping</h3>
+              <div class="panel-sub">Example: “ComEd → Home Utilities → paid by Chase Freedom”.</div>
+            </div>
+
+            <form class="form" id="pm-form">
+              <div class="form-row">
+                <label for="pmWorkspaceId">🏷️ Workspace</label>
+                <select id="pmWorkspaceId" required>
+                  <option value="personal" data-type="personal">🏠 Personal</option>
+                </select>
+                <div class="meta">Workspace = who owns the expense (Personal, Business, Rental, Investment).</div>
+              </div>
+</div>
+    </div>
+
+  </main>
+
+  
+<!-- Footer -->
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>Home &amp; Family</h4>
+          <a href="/household/householdgenie/household-genie.html">Household Genie</a>
+          <a href="/household/family-scheduler.html">Family Scheduler</a>
+          <a href="/household/kids-school.html">Kids &amp; School Hub</a>
+        </div>
+        <div class="footer-col">
+          <h4>Health &amp; Money</h4>
+          <a href="/household/nutrition-engine.html">Nutrition Engine</a>
+          <a href="/household/medication-logger.html">Medication &amp; Vitals</a>
+          <a href="/household/household-budget.html">Household Budget</a>
+        </div>
+        <div class="footer-col">
+          <h4>Life &amp; Travel</h4>
+          <a href="/household/car-care">Car Care Tracker</a>
+          <a href="/leisure/travelplangenie/index.html">Trip Planner</a>
+          <a href="/household/household-insurance.html">Safety &amp; Insurance</a>
+        </div>
+        <div class="footer-col">
+          <h4>Help</h4>
+          <a href="/onboarding/api-key-settings.html">API Keys</a>
+          <a href="/about.html">About</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+        <div aria-label="Social" class="social">
+          <a aria-label="Twitter / X" href="#">🐦</a>
+          <a aria-label="YouTube" href="#">▶️</a>
+          <a aria-label="GitHub" href="#">🐙</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Spacer for bottom nav -->
+  <div class="mobile-pad" aria-hidden="true"></div>
+
+  <!-- ===== MOBILE BOTTOM NAV ===== -->
+  <nav class="mobile-nav" aria-label="GenieSphere mobile navigation">
+    <div class="mobile-nav-inner">
+      <a class="mnav" href="../dashboard/household.html" data-nav="household">
+        <div class="ico">🏠</div><div>Household</div>
+      </a>
+      <a class="mnav" href="../dashboard/business.html" data-nav="business">
+        <div class="ico">🏢</div><div>Business</div>
+      </a>
+      <a class="mnav" href="../dashboard/investment.html" data-nav="investment">
+        <div class="ico">📈</div><div>Investment</div>
+      </a>
+      <a class="mnav" href="../dashboard/leisure.html" data-nav="leisure">
+        <div class="ico">🏝️</div><div>Leisure</div>
+      </a>
+    </div>
+  </nav>
+</div>
+
+<!-- ✅ Enterprise config bootstrap (matches household.html) -->
+<script>
+  window.GS_CONFIG_URL = "/shared/config.json";
+  window.GS_CONFIG_PATH = "/shared/config.json";
+</script>
+
+<!-- ✅ Supabase SDK (Edge-safe): loaded on-demand inside getClient() to avoid race conditions -->
+<script src="/shared/js/app-config.js?v=20260208a"></script>
+<script src="/shared/js/auth-header.js?v=20260208a"></script>
+
+<script>
+  // Force GSConfig to use /shared/config.json
+  async function loadConfig(){
+    // Enterprise standard: try config in a few sensible locations
+    const candidates = [];
+    try{
+      if(window.GS_CONFIG_URL) candidates.push(String(window.GS_CONFIG_URL));
+      if(window.GS_CONFIG_PATH) candidates.push(String(window.GS_CONFIG_PATH));
+    }catch(_){}
+    const meta = document.querySelector('meta[name="gs-config"]');
+    if(meta?.content) candidates.push(meta.content);
+
+    // Common fallbacks (root + relative)
+    candidates.push('/shared/config.json');
+
+    // Dedup + try in order
+    const seen = new Set();
+    const urls = candidates.map(u=>String(u||'').trim()).filter(u=>{
+      if(!u) return false;
+      if(seen.has(u)) return false;
+      seen.add(u);
+      return true;
+    });
+
+    let lastErr = null;
+    for(const url of urls){
+      try{
+        const res = await fetch(url, { cache: 'no-store' });
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const cfg = await res.json();
+        if(!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) throw new Error('Missing supabaseUrl or supabaseAnonKey');
+        return cfg;
+      }catch(err){
+        lastErr = new Error('[GSConfig] ' + url + ' -> ' + (err?.message || err));
+      }
+    }
+    throw lastErr || new Error('[GSConfig] Failed to load config');
+  }
+  const CONFIG_PROMISE = loadConfig();
+
+async function ensureSupabase(){
+    // Avoid race: load Supabase createClient on-demand
+    if(window.supabase && typeof window.supabase.createClient === 'function'){
+      return window.supabase.createClient;
+    }
+    // Preferred: ESM import (Edge-safe). Cache to window.supabase for reuse.
+    const mod = await import('https://esm.sh/@supabase/supabase-js@2.45.3');
+    const createClient = mod?.createClient;
+    if(typeof createClient !== 'function'){
+      throw new Error('[Supabase] createClient not available from module import');
+    }
+    window.supabase = window.supabase || {};
+    window.supabase.createClient = createClient;
+    return createClient;
+  }
+
+async function getClient(){
+    const cfg = await CONFIG_PROMISE;
+
+    function pickAuthStorage(){
+      const looksLikeSbKey = (k)=> typeof k === 'string' && k.startsWith('sb-') && k.includes('-auth-token');
+
+      try {
+        for (let i = 0; i < localStorage.length; i++){
+          const k = localStorage.key(i);
+          if (looksLikeSbKey(k)) return localStorage;
+        }
+      } catch(_){}
+
+      try {
+        for (let i = 0; i < sessionStorage.length; i++){
+          const k = sessionStorage.key(i);
+          if (looksLikeSbKey(k)) return sessionStorage;
+        }
+      } catch(_){}
+
+      return localStorage;
+    }
+
+    const authStorage = pickAuthStorage();
+
+    const createClient = await ensureSupabase();
+
+    return createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+      auth: { persistSession: true, storage: authStorage }
+    });
+  }
+
+  // Header auth
+  try{
+    window.GSAuthHeader?.init?.({
+      loginUrl: '/onboarding/login.html',
+      afterLogoutUrl: '/index.html'
+    });
+  }catch(_){}
+
+  function money(n){
+    const x = Number(n || 0);
+    return x.toLocaleString(undefined, { style:'currency', currency:'USD' });
+  }
+  function escapeHtml(str){
+    return String(str ?? '').replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+  }
+
+  // ===== Due date helpers (unchanged behavior) =====
+  function nextDueDate(card){
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    if(card.due_date){
+      const d = new Date(card.due_date + "T00:00:00");
+      if(!isNaN(d.getTime())) return d;
+    }
+
+    const day = Number(card.due_day);
+    if(!Number.isFinite(day) || day <= 0) return null;
+
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const make = (y,m,dd)=>{
+      const dt = new Date(y,m,dd);
+      if(dt.getMonth() !== m){
+        const last = new Date(y, m+1, 0);
+        return last;
+      }
+      return dt;
+    };
+
+    let due = make(year, month, day);
+    if(due < today) due = make(year, month+1, day);
+    return due;
+  }
+  function daysBetween(a,b){
+    const ms = (b.getTime() - a.getTime());
+    return Math.floor(ms / (1000*60*60*24));
+  }
+  function formatShortDate(d){
+    const mm = d.toLocaleString(undefined, { month:'short' });
+    return `${mm} ${d.getDate()}`;
+  }
+
+  // ===== Rewards rules (localStorage) =====
+  const RULES_KEY_PREFIX = "gs_cc_rules_v1:";
+  function readRulesForUser(userId){
+    const key = RULES_KEY_PREFIX + (userId || "anon");
+    try{
+      const obj = JSON.parse(localStorage.getItem(key) || "{}");
+      return obj && typeof obj === "object" ? obj : {};
+    }catch(e){
+      return {};
+    }
+  }
+  function getRate(rules, cardId, catKey){
+    const byCard = rules[cardId] || {};
+    const specific = Number(byCard[catKey]);
+    if(Number.isFinite(specific) && specific > 0) return specific / 100;
+
+    const other = Number(byCard["other"]);
+    if(Number.isFinite(other) && other > 0) return other / 100;
+
+    return 0.02;
+  }
+  function normalizeCategory(raw){
+    const s = String(raw || "").trim().toLowerCase();
+    if(!s) return "other";
+    const map = [
+      ["dining", ["restaurant","dining","food","cafe","coffee"]],
+      ["grocery", ["grocery","supermarket","market","costco","walmart","target"]],
+      ["gas", ["gas","fuel","shell","exxon","chevron","bp"]],
+      ["travel", ["travel","airline","hotel","uber","lyft","rental","booking"]],
+      ["amazon", ["amazon","amzn"]],
+      ["drugstore", ["drug","pharmacy","cvs","walgreens"]],
+      ["streaming", ["netflix","spotify","hulu","disney","streaming"]],
+      ["online", ["online","shop","ecommerce","etsy","ebay"]],
+    ];
+    for(const [key, words] of map){
+      for(const w of words){
+        if(s.includes(w)) return key;
+      }
+    }
+    return "other";
+  }
+
+  async function loadCards(client, userId){
+    const { data, error } = await client
+      .from('credit_cards')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending:false });
+
+    return error ? [] : (data || []);
+  }
+
+  async function loadTxns(client, userId){
+    const { data, error } = await client
+      .from('credit_card_transactions')
+      .select('id, user_id, credit_card_id, posted_date, description, amount, category')
+      .eq('user_id', userId)
+      .order('posted_date', { ascending:false })
+      .limit(5000);
+
+    return error ? [] : (data || []);
+  }
+
+  function computeHubKPIs(cards, txns, userId){
+    const totalCards = cards.length;
+    const activeCards = cards.filter(c => c.is_active !== false).length;
+
+    const balanceSum = cards.reduce((a,c)=>a + Number(c.balance || 0), 0);
+
+    const rules = readRulesForUser(userId);
+    const now = new Date();
+    const startYear = new Date(now.getFullYear(), 0, 1);
+
+    const chargesYTD = txns.filter(t=>{
+      const d = new Date(t.posted_date + "T00:00:00");
+      return d >= startYear && d <= now && Number(t.amount) > 0;
+    });
+
+    const rewardsYTD = chargesYTD.reduce((a,t)=>{
+      const cat = normalizeCategory(t.category || t.description);
+      const rate = t.credit_card_id ? getRate(rules, t.credit_card_id, cat) : 0.02;
+      return a + Number(t.amount||0)*rate;
+    },0);
+
+    const totalLimit = cards.reduce((a,c)=>a + Number(c.credit_limit || 0), 0);
+    const util = totalLimit > 0 ? (balanceSum / totalLimit) : null;
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const soon = [];
+    for(const c of cards){
+      const due = nextDueDate(c);
+      if(!due) continue;
+      const diff = daysBetween(today, due);
+      if(diff >= 0 && diff <= 7) soon.push({ card:c, due, diff });
+    }
+    soon.sort((a,b)=>a.diff - b.diff);
+
+    document.getElementById('kpi-total').textContent = String(totalCards);
+    document.getElementById('kpi-active').textContent = String(activeCards);
+    document.getElementById('kpi-balance').textContent = money(balanceSum);
+    document.getElementById('kpi-rewards').textContent = money(rewardsYTD);
+
+    document.getElementById('kpi-total-chip').textContent = totalCards ? 'Ready' : 'Add cards';
+    document.getElementById('kpi-active-chip').textContent = activeCards ? 'Good' : 'None';
+
+    if(util === null){
+      document.getElementById('kpi-util').textContent = '—';
+      const chip = document.getElementById('kpi-util-chip');
+      chip.textContent = 'Optional';
+      chip.className = 'chip warn';
+    }else{
+      const pct = util * 100;
+      document.getElementById('kpi-util').textContent = pct.toFixed(0) + '%';
+      const chip = document.getElementById('kpi-util-chip');
+      if(pct <= 30){ chip.textContent = 'Great'; chip.className = 'chip ok'; }
+      else if(pct <= 50){ chip.textContent = 'Ok'; chip.className = 'chip warn'; }
+      else { chip.textContent = 'High'; chip.className = 'chip bad'; }
+    }
+
+    document.getElementById('kpi-due').textContent = String(soon.length);
+    document.getElementById('kpi-due-chip').textContent = soon.length ? 'Review' : 'None';
+
+    const list = document.getElementById('due-list');
+    list.innerHTML = '';
+    if(!soon.length){
+      list.innerHTML = `<div class="empty">No cards due within 7 days. (Add due_day or due_date in 💳 Cards)</div>`;
+    }else{
+      soon.slice(0, 8).forEach(item=>{
+        const name = item.card.card_name || item.card.nickname || 'Card';
+        const badge = item.diff <= 1 ? `<span class="chip bad">Due soon</span>` : `<span class="chip warn">${item.diff} days</span>`;
+        const amt = Number(item.card.minimum_due || 0);
+        const amountDisplay = amt ? money(amt) : money(item.card.statement_balance || item.card.balance || 0);
+
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `
+          <div>
+            <strong>${escapeHtml(name)}</strong>
+            <div class="meta">Due ${formatShortDate(item.due)}</div>
+          </div>
+          <div class="right">
+            <div>
+              <div class="meta">Amount</div>
+              <span class="kpi">${amountDisplay}</span>
+            </div>
+            <div>
+              <div class="meta">Status</div>
+              ${badge}
+            </div>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      const moreCount = Math.max(0, soon.length - 8);
+      if(moreCount){
+        const more = document.createElement('div');
+        more.className = 'empty';
+        more.textContent = `+ ${moreCount} more due soon… Open 💳 Cards for the full list.`;
+        list.appendChild(more);
+      }
+    }
+  }
+
+  // ===== Hub Filters (existing behavior, kept) =====
+  const HUB_STATE = {
+    workspace: 'all',
+    purpose: 'all',
+    userId: null,
+    cards: [],
+    txns: [],
+    workspaces: [],
+    purposes: []
+  };
+
+  function cardWorkspaceKey(card){
+    return (
+      card.business_profile_id ||
+      card.workspace_id ||
+      card.entity_id ||
+      card.owner_entity_id ||
+      card.owner ||
+      card.entity ||
+      card.company ||
+      card.business_name ||
+      ''
+    ) || '';
+  }
+  function cardWorkspaceLabel(card){
+    return (
+      card.business_name ||
+      card.entity ||
+      card.company ||
+      card.owner ||
+      card.nickname_entity ||
+      ''
+    ) || '';
+  }
+
+  function buildWorkspaces(cards){
+    const groups = new Map();
+    for(const c of cards){
+      const key = cardWorkspaceKey(c);
+      const label = cardWorkspaceLabel(c);
+      if(!key && !label) continue;
+      const gkey = key || label;
+      if(!groups.has(gkey)){
+        groups.set(gkey, { key: gkey, label: label || 'Workspace', count: 0 });
+      }
+      groups.get(gkey).count += 1;
+    }
+
+    const list = [{ key:'all', label:'All', count: cards.length }, { key:'personal', label:'Personal', count: cards.length }];
+
+    const extra = Array.from(groups.values())
+      .filter(g => {
+        const s = (g.label || g.key || '').toString().toLowerCase();
+        return s && !['personal','me','myself'].includes(s);
+      })
+      .sort((a,b)=> (b.count - a.count) || String(a.label).localeCompare(String(b.label)));
+
+    if(extra.length){
+      const extraKeys = new Set(extra.map(e=>e.key));
+      const personalCount = cards.filter(c=>{
+        const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+        return !k || !extraKeys.has(k);
+      }).length;
+      list[1].count = personalCount;
+      return list.concat(extra.map(e=>({ key:e.key, label:e.label || e.key, count:e.count })));
+    }
+    return list;
+  }
+
+  function purposeFromTxn(t){
+    const cat = normalizeCategory(t.category || t.description);
+    const desc = String(t.description || '').toLowerCase();
+
+    if(desc.includes('insurance') || desc.includes('electric') || desc.includes('water') || desc.includes('gas ') || desc.includes('internet') || desc.includes('phone')) return 'bills';
+    if(cat === 'streaming') return 'bills';
+    if(cat === 'travel' || desc.includes('airbnb') || desc.includes('hilton') || desc.includes('marriott')) return 'travel';
+    if(desc.includes('robinhood') || desc.includes('etrade') || desc.includes('td ameritrade') || desc.includes('interactive brokers') || desc.includes('tradingview')) return 'investing';
+    if(desc.includes('quickbooks') || desc.includes('square') || desc.includes('clover') || desc.includes('stripe')) return 'bizops';
+    if(['dining','grocery','gas','drugstore','amazon','online'].includes(cat)) return 'daily';
+    return 'other';
+  }
+
+  const PURPOSE_LABELS = {
+    all: 'All',
+    daily: '🛒 Daily',
+    bills: '🧾 Bills',
+    travel: '✈️ Travel',
+    bizops: '🏢 Biz Ops',
+    investing: '📈 Investing',
+    other: '✨ Other'
+  };
+
+  function buildPurposes(txns){
+    const counts = new Map();
+    for(const t of txns){
+      if(!(Number(t.amount) > 0)) continue;
+      const p = purposeFromTxn(t);
+      counts.set(p, (counts.get(p) || 0) + 1);
+    }
+    const list = [{ key:'all', label:PURPOSE_LABELS.all, count: txns.length }];
+    const keys = Array.from(counts.keys()).sort((a,b)=>(counts.get(b)-counts.get(a)));
+    for(const k of keys){
+      list.push({ key:k, label: PURPOSE_LABELS[k] || k, count: counts.get(k) });
+    }
+    return list;
+  }
+
+  function renderPills(container, items, activeKey, onClick){
+    container.querySelectorAll('.filter-pill').forEach(n=>n.remove());
+    items.forEach(item=>{
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'filter-pill' + (item.key === activeKey ? ' active' : '');
+      btn.setAttribute('data-key', item.key);
+      btn.innerHTML = `${escapeHtml(item.label)} <span class="count">${Number(item.count||0)}</span>`;
+      btn.addEventListener('click', ()=> onClick(item.key));
+      container.appendChild(btn);
+    });
+  }
+
+  function applyFilters(){
+    const ws = HUB_STATE.workspace;
+    const allCards = HUB_STATE.cards;
+
+    let cards = allCards;
+    if(ws === 'personal'){
+      const known = new Set(HUB_STATE.workspaces.slice(2).map(x=>x.key));
+      cards = allCards.filter(c=>{
+        const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+        return !k || !known.has(k);
+      });
+    }else if(ws !== 'all'){
+      cards = allCards.filter(c=>{
+        const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+        return k === ws;
+      });
+    }
+
+    const cardIds = new Set(cards.map(c=>c.id).filter(Boolean));
+    let txns = HUB_STATE.txns.filter(t=> !t.credit_card_id || cardIds.has(t.credit_card_id));
+
+    const p = HUB_STATE.purpose;
+    if(p !== 'all'){
+      txns = txns.filter(t => purposeFromTxn(t) === p);
+    }
+    return { cards, txns };
+  }
+
+  function computeMonthlySnapshot(cards, txns, userId){
+    const now = new Date();
+    const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const chargesMTD = txns.filter(t=>{
+      const d = new Date(t.posted_date + "T00:00:00");
+      return d >= startMonth && d <= now && Number(t.amount) > 0;
+    });
+
+    const spent = chargesMTD.reduce((a,t)=> a + Number(t.amount||0), 0);
+
+    const rules = readRulesForUser(userId);
+    const rewards = chargesMTD.reduce((a,t)=>{
+      const cat = normalizeCategory(t.category || t.description);
+      const rate = t.credit_card_id ? getRate(rules, t.credit_card_id, cat) : 0.02;
+      return a + Number(t.amount||0)*rate;
+    },0);
+
+    const catSpend = new Map();
+    for(const t of chargesMTD){
+      const cat = normalizeCategory(t.category || t.description);
+      catSpend.set(cat, (catSpend.get(cat)||0) + Number(t.amount||0));
+    }
+    const topCat = Array.from(catSpend.entries()).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
+
+    const cardCount = new Map();
+    for(const t of chargesMTD){
+      if(!t.credit_card_id) continue;
+      cardCount.set(t.credit_card_id, (cardCount.get(t.credit_card_id)||0) + 1);
+    }
+    const topCardId = Array.from(cardCount.entries()).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
+    const topCardName = topCardId ? (cards.find(c=>c.id===topCardId)?.card_name || cards.find(c=>c.id===topCardId)?.nickname || 'Card') : null;
+
+    let status = 'Good';
+    let statusChip = 'Ready';
+    let statusChipClass = 'chip ok';
+    if(!cards.length){
+      status = 'Add cards';
+      statusChip = 'Setup';
+      statusChipClass = 'chip warn';
+    }else if(!txns.length){
+      status = 'Import CSV';
+      statusChip = 'Next';
+      statusChipClass = 'chip warn';
+    }
+
+    const setText = (id, val)=>{ const el=document.getElementById(id); if(el) el.textContent = val; };
+    setText('mtd-spent', money(spent));
+    setText('mtd-rewards', money(rewards));
+    setText('mtd-topcat', topCat ? topCat.toUpperCase() : '—');
+    setText('mtd-topcard', topCardName ? topCardName : '—');
+    setText('mtd-txns', String(chargesMTD.length));
+    setText('mtd-status', status);
+
+    const chip = document.getElementById('mtd-status-chip');
+    if(chip){ chip.textContent = statusChip; chip.className = statusChipClass; }
+  }
+
+  function refreshHub(){
+    const { cards, txns } = applyFilters();
+    computeHubKPIs(cards, txns, HUB_STATE.userId);
+    computeMonthlySnapshot(cards, txns, HUB_STATE.userId);
+  }
+
+  function mountFilters(){
+    const wrap = document.getElementById('hub-filters');
+    const wsRow = document.getElementById('workspace-filter-row');
+    const pRow = document.getElementById('purpose-filter-row');
+    if(!wrap || !wsRow || !pRow) return;
+
+    HUB_STATE.workspaces = buildWorkspaces(HUB_STATE.cards);
+    HUB_STATE.purposes = buildPurposes(HUB_STATE.txns);
+
+    const showWorkspaces = HUB_STATE.workspaces.length > 2;
+    const showPurposes = HUB_STATE.purposes.length > 1;
+
+    if(!showWorkspaces && !showPurposes){
+      wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    wsRow.style.display = showWorkspaces ? 'flex' : 'none';
+    pRow.style.display = showPurposes ? 'flex' : 'none';
+
+    renderPills(wsRow, HUB_STATE.workspaces, HUB_STATE.workspace, (key)=>{
+      HUB_STATE.workspace = key;
+      const { txns } = applyFilters();
+      HUB_STATE.purposes = buildPurposes(txns);
+      if(!HUB_STATE.purposes.find(x=>x.key===HUB_STATE.purpose)) HUB_STATE.purpose = 'all';
+      renderPills(wsRow, HUB_STATE.workspaces, HUB_STATE.workspace, (k)=>{ HUB_STATE.workspace=k; mountFilters(); refreshHub(); });
+      renderPills(pRow, HUB_STATE.purposes, HUB_STATE.purpose, (k)=>{ HUB_STATE.purpose=k; mountFilters(); refreshHub(); });
+      refreshHub();
+    });
+
+    renderPills(pRow, HUB_STATE.purposes, HUB_STATE.purpose, (key)=>{
+      HUB_STATE.purpose = key;
+      refreshHub();
+      renderPills(pRow, HUB_STATE.purposes, HUB_STATE.purpose, (k)=>{ HUB_STATE.purpose=k; mountFilters(); refreshHub(); });
+    });
+  }
+
+  // =========================================================
+  // NEW: Payment Map data layer
+  // - Tries Supabase table: recurring_payments
+  // - Falls back to localStorage per user if table not available
+  // =========================================================
+  const PM_STORAGE_PREFIX = 'gs_cc_payment_map_v1:';
+  const PM_TABLE = 'recurring_payments';
+
+  const PAYMENT_MAP_STATE = {
+    mode: 'local', // 'db' or 'local'
+    items: [],
+    cards: [],
+    userId: null,
+    client: null,
+  };
+
+  function pmStorageKey(userId){ return PM_STORAGE_PREFIX + (userId || 'anon'); }
+
+  function readLocalPaymentMap(userId){
+    try{
+      const raw = localStorage.getItem(pmStorageKey(userId));
+      const arr = JSON.parse(raw || '[]');
+      return Array.isArray(arr) ? arr : [];
+    }catch(_){ return []; }
+  }
+  function writeLocalPaymentMap(userId, items){
+    try{ localStorage.setItem(pmStorageKey(userId), JSON.stringify(items || [])); }catch(_){}
+  }
+
+  async function tryLoadPaymentMapFromDb(){
+    // Probe table. If it doesn't exist (404) or is not exposed, we use local storage automatically.
+    const client = PAYMENT_MAP_STATE.client;
+    const userId = PAYMENT_MAP_STATE.userId;
+    if(!client || !userId) return false;
+
+    const { data, error } = await client
+      .from(PM_TABLE)
+      .select('id, user_id, workspace, category, vendor, credit_card_id, notes, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending:false });
+
+    if(error){
+      // 404 = table doesn't exist or not in exposed schema
+      return false;
+    }
+    PAYMENT_MAP_STATE.items = data || [];
+    PAYMENT_MAP_STATE.mode = 'db';
+    return true;
+  }
+
+  function normalizePmItem(item){
+    return {
+      id: item.id || item.local_id || ('local_' + Math.random().toString(16).slice(2)),
+      user_id: item.user_id || PAYMENT_MAP_STATE.userId,
+      workspace: item.workspace || 'Personal',
+      category: item.category || 'Other',
+      vendor: item.vendor || '',
+      credit_card_id: item.credit_card_id || item.card_id || '',
+      notes: item.notes || '',
+      created_at: item.created_at || new Date().toISOString()
+    };
+  }
+
+  function getCardNameById(id){
+    const c = PAYMENT_MAP_STATE.cards.find(x=>String(x.id) === String(id));
+    return c?.card_name || c?.nickname || 'Card';
+  }
+
+  function renderPaymentMap(){
+    const tbody = document.getElementById('pm-tbody');
+    const note = document.getElementById('pm-storage-note');
+    if(!tbody) return;
+
+    const items = PAYMENT_MAP_STATE.items.map(normalizePmItem);
+
+    // KPIs
+    const subs = items.filter(x=>String(x.category).toLowerCase().includes('subscription')).length;
+    const fees = items.filter(x=>String(x.category).toLowerCase().includes('annual fee')).length;
+    const bills = items.filter(x=>{
+      const c = String(x.category).toLowerCase();
+      return c.includes('utilities') || c.includes('phone') || c.includes('internet') || c.includes('insurance');
+    }).length;
+
+    const set = (id, v)=>{ const el=document.getElementById(id); if(el) el.textContent = String(v); };
+    set('pm-kpi-total', items.length);
+    set('pm-kpi-subs', subs);
+    set('pm-kpi-bills', bills);
+    set('pm-kpi-fees', fees);
+
+    // Storage note
+    if(note){
+      if(PAYMENT_MAP_STATE.mode === 'db'){
+        note.style.display = 'none';
+      }else{
+        note.style.display = 'block';
+        note.innerHTML = `ℹ️ Payment Map is currently stored <strong>locally</strong> on this device (per user). When you add a Supabase table named <strong>${escapeHtml(PM_TABLE)}</strong>, it will auto-switch to database mode.`;
+      }
+    }
+
+    // Table rows
+    tbody.innerHTML = '';
+    if(!items.length){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="6"><div class="empty">No mappings yet. Add your first one on the right. Example: “ComEd → Home Utilities → paid by Amex”.</div></td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+
+    items.forEach(item=>{
+      const cardName = item.credit_card_id ? getCardNameById(item.credit_card_id) : '—';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="chip">${escapeHtml(item.workspace)}</span></td>
+        <td><span class="chip">${escapeHtml(item.category)}</span></td>
+        <td><strong>${escapeHtml(item.vendor)}</strong></td>
+        <td>${item.credit_card_id ? `<span class="chip ok">💳 ${escapeHtml(cardName)}</span>` : `<span class="chip warn">Pick card</span>`}</td>
+        <td class="meta">${escapeHtml(item.notes || '')}</td>
+        <td style="text-align:right;">
+          <button type="button" class="btn ghost small" data-pm-del="${escapeHtml(item.id)}">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Wire delete buttons
+    tbody.querySelectorAll('[data-pm-del]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.getAttribute('data-pm-del');
+        await deletePaymentMapItem(id);
+      });
+    });
+  }
+
+  async function loadPaymentMap(){
+    const userId = PAYMENT_MAP_STATE.userId;
+
+    // Try DB first
+    const ok = await tryLoadPaymentMapFromDb();
+    if(ok){
+      renderPaymentMap();
+      return;
+    }
+
+    // Fallback local
+    PAYMENT_MAP_STATE.mode = 'local';
+    PAYMENT_MAP_STATE.items = readLocalPaymentMap(userId);
+    renderPaymentMap();
+  }
+
+  async function savePaymentMapItem(item){
+    const status = document.getElementById('pm-form-status');
+    const showStatus = (msg, kind)=>{
+      if(!status) return;
+      status.style.display = 'block';
+      status.className = 'empty';
+      if(kind === 'ok') status.className = 'empty';
+      status.textContent = msg;
+    };
+
+    const normalized = normalizePmItem(item);
+
+    if(PAYMENT_MAP_STATE.mode === 'db'){
+      const client = PAYMENT_MAP_STATE.client;
+      const { error } = await client
+        .from(PM_TABLE)
+        .insert([{
+          user_id: PAYMENT_MAP_STATE.userId,
+          workspace: normalized.workspace,
+          category: normalized.category,
+          vendor: normalized.vendor,
+          credit_card_id: normalized.credit_card_id,
+          notes: normalized.notes
+        }]);
+      if(error){
+        // If DB insert fails unexpectedly, fall back to local so user can continue.
+        PAYMENT_MAP_STATE.mode = 'local';
+        showStatus('Could not save to DB. Saved locally instead.', 'warn');
+      }else{
+        showStatus('Saved ✅', 'ok');
+      }
+      await loadPaymentMap();
+      return;
+    }
+
+    // Local mode
+    const list = readLocalPaymentMap(PAYMENT_MAP_STATE.userId);
+    list.unshift({
+      local_id: normalized.id,
+      user_id: normalized.user_id,
+      workspace: normalized.workspace,
+      category: normalized.category,
+      vendor: normalized.vendor,
+      credit_card_id: normalized.credit_card_id,
+      notes: normalized.notes,
+      created_at: normalized.created_at
+    });
+    writeLocalPaymentMap(PAYMENT_MAP_STATE.userId, list);
+    PAYMENT_MAP_STATE.items = list;
+    showStatus('Saved locally ✅', 'ok');
+    renderPaymentMap();
+  }
+
+  async function deletePaymentMapItem(id){
+    if(PAYMENT_MAP_STATE.mode === 'db'){
+      const client = PAYMENT_MAP_STATE.client;
+      await client.from(PM_TABLE).delete().eq('id', id).eq('user_id', PAYMENT_MAP_STATE.userId);
+      await loadPaymentMap();
+      return;
+    }
+    const list = readLocalPaymentMap(PAYMENT_MAP_STATE.userId).filter(x => String(x.local_id || x.id) !== String(id));
+    writeLocalPaymentMap(PAYMENT_MAP_STATE.userId, list);
+    PAYMENT_MAP_STATE.items = list;
+    renderPaymentMap();
+  }
+
+  
+  // ===== Auto-suggest mappings from transactions =====
+  function vendorKey(desc){
+    return String(desc || '')
+      .toLowerCase()
+      .replace(/\d+/g,'')              // drop numbers
+      .replace(/[^a-z\s]/g,' ')        // keep letters/spaces
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function prettyVendor(desc){
+    const s = String(desc || '').trim();
+    return s.length > 38 ? (s.slice(0, 35) + '…') : s;
+  }
+
+  function suggestPmCategoryFromDesc(desc){
+    const d = String(desc || '').toLowerCase();
+    if(d.includes('annual fee')) return 'Annual Fee';
+    if(d.includes('insurance')) return 'Insurance';
+    if(d.includes('internet') || d.includes('xfinity') || d.includes('comcast')) return 'Internet';
+    if(d.includes('phone') || d.includes('att') || d.includes('verizon') || d.includes('t-mobile')) return 'Phone';
+    if(d.includes('electric') || d.includes('comed')) return 'Home Utilities';
+    if(d.includes('water')) return 'Home Utilities';
+    if(d.includes('gas') || d.includes('nicor')) return 'Home Utilities';
+    if(d.includes('netflix') || d.includes('spotify') || d.includes('hulu') || d.includes('disney')) return 'Subscription';
+
+    // fallback: use your normalizeCategory hints
+    const cat = normalizeCategory(desc);
+    if(cat === 'streaming') return 'Subscription';
+    return 'Other';
+  }
+
+  function buildAutoSuggestions(txns, existingPmItems){
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() - 180);
+
+    const pmVendors = new Set((existingPmItems || []).map(x => vendorKey(x.vendor)));
+
+    const groups = new Map();
+    for(const t of (txns || [])){
+      if(!(Number(t.amount) > 0)) continue;
+      const dt = new Date(String(t.posted_date || '') + 'T00:00:00');
+      if(!(dt >= cutoff)) continue;
+
+      const key = vendorKey(t.description);
+      if(!key) continue;
+      if(pmVendors.has(key)) continue; // already mapped
+
+      if(!groups.has(key)){
+        groups.set(key, {
+          key,
+          sampleDesc: t.description || key,
+          count: 0,
+          dates: [],
+          cardCounts: new Map(),
+        });
+      }
+      const g = groups.get(key);
+      g.count += 1;
+      g.dates.push(dt);
+      if(t.credit_card_id){
+        g.cardCounts.set(t.credit_card_id, (g.cardCounts.get(t.credit_card_id)||0) + 1);
+      }
+    }
+
+    const out = [];
+    for(const g of groups.values()){
+      if(g.count < 2) continue;
+
+      const c90 = g.dates.filter(d => (now - d) <= 90*24*3600*1000).length;
+      const ok = (c90 >= 2) || (g.count >= 3);
+      if(!ok) continue;
+
+      let bestCardId = '';
+      let bestCardN = 0;
+      for(const [cid, n] of g.cardCounts.entries()){
+        if(n > bestCardN){ bestCardN = n; bestCardId = cid; }
+      }
+
+      out.push({
+        workspace_id: 'personal',
+        vendor: prettyVendor(g.sampleDesc),
+        vendorKey: g.key,
+        count: g.count,
+        count90: c90,
+        category: suggestPmCategoryFromDesc(g.sampleDesc),
+        credit_card_id: bestCardId || '',
+        workspace: 'Personal'
+      });
+    }
+
+    out.sort((a,b)=> (b.count90 - a.count90) || (b.count - a.count));
+    return out.slice(0, 12);
+  }
+
+  function renderAutoSuggestions(){
+    const wrap = document.getElementById('pm-suggestions');
+    if(!wrap) return;
+
+    const suggestions = buildAutoSuggestions(HUB_STATE.txns, PAYMENT_MAP_STATE.items);
+
+    if(!suggestions.length){
+      wrap.innerHTML = `<div class="empty">No new recurring vendors found (or they’re already mapped).</div>`;
+      return;
+    }
+
+    wrap.innerHTML = suggestions.map(s => {
+      const cardName = s.credit_card_id ? getCardNameById(s.credit_card_id) : 'Pick card';
+      const reason = s.count90 >= 2 ? `${s.count90} charges in last 90 days` : `${s.count} charges in last 180 days`;
+      return `
+        <div class="row">
+          <div>
+            <strong>${escapeHtml(s.vendor)}</strong>
+            <div class="meta">${escapeHtml(reason)} • Suggest: ${escapeHtml(s.category)} • ${escapeHtml(cardName)}</div>
+          </div>
+          <div class="right">
+            <button class="btn small primary" data-pm-apply="${escapeHtml(s.vendorKey)}">Add</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    wrap.querySelectorAll('[data-pm-apply]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const key = btn.getAttribute('data-pm-apply');
+        const s = suggestions.find(x => x.vendorKey === key);
+        if(!s) return;
+
+        await savePaymentMapItem({
+          user_id: PAYMENT_MAP_STATE.userId,
+          workspace_id: s.workspace_id || 'personal',
+          workspace: getWorkspaceNameById(s.workspace_id || 'personal'),
+          category: s.category,
+          vendor: s.vendor,
+          credit_card_id: s.credit_card_id,
+          notes: 'Auto-suggested from transactions'
+        });
+
+        renderAutoSuggestions();
+      });
+    });
+  }
+
+
+  // ===== Workspace Model (Phase 1): personal | business | rental | investment =====
+  const WORKSPACE_STATE = {
+    items: [],      // {id,name,type}
+    activeId: 'personal',
+    hasWorkspaceIdColumn: false
+  };
+
+  function workspaceEmoji(type){
+    if(type === 'business') return '🏢';
+    if(type === 'rental') return '🏘️';
+    if(type === 'investment') return '📈';
+    return '🏠';
+  }
+
+  function getWorkspaceNameById(id){
+    const ws = (WORKSPACE_STATE.items || []).find(w => String(w.id) === String(id));
+    return ws?.name || 'Personal';
+  }
+
+  async function detectWorkspaceIdColumn(client){
+    try{
+      const { error } = await client
+        .from('recurring_payments')
+        .select('workspace_id', { head: true, count: 'exact' })
+        .limit(1);
+      if(error) return false;
+      return true;
+    }catch(_){
+      return false;
+    }
+  }
+
+  async function loadWorkspaces(client){
+    const out = [{ id: 'personal', name: 'Personal', type: 'personal' }];
+
+    // 1) Dedicated workspaces table (recommended)
+    try{
+      const { data, error } = await client
+        .from('workspaces')
+        .select('id,name,type')
+        .order('created_at', { ascending: true });
+
+      if(!error && Array.isArray(data) && data.length){
+        data.forEach(r=>{
+          if(!r?.id || !r?.name) return;
+          out.push({ id: r.id, name: r.name, type: (r.type || 'business') });
+        });
+      }
+    }catch(_){}
+
+        // 2) Fallback: business_profiles (public) => business workspaces
+    // NOTE: different projects have different column sets; try a few select signatures.
+    if(out.length === 1){
+      const tries = [
+        'id,display_name,business_name,name,type',
+        'id,display_name,business_name,type',
+        'id,business_name,display_name',
+        'id,name',
+        'id'
+      ];
+      for(const sel of tries){
+        try{
+          const { data, error } = await client
+            .from('business_profiles')
+            .select(sel)
+            .order('created_at', { ascending: true });
+
+          if(!error && Array.isArray(data) && data.length){
+            data.forEach(r=>{
+              const name = r.display_name || r.business_name || r.name;
+              if(!r?.id || !name) return;
+              out.push({ id: r.id, name, type: (r.type || 'business') });
+            });
+            break;
+          }
+        }catch(_){}
+      }
+    }
+
+
+    // 3) Local custom workspaces
+    try{
+      const raw = localStorage.getItem('gs_workspaces_custom');
+      const custom = raw ? JSON.parse(raw) : [];
+      if(Array.isArray(custom)){
+        custom.forEach(r=>{
+          if(!r?.id || !r?.name) return;
+          if(out.some(x=>String(x.id)===String(r.id))) return;
+          out.push({ id: r.id, name: r.name, type: r.type || 'business' });
+        });
+      }
+    }catch(_){}
+
+    WORKSPACE_STATE.items = out;
+    return out;
+  }
+
+  function mountWorkspaceSelect(){
+    const sel = document.getElementById('pmWorkspaceId');
+    if(!sel) return;
+
+    const prev = sel.value || WORKSPACE_STATE.activeId || 'personal';
+
+    sel.innerHTML = (WORKSPACE_STATE.items || []).map(w=>{
+      const emo = workspaceEmoji(w.type);
+      return `<option value="${escapeHtml(String(w.id))}" data-type="${escapeHtml(String(w.type||''))}">${emo} ${escapeHtml(w.name)}</option>`;
+    }).join('');
+
+    sel.value = (WORKSPACE_STATE.items || []).some(w=>String(w.id)===String(prev)) ? prev : 'personal';
+
+    sel.addEventListener('change', ()=>{
+      WORKSPACE_STATE.activeId = sel.value || 'personal';
+      try{ renderPaymentMapTable(); }catch(_){}
+      try{ renderAutoSuggestions(); }catch(_){}
+    });
+  }
+
+
+function mountPaymentMapForm(){
+    const form = document.getElementById('pm-form');
+    const cardSel = document.getElementById('pm-card');
+    if(!form || !cardSel) return;
+
+    // Populate cards
+    cardSel.innerHTML = '';
+    if(!PAYMENT_MAP_STATE.cards.length){
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'No cards found (add cards first)';
+      cardSel.appendChild(opt);
+      cardSel.disabled = true;
+    }else{
+      const opt0 = document.createElement('option');
+      opt0.value = '';
+      opt0.textContent = 'Select a card…';
+      cardSel.appendChild(opt0);
+
+      PAYMENT_MAP_STATE.cards.forEach(c=>{
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = (c.card_name || c.nickname || 'Card');
+        cardSel.appendChild(opt);
+      });
+      cardSel.disabled = false;
+    }
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const workspaceId = document.getElementById('pmWorkspaceId')?.value || 'personal';
+      const workspace = getWorkspaceNameById(workspaceId);
+      const category  = document.getElementById('pm-category')?.value || 'Other';
+      const vendor    = document.getElementById('pm-vendor')?.value || '';
+      const cardId    = document.getElementById('pm-card')?.value || '';
+      const notes     = document.getElementById('pm-notes')?.value || '';
+
+      if(!vendor.trim()){
+        const st = document.getElementById('pm-form-status');
+        if(st){
+          st.style.display = 'block';
+          st.textContent = 'Please enter a vendor.';
+        }
+        return;
+      }
+
+      await savePaymentMapItem({
+        user_id: PAYMENT_MAP_STATE.userId,
+        workspace,
+        category,
+        vendor: vendor.trim(),
+        credit_card_id: cardId,
+        notes: notes.trim()
+      });
+
+      form.reset();
+      // Keep a good default
+document.getElementById('pm-category').value = 'Home Utilities';
+    });
+  }
+
+  
+    async function bootstrapPaymentMap(){
+    let client;
+    try{
+      client = await getClient();
+    }catch(err){
+      console.warn('[Payment Map] Supabase not configured (/shared/config.json).', err);
+      const box = document.getElementById('gs-config-error');
+      const msg = document.getElementById('gs-config-error-msg');
+      if(box){
+        box.style.display = 'block';
+        if(msg) msg.textContent = (err?.message || 'Could not load /shared/config.json. Make sure it exists and is served.');
+      }
+      return;
+    }
+
+    // Must be logged in (enterprise standard)
+    const { data, error } = await client.auth.getUser();
+    const user = data?.user;
+    if(error || !user){
+      window.location.href = '/onboarding/login.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+      return;
+    }
+
+    HUB_STATE.userId = user.id;
+
+    // Workspace model + data (all optional tables; fail-safe)
+    WORKSPACE_STATE.hasWorkspaceIdColumn = await detectWorkspaceIdColumn(client);
+    await loadWorkspaces(client);
+    mountWorkspaceSelect();
+
+    // Load cards + txns for suggestions (core tables expected)
+    const [cards, txns] = await Promise.all([
+      loadCards(client, user.id),
+      loadTxns(client, user.id)
+    ]);
+
+    HUB_STATE.cards = cards;
+    HUB_STATE.txns = txns;
+
+    // Payment map state
+    PAYMENT_MAP_STATE.userId = user.id;
+    PAYMENT_MAP_STATE.client = client;
+    PAYMENT_MAP_STATE.cards = cards;
+
+    await loadPaymentMap();
+    mountPaymentMapForm();
+    renderAutoSuggestions();
+  }
+async function bootstrapCreditCardHub(){
+    let client;
+    try{
+      client = await getClient();
+    }catch(err){
+      console.warn('[Credit Card Hub] Supabase not configured (/shared/config.json).', err);
+      const box = document.getElementById('gs-config-error');
+      const msg = document.getElementById('gs-config-error-msg');
+      if(box){
+        box.style.display = 'block';
+        if(msg) msg.textContent = (err?.message || 'Could not load /shared/config.json. Make sure it exists and is served.');
+      }
+      return;
+    }
+
+    const { data, error } = await client.auth.getUser();
+    const user = data?.user;
+    if(error || !user){
+      window.location.href = '/onboarding/login.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+      return;
+    }
+
+    const [cards, txns] = await Promise.all([
+      loadCards(client, user.id),
+      loadTxns(client, user.id)
+    ]);
+
+    HUB_STATE.userId = user.id;
+    HUB_STATE.cards = cards;
+    HUB_STATE.txns = txns;
+
+    // Build filters and compute initial views
+    mountFilters();
+    refreshHub();
+
+    // Payment Map init
+    PAYMENT_MAP_STATE.userId = user.id;
+    PAYMENT_MAP_STATE.client = client;
+    PAYMENT_MAP_STATE.cards = cards;
+}
+
+  const PAGE = document.body?.getAttribute('data-page') || 'hub';
+  if(PAGE === 'payment-map') bootstrapPaymentMap();
+  else bootstrapCreditCardHub();
+
+  // Footer year
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+
+<!-- Theme Modal (shared) -->
+<div class="theme-overlay" id="themeOverlay" role="dialog" aria-modal="true" aria-labelledby="themeTitle" style="display:none;">
+  <div class="theme-modal">
+    <div class="theme-modal-header">
+      <div class="theme-modal-title">
+        <strong id="themeTitle">⚙️ Appearance</strong>
+        <span>Choose a theme. We’ll remember your preference.</span>
+      </div>
+      <button class="theme-close" id="closeThemeBtn" type="button" aria-label="Close appearance settings">✕</button>
+    </div>
+
+    <div class="theme-modal-body">
+      <div class="theme-grid" id="themeGrid">
+        <button class="theme-option" type="button" data-theme="theme-calm">
+          <div class="theme-option-head">
+            <div>
+              <p class="theme-option-name">🌿 Calm Future</p>
+              <p class="theme-option-desc">Bright, calm, and easy.</p>
+            </div>
+            <span class="theme-option-tag">Default</span>
+          </div>
+        </button>
+
+        <button class="theme-option" type="button" data-theme="theme-future">
+          <div class="theme-option-head">
+            <div>
+              <p class="theme-option-name">🌌 Soft Futuristic</p>
+              <p class="theme-option-desc">Indigo + cyan glow.</p>
+            </div>
+            <span class="theme-option-tag">Futuristic</span>
+          </div>
+        </button>
+
+        <button class="theme-option" type="button" data-theme="theme-nature">
+          <div class="theme-option-head">
+            <div>
+              <p class="theme-option-name">🌱 Nature + Tech</p>
+              <p class="theme-option-desc">Calm green + sky blue trust.</p>
+            </div>
+            <span class="theme-option-tag">Household</span>
+          </div>
+        </button>
+
+        <button class="theme-option" type="button" data-theme="theme-dark">
+          <div class="theme-option-head">
+            <div>
+              <p class="theme-option-name">🌑 Pro Dark</p>
+              <p class="theme-option-desc">Best for night use.</p>
+            </div>
+            <span class="theme-option-tag">Dark</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div class="theme-modal-footer">
+      <button class="btn" id="resetThemeBtn" type="button">Reset</button>
+      <button class="btn primary" id="doneThemeBtn" type="button">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Dropdown "Appearance" -> open the same theme modal
+  (function(){
+    const openFromDropdown = document.getElementById('dropdown-open-appearance');
+    const openThemeBtn = document.getElementById('openThemeBtn');
+    if(openFromDropdown && openThemeBtn){
+      openFromDropdown.addEventListener('click', ()=>{
+        openThemeBtn.click();
+      });
+    }
+  })();
+</script>
+
+<script>
+  // Mobile bottom nav: highlight current tab
+  (function(){
+    const path = (location.pathname || "").toLowerCase();
+    let key = "household";
+    if(path.includes("business")) key = "business";
+    else if(path.includes("investment")) key = "investment";
+    else if(path.includes("leisure")) key = "leisure";
+
+    document.querySelectorAll('.mobile-nav .mnav').forEach(a=>{
+      a.classList.toggle('active', a.getAttribute('data-nav') === key);
+    });
+  })();
+</script>
+
+<script>
+  // Theme Switcher (shared)
+  (function ThemeSwitcher(){
+    const STORAGE_KEY = 'geniesphere_theme';
+    const THEMES = ['theme-calm','theme-future','theme-nature','theme-dark'];
+    const DEFAULT_THEME = 'theme-dark';
+
+    const overlay = document.getElementById('themeOverlay');
+    const openBtn = document.getElementById('openThemeBtn');
+    const closeBtn = document.getElementById('closeThemeBtn');
+    const doneBtn = document.getElementById('doneThemeBtn');
+    const resetBtn = document.getElementById('resetThemeBtn');
+    const themeGrid = document.getElementById('themeGrid');
+
+    function saveTheme(theme){ try { localStorage.setItem(STORAGE_KEY, theme); } catch(_){ } }
+    function getTheme(){ try { return localStorage.getItem(STORAGE_KEY); } catch(_){ return null; } }
+
+    function updateSelected(theme){
+      if(!themeGrid) return;
+      themeGrid.querySelectorAll('.theme-option').forEach(btn => {
+        btn.classList.toggle('selected', btn.getAttribute('data-theme') === theme);
+      });
+    }
+
+    function applyTheme(theme){
+      THEMES.forEach(t => document.body.classList.remove(t));
+      document.body.classList.add(theme);
+      updateSelected(theme);
+    }
+
+    function openModal(){
+      if(!overlay) return;
+      overlay.classList.add('open');
+      overlay.style.display = 'flex';
+      const first = themeGrid?.querySelector('.theme-option');
+      setTimeout(()=> first && first.focus(), 40);
+    }
+    function closeModal(){
+      if(!overlay) return;
+      overlay.classList.remove('open');
+      overlay.style.display = 'none';
+      openBtn && openBtn.focus();
+    }
+
+    const saved = getTheme();
+    const theme = (saved && THEMES.includes(saved)) ? saved : DEFAULT_THEME;
+    applyTheme(theme);
+
+    if(openBtn) openBtn.addEventListener('click', openModal);
+    if(closeBtn) closeBtn.addEventListener('click', closeModal);
+    if(doneBtn) doneBtn.addEventListener('click', closeModal);
+
+    if(overlay){
+      overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal(); });
+    }
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && overlay?.classList.contains('open')) closeModal(); });
+
+    if(themeGrid){
+      themeGrid.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.theme-option');
+        if(!btn) return;
+        const next = btn.getAttribute('data-theme');
+        if(!THEMES.includes(next)) return;
+        applyTheme(next);
+        saveTheme(next);
+      });
+    }
+
+    if(resetBtn){
+      resetBtn.addEventListener('click', ()=>{
+        applyTheme(DEFAULT_THEME);
+        saveTheme(DEFAULT_THEME);
+      });
+    }
+  })();
+</script>
+
+<script src="/shared/js/hub-badges.js"></script>
+</body>
+</html>

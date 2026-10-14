@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trip Expense Splitter – Voyage Genie</title>
+
+  <!-- TailwindCSS (Voyage template uses v2.x) -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+
+  <!-- Supabase JS v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --vg-blue:#60a5fa;
+      --vg-indigo:#4c6ef5;
+      --vg-bg:#f4f8fb;
+      --panel:#ffffff;
+      --border:#e5e7eb;
+      --muted:#6b7280;
+      --text:#333;
+      --accent:#2563eb;
+      --accent2:#10b981;
+      --radius:12px;
+      --shadow:0 4px 12px rgba(0,0,0,0.08);
+    }
+    body{
+      font-family:'Segoe UI',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif;
+      background:var(--vg-bg);
+      color:var(--text);
+    }
+    .vg-card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:1rem;
+    }
+    .vg-title{ font-size:1.25rem; font-weight:700; }
+    .vg-sub{ color:var(--muted); font-size: .9rem;}
+    .vg-input, .vg-select, .vg-num{
+      width:100%; padding:.6rem .8rem; border:1px solid var(--border); border-radius:10px; background:#fff; color:var(--text);
+    }
+    .vg-btn{ display:inline-flex; align-items:center; gap:.5rem; border-radius:999px; padding:.55rem .9rem; border:1px solid var(--border); background:#fff; }
+    .vg-btn:hover{ background:#f9fafb; }
+    .vg-btn-primary{ background:var(--vg-indigo); color:#fff; border-color:transparent; }
+    .vg-btn-blue{ background:var(--vg-blue); color:#fff; border-color:transparent; }
+    .vg-chip{ display:inline-flex; align-items:center; gap:.5rem; border:1px solid var(--border); background:#fff; border-radius:999px; padding:.35rem .65rem;}
+    .money{ font-variant-numeric:tabular-nums; }
+
+    /* Voyage header styles (from template) */
+    .nav-icon{ height:50px; width:auto; margin-right:8px; }
+    .nav-brand{ display:flex; align-items:center; }
+    .hamburger{ display:none; flex-direction:column; justify-content:space-between; width:24px; height:18px; cursor:pointer; }
+    .hamburger span{ width:100%; height:3px; background-color:white; transition:all .3s; }
+    .hamburger.active span:nth-child(1){ transform:rotate(45deg) translate(5px,5px); }
+    .hamburger.active span:nth-child(2){ opacity:0; }
+    .hamburger.active span:nth-child(3){ transform:rotate(-45deg) translate(7px,-7px); }
+    .nav-links a:hover{ text-decoration:underline; }
+
+    /* Mobile nav from template */
+    @media (max-width: 640px){
+      .hamburger{ display:flex; }
+      .nav-links{ display:none; flex-direction:column; position:absolute; top:100%; right:0; background:linear-gradient(to bottom, var(--vg-blue), var(--vg-indigo)); width:100%; padding:1rem; box-shadow:0 4px 12px rgba(0,0,0,.1); }
+      .nav-links.active{ display:flex; }
+      .nav-links li{ margin:.5rem 0; }
+      .nav-links a{ font-size:1.1rem; padding:.5rem; display:block; text-align:center; }
+    }
+
+    /* Responsive Expenses: table → stacked cards on mobile */
+    table.responsive{ width:100%; }
+    table.responsive thead{ display:none; }
+    table.responsive tr{
+      display:grid; grid-template-columns:1fr; row-gap:10px;
+      padding:10px; margin-bottom:10px;
+      border:1px solid var(--border); border-radius:10px; background:#fff;
+    }
+    table.responsive td{ padding:0; }
+    table.responsive td[data-label]::before{
+      content:attr(data-label); display:block; font-size:.85rem; color:var(--muted); margin-bottom:.3rem;
+    }
+    @media (min-width:640px){
+      table.responsive thead{ display:table-header-group; }
+      table.responsive tr{ display:table-row; padding:0; margin:0; background:transparent; border:none; }
+      table.responsive th, table.responsive td{ padding:.6rem; }
+      table.responsive td[data-label]::before{ content:none; }
+      table.responsive{ table-layout:fixed; }
+      table.responsive thead th:nth-child(1),
+      table.responsive tbody td:nth-child(1){ width:14%; }
+      table.responsive thead th:nth-child(2),
+      table.responsive tbody td:nth-child(2){ width:22%; }
+      table.responsive thead th:nth-child(3),
+      table.responsive tbody td:nth-child(3){ width:15%; }
+      table.responsive thead th:nth-child(4),
+      table.responsive tbody td:nth-child(4){ width:10%; }
+      table.responsive thead th:nth-child(5),
+      table.responsive tbody td:nth-child(5){ width:22%; }
+      table.responsive thead th:nth-child(6),
+      table.responsive tbody td:nth-child(6){ width:10%; }
+      table.responsive thead th:nth-child(7),
+      table.responsive tbody td:nth-child(7){ width:7%; }
+    }
+
+    /* Summary cards on mobile */
+    .sum-card{ border:1px solid var(--border); background:#fff; border-radius:10px; padding:12px; }
+
+    /* Modals */
+    .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.45); z-index:50; }
+    .modal.open{ display:flex; }
+    .modal-card{ width:min(720px, calc(100% - 2rem)); background:#fff; border-radius:12px; box-shadow:var(--shadow); overflow:hidden; border:1px solid var(--border); }
+    .modal-card .hd{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); }
+    .modal-card .bd{ padding:16px; max-height:70vh; overflow:auto; }
+    .modal-card .ft{ padding:12px 16px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:.5rem; }
+
+    /* Prevent page scroll behind modal (mobile) */
+    body.lock{ position:fixed; width:100%; overflow:hidden; }
+
+    /* Settlements controls – keep labels on one line (desktop) */
+    @media (min-width: 640px){
+      .settle-controls{
+        display:flex; align-items:center; gap:.75rem; flex-wrap:nowrap;
+      }
+      .settle-controls .ctrl{
+        display:flex; align-items:center; gap:.5rem; white-space:nowrap; /* <- no wrap */
+      }
+      .settle-controls select{ min-width: 9.5rem; }      /* tidy width */
+      .settle-controls .rerun{ padding:.55rem .9rem; }    /* match pill sizing */
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Voyage Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center nav-menu">
+      <a href="index.html" class="nav-brand" aria-label="Go to Home">
+        <img src="images/nav-icon.png" alt="Voyage Genie Icon" class="nav-icon">
+        <h1 class="text-2xl font-bold">Voyage Genie</h1>
+      </a>
+      <div class="hamburger" aria-label="Toggle navigation menu" role="button" tabindex="0">
+        <span></span><span></span><span></span>
+      </div>
+      <ul class="nav-links flex space-x-6">
+        <li><a href="index.html" aria-label="Home">Home</a></li>
+        <li class="relative">
+          <a href="index.html" class="flex items-center" aria-label="Plan A Trip">
+            Plan A Trip
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </a>
+        </li>
+        <li><a href="trip-dashboard.html">📋 My Trips</a></li>
+        <li><a href="features.html" aria-label="Features">Features</a></li>
+        <li><a href="contact.html" aria-label="Contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <header class="mb-4">
+      <h2 class="text-2xl font-bold">🧮 Trip Expense Splitter</h2>
+      <p class="vg-sub mt-1">Add people, log expenses, assign payers (for families), and get suggested settlements.</p>
+
+      <div class="flex items-center mt-3 space-x-2">
+        <input id="tripTitle" class="vg-input flex-1" placeholder="Trip title (e.g., Hawaii 2025)" />
+        <button class="vg-btn vg-btn-blue" onclick="saveToCloud()">☁️ Save</button>
+      </div>
+      <div id="cloudStatus" class="vg-sub mt-2"></div>
+    </header>
+
+    <!-- People Panel -->
+    <section class="vg-card mb-5" id="panel-people">
+      <div class="flex items-center justify-between mb-2">
+        <div class="vg-title">👥 People</div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <input id="personName" class="vg-input" placeholder="Add name (e.g., Alice)" />
+        <div class="flex flex-wrap items-center gap-2">
+          <button class="vg-btn vg-btn-primary" onclick="addPerson()">➕ Add Person</button>
+          <button class="vg-btn" onclick="toggleBatch()">➕ Add Multiple</button>
+          <button id="assignPayersBtn" class="vg-btn" onclick="openPayers()">👪 Assign Payers</button>
+        </div>
+      </div>
+
+      <!-- Batch add -->
+      <div id="batchWrap" class="mt-3 hidden">
+        <div class="vg-sub mb-2">Paste names (comma/line separated). Empty cells ignored.</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          <template id="batchCellTpl"><input class="vg-input batchName" placeholder="Name"/></template>
+        </div>
+        <div class="flex gap-2 mt-3">
+          <button class="vg-btn vg-btn-primary" onclick="addBatch()">Add All</button>
+          <button class="vg-btn" onclick="clearBatch()">Clear</button>
+        </div>
+      </div>
+
+      <div id="peopleList" class="flex flex-wrap gap-2 mt-4"></div>
+
+      <div class="border-t border-gray-200 my-4"></div>
+
+      <div class="flex flex-wrap gap-2">
+        <button class="vg-btn vg-btn-blue" onclick="addExpenseRow()">➕ Add Expense</button>
+        <button class="vg-btn" onclick="resetDemo()">🔁 Reset</button>
+      </div>
+    </section>
+
+    <!-- Expenses -->
+    <section class="vg-card mb-5" id="panel-expenses">
+      <div class="flex items-center justify-between mb-2">
+        <div class="vg-title">🧾 Expenses</div>
+        <p class="vg-sub hidden sm:block">Use “Edit” to choose who shares the expense.</p>
+      </div>
+
+      <div class="overflow-hidden">
+        <table class="responsive">
+          <thead>
+            <tr>
+              <th class="text-left">Date</th>
+              <th class="text-left">Description / Vendor</th>
+              <th class="text-left">Paid By</th>
+              <th class="text-left">Amount</th>
+              <th class="text-left">Split Between</th>
+              <th class="text-left">Per-Person</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="expensesBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="vg-card mb-5" id="panel-summary">
+      <div class="flex items-center justify-between mb-2">
+        <div class="vg-title">📊 Summary</div>
+        <div class="hidden sm:flex gap-2">
+          <button class="vg-btn" onclick="recalculate()">🔄 Refresh</button>
+          <button class="vg-btn" onclick="exportSummaryCSV()">⬇️ Export</button>
+        </div>
+      </div>
+
+      <!-- Desktop table -->
+      <div class="overflow-x-auto hidden sm:block">
+        <table class="w-full min-w-[520px]">
+          <thead>
+            <tr>
+              <th class="text-left">Person</th>
+              <th class="text-left">Total Paid</th>
+              <th class="text-left">Fair Share</th>
+              <th class="text-left">Balance (Owes + / Gets −)</th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div id="summaryCards" class="sm:hidden grid grid-cols-1 gap-2 mt-2"></div>
+
+      <div class="mt-2 sm:hidden">
+        <button class="vg-btn w-full" onclick="exportSummaryCSV()">⬇️ Export Summary CSV</button>
+      </div>
+    </section>
+
+    <!-- Settlements -->
+    <section class="vg-card" id="panel-settlements">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div class="vg-title">🤝 Suggested Settlements</div>
+        <div class="hidden sm:flex settle-controls">
+          <div class="ctrl">
+            <span class="vg-sub">Max payees / debtor</span>
+            <select id="settleLimit" class="vg-select">
+              <option value="auto" selected>Auto</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="unlimited">Unlimited</option>
+            </select>
+          </div>
+
+          <div class="ctrl">
+            <span class="vg-sub">Collector (optional)</span>
+            <select id="settleCollector" class="vg-select">
+              <option value="" selected>— None —</option>
+            </select>
+          </div>
+
+          <button class="vg-btn rerun" onclick="recalculate()">🔄 Re-run</button>
+        </div>
+
+      </div>
+
+      <!-- Mobile settlement controls -->
+      <div class="sm:hidden grid grid-cols-2 gap-2 mb-2">
+        <select id="settleLimit_m" class="vg-select" onchange="syncMobileSettle();recalculate()">
+          <option value="auto" selected>Limit: Auto</option>
+          <option value="1">Limit: 1</option>
+          <option value="2">Limit: 2</option>
+          <option value="unlimited">Limit: Unlimited</option>
+        </select>
+        <select id="settleCollector_m" class="vg-select" onchange="syncMobileSettle();recalculate()">
+          <option value="" selected>Collector: None</option>
+        </select>
+      </div>
+
+      <div id="settlements" class="text-sm text-gray-600">No settlements yet.</div>
+      <div id="familyLegend" class="vg-sub mt-3"></div>
+
+      <div class="border-t border-gray-200 my-4"></div>
+      <div class="flex flex-wrap gap-2">
+        <button class="vg-btn" onclick="saveToCloud()">☁️ Save to Cloud</button>
+        <button class="vg-btn" onclick="copyCloudLink()">🔗 Cloud Link</button>
+        <button class="vg-btn" onclick="exportExpensesCSV()">⬇️ Exp CSV</button>
+        <button class="vg-btn" onclick="exportSummaryCSV()">⬇️ Summary CSV</button>
+        <button class="vg-btn" onclick="window.print()">🖨️ Print</button>
+      </div>
+    </section>
+
+    <footer class="text-center text-gray-500 mt-8 mb-10">
+      © <span id="year"></span> Voyage Genie · Trip Expense Splitter.
+    </footer>
+  </main>
+
+  <!-- People Picker Modal -->
+  <div id="peoplePicker" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="hd">
+        <h3 class="font-semibold">Select people for this expense</h3>
+        <button class="vg-btn" onclick="closePicker()">✖</button>
+      </div>
+      <div class="bd space-y-3">
+        <input id="pickerSearch" class="vg-input" placeholder="Search…">
+        <div id="pickerList" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+      </div>
+      <div class="ft">
+        <button class="vg-btn" onclick="selectAllPicker(true)">Select All</button>
+        <button class="vg-btn" onclick="selectAllPicker(false)">Clear</button>
+        <button class="vg-btn vg-btn-blue" onclick="applyPicker()">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign Payers Modal -->
+  <div id="payersModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="hd">
+        <h3 class="font-semibold">👪 Assign Payers</h3>
+        <button class="vg-btn" onclick="closePayers()">✖</button>
+      </div>
+      <div class="bd">
+        <div id="payersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        <p class="vg-sub mt-3">Pick who will <em>settle</em> for each person. “— Myself —” means they settle for themselves.</p>
+      </div>
+      <div class="ft">
+        <button class="vg-btn vg-btn-blue" onclick="applyPayers()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="hd">
+        <h3 class="font-semibold">🔑 Sign in to Save</h3>
+        <button class="vg-btn" onclick="closeAuth()">✖</button>
+      </div>
+      <div class="bd space-y-3">
+        <p class="vg-sub">Enter your email and we’ll send you a sign-in link.</p>
+        <input id="authEmail" class="vg-input" placeholder="you@example.com" type="email">
+        <div id="authNote" class="vg-sub"></div>
+      </div>
+      <div class="ft">
+        <button class="vg-btn vg-btn-blue" onclick="sendMagicLink()">Send Link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer (Voyage) -->
+  <footer class="bg-gradient-to-r from-blue-400 to-indigo-600 text-center py-8 text-sm text-white">
+    <p class="mb-2">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍</p>
+    <form class="flex flex-col sm:flex-row justify-center items-center gap-2 mt-4">
+      <input class="px-4 py-2 rounded bg-white shadow border text-gray-800" placeholder="Enter your email" type="email"/>
+      <button class="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600">Subscribe</button>
+    </form>
+    <div class="mt-4">
+      <a class="mx-2 hover:underline text-white" href="index.html">Home</a>
+      <a class="mx-2 hover:underline text-white" href="features.html">Features</a>
+      <a class="mx-2 hover:underline text-white" href="contact.html">Contact</a>
+    </div>
+  </footer>
+
+  <script>
+    /* ===== Voyage hamburger ===== */
+    document.addEventListener('DOMContentLoaded', function () {
+      const hamburger = document.querySelector('.hamburger');
+      const navLinks = document.querySelector('.nav-links');
+      if(hamburger){
+        hamburger.addEventListener('click', function () {
+          hamburger.classList.toggle('active');
+          navLinks && navLinks.classList.toggle('active');
+        });
+      }
+    });
+
+    /* ===== Supabase config — replace with your keys ===== */
+    const SUPABASE_URL = "https://pbojacnagutipfhcxltj.supabase.co";        // ← replace
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0";               // ← replace
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /* ===== Data model (starts empty) ===== */
+    let people = [];                 // [{name, payer}]
+    let expenses = [];               // [{date, desc, paidBy, amount, included:{name:bool}}]
+    let tripTitle = "My Trip";
+
+    // cloud/auth state
+    let currentTripId = null;
+    let currentUser = null;
+
+    // picker modal state
+    let pickerIndex = -1;
+    let pickerTmp = {};
+
+    /* ===== Utilities ===== */
+    const $ = (id)=>document.getElementById(id);
+    const names = ()=>people.map(p=>p.name);
+    const byName = (n)=>people.find(p=>p.name===n);
+    const clean = (s)=> (s||"").trim().replace(/\s+/g," ");
+
+    function fmtCurrency(n){ return (n||0).toLocaleString(undefined,{style:"currency",currency:"USD"}); }
+
+    /* ===== People ===== */
+    function renderPeople(){
+      const wrap = $("peopleList");
+      wrap.innerHTML = "";
+      people.forEach(p=>{
+        const suffix = p.payer && p.payer!==p.name ? ` <span class="text-gray-500">→ ${p.payer}</span>` : "";
+        const div = document.createElement("div");
+        div.className = "vg-chip";
+        div.innerHTML = `👤 ${p.name}${suffix}
+          <button class="vg-btn" onclick="removePerson('${p.name.replace(/'/g,"\\'")}')">🗑️</button>`;
+        wrap.appendChild(div);
+      });
+      updateAssignPayersState();
+    }
+    function addPerson(){
+      const input=$("personName"); const n=clean(input.value);
+      if(!n) return;
+      if(people.some(p=>p.name===n)){ alert("Name exists."); return; }
+      people.push({name:n, payer:n});
+      expenses.forEach(ex=>ex.included[n]=true);
+      input.value=""; renderPeople(); renderExpenses(); recalc(); dirty();
+    }
+    function removePerson(n){
+      if(!confirm(`Remove ${n}?`)) return;
+      people = people.filter(p=>p.name!==n);
+      expenses.forEach(ex=>{ delete ex.included[n]; if(ex.paidBy===n) ex.paidBy=""; });
+      renderPeople(); renderExpenses(); recalc(); dirty();
+    }
+    function updateAssignPayersState(){
+      const btn = $("assignPayersBtn");
+      const dis = !people.length;
+      if(btn){ btn.disabled = dis; btn.classList.toggle("opacity-50", dis); btn.classList.toggle("pointer-events-none", dis); }
+    }
+
+    // batch add
+    function toggleBatch(){
+      const w=$("batchWrap");
+      if(w.classList.contains("hidden")){
+        if(!w.dataset.built){
+          const grid=w.querySelector(".grid"); const tpl=$("batchCellTpl").content;
+          for(let i=0;i<12;i++) grid.appendChild(tpl.cloneNode(true));
+          w.dataset.built="1";
+          grid.addEventListener("paste",(e)=>{
+            const t=e.target; if(!t.classList.contains("batchName")) return;
+            e.preventDefault();
+            const text=(e.clipboardData.getData("text")||"").trim();
+            const list=text.split(/[\n,]+/).map(clean).filter(Boolean);
+            const cells=[...grid.querySelectorAll(".batchName")];
+            let idx=cells.indexOf(t); list.forEach(n=>{ if(idx<cells.length) cells[idx++].value=n; });
+          });
+        }
+        w.classList.remove("hidden");
+      } else w.classList.add("hidden");
+    }
+    function addBatch(){
+      const cells=[...document.querySelectorAll(".batchName")];
+      const list=cells.map(i=>i.value).flatMap(v=>v.split(/[\n,]+/)).map(clean).filter(Boolean);
+      if(!list.length) return alert("Add some names first.");
+      let added=0; list.forEach(n=>{
+        if(!people.some(p=>p.name===n)){ people.push({name:n,payer:n}); expenses.forEach(ex=>ex.included[n]=true); added++; }
+      });
+      if(!added) alert("No new names.");
+      clearBatch(); renderPeople(); renderExpenses(); recalc(); dirty();
+    }
+    function clearBatch(){ document.querySelectorAll(".batchName").forEach(i=>i.value=""); }
+
+    /* ===== Assign Payers ===== */
+    function openPayers(){
+      if(!people.length){ alert("Add people first."); return; }
+      buildPayersGrid();
+      $("payersModal").classList.add("open"); document.body.classList.add("lock");
+    }
+    function closePayers(){ $("payersModal").classList.remove("open"); document.body.classList.remove("lock"); }
+    window.openPayers=openPayers; window.closePayers=closePayers;
+
+    function buildPayersGrid(){
+      const box=$("payersGrid"); box.innerHTML="";
+      const opts = (self)=> `<option value="${self}">— Myself —</option>` + names().map(n=>`<option value="${n}">${n}</option>`).join("");
+      people.forEach((p,idx)=>{
+        const card=document.createElement("div");
+        card.className="border border-gray-200 rounded-lg p-3";
+        const selId=`payer_${idx}`;
+        card.innerHTML = `
+          <div class="font-semibold mb-2">👤 ${p.name}</div>
+          <label class="block text-sm mb-2 text-gray-600">Payer</label>
+          <select id="${selId}" class="vg-select">${opts(p.name)}</select>`;
+        box.appendChild(card);
+        setTimeout(()=>{ const sel=$(selId); sel.value=p.payer||p.name; sel.onchange=()=>{ people[idx].payer=sel.value||p.name; dirty(); }; },0);
+      });
+    }
+    function applyPayers(){
+      const set=new Set(names());
+      people.forEach(p=>{ if(!set.has(p.payer)) p.payer=p.name; });
+      closePayers(); renderPeople(); recalc(); dirty();
+    }
+
+    /* ===== Expenses ===== */
+    function addExpenseRow(){
+      const first = names()[0] || "";
+      const ex = { date:"", desc:"", paidBy:first, amount:0, included:{} };
+      names().forEach(n=>ex.included[n]=true);
+      expenses.push(ex); renderExpenses(); recalc(); dirty();
+    }
+    function removeExpenseRow(i){ expenses.splice(i,1); renderExpenses(); recalc(); dirty(); }
+    function renderExpenses(){
+      const body=$("expensesBody"); body.innerHTML="";
+      const nlist=names();
+      expenses.forEach((ex, idx)=>{
+        nlist.forEach(n=>{ if(!(n in ex.included)) ex.included[n]=false; });
+        Object.keys(ex.included).forEach(k=>{ if(!nlist.includes(k)) delete ex.included[k]; });
+
+        const tr=document.createElement("tr");
+
+        const tdDate=document.createElement("td"); tdDate.setAttribute("data-label","Date");
+        tdDate.innerHTML=`<input type="date" class="vg-input" value="${ex.date}" onchange="expenses[${idx}].date=this.value; dirty()">`;
+        tr.appendChild(tdDate);
+
+        const tdDesc=document.createElement("td"); tdDesc.setAttribute("data-label","Description / Vendor");
+        tdDesc.innerHTML=`<input class="vg-input" placeholder="e.g., Dinner at Luigi's" value="${ex.desc}" onchange="expenses[${idx}].desc=this.value; dirty()">`;
+        tr.appendChild(tdDesc);
+
+        const tdPaid=document.createElement("td"); tdPaid.setAttribute("data-label","Paid By");
+        const options = ['<option value=""></option>'].concat(nlist.map(n=>`<option value="${n}" ${ex.paidBy===n?'selected':''}>${n}</option>`)).join("");
+        tdPaid.innerHTML=`<select class="vg-select" onchange="expenses[${idx}].paidBy=this.value; recalc(); dirty()">${options}</select>`;
+        tr.appendChild(tdPaid);
+
+        const tdAmt=document.createElement("td"); tdAmt.setAttribute("data-label","Amount");
+        tdAmt.innerHTML=`<input type="number" step="0.01" min="0" class="vg-num" value="${ex.amount}" oninput="expenses[${idx}].amount=parseFloat(this.value||0); recalc(); dirty()">`;
+        tr.appendChild(tdAmt);
+
+        const tdSplit=document.createElement("td"); tdSplit.setAttribute("data-label","Split Between");
+        const namesStr = includedNames(ex, nlist);
+        tdSplit.innerHTML = `
+          <div class="flex items-center gap-2">
+            <input class="vg-input" readonly value="${namesStr}">
+            <button class="vg-btn" onclick="openPicker(${idx})">✏️ Edit</button>
+          </div>`;
+        tr.appendChild(tdSplit);
+
+        const tdShare=document.createElement("td"); tdShare.setAttribute("data-label","Per-Person");
+        const div=document.createElement("div"); div.className="money text-left"; div.textContent=fmtCurrency(perPerson(ex,nlist));
+        tdShare.appendChild(div); tr.appendChild(tdShare);
+
+        const tdDel=document.createElement("td"); tdDel.setAttribute("data-label","Remove");
+        const b=document.createElement("button"); b.className="vg-btn"; b.textContent="🗑️"; b.title="Remove"; b.onclick=()=>removeExpenseRow(idx);
+        tdDel.appendChild(b); tr.appendChild(tdDel);
+
+        body.appendChild(tr);
+      });
+    }
+    function includedNames(ex, nlist){
+      const inc=nlist.filter(n=>ex.included[n]);
+      if(inc.length===nlist.length) return "All";
+      if(inc.length===0) return "—";
+      return inc.join(", ");
+    }
+
+    /* ===== People Picker ===== */
+    function openPicker(i){
+      pickerIndex=i; pickerTmp={...expenses[i].included};
+      buildPickerList(); $("pickerSearch").value="";
+      $("peoplePicker").classList.add("open"); document.body.classList.add("lock");
+    }
+    function closePicker(){ $("peoplePicker").classList.remove("open"); document.body.classList.remove("lock"); }
+    function applyPicker(){
+      if(pickerIndex<0) return closePicker();
+      expenses[pickerIndex].included = {...pickerTmp};
+      pickerIndex=-1; pickerTmp={}; closePicker(); renderExpenses(); recalc(); dirty();
+    }
+    function buildPickerList(){
+      const box=$("pickerList"); const q=($("pickerSearch").value||"").toLowerCase(); box.innerHTML="";
+      names().filter(n=>n.toLowerCase().includes(q)).forEach(n=>{
+        const chk=!!pickerTmp[n];
+        const label=document.createElement("label");
+        label.className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2";
+        label.innerHTML=`<input type="checkbox" ${chk?'checked':''} onchange="pickerTmp['${n.replace(/'/g,"\\'")}']=this.checked"> <span>${n}</span>`;
+        box.appendChild(label);
+      });
+    }
+    $("pickerSearch")?.addEventListener("input", buildPickerList);
+    function selectAllPicker(v){ names().forEach(n=>pickerTmp[n]=v); buildPickerList(); }
+
+    /* ===== Math ===== */
+    function perPerson(ex, nlist){
+      const inc=nlist.filter(n=>ex.included[n]); const c=inc.length; if(!c) return 0;
+      return (ex.amount||0)/c;
+    }
+    function summarize(){
+      const nlist=names(); const paid={}, share={}; nlist.forEach(n=>{paid[n]=0;share[n]=0;});
+      expenses.forEach(ex=>{
+        if(ex.paidBy && (ex.amount||0)>0) paid[ex.paidBy]+=ex.amount||0;
+        const each=perPerson(ex,nlist);
+        nlist.forEach(n=>{ if(ex.included[n]) share[n]+=each; });
+      });
+      const bal={}; nlist.forEach(n=>bal[n]=(share[n]||0)-(paid[n]||0));
+      return {paid, share, bal};
+    }
+    function recalc(){
+      const nlist=names();
+      // inline updates
+      [...document.querySelectorAll("#expensesBody tr")].forEach((tr,i)=>{
+        const td=tr.children[5]; if(td){ td.querySelector("div").textContent=fmtCurrency(perPerson(expenses[i], nlist)); }
+        const split=tr.children[4]?.querySelector("input"); if(split){ split.value=includedNames(expenses[i], nlist); }
+      });
+
+      const {paid,share,bal}=summarize();
+
+      // desktop summary
+      const tbody=$("summaryBody"); tbody.innerHTML="";
+      nlist.forEach(n=>{
+        const p=byName(n) || {payer:n};
+        const b=(bal[n]||0);
+        const tr=document.createElement("tr");
+        tr.innerHTML=`
+          <td>${n}${p.payer!==n?` <span class="text-gray-500">→ ${p.payer}</span>`:""}</td>
+          <td class="money">${fmtCurrency(paid[n]||0)}</td>
+          <td class="money">${fmtCurrency(share[n]||0)}</td>
+          <td class="money ${b>0?'text-red-500':(b<0?'text-green-600':'')}">${fmtCurrency(b)}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      // mobile summary
+      renderSummaryCards(nlist, paid, share, bal);
+
+      // settlements
+      suggestSettlements(bal);
+    }
+    function renderSummaryCards(nlist, paid, share, bal){
+      const box=$("summaryCards"); box.innerHTML="";
+      nlist.forEach(n=>{
+        const payer=(byName(n)?.payer)||n; const b=(bal[n]||0);
+        const card=document.createElement("div"); card.className="sum-card";
+        card.innerHTML=`
+          <div class="font-semibold mb-1">👤 ${n}</div>
+          ${payer!==n?`<div class="text-sm text-gray-500 mb-1">Payer: ${payer}</div>`:""}
+          <div class="grid grid-cols-3 gap-2 text-sm">
+            <div><div class="text-gray-500">Paid</div><div class="money">${fmtCurrency(paid[n]||0)}</div></div>
+            <div><div class="text-gray-500">Fair Share</div><div class="money">${fmtCurrency(share[n]||0)}</div></div>
+            <div><div class="text-gray-500">Balance</div><div class="money ${b>0?'text-red-500':(b<0?'text-green-600':'')}">${fmtCurrency(b)}</div></div>
+          </div>`;
+        box.appendChild(card);
+      });
+    }
+
+    /* Consolidate balances by payer family */
+    function consolidateByPayer(balMap){
+      const out={}; const legend=new Map();
+      people.forEach(p=>{
+        const payer=(p.payer && names().includes(p.payer))?p.payer:p.name;
+        const b=balMap[p.name]||0;
+        out[payer]=(out[payer]||0)+b;
+        if(!legend.has(payer)) legend.set(payer,[]);
+        if(payer!==p.name) legend.get(payer).push(p.name);
+      });
+      return {out,legend};
+    }
+
+    function computeSettlements(map,{maxPayeesPerDebtor=null,collector=null}={}){
+      const creditors=[], debtors=[];
+      Object.entries(map).forEach(([p,b])=>{
+        if(b<-0.005) creditors.push({p,amt:-b});
+        else if(b>0.005) debtors.push({p,amt:b});
+      });
+      if(!creditors.length||!debtors.length) return [];
+
+      if(collector){
+        const totalReceive=creditors.reduce((s,c)=>s+c.amt,0);
+        const totalOwes=debtors.reduce((s,d)=>s+d.amt,0);
+        const target=Math.min(totalReceive,totalOwes);
+        const res=[]; let need=target;
+        for(const d of debtors){ if(need<=0.005) break; const pay=Math.min(d.amt,need); if(pay>0.005){ res.push({from:d.p,to:collector,amt:pay}); need-=pay; } }
+        return res;
+      }
+
+      creditors.sort((a,b)=>b.amt-a.amt);
+      debtors.sort((a,b)=>b.amt-a.amt);
+      const raw=[];
+      for(let i=0;i<debtors.length;i++){
+        let rem=debtors[i].amt, payments=0;
+        for(let j=0;j<creditors.length && rem>0;j++){
+          if(creditors[j].amt<=0.005) continue;
+          if(Number.isFinite(maxPayeesPerDebtor) && payments>=maxPayeesPerDebtor) break;
+          const pay=Math.min(rem,creditors[j].amt);
+          if(pay>0.005){ raw.push({from:debtors[i].p,to:creditors[j].p,amt:pay}); rem-=pay; creditors[j].amt-=pay; payments++; }
+        }
+      }
+      const agg=new Map();
+      raw.forEach(r=>{ const k=r.from+"|"+r.to; agg.set(k,(agg.get(k)||0)+r.amt); });
+      const out=[...agg.entries()].map(([k,amt])=>{const [from,to]=k.split("|"); return {from,to,amt};}).filter(r=>r.amt>0.005);
+      out.sort((a,b)=> a.from.localeCompare(b.from)||b.amt-a.amt);
+      return out;
+    }
+
+    function suggestSettlements(balMap){
+      const {out,legend}=consolidateByPayer(balMap);
+
+      const creditors=Object.entries(out).filter(([_,b])=>b<-0.005).map(([p])=>p).sort((a,b)=>a.localeCompare(b));
+      const sel=$("settleCollector"); const cur=sel?.value||"";
+      if(sel){ sel.innerHTML=`<option value="">— None —</option>`+creditors.map(n=>`<option value="${n}" ${cur===n?'selected':''}>${n}</option>`).join(""); }
+      const selm=$("settleCollector_m"); const curm=selm?.value||"";
+      if(selm){ selm.innerHTML=`<option value="">Collector: None</option>`+creditors.map(n=>`<option value="${n}" ${curm===n?'selected':''}>Collector: ${n}</option>`).join(""); }
+
+      const limitVal=($("settleLimit")?.value||$("settleLimit_m")?.value||"auto");
+      const collector=($("settleCollector")?.value||$("settleCollector_m")?.value||"").trim() || null;
+      const limit = limitVal==="auto"?null:(limitVal==="unlimited"?Infinity:Number(limitVal)||null);
+
+      const rows=computeSettlements(out,{maxPayeesPerDebtor:limit,collector});
+
+      const wrap=$("settlements"); wrap.innerHTML="";
+      if(!rows.length){ wrap.textContent="All square! No settlements needed."; }
+      else{
+        const list=document.createElement("div"); list.className="space-y-2";
+        rows.forEach(r=>{
+          const d=document.createElement("div"); d.className="flex items-center gap-2 text-sm";
+          d.innerHTML=`<span class="vg-chip">💸 ${r.from}</span><span class="text-gray-500">pays</span><span class="vg-chip">🧾 ${r.to}</span><span class="text-gray-500">→</span><strong class="money">${fmtCurrency(r.amt)}</strong>`;
+          list.appendChild(d);
+        }); wrap.appendChild(list);
+      }
+
+      const legendBox=$("familyLegend");
+      if(legend.size){
+        const chips=[]; legend.forEach((members,payer)=>{ if(members.length) chips.push(`<span class="vg-chip">${members.join(", ")} → ${payer}</span>`); });
+        legendBox.innerHTML=chips.join(" ");
+      } else legendBox.innerHTML="";
+    }
+
+    /* ===== CSV ===== */
+    function downloadCSV(rows, filename){
+      const csv = rows.map(r => r.map(cell => {
+        const s = String(cell ?? ""); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+      }).join(",")).join("\n");
+      const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"}); const url = URL.createObjectURL(blob);
+      const a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+    function exportExpensesCSV(){
+      tripTitle = $("tripTitle").value || "My Trip";
+      const nlist=names(); const rows=[];
+      rows.push(["Trip Title", tripTitle]); rows.push([]);
+      rows.push(["Date","Description/Vendor","Paid By","Amount","Included","Per-Person Share"]);
+      expenses.forEach(ex=>{
+        const inc=nlist.filter(n=>ex.included[n]).join("; ");
+        rows.push([ex.date||"",ex.desc||"",ex.paidBy||"", (ex.amount||0).toFixed(2), inc, perPerson(ex,nlist).toFixed(2)]);
+      });
+      downloadCSV(rows,"expenses.csv");
+    }
+    function exportSummaryCSV(){
+      tripTitle = $("tripTitle").value || "My Trip";
+      const {paid,share,bal}=summarize(); const nlist=names(); const rows=[];
+      rows.push(["Trip Title", tripTitle]); rows.push([]);
+      rows.push(["=== Summary by Person ==="]);
+      rows.push(["Person","Payer","Total Paid","Fair Share","Balance (Owes + / Gets -)"]);
+      nlist.forEach(n=>{ const p=byName(n)||{payer:n}; rows.push([n, p.payer||n, (paid[n]||0).toFixed(2), (share[n]||0).toFixed(2), (bal[n]||0).toFixed(2)]); });
+
+      rows.push([]); rows.push(["=== Expenses ==="]);
+      rows.push(["Date","Description/Vendor","Paid By","Amount","Included","Per-Person Share"]);
+      expenses.forEach(ex=>{ const inc=nlist.filter(n=>ex.included[n]).join("; "); rows.push([ex.date||"",ex.desc||"",ex.paidBy||"", (ex.amount||0).toFixed(2), inc, perPerson(ex,nlist).toFixed(2)]); });
+
+      const {out}=consolidateByPayer(bal);
+      const settlements=computeSettlements(out,{
+        maxPayeesPerDebtor:($("settleLimit")?.value==="1")?1:($("settleLimit")?.value==="2")?2:($("settleLimit")?.value==="unlimited")?Infinity:null,
+        collector:($("settleCollector")?.value || $("settleCollector_m")?.value || "") || null
+      });
+      rows.push([]); rows.push(["=== Suggested Settlements (payer-consolidated) ==="]);
+      rows.push(["From","To","Amount"]); settlements.forEach(s=>rows.push([s.from,s.to,s.amt.toFixed(2)]));
+      downloadCSV(rows,"summary.csv");
+    }
+
+    /* ===== Cloud: Supabase save/load/auth ===== */
+    function payload(){
+      return { name: $("tripTitle").value || "My Trip", form_data: { people, expenses, tripTitle: $("tripTitle").value || "My Trip" } };
+    }
+    async function saveToCloud(){
+      const status=$("cloudStatus"); status.textContent="Saving…";
+      const { data:{ user } } = await supabase.auth.getUser();
+      if(!user){ status.textContent="Please sign in to save."; openAuth(); return; }
+      const p = payload(); p.owner_id = user.id;
+
+      let res;
+      if(currentTripId){
+        res = await supabase.from("trips").update({ name:p.name, form_data:p.form_data, owner_id:p.owner_id, updated_at:new Date().toISOString() })
+              .eq("id", currentTripId).select("id").single();
+      } else {
+        res = await supabase.from("trips").insert({ name:p.name, form_data:p.form_data, owner_id:p.owner_id }).select("id").single();
+        if(res.data) currentTripId = res.data.id;
+      }
+      if(res.error){ status.textContent="Save failed."; alert("❌ "+res.error.message); return; }
+
+      const link = buildLink(currentTripId); try{ await navigator.clipboard.writeText(link); }catch{}
+      status.innerHTML = `Saved ✅ <span class="text-gray-500">(link copied)</span>`;
+    }
+    function buildLink(id){ const u=new URL(location.href); u.searchParams.set("trip_id", id); u.hash=""; return u.toString(); }
+    async function copyCloudLink(){
+      if(!currentTripId){ alert("No saved trip yet. Click Save."); return; }
+      const link = buildLink(currentTripId);
+      try{ await navigator.clipboard.writeText(link); alert("Link copied:\n"+link); }catch{ alert("Link:\n"+link); }
+    }
+    async function loadFromCloudIfAny(){
+      const id=new URLSearchParams(location.search).get("trip_id"); if(!id) return false;
+      const { data, error } = await supabase.from("trips").select("id,name,form_data").eq("id", id).single();
+      if(error||!data){ alert("Trip not found or not accessible."); return false; }
+      currentTripId=data.id;
+      const fd=data.form_data||{};
+      tripTitle = fd.tripTitle || data.name || "My Trip";
+      people = Array.isArray(fd.people)? fd.people.map(p=> typeof p==="string"?{name:p,payer:p}:{name:p.name,payer:p.payer||p.name}) : [];
+      expenses = Array.isArray(fd.expenses)? fd.expenses : [];
+      $("tripTitle").value=tripTitle;
+      renderPeople(); renderExpenses(); recalc();
+      $("cloudStatus").textContent="Loaded from cloud";
+      return true;
+    }
+
+    // Auth modal
+    function openAuth(){ $("authModal").classList.add("open"); document.body.classList.add("lock"); }
+    function closeAuth(){ $("authModal").classList.remove("open"); document.body.classList.remove("lock"); }
+    async function sendMagicLink(){
+      const email=clean($("authEmail").value); const note=$("authNote");
+      if(!email){ note.textContent="Please enter an email."; return; }
+      note.textContent="Sending link…";
+      const redirectTo = location.origin + location.pathname + location.search;
+      const { error } = await supabase.auth.signInWithOtp({ email, options:{ emailRedirectTo: redirectTo } });
+      if(error){ note.textContent="Failed: "+error.message; return; }
+      note.textContent="Check your email for the sign-in link.";
+    }
+    function updateAuthPills(){
+      // You can also show email in header if desired; keeping simple for this page
+    }
+    async function logout(){ await supabase.auth.signOut(); currentUser=null; $("cloudStatus").textContent="Signed out."; updateAuthPills(); }
+
+    supabase.auth.onAuthStateChange(async (_event, session)=>{ currentUser=session?.user||null; updateAuthPills(); if(currentUser){ $("cloudStatus").textContent="Signed in."; } });
+
+    /* ===== Misc ===== */
+    function resetDemo(){
+      if(!confirm("Reset to blank trip?")) return;
+      people=[]; expenses=[]; $("tripTitle").value="My Trip"; currentTripId=null;
+      const u=new URL(location.href); u.searchParams.delete("trip_id"); history.replaceState(null,"",u.toString()); location.hash="";
+      renderPeople(); renderExpenses(); addExpenseRow(); recalc();
+      $("cloudStatus").textContent="Blank trip.";
+    }
+    function dirty(){ const s=$("cloudStatus"); s.textContent="Unsaved changes…"; setTimeout(()=>{ if(s.textContent==="Unsaved changes…") s.textContent=""; }, 2000); }
+
+    function encodeHash(){ const s=JSON.stringify({people,expenses,tripTitle:$("tripTitle").value||"My Trip"}); location.hash="s="+btoa(unescape(encodeURIComponent(s))); return location.href; }
+    function decodeHash(){
+      const m=location.hash.match(/[#&?]s=([^&]+)/); if(!m) return false;
+      try{
+        const state=JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+        if(Array.isArray(state.people)&&Array.isArray(state.expenses)){
+          people=state.people.map(p=> typeof p==="string"?{name:p,payer:p}:{name:p.name,payer:p.payer||p.name});
+          expenses=state.expenses; tripTitle=state.tripTitle||"My Trip"; $("tripTitle").value=tripTitle;
+          renderPeople(); renderExpenses(); recalc(); return true;
+        }
+      }catch(e){}
+      return false;
+    }
+
+    function syncMobileSettle(){
+      const limM=$("settleLimit_m"), colM=$("settleCollector_m");
+      const lim=$("settleLimit"), col=$("settleCollector");
+      if(lim && limM) lim.value=(limM.value||'auto').replace('Limit: ','').toLowerCase();
+      if(col && colM) col.value=(colM.value||'').replace('Collector: ','');
+    }
+
+    // expose some used-by-inline
+    window.removePerson = removePerson;
+    window.openPicker = openPicker;
+    window.closePicker = closePicker;
+
+    async function init(){
+      $("year").textContent=new Date().getFullYear();
+      $("tripTitle").value=tripTitle;
+      renderPeople(); renderExpenses(); addExpenseRow(); recalc();
+
+      $("peoplePicker").addEventListener("click", e=>{ if(e.target.id==="peoplePicker") closePicker(); });
+      $("payersModal").addEventListener("click", e=>{ if(e.target.id==="payersModal") closePayers(); });
+      $("authModal").addEventListener("click", e=>{ if(e.target.id==="authModal") closeAuth(); });
+
+      decodeHash(); window.addEventListener("hashchange", decodeHash);
+      await loadFromCloudIfAny();
+
+      const { data:{ session } } = await supabase.auth.getSession();
+      currentUser = session?.user || null;
+      updateAuthPills();
+    }
+    init();
+  </script>
+</body>
+</html>

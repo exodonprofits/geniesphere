@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Create Account • GenieSphere</title>
+  <meta name="description" content="Create your GenieSphere account and start with the agents you selected."/>
+  <meta name="gs-config" content="/shared/config.json"/>
+  <style>
+/* ═══════════════════════════════════════════════════════════
+   GenieSphere Sign Up — Light theme
+   Mirrors login.html design tokens
+═══════════════════════════════════════════════════════════ */
+:root{
+  --bg:#F5F7FA;
+  --panel:#FFFFFF;
+  --panel-soft:#F0F4F8;
+  --text:#111827;
+  --muted:#6B7280;
+  --muted-2:#9CA3AF;
+  --line:#E5EAF0;
+  --line-2:#D1D9E0;
+  --teal:#22D3EE;
+  --teal-dark:#0891B2;
+  --teal-deep:#0E7490;
+  --teal-dim:rgba(34,211,238,.10);
+  --teal-soft:rgba(34,211,238,.06);
+  --teal-bd:rgba(34,211,238,.28);
+  --ok-bg:#F0FDFA; --ok-bd:#99F6E4; --ok-txt:#0F766E;
+  --err-bg:#FEF2F2; --err-bd:#FECACA; --err-txt:#B91C1C;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.07);
+  --shadow-lg:0 4px 8px rgba(0,0,0,.06),0 20px 48px rgba(0,0,0,.10);
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0}
+body{
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+
+/* Background deco */
+
+/* ── GenieSphere area-colour background ── */
+.gs-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#F5F7FA;}
+.gs-bg svg{position:absolute;inset:0;width:100%;height:100%;}
+.gs-vignette{position:absolute;inset:0;background:radial-gradient(ellipse 72% 72% at 50% 50%,rgba(245,247,250,0) 0%,rgba(245,247,250,.52) 58%,rgba(245,247,250,.80) 100%);}
+
+/* ── Layout ── */
+body{overflow-x:hidden;display:block;padding:0;}
+.page-wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;}
+@media(max-width:480px){.page-wrap{padding:20px 14px;}}
+.page-inner{width:100%;max-width:860px;}
+
+/* ── Top bar ── */
+.page-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;}
+.gs-logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.gs-logo-mark{width:28px;height:28px;border-radius:8px;flex-shrink:0;background:linear-gradient(135deg,#2D6A4F,#52B788);display:flex;align-items:center;justify-content:center;}
+.gs-logo-mark img{width:20px;height:20px;object-fit:contain;border-radius:5px;display:block;}
+.gs-logo-fallback{width:20px;height:20px;border-radius:5px;background:radial-gradient(circle at 30% 30%,#7ef1c7,#0f9f68);}
+.gs-wordmark{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.03em;}
+.topbar-link{font-size:13px;font-weight:600;color:var(--teal-dark);text-decoration:none;}
+.topbar-link:hover{text-decoration:underline;}
+
+
+/* Page eyebrow + heading */
+.page-eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--teal-dark);margin-bottom:6px}
+.page-title{font-size:clamp(20px,2.8vw,26px);font-weight:900;letter-spacing:-.04em;margin:0 0 4px;color:var(--text)}
+.page-sub{font-size:13px;color:var(--muted);margin:0 0 20px;line-height:1.55}
+
+/* Card */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;margin-bottom:16px}
+.card-head{padding:16px 18px 12px;background:linear-gradient(135deg,var(--teal-soft),rgba(8,145,178,.02));border-bottom:1px solid var(--line)}
+.card-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.card-eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--teal-dark)}
+.card-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--teal-dim);border:1px solid var(--teal-bd);color:var(--teal-deep)}
+.card-title{font-size:18px;font-weight:900;letter-spacing:-.03em;margin:0 0 3px;color:var(--text)}
+.card-sub{font-size:13px;color:var(--muted);margin:0}
+
+.card-body{padding:16px 18px}
+
+/* Form fields */
+.fg{display:grid;gap:14px}
+.fg-2{grid-template-columns:1fr 1fr}
+@media(max-width:540px){.fg-2{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.field input{
+  padding:11px 13px;border-radius:10px;
+  border:1.5px solid var(--line-2);background:var(--panel-soft);
+  color:var(--text);font-size:14px;font-family:inherit;outline:none;
+  transition:border-color .14s,box-shadow .14s;width:100%;
+}
+.field input:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim);background:var(--panel)}
+.field input::placeholder{color:var(--muted-2)}
+
+/* Password strength */
+.pw-strength{display:flex;gap:4px;margin-top:6px}
+.pw-bar{flex:1;height:3px;border-radius:999px;background:var(--line-2);transition:background .2s}
+.pw-bar.active-1{background:#EF4444}
+.pw-bar.active-2{background:#F59E0B}
+.pw-bar.active-3{background:#22D3EE}
+.pw-bar.active-4{background:#10B981}
+.pw-hint{font-size:11px;color:var(--muted-2);margin-top:4px;line-height:1.4}
+
+/* Buttons */
+.btn-row{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.btn{border:none;border-radius:999px;padding:11px 16px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;transition:filter .14s,transform .12s;white-space:nowrap;width:100%}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.5;cursor:not-allowed;filter:none;transform:none}
+.btn-primary{background:var(--teal);color:#012e38;box-shadow:0 4px 14px rgba(34,211,238,.28)}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--line-2);font-size:13px;padding:9px 16px}
+.btn-ghost:hover{border-color:var(--teal-bd);background:var(--teal-dim);color:var(--teal-deep)}
+
+/* Status messages */
+.status-msg{display:none;padding:11px 13px;border-radius:10px;font-size:13px;margin-top:12px;line-height:1.5}
+.status-msg.ok{display:block;background:var(--ok-bg);border:1px solid var(--ok-bd);color:var(--ok-txt)}
+.status-msg.err{display:block;background:var(--err-bg);border:1px solid var(--err-bd);color:var(--err-txt)}
+.status-msg.info{display:block;background:#F0F9FF;border:1px solid #BAE6FD;color:#0369A1}
+
+/* Terms line */
+.terms-line{font-size:12px;color:var(--muted-2);margin-top:12px;line-height:1.5}
+.terms-line a{color:var(--teal-dark);font-weight:600}
+
+/* Agent selection sidebar */
+.agents-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;min-width:0;word-break:break-word}
+.agents-head{padding:14px 18px;background:linear-gradient(135deg,var(--teal-soft),rgba(8,145,178,.02));border-bottom:1px solid var(--line)}
+.agents-head h3{font-size:14px;font-weight:800;margin:0 0 2px}
+.agents-head p{font-size:12px;color:var(--muted);margin:0}
+.agents-body{padding:14px 18px}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:1px solid var(--teal-bd);background:var(--teal-dim);color:var(--teal-deep);font-size:12px;font-weight:700}
+.chips-empty{font-size:13px;color:var(--muted-2);padding:4px 0}
+
+.next-steps{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.next-steps h4{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:0 0 10px}
+.step-list{display:flex;flex-direction:column;gap:8px}
+.step-item{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--muted)}
+.step-icon{width:20px;height:20px;border-radius:50%;background:var(--teal-dim);border:1px solid var(--teal-bd);color:var(--teal-deep);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+
+/* Already have account link */
+.login-link{text-align:center;font-size:13px;color:var(--muted);margin-top:12px}
+.login-link a{color:var(--teal-dark);font-weight:700}
+.login-link a:hover{text-decoration:underline}
+
+/* Two-col layout for form + sidebar */
+.signup-grid{display:grid;grid-template-columns:1fr 280px;gap:14px;align-items:start}
+.signup-grid > *{min-width:0}
+@media(max-width:760px){.signup-grid{grid-template-columns:1fr}}
+
+/* Footer */
+.page-foot{text-align:center;font-size:12px;color:var(--muted-2);margin-top:16px}
+
+/* Trust strip */
+.trust-strip{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:14px}
+.trust-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted-2);font-weight:600}
+  </style>
+</head>
+<body>
+  <!-- GenieSphere area-colour background -->
+  <div class="gs-bg" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="g-teal"   cx="15%" cy="25%" r="55%"><stop offset="0%" stop-color="#22D3EE" stop-opacity=".18"/><stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/></radialGradient>
+        <radialGradient id="g-navy"   cx="82%" cy="18%" r="48%"><stop offset="0%" stop-color="#3B82F6" stop-opacity=".15"/><stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/></radialGradient>
+        <radialGradient id="g-amber"  cx="88%" cy="78%" r="50%"><stop offset="0%" stop-color="#F59E0B" stop-opacity=".14"/><stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/></radialGradient>
+        <radialGradient id="g-coral"  cx="12%" cy="80%" r="45%"><stop offset="0%" stop-color="#F97316" stop-opacity=".13"/><stop offset="100%" stop-color="#F97316" stop-opacity="0"/></radialGradient>
+        <radialGradient id="g-violet" cx="50%" cy="55%" r="38%"><stop offset="0%" stop-color="#8B5CF6" stop-opacity=".09"/><stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/></radialGradient>
+        <radialGradient id="g-green"  cx="50%" cy="5%"  r="40%"><stop offset="0%" stop-color="#52B788" stop-opacity=".12"/><stop offset="100%" stop-color="#52B788" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="1440" height="900" fill="url(#g-teal)"/>
+      <rect width="1440" height="900" fill="url(#g-navy)"/>
+      <rect width="1440" height="900" fill="url(#g-amber)"/>
+      <rect width="1440" height="900" fill="url(#g-coral)"/>
+      <rect width="1440" height="900" fill="url(#g-violet)"/>
+      <rect width="1440" height="900" fill="url(#g-green)"/>
+      <!-- Curved filled strips -->
+      <path d="M-80,140 C200,80 420,260 720,200 S1100,80 1520,160 L1520,-60 L-80,-60 Z"    fill="#22D3EE" fill-opacity=".055"/>
+      <path d="M-80,180 C180,120 400,300 700,240 S1080,120 1520,200 L1520,140 L-80,140 Z"  fill="#22D3EE" fill-opacity=".030"/>
+      <path d="M600,-60 C800,60 1100,40 1300,140 S1500,240 1520,180 L1520,-60 Z"           fill="#3B82F6" fill-opacity=".06"/>
+      <path d="M700,-60 C900,80 1150,50 1350,160 S1500,260 1520,200 L1520,140 L700,140 Z"  fill="#3B82F6" fill-opacity=".03"/>
+      <path d="M960,960 C1100,820 1300,780 1520,700 L1520,960 Z"                           fill="#F59E0B" fill-opacity=".07"/>
+      <path d="M800,960 C980,860 1200,820 1520,750 L1520,700 L800,700 Z"                   fill="#F59E0B" fill-opacity=".04"/>
+      <path d="M-80,960 C80,820 240,780 480,840 S700,920 900,960 Z"                        fill="#F97316" fill-opacity=".07"/>
+      <path d="M-80,840 C60,760 220,720 460,780 S680,860 880,900 L880,960 L-80,960 Z"     fill="#F97316" fill-opacity=".04"/>
+      <path d="M-80,520 C200,480 400,560 720,500 S1040,420 1520,500 L1520,560 C1040,480 720,560 400,620 S200,540 -80,580 Z" fill="#8B5CF6" fill-opacity=".040"/>
+      <path d="M300,-60 C420,40 580,20 720,60 S900,40 1060,-60 Z"                          fill="#52B788" fill-opacity=".08"/>
+      <!-- Hairline arc strokes -->
+      <path d="M-80,220 C300,140 600,320 1000,260 S1300,160 1520,240" fill="none" stroke="#22D3EE" stroke-width="1"   stroke-opacity=".12"/>
+      <path d="M-80,320 C200,280 500,380 800,320 S1100,220 1520,300" fill="none" stroke="#3B82F6" stroke-width="1"   stroke-opacity=".10"/>
+      <path d="M-80,500 C300,460 600,540 900,480 S1200,400 1520,480" fill="none" stroke="#8B5CF6" stroke-width="1"   stroke-opacity=".09"/>
+      <path d="M-80,640 C200,600 500,680 800,620 S1100,540 1520,620" fill="none" stroke="#F59E0B" stroke-width=".8"  stroke-opacity=".10"/>
+      <path d="M-80,760 C300,720 600,800 1000,740 S1300,660 1520,740" fill="none" stroke="#F97316" stroke-width=".8" stroke-opacity=".09"/>
+    </svg>
+    <div class="gs-vignette"></div>
+  </div>
+
+<div class="page-wrap">
+  <div class="page-inner">
+
+    <!-- Top bar -->
+    <div class="page-topbar">
+      <a class="gs-logo" href="/index.html" aria-label="GenieSphere home">
+        <div class="gs-logo-mark">
+          <img src="/shared/assets/images/genie-logo.png" alt="" onerror="this.parentElement.innerHTML='<div class=gs-logo-fallback></div>'"/>
+        </div>
+        <span class="gs-wordmark">GenieSphere</span>
+      </a>
+      <a class="topbar-link" href="login.html">Already have an account? Sign in →</a>
+    </div>
+
+    <div class="signup-grid">
+
+        <!-- Form card -->
+        <div>
+          <div class="card">
+            <header class="card-head">
+              <div class="card-head-row">
+                <span class="card-eyebrow">New account</span>
+                <span class="card-badge">✨ Free to start</span>
+              </div>
+              <h1 class="card-title">Create your account</h1>
+              <p class="card-sub">You'll start with the agents you selected. Change anytime in Settings.</p>
+            </header>
+
+            <div class="card-body">
+              <form id="signupForm" novalidate>
+                <div class="fg fg-2">
+                  <div class="field">
+                    <label for="fullName">Full name</label>
+                    <input id="fullName" type="text" autocomplete="name" placeholder="e.g., Jimmy Tran" required/>
+                  </div>
+                  <div class="field">
+                    <label for="email">Email address</label>
+                    <input id="email" type="email" autocomplete="email" placeholder="you@email.com" required/>
+                  </div>
+                </div>
+
+                <div class="fg fg-2" style="margin-top:14px">
+                  <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" type="password" autocomplete="new-password" placeholder="Create a password" required/>
+                    <div class="pw-strength">
+                      <div class="pw-bar" id="pw1"></div>
+                      <div class="pw-bar" id="pw2"></div>
+                      <div class="pw-bar" id="pw3"></div>
+                      <div class="pw-bar" id="pw4"></div>
+                    </div>
+                    <div class="pw-hint" id="pwHint">Min 8 chars · uppercase · lowercase · number</div>
+                  </div>
+                  <div class="field">
+                    <label for="confirmPassword">Confirm password</label>
+                    <input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter password" required/>
+                  </div>
+                </div>
+
+                <div class="btn-row">
+                  <button class="btn btn-primary" type="submit" id="btnSignup">✨ Create account</button>
+                  <button class="btn btn-ghost" type="button" id="goLoginBtn">Already have an account?</button>
+                </div>
+
+                <div class="status-msg" id="statusBox"></div>
+
+                <div class="terms-line">
+                  By continuing, you agree to use GenieSphere responsibly.
+                  <a href="/legal/terms.html">Terms</a> · <a href="/legal/privacy.html">Privacy</a>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="trust-strip">
+            <div class="trust-item">🔒 SSL encrypted</div>
+            <div class="trust-item">🛡️ Supabase Auth</div>
+            <div class="trust-item">✅ No data sold</div>
+          </div>
+        </div>
+
+        <!-- Agent selection sidebar -->
+        <aside class="agents-card" aria-label="Your selected setup">
+          <div class="agents-head">
+            <h3>✅ Your starting setup</h3>
+            <p id="selectionSummary">Loading your selections…</p>
+          </div>
+          <div class="agents-body">
+            <div class="chips" id="selectionChips"></div>
+
+            <div class="next-steps">
+              <h4>What happens next</h4>
+              <div class="step-list">
+                <div class="step-item"><div class="step-icon">1</div><span>Account created in 30 seconds</span></div>
+                <div class="step-item"><div class="step-icon">2</div><span>Your chosen agents are saved automatically</span></div>
+                <div class="step-item"><div class="step-icon">3</div><span>You're routed straight to the right dashboard</span></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+    </div><!-- /signup-grid -->
+
+    <div class="page-foot">© <span id="year"></span> GenieSphere · <a href="login.html" style="color:var(--teal-dark)">Sign in instead</a></div>
+
+  </div>
+</div>
+
+<!-- Config loader -->
+<script>
+  window.GS_CONFIG_URL = "/shared/config.json";
+  window.GS_CONFIG_PATH = "/shared/config.json";
+</script>
+<script src="/shared/js/app-config.js?v=20260208a"></script>
+
+<!-- Auth + agent save — ES module, all logic preserved exactly -->
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.3";
+
+  const AGENT_LABELS = {
+    "rental-genie": "🏡 Rental Genie",
+    "hvac-genie": "❄️🔥 HVAC Genie",
+    "salon-genie": "💅 Salon Genie",
+    "email-genie": "📨 Email Genie",
+    "marketing-genie": "📢 Marketing Genie",
+    "payroll-master": "🧾 Payroll Master",
+    "inventory-manager": "📦 Inventory Manager",
+    "investment-genie": "📈 Investment Genie",
+    "credit-card-genie": "💳 Credit Card Genie",
+    "travel-genie": "✈️ Travel Genie",
+    "gift-genie": "🎁 Gift Genie",
+    "household-genie": "🏠 Household Genie",
+    "nutrition-genie": "🥗 Nutrition Genie"
+  };
+
+  function setStatus(msg, type){
+    const el = document.getElementById('statusBox');
+    if(!el) return;
+    el.className = 'status-msg' + (type ? (' ' + type) : ' info');
+    el.style.display = 'block';
+    el.textContent = msg;
+  }
+  function clearStatus(){
+    const el = document.getElementById('statusBox');
+    if(!el) return;
+    el.style.display = 'none';
+    el.textContent = '';
+    el.className = 'status-msg';
+  }
+
+  function getSelections(){
+    const params = new URLSearchParams(window.location.search);
+    const area = (params.get('area') || '').trim();
+    const agentsParam = (params.get('agents') || '').trim();
+    let agents = agentsParam ? agentsParam.split(',').map(s=>s.trim()).filter(Boolean) : [];
+    if(!agents.length){
+      try{ const a = localStorage.getItem('gs_pending_agents') || ''; agents = a ? a.split(',').map(s=>s.trim()).filter(Boolean) : []; }catch(_){}
+    }
+    let resolvedArea = area;
+    if(!resolvedArea){ try{ resolvedArea = localStorage.getItem('gs_pending_area') || ''; }catch(_){} }
+    return { area: resolvedArea || '', agents };
+  }
+
+  function persistPending(area, agents){
+    try{ localStorage.setItem('gs_pending_area', area || ''); localStorage.setItem('gs_pending_agents', (agents || []).join(',')); }catch(_){}
+  }
+  function clearPending(){
+    try{ localStorage.removeItem('gs_pending_area'); localStorage.removeItem('gs_pending_agents'); }catch(_){}
+  }
+
+  function renderSelections(){
+    const { area, agents } = getSelections();
+    const summary = document.getElementById('selectionSummary');
+    const chips   = document.getElementById('selectionChips');
+
+    if(summary) summary.textContent = area
+      ? `Area: ${area.toUpperCase()} · ${agents.length} agent${agents.length!==1?'s':''} selected`
+      : agents.length ? `${agents.length} agent${agents.length!==1?'s':''} selected`
+      : 'No selections yet';
+
+    if(chips){
+      chips.innerHTML = '';
+      if(!agents.length){
+        chips.innerHTML = '<div class="chips-empty">No agents selected — you can pick them after sign up.</div>';
+        return;
+      }
+      agents.forEach(k=>{
+        const div = document.createElement('div');
+        div.className = 'chip';
+        div.textContent = AGENT_LABELS[k] || ('🧩 ' + k);
+        chips.appendChild(div);
+      });
+    }
+  }
+
+  async function saveAgentPreferences(sbClient, user){
+    const { agents } = getSelections();
+    if(!agents.length) return { ok:true, inserted:0 };
+    const rows = agents.slice(0,50).map(k => ({ user_id: user.id, agent_key: k, enabled: true }));
+    const { error } = await sbClient.from('user_agent_preferences').upsert(rows, { onConflict: 'user_id,agent_key' });
+    if(error) throw error;
+    clearPending();
+    return { ok:true, inserted: rows.length };
+  }
+
+  function passwordOk(p){
+    if(!p || p.length < 8) return { ok:false, msg:"Password must be at least 8 characters." };
+    if(!/[A-Z]/.test(p)) return { ok:false, msg:"Password must include at least 1 uppercase letter." };
+    if(!/[a-z]/.test(p)) return { ok:false, msg:"Password must include at least 1 lowercase letter." };
+    if(!/[0-9]/.test(p)) return { ok:false, msg:"Password must include at least 1 number." };
+    return { ok:true };
+  }
+
+  // Live password strength indicator
+  function updateStrength(p){
+    let score = 0;
+    if(p.length >= 8) score++;
+    if(/[A-Z]/.test(p) && /[a-z]/.test(p)) score++;
+    if(/[0-9]/.test(p)) score++;
+    if(/[^A-Za-z0-9]/.test(p)) score++;
+    const hints = ['','Weak','Fair','Strong','Very strong'];
+    const colors = ['','active-1','active-2','active-3','active-4'];
+    for(let i=1;i<=4;i++){
+      const bar = document.getElementById('pw'+i);
+      if(bar){ bar.className = 'pw-bar' + (i <= score ? (' ' + colors[score]) : ''); }
+    }
+    const hint = document.getElementById('pwHint');
+    if(hint) hint.textContent = p.length === 0
+      ? 'Min 8 chars · uppercase · lowercase · number'
+      : (hints[score] || '') + (score < 3 ? ' — add numbers or symbols' : ' password');
+  }
+
+  (function(){
+    document.getElementById('year').textContent = new Date().getFullYear();
+    renderSelections();
+
+    document.getElementById('password').addEventListener('input', e => updateStrength(e.target.value));
+
+    document.getElementById('goLoginBtn').addEventListener('click', ()=>{
+      const params = new URLSearchParams(window.location.search);
+      window.location.href = 'login.html?' + params.toString();
+    });
+  })();
+
+  document.getElementById('signupForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    clearStatus();
+
+    const fullName = document.getElementById('fullName').value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const pw       = document.getElementById('password').value;
+    const pw2      = document.getElementById('confirmPassword').value;
+
+    const pol = passwordOk(pw);
+    if(!pol.ok){ setStatus('❌ ' + pol.msg, 'err'); return; }
+    if(pw !== pw2){ setStatus('❌ Passwords do not match. Please re-check.', 'err'); return; }
+
+    const { area, agents } = getSelections();
+    persistPending(area, agents);
+
+    setStatus('Creating your account…', 'info');
+
+    const btn = document.getElementById('btnSignup');
+    if(btn){ btn.disabled = true; }
+
+    try{
+      const cfg = await window.GSConfig.getConfigPromise();
+      const sbClient = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+      const { data, error } = await sbClient.auth.signUp({
+        email,
+        password: pw,
+        options: { data: { full_name: fullName } }
+      });
+      if(error) throw error;
+
+      const user    = data?.user    || null;
+      const session = data?.session || null;
+
+      if(session && user){
+        await saveAgentPreferences(sbClient, user);
+        setStatus('✅ Account created! Redirecting to sign in…', 'ok');
+        const params = new URLSearchParams(window.location.search);
+        setTimeout(()=>{ window.location.href = 'login.html?' + params.toString(); }, 1200);
+        return;
+      }
+
+      setStatus('✅ Account created! Please check your email to confirm, then come back and log in.', 'ok');
+    }catch(err){
+      console.error(err);
+      setStatus(err?.message ? ('❌ ' + err.message) : '❌ Sign up failed. Please try again.', 'err');
+    }finally{
+      const btn2 = document.getElementById('btnSignup');
+      if(btn2){ btn2.disabled = false; }
+    }
+  });
+</script>
+</body>
+</html>

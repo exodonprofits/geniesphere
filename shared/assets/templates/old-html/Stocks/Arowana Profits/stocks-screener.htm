@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Screener - WealthPath</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .nav-links a {
+            margin-left: 1.5rem;
+            text-decoration: none;
+            color: #2c3e50;
+            font-weight: 500;
+            position: relative;
+        }
+
+        /* Dropdown Menu */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            z-index: 1001;
+            top: 100%;
+            left: 0;
+            padding: 0.5rem 0;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content a {
+            color: #2c3e50;
+            padding: 0.8rem 1.5rem;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown > a::after {
+            content: "▾";
+            margin-left: 5px;
+            font-size: 0.8em;
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 8rem 5% 4rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 4rem 5%;
+            background-color: #ffffff;
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Tools Section */
+        .tool-preview {
+            height: 200px;
+            background: #eee;
+            margin: 1rem 0;
+            border-radius: 8px;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            padding: 4rem 5%;
+            background-color: #f8f9fa;
+            text-align: center;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 3rem 5%;
+            text-align: center;
+        }
+        /* Reuse existing styles from index.html */
+        /* Add new styles for the screener */
+        .screener-container {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 5%;
+        }
+
+        .filter-section {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .results-table th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .results-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .positive {
+            color: #2ecc71;
+        }
+
+        .negative {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">Arowana Profits</div>
+        <div class="nav-links">
+            <a href="index.htm">Home</a>
+            <a href="#services">Services</a>
+            <div class="dropdown">
+                <a href="#tools">Investment Tools ▾</a>
+                <div class="dropdown-content">
+                    <a href="stocks-screener.htm">Stock Screener</a>
+                    <a href="portfolio-analyzer.htm">Portfolio Analyzer</a>
+                    <a href="#risk-calculator">Risk Calculator</a>
+                    <a href="#market-calendar">Market Calendar</a>
+                </div>
+            </div>
+            <a href="#about">About</a>
+            <a href="contact.htm">Contact</a>
+            <a href="#contact" class="cta-button">Get Started</a>
+        </div>
+    </nav>
+<section class="features" id="services">
+ <div class="screener-container">
+        <h1>Smart Stock Screener</h1>
+        <p>Filter stocks using professional-grade parameters</p>
+
+        <div class="filter-section">
+            <h2>Filter Criteria</h2>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Price Range ($)</label>
+                    <input type="number" id="minPrice" placeholder="Min">
+                    <input type="number" id="maxPrice" placeholder="Max">
+                </div>
+                
+                <div class="filter-group">
+                    <label>Market Cap</label>
+                    <select id="marketCap">
+                        <option value="">Any</option>
+                        <option value="large">Large Cap (>$10B)</option>
+                        <option value="mid">Mid Cap ($2B-$10B)</option>
+                        <option value="small">Small Cap (<$2B)</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Dividend Yield (%)</label>
+                    <input type="number" id="minDividend" placeholder="Min">
+                </div>
+
+                <div class="filter-group">
+                    <label>PE Ratio</label>
+                    <input type="number" id="maxPE" placeholder="Max">
+                </div>
+
+                <div class="filter-group">
+                    <label>Volume</label>
+                    <input type="number" id="minVolume" placeholder="Min (millions)">
+                </div>
+
+                <div class="filter-group">
+                    <label>Sector</label>
+                    <div class="sector-checkboxes">
+			<table>
+			<tr><td><label><input type="checkbox" value="tech"> Technology</label></td>
+			    <td><label><input type="checkbox" value="finance"> Financial</label></td>
+                            <td><label><input type="checkbox" value="healthcare"> Healthcare</label></td>
+			</tr>
+			</table>
+                    </div>
+                </div>
+            </div>
+
+            <button class="cta-button" onclick="filterStocks()" style="margin-top: 1rem">Filter Stocks</button>
+            <button class="cta-button" onclick="clearFilters()" style="background: #e74c3c; margin-left: 1rem">Clear Filters</button>
+        </div>
+
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Company</th>
+                    <th>Price</th>
+                    <th>Change</th>
+                    <th>Market Cap</th>
+                    <th>PE Ratio</th>
+                    <th>Dividend Yield</th>
+                    <th>Volume</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody">
+                <!-- Results will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Sample stock data (replace with real data from API)
+        const stocks = [
+            { symbol: 'AAPL', name: 'Apple Inc.', price: 185.15, change: 1.2, 
+              marketCap: 'Large', pe: 29.3, dividend: 0.55, volume: 60.5, sector: 'tech' },
+            { symbol: 'JPM', name: 'JP Morgan Chase', price: 155.40, change: -0.8, 
+              marketCap: 'Large', pe: 12.7, dividend: 2.48, volume: 15.2, sector: 'finance' },
+            { symbol: 'TSLA', name: 'Tesla Inc.', price: 245.80, change: 3.5, 
+              marketCap: 'Large', pe: 68.9, dividend: 0, volume: 120.3, sector: 'tech' },
+            { symbol: 'CVS', name: 'CVS Health', price: 72.30, change: 0.4, 
+              marketCap: 'Large', pe: 16.2, dividend: 3.1, volume: 8.9, sector: 'healthcare' }
+        ];
+
+        function filterStocks() {
+            const minPrice = parseFloat(document.getElementById('minPrice').value);
+            const maxPrice = parseFloat(document.getElementById('maxPrice').value);
+            const marketCap = document.getElementById('marketCap').value;
+            const minDividend = parseFloat(document.getElementById('minDividend').value);
+            const maxPE = parseFloat(document.getElementById('maxPE').value);
+            const minVolume = parseFloat(document.getElementById('minVolume').value);
+            const sectors = Array.from(document.querySelectorAll('.sector-checkboxes input:checked'))
+                               .map(cb => cb.value);
+
+            let filtered = stocks.filter(stock => {
+                return (!minPrice || stock.price >= minPrice) &&
+                       (!maxPrice || stock.price <= maxPrice) &&
+                       (!marketCap || stock.marketCap.toLowerCase() === marketCap) &&
+                       (!minDividend || stock.dividend >= minDividend) &&
+                       (!maxPE || stock.pe <= maxPE) &&
+                       (!minVolume || stock.volume >= minVolume) &&
+                       (sectors.length === 0 || sectors.includes(stock.sector));
+            });
+
+            displayResults(filtered);
+        }
+
+        function clearFilters() {
+            document.querySelectorAll('input, select').forEach(element => {
+                if (element.type !== 'button') element.value = '';
+            });
+            document.querySelectorAll('.sector-checkboxes input').forEach(cb => cb.checked = false);
+            displayResults(stocks);
+        }
+
+        function displayResults(results) {
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = results.map(stock => `
+                <tr>
+                    <td>${stock.symbol}</td>
+                    <td>${stock.name}</td>
+                    <td>$${stock.price.toFixed(2)}</td>
+                    <td class="${stock.change >= 0 ? 'positive' : 'negative'}">
+                        ${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(1)}%
+                    </td>
+                    <td>${stock.marketCap} Cap</td>
+                    <td>${stock.pe.toFixed(1)}</td>
+                    <td>${stock.dividend}%</td>
+                    <td>${stock.volume}M</td>
+                </tr>
+            `).join('');
+        }
+
+        // Initial load
+        displayResults(stocks);
+    </script>
+</service>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2023 Arowana Profits - Weath Path Coaching. All rights reserved.</p>
+    </footer>
+</body>
+</html>

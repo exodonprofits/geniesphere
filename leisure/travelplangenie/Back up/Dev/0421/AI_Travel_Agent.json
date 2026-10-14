@@ -1,0 +1,328 @@
+{
+  "name": "AI Agent - Tropical Planner - Display",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "travel-agent",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "8a0374fa-c049-425c-bc5f-422ad303990b",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -6460,
+        2660
+      ],
+      "webhookId": "b9d2de95-f75d-4afa-9f7c-53f2844fac24"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "method-condition",
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -6260,
+        2660
+      ],
+      "id": "7d8f6b94-0bc7-45f4-8e9a-5e78aef636be",
+      "name": "If Method"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.body;\n\nreturn [{\n  json: {\n    departureLocation: data.departureLocation || \"Not provided\",\n    destination: data.destination || \"Not specified\",\n    budget: data.budget || \"~\",\n    tripType: data.tripType || \"N/A\",\n    groupSize: data.groupSize || \"1\",\n    ageRange: data.ageRange || \"~\",\n    startDate: data.startDate || \"N/A\",\n    endDate: data.endDate || \"N/A\",\n    email: data.email || \"unknown\",\n    display: String(data.display || \"false\").toLowerCase()\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -6060,
+        2520
+      ],
+      "id": "7a24f938-6ac9-4a48-97c2-5d33ed97c132",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "const {\n  destination,\n  customDestination,\n  startDate,\n  endDate,\n  budget,\n  tripType,\n  groupSize,\n  ageRange,\n  email,\n  departureLocation,\n  display\n} = $json;\n\nconst finalDestination = customDestination || destination;\n\nreturn [{\n  json: {\n    email,\n    destination: finalDestination,\n    departureLocation,\n    startDate,\n    endDate,\n    groupSize,\n    budget,\n    display,\n    prompt: `You are a helpful travel agent. A user is planning a trip and needs your help creating a detailed itinerary.\n\n- Departure location: ${departureLocation || \"Not provided\"}\n- Destination: ${finalDestination}\n- Travel dates: ${startDate} to ${endDate}\n- Budget: $${budget}\n- Trip type: ${tripType}\n- Group size: ${groupSize}\n- Age ranges: ${Array.isArray(ageRange) ? ageRange.join(\", \") : ageRange || \"not specified\"}\n\nCreate a complete itinerary for this trip. Include recommendations for:\n1. Flights (airlines and routes from ${departureLocation || \"the nearest major airport\"})\n2. Accommodation options\n3. Daily schedule with activities\n4. Local food spots\n5. Transportation and travel tips\n\nRespond in a clean and organized layout with sections.`\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5860,
+        2520
+      ],
+      "id": "e3bbb5a6-6d2f-49e2-b8f6-e95ddfe857df",
+      "name": "Prepare Travel Data"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "You are an experienced and helpful AI travel agent. Your goal is to create exciting, practical, and well-organized travel itineraries tailored to each user's preferences. Be friendly, informative, and concise.\n\nWhen suggesting hotels, attractions, restaurants, or tours, include relevant hyperlinks so users can easily click through to book or learn more. Ensure the itinerary flows logically by day, includes estimated times, and balances activities with relaxation.\n\nAlways provide valuable travel tips and local insights to enhance the experience. Format your responses in a clean and readable way using bullet points, headings, and emojis where appropriate to improve readability and engagement.",
+              "role": "system"
+            },
+            {
+              "content": "={{$json.prompt}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -5660,
+        2520
+      ],
+      "id": "4fbb380d-dd1a-4c87-a8f3-e1bfc3124327",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const travel = $node[\"Prepare Travel Data\"].json;\nconst ai = $node[\"OpenAI\"].json.message?.content || \"No itinerary found.\";\nconst displayValue = String(travel.display);\nreturn [{\n  json: {\n    destination: travel.destination,\n    departureLocation: travel.departureLocation,\n    startDate: travel.startDate,\n    endDate: travel.endDate,\n    groupSize: travel.groupSize,\n    budget: travel.budget,\n    email: travel.email,\n    itinerary: ai,\n    display: displayValue\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5360,
+        2660
+      ],
+      "id": "298d2ec1-566d-40e0-b3f9-aacbdfca7824",
+      "name": "Travel Info"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "display-condition",
+              "leftValue": "={{ $json.display }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -5140,
+        2540
+      ],
+      "id": "75632fe5-6803-4fcb-8dec-44d82c66a223",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// In-memory storage for itineraries\nif (!global.itineraries) {\n  global.itineraries = {};\n}\n\nconst trip = $json;\nconst itineraryId = Date.now().toString();\n\nglobal.itineraries[itineraryId] = {\n  tripTitle: `🌍 Trip Plan: ${trip.destination}`,\n  departure: trip.departureLocation,\n  dates: `${trip.startDate} to ${trip.endDate}`,\n  groupSize: trip.groupSize,\n  budget: `$${trip.budget}`,\n  itinerary: trip.itinerary\n};\n\nreturn [{\n  headers: {\n    \"Location\": `http://localhost:80/travel_plan_display_new.html?itineraryId=${itineraryId}`\n  },\n  statusCode: 302\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4820,
+        2440
+      ],
+      "id": "a5ce7623-11d5-4b4d-8688-04327eb0f710",
+      "name": "Store and Redirect"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.email}}",
+        "subject": "Your AI Travel Plan for {{ $json.destination || 'your next trip' }}",
+        "message": "<div style=\"font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;\">\n  <h2 style=\"color:#2a4a6e;\">🌍 Trip Plan: {{$json.destination}}</h2>\n  <p><strong>Date:</strong> {{$json.startDate}} to {{$json.endDate}}</p>\n  <p><strong>Departure From:</strong> {{$json.departureLocation}}</p>\n  <p><strong>Budget:</strong> ${{$json.budget}} (for {{$json.groupSize}} people)</p>\n  <hr>\n  <pre style=\"white-space: pre-wrap; font-size: 14px;\">{{$json.itinerary}}</pre>\n  <hr>\n  <p style=\"font-size:12px; color:#999;\">Generated by Voyage Genie ✨</p>\n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -4820,
+        2620
+      ],
+      "id": "72432592-e1c7-4782-9231-ac7739971173",
+      "name": "Gmail",
+      "webhookId": "4c9c27ff-b8bd-4404-8327-1d4f97e9f1c6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bBXXYTmxaLHTskHO",
+          "name": "Gmail account 12"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const itineraryId = $json.query.itineraryId;\n\nif (!global.itineraries || !global.itineraries[itineraryId]) {\n  return [{\n    json: { error: 'Itinerary not found' },\n    statusCode: 404\n  }];\n}\n\nreturn [{\n  json: global.itineraries[itineraryId]\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5980,
+        2860
+      ],
+      "id": "06db91a9-90c3-4eef-a05e-a76b420435c2",
+      "name": "Retrieve Itinerary"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retrieve Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Prepare Travel Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Travel Data": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Travel Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Travel Info": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Store and Redirect",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a5a0b13e-f72e-4631-84cf-479a8ec9c6d8",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "nw46qjjQLD80Yflk",
+  "tags": []
+}

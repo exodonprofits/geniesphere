@@ -1,0 +1,86 @@
+{
+  "name": "Gift Order Parser",
+  "nodes": [
+    {
+      "id": "WebhookGift",
+      "name": "Webhook Gift Parser",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [300, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gift-order-parser",
+        "responseMode": "onLastNode",
+        "options": {
+          "responseContentType": "application/json"
+        }
+      }
+    },
+    {
+      "id": "ChatGPTParse",
+      "name": "ChatGPT Parse Order",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [600, 300],
+      "parameters": {
+        "operation": "chat",
+        "model": "gpt-4.1-mini",
+        "options": {
+          "temperature": 0
+        },
+        "systemMessage": "You are a parser for online order emails and product links. You receive a single string which may contain an order confirmation email body and/or a product URL. Extract the following fields when possible and return STRICT JSON with no comments or extra text:\n\n{\n  \"recipient_name\": string | null,\n  \"occasion\": string | null,\n  \"occasion_date\": string | null in YYYY-MM-DD or null,\n  \"gift_idea\": string | null,\n  \"gift_category\": string | null,\n  \"store_name\": string | null,\n  \"purchase_url\": string | null,\n  \"estimated_cost\": number | null,\n  \"actual_cost\": number | null,\n  \"order_id\": string | null,\n  \"date_purchased\": string | null in YYYY-MM-DD or null,\n  \"notes\": string | null\n}\n\nIf you are not sure, set the value to null. Do NOT wrap in markdown, do NOT add any explanation. Output must be valid JSON only.",
+        "messages": [
+          {
+            "text": "Order text:\n\n{{$json[\"raw_order\"]}}",
+            "type": "user"
+          }
+        ]
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR-OPENAI-CREDENTIAL-ID",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "id": "FunctionJson",
+      "name": "Parse JSON from ChatGPT",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "parameters": {
+        "functionCode": "const response = $json.data || $json;\n// For the OpenAI Chat node, content is often in `response[0].content[0].text` or similar depending on n8n version.\n// Adjust this based on the exact output you see in \"ChatGPT Parse Order\" test.\n\nlet text;\nif (Array.isArray(response) && response[0]?.message?.content) {\n  text = response[0].message.content;\n} else if (Array.isArray(response) && response[0]?.content?.[0]?.text) {\n  text = response[0].content[0].text;\n} else if (typeof response === 'string') {\n  text = response;\n} else if ($json.message && typeof $json.message === 'string') {\n  text = $json.message;\n}\n\nif (!text) {\n  throw new Error('Could not find ChatGPT text content to parse.');\n}\n\nlet parsed;\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  throw new Error('Failed to parse JSON from ChatGPT: ' + e.message + '\\nContent: ' + text);\n}\n\nreturn [ { json: parsed } ];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Gift Parser": {
+      "main": [
+        [
+          {
+            "node": "ChatGPT Parse Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ChatGPT Parse Order": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON from ChatGPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "versionId": "gift-order-parser-v1"
+}

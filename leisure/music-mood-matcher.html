@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Music Mood Matcher – GenieSphere</title>
+  <style>
+    :root{
+      --bg:#0b1220; /* deep blue */
+      --panel:#121a2b;
+      --muted:#1b2740;
+      --accent:#4ade80; /* green */
+      --accent-2:#3b82f6; /* blue */
+      --text:#e6edf5;
+      --sub:#b7c3d6;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --radius:18px;
+      --shadow:0 8px 24px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 800px at 10% -10%,#1a2440 0%,#0b1220 45%),radial-gradient(900px 600px at 110% 0%,#15213b 0%,#0b1220 55%);color:var(--text);font:16px/1.45 system-ui,Segoe UI,Roboto,Arial,sans-serif}
+
+    /* Header */
+    .header{position:sticky;top:0;z-index:50;backdrop-filter: blur(8px);background:rgba(11,18,32,.6);border-bottom:1px solid rgba(255,255,255,.06)}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{ display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); }
+    .logo{
+        width:40px; height:40px; border-radius:50%;
+        background: radial-gradient(circle at 30% 30%, #6af0c4, #3ee1a1 40%, #1c9369 75%);
+        box-shadow: 0 0 0 4px var(--ring), 0 8px 24px rgba(62,225,161,.35);
+    }
+    .brand-name{font-weight:800; letter-spacing:.2px;}
+    .nav{display:flex;gap:10px;flex-wrap:wrap}
+    .pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);text-decoration:none;color:var(--text);transition:.2s}
+    .pill:hover{transform:translateY(-1px);background:rgba(255,255,255,.1)}
+    .pill.primary{background:var(--accent-2);border-color:transparent;color:white}
+
+    /* Layout */
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
+
+    /* Cards */
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card h2{margin:0 0 10px;font-size:20px}
+    .card .head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+    .content{padding:16px}
+
+    /* Inputs */
+    label{display:block;margin:8px 0 6px;color:var(--sub);font-size:14px}
+    input,select,textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0f1627;color:var(--text);outline:none}
+    textarea{min-height:80px;resize:vertical}
+
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:10px 16px;cursor:pointer;background:var(--muted);color:var(--text);transition:.2s;text-decoration:none}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.green{background:var(--accent);color:#06250f}
+    .btn.blue{background:var(--accent-2);color:#fff}
+    .btn.red{background:var(--danger);color:#fff}
+    .btn.yellow{background:var(--warning);color:#111827}
+
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);cursor:pointer}
+    .chip.active{outline:2px solid var(--accent-2);}
+
+    /* Table */
+    .tbl{width:100%;min-width:980px;border-collapse:collapse}
+    .tbl th,.tbl td{border-bottom:1px solid rgba(255,255,255,.08);padding:10px;text-align:left}
+    .tbl th{color:var(--sub);font-weight:600}
+    .table-wrap{overflow-x:auto}
+
+    .bar{height:10px;background:#0f1627;border:1px solid rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+    .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#22d3ee);width:0%}
+
+    footer{margin:24px 0 40px;color:var(--sub);text-align:center}
+
+    .flex{display:flex;gap:8px;align-items:center}
+    .right{justify-content:flex-end}
+    .space{height:8px}
+
+    @media print{ .header,.no-print{display:none !important} body{background:white;color:black} .card{box-shadow:none;border-color:#ddd} a::after{content:" (" attr(href) ")";font-size:12px;color:#555} }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="../index.html" aria-label="Back to GenieSphere Home">
+            <img src="../genie-logo.png" alt="GenieSphere Logo" class="logo"/>
+            <span class="brand-name">GenieSphere</span>
+        </a>
+        <nav class="nav">
+          <a class="pill" href="../dashboard/personal.html">👤 Personal</a>
+          <a class="pill" href="../dashboard/business.html">🏢 Business</a>
+          <a class="pill" href="../dashboard/investment.html">📈 Investing</a>
+          <a class="pill primary" href="../dashboard/leisure.html">🎉 Leisure</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="row">
+      <h1 style="margin:18px 0 0">🎵 Music Mood Matcher</h1>
+      <div class="flex right no-print">
+        <button class="btn green" id="saveBtn">💾 Save</button>
+        <button class="btn" id="loadBtn">📂 Load</button>
+        <button class="btn" id="exportCSV">📤 Export CSV</button>
+        <button class="btn" id="exportM3U">📼 Export M3U</button>
+        <button class="btn" id="printBtn">🖨️ Print</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Session Overview -->
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>🗂️ Session Overview</h2>
+            <div class="chips no-print"><span class="chip" id="autosaveBadge">Auto‑saved</span></div>
+          </div>
+          <div class="row" style="align-items:flex-start;gap:12px">
+            <div style="flex:1;min-width:200px">
+              <label for="sessionName">🎧 Session Name</label>
+              <input id="sessionName" placeholder="Friday Vibes" />
+            </div>
+            <div style="width:200px">
+              <label for="dj">👑 DJ / Host</label>
+              <input id="dj" placeholder="You" />
+            </div>
+            <div style="width:180px">
+              <label for="date">📅 Date</label>
+              <input id="date" type="date" />
+            </div>
+            <div style="width:220px">
+              <label for="location">📍 Location</label>
+              <input id="location" placeholder="Living room / Park" />
+            </div>
+          </div>
+          <div style="margin-top:8px">
+            <label for="notes">📝 Notes</label>
+            <textarea id="notes" placeholder="Guests, theme, volume rules…"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mood Targets & Filters -->
+      <section class="card">
+        <div class="content">
+          <div class="head">
+            <h2>💡 Mood Targets & Filters</h2>
+            <div class="flex no-print" style="flex-wrap:wrap">
+              <input id="search" placeholder="Search songs… (title, artist, mood, genre)" style="min-width:240px">
+              <select id="filterStatus" style="width:160px">
+                <option value="">All</option>
+                <option>Queued</option>
+                <option>Playing</option>
+                <option>Played</option>
+                <option>Favorite</option>
+              </select>
+              <button class="btn" id="clearFilters">🧹 Clear</button>
+            </div>
+          </div>
+          <div class="row" style="gap:12px;align-items:flex-start">
+            <div style="min-width:220px">
+              <label>⚡ Energy Target</label>
+              <input type="range" id="energy" min="0" max="100" value="60">
+            </div>
+            <div style="min-width:220px">
+              <label>🎚️ BPM Range</label>
+              <div class="row" style="gap:8px">
+                <input type="number" id="bpmMin" placeholder="min" style="width:100px">
+                <input type="number" id="bpmMax" placeholder="max" style="width:100px">
+              </div>
+            </div>
+            <div style="min-width:180px">
+              <label for="era">📻 Era</label>
+              <select id="era">
+                <option value="">Any</option>
+                <option>70s</option>
+                <option>80s</option>
+                <option>90s</option>
+                <option>2000s</option>
+                <option>2010s</option>
+                <option>2020s</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <label>🎭 Moods</label>
+            <div class="chips" id="moodChips"></div>
+          </div>
+          <div style="margin-top:10px">
+            <label>🎼 Genres</label>
+            <div class="chips" id="genreChips"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Add Track -->
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>➕ Quick Add Track</h2></div>
+          <div class="row" style="align-items:flex-start;gap:12px">
+            <input id="qaTitle" placeholder="Title" style="flex:2;min-width:200px">
+            <input id="qaArtist" placeholder="Artist" style="flex:1;min-width:160px">
+            <input id="qaLink" placeholder="Link (Spotify/YouTube/MP3)" style="flex:2;min-width:220px">
+            <input id="qaBPM" type="number" placeholder="BPM" style="width:110px">
+            <input id="qaEnergy" type="number" min="0" max="100" placeholder="Energy" style="width:120px">
+            <input id="qaDur" type="number" min="0" placeholder="Duration (sec)" style="width:140px">
+            <button class="btn green" id="qaAdd">Add</button>
+          </div>
+          <div class="chips no-print" id="qaTags" style="margin-top:10px"></div>
+        </div>
+      </section>
+
+      <!-- Track Library -->
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>📚 Track Library</h2>
+            <div class="flex no-print" style="flex-wrap:wrap">
+              <button class="btn" id="smartQueue">🧠 Generate Smart Queue</button>
+              <button class="btn" id="favoriteFilter">⭐ Show Favorites</button>
+              <button class="btn red" id="clearPlayed">🧹 Clear Played</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="tbl" id="tracksTable">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Artist</th>
+                  <th>Mood</th>
+                  <th>Genre</th>
+                  <th>BPM</th>
+                  <th>Energy</th>
+                  <th>Dur</th>
+                  <th>Status</th>
+                  <th>Link</th>
+                  <th class="no-print">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Now Playing & Queue Controls -->
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>▶️ Now Playing & Queue</h2></div>
+          <div id="nowPlaying" class="row" style="gap:12px;flex-wrap:wrap">
+            <div style="flex:2;min-width:240px">
+              <div style="font-weight:700" id="npTitle">No track selected</div>
+              <div style="color:var(--sub)" id="npMeta"></div>
+            </div>
+            <div style="min-width:260px;flex:2">
+              <div class="bar"><i id="npBar" style="width:0%"></i></div>
+              <div style="color:var(--sub);font-size:12px;margin-top:4px"><span id="npTime">0:00</span> / <span id="npTotal">0:00</span></div>
+            </div>
+            <div class="flex no-print" style="flex-wrap:wrap">
+              <button class="btn" id="prevBtn">⏮️ Prev</button>
+              <button class="btn green" id="playBtn">▶️ Play</button>
+              <button class="btn" id="pauseBtn">⏸️ Pause</button>
+              <button class="btn" id="nextBtn">⏭️ Next</button>
+              <button class="btn yellow" id="favBtn">⭐ Toggle Favorite</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Export / Import -->
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>📤 Export / Import</h2></div>
+          <div class="row" style="gap:12px;align-items:flex-start">
+            <button class="btn" id="copyLinks">🔗 Copy Links</button>
+            <button class="btn" id="exportJSON">🧾 Export JSON</button>
+            <input id="importFile" type="file" accept="application/json" class="no-print">
+            <button class="btn" id="importJSON">📥 Import JSON</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <p>© <span id="year"></span> GenieSphere · Music Mood Matcher. Built to make life easier 💫</p>
+    </footer>
+  </main>
+
+  <script>
+    const $ = (s,ctx=document)=>ctx.querySelector(s);
+    const $$ = (s,ctx=document)=>Array.from(ctx.querySelectorAll(s));
+    const stateKey = 'music_mood_matcher_v1';
+
+    const defaultMoods = ['Happy','Chill','Focus','Party','Romance','Epic','Groovy','Mellow'];
+    const defaultGenres = ['Pop','Rock','Hip-Hop','EDM','House','Techno','R&B','Jazz','Classical','Lo-fi','Country'];
+
+    const model = {
+      session: { name:'Friday Vibes', dj:'', date:'', location:'', notes:'', energy:60, bpmMin:'', bpmMax:'', era:'', moodPrefs:[], genrePrefs:[] },
+      tracks: [], // {id,title,artist,link,bpm,energy,duration, moods:[], genres:[], era:'', status:'Queued'|'Playing'|'Played'|'Favorite'}
+      nowId: null,
+      timer: { id:null, elapsed:0 }
+    };
+
+    // --- UI setup ---
+    function chip(label, active=false){
+      const c=document.createElement('span'); c.className='chip'+(active?' active':''); c.textContent=label; c.onclick=()=>{ c.classList.toggle('active'); save(); };
+      return c;
+    }
+
+    function renderTargets(){
+      $('#sessionName').value = model.session.name||'';
+      $('#dj').value = model.session.dj||'';
+      $('#date').value = model.session.date||'';
+      $('#location').value = model.session.location||'';
+      $('#notes').value = model.session.notes||'';
+      $('#energy').value = model.session.energy||60;
+      $('#bpmMin').value = model.session.bpmMin||'';
+      $('#bpmMax').value = model.session.bpmMax||'';
+      $('#era').value = model.session.era||'';
+
+      const moodWrap = $('#moodChips'); moodWrap.innerHTML='';
+      defaultMoods.forEach(m=> moodWrap.appendChild(chip(m, model.session.moodPrefs.includes(m))) );
+      const genreWrap = $('#genreChips'); genreWrap.innerHTML='';
+      defaultGenres.forEach(g=> genreWrap.appendChild(chip(g, model.session.genrePrefs.includes(g))) );
+
+      const qaTagWrap = $('#qaTags'); qaTagWrap.innerHTML='';
+      [...defaultMoods, ...defaultGenres].forEach(t=>{ const el=chip(t,false); el.onclick=()=>{ addTagToQA(t); }; qaTagWrap.appendChild(el); });
+    }
+
+    function addTagToQA(t){
+      const current = ($('#qaTitle').value+ ' '+$('#qaArtist').value).trim();
+      if(!current) $('#qaTitle').value = t; else $('#qaTitle').value = current + ' · ' + t;
+    }
+
+    // --- Tracks ---
+    function addTrack(obj){
+      const t = Object.assign({id:uid(), title:'', artist:'', link:'', bpm:'', energy:'', duration:'', moods:[], genres:[], era:model.session.era||'', status:'Queued', favorite:false}, obj||{});
+      model.tracks.push(t); renderTracks(); save();
+    }
+
+    function removeTrack(id){ model.tracks = model.tracks.filter(t=>t.id!==id); if(model.nowId===id) stopNow(); renderTracks(); save(); }
+
+    function toggleFavorite(id){ const t=model.tracks.find(x=>x.id===id); if(!t) return; t.favorite=!t.favorite; if(t.favorite && t.status==='Played') t.status='Queued'; renderTracks(); save(); }
+
+    function setStatus(id, st){ const t=model.tracks.find(x=>x.id===id); if(!t) return; t.status=st; renderTracks(); save(); }
+
+    function move(id, dir){ const i=model.tracks.findIndex(x=>x.id===id); if(i<0) return; const j=i+dir; if(j<0||j>=model.tracks.length) return; [model.tracks[i], model.tracks[j]]=[model.tracks[j], model.tracks[i]]; renderTracks(); save(); }
+
+    function trackRow(t){
+      const tr=document.createElement('tr'); tr.dataset.id=t.id;
+      tr.innerHTML = `
+        <td><input class="t-title" value="${esc(t.title)}" placeholder="Title"></td>
+        <td><input class="t-artist" value="${esc(t.artist)}" placeholder="Artist"></td>
+        <td><input class="t-moods" value="${esc((t.moods||[]).join(', '))}" placeholder="Happy, Chill"></td>
+        <td><input class="t-genres" value="${esc((t.genres||[]).join(', '))}" placeholder="Pop, EDM"></td>
+        <td><input type="number" class="t-bpm" value="${t.bpm||''}" style="width:90px"></td>
+        <td><input type="number" min="0" max="100" class="t-energy" value="${t.energy||''}" style="width:90px"></td>
+        <td><input type="number" min="0" class="t-duration" value="${t.duration||''}" style="width:90px"></td>
+        <td>
+          <select class="t-status">
+            ${['Queued','Playing','Played'].map(s=>`<option ${t.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </td>
+        <td><input class="t-link" value="${esc(t.link||'')}" placeholder="https://..."></td>
+        <td class="no-print">
+          <div class="flex">
+            <button class="btn" title="Play">▶️</button>
+            <button class="btn" title="Up">⬆️</button>
+            <button class="btn" title="Down">⬇️</button>
+            <button class="btn yellow" title="Favorite">${t.favorite?'⭐':'☆'}</button>
+            <button class="btn red" title="Remove">🗑️</button>
+          </div>
+        </td>`;
+      // wire
+      tr.querySelector('.t-title').addEventListener('input',e=>{ t.title=e.target.value; save(); });
+      tr.querySelector('.t-artist').addEventListener('input',e=>{ t.artist=e.target.value; save(); });
+      tr.querySelector('.t-moods').addEventListener('input',e=>{ t.moods=splitTags(e.target.value); save(); });
+      tr.querySelector('.t-genres').addEventListener('input',e=>{ t.genres=splitTags(e.target.value); save(); });
+      tr.querySelector('.t-bpm').addEventListener('input',e=>{ t.bpm=Number(e.target.value)||''; save(); });
+      tr.querySelector('.t-energy').addEventListener('input',e=>{ t.energy=Number(e.target.value)||''; save(); });
+      tr.querySelector('.t-duration').addEventListener('input',e=>{ t.duration=Number(e.target.value)||''; save(); if(model.nowId===t.id) updateNowUI(); });
+      tr.querySelector('.t-status').addEventListener('change',e=>{ setStatus(t.id, e.target.value); });
+      const [play, up, down, fav, del] = tr.querySelectorAll('button');
+      play.onclick=()=> playTrack(t.id);
+      up.onclick=()=> move(t.id,-1);
+      down.onclick=()=> move(t.id,1);
+      fav.onclick=()=> toggleFavorite(t.id);
+      del.onclick=()=> removeTrack(t.id);
+      return tr;
+    }
+
+    function renderTracks(){
+      const tbody = $('#tracksTable tbody'); tbody.innerHTML='';
+      const q = ($('#search').value||'').toLowerCase();
+      const st = $('#filterStatus').value||'';
+      const mSel = selectedChips('#moodChips');
+      const gSel = selectedChips('#genreChips');
+      const eTarget = Number($('#energy').value)||0;
+      const bpmMin = Number($('#bpmMin').value)||0; const bpmMax = Number($('#bpmMax').value)||999;
+      const era = $('#era').value||'';
+
+      model.tracks
+        .filter(t=> !q || [t.title,t.artist,(t.moods||[]).join(' '),(t.genres||[]).join(' ')].join(' ').toLowerCase().includes(q))
+        .filter(t=> !st || (st==='Favorite'?t.favorite:(t.status===st)))
+        .filter(t=> mSel.size===0 || (t.moods||[]).some(x=>mSel.has(x)))
+        .filter(t=> gSel.size===0 || (t.genres||[]).some(x=>gSel.has(x)))
+        .filter(t=> !era || (t.era||'')===era)
+        .filter(t=> (t.energy==='' || Math.abs(Number(t.energy)-eTarget) <= 100) )
+        .filter(t=> (t.bpm==='' || (Number(t.bpm)>=bpmMin && Number(t.bpm)<=bpmMax)))
+        .forEach(t=> tbody.appendChild(trackRow(t)));
+
+      updateNowUI();
+    }
+
+    function selectedChips(sel){
+      return new Set( $$(sel+' .chip.active').map(c=>c.textContent) );
+    }
+
+    // --- Now Playing ---
+    function playTrack(id){
+      model.nowId = id; model.tracks.forEach(t=>{ if(t.id===id) t.status='Playing'; else if(t.status==='Playing') t.status='Queued'; });
+      model.timer.elapsed = 0; startTimer(); updateNowUI(); save();
+    }
+    function stopNow(){ clearInterval(model.timer.id); model.timer.id=null; }
+    function startTimer(){ stopNow(); model.timer.id=setInterval(()=>{ model.timer.elapsed+=1; updateNowUI(true); },1000); }
+
+    function currentTrack(){ return model.tracks.find(t=>t.id===model.nowId); }
+
+    function updateNowUI(tick=false){
+      const t = currentTrack();
+      if(!t){ $('#npTitle').textContent='No track selected'; $('#npMeta').textContent=''; $('#npBar').style.width='0%'; $('#npTime').textContent='0:00'; $('#npTotal').textContent='0:00'; return; }
+      $('#npTitle').textContent = `${t.title||'Untitled'} — ${t.artist||''}`;
+      $('#npMeta').textContent = `${(t.moods||[]).join(', ')} · ${(t.genres||[]).join(', ')} · ${t.bpm||'?'} BPM · Energy ${t.energy||'?'}%`;
+      const total = Number(t.duration)||0; const el = model.timer.elapsed||0; const pct = total? Math.min(100, Math.round((el/total)*100)) : 0;
+      $('#npBar').style.width = pct+'%';
+      $('#npTime').textContent = fmtTime(el);
+      $('#npTotal').textContent = fmtTime(total);
+      if(tick && total && el>=total){ nextTrack(); }
+    }
+
+    function nextTrack(){
+      const idx = model.tracks.findIndex(t=>t.id===model.nowId);
+      if(idx<0){ stopNow(); return; }
+      model.tracks[idx].status='Played';
+      const next = model.tracks.slice(idx+1).find(t=>t.status!=='Played');
+      if(next) playTrack(next.id); else { model.nowId=null; stopNow(); updateNowUI(); save(); }
+    }
+    function prevTrack(){
+      const idx = model.tracks.findIndex(t=>t.id===model.nowId);
+      if(idx>0){ const prev = model.tracks.slice(0,idx).reverse().find(t=>t.status!=='Played'); if(prev) playTrack(prev.id); }
+    }
+
+    // --- Smart Queue ---
+    function smartQueue(){
+      const energy = Number($('#energy').value)||60;
+      const low = model.tracks.filter(t=>Number(t.energy||0) < energy).sort((a,b)=>(a.energy||0)-(b.energy||0));
+      const high = model.tracks.filter(t=>Number(t.energy||0) >= energy).sort((a,b)=> (b.energy||0)-(a.energy||0));
+      const ordered = [...low, ...high];
+      // keep favorites near the top of their segment
+      ordered.sort((a,b)=> (b.favorite?1:0) - (a.favorite?1:0));
+      model.tracks = ordered.concat( model.tracks.filter(t=>!ordered.includes(t) && t.status==='Played') );
+      model.tracks.forEach(t=>{ if(t.status==='Played') return; t.status='Queued'; });
+      renderTracks(); save();
+    }
+
+    // --- Export / Import ---
+    function exportCSV(){
+      const rows = [["Title","Artist","Moods","Genres","BPM","Energy","Duration","Status","Link"]];
+      model.tracks.forEach(t=> rows.push([t.title||'',t.artist||'',(t.moods||[]).join('; '),(t.genres||[]).join('; '),t.bpm||'',t.energy||'',t.duration||'',t.status||'',t.link||'']) );
+      download('tracks.csv', rows.map(r=>r.map(cell=>{
+        const s=String(cell??''); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+      }).join(',')).join('\n'), 'text/csv');
+    }
+
+    function exportM3U(){
+      const lines=['#EXTM3U'];
+      model.tracks.filter(t=>t.link).forEach(t=>{
+        const dur = Number(t.duration)||-1; // -1 unknown
+        lines.push(`#EXTINF:${dur},${t.artist||''} - ${t.title||''}`);
+        lines.push(t.link);
+      });
+      download('playlist.m3u', lines.join('\n'), 'audio/x-mpegurl');
+    }
+
+    function exportJSON(){
+      download('music-mood-matcher.json', JSON.stringify(snapshot(), null, 2), 'application/json');
+    }
+
+    function copyLinks(){
+      const text = model.tracks.map(t=>t.link).filter(Boolean).join('\n');
+      navigator.clipboard.writeText(text).then(()=> alert('Links copied to clipboard.')); 
+    }
+
+    function importJSON(file){
+      const reader=new FileReader(); reader.onload=e=>{ try{ const data=JSON.parse(e.target.result); hydrate(data); alert('Imported!'); }catch(err){ alert('Invalid JSON.'); } };
+      reader.readAsText(file);
+    }
+
+    function download(name, data, type){ const blob=new Blob([data], {type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+
+    // --- Snapshot / Persistence ---
+    function snapshot(){
+      return {
+        session: {
+          name: $('#sessionName').value,
+          dj: $('#dj').value,
+          date: $('#date').value,
+          location: $('#location').value,
+          notes: $('#notes').value,
+          energy: Number($('#energy').value)||60,
+          bpmMin: $('#bpmMin').value,
+          bpmMax: $('#bpmMax').value,
+          era: $('#era').value,
+          moodPrefs: selectedChips('#moodChips')? Array.from(selectedChips('#moodChips')):[],
+          genrePrefs: selectedChips('#genreChips')? Array.from(selectedChips('#genreChips')):[]
+        },
+        tracks: $$('#tracksTable tbody tr').map(tr=>{
+          const id = tr.dataset.id; const t = model.tracks.find(x=>x.id===id) || {id};
+          return {
+            id,
+            title: tr.querySelector('.t-title').value,
+            artist: tr.querySelector('.t-artist').value,
+            moods: splitTags(tr.querySelector('.t-moods').value),
+            genres: splitTags(tr.querySelector('.t-genres').value),
+            bpm: Number(tr.querySelector('.t-bpm').value)||'',
+            energy: Number(tr.querySelector('.t-energy').value)||'',
+            duration: Number(tr.querySelector('.t-duration').value)||'',
+            status: tr.querySelector('.t-status').value,
+            link: tr.querySelector('.t-link').value,
+            favorite: (model.tracks.find(x=>x.id===id)||{}).favorite || false,
+            era: model.session.era||''
+          }
+        }),
+        nowId: model.nowId
+      };
+    }
+
+    function hydrate(s){
+      if(!s) return;
+      model.session = Object.assign(model.session, s.session||{});
+      model.tracks = s.tracks || [];
+      model.nowId = s.nowId || null;
+      renderTargets(); renderTracks(); updateNowUI(); save();
+    }
+
+    function save(){ try{ localStorage.setItem(stateKey, JSON.stringify(snapshot())); $('#autosaveBadge').textContent='Auto‑saved \u2713'; }catch(e){ console.error(e); $('#autosaveBadge').textContent='Save error'; } }
+    function load(){ try{ const raw=localStorage.getItem(stateKey); if(!raw){ seed(); return; } hydrate(JSON.parse(raw)); }catch(e){ console.error(e); seed(); } }
+
+    // --- Utilities ---
+    function splitTags(s){ return (s||'').split(',').map(x=>x.trim()).filter(Boolean); }
+    function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+    function uid(){ return 'id'+Math.random().toString(36).slice(2)+Date.now().toString(36); }
+    function fmtTime(sec){ sec=Math.max(0,sec|0); const m=Math.floor(sec/60); const s=(sec%60).toString().padStart(2,'0'); return `${m}:${s}`; }
+
+    // --- Events ---
+    $('#saveBtn').onclick=save; $('#loadBtn').onclick=()=>{ load(); alert('Loaded saved session.'); };
+    $('#exportCSV').onclick=exportCSV; $('#exportM3U').onclick=exportM3U; $('#exportJSON').onclick=exportJSON; $('#copyLinks').onclick=copyLinks; $('#printBtn').onclick=()=>window.print();
+    $('#smartQueue').onclick=smartQueue; $('#favoriteFilter').onclick=()=>{ $('#filterStatus').value='Favorite'; renderTracks(); };
+    $('#clearPlayed').onclick=()=>{ if(!confirm('Clear all tracks with status "Played"?')) return; model.tracks=model.tracks.filter(t=>t.status!=='Played'); renderTracks(); save(); };
+    $('#clearFilters').onclick=()=>{ $('#search').value=''; $('#filterStatus').value=''; $('#bpmMin').value=''; $('#bpmMax').value=''; $('#era').value=''; $$('#moodChips .chip, #genreChips .chip').forEach(c=>c.classList.remove('active')); renderTracks(); };
+    ['sessionName','dj','date','location','notes','energy','bpmMin','bpmMax','era'].forEach(id=>{ $('#'+id).addEventListener('input', ()=>{ model.session[name]=($('#'+id).value); save(); }); });
+
+    $('#qaAdd').onclick=()=>{
+      addTrack({
+        title: $('#qaTitle').value.trim(),
+        artist: $('#qaArtist').value.trim(),
+        link: $('#qaLink').value.trim(),
+        bpm: Number($('#qaBPM').value)||'',
+        energy: Number($('#qaEnergy').value)||'',
+        duration: Number($('#qaDur').value)||''
+      });
+      ['qaTitle','qaArtist','qaLink','qaBPM','qaEnergy','qaDur'].forEach(id=> $('#'+id).value='');
+    };
+
+    $('#playBtn').onclick=()=>{ const first = model.tracks.find(t=>t.status!=='Played'); if(first) playTrack(first.id); };
+    $('#pauseBtn').onclick=()=> stopNow();
+    $('#nextBtn').onclick=nextTrack; $('#prevBtn').onclick=prevTrack; $('#favBtn').onclick=()=>{ const t=currentTrack(); if(t) toggleFavorite(t.id); };
+
+    // --- Seed/demo ---
+    function seed(){
+      renderTargets();
+      addTrack({title:'Levitating', artist:'Dua Lipa', bpm:103, energy:78, duration:203, genres:['Pop'], moods:['Happy','Party'], link:''});
+      addTrack({title:'Blinding Lights', artist:'The Weeknd', bpm:171, energy:82, duration:200, genres:['Pop'], moods:['Epic','Party'], link:''});
+      addTrack({title:'Sunflower', artist:'Post Malone', bpm:90, energy:55, duration:157, genres:['Hip-Hop','Pop'], moods:['Chill','Groovy'], link:''});
+      save();
+    }
+
+    // Init
+    $('#year').textContent = new Date().getFullYear();
+    load();
+  </script>
+</body>
+</html>

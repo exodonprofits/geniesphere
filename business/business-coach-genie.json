@@ -1,0 +1,199 @@
+{
+  "name": "Business Coach Genie (Webhook -> ChatGPT -> Respond)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "business-coach-genie",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json.body || $json;\n\nfunction s(v){ return (v ?? '').toString().trim(); }\n\nconst payload = {\n  goal: s(b.goal),\n  deadline: s(b.deadline || '30 days'),\n  bizType: s(b.bizType || 'Other'),\n  teamSize: s(b.teamSize || '6-15'),\n  context: s(b.context),\n  pain: s(b.pain),\n  tried: s(b.tried),\n  page: s(b.page || 'business-coach-genie'),\n};\n\n// Basic validation\nif (!payload.goal && !payload.context && !payload.pain) {\n  return [{\n    ok: false,\n    error: \"Please provide at least a Goal, Situation, or Pain Point.\",\n    payload\n  }];\n}\n\nreturn [{ ok: true, payload }];"
+      },
+      "id": "Validate",
+      "name": "Validate + Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.ok}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      },
+      "id": "If",
+      "name": "If Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\":false,\"error\":$json.error,\"payload\":$json.payload}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "Respond400",
+      "name": "Respond 400",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        930,
+        430
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are Business Coach Genie inside GenieSphere. Audience is non-technical small business owners. Keep output clear, practical, and short. Use bullet points and simple language. Never give legal/financial advice; recommend consulting professionals where appropriate."
+          },
+          {
+            "role": "user",
+            "content": "Create a business coaching plan using this input:\n\nGOAL: {{$json.payload.goal}}\nDEADLINE: {{$json.payload.deadline}}\nBUSINESS TYPE: {{$json.payload.bizType}}\nTEAM SIZE: {{$json.payload.teamSize}}\nSITUATION: {{$json.payload.context}}\nPAIN POINT: {{$json.payload.pain}}\nTRIED: {{$json.payload.tried}}\n\nReturn:\n1) A 1-paragraph summary of what's happening\n2) 3 Options (A/B/C)\n3) A recommended plan (Week 1-4)\n4) Next 7 steps checklist\n5) Quick scripts/templates if relevant (max 5 bullets)\n\nFormat for easy copy/paste. Use emojis lightly."
+          }
+        ],
+        "temperature": 0.5
+      },
+      "id": "OpenAI",
+      "name": "ChatGPT (Business Plan)",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 2,
+      "position": [
+        950,
+        260
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json?.choices?.[0]?.message?.content || $json?.data?.[0]?.message?.content || $json?.message?.content || $json?.response || '';\n\n// Lightweight parsing helpers (optional)\nconst lines = (text || '').split('\\n').map(l => l.trim()).filter(Boolean);\n\n// Attempt to extract a \"Next 7 steps\" block\nlet nextSteps = [];\nlet inNext = false;\nfor (const l of lines) {\n  const low = l.toLowerCase();\n  if (low.includes('next 7') && low.includes('step')) { inNext = true; continue; }\n  if (inNext && (low.startsWith('5)') || low.startsWith('scripts') || low.includes('templates'))) { inNext = false; }\n  if (inNext) {\n    const cleaned = l.replace(/^[-*\\d+.\\)]\\s*/, '').trim();\n    if (cleaned) nextSteps.push(cleaned);\n  }\n}\nnextSteps = nextSteps.slice(0, 7);\n\nreturn [{\n  ok: true,\n  result: text,\n  next_steps: nextSteps,\n  meta: {\n    model: $json?.model || 'unknown',\n    usage: $json?.usage || null\n  }\n}];"
+      },
+      "id": "Format",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "Respond200",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1390,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate + Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate + Normalize": {
+      "main": [
+        [
+          {
+            "node": "If Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Valid": {
+      "main": [
+        [
+          {
+            "node": "ChatGPT (Business Plan)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ChatGPT (Business Plan)": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "versionId": "1"
+}

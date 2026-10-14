@@ -1,0 +1,627 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voyage Genie â€“ AI-Powered Travel Planning</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f9fc;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+    }
+    .hero-section {
+      background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center/cover;
+      color: white;
+      padding: 6rem 2rem;
+      text-align: center;
+      position: relative;
+    }
+    .hero-section h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    .hero-section p {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .hero-textbox-container {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .hero-textbox {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      background-color: rgba(255, 255, 255, 0.9);
+      color: #333;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s ease;
+    }
+    .hero-textbox:focus {
+      outline: none;
+      background-color: rgba(255, 255, 255, 1);
+    }
+    .hero-textbox::placeholder {
+      color: #666;
+    }
+    .hero-textbox-submit {
+      background-color: #00c4b4;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .hero-textbox-submit:hover {
+      background-color: #009c8c;
+      transform: scale(1.05);
+    }
+    .cta-button {
+      background-color: #00c4b4;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .cta-button:hover {
+      background-color: #009c8c;
+      transform: scale(1.05);
+    }
+    .features-section,
+    .testimonials-section {
+      padding: 4rem 1rem;
+      text-align: center;
+    }
+    .travel-options-section {
+      background-color: white;
+      padding: 3rem 1rem;
+      text-align: center;
+    }
+    .features-section h2,
+    .testimonials-section h2,
+    .travel-options-section h2 {
+      font-size: 3rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      color: #2c3e50;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .feature-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+    .feature-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #34495e;
+    }
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .testimonial-card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      font-style: italic;
+      color: #555;
+    }
+    .testimonial-card p {
+      margin-bottom: 1rem;
+    }
+    .testimonial-card cite {
+      font-style: normal;
+      color: #2c3e50;
+      font-weight: 600;
+    }
+    .travel-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .travel-option {
+      display: flex;
+      flex-direction: column;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      text-align: center;
+      transition: transform 0.3s ease;
+      min-height: 350px;
+    }
+    .travel-option:hover {
+      transform: translateY(-5px);
+    }
+    .travel-option img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .travel-option h3 {
+      font-size: 1.25rem;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+    }
+    .travel-option p {
+      color: #555;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      flex-grow: 1;
+      min-height: 60px;
+    }
+    .travel-option a {
+      background-color: #3b82f6;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      transition: background-color 0.3s ease;
+      font-size: 0.9rem;
+      margin-top: auto;
+    }
+    .travel-option a:hover {
+      background-color: #2563eb;
+    }
+    footer {
+      background-color: #e2e8f0;
+      padding: 1.5rem;
+      text-align: center;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: #0096c7;
+      margin: 0 0.5rem;
+      transition: color 0.3s ease;
+    }
+    footer a:hover {
+      color: #0077b6;
+      text-decoration: underline;
+    }
+    .nav-icon {
+      height: 24px;
+      width: auto;
+      margin-right: 8px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+    }
+    .nav-menu {
+      display: flex;
+      align-items: center;
+    }
+    .nav-links {
+      display: flex;
+      space-x-6;
+    }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 24px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .hamburger span {
+      width: 100%;
+      height: 3px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+    .nav-links.active {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 64px;
+      left: 0;
+      width: 100%;
+      background: linear-g²…íìå¾T ³46df¬ {F3a1fo
+0w#9:cg8 2 *$!" e`eK.':µsMM"9_J‘ +(02I'hEKo£!° ,xü2(qx G"rá5. 4.¨0/(¶.91B¥)  }f"æ!&laG-¤©ª9rqGw+vubìït ! !amwrb)n: .5rd/º/   2!^u>d,a<kFî:€r}n5ERÓ‘	!üJ $01|onbUr?a2.e}uióÏkp5n6n>b°s()|İ	àj[
+d”0 Ôü0Yjrêk#i:®Ò?ZQô5(%ñäDf)0tRcN+litu85b}/ µğh(-,  $çN"æ ohámd=zgasîyAm&a8rZÔ&>n\ )Ö~od`(20;
+0, ` !ÿ8aca%{°2;‰"…M
+2 ° .@FqbT6åÇjd1#Div%¤âtAn:ä~IcLm¸t$-!z!Ât(¶ralsfor,>²K}p4Ä{µvá§h"Ô2ÑîòÌmVô)7Cx*(-2P00;
+ ;<0u€$$¡fn¥òsmet`åè-cnuca|a².{!H2!lá|)}ğñh² 5©71Z;Š¡ 5* (\A~Oa,
+ 0$¢exo 0z"m:¤  ` de`aláy:"n]µh3/  ` `Viğ7%P.4óaO; ¡bä#ãmå#yt²í· ¡a~d`r%
+¨p``5€ p8&g[ãle}dõt½kll–ô({*  pe &LeP:¸31
+  p paädyêFz@¢*5rf½`(bl};b¡¨<"¢ ùûbPIsihE(r\Œ9âgùa‚€!( !è®ŞrBes,CR í4qº 0ôf;Z¡;  @Aà÷c$g»¡)-je»8  `Pwy*kfÒO}~ü+`lo2:)3bfæ
+) `«$cnoŸ2¤#3335
+" :0ğ ·ŞqÁhcf-îz¬0dº`*lT(8 rgWp(‘,`0,00µ0&å)µŠd,  }ƒ)± (.ïäw#`%ôtårày†Pe\(încpSË_Bæ¢ "@ottlË>Û>j|/nojŠ'  à…æOi-;HìNw²&5 2: 2p8SOƒ#(Q| 2(¡0,µ2¨*ş#   9€¸  "&£ôqft|¡²oùnt74ˆxaÀc zk$|¬ò KÊ` !H  co,es`¢©x}«(lp ",
+*¶> fjM^óDawtUb,i]âmi\`X 9# !$¢cbZO2/eGfïhı÷> "&‡4b0‹V%!(  0<*lo2;ªÿ89te?$d) yad.~g:  ½jim ±÷'mš( # 0""gCdåpHVu°nu{f02”é»,  0äg|4zk:e:<0ÄA>r)? : ¥F/çV/7Ukwedğ3H1…!-8Bor\ñ*>`înnà%¢&(,`9v!GQnr>¢	­eÎrg$rí¶« h<|ps®'y]#k|»jcabK&ö#vnd-#6¬yb2.×S%uHsd l²nqFKrap¸f63 e°c$:©%…~*b±`$nu'v`eatUt-wQb-y0R¼|war Úê³     gàkK/ro3n¥íkOloùË%#009A¹y3J!(  ä$~sc&£†{a s``lı 1.0=9c‹i'  }K=ğa DmeeãÅˆoáxl7}ÄwH: 4%]Ğù©"{ %%€#+X7r*/seâzJod /
+¤!h"  pa¦d1nö>%Ppg. 3àñ=9 "%&l}X€i4 "p\G{k,ğeÅviçN$ØIz " @"* vkn-Â;y':"2òeL( e (¨w
+($å(2¤-èerë({Uc¾Iîo„± {K!£$ ( ,(d»=uwkze~ Kzgo;¨ ,è  l
+- , !b.öfèõ´bm·-qdöhKÿ8Hx !   À|dsthyfeia,s­Qçûä(oä t ~š"(((#Gr5v÷tï.htalnweBğá«Pr¸1 [`$x/#  (fOjmwi:m5,á7òE»	 " !À*}
+A ("!z/fAQ½Fdf[u<ë¨$  
+( 4)£ğliy: Nï²G5!+&ˆ$a]
+6 `ij¡'ha}âU²«år`;y"2)¢8 a)bMağ{˜ælåx;Jé B" }
+"(#$	`.o§v,MSang(iÙ:{+" 2!¤®ä`Bn~´3wiza:· .7ğDô†" 8!!}
+ †¦àø |eŞÎ=vgxt n-j/n|`í
+íèSn0(0   bîmah>´iru'$;ïj40Ão]ímn?@% & vùrZ 1r5l9B`"`©$ı«#,!0!t3(åÒ-<-p4@/­gr@Y- |1("" t bcJ`vh: Y2*{
+9"8 x  niş¤vaT4h;(”,±ğø;A  8}	€p P(!.ïQmı,Euôy0;òk.åáy+qğ$‹!€(a   "æHmğ%lyrc)ô,Æf2 9äõ,o)\@èb ¬ñ°Nu9ë0,75fÅ|/*d(@L¤w
+ ( /Lews-çtÔe0<s=i)t({Â2±´ )$$bèD~. 3d9ë
+0$"3Q0" ei-µÙçtzš&* ¦q4: $&1 à} $)s]8a?cpxtd.,¯«e©`?<p lty6 4/m NaæicathO> l,<Š49nqv$ÁmàWq9"2Ï-§v¸ä)e`|$eO|[d6{o=à`a%œ²++vo-I>í§m-6104toxt.Çlaôl ×µ]roy(dïp=¸*10 {hidOv¦%å³&óH`  ,eÁu0Cl`óq)náP-u$'Ñn -X,#1ôïhp8)°¸p9å4*g.4jusniä~ÃfÅä_Á.æ¡iıå-Òie~|eò,oQw-l¥'p¾
+ !h©dnáhse‚:,HÏE7³(u|gs·<²n%N„æ0NÊl"¢a0}­ìarfl%°CÍ vE`Ğomm":d b@ !¨=á}·àğoa5"~av-hc{gP~c"'s|~rVmyqFå4[jim°Çno&)cm‡zb="nir%a3k~*¾Â0E@354êµ4l½ gliWï= twy¥zóâ,!æÿNtı¦ß,L"¾ïi#ed OU~ii4/è¹.Êv4 -  $A0`0èp-lxf$sha³3' ê÷	 evGer 1²i#-ìi3o\=#T/çæfe NeViE!eio Ëa&k pm,lš"b}lu.!`ğhcIt4År*02]’0w     ¬wpin¾&táo?J¨$¤$a)sjdn<íc0áˆ/*" 9 ˆ(" b9Hf¿³t"_;ª d  - =/tIW4µ$b   ím G-asy½rÿa!¤y|j3 2n–ø¬¢üa!ä,x(7&> !T.7D   <nI»5a hra'}
+£hnmUºãl@ss}#økç@(5nt$flhj¢)uVi¡LleF5l="Gú0F ÊnNùp&@cme<g|v</l¥—Z!€0! 8€0¸\È>& *â*%gy*4ã!Twr5ó,x¶éä* cla#'w how-R›÷oeçrlIúv Czie	ljel"å-00m fwcd$be? 4@%aUPSCŒ%A<'$i  $!1iH$¡<na$) R%v%ÁoVeacxÆv}n%¨k*ùss! èNP%x:Uæf!SL)Nõ‚ 4OA-labş$ |!t/hBg[tQcpbŞJínCkt4o`¾=/,H `án1 ,¬5¸?. =€9¼/dK?LŒ  >/~IJ
+J°4( } Hes‡0Cua`iï^®>:D´2uÁ<c6nlMmÁ4Açlj”·ifçcb*ôåvk-s`^.	nn"¾
+ 1$<x°>vdscoöeb$<,BsRgM”"\;H0$ŞAUé…TnkE8Eá
+`(¡`|`i6!gé@vû¶"Èï8kmdètbo|;8n¤a).Õòê6
+  Ä¸AnxgP9ü;peŒmyT" siåöó7&hçóû,rey|ªcxI ”Ümal8ohd…³-2XekcGeâCeÀiµ}dHIveuawgù\nòdl/5·Gré.!hdìv7/"!2ha­"aòàl¼§Šso W…o!A8torAlpÌfaJ8ûe[ccwtin­ù#ºƒ! p2 !<b5õT-##Yasò%*"åòn\xÜ1<ñNø½~Bmiv"$ó:AA1-aCUl=!R5JÍhñ#yïuğéerth.€^N Wæjiõ!¤Ick(Ofta'|/atx\oì>/4 ˆ²aivœ6r*  K%öQ>M`tè‡ò ÁÈlò/ŞgzdD8fbBxeş ple&Or(crkñşB!!hor{NamY2eF@ht+o% !ò}…ïbyOwpl%ét2wvvaJ3bå>=¾82 "<{C!tLkn¾
+  >¡­i èmi.0T¶)n8Û*cp	Mî *]qävÅf`dé`Gú<}¦yáhwr!eçl NxTiïêñ) /®:*0<wad|ijO¤)ÄupMsl­6iqï c,eñS9ªt6åW7¬+o`Ti?_a-v7cdÄ-§.>Z ‚Ñ¡¶h2=ÅøNîdrcpW`;g|`GqtJïJ3oh2>
+    <div class="travel-options">
+      <div class="travel-option">
+        <!-- Placeholder URL: Replace with actual hosted image URL -->
+        <img src="images/beachortropical.jpg" alt="Tropical Resort">
+        <h3>ğŸ–ï¸ Tropical Resort</h3>
+        <p>Relax in paradise with all-inclusive packages tailored to your preferences.</p>
+        <a href="tropical_trip_plan_form.html" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Plan Now</a>
+      </div>
+      <div class="travel-option">
+        <img src="images/cruise1.jpg" alt="Cruise Adventure">
+        <h3>ğŸš¢ Cruise Adventure</h3>
+        <p>Embark on a luxurious cruise with stunning ocean views and exciting stops.</p>
+        <a href="cruise_trip_plan_form.html" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Plan Now</a>
+      </div>
+      <div class="travel-option">
+        <!-- Placeholder URL: Replace with actual hosted image URL -->
+        <img src="images/hotel.jpg" alt="Airbnb Getaway">
+        <h3>ğŸ  Airbnb Getaway</h3>
+        <p>Find the perfect home away from home with personalized Airbnb recommendations.</p>
+        <a href="airbnb_trip_plan_form.html" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Plan Now</a>
+      </div>
+      <div class="travel-option">
+        <img src="images/adventure1.jpg" alt="Adventure Trip">
+        <h3>ğŸŒ„ Adventure Trip</h3>
+        <p>Experience thrilling outdoor activities and explore new destinations.</p>
+        <a href="adventure_trip_plan_form.html" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Plan Now</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <h2>Why Choose Voyage Genie?</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <h3>Personalized Itineraries</h3>
+        <p>Tailored travel plans based on your preferences, budget, and interests.</p>
+      </div>
+      <div class="feature-card">
+        <h3>AI-Powered Planning</h3>
+        <p>Smart recommendations for flights, hotels, and activities using advanced AI.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Stress-Free Experience</h3>
+        <p>We handle the details, so you can focus on enjoying your trip.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section class="testimonials-section">
+    <h2>What Our Travelers Say</h2>
+    <div class="testimonials-grid">
+      <!-- Hardcoded testimonials as fallback -->
+      <div class="testimonial-card">
+        <p>"Voyage Genie made planning my honeymoon so easy! Everything was perfect."</p>
+        <cite>â€“ Sarah M.</cite>
+      </div>
+      <div class="testimonial-card">
+        <p>"I loved the personalized recommendations. It felt like a custom trip just for me."</p>
+        <cite>â€“ James T.</cite>
+      </div>
+      <div class="testimonial-card">
+        <p>"The AI found deals I never would have discovered on my own. Amazing service!"</p>
+        <cite>â€“ Priya K.</cite>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>Â© 2025 VoyageGenie.com â€“ Your AI Travel Companion âœˆï¸ğŸŒ | Plan Smarter with Genie</p><br>
+    <div class="newsletter-container">
+      <input type="email" class="newsletter-input" placeholder="Enter your email for travel updates" aria-label="Enter your email for travel updates">
+      <button class="newsletter-submit" aria-label="Subscribe to newsletter">Subscribe</button>
+    </div>
+    <div class="mt-4">
+      <a href="#" aria-label="Visit our Facebook page">Facebook</a>
+      <a href="#" aria-label="Visit our Instagram page">Instagram</a>
+      <a href="contact.html" aria-label="Contact Us">Contact Us</a>
+    </div>
+    <div class="mt-2">
+      <a href="#home" aria-label="Go to Home">Home</a>
+      <a href="features.html" aria-label="Go to Features">Features</a>
+    </div>
+  </footer>
+
+  <script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+      if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+          var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+          var firstSheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[firstSheetName];
+
+          // Convert sheet to JSON to filter blank rows
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+          // Filter out blank rows (rows where all cells are empty, null, or undefined)
+          var filteredData = jsonData.filter(row => row.some(filledCell));
+
+          // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+          var headerRowIndex = filteredData.findIndex((row, index) =>
+            row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+          );
+          // Fallback
+          if (headerRowIndex === -1 || headerRowIndex > 25) {
+            headerRowIndex = 0;
+          }
+
+          // Convert filtered JSON back to CSV
+          var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+          csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+          return csv;
+        } catch (e) {
+          console.error(e);
+          return "";
+        }
+      }
+      return gk_fileData[filename] || "";
+    }
+  </script>
+  <script>
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Fetch Google Reviews
+    async function fetchGoogleReviews() {
+      try {
+        const response = await fetch('https://maps.googleapis.com/maps/api/place/details/json?place_id=YOUR_PLACE_ID&fields=reviews&key=YOUR_API_KEY');
+        const data = await response.json();
+        
+        if (data.result && data.result.reviews && data.result.reviews.length > 0) {
+          const reviews = data.result.reviews.slice(0, 3);
+          const testimonialsGrid = document.querySelector('.testimonials-grid');
+          testimonialsGrid.innerHTML = '';
+
+          reviews.forEach(review => {
+            if (review.rating >= 4 && review.text) {
+              const testimonialCard = document.createElement('div');
+              testimonialCard.className = 'testimonial-card';
+              const reviewText = review.text.length > 150 ? review.text.substring(0, 147) + '...' : review.text;
+              testimonialCard.innerHTML = `
+                <p>"${reviewText}"</p>
+                <cite>â€“ ${review.author_name}</cite>
+              `;
+              testimonialsGrid.appendChild(testimonialCard);
+            }
+          });
+
+          const currentReviewCount = testimonialsGrid.children.length;
+          const fallbackTestimonials = [
+            { text: "Voyage Genie made planning my honeymoon so easy! Everything was perfect.", author: "Sarah M." },
+            { text: "I loved the personalized recommendations. It felt like a custom trip just for me.", author: "James T." },
+            { text: "The AI found deals I never would have discovered on my own. Amazing service!", author: "Priya K." }
+          ];
+
+          for (let i = currentReviewCount; i < 3; i++) {
+            const testimonialCard = document.createElement('div');
+            testimonialCard.className = 'testimonial-card';
+            testimonialCard.innerHTML = `
+              <p>"${fallbackTestimonials[i].text}"</p>
+              <cite>â€“ ${fallbackTestimonials[i].author}</cite>
+            `;
+            testimonialsGrid.appendChild(testimonialCard);
+          }
+        } else {
+          console.warn('No reviews found or API returned an error. Using fallback testimonials.');
+        }
+      } catch (error) {
+        console.error('Error fetching Google Reviews:', error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchGoogleReviews);
+
+    // Hamburger Menu Toggle
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      navLinks.classList.toggle('active');
+    });
+
+    // Close menu when a link is clicked (for better UX on mobile)
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        navLinks.classList.remove('active');
+      });
+    });
+
+    // Accessibility: Allow keyboard navigation for hamburger menu
+    hamburger.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        hamburger.click();
+      }
+    });
+
+    // Textbox Interactivity: Ask Genie for Suggestions
+    const heroTextbox = document.querySelector('.hero-textbox');
+    const heroTextboxSubmit = document.querySelector('.hero-textbox-submit');
+
+    function handleGenieQuery() {
+      const query = heroTextbox.value.trim().toLowerCase();
+
+      // Keyword-based logic to determine trip type
+      const tropicalKeywords = ['beach', 'resort', 'tropical', 'relax', 'paradise'];
+      const cruiseKeywords = ['cruise', 'ship', 'ocean', 'sea', 'boat'];
+      const airbnbKeywords = ['airbnb', 'home', 'stay', 'house', 'cozy'];
+      const adventureKeywords = ['adventure', 'hiking', 'mountain', 'explore', 'outdoor'];
+
+      let redirectUrl = 'tropical_trip_plan_form.html'; // Default fallback
+
+      if (tropicalKeywords.some(keyword => query.includes(keyword))) {
+        redirectUrl = 'tropical_trip_plan_form.html';
+      } else if (cruiseKeywords.some(keyword => query.includes(keyword))) {
+        redirectUrl = 'cruise_trip_plan_form.html';
+      } else if (airbnbKeywords.some(keyword => query.includes(keyword))) {
+        redirectUrl = 'airbnb_trip_plan_form.html';
+      } else if (adventureKeywords.some(keyword => query.includes(keyword))) {
+        redirectUrl = 'adventure_trip_plan_form.html';
+      }
+
+      // Redirect to the appropriate form
+      window.location.href = redirectUrl;
+
+      // Provide feedback for accessibility
+      heroTextbox.setAttribute('aria-label', `Redirecting to ${redirectUrl.split('_')[0]} trip planning form`);
+    }
+
+    heroTextbox.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleGenieQuery();
+      }
+    });
+
+    heroTextboxSubmit.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleGenieQuery();
+    });
+
+    // Accessibility: Allow keyboard navigation for submit button
+    heroTextboxSubmit.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleGenieQuery();
+      }
+    });
+
+    // Newsletter Signup Interactivity
+    const newsletterInput = document.querySelector('.newsletter-input');
+    const newsletterSubmit = document.querySelector('.newsletter-submit');
+
+    newsletterSubmit.addEventListener('click', (e) => {
+      e.preventDefault();
+      const email = newsletterInput.value.trim();
+      if (email) {
+        console.log(`Subscribed with email: ${email}`); // Placeholder for actual submission logic
+        newsletterInput.value = '';
+        newsletterInput.setAttribute('aria-label', 'Thank you for subscribing to travel updates');
+        alert('Thank you for subscribing!'); // Temporary feedback
+      } else {
+        newsletterInput.setAttribute('aria-label', 'Please enter a valid email for travel updates');
+        alert('Please enter a valid email address.');
+      }
+    });
+
+    // Accessibility: Allow keyboard navigation for newsletter submit button
+    newsletterSubmit.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        newsletterSubmit.click();
+      }
+    });
+  </script>
+  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'933054a068f4bd48',t'UTc0NİgjkwO{³û\CñELl=q}fqsrA=Cm)Ämn|.gúå3|o,eíesÌ(g÷cvkr|&éa<-ÃÂt=¯w:B>‚='ocÁdcsh-ê8ålmeîoGô{itFoPe{cöb@d)n¶ä&}i¡® j{'7–gá.mM~d/f$lEMeéÊôqÊyDaæèAnå(gHd¥T·)8V¯a`pg~nSo-ìe-I¥¿ë+B,cåtA`õàdntcDée&La-daÕhEb|%a¡ªeñp%nun hd% —ìáf)ÂgtÌçï=ÒMd9)ÛvÑ¡¤a=àoƒøeh¯t>ap-`UuAlınàt(ifpAhd&){ániE)G@ô49[9s)dnX-.ajs=úeä*pos-ùIeq=$ab{ïlTôu7»qtqûh`®(¬x5 =@&wtşïLLEâv9 aOãvYäd.bo\>åp='nÏne#9ál»p)-}vik·ojÄh|y½'jÄPdänkfécuígşt&rz -,!0)e§dJha8,îE-«iç*¦Lgqt)>o'?ägi0ÍÍn>b-c$yZukfç
+g07flk¶¤m|wy´Fgv.!läBQâtListEdwr1doRä-=mt&c$v<Vôh|L©wtgk·r6¯FÍ,WÏ^|lNNfcDªfÿJ+e&ñğir!dônCuMgL´/;jread}}ğ|!iè×şld|=GuıA•m.ê	û+ÁoáÿlF5m/rí`dùs}atDóreîgj¿fUfGdaOn`bóqÅ(b~glk%tmæÕ'©9dïÃÃ%ç^|«3uH…õKTap¥"¬qobuíelkonre)dYpt!ôec
+aOGD=å<w‰ki-u7¤*¯y@fëPp¼Jâ€•²ákIxè=/e4st1cn)9{febk4í/~ b)’crâ?„#oNta¾Õ'ocUıeŞ\x|C/cov´'èt×iFgNv½foew­ÄbÔ;h&¨b­Wvar@h<2s2EÁuÆlaolnv(Cûs‚%pv.	+'.a,k4ÆğMN=buiênowWF, 7È#úák5=z2½¯192f44nÓw8e?7t#/t{#LUè0LPU2Î0‡2LC5w}äA5LDE=±KwwG2 )¹¥?kwåuêÿ2Á2¥kt]Dmendì§qe7+pT6+e®on7T¤'3a.R¿u¹'.cdN§3hchBì=U.gm,1md6ovml!òbğõ´M*rddaX,ê¨C/#mnY®*dbp.çgr,e-aFt^ƒydä&la`å)&hã`áï7Y4]$Apêäƒ(-h~ˆã); +d¯gM,c	Inóxœ€k#nm(óaYd'!S1]e4p%fb]lÉ)F)dI|si|¨eï¢et-n}.bob+^lV w],mãU}­Í<náâEaRteEmef4ª·fRemm.ª9>`eIÌ5tU;såtltl1±9Qv}4ıíešZ+{iui/î¼AhbwoÌute=;q®{Uala.t6`t8#h*óu>|eè<Ì´T=5`.S\yé<FâoÂher½-µkîdgk&®:ôilç
+faqibinË4&liddeë#doãvuåDd&bä)oIÔpl&Ls@áÓ(8a©šHd)G.mà'iÎu!=|&yùgíáî«RGaD)[Va6 +c,);%,0a0mf9icÆnV.kc~Õg°hi¿d lsHhfcıment3ƒd`á.ôIsô%ææÒ2/DOŞÊj_\uftLmåd/,$s1y¥ì7%zöOğ$M-dkcán@¦onæDIuùs4¡ï!Àidodd<†To!dyŞí¨8{.?hì3ñmÄtğn-ärDaF)çç mecHaÊóÎÅ&uoc_uo(J{h	B(:güëmIøg6!=1Däauigjv¾³ac4z×däöm~èL"fíaäô.nnsdefy|DEõeãiA"Ei½mlc
+Amıy=¨.	Wãóc É6p>^zsoÄ{Š+mö	fŸ

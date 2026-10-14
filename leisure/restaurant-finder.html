@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Restaurant Finder | GenieSphere</title>
+  <meta name="description" content="Find, compare, shortlist, and plan restaurants with a more complete GenieSphere Leisure experience." />
+  <meta name="gs-config" content="/shared/config.json" />
+  <style>
+    :root{
+      --bg:#0a1020;
+      --panel:#121a2b;
+      --panel-2:#162137;
+      --panel-3:#0f1728;
+      --text:#eef4ff;
+      --muted:#a9b6d9;
+      --line:rgba(120,155,255,.18);
+      --line-strong:rgba(142,173,255,.32);
+      --brand:#3ee1a1;
+      --brand-2:#4c6ef5;
+      --danger:#ff7b7b;
+      --warn:#ffcb69;
+      --ok:#7df3b1;
+      --shadow:0 18px 48px rgba(0,0,0,.30);
+      --shadow-soft:0 10px 24px rgba(0,0,0,.22);
+      --radius:7px;
+      --radius-lg:18px;
+      --pill:999px;
+      --container:1440px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:radial-gradient(circle at top, rgba(76,110,245,.12), transparent 28%), var(--bg);
+      color:var(--text);
+      font:500 16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial,sans-serif;
+    }
+    a{text-decoration:none;color:inherit}
+    button,input,select,textarea{font:inherit}
+    .container{max-width:var(--container);margin:0 auto;padding:24px}
+    .muted{color:var(--muted)}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+    .site-header{
+      position:sticky;top:0;z-index:1000;
+      margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);
+      background:linear-gradient(180deg,rgba(9,14,25,.86),rgba(10,16,32,.96));
+      border-bottom:1px solid var(--line);
+      backdrop-filter:saturate(120%) blur(14px);
+      box-shadow:var(--shadow-soft);
+    }
+    .site-header-inner{
+      max-width:var(--container);margin:0 auto;padding:16px 24px;
+      display:flex;align-items:center;justify-content:space-between;gap:14px;
+    }
+    .brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.01em}
+    .logo{
+      width:44px;height:44px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+      box-shadow:0 0 0 3px rgba(62,225,161,.22), 0 10px 24px rgba(62,225,161,.28);
+      flex:0 0 auto;
+    }
+    .menu{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+    .menu a{
+      color:var(--muted);padding:4px 2px;border-bottom:2px solid transparent;
+      transition:.18s ease;
+    }
+    .menu a:hover,.menu a.active{color:var(--text);border-bottom-color:var(--brand-2)}
+    .userbox{display:flex;align-items:center;gap:12px;margin-left:auto}
+    .searchbar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line);min-width:260px}
+    .searchbar input{background:transparent;border:0;outline:0;color:var(--text);width:100%}
+    .searchbar input::placeholder{color:#8fa0ca}
+    .user-menu{position:relative}
+    .user-menu-toggle{
+      border:1px solid var(--line-strong);background:rgba(255,255,255,.04);color:var(--text);
+      border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px;
+    }
+    .user-menu-dropdown{
+      position:absolute;right:0;top:calc(100% + 10px);width:260px;background:#0d1528;border:1px solid var(--line-strong);
+      border-radius:18px;box-shadow:var(--shadow);padding:12px;display:none;
+    }
+    .user-menu.open .user-menu-dropdown{display:block}
+    .dropdown-label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#8fa0ca;padding:4px 8px}
+    .dropdown-nav, .dropdown-action{
+      width:100%;text-align:left;background:transparent;border:0;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;
+    }
+    .dropdown-nav:hover,.dropdown-action:hover{background:rgba(255,255,255,.06)}
+    .user-menu-divider{height:1px;background:var(--line);margin:8px 0}
+
+    .page-wrap{max-width:var(--container);margin:0 auto;padding:28px 24px 70px}
+    .hero{
+      display:grid;grid-template-columns:1.4fr .9fr;gap:22px;align-items:stretch;
+      margin-bottom:22px;
+    }
+    .hero-main,.hero-side,.panel,.card,.drawer{
+      background:linear-gradient(180deg, rgba(18,26,43,.96), rgba(12,18,33,.98));
+      border:1px solid var(--line);
+      border-radius:24px;
+      box-shadow:var(--shadow-soft);
+    }
+    .hero-main{padding:28px;position:relative;overflow:hidden}
+    .hero-main::after{
+      content:"";position:absolute;inset:auto -80px -120px auto;width:260px;height:260px;border-radius:50%;
+      background:radial-gradient(circle, rgba(62,225,161,.18), transparent 65%);
+    }
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#d7e8ff}
+    .hero-title{font-size:clamp(32px,4vw,52px);line-height:1.02;margin:16px 0 12px}
+    .hero-copy{max-width:760px;color:#c7d5f3;font-size:17px}
+    .hero-actions,.chip-row,.hero-stats{display:flex;flex-wrap:wrap;gap:12px}
+    .hero-actions{margin-top:18px}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      padding:12px 18px;border-radius:999px;border:1px solid var(--line-strong);cursor:pointer;font-weight:800;
+      transition:transform .16s ease, background .16s ease, border-color .16s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{background:linear-gradient(180deg, rgba(62,225,161,.18), rgba(62,225,161,.10));color:#edfff8;border-color:rgba(62,225,161,.42)}
+    .btn-secondary{background:rgba(255,255,255,.05);color:#edf3ff}
+    .btn-ghost{background:transparent;color:#d8e6ff}
+    .hero-stats{margin-top:18px}
+    .stat-pill{padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--line);min-width:150px}
+    .stat-pill strong{display:block;font-size:18px}
+    .stat-pill span{font-size:13px;color:var(--muted)}
+    .hero-side{padding:20px;display:grid;gap:14px}
+    .hero-side-card{padding:16px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+    .hero-side-card h3{margin:0 0 8px;font-size:16px}
+
+    .layout{display:grid;grid-template-columns:minmax(0,1.45fr) 360px;gap:22px;align-items:start}
+    .stack{display:grid;gap:22px}
+    .panel{padding:22px}
+    .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+    .section-head h2{margin:0;font-size:24px}
+    .section-head p{margin:4px 0 0;color:var(--muted)}
+
+    .filters{display:grid;grid-template-columns:repeat(6, minmax(120px, 1fr));gap:12px}
+    .field{display:grid;gap:8px}
+    .field label{font-size:13px;color:#cfdcff;font-weight:700}
+    .input,.select,.textarea{
+      width:100%;padding:12px 14px;border-radius:14px;background:#0e1628;border:1px solid var(--line);color:var(--text);outline:0;
+    }
+    .input::placeholder,.textarea::placeholder{color:#8092bd}
+    .textarea{min-height:110px;resize:vertical}
+    .chip-row{margin-top:12px}
+    .chip{padding:9px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#dbe7ff;cursor:pointer}
+    .chip.active{background:rgba(76,110,245,.16);border-color:rgba(76,110,245,.38);color:#f3f7ff}
+
+    .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+    .card{padding:18px;display:grid;gap:12px}
+    .card-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .card-title{margin:0;font-size:20px}
+    .rating{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:13px;font-weight:800}
+    .meta{display:flex;flex-wrap:wrap;gap:8px}
+    .meta-pill{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:13px;color:#d8e6ff}
+    .kpi-line{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .kpi-mini{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+    .kpi-mini strong{display:block;font-size:16px}
+    .kpi-mini span{font-size:12px;color:var(--muted)}
+    .card-actions{display:flex;flex-wrap:wrap;gap:10px}
+    .mini-btn{
+      padding:10px 14px;border-radius:999px;border:1px solid var(--line-strong);background:rgba(255,255,255,.05);color:#eef4ff;cursor:pointer;font-weight:700;
+    }
+    .mini-btn.primary{background:rgba(62,225,161,.14);border-color:rgba(62,225,161,.36)}
+    .mini-btn.warn{background:rgba(255,203,105,.12);border-color:rgba(255,203,105,.34)}
+
+    .sidebar{display:grid;gap:22px;position:sticky;top:96px}
+    .summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .summary-box{padding:16px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+    .summary-box strong{display:block;font-size:22px}
+    .list,.timeline,.saved-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+    .list-item,.timeline-item,.saved-item{padding:14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+    .saved-item{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .saved-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .empty{padding:14px;border-radius:16px;border:1px dashed var(--line-strong);color:var(--muted);text-align:center}
+
+    .planner-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .foot-note{font-size:13px;color:var(--muted)}
+
+    .drawer{
+      position:fixed;right:18px;bottom:18px;width:min(420px, calc(100vw - 36px));padding:18px;z-index:999;
+      display:none;
+    }
+    .drawer.open{display:grid;gap:14px}
+    .compare-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .compare-box{padding:12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+
+    .mobile-pad{display:none;height:84px}
+    .mobile-nav{
+      display:none;position:fixed;left:0;right:0;bottom:0;z-index:1000;
+      background:rgba(9,14,25,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+    }
+    .mobile-nav-inner{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px 12px env(safe-area-inset-bottom)}
+    .mnav{display:grid;place-items:center;gap:4px;color:#b6c3e7;font-size:11px;padding:8px 4px;border-radius:14px}
+    .mnav.active{background:rgba(76,110,245,.16);color:#fff}
+    .ico{font-size:18px}
+
+    @media (max-width:1180px){
+      .hero,.layout{grid-template-columns:1fr}
+      .sidebar{position:static}
+      .filters{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+    @media (max-width:860px){
+      .site-header-inner{flex-wrap:wrap}
+      .searchbar{min-width:0;flex:1 1 100%}
+      .menu{order:3;width:100%;overflow:auto;white-space:nowrap;padding-bottom:4px}
+      .cards,.planner-grid{grid-template-columns:1fr}
+      .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .compare-grid,.summary-grid{grid-template-columns:1fr}
+      .mobile-nav,.mobile-pad{display:block}
+    }
+    @media (max-width:560px){
+      .page-wrap,.container{padding-left:16px;padding-right:16px}
+      .hero-main,.hero-side,.panel,.card,.drawer{border-radius:20px}
+      .filters{grid-template-columns:1fr}
+      .kpi-line{grid-template-columns:1fr}
+      .hero-title{font-size:32px}
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="/dashboard/leisure.html">
+        <span class="logo" aria-hidden="true"></span>
+        <span>GenieSphere</span>
+      </a>
+
+      <nav class="menu" aria-label="Primary">
+        <a href="/dashboard/overview.html">Overview</a>
+        <a href="/dashboard/household.html">Household</a>
+        <a href="/dashboard/business.html">Business</a>
+        <a href="/dashboard/investment.html">Investment</a>
+        <a href="/dashboard/leisure.html" class="active">Leisure</a>
+        <a href="/dashboard/finance.html">Finance</a>
+      </nav>
+
+      <div class="userbox">
+        <label class="searchbar" for="globalSearch">
+          <span>🔎</span>
+          <input id="globalSearch" type="search" placeholder="Search cuisines, vibe, distance, dietary needs..." />
+        </label>
+
+        <div class="user-menu" id="userMenu">
+          <button class="user-menu-toggle" id="userMenuToggle" type="button" aria-expanded="false">Jimmy ▾</button>
+          <div class="user-menu-dropdown" role="menu" aria-label="User menu">
+            <div class="dropdown-label">Areas</div>
+            <button class="dropdown-nav" data-target="/dashboard/overview.html">🧭 Overview</button>
+            <button class="dropdown-nav" data-target="/dashboard/household.html">🏡 Household</button>
+            <button class="dropdown-nav" data-target="/dashboard/business.html">🏢 Business</button>
+            <button class="dropdown-nav" data-target="/dashboard/investment.html">📈 Investment</button>
+            <button class="dropdown-nav" data-target="/dashboard/leisure.html">🏝️ Leisure</button>
+            <div class="user-menu-divider"></div>
+            <div class="dropdown-label">Account</div>
+            <button class="dropdown-nav" data-target="/onboarding/user_profile_form.html">👤 User profile</button>
+            <button class="dropdown-nav" data-target="/onboarding/display_settings.html">⚙️ Settings</button>
+            <div class="user-menu-divider"></div>
+            <button class="dropdown-action" id="user-auth-action" type="button">Log in / Sign up</button>
+            <button class="dropdown-action" id="user-signout-btn" type="button">Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-wrap">
+    <section class="hero">
+      <article class="hero-main">
+        <div class="eyebrow">🍜 Leisure Genie • Restaurant Finder</div>
+        <h1 class="hero-title">Find the right restaurant faster, then actually decide.</h1>
+        <p class="hero-copy">Compare vibe, price, distance, dietary fit, and reservation readiness in one working page. Save shortlists, build a plan, and keep family or date-night decisions simple.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="btnUseTopPick" type="button">✨ Use Top Match</button>
+          <a class="btn btn-secondary" href="/dashboard/finance.html">💼 View Finance</a>
+          <a class="btn btn-ghost" href="/dashboard/leisure.html">⬅️ Back to Leisure</a>
+        </div>
+        <div class="hero-stats" aria-label="Quick stats">
+          <div class="stat-pill"><strong id="heroMatchCount">12 matches</strong><span>Filtered restaurant options</span></div>
+          <div class="stat-pill"><strong id="heroSavedCount">0 saved</strong><span>Your shortlist</span></div>
+          <div class="stat-pill"><strong id="heroAvgDistance">3.8 mi</strong><span>Average distance</span></div>
+          <div class="stat-pill"><strong id="heroBudgetLabel">$30–$60</strong><span>Most common spend</span></div>
+        </div>
+      </article>
+
+      <aside class="hero-side">
+        <div class="hero-side-card">
+          <h3>🧠 Quick planning prompts</h3>
+          <p class="muted">Try “romantic dinner under $70,” “family lunch with vegan options,” or “quiet sushi place after 7pm.”</p>
+        </div>
+        <div class="hero-side-card">
+          <h3>📅 Tonight plan</h3>
+          <p id="tonightSummary">No dinner plan saved yet. Save one option to build a simple outing plan here.</p>
+        </div>
+        <div class="hero-side-card">
+          <h3>⭐ Best current fit</h3>
+          <p id="topMatchSummary">Set your filters and GenieSphere will surface the best-fit option automatically.</p>
+        </div>
+      </aside>
+    </section>
+
+    <div class="layout">
+      <div class="stack">
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>Search & refine</h2>
+              <p>Filter by what matters most instead of scrolling aimlessly.</p>
+            </div>
+          </div>
+          <div class="filters">
+            <div class="field">
+              <label for="searchTerm">Search</label>
+              <input class="input" id="searchTerm" type="search" placeholder="Sushi, brunch, date night, quiet patio..." />
+            </div>
+            <div class="field">
+              <label for="cuisineFilter">Cuisine</label>
+              <select class="select" id="cuisineFilter">
+                <option value="all">All cuisines</option>
+                <option>American</option>
+                <option>Italian</option>
+                <option>Japanese</option>
+                <option>Vietnamese</option>
+                <option>Mexican</option>
+                <option>Fusion</option>
+                <option>Steakhouse</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="vibeFilter">Vibe</label>
+              <select class="select" id="vibeFilter">
+                <option value="all">Any vibe</option>
+                <option>Casual</option>
+                <option>Family</option>
+                <option>Romantic</option>
+                <option>Upscale</option>
+                <option>Quick Bite</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="priceFilter">Price</label>
+              <select class="select" id="priceFilter">
+                <option value="all">Any budget</option>
+                <option>$</option>
+                <option>$$</option>
+                <option>$$$</option>
+                <option>$$$$</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="distanceFilter">Max distance</label>
+              <select class="select" id="distanceFilter">
+                <option value="all">Any distance</option>
+                <option value="2">Within 2 miles</option>
+                <option value="5">Within 5 miles</option>
+                <option value="10">Within 10 miles</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="audienceFilter">Audience</label>
+              <select class="select" id="audienceFilter">
+                <option value="all">Any audience</option>
+                <option>Date Night</option>
+                <option>Family</option>
+                <option>Friends</option>
+                <option>Solo</option>
+                <option>Business Meal</option>
+              </select>
+            </div>
+          </div>
+          <div class="chip-row" id="dietaryChips">
+            <button class="chip" data-chip="Vegetarian" type="button">Vegetarian</button>
+            <button class="chip" data-chip="Vegan" type="button">Vegan</button>
+            <button class="chip" data-chip="Gluten-Free" type="button">Gluten-Free</button>
+            <button class="chip" data-chip="Kids Menu" type="button">Kids Menu</button>
+            <button class="chip" data-chip="Outdoor Seating" type="button">Outdoor Seating</button>
+            <button class="chip" data-chip="Reservations" type="button">Reservations</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>Recommended matches</h2>
+              <p>Best-fit restaurants update instantly based on your filters and quick preference chips.</p>
+            </div>
+            <div class="muted" id="resultsSummary">Showing 12 restaurants</div>
+          </div>
+          <div class="cards" id="restaurantCards"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>Plan this outing</h2>
+              <p>Save context so the decision becomes easy when it is time to book or leave.</p>
+            </div>
+          </div>
+          <div class="planner-grid">
+            <div class="field">
+              <label for="planDate">Date</label>
+              <input class="input" id="planDate" type="date" />
+            </div>
+            <div class="field">
+              <label for="planTime">Time</label>
+              <input class="input" id="planTime" type="time" />
+            </div>
+            <div class="field">
+              <label for="partySize">Party size</label>
+              <input class="input" id="partySize" type="number" min="1" value="2" />
+            </div>
+            <div class="field">
+              <label for="budgetTarget">Budget target</label>
+              <input class="input" id="budgetTarget" type="text" placeholder="Example: under $80 total" />
+            </div>
+            <div class="field field-full">
+              <label for="planningNotes">Planning notes</label>
+              <textarea class="textarea" id="planningNotes" placeholder="Parking needs, someone wants patio seating, celebrating birthday, avoid loud places..."></textarea>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn btn-primary" id="btnSavePlan" type="button">💾 Save outing plan</button>
+            <button class="btn btn-secondary" id="btnClearPlan" type="button">Reset planner</button>
+          </div>
+          <p class="foot-note" id="plannerMessage">Your saved plan stays on this device for now. Later this can connect to GenieSphere storage or webhook workflows.</p>
+        </section>
+      </div>
+
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>Decision snapshot</h2>
+              <p>Quick numbers to make this feel less open-ended.</p>
+            </div>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-box"><strong id="snapshotBest">4.8 ★</strong><span>Top rating</span></div>
+            <div class="summary-box"><strong id="snapshotReserve">7</strong><span>Take reservations</span></div>
+            <div class="summary-box"><strong id="snapshotFamily">5</strong><span>Family-friendly</span></div>
+            <div class="summary-box"><strong id="snapshotPatio">4</strong><span>Patio options</span></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>Saved shortlist</h2>
+              <p>Your best options, ready for a final pick.</p>
+            </div>
+          </div>
+          <div id="savedList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2>Suggested timeline</h2>
+              <p>Simple next steps once you decide.</p>
+            </div>
+          </div>
+          <ul class="timeline" id="timelineList">
+            <li class="timeline-item">Choose one restaurant and save it to your shortlist.</li>
+            <li class="timeline-item">Check reservation policy and ideal arrival window.</li>
+            <li class="timeline-item">Add quick notes for parking, dietary needs, or budget.</li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <aside class="drawer" id="compareDrawer" aria-label="Compare restaurants">
+    <div class="section-head">
+      <div>
+        <h2>Compare picks</h2>
+        <p>Keep two top choices side by side.</p>
+      </div>
+      <button class="mini-btn" id="btnCloseCompare" type="button">Close</button>
+    </div>
+    <div class="compare-grid" id="compareGrid"></div>
+  </aside>
+
+  <div class="mobile-pad" aria-hidden="true"></div>
+  <nav class="mobile-nav" aria-label="GenieSphere mobile navigation">
+    <div class="mobile-nav-inner">
+      <a class="mnav" href="/dashboard/overview.html"><div class="ico">🧭</div><div>Overview</div></a>
+      <a class="mnav" href="/dashboard/household.html"><div class="ico">🏡</div><div>Household</div></a>
+      <a class="mnav" href="/dashboard/business.html"><div class="ico">🏢</div><div>Business</div></a>
+      <a class="mnav" href="/dashboard/investment.html"><div class="ico">📈</div><div>Investment</div></a>
+      <a class="mnav active" href="/dashboard/leisure.html"><div class="ico">🏝️</div><div>Leisure</div></a>
+    </div>
+  </nav>
+
+  <script>
+    const RESTAURANTS = [
+      {id:'r1',name:'Basil & Ember',cuisine:'Italian',vibe:'Romantic',price:'$$$',distance:4.2,rating:4.8,audience:['Date Night','Business Meal'],dietary:['Vegetarian','Reservations'],neighborhood:'Downtown',budget:'~$35 pp',reserve:'Recommended',patio:'No',summary:'Warm lighting, handmade pasta, and a quieter dining room for slower dinners.'},
+      {id:'r2',name:'Pho Lantern',cuisine:'Vietnamese',vibe:'Casual',price:'$$',distance:3.1,rating:4.7,audience:['Family','Friends','Solo'],dietary:['Gluten-Free','Kids Menu'],neighborhood:'West Loop',budget:'~$18 pp',reserve:'Walk-in friendly',patio:'Yes',summary:'Comforting pho, rice plates, and easy group seating with fast service.'},
+      {id:'r3',name:'Harbor Grill',cuisine:'American',vibe:'Family',price:'$$$',distance:5.8,rating:4.5,audience:['Family','Friends'],dietary:['Kids Menu','Outdoor Seating','Reservations'],neighborhood:'Riverfront',budget:'~$28 pp',reserve:'Recommended',patio:'Yes',summary:'Reliable seafood and burgers with a patio and broad menu for mixed groups.'},
+      {id:'r4',name:'Sora Omakase',cuisine:'Japanese',vibe:'Upscale',price:'$$$$',distance:7.2,rating:4.9,audience:['Date Night','Business Meal'],dietary:['Reservations'],neighborhood:'Gold Coast',budget:'~$95 pp',reserve:'Required',patio:'No',summary:'High-end sushi counter experience with limited seats and polished service.'},
+      {id:'r5',name:'Mango Mesa',cuisine:'Mexican',vibe:'Family',price:'$$',distance:2.4,rating:4.6,audience:['Family','Friends'],dietary:['Vegetarian','Kids Menu','Outdoor Seating'],neighborhood:'South Elgin',budget:'~$20 pp',reserve:'Optional',patio:'Yes',summary:'Colorful neighborhood favorite with tacos, bowls, and easy casual energy.'},
+      {id:'r6',name:'Oak & Marble',cuisine:'Steakhouse',vibe:'Upscale',price:'$$$$',distance:6.5,rating:4.7,audience:['Business Meal','Date Night'],dietary:['Reservations'],neighborhood:'Schaumburg',budget:'~$85 pp',reserve:'Recommended',patio:'No',summary:'Classic steakhouse feel with polished service, private booths, and wine-heavy menu.'},
+      {id:'r7',name:'Juniper Table',cuisine:'Fusion',vibe:'Casual',price:'$$$',distance:4.8,rating:4.4,audience:['Friends','Date Night'],dietary:['Vegetarian','Outdoor Seating','Reservations'],neighborhood:'Naperville',budget:'~$30 pp',reserve:'Recommended',patio:'Yes',summary:'Small-plates menu with a trendier crowd and flexible options for groups.'},
+      {id:'r8',name:'Green Spoon Cafe',cuisine:'American',vibe:'Quick Bite',price:'$',distance:1.7,rating:4.3,audience:['Solo','Friends','Family'],dietary:['Vegetarian','Vegan','Gluten-Free'],neighborhood:'Elgin',budget:'~$14 pp',reserve:'No reservation needed',patio:'No',summary:'Healthy bowls, wraps, and coffee stop energy for lighter meals.'},
+      {id:'r9',name:'Kumo Ramen House',cuisine:'Japanese',vibe:'Casual',price:'$$',distance:2.9,rating:4.6,audience:['Friends','Solo'],dietary:['Gluten-Free'],neighborhood:'St. Charles',budget:'~$17 pp',reserve:'Walk-in friendly',patio:'No',summary:'Ramen, small plates, and cozy seating for fast but satisfying dinners.'},
+      {id:'r10',name:'Olive Court',cuisine:'Mediterranean',vibe:'Family',price:'$$',distance:5.1,rating:4.5,audience:['Family','Business Meal'],dietary:['Vegetarian','Gluten-Free','Reservations'],neighborhood:'Geneva',budget:'~$22 pp',reserve:'Optional',patio:'Yes',summary:'Good for mixed dietary needs with generous portions and reliable service.'},
+      {id:'r11',name:'Morning Butter',cuisine:'American',vibe:'Family',price:'$$',distance:3.3,rating:4.4,audience:['Family','Friends'],dietary:['Kids Menu','Outdoor Seating'],neighborhood:'Batavia',budget:'~$18 pp',reserve:'Walk-in friendly',patio:'Yes',summary:'Brunch-heavy menu with pancakes, egg dishes, and family-sized tables.'},
+      {id:'r12',name:'Cedar Flame',cuisine:'Middle Eastern',vibe:'Casual',price:'$$',distance:4.1,rating:4.7,audience:['Family','Friends','Solo'],dietary:['Vegetarian','Gluten-Free'],neighborhood:'Aurora',budget:'~$19 pp',reserve:'Optional',patio:'No',summary:'Kebabs, bowls, and fresh mezze with several flexible dietary choices.'}
+    ];
+
+    const STORAGE = {
+      saved:'gs_restaurant_saved_v1',
+      plan:'gs_restaurant_plan_v1'
+    };
+
+    const state = {
+      chipFilters:new Set(),
+      saved:loadJSON(STORAGE.saved, []),
+      plan:loadJSON(STORAGE.plan, null),
+      compare:[]
+    };
+
+    const $ = (id)=>document.getElementById(id);
+
+    function loadJSON(key, fallback){
+      try{ const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; }catch(_){ return fallback; }
+    }
+    function saveJSON(key, value){
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+    function esc(v){
+      return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    function currentFilters(){
+      return {
+        term: $('searchTerm').value.trim().toLowerCase(),
+        cuisine: $('cuisineFilter').value,
+        vibe: $('vibeFilter').value,
+        price: $('priceFilter').value,
+        distance: $('distanceFilter').value,
+        audience: $('audienceFilter').value,
+        chips:[...state.chipFilters]
+      };
+    }
+
+    function matchesFilters(item, f){
+      const hay = [item.name,item.cuisine,item.vibe,item.summary,item.neighborhood,...item.audience,...item.dietary].join(' ').toLowerCase();
+      if(f.term && !hay.includes(f.term)) return false;
+      if(f.cuisine !== 'all' && item.cuisine !== f.cuisine) return false;
+      if(f.vibe !== 'all' && item.vibe !== f.vibe) return false;
+      if(f.price !== 'all' && item.price !== f.price) return false;
+      if(f.distance !== 'all' && item.distance > Number(f.distance)) return false;
+      if(f.audience !== 'all' && !item.audience.includes(f.audience)) return false;
+      if(f.chips.length && !f.chips.every(ch => item.dietary.includes(ch) || item.reserve.includes(ch) || item.patio === 'Yes' && ch === 'Outdoor Seating')) return false;
+      return true;
+    }
+
+    function scoreItem(item, f){
+      let score = item.rating * 20;
+      if(f.term){
+        const hay = [item.name,item.summary,item.cuisine,item.vibe].join(' ').toLowerCase();
+        if(hay.includes(f.term)) score += 15;
+      }
+      if(f.cuisine !== 'all' && item.cuisine === f.cuisine) score += 12;
+      if(f.vibe !== 'all' && item.vibe === f.vibe) score += 10;
+      if(f.price !== 'all' && item.price === f.price) score += 8;
+      if(f.audience !== 'all' && item.audience.includes(f.audience)) score += 10;
+      score += Math.max(0, 8 - item.distance);
+      score += f.chips.filter(ch => item.dietary.includes(ch)).length * 4;
+      if(f.chips.includes('Reservations') && item.reserve !== 'No reservation needed' && item.reserve !== 'Walk-in friendly') score += 5;
+      if(f.chips.includes('Outdoor Seating') && item.patio === 'Yes') score += 5;
+      return score;
+    }
+
+    function filteredRestaurants(){
+      const f = currentFilters();
+      return RESTAURANTS
+        .filter(r => matchesFilters(r, f))
+        .map(r => ({...r, score:scoreItem(r, f)}))
+        .sort((a,b) => b.score - a.score || b.rating - a.rating || a.distance - b.distance);
+    }
+
+    function renderCards(){
+      const rows = filteredRestaurants();
+      $('restaurantCards').innerHTML = rows.length ? rows.map(r => `
+        <article class="card">
+          <div class="card-top">
+            <div>
+              <h3 class="card-title">${esc(r.name)}</h3>
+              <div class="muted">${esc(r.neighborhood)} · ${esc(r.summary)}</div>
+            </div>
+            <div class="rating">⭐ ${r.rating.toFixed(1)}</div>
+          </div>
+          <div class="meta">
+            <span class="meta-pill">${esc(r.cuisine)}</span>
+            <span class="meta-pill">${esc(r.vibe)}</span>
+            <span class="meta-pill">${esc(r.price)}</span>
+            <span class="meta-pill">${esc(r.distance.toFixed(1))} mi</span>
+            <span class="meta-pill">${esc(r.reserve)}</span>
+          </div>
+          <div class="kpi-line">
+            <div class="kpi-mini"><strong>${esc(r.budget)}</strong><span>Budget</span></div>
+            <div class="kpi-mini"><strong>${esc(r.patio)}</strong><span>Patio</span></div>
+            <div class="kpi-mini"><strong>${esc(r.audience[0])}</strong><span>Best for</span></div>
+          </div>
+          <div class="meta">${r.dietary.map(d => `<span class="meta-pill">${esc(d)}</span>`).join('')}</div>
+          <div class="card-actions">
+            <button class="mini-btn primary" type="button" data-save="${r.id}">${state.saved.includes(r.id) ? '✓ Saved' : 'Save shortlist'}</button>
+            <button class="mini-btn" type="button" data-compare="${r.id}">Compare</button>
+            <button class="mini-btn warn" type="button" data-plan="${r.id}">Use in plan</button>
+          </div>
+        </article>
+      `).join('') : `<div class="empty">No restaurants match these filters yet. Try widening distance, price, or vibe.</div>`;
+
+      $('resultsSummary').textContent = `Showing ${rows.length} ${rows.length === 1 ? 'restaurant' : 'restaurants'}`;
+      updateHeroStats(rows);
+      bindCardActions();
+    }
+
+    function updateHeroStats(rows){
+      $('heroMatchCount').textContent = `${rows.length} ${rows.length === 1 ? 'match' : 'matches'}`;
+      $('heroSavedCount').textContent = `${state.saved.length} saved`;
+      const avgDist = rows.length ? (rows.reduce((a,r)=>a+r.distance,0)/rows.length).toFixed(1) : '0.0';
+      $('heroAvgDistance').textContent = `${avgDist} mi`;
+      const budgetLabel = rows.length ? mostCommon(rows.map(r=>r.budget)) : '—';
+      $('heroBudgetLabel').textContent = budgetLabel;
+      const top = rows[0];
+      $('topMatchSummary').textContent = top ? `${top.name} looks like the best current fit: ${top.cuisine}, ${top.vibe.toLowerCase()}, ${top.distance.toFixed(1)} miles away.` : 'No top match yet. Relax one or two filters to restore results.';
+
+      $('snapshotBest').textContent = rows.length ? `${rows[0].rating.toFixed(1)} ★` : '—';
+      $('snapshotReserve').textContent = rows.filter(r => r.reserve !== 'Walk-in friendly' && r.reserve !== 'No reservation needed').length;
+      $('snapshotFamily').textContent = rows.filter(r => r.audience.includes('Family')).length;
+      $('snapshotPatio').textContent = rows.filter(r => r.patio === 'Yes').length;
+    }
+
+    function mostCommon(values){
+      const map = new Map();
+      values.forEach(v => map.set(v, (map.get(v)||0)+1));
+      return [...map.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
+    }
+
+    function bindCardActions(){
+      document.querySelectorAll('[data-save]').forEach(btn => {
+        btn.onclick = () => toggleSaved(btn.dataset.save);
+      });
+      document.querySelectorAll('[data-compare]').forEach(btn => {
+        btn.onclick = () => addCompare(btn.dataset.compare);
+      });
+      document.querySelectorAll('[data-plan]').forEach(btn => {
+        btn.onclick = () => useInPlan(btn.dataset.plan);
+      });
+    }
+
+    function toggleSaved(id){
+      const idx = state.saved.indexOf(id);
+      if(idx >= 0) state.saved.splice(idx,1); else state.saved.unshift(id);
+      state.saved = [...new Set(state.saved)].slice(0,8);
+      saveJSON(STORAGE.saved, state.saved);
+      renderSaved();
+      renderCards();
+      updateTonightSummary();
+    }
+
+    function renderSaved(){
+      const rows = state.saved.map(id => RESTAURANTS.find(r => r.id === id)).filter(Boolean);
+      $('savedList').innerHTML = rows.length ? `<div class="saved-list">${rows.map(r => `
+        <div class="saved-item">
+          <div>
+            <strong>${esc(r.name)}</strong>
+            <div class="muted">${esc(r.cuisine)} · ${esc(r.price)} · ${esc(r.distance.toFixed(1))} mi</div>
+          </div>
+          <div class="saved-actions">
+            <button class="mini-btn" type="button" data-plan="${r.id}">Plan</button>
+            <button class="mini-btn" type="button" data-remove="${r.id}">Remove</button>
+          </div>
+        </div>
+      `).join('')}</div>` : `<div class="empty">No saved picks yet. Save a few strong options here before making the final call.</div>`;
+      document.querySelectorAll('[data-remove]').forEach(btn => btn.onclick = () => toggleSaved(btn.dataset.remove));
+      document.querySelectorAll('#savedList [data-plan]').forEach(btn => btn.onclick = () => useInPlan(btn.dataset.plan));
+    }
+
+    function addCompare(id){
+      if(!state.compare.includes(id)) state.compare.push(id);
+      state.compare = state.compare.slice(-2);
+      renderCompare();
+    }
+
+    function renderCompare(){
+      const rows = state.compare.map(id => RESTAURANTS.find(r => r.id === id)).filter(Boolean);
+      const drawer = $('compareDrawer');
+      const grid = $('compareGrid');
+      if(!rows.length){ drawer.classList.remove('open'); grid.innerHTML=''; return; }
+      drawer.classList.add('open');
+      grid.innerHTML = rows.map(r => `
+        <div class="compare-box">
+          <strong>${esc(r.name)}</strong>
+          <div class="muted">${esc(r.cuisine)} · ${esc(r.vibe)}</div>
+          <div class="muted">${esc(r.price)} · ${esc(r.distance.toFixed(1))} mi · ⭐ ${r.rating.toFixed(1)}</div>
+          <div class="muted">${esc(r.reserve)} · Patio ${esc(r.patio)}</div>
+          <div class="foot-note">${esc(r.summary)}</div>
+        </div>
+      `).join('');
+    }
+
+    function useInPlan(id){
+      const r = RESTAURANTS.find(x => x.id === id);
+      if(!r) return;
+      $('planningNotes').value = `Restaurant: ${r.name}\nBest for: ${r.audience.join(', ')}\nReservation: ${r.reserve}\nBudget: ${r.budget}\nNotes: ${r.summary}`;
+      $('plannerMessage').textContent = `${r.name} has been inserted into your outing notes. Add date, time, and party size, then save the plan.`;
+      updateTonightSummary(r.name);
+    }
+
+    function savePlan(){
+      const plan = {
+        date:$('planDate').value,
+        time:$('planTime').value,
+        partySize:$('partySize').value,
+        budget:$('budgetTarget').value,
+        notes:$('planningNotes').value.trim(),
+        savedAt:new Date().toISOString()
+      };
+      state.plan = plan;
+      saveJSON(STORAGE.plan, plan);
+      $('plannerMessage').textContent = 'Outing plan saved on this device.';
+      updateTonightSummary();
+    }
+
+    function loadPlanIntoUI(){
+      if(!state.plan) return;
+      $('planDate').value = state.plan.date || '';
+      $('planTime').value = state.plan.time || '';
+      $('partySize').value = state.plan.partySize || 2;
+      $('budgetTarget').value = state.plan.budget || '';
+      $('planningNotes').value = state.plan.notes || '';
+      $('plannerMessage').textContent = 'Loaded your saved outing plan.';
+    }
+
+    function clearPlan(){
+      state.plan = null;
+      localStorage.removeItem(STORAGE.plan);
+      $('planDate').value = '';
+      $('planTime').value = '';
+      $('partySize').value = 2;
+      $('budgetTarget').value = '';
+      $('planningNotes').value = '';
+      $('plannerMessage').textContent = 'Planner reset.';
+      updateTonightSummary();
+    }
+
+    function updateTonightSummary(nameOverride){
+      const savedTop = RESTAURANTS.find(r => r.id === state.saved[0]);
+      const focusName = nameOverride || extractRestaurantNameFromNotes() || savedTop?.name;
+      $('tonightSummary').textContent = focusName ? `Current dinner plan is centered around ${focusName}. Save the outing plan when you are ready.` : 'No dinner plan saved yet. Save one option to build a simple outing plan here.';
+    }
+
+    function extractRestaurantNameFromNotes(){
+      const notes = $('planningNotes').value || state.plan?.notes || '';
+      const match = notes.match(/Restaurant:\s*(.+)/i);
+      return match ? match[1].trim() : '';
+    }
+
+    function toggleChip(btn){
+      const key = btn.dataset.chip;
+      if(state.chipFilters.has(key)) state.chipFilters.delete(key); else state.chipFilters.add(key);
+      btn.classList.toggle('active', state.chipFilters.has(key));
+      renderCards();
+    }
+
+    function bindFilters(){
+      ['searchTerm','cuisineFilter','vibeFilter','priceFilter','distanceFilter','audienceFilter'].forEach(id => {
+        $(id).addEventListener('input', renderCards);
+        $(id).addEventListener('change', renderCards);
+      });
+      $('globalSearch').addEventListener('input', e => {
+        $('searchTerm').value = e.target.value;
+        renderCards();
+      });
+      document.querySelectorAll('#dietaryChips .chip').forEach(btn => {
+        btn.addEventListener('click', () => toggleChip(btn));
+      });
+    }
+
+    function bindHeader(){
+      const menu = $('userMenu');
+      const toggle = $('userMenuToggle');
+      toggle.addEventListener('click', () => {
+        const open = menu.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+      document.addEventListener('click', e => {
+        if(!menu.contains(e.target)){ menu.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); }
+      });
+      document.querySelectorAll('.dropdown-nav').forEach(btn => {
+        btn.addEventListener('click', ()=> location.href = btn.dataset.target);
+      });
+      $('user-auth-action').addEventListener('click', ()=> location.href='/onboarding/login.html');
+      $('user-signout-btn').addEventListener('click', ()=> location.href='/onboarding/login.html');
+    }
+
+    function bindGeneralActions(){
+      $('btnUseTopPick').addEventListener('click', () => {
+        const top = filteredRestaurants()[0];
+        if(top) useInPlan(top.id);
+      });
+      $('btnSavePlan').addEventListener('click', savePlan);
+      $('btnClearPlan').addEventListener('click', clearPlan);
+      $('btnCloseCompare').addEventListener('click', () => {
+        state.compare = [];
+        renderCompare();
+      });
+    }
+
+    function init(){
+      bindHeader();
+      bindFilters();
+      bindGeneralActions();
+      loadPlanIntoUI();
+      renderSaved();
+      renderCards();
+      updateTonightSummary();
+    }
+
+    init();
+  </script>
+</body>
+</html>

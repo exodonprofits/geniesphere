@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🍱 Nutrition Engine | GenieSphere</title>
+<meta name="description" content="Nutrition Engine Hub — launch your AI meal planner and supporting health tools."/>
+<meta name="gs-config" content="/shared/config.json"/>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   NUTRITION ENGINE HUB — Household · Teal Identity
+   Tokens copied verbatim from household.html
+   bg:#F5F7FA  panel:#FFFFFF  text:#111827  accent:#22D3EE
+═══════════════════════════════════════════════════════════════ */
+:root{
+  --area-accent:#22D3EE; --area-dim:rgba(34,211,238,.10); --area-dark:#0E7490;
+  --bg:#F5F7FA; --panel:#FFFFFF; --panel-soft:#F0F4F8;
+  --text:#111827; --muted:#6B7280; --muted-2:#9CA3AF;
+  --line:#E5EAF0; --line-2:#D1D9E0;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.08);
+  --radius:18px; --radius-lg:24px; --max:1440px;
+  --teal:#22D3EE; --teal-dark:#0891B2; --teal-deep:#0E7490;
+  --teal-dim:rgba(34,211,238,.10); --teal-soft:rgba(34,211,238,.06); --teal-bd:rgba(34,211,238,.28);
+  --ok-bg:#F0FDFA; --ok-bd:#99F6E4; --ok-txt:#0F766E;
+  --warn-bg:#FFFBEB; --warn-bd:#FCD34D; --warn-txt:#92400E;
+  --urgent-bg:#FEF2F2; --urgent-bd:#FECACA; --urgent-txt:#B91C1C;
+}
+*{box-sizing:border-box} html,body{margin:0;padding:0;min-height:100%}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ── TOPBAR — verbatim from household.html ── */
+.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(14px) saturate(180%);border-bottom:1px solid var(--line);box-shadow:0 1px 0 var(--line),0 2px 10px rgba(0,0,0,.04)}
+.topbar-inner{max-width:var(--max);margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+.brand-mark{width:36px;height:36px;border-radius:50%;flex:0 0 auto;background:radial-gradient(circle at 30% 30%,#7ef1c7 0%,#34d399 45%,#0f9f68 100%);box-shadow:0 0 0 3px rgba(52,211,153,.18),0 4px 12px rgba(52,211,153,.14)}
+.brand-name{font-size:18px;font-weight:800;letter-spacing:-.03em}
+.nav{display:flex;align-items:center;gap:2px;flex-wrap:wrap;margin-left:12px}
+.nav-link{color:var(--muted);font-weight:500;font-size:13px;padding:6px 10px;border-radius:8px;border-bottom:2px solid transparent;transition:background .14s,color .14s;text-decoration:none}
+.nav-link:hover{background:var(--area-dim);color:var(--area-dark)}
+.nav-link.active{background:var(--area-dim);color:var(--area-dark);font-weight:700;border-bottom-color:var(--area-accent)}
+.userbox{display:flex;align-items:center;gap:10px;margin-left:auto}
+.search{width:220px;max-width:26vw;border:1px solid var(--line-2);border-radius:999px;background:var(--panel-soft);padding:9px 14px;color:var(--text);outline:none;font-size:13px;font-family:inherit;transition:border-color .14s,box-shadow .14s}
+.search:focus{border-color:var(--area-accent);box-shadow:0 0 0 3px var(--area-dim)}
+.search::placeholder{color:var(--muted-2)}
+.user-menu{position:relative;display:flex;align-items:center}
+.user-menu-toggle{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 1px 2px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.06);transition:border-color .14s;white-space:nowrap}
+.user-menu-toggle:hover{border-color:var(--area-accent)}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--area-dim);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--area-dark);flex-shrink:0}
+.user-menu-dropdown{position:absolute;right:0;top:calc(100% + 8px);min-width:240px;background:var(--panel);border-radius:16px;border:1px solid var(--line);box-shadow:0 4px 6px rgba(0,0,0,.04),0 20px 48px rgba(0,0,0,.13);padding:6px 0;display:none;z-index:2005}
+.user-menu.open .user-menu-dropdown{display:block}
+.user-menu-dropdown a,.user-menu-dropdown button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 14px;background:none;border:none;color:var(--text);font-size:13px;cursor:pointer;transition:background .12s;font-family:inherit;text-decoration:none}
+.user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:var(--panel-soft)}
+.user-menu-divider{height:1px;margin:4px 8px;background:var(--line)}
+.dropdown-label{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted-2);padding:8px 14px 3px;font-weight:700}
+.mobile-only{display:none} .auth-only{display:none}
+
+/* ── PAGE ── */
+.page{max-width:var(--max);margin:0 auto;padding:32px 24px 52px}
+
+/* ── PAGE HEADER ── */
+.page-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-dark);margin-bottom:10px}
+.page-title{font-size:clamp(24px,3.5vw,38px);font-weight:900;letter-spacing:-.04em;line-height:1.06;margin:0 0 8px;color:var(--text)}
+.page-subtitle{color:var(--muted);font-size:15px;max-width:560px;margin:0 0 20px;line-height:1.6}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;transition:filter .15s,transform .12s;white-space:nowrap;font-family:inherit;text-decoration:none}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-green{background:var(--teal);color:#012e38}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--line-2)}
+.btn-outline:hover{border-color:var(--teal);background:var(--teal-dim)}
+.btn-sm{padding:7px 14px;font-size:13px}
+
+/* ── ASK BAR ── */
+.ask-bar{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;margin-bottom:28px;box-shadow:var(--shadow)}
+.ask-inner{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.ask-copy{flex:1;min-width:200px}
+.ask-copy strong{font-size:15px;font-weight:700;display:block;margin-bottom:3px}
+.ask-copy p{font-size:13px;color:var(--muted);margin:0}
+
+/* ── SECTIONS DIVIDER — from household ── */
+.sections-divider{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.divider-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);white-space:nowrap}
+.divider-line{height:1px;background:var(--line);flex:1}
+
+/* ── SECTION ACCORDION — verbatim from household ── */
+details.section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+details.section>summary{list-style:none;cursor:pointer;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:background .13s;user-select:none}
+details.section>summary::-webkit-details-marker{display:none}
+details.section>summary:hover{background:var(--teal-soft)}
+details.section[open]>summary{border-bottom:1px solid var(--line)}
+.section-title{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;color:var(--text);margin:0}
+.section-right{display:flex;align-items:center;gap:12px}
+.section-summary-right{color:var(--muted-2);font-size:13px;font-weight:500}
+.section-chevron{font-size:12px;color:var(--muted-2);transition:transform .2s;flex-shrink:0}
+details.section[open] .section-chevron{transform:rotate(180deg)}
+.section-body{padding:16px 20px}
+
+/* ── CARD GRID — from household ── */
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.grid-featured{grid-template-columns:1fr}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.grid,.grid-2{grid-template-columns:1fr}}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;text-decoration:none;color:var(--text);min-height:136px;display:flex;flex-direction:column;transition:transform .14s,border-color .14s,box-shadow .14s;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.card:hover{transform:translateY(-3px);border-color:var(--teal-bd);box-shadow:var(--shadow-md)}
+.card-icon{font-size:22px;margin-bottom:9px;line-height:1}
+.card-title{font-size:16px;font-weight:700;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.card p{margin:0;color:var(--muted);font-size:13px;line-height:1.5;flex:1}
+.micro{margin-top:8px;font-size:11px;color:var(--muted-2)}
+
+/* Featured card */
+.card.featured{min-height:170px;border-color:rgba(34,211,238,.22);background:linear-gradient(160deg,var(--ok-bg),rgba(240,253,250,.6));padding:20px}
+.card.featured:hover{border-color:var(--teal-bd)}
+.card.featured .card-title{font-size:18px}
+.card.featured p{font-size:14px;max-width:60ch}
+.card.featured::after{content:"Genie";position:absolute;top:12px;right:12px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--teal-dim);border:1px solid var(--teal-bd);color:var(--teal-deep)}
+
+/* Disabled (coming soon) */
+.card.disabled{opacity:.6;pointer-events:none;filter:saturate(.7)}
+.card.disabled:hover{transform:none;border-color:var(--line);box-shadow:var(--shadow)}
+
+/* Compact (testing) cards */
+.card.compact{min-height:110px;padding:16px}
+
+/* Hub badge */
+.hub-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;margin-bottom:10px;white-space:nowrap}
+.hub-badge.recommended{background:var(--teal-dim);color:var(--teal-deep);border:1px solid var(--teal-bd)}
+.hub-badge.coming-soon{background:var(--warn-bg);color:var(--warn-txt);border:1px solid var(--warn-bd)}
+.hub-badge.testing{background:var(--panel-soft);color:var(--muted);border:1px solid var(--line-2)}
+
+/* Feature pills inside featured card */
+.feature-pills{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.fpill{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;border:1px solid var(--teal-bd);background:var(--teal-dim);color:var(--teal-deep);font-size:12px;font-weight:600}
+
+/* Hub CTA button */
+.hub-btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:999px;background:var(--teal);color:#012e38;font:700 14px/1 inherit;text-decoration:none;transition:filter .15s,transform .12s;border:none;cursor:pointer;margin-top:12px}
+.hub-btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+
+/* ── FOOTER — from household ── */
+.site-footer{margin-top:40px;padding:26px 0 34px;border-top:1px solid var(--line);background:var(--panel)}
+.site-footer-inner{max-width:var(--max);margin:0 auto;padding:0 24px}
+.footer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+@media(max-width:860px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.footer-col h4{margin:0 0 10px;color:var(--text);font-size:13px;font-weight:700}
+.footer-col a{display:block;color:var(--muted);text-decoration:none;margin:5px 0;font-size:13px;transition:color .13s}
+.footer-col a:hover{color:var(--teal-dark)}
+.footer-bottom{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted-2)}
+
+/* ── MOBILE NAV — from household ── */
+.mobile-nav{position:fixed;left:0;right:0;bottom:0;display:none;z-index:1200;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.08);backdrop-filter:blur(12px)}
+.mobile-nav-inner{max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.mnav{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--muted-2);font-weight:600;font-size:10px;text-decoration:none;transition:all .14s}
+.mnav .ico{font-size:17px;line-height:1}
+.mnav.active{color:var(--teal-deep);border-color:var(--teal-bd);background:var(--teal-dim)}
+.mobile-pad{display:none;height:70px}
+
+/* ── Agent flow tracker ── */
+.agent-flow{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.agent-flow-head{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(135deg,var(--teal-soft),rgba(8,145,178,.01))}
+.agent-flow-title{font-size:15px;font-weight:800}
+.agent-flow-reset{font-size:12px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:inherit;padding:4px 8px;border-radius:6px;transition:color .13s}
+.agent-flow-reset:hover{color:var(--err-txt)}
+.flow-steps{display:grid;grid-template-columns:repeat(3,1fr);padding:16px 20px;gap:12px}
+@media(max-width:640px){.flow-steps{grid-template-columns:1fr}}
+.flow-step-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel-soft);transition:border-color .14s}
+.flow-step-item.active{background:var(--ok-bg);border-color:var(--ok-bd)}
+.flow-step-item.done{background:var(--teal-soft);border-color:var(--teal-bd)}
+.flow-step-item.next-up{background:var(--warn-bg);border-color:var(--warn-bd)}
+.flow-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;background:var(--panel);border:1.5px solid var(--line-2)}
+.flow-step-item.done .flow-dot{background:var(--teal);border-color:var(--teal);color:#012e38}
+.flow-step-item.active .flow-dot{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-txt)}
+.flow-step-item.next-up .flow-dot{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn-txt)}
+.flow-step-body{flex:1;min-width:0}
+.flow-step-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.flow-step-detail{font-size:11px;color:var(--muted);line-height:1.4}
+.flow-step-cta{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:11px;font-weight:700;color:var(--teal-deep);text-decoration:none;border:1px solid var(--teal-bd);background:var(--teal-dim);padding:4px 10px;border-radius:999px;transition:all .13s}
+.flow-step-cta:hover{background:var(--teal);color:#012e38;border-color:var(--teal)}
+.flow-step-cta.warn{color:var(--warn-txt);border-color:var(--warn-bd);background:var(--warn-bg)}
+.flow-step-cta.warn:hover{background:var(--warn-bd);color:var(--warn-txt)}
+@media(max-width:860px){.mobile-nav{display:block}.mobile-pad{display:block}.page{padding-bottom:calc(70px + env(safe-area-inset-bottom))}}
+@media(max-width:820px){.nav{display:none}.mobile-only{display:block}}
+@media(max-width:640px){.search{display:none}.topbar-inner{padding:0 14px}.section-body{padding:14px 16px}.section-summary-right{display:none}}
+@media(max-width:480px){.site-footer{display:none!important}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/index.html">
+      <div class="brand-mark"></div>
+      <span class="brand-name">GenieSphere</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-link" href="/dashboard/overview.html">🧭 Overview</a>
+      <a class="nav-link active" href="/dashboard/household.html">🏡 Household</a>
+      <a class="nav-link" href="/dashboard/business.html">🏢 Business</a>
+      <a class="nav-link" href="/dashboard/investment.html">📈 Investment</a>
+      <a class="nav-link" href="/dashboard/leisure.html">🌴 Leisure</a>
+      <a class="nav-link" href="/dashboard/finance.html">💼 Finance</a>
+    </nav>
+    <div class="userbox">
+      <input class="search" type="search" placeholder="Search meals, plans, grocery…" aria-label="Search"/>
+      <div class="user-menu" id="user-menu">
+        <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle" type="button">
+          <span class="avatar" aria-hidden="true">👤</span>
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="user-menu-dropdown" id="user-menu-dropdown" aria-hidden="true">
+          <div class="mobile-only">
+            <div class="dropdown-label">Areas</div>
+            <button class="dropdown-nav" data-target="/dashboard/household.html" type="button">🏡 Household</button>
+            <button class="dropdown-nav" data-target="/dashboard/business.html" type="button">🏢 Business</button>
+            <button class="dropdown-nav" data-target="/dashboard/investment.html" type="button">📈 Investment</button>
+            <button class="dropdown-nav" data-target="/dashboard/leisure.html" type="button">🌴 Leisure</button>
+            <div class="user-menu-divider"></div>
+          </div>
+          <div class="dropdown-label">Account</div>
+          <button class="dropdown-nav" data-target="/onboarding/user_profile_form.html" type="button">👤 User profile</button>
+          <button class="dropdown-nav" data-target="/onboarding/display_settings.html" type="button">⚙️ Settings</button>
+          <div class="user-menu-divider"></div>
+          <button id="user-auth-action" type="button">Log in / Sign up</button>
+          <button class="auth-only" id="user-signout-btn" type="button">🚪 Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- PAGE -->
+<main class="page">
+
+  <!-- Page header -->
+  <div class="page-eyebrow">🏡 Household · Food &amp; Nutrition</div>
+  <h1 class="page-title">🍱 Nutrition Engine</h1>
+  <p class="page-subtitle">Your household meal assistant — plan the week, build the grocery list, and track nutrition. Each step flows into the next.</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px">
+    <a class="btn btn-outline btn-sm" href="/dashboard/household.html">← Household</a>
+  </div>
+
+  <!-- Agent flow tracker — rendered by JS based on localStorage state -->
+  <div id="agentFlow" style="margin-bottom:24px">
+    <!-- JS fills this in -->
+  </div>
+
+  <!-- Sections -->
+  <div class="sections-divider">
+    <div class="divider-label">All nutrition tools</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- Featured -->
+  <details class="section" open>
+    <summary>
+      <span class="section-title">⭐ Featured</span>
+      <div class="section-right">
+        <span class="section-summary-right" id="featuredMeta">Your meal planning assistant</span>
+        <span class="section-chevron">▾</span>
+      </div>
+    </summary>
+    <div class="section-body">
+      <div class="grid grid-featured">
+        <div class="card featured" id="genieCard">
+          <span class="hub-badge recommended" id="genieBadge">Recommended</span>
+          <div class="card-title"><span>🧞</span> Nutrition Genie</div>
+          <p id="genieDesc">All-in-one: guided setup → AI weekly meal plan → grocery list → macros. Works for any household size.</p>
+          <div class="feature-pills">
+            <span class="fpill">🧠 Weekly plan</span>
+            <span class="fpill">👨‍👩‍👧 Family-aware</span>
+            <span class="fpill">🧺 Grocery list</span>
+            <span class="fpill">📊 Macros</span>
+            <span class="fpill">🗃️ History</span>
+          </div>
+          <a class="hub-btn" href="/household/nutritiongenie/nutrition-genie_pro.html" id="genieBtn">🧞 Start My Weekly Plan</a>
+          <div class="micro" id="genieMicro">Best for: "Just set it up for my household" ✅</div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Core Tools -->
+  <details class="section" open>
+    <summary>
+      <span class="section-title">🥗 Core Tools</span>
+      <div class="section-right">
+        <span class="section-summary-right">Coming next</span>
+        <span class="section-chevron">▾</span>
+      </div>
+    </summary>
+    <div class="section-body">
+      <div class="grid">
+        <a class="card" href="/household/nutritiongenie/grocery-planner.html" id="groceryCard">
+          <div class="card-icon">🛒</div>
+          <div class="card-title">Grocery Planner</div>
+          <p id="groceryDesc">Build and manage your shopping list. Categorised, checkable, and exportable.</p>
+          <div class="micro" id="groceryMicro">Goal: "Make shopping effortless"</div>
+        </a>
+        <div class="card disabled">
+          <span class="hub-badge coming-soon">Coming soon</span>
+          <div class="card-icon">📊</div>
+          <div class="card-title">Macros Tracker</div>
+          <p>Track protein, carbs, and fat daily — see progress over time.</p>
+          <div class="micro">Goal: "Stay on target"</div>
+        </div>
+        <div class="card disabled">
+          <span class="hub-badge coming-soon">Coming soon</span>
+          <div class="card-icon">📚</div>
+          <div class="card-title">Saved Recipes</div>
+          <p>Store favourite meals and pull them back into future plans.</p>
+          <div class="micro">Goal: "Reuse what you love"</div>
+        </div>
+        <div class="card disabled">
+          <span class="hub-badge coming-soon">Coming soon</span>
+          <div class="card-icon">🩺</div>
+          <div class="card-title">Diabetic Mode</div>
+          <p>Smart substitutions, low-GI targets, and blood sugar-friendly planning rules.</p>
+          <div class="micro">Goal: "Lower spikes"</div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Healthy Habits -->
+  <details class="section" open>
+    <summary>
+      <span class="section-title">💪 Healthy Habits</span>
+      <div class="section-right">
+        <span class="section-summary-right">Simple trackers</span>
+        <span class="section-chevron">▾</span>
+      </div>
+    </summary>
+    <div class="section-body">
+      <div class="grid">
+        <div class="card disabled">
+          <span class="hub-badge coming-soon">Coming soon</span>
+          <div class="card-icon">💧</div>
+          <div class="card-title">Water Tracker</div>
+          <p>Daily hydration reminders and progress.</p>
+        </div>
+        <div class="card disabled">
+          <span class="hub-badge coming-soon">Coming soon</span>
+          <div class="card-icon">🥚</div>
+          <div class="card-title">Snack Builder</div>
+          <p>Quick diabetic-friendly snacks based on what you have at home.</p>
+        </div>
+        <div class="card disabled">
+          <span class="hub-badge coming-soon">Coming soon</span>
+          <div class="card-icon">🛡️</div>
+          <div class="card-title">Allergy Alerts</div>
+          <p>Ingredient checks for allergies and food intolerances.</p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Advanced / Testing -->
+  <details class="section">
+    <summary>
+      <span class="section-title">🧪 Advanced &amp; Testing</span>
+      <div class="section-right">
+        <span class="section-summary-right">Older standalone modes</span>
+        <span class="section-chevron">▾</span>
+      </div>
+    </summary>
+    <div class="section-body">
+      <div class="grid grid-2">
+        <a class="card compact" href="/household/nutritiongenie/nutrition-genie_v2.html">
+          <span class="hub-badge testing">For testing</span>
+          <div class="card-title">🧠 AI Weekly Plan (Standalone)</div>
+          <p>Simple direct form → AI results. Useful for debugging webhook output.</p>
+        </a>
+        <a class="card compact" href="/household/nutritiongenie/meal-planner.html">
+          <span class="hub-badge testing">For testing</span>
+          <div class="card-title">🧭 Meal Planner Wizard</div>
+          <p>Guided wizard UI without the combined Pro flow.</p>
+        </a>
+      </div>
+    </div>
+  </details>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>All Areas</h4>
+        <a href="/dashboard/overview.html">🧭 Overview</a>
+        <a href="/dashboard/household.html">🏡 Household</a>
+        <a href="/dashboard/business.html">🏢 Business</a>
+        <a href="/dashboard/investment.html">📈 Investment</a>
+        <a href="/dashboard/finance.html">💼 Finance</a>
+      </div>
+      <div class="footer-col">
+        <h4>Food &amp; Nutrition</h4>
+        <a href="/household/nutritiongenie/nutrition-engine-hub.html">Nutrition Engine</a>
+        <a href="/household/nutritiongenie/nutrition-genie_pro.html">Nutrition Genie</a>
+        <a href="/household/nutritiongenie/grocery-planner.html">Grocery Planner</a>
+        <a href="/household/nutritiongenie/pantry-tracker.html">Pantry Tracker</a>
+      </div>
+      <div class="footer-col">
+        <h4>Household Tools</h4>
+        <a href="/household/bill-reminders.html">Bills Hub</a>
+        <a href="/household/appointment-center.html">Appointments</a>
+        <a href="/household/cargenie/car-care.html">Car Care Genie</a>
+        <a href="/household/chore-manager.html">Chore Manager</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="/onboarding/api-key-settings.html">API Keys</a>
+        <a href="/about.html">About</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© <span id="yr"></span> GenieSphere. All rights reserved.</div>
+    </div>
+  </div>
+</footer>
+
+<div aria-hidden="true" class="mobile-pad"></div>
+
+<!-- MOBILE NAV -->
+<nav aria-label="GenieSphere mobile navigation" class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <a class="mnav" data-nav="overview" href="/dashboard/overview.html"><div class="ico">🧭</div><div>Overview</div></a>
+    <a class="mnav active" data-nav="household" href="/dashboard/household.html"><div class="ico">🏡</div><div>Home</div></a>
+    <a class="mnav" data-nav="business" href="/dashboard/business.html"><div class="ico">🏢</div><div>Business</div></a>
+    <a class="mnav" data-nav="investment" href="/dashboard/investment.html"><div class="ico">📈</div><div>Invest</div></a>
+    <a class="mnav" data-nav="leisure" href="/dashboard/leisure.html"><div class="ico">🏝️</div><div>Leisure</div></a>
+    <a class="mnav" data-nav="finance" href="/dashboard/finance.html"><div class="ico">💼</div><div>Finance</div></a>
+  </div>
+</nav>
+
+<!-- SCRIPTS -->
+<script>window.GS_CONFIG_URL="/shared/config.json";window.GS_CONFIG_PATH="/shared/config.json";</script>
+<script src="/shared/js/app-config.js?v=20260211"></script>
+<script src="/shared/js/gs-client.js?v=20260211"></script>
+<script src="/shared/js/auth-header.js?v=20260211"></script>
+<script src="/shared/js/hub-badges.js?v=20260211"></script>
+<script>window.GSAuthHeader?.init({loginUrl:"/onboarding/login.html",afterLogoutUrl:"/index.html"});</script>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+// Mobile nav active state
+document.querySelectorAll('.mobile-nav .mnav').forEach(a =>
+  a.classList.toggle('active', a.getAttribute('data-nav') === 'household')
+);
+
+// ── Agent flow state engine ─────────────────────────────────
+(function(){
+  const LS_PLAN  = 'gs_nutrition_last_plan_v1';
+  const LS_AGENT = 'gs_nutrition_agent_state_v1';
+  const LS_GROC  = 'gs_grocery_planner_v1';
+
+  function getAgentState(){
+    try{ return JSON.parse(localStorage.getItem(LS_AGENT)||'null'); }catch(_){ return null; }
+  }
+  function getPlan(){
+    try{ const r=localStorage.getItem(LS_PLAN); return r?JSON.parse(r):null; }catch(_){ return null; }
+  }
+  function getGroceryState(){
+    try{ const r=localStorage.getItem(LS_GROC); return r?JSON.parse(r):null; }catch(_){ return null; }
+  }
+  function resetFlow(){
+    if(!confirm('Clear your current meal plan and start fresh?')) return;
+    try{
+      localStorage.removeItem(LS_PLAN);
+      localStorage.removeItem(LS_AGENT);
+    }catch(_){}
+    renderFlow();
+    // Also update genie/grocery card copy
+    updateCards(null, null);
+  }
+
+  function timeAgo(iso){
+    if(!iso) return '';
+    const h = Math.round((Date.now()-new Date(iso))/3600000);
+    if(h<1) return 'just now';
+    if(h<24) return `${h}h ago`;
+    const d = Math.round(h/24);
+    return d===1?'yesterday':`${d} days ago`;
+  }
+
+  function renderFlow(){
+    const container = document.getElementById('agentFlow');
+    if(!container) return;
+    const agent = getAgentState();
+    const groc  = getGroceryState();
+    const hasPlan = !!agent && !!agent.planDate;
+    const hasShopped = groc && Array.isArray(groc.items) && groc.items.length > 0;
+    const checkedCount = hasShopped ? groc.items.filter(i=>i.checked).length : 0;
+    const totalCount   = hasShopped ? groc.items.length : 0;
+    const allDone = hasShopped && totalCount > 0 && checkedCount === totalCount;
+
+    // Step definitions
+    const steps = [
+      {
+        id:'plan',
+        num: hasPlan ? '✓' : '1',
+        name: 'Plan your meals',
+        detail: hasPlan
+          ? `${agent.daysCount||'?'} days · ${agent.household===1?'just you':(agent.household||'?')+' people'} · ${agent.goal||''} · ${timeAgo(agent.planDate)}`
+          : 'Answer a few questions and we\'ll build a weekly meal plan for your household.',
+        state: hasPlan ? 'done' : 'next-up',
+        cta: hasPlan
+          ? { label:'View or regenerate →', href:'/household/nutritiongenie/nutrition-genie_pro.html', style:'default' }
+          : { label:'Start planning →', href:'/household/nutritiongenie/nutrition-genie_pro.html', style:'default' }
+      },
+      {
+        id:'shop',
+        num: allDone ? '✓' : hasShopped ? '→' : '2',
+        name: 'Shop the list',
+        detail: hasShopped
+          ? (allDone ? `All ${totalCount} items checked off — shopping done!` : `${checkedCount} of ${totalCount} items checked off`)
+          : (hasPlan ? `${agent.groceryCount||0} items ready to import.` : 'Generate your meal plan first.'),
+        state: allDone ? 'done' : hasShopped ? 'active' : (hasPlan ? 'next-up' : 'inactive'),
+        cta: hasPlan
+          ? { label: hasShopped ? 'Continue shopping →' : 'Open grocery list →', href:'/household/nutritiongenie/grocery-planner.html'+(hasPlan&&!hasShopped?'?from=genie':''), style:'default' }
+          : null
+      },
+      {
+        id:'done',
+        num: allDone ? '✓' : '3',
+        name: 'Done for the week',
+        detail: allDone
+          ? 'All items ticked off. Start a new plan whenever you\'re ready.'
+          : 'Check off items as you shop — we\'ll track your progress here.',
+        state: allDone ? 'done' : 'inactive',
+        cta: allDone
+          ? { label:'Start next week →', href:'/household/nutritiongenie/nutrition-genie_pro.html', style:'default' }
+          : null
+      }
+    ];
+
+    // Map state names to CSS classes
+    const stateClass = { 'done':'done', 'active':'active', 'next-up':'next-up', 'inactive':'' };
+
+    container.innerHTML = `
+      <div class="agent-flow">
+        <div class="agent-flow-head">
+          <div class="agent-flow-title">🧭 Your meal assistant — this week</div>
+          ${hasPlan ? `<button class="agent-flow-reset" onclick="resetAgentFlow()">Start fresh</button>` : ''}
+        </div>
+        <div class="flow-steps">
+          ${steps.map(s=>`
+            <div class="flow-step-item ${stateClass[s.state]||''}">
+              <div class="flow-dot">${s.num}</div>
+              <div class="flow-step-body">
+                <div class="flow-step-name">${s.name}</div>
+                <div class="flow-step-detail">${s.detail}</div>
+                ${s.cta ? `<a class="flow-step-cta ${s.cta.style==='warn'?'warn':''}" href="${s.cta.href}">${s.cta.label}</a>` : ''}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function updateCards(agent, groc){
+    // Genie card
+    const genieBtn  = document.getElementById('genieBtn');
+    const genieMicro = document.getElementById('genieMicro');
+    const genieBadge = document.getElementById('genieBadge');
+    const genieDesc  = document.getElementById('genieDesc');
+    if(agent && agent.planDate){
+      if(genieBtn){ genieBtn.textContent = '🔄 Regenerate Plan'; }
+      if(genieMicro){ genieMicro.textContent = `Last plan: ${agent.goal||'—'} · ${agent.daysCount||'?'} days · ${timeAgo(agent.planDate)}`; }
+      if(genieBadge){ genieBadge.textContent = 'Plan active'; }
+      if(genieDesc){ genieDesc.textContent = 'You have an active meal plan. Open it to review, adjust, or regenerate for a new week.'; }
+    } else {
+      if(genieBtn){ genieBtn.textContent = '🧞 Start My Weekly Plan'; }
+      if(genieMicro){ genieMicro.textContent = 'Best for: "Just set it up for my household" ✅'; }
+      if(genieBadge){ genieBadge.textContent = 'Recommended'; }
+    }
+
+    // Grocery card
+    const grocCard  = document.getElementById('groceryCard');
+    const grocDesc  = document.getElementById('groceryDesc');
+    const grocMicro = document.getElementById('groceryMicro');
+    if(groc && Array.isArray(groc.items) && groc.items.length > 0){
+      const checked = groc.items.filter(i=>i.checked).length;
+      const total   = groc.items.length;
+      if(grocDesc){ grocDesc.textContent = `${checked} of ${total} items checked off. ${checked===total?'All done!':'Continue shopping where you left off.'}`; }
+      if(grocMicro){ grocMicro.textContent = checked===total ? '✅ Shopping complete' : `${total-checked} items remaining`; }
+      if(grocCard){ grocCard.href = '/household/nutritiongenie/grocery-planner.html'; }
+    } else if(agent && agent.planDate){
+      if(grocDesc){ grocDesc.textContent = `Your plan has ${agent.groceryCount||0} items ready to import. Open the grocery planner to start shopping.`; }
+      if(grocMicro){ grocMicro.textContent = '⬇️ Import from meal plan ready'; }
+      if(grocCard){ grocCard.href = '/household/nutritiongenie/grocery-planner.html?from=genie'; }
+    }
+  }
+
+  // Expose reset for inline onclick
+  window.resetAgentFlow = function(){
+    if(!confirm('Clear your current meal plan and grocery list, and start fresh?')) return;
+    try{ localStorage.removeItem('gs_nutrition_last_plan_v1'); }catch(_){}
+    try{ localStorage.removeItem('gs_nutrition_agent_state_v1'); }catch(_){}
+    renderFlow();
+    updateCards(null, null);
+  };
+
+  // Init
+  const agent = getAgentState();
+  const groc  = getGroceryState();
+  renderFlow();
+  updateCards(agent, groc);
+})();
+
+// User menu — verbatim from household.html
+(function(){
+  var wrap=document.getElementById('user-menu'),toggle=document.getElementById('user-menu-toggle'),menu=document.getElementById('user-menu-dropdown');
+  if(!wrap||!toggle||!menu) return;
+  function openM(){wrap.classList.add('open');toggle.setAttribute('aria-expanded','true');menu.setAttribute('aria-hidden','false');}
+  function closeM(){wrap.classList.remove('open');toggle.setAttribute('aria-expanded','false');menu.setAttribute('aria-hidden','true');}
+  closeM();
+  toggle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();wrap.classList.contains('open')?closeM():openM();});
+  document.addEventListener('click',e=>{if(wrap&&!wrap.contains(e.target))closeM();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
+  menu.querySelectorAll('.dropdown-nav[data-target]').forEach(b=>{b.addEventListener('click',()=>{var t=b.getAttribute('data-target');closeM();if(t)window.location.href=t;});});
+  var authBtn=document.getElementById('user-auth-action');
+  if(authBtn) authBtn.addEventListener('click',()=>{closeM();window.location.href='/onboarding/login.html';});
+  var signoutBtn=document.getElementById('user-signout-btn');
+  if(signoutBtn) signoutBtn.addEventListener('click',()=>{closeM();try{if(window.GSClient)window.GSClient.getAsync().then(c=>c.auth.signOut());}catch(e){}setTimeout(()=>window.location.href='/index.html',300);});
+  (function(){
+    var lbl=document.getElementById('user-name-label'); if(!lbl) return;
+    try{if(window.GSClient){window.GSClient.getAsync().then(c=>c.auth.getSession()).then(r=>{var user=r?.data?.session?.user;if(user){var meta=user.user_metadata||{};var name=(meta.full_name||meta.name||user.email||'').split(/\s+/)[0]||'Account';lbl.textContent=name;if(authBtn)authBtn.textContent='My account';document.querySelectorAll('.auth-only').forEach(el=>el.style.display='block');}}).catch(()=>{});}}catch(e){}
+  })();
+})();
+</script>
+</body>
+</html>

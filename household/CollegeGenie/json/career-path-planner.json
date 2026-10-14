@@ -1,0 +1,82 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "career-analysis",
+        "responseMode": "onReceived"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "career-analysis"
+    },
+    {
+      "parameters": {
+        "prompt": "Given the user's grade level, dream job, motivators, preferred environment, strengths, and favorite subjects, recommend 3 potential careers and 3 matching college majors. Make the advice friendly and encouraging.\n\nHere is the user data:\n\nName: {{$json[\"fullName\"]}}\nGrade: {{$json[\"gradeLevel\"]}}\nDream Career: {{$json[\"dreamCareer\"]}}\nMotivators: {{$json[\"motivators\"]}}\nEnvironment: {{$json[\"environment\"]}}\nStrengths: {{$json[\"strengths\"]}}\nSubjects: {{$json[\"subjects\"]}}",
+        "model": "gpt-4",
+        "temperature": 0.7,
+        "maxTokens": 500
+      },
+      "name": "ChatGPT",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ],
+      "credentials": {
+        "openAIApi": {
+          "id": "1",
+          "name": "OpenAI Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "ChatGPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ChatGPT": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "careerPathPlannerWorkflow",
+  "name": "Career Path Planner Analysis",
+  "tags": []
+}

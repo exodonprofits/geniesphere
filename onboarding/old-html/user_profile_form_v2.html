@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Profile | GenieSphere</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f8fafc;
+      padding: 1rem;
+      max-width: 700px;
+      margin: auto;
+      color: #0f172a;
+    }
+    h2 {
+      margin-top: 50px;
+      margin-bottom: 30px;
+      text-align: center;
+      color: #1e293b;
+    }
+    form {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    input {
+      width: 100%;
+      padding: .75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    .button-group {
+      display: flex;
+      gap: 1rem;
+    }
+    button {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+    }
+    .save-btn {
+      background-color: #10b981;
+      color: white;
+    }
+    .cancel-btn {
+      background-color: #e2e8f0;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body>
+  <!--script type="module" src="/shared/js/header-light.js"></script-->
+  <script type="module">import '/shared/js/header-light.js?v=3.0';</script>  
+  <h2>🧑‍💼 Update Your Profile</h2>
+  <form id="profile-form">
+    <input id="full_name" placeholder="👤 Full Name" />
+    <input id="phone" placeholder="📞 Phone Number" />
+    <input id="address" placeholder="🏠 Street Address" />
+    <input id="city" placeholder="🌇️ City" />
+    <input id="state" placeholder="🌆 State" />
+    <input id="zip" placeholder="📬 ZIP Code" />
+    <input id="country" placeholder="🌍 Country" />
+    <hr style="margin: 1.5rem 0;"/>
+    <input id="email" type="email" placeholder="📧 Email Address" disabled />
+
+    <div class="button-group">
+      <button type="submit" class="save-btn">📀 Save Profile</button>
+      <button type="button" class="cancel-btn" onclick="window.history.back()">Cancel</button>
+    </div>
+  </form>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+
+    async function loadProfile() {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData?.user?.id) {
+        alert("You must be logged in.");
+        return window.location.href = "/login.html";
+      }
+
+      const userId = authData.user.id;
+      const emailInput = document.getElementById("email");
+      if (emailInput) emailInput.value = authData.user.email;
+
+      const { data: profile, error } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.warn("Failed to load profile:", error.message);
+      }
+
+      if (profile) {
+        document.getElementById("full_name").value = profile.full_name || '';
+        document.getElementById("phone").value = profile.phone || '';
+        document.getElementById("address").value = profile.address || '';
+        document.getElementById("city").value = profile.city || '';
+        document.getElementById("state").value = profile.state || '';
+        document.getElementById("zip").value = profile.zip || '';
+        document.getElementById("country").value = profile.country || '';
+      }
+    }
+
+    loadProfile();
+
+    document.getElementById("profile-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData?.user?.id) {
+        alert("You must be logged in.");
+        return window.location.href = "/login.html";
+      }
+
+      const userId = authData.user.id;
+
+      const payload = {
+        user_id: userId,
+        full_name: document.getElementById("full_name").value,
+        phone: document.getElementById("phone").value,
+        address: document.getElementById("address").value,
+        city: document.getElementById("city").value,
+        state: document.getElementById("state").value,
+        zip: document.getElementById("zip").value,
+        country: document.getElementById("country").value,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from("user_profiles")
+        .select("user_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      let result;
+      if (existingProfile) {
+        result = await supabase
+          .from("user_profiles")
+          .update(payload)
+          .eq("user_id", userId);
+      } else {
+        result = await supabase
+          .from("user_profiles")
+          .insert(payload);
+      }
+
+      if (result.error) {
+        alert("❌ Failed to save profile.");
+        console.error(result.error);
+      } else {
+        alert("✅ Profile saved successfully.");
+      }
+    });
+  </script>
+</body>
+</html>

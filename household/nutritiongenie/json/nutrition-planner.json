@@ -1,0 +1,75 @@
+{
+  "name": "Nutrition Meal Plan Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "nutrition-plan",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": 1,
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ],
+      "webhookId": "webhook-nutrition-plan"
+    },
+    {
+      "parameters": {
+        "functionCode": "\nconst data = items[0].json;\nconst name = data.personal_info.name || \"Friend\";\nconst goals = data.health_dietary_preferences.nutritional_goals;\nconst cuisine = data.meal_preferences.cuisine_preferences.join(\", \");\nconst meals = data.meal_preferences.meals_per_day;\nconst dislikes = data.meal_preferences.disliked_foods;\n\nreturn [{\n  json: {\n    message: `Hi ${name}, here\u2019s your custom plan!\\n\\nGoal: ${goals}\\nPreferred Cuisine: ${cuisine}\\nMeals/Day: ${meals}\\nAvoid: ${dislikes}`\n  }\n}];\n"
+      },
+      "name": "Generate Plan Summary",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "responseData": "={{ $json[\"message\"] }}",
+        "options": {
+          "raw": false
+        }
+      },
+      "name": "Respond with Plan",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Plan Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Plan Summary": {
+      "main": [
+        [
+          {
+            "node": "Respond with Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "version": 1
+}

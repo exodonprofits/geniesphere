@@ -1,0 +1,133 @@
+{
+  "name": "Voyage Genie Email",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send-email",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "email-webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -100
+      ],
+      "webhookId": "new-email-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Webhook received payload:', JSON.stringify($json, null, 2));\nconsole.log('Webhook resolvedEmail:', $json.resolvedEmail);\nconsole.log('Webhook resolvedSubject:', $json.resolvedSubject);\nconsole.log('Webhook resolvedMessage type:', typeof $json.resolvedMessage);\nconsole.log('Webhook resolvedMessage length:', $json.resolvedMessage ? $json.resolvedMessage.length : 'undefined');\nconsole.log('Webhook resolvedMessage preview:', $json.resolvedMessage ? $json.resolvedMessage.substring(0, 500) : 'undefined');\n\nconst email = $json.resolvedEmail ? String($json.resolvedEmail).trim() : null;\nconst subject = $json.resolvedSubject || 'Your Adventure Itinerary - Voyage Genie';\nlet message = $json.resolvedMessage || 'No itinerary available to send.';\n\nconsole.log('After fallback message length:', message.length);\nconsole.log('After fallback message preview:', message.substring(0, 500));\n\n// Validate email\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!email || !emailRegex.test(email)) {\n  console.log('Invalid email, using fallback:', email);\n  message = 'Invalid email address provided.';\n  return [{ json: { resolvedEmail: 'jtran112675@gmail.com', resolvedSubject: subject, resolvedMessage: message } }];\n}\n\nconsole.log('Sending email to:', email);\nconsole.log('Final message length:', message.length);\nconsole.log('Final message preview:', message.substring(0, 500));\nreturn [{ json: { resolvedEmail: email, resolvedSubject: subject, resolvedMessage: message } }];"
+      },
+      "id": "validate-email-node",
+      "name": "Validate Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = $json.resolvedMessage || 'Fallback: No itinerary available to send.';\nconsole.log('Final message to Gmail length:', message.length);\nconsole.log('Final message to Gmail preview:', message.substring(0, 500));\nreturn [{ json: { resolvedEmail: $json.resolvedEmail, resolvedSubject: $json.resolvedSubject, resolvedMessage: message } }];"
+      },
+      "id": "finalize-email-node",
+      "name": "Finalize Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.resolvedEmail }}",
+        "subject": "={{ $json.resolvedSubject }}",
+        "emailFormat": "text",
+        "message": "={{ $json.resolvedMessage }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1020,
+        -100
+      ],
+      "id": "9aed6576-a6a6-4898-a2d9-163ceef509c1",
+      "name": "Gmail",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bBXXYTmxaLHTskHO",
+          "name": "Gmail account 12"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Email": {
+      "main": [
+        [
+          {
+            "node": "Finalize Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Email": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "new-version-id",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "new-email-workflow-id",
+  "tags": []
+}

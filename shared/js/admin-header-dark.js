@@ -1,0 +1,235 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const supabase = createClient(
+  "https://pbojacnagutipfhcxltj.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0"
+);
+
+async function injectUserBar() {
+  let userBar = document.getElementById("user-bar");
+
+  if (!userBar) {
+    userBar = document.createElement("div");
+    userBar.id = "user-bar";
+    userBar.className = "user-info";
+    document.body.prepend(userBar);
+  }
+
+  if (!document.getElementById("logo-wrapper")) {
+    const logoWrapper = document.createElement("div");
+    logoWrapper.id = "logo-wrapper";
+    logoWrapper.innerHTML = `
+      <a href="/dashboard/admin_dashboard.html">
+        <img src="/shared/assets/logo/genie-logo.png" alt="GenieSphere Logo" class="genie-logo" />
+      </a>
+    `;
+    document.body.prepend(logoWrapper);
+  }
+
+  const style = document.createElement("style");
+  style.textContent = `
+    #logo-wrapper {
+      position: fixed;
+      top: 10px;
+      left: 20px;
+      z-index: 9999;
+    }
+    .genie-logo {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      box-shadow: 0 0 30px rgba(43, 255, 217, 0.6);
+      object-fit: cover;
+      cursor: pointer;
+      margin-bottom:40px;
+    }
+    .user-info {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 0.95rem;
+      color: #F8FAFC;
+      z-index: 9999;
+    }
+    .user-info button {
+      background: none;
+      border: none;
+      color: #2BFFD9;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
+      text-align: left;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background-color: #0f172a;
+      border: 1px solid #2BFFD9;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+      min-width: 220px;
+      padding: 6px 0;
+      z-index: 10000;
+      box-sizing: border-box;
+    }
+
+    .dropdown-menu a,
+    .dropdown-menu button,
+    .submenu-trigger {
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      background: none;
+      border: none;
+      color: #2BFFD9;
+      font-size: 0.95rem;
+      text-align: left;
+      text-decoration: none;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .dropdown-menu a:hover,
+    .dropdown-menu button:hover,
+    .submenu-trigger:hover {
+      background-color: #1e293b;
+      color: #ffffff;
+    }
+
+    .submenu {
+      display: none;
+      padding-left: 12px;
+    }
+
+    .submenu a {
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      color: #2BFFD9;
+      text-decoration: none;
+      display: block;
+      text-align: left;
+      box-sizing: border-box;
+    }
+
+    .submenu a:hover {
+      background-color: #1e293b;
+      color: #ffffff;
+    }
+
+    @media (hover: hover) {
+      .dropdown:hover .dropdown-menu {
+        display: block;
+      }
+
+      .dropdown:hover .submenu {
+        display: block;
+      }
+    }
+
+    .dropdown.open .dropdown-menu {
+      display: block;
+    }
+
+    .submenu-container.open .submenu {
+      display: block;
+    }
+
+    .dropdown-menu button {
+      all: unset;
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      color: #2BFFD9;
+      font-size: 0.95rem;
+      text-align: left;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .dropdown-menu button:hover {
+      background-color: #1e293b;
+      color: #ffffff;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("full_name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const displayName = profile?.full_name || user.email;
+
+  console.log("Full name: ", displayName);
+  console.log("user_id: ", user.id);
+
+  if (user && userBar) {
+    userBar.innerHTML = `
+      <div class="dropdown">
+        <div class="dropdown-trigger"><span style="color:#64748b;">👤</span> ${displayName} ▼</div>
+        <div class="dropdown-menu">
+          <a href="/onboarding/user_profile_form.html">User Profile</a>
+          <div class="submenu-container">
+            <div class="submenu-trigger">Settings ▼</div>
+            <div class="submenu">
+              <a href="/onboarding/change-password.html">Change Password</a>
+              <a href="#">Notification Preferences</a>
+            </div>
+          </div>
+          <button onclick="logout()">Logout</button>
+        </div>
+      </div>
+    `;
+
+    const submenuTrigger = userBar.querySelector(".submenu-trigger");
+    const submenuContainer = userBar.querySelector(".submenu-container");
+
+    if (submenuTrigger && submenuContainer) {
+      submenuTrigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        submenuContainer.classList.toggle("open");
+      });
+
+      document.addEventListener("click", () => {
+        submenuContainer.classList.remove("open");
+      });
+    }
+
+    const dropdownTrigger = userBar.querySelector(".dropdown-trigger");
+    const dropdown = userBar.querySelector(".dropdown");
+
+    if (dropdown && dropdownTrigger) {
+      console.log("✅ Dropdown initialized");
+      dropdownTrigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle("open");
+      });
+
+      document.addEventListener("click", () => {
+        dropdown.classList.remove("open");
+      });
+    }
+  }
+
+  window.logout = async function () {
+    await supabase.auth.signOut();
+    window.location.href = "/onboarding/login.html";
+  };
+}
+
+// ✅ Ensure injectUserBar runs at the right time
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", injectUserBar);
+} else {
+  injectUserBar();
+}

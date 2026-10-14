@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>➕ Add Household Note</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-xl mx-auto p-6">
+    <h1 class="text-2xl font-bold text-center mb-4">➕ Add Household Note</h1>
+    <div class="bg-white p-6 rounded-2xl shadow">
+      <form id="noteForm" class="space-y-4">
+        <div>
+          <label class="block font-semibold">📝 Title</label>
+          <input type="text" name="title" placeholder="e.g. Chores, Reminder, Instructions" class="w-full p-2 border rounded" required />
+        </div>
+        <div>
+          <label class="block font-semibold">📋 Content</label>
+          <textarea name="content" placeholder="Write your note here..." rows="6" class="w-full p-2 border rounded" required></textarea>
+        </div>
+        <div class="flex justify-center">
+          <button type="submit" class="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition">💾 Save</button>
+        </div>
+      </form>
+    </div>
+    <div class="text-center mt-4">
+      <a href="household-notes.html" class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition w-max mx-auto">
+        ⬅️ Back to Notes
+      </a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabase = createClient('https://pbojacnagutipfhcxltj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+
+    const form = document.getElementById('noteForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const user = await supabase.auth.getUser();
+      const payload = Object.fromEntries(formData.entries());
+      payload.user_id = user.data.user.id;
+
+      const { error } = await supabase.from('household_notes').insert([payload]);
+      if (error) return alert('Error saving: ' + error.message);
+      window.location.href = 'household-notes.html';
+    });
+  </script>
+</body>
+</html>

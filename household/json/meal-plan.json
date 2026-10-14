@@ -1,0 +1,141 @@
+{
+  "name": "Meal Planner - Generate Meal Plan (Webhook -> ChatGPT)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "meal-plan-generate",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json;\n\n// Defaults / normalization\nconst planDays = Number(b.planDays || 7);\nconst people = Number(b.people || 1);\nconst mealsPerDay = Array.isArray(b.mealsPerDay) ? b.mealsPerDay : (b.mealsPerDay ? [b.mealsPerDay] : [\"breakfast\",\"lunch\",\"dinner\"]);\nconst cuisine = Array.isArray(b.cuisine) ? b.cuisine : (b.cuisine ? [b.cuisine] : []);\nconst allergies = Array.isArray(b.allergies) ? b.allergies : (b.allergies ? [b.allergies] : []);\nconst avoidIngredients = Array.isArray(b.avoidIngredients) ? b.avoidIngredients : (b.avoidIngredients ? [b.avoidIngredients] : []);\n\nconst goal = b.goal || \"balanced\";\nconst dietStyle = b.dietStyle || \"\";\nconst budgetLevel = b.budgetLevel || \"medium\";\nconst timePerMeal = Number(b.timePerMeal || 30);\nconst calorieTarget = b.calorieTarget ? String(b.calorieTarget) : \"\";\nconst notes = b.notes || \"\";\n\nconst system = `You are a meal planning assistant. Output ONLY valid JSON. No markdown.`;\n\nconst schema = {\n  planMeta: {\n    days: planDays,\n    people,\n    goal,\n    dietStyle,\n    mealsPerDay,\n    cuisine,\n    allergies,\n    avoidIngredients,\n    budgetLevel,\n    timePerMealMinutes: timePerMeal,\n    calorieTarget,\n    notes\n  },\n  groceryList: [\n    { item: \"string\", quantity: \"string\", category: \"Produce|Meat|Seafood|Dairy|Pantry|Frozen|Spices|Other\" }\n  ],\n  days: [\n    {\n      day: 1,\n      meals: [\n        {\n          mealType: \"breakfast|lunch|dinner|snack\",\n          title: \"string\",\n          cuisine: \"string\",\n          prepTimeMinutes: 10,\n          cookTimeMinutes: 15,\n          servings: people,\n          ingredients: [{ name: \"string\", amount: \"string\" }],\n          steps: [\"string\"],\n          nutrition: {\n            calories: 0,\n            protein_g: 0,\n            carbs_g: 0,\n            fat_g: 0,\n            fiber_g: 0,\n            sugar_g: 0\n          },\n          diabeticNotes: \"string\"\n        }\n      ]\n    }\n  ]\n};\n\nconst userPrompt = `Create a ${planDays}-day meal plan for ${people} people.\n\nConstraints:\n- Goal: ${goal}\n- Diet style: ${dietStyle || \"none specified\"}\n- Meals per day: ${mealsPerDay.join(\", \")}\n- Cuisine preferences: ${cuisine.length ? cuisine.join(\", \") : \"no preference\"}\n- Allergies: ${allergies.length ? allergies.join(\", \") : \"none\"}\n- Avoid ingredients: ${avoidIngredients.length ? avoidIngredients.join(\", \") : \"none\"}\n- Budget level: ${budgetLevel}\n- Time per meal: <= ${timePerMeal} minutes\n- Calorie target (optional): ${calorieTarget || \"none\"}\n- Notes: ${notes || \"none\"}\n\nOutput requirements:\n- Return ONLY JSON.\n- Match this JSON structure exactly (fill with real values): ${JSON.stringify(schema)}\n- Make meals practical and repeat ingredients to reduce grocery cost.\n- Ensure diabetic-friendly choices when goal mentions diabetes.\n`;\n\nreturn [{\n  system,\n  userPrompt,\n  planDays,\n  people\n}];"
+      },
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "chat",
+        "model": "gpt-4o-mini",
+        "messages": [
+          {
+            "role": "system",
+            "content": "={{$json.system}}"
+          },
+          {
+            "role": "user",
+            "content": "={{$json.userPrompt}}"
+          }
+        ],
+        "options": {
+          "temperature": 0.6,
+          "maxTokens": 2500
+        }
+      },
+      "name": "OpenAI - Meal Plan",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 3,
+      "position": [
+        780,
+        220
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json;\n// n8n OpenAI node usually returns content in: raw.message.content OR raw.choices[0].message.content depending on version\nconst content = raw.message?.content || raw.choices?.[0]?.message?.content || raw.data?.[0]?.content || \"\";\n\nlet parsed;\ntry {\n  parsed = JSON.parse(content);\n} catch (e) {\n  // Fallback: return diagnostic so you can see what happened\n  parsed = {\n    error: \"Model output was not valid JSON\",\n    raw: content\n  };\n}\n\nreturn [{\n  ok: !parsed.error,\n  result: parsed\n}];"
+      },
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1030,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1270,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Meal Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Meal Plan": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "versionId": "1"
+}

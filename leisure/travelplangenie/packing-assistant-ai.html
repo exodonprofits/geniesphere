@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Packing Assistant – Voyage Genie</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:    #0f1f3d;
+      --ocean:   #0096c7;
+      --sky:     #90e0ef;
+      --sand:    #f9f4ec;
+      --coral:   #ff6b6b;
+      --mint:    #06d6a0;
+      --gold:    #ffd166;
+      --white:   #ffffff;
+      --gray-50: #f8fafc;
+      --gray-100:#f1f5f9;
+      --gray-200:#e2e8f0;
+      --gray-400:#94a3b8;
+      --gray-600:#475569;
+      --gray-800:#1e293b;
+      --radius:  12px;
+      --shadow:  0 4px 24px rgba(15,31,61,.08);
+      --shadow-lg: 0 8px 40px rgba(15,31,61,.14);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--sand);
+      color: var(--gray-800);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: linear-gradient(135deg, #0f2d5e 0%, #0096c7 100%);
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 20px rgba(0,0,0,.2);
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand { display: flex; align-items: center; gap: .6rem; text-decoration: none; color: white; }
+    .nav-brand img { height: 28px; width: auto; }
+    .nav-brand span { font-family: 'Playfair Display', serif; font-size: 1.25rem; letter-spacing: .01em; }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; list-style: none; }
+    .nav-links a { color: rgba(255,255,255,.85); text-decoration: none; font-size: .9rem; font-weight: 500; transition: color .2s; }
+    .nav-links a:hover { color: white; }
+    .dropdown { position: relative; }
+    .dropdown-menu {
+      display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+      background: white; border-radius: var(--radius); box-shadow: var(--shadow-lg); min-width: 200px;
+      padding: .5rem 0; overflow: hidden;
+    }
+    .dropdown:hover .dropdown-menu { display: block; }
+    .dropdown-menu a { color: var(--gray-800); padding: .75rem 1rem; display: block; font-size: .875rem; transition: background .15s; }
+    .dropdown-menu a:hover { background: var(--gray-50); }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .hamburger span { width: 22px; height: 2px; background: white; border-radius: 2px; transition: .3s; }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+    @media (max-width: 640px) {
+      .hamburger { display: flex; }
+      .nav-links {
+        display: none; flex-direction: column; gap: .25rem;
+        position: absolute; top: 64px; left: 0; right: 0;
+        background: linear-gradient(135deg, #0f2d5e, #0096c7);
+        padding: 1rem 1.5rem 1.5rem;
+      }
+      .nav-links.open { display: flex; }
+      .dropdown-menu { position: static; box-shadow: none; background: rgba(255,255,255,.1); border-radius: 8px; margin-top: .25rem; }
+      .dropdown-menu a { color: rgba(255,255,255,.9); }
+      .dropdown:hover .dropdown-menu { display: none; }
+      .dropdown.open .dropdown-menu { display: block; }
+    }
+
+    /* ── MAIN ── */
+    main { flex: 1; max-width: 1000px; margin: 0 auto; width: 100%; padding: 2rem 1.5rem; }
+
+    /* ── PAGE HEADER ── */
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--navy); margin-bottom: .35rem; }
+    .page-header p { color: var(--gray-600); font-size: .95rem; }
+    .back-link { display: inline-flex; align-items: center; gap: .4rem; color: var(--ocean); font-size: .85rem; font-weight: 500; text-decoration: none; margin-bottom: 1rem; transition: gap .2s; }
+    .back-link:hover { gap: .2rem; }
+
+    /* ── EMPTY STATE ── */
+    #emptyState {
+      background: white; border-radius: var(--radius); border: 2px dashed var(--gray-200);
+      padding: 3rem 2rem; text-align: center; display: none;
+    }
+    #emptyState .es-icon { font-size: 3rem; margin-bottom: 1rem; }
+    #emptyState h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--navy); margin-bottom: .5rem; }
+    #emptyState p { color: var(--gray-600); margin-bottom: 1.5rem; }
+    #emptyState a { display: inline-flex; align-items: center; gap: .5rem; background: var(--ocean); color: white; padding: .75rem 1.5rem; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: .9rem; transition: background .2s, transform .15s; }
+    #emptyState a:hover { background: #007aaa; transform: translateY(-1px); }
+
+    /* ── NO-TRIP WARNING BANNER ── */
+    #noTripBanner {
+      background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius);
+      padding: .875rem 1.25rem; display: none; align-items: flex-start; gap: .75rem;
+      margin-bottom: 1.5rem;
+    }
+    #noTripBanner .icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+    #noTripBanner .msg { font-size: .875rem; color: #92400e; }
+    #noTripBanner a { color: #b45309; font-weight: 600; }
+
+    /* ── CONTEXT PILLS ── */
+    .pills-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.5rem; }
+    .pill {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .35rem .85rem; border-radius: 50px; font-size: .82rem; font-weight: 500;
+      border: 1px solid transparent;
+    }
+    .pill-dest    { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+    .pill-dates   { background: #f3e8ff; color: #7e22ce; border-color: #e9d5ff; }
+    .pill-people  { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .pill-act     { background: #ffedd5; color: #c2410c; border-color: #fed7aa; }
+
+    /* ── CONTROLS BAR ── */
+    .controls {
+      background: white; border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 1rem 1.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-bottom: 1.5rem;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: .45rem; padding: .6rem 1.1rem;
+      border-radius: 50px; font-size: .875rem; font-weight: 600; cursor: pointer;
+      border: none; transition: transform .15s, box-shadow .15s, background .2s;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-primary  { background: var(--ocean); color: white; }
+    .btn-primary:hover { background: #007aaa; }
+    .btn-ghost   { background: var(--gray-100); color: var(--gray-800); border: 1px solid var(--gray-200); }
+    .btn-ghost:hover { background: var(--gray-200); }
+    .btn-danger  { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .btn-danger:hover { background: #fecaca; }
+    .controls-sep { flex: 1; }
+
+    /* ── SMART SIGNALS ── */
+    #smartPanel {
+      background: linear-gradient(135deg, #e0f2fe, #f0fdf4);
+      border: 1px solid #bae6fd; border-radius: var(--radius); padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem; display: none;
+    }
+    #smartPanel h3 { font-size: .875rem; font-weight: 600; color: var(--navy); margin-bottom: .5rem; display: flex; align-items: center; gap: .4rem; }
+    #smartSignals { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; }
+    #smartSignals li { background: white; border-radius: 6px; padding: .3rem .7rem; font-size: .8rem; color: var(--gray-600); border: 1px solid var(--gray-200); }
+
+    /* ── PROGRESS CARD ── */
+    #progressCard {
+      background: white; border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: none;
+    }
+    .progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; }
+    .progress-label { font-weight: 600; font-size: .9rem; color: var(--navy); }
+    .progress-count { font-size: .85rem; color: var(--gray-600); }
+    .progress-track { height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; }
+    .progress-fill  { height: 100%; background: linear-gradient(90deg, var(--ocean), var(--mint)); border-radius: 4px; transition: width .4s ease; }
+    .progress-pct   { font-size: .8rem; color: var(--gray-400); margin-top: .4rem; }
+
+    /* ── SPINNER ── */
+    #spinner {
+      position: fixed; inset: 0; background: rgba(15,31,61,.55); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center; z-index: 200; flex-direction: column; gap: 1.5rem;
+    }
+    #spinner.on { display: flex; }
+    .spinner-box { background: white; border-radius: 20px; padding: 2.5rem 3rem; text-align: center; box-shadow: var(--shadow-lg); }
+    .spin-orbit { width: 56px; height: 56px; position: relative; margin: 0 auto 1.25rem; }
+    .spin-core { width: 16px; height: 16px; background: var(--ocean); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+    .spin-ring { width: 56px; height: 56px; border: 2px solid transparent; border-top-color: var(--ocean); border-right-color: var(--sky); border-radius: 50%; position: absolute; top: 0; left: 0; animation: spin 1.2s linear infinite; }
+    .spin-ring2 { width: 38px; height: 38px; border: 2px solid transparent; border-bottom-color: var(--mint); border-radius: 50%; position: absolute; top: 9px; left: 9px; animation: spin 1.8s linear infinite reverse; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); margin-bottom: .35rem; }
+    .spinner-hint  { font-size: .82rem; color: var(--gray-400); margin-bottom: .5rem; }
+    .spinner-timer { font-size: .8rem; color: var(--gray-400); font-variant-numeric: tabular-nums; }
+
+    /* ── RESULTS GRID ── */
+    #results { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.25rem; }
+
+    /* ── CATEGORY CARD ── */
+    .cat-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .cat-header {
+      padding: .875rem 1.125rem; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .cat-title { display: flex; align-items: center; gap: .5rem; font-weight: 600; font-size: .9rem; color: var(--navy); }
+    .cat-icon { font-size: 1.1rem; }
+    .cat-count { font-size: .75rem; color: var(--gray-400); background: var(--gray-100); padding: .15rem .5rem; border-radius: 20px; }
+    .cat-items { padding: .5rem .5rem .75rem; }
+
+    /* ── ITEM ROW ── */
+    .item-row {
+      display: flex; align-items: flex-start; gap: .625rem;
+      padding: .55rem .625rem; border-radius: 8px; transition: background .15s; cursor: pointer;
+    }
+    .item-row:hover { background: var(--gray-50); }
+    .item-row.checked .item-name { text-decoration: line-through; color: var(--gray-400); }
+    .item-check {
+      width: 18px; height: 18px; border: 2px solid var(--gray-200); border-radius: 5px;
+      flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center;
+      transition: background .15s, border-color .15s; background: white;
+    }
+    .item-row.checked .item-check { background: var(--mint); border-color: var(--mint); }
+    .item-check svg { display: none; }
+    .item-row.checked .item-check svg { display: block; }
+    .item-body { flex: 1; min-width: 0; }
+    .item-name { font-size: .875rem; color: var(--gray-800); line-height: 1.4; }
+    .item-qty  { font-size: .75rem; color: var(--gray-400); margin-left: .3rem; }
+    .item-why  {
+      font-size: .75rem; color: var(--gray-400); margin-top: .15rem;
+      display: flex; align-items: center; gap: .3rem; line-height: 1.3;
+    }
+    .why-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--gray-300); flex-shrink: 0; }
+
+    /* ── SELECT ALL ROW ── */
+    .select-all-row { display: flex; justify-content: flex-end; padding: .25rem .625rem; margin-bottom: .25rem; }
+    .select-all-btn { font-size: .75rem; color: var(--ocean); cursor: pointer; background: none; border: none; font-weight: 500; }
+
+    /* ── TOOLTIP ── */
+    .tooltip-wrap { position: relative; display: inline-flex; }
+    .tooltip-wrap .tip {
+      display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+      background: var(--gray-800); color: white; font-size: .75rem; padding: .4rem .6rem;
+      border-radius: 6px; white-space: nowrap; max-width: 240px; white-space: normal; line-height: 1.4;
+      z-index: 50; pointer-events: none;
+    }
+    .tooltip-wrap:hover .tip { display: block; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: linear-gradient(135deg, #0f2d5e 0%, #0096c7 100%);
+      color: rgba(255,255,255,.8); font-size: .85rem; padding: 2.5rem 1.5rem;
+      text-align: center;
+    }
+    footer p { margin-bottom: .75rem; }
+    .footer-email { display: flex; justify-content: center; gap: .5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .footer-email input { padding: .5rem 1rem; border-radius: 50px; border: none; font-size: .85rem; width: 220px; }
+    .footer-email button { background: #06d6a0; color: white; border: none; padding: .5rem 1.25rem; border-radius: 50px; cursor: pointer; font-weight: 600; font-size: .85rem; }
+    .footer-links a { color: rgba(255,255,255,.7); text-decoration: none; margin: 0 .75rem; }
+    .footer-links a:hover { color: white; }
+
+    /* ── CHATBOT FAB ── */
+    .fab {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      width: 52px; height: 52px; border-radius: 50%; background: var(--ocean);
+      color: white; font-size: 1.35rem; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(0,150,199,.4); cursor: pointer; border: none;
+      transition: background .2s, transform .2s; z-index: 50;
+    }
+    .fab:hover { background: #007aaa; transform: scale(1.08); }
+
+    /* ── PRINT ── */
+    @media print {
+      nav, footer, .fab, .controls, #progressCard, #spinner, #noTripBanner, .back-link { display: none !important; }
+      body { background: white; }
+      main { padding: 0; }
+      .cat-card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+      .item-row:hover { background: none; }
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .cat-card { animation: fadeUp .3s ease both; }
+    .cat-card:nth-child(1)  { animation-delay: .03s; }
+    .cat-card:nth-child(2)  { animation-delay: .06s; }
+    .cat-card:nth-child(3)  { animation-delay: .09s; }
+    .cat-card:nth-child(4)  { animation-delay: .12s; }
+    .cat-card:nth-child(5)  { animation-delay: .15s; }
+    .cat-card:nth-child(6)  { animation-delay: .18s; }
+    .cat-card:nth-child(7)  { animation-delay: .21s; }
+    .cat-card:nth-child(8)  { animation-delay: .24s; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand" aria-label="Voyage Genie Home">
+      <img src="images/nav-icon.png" alt="Voyage Genie">
+      <span>Voyage Genie</span>
+    </a>
+    <div class="hamburger" id="hamburger" role="button" tabindex="0" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li class="dropdown">
+        <a href="#" style="display:flex;align-items:center;gap:.3rem">
+          Plan A Trip
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </a>
+        <ul class="dropdown-menu">
+          <li><a href="tropical-trip-planner.html">🏖️ Tropical Resort</a></li>
+          <li><a href="cruise-trip-planner.html">🚢 Cruise Adventure</a></li>
+          <li><a href="airbnb-trip-planner.html">🏠 Airbnb Getaway</a></li>
+          <li><a href="adventure-trip-planner.html">🌄 Adventure Trip</a></li>
+        </ul>
+      </li>
+      <li><a href="trip-dashboard.html">📋 My Trips</a></li>
+      <li><a href="features.html">Features</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <!-- Back link -->
+  <a href="trip-dashboard.html" class="back-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back to my trips
+  </a>
+
+  <!-- Page header -->
+  <div class="page-header">
+    <h1>✈️ Packing Assistant</h1>
+    <p>Genie builds a smart packing list from your trip plan — tailored to your destination, dates, and activities.</p>
+  </div>
+
+  <!-- No-trip warning banner -->
+  <div id="noTripBanner">
+    <span class="icon">⚠️</span>
+    <span class="msg">
+      No saved trip found. Your packing list may be generic.
+      <a href="trip-dashboard.html">Plan a trip first</a> for a fully personalized list.
+    </span>
+  </div>
+
+  <!-- Empty state (shown when there is truly nothing and user hasn't tried yet) -->
+  <div id="emptyState">
+    <div class="es-icon">🧳</div>
+    <h2>No trip planned yet</h2>
+    <p>Plan your trip first so Genie can build a packing list that's perfectly matched to your adventure.</p>
+    <a href="index.html">🗺️ Plan a trip now</a>
+  </div>
+
+  <!-- Context pills -->
+  <div class="pills-row" id="contextPills"></div>
+
+  <!-- Controls bar -->
+  <div class="controls" id="controlsBar">
+    <button class="btn btn-primary" id="btnGenerate">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      Generate with AI
+    </button>
+    <button class="btn btn-ghost" id="btnRegenerate" style="display:none">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      Regenerate
+    </button>
+    <button class="btn btn-ghost" id="btnExport" style="display:none">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export CSV
+    </button>
+    <button class="btn btn-ghost" id="btnPrint" style="display:none">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print
+    </button>
+    <div class="controls-sep"></div>
+    <button class="btn btn-danger" id="btnClear" style="display:none">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      Clear list
+    </button>
+  </div>
+
+  <!-- Smart signals panel -->
+  <div id="smartPanel">
+    <h3>✨ Smart signals from your itinerary</h3>
+    <ul id="smartSignals"></ul>
+  </div>
+
+  <!-- Progress card -->
+  <div id="progressCard">
+    <div class="progress-header">
+      <span class="progress-label">Packing progress</span>
+      <span class="progress-count" id="progressCount">0 of 0 packed</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="progress-pct" id="progressPct">0% complete</div>
+  </div>
+
+  <!-- Results grid -->
+  <section id="results"></section>
+</main>
+
+<!-- Spinner -->
+<div id="spinner">
+  <div class="spinner-box">
+    <div class="spin-orbit">
+      <div class="spin-ring"></div>
+      <div class="spin-ring2"></div>
+      <div class="spin-core"></div>
+    </div>
+    <div class="spinner-title">Genie is building your list…</div>
+    <div class="spinner-hint">Typically takes 10–20 seconds</div>
+    <div class="spinner-timer" id="spinnerTimer">00:00</div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <p>© 2026 VoyageGenie.com – Your AI Travel Companion ✈️🌍</p>
+  <div class="footer-email">
+    <input type="email" placeholder="Enter your email"/>
+    <button>Subscribe</button>
+  </div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="index.html#plan-trip">Plan</a>
+    <a href="features.html">Features</a>
+    <a href="contact.html">Contact</a>
+  </div>
+</footer>
+
+<!-- Chatbot FAB -->
+<button class="fab" title="Ask Genie">💬</button>
+
+<script>
+/* ── CONFIG ── */
+const N8N_WEBHOOK_URL = "https://YOUR-N8N-ENDPOINT/webhook/packing-assistant-ai";
+
+/* ── CATEGORY ICONS ── */
+const CAT_ICONS = {
+  Clothing: '👕', Clothes: '👕', Apparel: '👔',
+  Toiletries: '🧴', 'Personal Care': '🧴',
+  Documents: '📄', Paperwork: '📄', Travel: '🛫',
+  Electronics: '🔌', Tech: '💻', Gadgets: '📱',
+  Footwear: '👟', Shoes: '👟',
+  'Health & Medicine': '💊', Medicine: '💊', Health: '💊',
+  'Food & Snacks': '🍫', Food: '🍫', Snacks: '🍫',
+  Entertainment: '🎧', Activities: '🏄', Sports: '⚽',
+  'Beach & Sun': '🌊', Beach: '🌊',
+  Money: '💳', Finance: '💳',
+  'Sleep & Comfort': '😴', Sleep: '😴',
+  Accessories: '👜', Bag: '🎒',
+  Misc: '📦', Other: '📦',
+};
+function catIcon(name) {
+  for (const [k, v] of Object.entries(CAT_ICONS)) {
+    if (name.toLowerCase().includes(k.toLowerCase())) return v;
+  }
+  return '📦';
+}
+
+/* ── STORAGE KEYS ── */
+const STORAGE_KEYS = { context: 'tripContext', itinerary: 'tripItinerary', checks: 'packingChecks', list: 'packingList' };
+
+/* ── HELPERS ── */
+const $ = s => document.querySelector(s);
+const fmtDates = (a, b) => (!a && !b) ? 'Dates TBD' : a && b ? `${a} → ${b}` : a || b;
+
+function readTripContext() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.context) || 'null'); } catch { return null; }
+}
+function readTripItinerary() {
+  const params = new URLSearchParams(location.search);
+  let raw = params.get('itinerary') || '';
+  let b64 = params.get('itinerary_b64') || '';
+  try { if (b64) raw = atob(b64); else if (raw) raw = decodeURIComponent(raw); if (raw) return JSON.parse(raw); } catch {}
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.itinerary) || 'null'); } catch { return null; }
+}
+
+function readChecks() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.checks) || '{}'); } catch { return {}; }
+}
+function saveChecks(checks) {
+  localStorage.setItem(STORAGE_KEYS.checks, JSON.stringify(checks));
+}
+function readSavedList() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.list) || 'null'); } catch { return null; }
+}
+function saveList(payload) {
+  localStorage.setItem(STORAGE_KEYS.list, JSON.stringify(payload));
+}
+
+/* ── PILLS ── */
+function renderPills(ctx) {
+  const row = $('#contextPills'); row.innerHTML = '';
+  if (!ctx) return;
+  const add = (cls, emoji, text) => {
+    const el = document.createElement('span');
+    el.className = `pill ${cls}`;
+    el.textContent = `${emoji} ${text}`;
+    row.appendChild(el);
+  };
+  if (ctx.destination) add('pill-dest', '📍', ctx.destination);
+  add('pill-dates', '📅', fmtDates(ctx.startDate, ctx.endDate));
+  if (ctx.travelers) add('pill-people', '👥', `${ctx.travelers} traveler${ctx.travelers > 1 ? 's' : ''}`);
+  if (Array.isArray(ctx.activities) && ctx.activities.length) {
+    ctx.activities.slice(0, 3).forEach(a => add('pill-act', '🎯', a));
+  }
+}
+
+/* ── EMPTY / WARNING STATES ── */
+function showEmptyState(show) {
+  $('#emptyState').style.display = show ? 'block' : 'none';
+  $('#controlsBar').style.display = show ? 'none' : 'flex';
+}
+function showNoTripBanner(show) {
+  $('#noTripBanner').style.display = show ? 'flex' : 'none';
+}
+
+/* ── PROGRESS ── */
+function updateProgress() {
+  const checks = readChecks();
+  const allRows = document.querySelectorAll('.item-row');
+  if (!allRows.length) return;
+  const total = allRows.length;
+  const done = Object.values(checks).filter(Boolean).length;
+  const pct = Math.round((done / total) * 100);
+  $('#progressCard').style.display = 'block';
+  $('#progressCount').textContent = `${done} of ${total} packed`;
+  $('#progressFill').style.width = pct + '%';
+  $('#progressPct').textContent = `${pct}% complete`;
+}
+
+/* ── SPINNER ── */
+let timerInterval;
+function showSpinner(on) {
+  if (on) {
+    $('#spinner').classList.add('on');
+    const start = Date.now();
+    timerInterval = setInterval(() => {
+      const s = Math.floor((Date.now() - start) / 1000);
+      const m = String(Math.floor(s / 60)).padStart(2, '0');
+      const ss = String(s % 60).padStart(2, '0');
+      $('#spinnerTimer').textContent = `${m}:${ss}`;
+    }, 500);
+  } else {
+    $('#spinner').classList.remove('on');
+    clearInterval(timerInterval);
+  }
+}
+
+/* ── SMART SIGNALS ── */
+function renderSignals(sigs) {
+  const panel = $('#smartPanel'), list = $('#smartSignals');
+  if (!sigs || (!sigs.weather && !sigs.activities && !sigs.transport && !sigs.amenities)) {
+    panel.style.display = 'none'; return;
+  }
+  panel.style.display = 'block'; list.innerHTML = '';
+  const add = t => { const li = document.createElement('li'); li.textContent = t; list.appendChild(li); };
+  if (sigs.weather) add('🌤️ Weather: ' + sigs.weather);
+  if (Array.isArray(sigs.activities)) sigs.activities.forEach(a => add('🎯 ' + a));
+  if (Array.isArray(sigs.transport)) sigs.transport.forEach(t => add('✈️ ' + t));
+  if (sigs.amenities) add('🏨 Amenities considered');
+}
+
+/* ── RENDER LIST ── */
+function renderList(payload, fromCache = false) {
+  const root = $('#results'); root.innerHTML = '';
+  if (!payload || !payload.categories) return;
+
+  renderSignals(payload.signals || {});
+
+  const checks = readChecks();
+
+  // Show action buttons
+  ['btnRegenerate', 'btnExport', 'btnPrint', 'btnClear'].forEach(id => {
+    const el = $('#' + id);
+    if (el) el.style.display = 'inline-flex';
+  });
+
+  Object.entries(payload.categories).forEach(([cat, items]) => {
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+
+    const header = document.createElement('div');
+    header.className = 'cat-header';
+    header.innerHTML = `
+      <div class="cat-title">
+        <span class="cat-icon">${catIcon(cat)}</span>
+        <span>${cat}</span>
+      </div>
+      <span class="cat-count">${items.length}</span>
+    `;
+    card.appendChild(header);
+
+    // Select all toggle
+    const selRow = document.createElement('div');
+    selRow.className = 'select-all-row';
+    const selBtn = document.createElement('button');
+    selBtn.className = 'select-all-btn';
+    const allChecked = items.every(it => checks[`${cat}::${it.name}`]);
+    selBtn.textContent = allChecked ? 'Uncheck all' : 'Check all';
+    selBtn.addEventListener('click', () => {
+      const c = readChecks();
+      const now = items.every(it => c[`${cat}::${it.name}`]);
+      items.forEach(it => { c[`${cat}::${it.name}`] = !now; });
+      saveChecks(c);
+      renderList(payload);
+    });
+    selRow.appendChild(selBtn);
+    card.appendChild(selRow);
+
+    const itemsWrap = document.createElement('div');
+    itemsWrap.className = 'cat-items';
+
+    items.forEach(it => {
+      const key = `${cat}::${it.name}`;
+      const checked = !!checks[key];
+
+      const row = document.createElement('div');
+      row.className = 'item-row' + (checked ? ' checked' : '');
+      row.innerHTML = `
+        <div class="item-check">
+          <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+            <path d="M1 4.5l3 3 6-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="item-body">
+          <span class="item-name">${it.name}${it.qty ? `<span class="item-qty">×${it.qty}</span>` : ''}</span>
+          ${it.why ? `<div class="item-why"><span class="why-dot"></span>${it.why}</div>` : ''}
+        </div>
+      `;
+
+      row.addEventListener('click', () => {
+        const c = readChecks();
+        c[key] = !c[key];
+        saveChecks(c);
+        row.classList.toggle('checked', !!c[key]);
+        row.querySelector('.item-check').innerHTML = c[key]
+          ? `<svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5l3 3 6-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+          : '';
+        updateProgress();
+      });
+
+      itemsWrap.appendChild(row);
+    });
+
+    card.appendChild(itemsWrap);
+    root.appendChild(card);
+  });
+
+  window.__lastPayload = payload;
+  updateProgress();
+}
+
+/* ── EXPORT CSV ── */
+function exportCSV() {
+  const payload = window.__lastPayload;
+  if (!payload || !payload.categories) return;
+  const rows = [['Category', 'Item', 'Qty', 'Packed', 'Why']];
+  const checks = readChecks();
+  Object.entries(payload.categories).forEach(([cat, items]) =>
+    items.forEach(it => rows.push([cat, it.name, String(it.qty || ''), checks[`${cat}::${it.name}`] ? 'Yes' : 'No', it.why || '']))
+  );
+  const csv = rows.map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'packing-list.csv';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+/* ── GENERATE ── */
+async function generatePackingList() {
+  const context = readTripContext() || {};
+  const itinerary = readTripItinerary() || {};
+  renderPills(context);
+
+  const payload = {
+    destination: context.destination || itinerary.destination || '',
+    startDate: context.startDate || itinerary.startDate || '',
+    endDate: context.endDate || itinerary.endDate || '',
+    travelers: context.travelers || itinerary.travelers || 1,
+    activities: context.activities || itinerary.activities || [],
+    transport: itinerary.transport || [],
+    lodging: itinerary.lodging || null,
+    weather: itinerary.weather || null,
+  };
+
+  try {
+    showSpinner(true);
+    const resp = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    saveList(data);
+    // Clear old checks when regenerating
+    localStorage.removeItem(STORAGE_KEYS.checks);
+    renderList(data);
+  } catch (e) {
+    console.error(e);
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = 'background:#fee2e2;border:1px solid #fecaca;border-radius:12px;padding:1.5rem;color:#b91c1c;font-size:.875rem;';
+    errDiv.innerHTML = `<strong>Could not generate packing list.</strong><br>Please check your n8n webhook URL and try again.`;
+    $('#results').innerHTML = ''; $('#results').appendChild(errDiv);
+  } finally { showSpinner(false); }
+}
+
+/* ── INIT ── */
+function init() {
+  const ctx = readTripContext();
+  const itin = readTripItinerary();
+  const hasTrip = !!(ctx || itin);
+
+  if (hasTrip) {
+    renderPills(ctx || itin);
+    showEmptyState(false);
+    // Show warning banner if context is very minimal
+    const hasDestination = ctx?.destination || itin?.destination;
+    showNoTripBanner(!hasDestination);
+  } else {
+    showEmptyState(true);
+    showNoTripBanner(false);
+    return;
+  }
+
+  // Load saved list from localStorage if available
+  const saved = readSavedList();
+  if (saved) {
+    renderList(saved, true);
+  }
+
+  // Auto-generate if ?auto=1 or no saved list
+  const autoParam = new URLSearchParams(location.search).get('auto');
+  if (autoParam === '1' || !saved) {
+    generatePackingList();
+  }
+}
+
+/* ── EVENT BINDINGS ── */
+$('#btnGenerate').addEventListener('click', generatePackingList);
+$('#btnRegenerate').addEventListener('click', generatePackingList);
+$('#btnExport').addEventListener('click', exportCSV);
+$('#btnPrint').addEventListener('click', () => window.print());
+$('#btnClear').addEventListener('click', () => {
+  if (confirm('Clear your packing list and all checked items?')) {
+    localStorage.removeItem(STORAGE_KEYS.checks);
+    localStorage.removeItem(STORAGE_KEYS.list);
+    $('#results').innerHTML = '';
+    $('#progressCard').style.display = 'none';
+    $('#smartPanel').style.display = 'none';
+    ['btnRegenerate','btnExport','btnPrint','btnClear'].forEach(id => {
+      const el = $('#' + id); if (el) el.style.display = 'none';
+    });
+    window.__lastPayload = null;
+  }
+});
+
+// Mobile nav
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+if (hamburger) {
+  hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('active');
+    navLinks.classList.toggle('open');
+  });
+}
+
+init();
+</script>
+</body>
+</html>

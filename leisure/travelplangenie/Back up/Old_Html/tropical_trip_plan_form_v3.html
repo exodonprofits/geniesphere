@@ -1,0 +1,1026 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plan Your Tropical Resort – Voyage Genie</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+    .planning-section {
+      max-width: 4xl;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+    }
+    .planning-section h1 {
+      color: #2c3e50;
+      font-size: 2.25rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .planning-section p {
+      text-align: center;
+      color: #555;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      font-style: italic;
+    }
+    .form-section {
+      transition: transform 0.3s ease;
+    }
+    .form-section:hover {
+      transform: translateY(-2px);
+    }
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #e6f3fa;
+      color: #0096c7;
+    }
+    .option-card {
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+    }
+    .option-card.selected {
+      background-color: #e8f1ff;
+      border-color: #2a6bcc;
+    }
+    .option-card.selected::after {
+      content: "✓";
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      color: #2a6bcc;
+      font-weight: bold;
+    }
+    .option-card input[type="radio"],
+    .option-card input[type="checkbox"] {
+      display: none;
+    }
+    .loading-spinner {
+      display: none;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .airport-select {
+      appearance: none;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232A6BCC"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center/16px;
+    }
+    .planning-form label {
+      display: block;
+      color: #34495e;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .planning-form select,
+    .planning-form input,
+    .planning-form textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #333;
+    }
+    .planning-form input[type="checkbox"] {
+      width: auto;
+      margin-right: 0.5rem;
+    }
+    .planning-form textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .planning-form button {
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .planning-form .submit-btn {
+      background-color: #0096c7;
+      color: white;
+      width: 100%;
+    }
+    .planning-form .submit-btn:hover {
+      background-color: #0077b6;
+    }
+    .planning-form .reset-btn {
+      background-color: #6b7280;
+      color: white;
+      width: 100%;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+    .planning-form .reset-btn:hover {
+      background-color: #4b5563;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin: 2rem 0;
+      color: #0096c7;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+      color: #0077b6;
+    }
+    .panel-divider {
+      border-top: 1px solid #d1d5db;
+      margin: 1.5rem 0;
+    }
+    .nav-icon {
+      height: 30px;
+      width: auto;
+      margin-right: 8px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+    }
+    .advertisement-section {
+      background-color: #e6f3fa;
+      height: 95px;
+      border-bottom: 1px solid #d1d5db;
+      overflow: hidden;
+      position: relative;
+    }
+    .promo-container {
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      animation: marquee 20s linear infinite;
+    }
+    .promo-container:hover {
+      animation-play-state: paused;
+    }
+    .promo-item {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      margin-right: 1rem;
+      height: 40px;
+      font-size: 1rem;
+      color: #34495e;
+      font-weight: 500;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+    }
+    .promo-item:hover {
+      transform: scale(1.05);
+    }
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .hamburger {
+      display: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .nav-links {
+      display: flex;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+    .modal button {
+      padding: 0.5rem 1rem;
+      margin: 0.5rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .modal .proceed-btn {
+      background-color: #0096c7;
+      color: white;
+    }
+    .modal .proceed-btn:hover {
+      background-color: #0077b6;
+    }
+    .modal .cancel-btn {
+      background-color: #6b7280;
+      color: white;
+    }
+    .modal .cancel-btn:hover {
+      background-color: #4b5563;
+    }
+    @media (max-width: 640px) {
+      .hamburger {
+        display: block;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: linear-gradient(to bottom, #60a5fa, #4c6ef5);
+        width: 100%;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .nav-links.active {
+        display: flex;
+      }
+      .nav-links li {
+        margin: 0.5rem 0;
+      }
+      .nav-links a {
+        font-size: 1.1rem;
+        padding: 0.5rem;
+        display: block;
+        text-align: center;
+      }
+      .nav-brand h1 {
+        font-size: 1.125rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html#home" class="nav-brand" aria-label="Go to Home">
+        <img src="nav-icon.png" alt="Voyage Genie Icon" class="nav-icon">
+        <h1 class="text-2xl font-bold">Voyage Genie</h1>
+      </a>
+      <div class="hamburger">☰</div>
+      <ul class="nav-links space-x-6">
+        <li><a href="index.html#home" class="hover:underline" aria-label="Go to Home">Home</a></li>
+        <li><a href="features.html" class="hover:underline" aria-label="Go to Features">Features</a></li>
+        <li><a href="contact.html" class="hover:underline" aria-label="Go to Contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Advertisement Section -->
+  <section class="advertisement-section"><br>
+    <div class="promo-container">
+      <div class="promo-item">✨ 20% Off Your Next Tropical Getaway!</div>
+      <div class="promo-item">🌴 Book Now: Luxury Resorts in Bali</div>
+      <div class="promo-item">🏝️ Exclusive Deals on Caribbean Escapes</div>
+      <div class="promo-item">✈️ Save Big on Flights to Hawaii!</div>
+      <div class="promo-item">🌺 Discover Hidden Gems in Thailand</div>
+      <div class="promo-item">✨ 20% Off Your Next Tropical Getaway!</div>
+      <div class="promo-item">🌴 Book Now: Luxury Resorts in Bali</div>
+      <div class="promo-item">🏝️ Exclusive Deals on Caribbean Escapes</div>
+      <div class="promo-item">✈️ Save Big on Flights to Hawaii!</div>
+      <div class="promo-item">🌺 Discover Hidden Gems in Thailand</div>
+    </div>
+  </section>
+
+  <!-- Modal for confirmation -->
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="modal" id="confirmationModal">
+    <p class="text-lg font-semibold mb-4">Generating your travel plan may take up to 30 seconds. Would you like to proceed?</p>
+    <button class="proceed-btn" id="proceedBtn">Proceed</button>
+    <button class="cancel-btn" id="cancelBtn">Cancel</button>
+  </div>
+
+  <main>
+    <section class="planning-section">
+      <h1>🌴 Plan Your Tropical Resort Voyage</h1>
+      <p>Plan less, explore more with Voyage Genie</p>
+      <form id="travelForm" class="planning-form" role="form" aria-labelledby="form-title">
+        <!-- Departure Location -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">✈️</div>
+            <label for="airportSelect" class="font-semibold text-gray-700">Departure Location</label>
+          </div>
+          <select class="airport-select w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="airportSelect" name="departureLocation" required aria-label="Select departure airport">
+            <option value="">-- Select Popular Airport --</option>
+            <optgroup label="🇺🇸 United States">
+              <option value="New York (JFK)">New York (JFK)</option>
+              <option value="Los Angeles (LAX)">Los Angeles (LAX)</option>
+              <option value="Chicago O'Hare (ORD)">Chicago O'Hare (ORD)</option>
+              <option value="San Francisco (SFO)">San Francisco (SFO)</option>
+              <option value="Dallas/Fort Worth (DFW)">Dallas/Fort Worth (DFW)</option>
+              <option value="Miami (MIA)">Miami (MIA)</option>
+              <option value="Atlanta (ATL)">Atlanta (ATL)</option>
+            </optgroup>
+            <optgroup label="🇨🇦 Canada">
+              <option value="Toronto Pearson (YYZ)">Toronto Pearson (YYZ)</option>
+              <option value="Vancouver (YVR)">Vancouver (YVR)</option>
+              <option value="Montreal (YUL)">Montreal (YUL)</option>
+            </optgroup>
+            <optgroup label="🇬🇧 United Kingdom">
+              <option value="London Heathrow (LHR)">London Heathrow (LHR)</option>
+              <option value="London Gatwick (LGW)">London Gatwick (LGW)</option>
+              <option value="Manchester (MAN)">Manchester (MAN)</option>
+            </optgroup>
+            <optgroup label="🇦🇺 Australia">
+              <option value="Sydney (SYD)">Sydney (SYD)</option>
+              <option value="Melbourne (MEL)">Melbourne (MEL)</option>
+              <option value="Brisbane (BNE)">Brisbane (BNE)</option>
+            </optgroup>
+            <optgroup label="🌏 Asia">
+              <option value="Tokyo Narita (NRT)">Tokyo Narita (NRT)</option>
+              <option value="Seoul Incheon (ICN)">Seoul Incheon (ICN)</option>
+              <option value="Singapore Changi (SIN)">Singapore Changi (SIN)</option>
+              <option value="Hong Kong (HKG)">Hong Kong (HKG)</option>
+              <option value="Bangkok Suvarnabhumi (BKK)">Bangkok Suvarnabhumi (BKK)</option>
+            </optgroup>
+            <optgroup label="🇪🇺 Europe">
+              <option value="Paris Charles de Gaulle (CDG)">Paris Charles de Gaulle (CDG)</option>
+              <option value="Frankfurt (FRA)">Frankfurt (FRA)</option>
+              <option value="Amsterdam Schiphol (AMS)">Amsterdam Schiphol (AMS)</option>
+              <option value="Madrid Barajas (MAD)">Madrid Barajas (MAD)</option>
+            </optgroup>
+            <optgroup label="✈️ Other">
+              <option value="Dubai (DXB)">Dubai (DXB)</option>
+              <option value="Doha (DOH)">Doha (DOH)</option>
+              <option value="Istanbul (IST)">Istanbul (IST)</option>
+              <option value="OTHER">CAN'T FIND MY AIRPORT ➔</option>
+            </optgroup>
+          </select>
+          <div class="custom-airport-input mt-4 hidden">
+            <input id="customAirportInput" name="customAirport" placeholder="Enter custom airport/city" type="text" disabled class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Custom airport input"/>
+          </div>
+        </div>
+
+        <!-- Destination -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">📍</div>
+            <label for="destinationSelect" class="font-semibold text-gray-700">Destination</label>
+          </div>
+          <select id="destinationSelect" name="destination" required class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Select destination">
+            <option value="">-- Select Destination --</option>
+            <optgroup label="🏝️ Caribbean">
+              <option value="Aruba">Aruba</option>
+              <option value="Bahamas">Bahamas</option>
+              <option value="Turks & Caicos">Turks & Caicos</option>
+              <option value="Barbados">Barbados</option>
+              <option value="Jamaica">Jamaica</option>
+            </optgroup>
+            <optgroup label="🇲🇽 Mexico">
+              <option value="Cancun">Cancun</option>
+              <option value="Puerto Vallarta">Puerto Vallarta</option>
+              <option value="Los Cabos">Los Cabos</option>
+              <option value="Tulum">Tulum</option>
+            </optgroup>
+            <optgroup label="🇺🇸 United States">
+              <option value="Hawaii">Hawaii</option>
+              <option value="Key West">Key West</option>
+            </optgroup>
+            <optgroup label="🌏 South Pacific">
+              <option value="Fiji">Fiji</option>
+              <option value="Bora Bora">Bora Bora</option>
+              <option value="Tahiti">Tahiti</option>
+            </optgroup>
+            <optgroup label="🌴 Southeast Asia">
+              <option value="Phuket">Phuket</option>
+              <option value="Bali">Bali (Denpasar)</option>
+              <option value="Krabi">Krabi</option>
+              <option value="Koh Samui">Koh Samui</option>
+            </optgroup>
+            <optgroup label="🇲🇻 Maldives">
+              <option value="Malé">Malé</option>
+            </optgroup>
+            <optgroup label="🇵🇭 Philippines">
+              <option value="Boracay">Boracay (Malay)</option>
+              <option value="El Nido">El Nido (Palawan)</option>
+              <option value="Cebu City">Cebu City</option>
+            </optgroup>
+            <option value="OTHER">CAN'T FIND MY DESTINATION ➔</option>
+          </select>
+          <div class="custom-destination-input mt-4 hidden">
+            <input id="customDestinationInput" name="customDestination" placeholder="Enter custom destination" type="text" disabled list="destinationSuggestions" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Custom destination input"/>
+            <datalist id="destinationSuggestions">
+              <option value="Seychelles">
+              <option value="Mauritius">
+              <option value="Costa Rica">
+              <option value="Belize">
+              <option value="Puerto Rico">
+            </datalist>
+          </div>
+        </div>
+
+        <!-- Travel Dates -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">📅</div>
+            <label class="font-semibold text-gray-700">Travel Dates</label>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <input id="startDate" name="startDate" required type="date" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Start date" min="2025-04-19"/>
+            </div>
+            <div>
+              <input id="endDate" name="endDate" required type="date" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="End date" min="2025-04-20"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Preferences -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">❤️</div>
+            <label class="font-semibold text-gray-700">Trip Preferences</label>
+          </div>
+          <div class="mb-6">
+            <label class="block font-semibold text-gray-700 mb-2">Trip Type</label>
+            <div class="grid grid-cols-1 gap-3">
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Solo"/>
+                👤 Solo Travel
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Couple"/>
+                💑 Couple's Getaway
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Family"/>
+                👨👩👧👦 Family Vacation
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Group"/>
+                👥 Group Trip
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Honeymoon"/>
+                💍 Honeymoon
+              </label>
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="block font-semibold text-gray-700 mb-2">Day Activities</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="BeachRelaxation"/>
+                🏖️ Beach Relaxation
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="CulturalTours"/>
+                🏛️ Cultural Tours
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="AdventureSports"/>
+                🪂 Adventure Sports
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="SnorkelingDiving"/>
+                🤿 Snorkeling/Diving
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="IslandHopping"/>
+                🚤 Island Hopping Tours
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="NatureHikes"/>
+                🌿 Nature Hikes
+              </label>
+            </div>
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-2">Night Activities</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="Nightlife"/>
+                🌃 Nightlife
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="FineDining"/>
+                🍽️ Fine Dining
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="LocalEvents"/>
+                🎭 Local Events
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="BeachBonfires"/>
+                🔥 Beach Bonfires
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="Stargazing"/>
+                🌌 Stargazing Tours
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="CulturalPerformances"/>
+                💃 Cultural Performances
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group Size -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">👥</div>
+            <label class="font-semibold text-gray-700">Group Size</label>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <label class="option-card" tabindex="0">
+              <input name="groupSize" type="radio" value="1"/>
+              1 Traveler
+            </label>
+            <label class="option-card" tabindex="0">
+              <input name="groupSize" type="radio" value="2"/>
+              2 People
+            </label>
+            <label class="option-card" tabindex="0">
+              <input name="groupSize" type="radio" value="3-4"/>
+              3-4 People
+            </label>
+            <label class="option-card" tabindex="0">
+              <input name="groupSize" type="radio" value="5+"/>
+              5+ People
+            </label>
+          </div>
+        </div>
+
+        <!-- Traveler Details -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">👥</div>
+            <label class="font-semibold text-gray-700">Traveler Details</label>
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-2">Age Ranges</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Kids"/>
+                👶 Kids (0-12)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Teens"/>
+                🧑 Teens (13-19)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Adults"/>
+                🧑💼 Adults (20-39)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="MiddleAge"/>
+                👨🦳 Adults (40-64)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Seniors"/>
+                👵 Seniors (65+)
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">💵</div>
+            <label for="budget" class="font-semibold text-gray-700">Budget</label>
+          </div>
+          <input id="budget" class="budget-input w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="budget" placeholder="Estimated total budget (USD)" type="number" min="0" aria-label="Budget in USD"/>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">📧</div>
+            <label for="email" class="font-semibold text-gray-700">Contact Information</label>
+          </div>
+          <input id="email" name="email" placeholder="Enter email for travel plan" required type="email" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Email address"/>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button class="submit-btn flex items-center justify-center gap-3" type="submit" aria-label="Generate travel plan">
+            🚀 Generate Travel Plan
+            <div class="loading-spinner"></div>
+          </button>
+          <button class="reset-btn" type="reset" aria-label="Reset form">
+            🔄 Reset Form
+          </button>
+        </div>
+        <div id="form-status" class="hidden mt-4 p-3 rounded-md text-center"></div>
+      </form>
+      <a href="index.html" class="back-link">← Back to Home</a>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-200 text-center py-8">
+    <p class="text-sm">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍</p>
+    <div class="mt-4 flex justify-center space-x-6">
+      <a href="#" class="text-blue-500 hover:underline" aria-label="Visit our Facebook page">Facebook</a>
+      <a href="#" class="text-blue-500 hover:underline" aria-label="Visit our Instagram page">Instagram</a>
+      <a href="contact.html" class="text-blue-500 hover:underline" aria-label="Contact Us">Contact Us</a>
+    </div>
+    <div class="mt-4">
+      <a href="index.html#home" class="text-blue-500 hover:underline mx-2" aria-label="Go to Home">Home</a>
+      <a href="features.html" class="text-blue-500 hover:underline mx-2" aria-label="Go to Features">Features</a>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('travelForm');
+      const airportSelect = document.getElementById('airportSelect');
+      const customAirportInput = document.getElementById('customAirportInput');
+      const customAirportDiv = document.querySelector('.custom-airport-input');
+      const destinationSelect = document.getElementById('destinationSelect');
+      const customDestInput = document.getElementById('customDestinationInput');
+      const customDestDiv = document.querySelector('.custom-destination-input');
+      const startDateInput = document.getElementById('startDate');
+      const endDateInput = document.getElementById('endDate');
+      const budgetInput = document.getElementById('budget');
+      const submitBtn = form.querySelector('.submit-btn');
+      const formStatus = document.getElementById('form-status');
+      const modal = document.getElementById('confirmationModal');
+      const modalOverlay = document.getElementById('modalOverlay');
+      const proceedBtn = document.getElementById('proceedBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+
+      // Load saved form data from localStorage
+      const loadFormData = () => {
+        const savedData = JSON.parse(localStorage.getItem('travelFormData') || '{}');
+        if (savedData.departureLocation) {
+          if (airportSelect.querySelector(`option[value="${savedData.departureLocation}"]`)) {
+            airportSelect.value = savedData.departureLocation;
+          } else {
+            airportSelect.value = 'OTHER';
+            customAirportInput.value = savedData.departureLocation;
+          }
+        }
+        if (savedData.destination) {
+          if (destinationSelect.querySelector(`option[value="${savedData.destination}"]`)) {
+            destinationSelect.value = savedData.destination;
+          } else {
+            destinationSelect.value = 'OTHER';
+            customDestInput.value = savedData.destination;
+          }
+        }
+        if (savedData.startDate) startDateInput.value = savedData.startDate;
+        if (savedData.endDate) endDateInput.value = savedData.endDate;
+        if (savedData.budget) budgetInput.value = savedData.budget;
+        if (savedData.email) form.querySelector('#email').value = savedData.email;
+        if (savedData.tripType) {
+          const tripTypeInput = form.querySelector(`input[name="tripType"][value="${savedData.tripType}"]`);
+          if (tripTypeInput) {
+            tripTypeInput.checked = true;
+            tripTypeInput.closest('.option-card').classList.add('selected');
+          }
+        }
+        if (savedData.groupSize) {
+          const groupSizeInput = form.querySelector(`input[name="groupSize"][value="${savedData.groupSize}"]`);
+          if (groupSizeInput) {
+            groupSizeInput.checked = true;
+            groupSizeInput.closest('.option-card').classList.add('selected');
+          }
+        }
+        if (savedData.ageRange) {
+          savedData.ageRange.forEach(value => {
+            const ageInput = form.querySelector(`input[name="ageRange"][value="${value}"]`);
+            if (ageInput) {
+              ageInput.checked = true;
+              ageInput.closest('.option-card').classList.add('selected');
+            }
+          });
+        }
+        if (savedData.dayActivity) {
+          savedData.dayActivity.forEach(value => {
+            const dayActivityInput = form.querySelector(`input[name="dayActivity"][value="${value}"]`);
+            if (dayActivityInput) {
+              dayActivityInput.checked = true;
+              dayActivityInput.closest('.option-card').classList.add('selected');
+            }
+          });
+        }
+        if (savedData.nightActivity) {
+          savedData.nightActivity.forEach(value => {
+            const nightActivityInput = form.querySelector(`input[name="nightActivity"][value="${value}"]`);
+            if (nightActivityInput) {
+              nightActivityInput.checked = true;
+              nightActivityInput.closest('.option-card').classList.add('selected');
+            }
+          });
+        }
+        toggleCustomAirport();
+        toggleCustomDestination();
+      };
+
+      // Save form data to localStorage
+      const saveFormData = () => {
+        const formData = new FormData(form);
+        const dataToSave = {
+          departureLocation: airportSelect.value === 'OTHER' ? customAirportInput.value.trim() : airportSelect.value,
+          destination: destinationSelect.value === 'OTHER' ? customDestInput.value.trim() : destinationSelect.value,
+          startDate: startDateInput.value,
+          endDate: endDateInput.value,
+          tripType: formData.get('tripType'),
+          groupSize: formData.get('groupSize'),
+          ageRange: formData.getAll('ageRange'),
+          dayActivity: formData.getAll('dayActivity'),
+          nightActivity: formData.getAll('nightActivity'),
+          budget: budgetInput.value,
+          email: formData.get('email')
+        };
+        localStorage.setItem('travelFormData', JSON.stringify(dataToSave));
+      };
+
+      const toggleCustomAirport = () => {
+        if (airportSelect.value === 'OTHER') {
+          customAirportDiv.classList.remove('hidden');
+          customAirportInput.disabled = false;
+          customAirportInput.required = true;
+          airportSelect.required = false;
+        } else {
+          customAirportDiv.classList.add('hidden');
+          customAirportInput.disabled = true;
+          customAirportInput.required = false;
+          airportSelect.required = true;
+        }
+      };
+
+      const toggleCustomDestination = () => {
+        if (destinationSelect.value === 'OTHER') {
+          customDestDiv.classList.remove('hidden');
+          customDestInput.disabled = false;
+          customDestInput.required = true;
+          destinationSelect.required = false;
+        } else {
+          customDestDiv.classList.add('hidden');
+          customDestInput.disabled = true;
+          customDestInput.required = false;
+          destinationSelect.required = true;
+        }
+      };
+
+      document.querySelectorAll('.option-card').forEach(item => {
+        item.addEventListener('click', function(e) {
+          const input = this.querySelector('input');
+          if (input.type === 'radio') {
+            document.querySelectorAll(`input[name="${input.name}"]`).forEach(radio => {
+              radio.checked = false;
+              radio.closest('.option-card').classList.remove('selected');
+            });
+            input.checked = true;
+            this.classList.add('selected');
+          } else if (input.type === 'checkbox') {
+            input.checked = !input.checked;
+            this.classList.toggle('selected', input.checked);
+          }
+          saveFormData();
+        });
+
+        item.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.click();
+          }
+        });
+      });
+
+      endDateInput.addEventListener('change', () => {
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+        if (startDate && endDate && endDate <= startDate) {
+          formStatus.className = 'bg-red-100 text-red-600';
+          formStatus.classList.remove('hidden');
+          formStatus.textContent = 'End date must be after start date.';
+          endDateInput.value = '';
+          setTimeout(() => { formStatus.classList.add('hidden'); }, 3000);
+        }
+        saveFormData();
+      });
+
+      budgetInput.addEventListener('input', () => {
+        if (budgetInput.value < 0) {
+          formStatus.className = 'bg-red-100 text-red-600';
+          formStatus.classList.remove('hidden');
+          formStatus.textContent = 'Budget cannot be negative.';
+          budgetInput.value = '';
+          setTimeout(() => { formStatus.classList.add('hidden'); }, 3000);
+        }
+        saveFormData();
+      });
+
+      // Show modal on form submit
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        modal.style.display = 'block';
+        modalOverlay.style.display = 'block';
+      });
+
+      // Proceed with form submission
+      proceedBtn.addEventListener('click', async () => {
+        modal.style.display = 'none';
+        modalOverlay.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Processing... <div class="loading-spinner" style="display:inline-block;"></div>';
+
+        const formData = new FormData(form);
+        if (airportSelect.value === 'OTHER') {
+          const customValue = customAirportInput.value.trim();
+          if (customValue) formData.set('departureLocation', customValue);
+        }
+        if (destinationSelect.value === 'OTHER') {
+          const customDest = customDestInput.value.trim();
+          if (customDest) formData.set('destination', customDest);
+        }
+
+        try {
+          const response = await fetch('https://exodonprofits.app.n8n.cloud/webhook/tropical-travel-agent', {
+            method: 'POST',
+            body: formData,
+            redirect: 'follow'
+          });
+
+          if (response.ok || response.redirected) {
+            window.location.href = 'workflow_confirmation.html';
+          } else {
+            const errorText = await response.text();
+            throw new Error(`Submission failed with status ${response.status}: ${errorText}`);
+          }
+        } catch (error) {
+          console.error('Error during form submission:', error);
+          formStatus.className = 'bg-red-100 text-red-600';
+          formStatus.classList.remove('hidden');
+          formStatus.textContent = `Submission failed: ${error.message}. Please try again.`;
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '🚀 Generate Travel Plan <div class="loading-spinner" style="display:none;"></div>';
+          setTimeout(() => { formStatus.classList.add('hidden'); }, 5000);
+        }
+      });
+
+      // Cancel form submission
+      cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        modalOverlay.style.display = 'none';
+      });
+
+      // Add event listeners to save form data on input changes
+      [airportSelect, customAirportInput, destinationSelect, customDestInput, startDateInput, endDateInput, budgetInput, form.querySelector('#email')].forEach(input => {
+        input.addEventListener('change', saveFormData);
+      });
+
+      airportSelect.addEventListener('change', toggleCustomAirport);
+      destinationSelect.addEventListener('change', toggleCustomDestination);
+      loadFormData();
+
+      window.addEventListener('pageshow', () => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '🚀 Generate Travel Plan <div class="loading-spinner" style="display:none;"></div>';
+      });
+
+      const hamburger = document.querySelector('.hamburger');
+      const navLinks = document.querySelector('.nav-links');
+
+      hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+      });
+
+      navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          navLinks.classList.remove('active');
+        });
+      });
+    });
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'935fe8c35cba820f',t:'MTc0NTYwNTgwMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

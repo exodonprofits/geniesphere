@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Profile Setup | GenieSphere</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F8FAFC;
+      color: #1E293B;
+      padding: 40px 20px;
+      max-width: 700px;
+      margin: auto;
+    }
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    select, input, textarea {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #CBD5E1;
+      font-size: 1rem;
+      background-color: white;
+      color: #1E293B;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 12px;
+      background-color: #2BFFD9;
+      color: #0F172A;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .card {
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 30px 20px;
+      margin-top: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+<script type="module" src="../shared/js/header-light.js"></script>
+<h1>🏢 Manage Your Business Profiles</h1>
+
+<div class="card">
+  <form id="businessForm">
+    <select id="business_selector">
+      <option value="new">➕ New Business</option>
+    </select>
+
+    <h2>🔹 Business Details</h2>
+    <input id="business_name" placeholder="🏢 Business Name" required />
+    <input id="industry" placeholder="🏷️ Industry (e.g. Nail Salon, Rental, Consulting)" />
+    <input id="location" placeholder="🌍 Business Location (optional)" />
+    <select id="business_type">
+      <option value="">🧾 Business Type (optional)</option>
+      <option value="llc">LLC</option>
+      <option value="s-corp">S-Corp</option>
+      <option value="sole">Sole Proprietor</option>
+      <option value="partnership">Partnership</option>
+      <option value="other">Other</option>
+    </select>
+
+    <h2>🔹 Operations & Services</h2>
+    <input id="employee_count" type="number" min="0" placeholder="👥 Number of Employees" />
+    <input id="services" placeholder="🧾 Services Offered (e.g. Appointments, Walk-ins)" />
+    <input id="hours" placeholder="⏰ Operating Hours (e.g. 9am–7pm Mon–Sat)" />
+
+    <h2>🔹 Contact Info</h2>
+    <input id="phone" placeholder="📱 Phone Number (optional)" />
+    <input id="email" type="email" placeholder="✉️ Support Email (optional)" />
+    <input id="website" type="url" placeholder="🌐 Website or Booking Link (optional)" />
+
+    <h2>🔹 Notes</h2>
+    <textarea id="notes" placeholder="📝 Additional notes or preferences (optional)" rows="4"></textarea>
+
+    <div style="display: flex; justify-content: space-between; gap: 10px;">
+      <button type="submit">✅ Save Profile</button>
+      <button type="button" onclick="history.back()" style="background-color: #64748b; color: white;">❌ Cancel</button>
+    </div>
+  </form>
+</div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  const supabase = createClient(
+    'https://pbojacnagutipfhcxltj.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+      );
+
+  const form = document.getElementById('businessForm');
+  const selector = document.getElementById('business_selector');
+
+  let user = null;
+  let businesses = [];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const res = await supabase.auth.getUser();
+    user = res.data?.user;
+    if (!user) return alert("Not authenticated");
+
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .select('*')
+      .eq('owner_id', user.id);
+
+    if (error) {
+      console.error("Error loading businesses:", error);
+      return;
+    }
+
+    businesses = data || [];
+    businesses.forEach(biz => {
+      const option = document.createElement('option');
+      option.value = biz.id;
+      option.textContent = biz.business_name;
+      selector.appendChild(option);
+    });
+
+    selector.addEventListener('change', () => {
+      const selectedId = selector.value;
+      if (selectedId === 'new') {
+        form.reset();
+      } else {
+        const biz = businesses.find(b => b.id === selectedId);
+        if (biz) fillForm(biz);
+      }
+    });
+  });
+
+  function fillForm(biz) {
+    document.getElementById('business_name').value = biz.business_name || '';
+    document.getElementById('industry').value = biz.industry || '';
+    document.getElementById('location').value = biz.location || '';
+    document.getElementById('business_type').value = biz.business_type || '';
+    document.getElementById('employee_count').value = biz.employee_count || '';
+    document.getElementById('services').value = biz.services || '';
+    document.getElementById('hours').value = biz.hours || '';
+    document.getElementById('phone').value = biz.phone || '';
+    document.getElementById('email').value = biz.email || '';
+    document.getElementById('website').value = biz.website || '';
+    document.getElementById('notes').value = biz.notes || '';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      owner_id: user.id,
+      business_name: document.getElementById('business_name').value,
+      industry: document.getElementById('industry').value,
+      location: document.getElementById('location').value,
+      business_type: document.getElementById('business_type').value,
+      employee_count: parseInt(document.getElementById('employee_count').value) || null,
+      services: document.getElementById('services').value,
+      hours: document.getElementById('hours').value,
+      phone: document.getElementById('phone').value,
+      email: document.getElementById('email').value,
+      website: document.getElementById('website').value,
+      notes: document.getElementById('notes').value,
+    };
+
+    let result;
+    if (selector.value === 'new') {
+      result = await supabase.from('business_profiles').insert([payload]);
+    } else {
+      result = await supabase.from('business_profiles').update(payload).eq('id', selector.value);
+    }
+
+    if (result.error) {
+      alert("Error: " + result.error.message);
+    } else {
+      alert("✅ Business profile saved!");
+      window.location.reload(); // reload so new business shows in dropdown
+    }
+  });
+</script>
+</body>
+</html>

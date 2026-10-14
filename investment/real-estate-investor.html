@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🏠 Real Estate Investor Hub — Enhanced</title>
+  <style>
+    :root{
+      --bg:#f7f9fb; --ink:#1a2a3a; --muted:#6b7280; --card:#fff; --brand:#10b981; --accent:#1a3c5e;
+      --danger:#ef4444; --warn:#f59e0b; --info:#3b82f6; --ok:#16a34a;
+      --radius:14px; --shadow:0 10px 24px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+    main{max-width:1200px;margin:90px auto 40px;padding:0 20px}
+    h1{margin:0 0 8px;color:var(--accent)}
+    .sub{color:var(--muted);margin-bottom:16px}
+
+    /* KPI row */
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:12px 0 18px}
+    .kpi{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
+    .kpi .label{font-size:12px;color:var(--muted)}
+    .kpi .value{font-size:22px;font-weight:700;margin-top:6px}
+
+    /* Action bar */
+    .bar{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 18px}
+    .btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:10px 14px;
+         background:#3b82f6;color:#fff;cursor:pointer;text-decoration:none}
+    .btn.save{background:var(--brand)}
+    .btn.ghost{background:#e5e7eb;color:#111}
+    .btn.ok{background:var(--ok)}
+    .btn.warn{background:var(--warn)}
+    .btn.info{background:var(--info)}
+
+    /* Tabs */
+    .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+    .tab{border:1px solid #d1d5db;background:#fff;color:#0f172a;border-radius:999px;padding:8px 12px;font-size:14px;cursor:pointer}
+    .tab.active{background:#0ea5e9;color:#fff;border-color:#0ea5e9}
+
+    /* Grid */
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:10px}
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .card h3{margin:0 0 6px;color:var(--accent)}
+    .card p{margin:6px 0 12px;color:var(--muted);font-size:14px}
+    .pill{display:inline-block;font-size:12px;padding:4px 10px;border-radius:999px;background:#eef2ff;color:#3730a3}
+
+    /* Section headings */
+    .section-title{display:flex;align-items:center;gap:10px;margin:24px 0 8px}
+    .section-title span{font-size:22px;font-weight:800;color:var(--accent)}
+
+    /* Property tiles (unchanged pattern) */
+    .prop{display:flex;flex-direction:column;gap:10px}
+    .prop .top{display:flex;justify-content:space-between;align-items:center}
+    .meta{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:13px;color:#374151}
+
+    /* Slide-in panel */
+    .panel{position:fixed;top:75px;right:0;bottom:0;max-width:440px;width:100%;background:#fff;
+           box-shadow:-8px 0 24px rgba(0,0,0,.08);transform:translateX(100%);transition:transform .25s ease;overflow:auto}
+    .panel.open{transform:translateX(0)}
+    .panel header{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #eee}
+    .panel .content{padding:16px}
+    .panel label{display:block;font-size:13px;color:#374151;margin:10px 0 6px}
+    .panel input,.panel select,.panel textarea{width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:10px}
+    .panel textarea{min-height:80px}
+
+    /* Helper */
+    .back{margin:24px 0 0;text-align:center}
+    .back a{color:#2563eb;text-decoration:none}
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <!-- Shared header include (keep as in your platform) -->
+  <script type="module">import '/shared/js/header-light.js?v=5.0';</script>
+
+  <main>
+    <h1>🏠 Real Estate Investor Hub</h1>
+    <div class="sub">Analyze deals, track financing, monitor performance, and plan long‑term growth. Rental operations live in <a href="/business/rental-genie.html">Rental Genie</a> (Business).
+    </div>
+
+    <!-- KPIs -->
+    <section class="kpis" id="kpiRow">
+      <div class="kpi"><div class="label">Portfolio Value</div><div class="value" id="kpiValue">—</div></div>
+      <div class="kpi"><div class="label">Total Equity</div><div class="value" id="kpiEquity">—</div></div>
+      <div class="kpi"><div class="label">Monthly Cash Flow</div><div class="value" id="kpiCashflow">—</div></div>
+      <div class="kpi"><div class="label">Avg Cap Rate</div><div class="value" id="kpiCap">—</div></div>
+      <div class="kpi"><div class="label">Cash‑on‑Cash</div><div class="value" id="kpiCoc">—</div></div>
+    </section>
+
+    <!-- Quick actions -->
+    <!--div class="bar">
+      <a class="btn save" href="deal-analyzer.html">🧮 Deal Analyzer</a>
+      <a class="btn info" href="market-comps.html">🧭 Market & Rent Comps</a>
+      <a class="btn" href="refi-analyzer.html">🏦 Refi Analyzer</a>
+      <a class="btn" href="portfolio-report.html">📄 Portfolio Report</a>
+      <button class="btn ghost" id="recalcBtn">🔁 Recalculate KPIs</button>
+    </div-->
+
+    <!-- Filter tabs (1–7) -->
+    <!--div class="tabs" id="tabs">
+      <button class="tab active" data-cat="1">1) 📊 Analysis & Acquisition</button>
+      <button class="tab" data-cat="2">2) 💵 Financing & Costs</button>
+      <button class="tab" data-cat="3">3) 🏘️ Property & Tenants</button>
+      <button class="tab" data-cat="4">4) 📈 Performance</button>
+      <button class="tab" data-cat="5">5) 🧾 Tax & Compliance</button>
+      <button class="tab" data-cat="6">6) 🤖 AI Automations</button>
+      <button class="tab" data-cat="7">7) 📅 Planning & Growth</button>
+    </div-->
+
+    <!-- ===== Sections (cards carry data-cat attribute for filtering) ===== -->
+
+    <!-- 1) Analysis & Acquisition -->
+    <div class="section-title"><span>📊 Property Analysis & Acquisition</span><span class="muted">Deal math + comps + offers</span></div>
+    <section class="grid">
+      <article class="card" data-cat="1">
+        <h3>🧮 Property Analyzer</h3>
+        <p>Cap Rate, CoC, DSCR, breakeven. Save scenarios to a property.</p>
+        <div class="bar"><a class="btn ok" href="deal-analyzer.html">Open</a></div>
+      </article>
+      <article class="card" data-cat="1">
+        <h3>📈 Deal Screener</h3>
+        <p>Compare multiple listings side‑by‑side by returns and risk.</p>
+        <div class="bar"><a class="btn ok" href="deal-screener.html">Open</a></div>
+      </article>
+      <article class="card" data-cat="1">
+        <h3>🧭 Market & Rent Comps</h3>
+        <p>Send address to n8n → pull rent & sale comps.</p>
+        <div class="bar"><a class="btn info" href="market-comps.html">Run Comps</a></div>
+      </article>
+      <article class="card" data-cat="1">
+        <h3>🏦 Mortgage Comparison</h3>
+        <p>Estimate payments across lenders/terms/points.</p>
+        <div class="bar"><a class="btn info" href="mortgage-comparison.html">Open</a></div>
+      </article>
+      <article class="card" data-cat="1">
+        <h3>📝 Offer Calculator</h3>
+        <p>Back into max offer based on target returns and buffer.</p>
+        <div class="bar"><button class="btn" id="offerCalc">Open</button></div>
+      </article>
+      <article class="card" data-cat="1">
+        <h3>🗺️ Market Heat Map</h3>
+        <p>Visualize cash‑flow vs appreciation markets (beta).</p>
+        <div class="bar"><button class="btn" id="heatmap">Open</button></div>
+      </article>
+    </section>
+
+    <!-- 2) Financing & Cost Tracking -->
+    <div class="section-title"><span>💵 Financing & Cost Tracking</span><span class="muted">Loans, refis, expenses</span></div>
+    <section class="grid">
+      <article class="card" data-cat="2">
+        <h3>📒 Loan Tracker</h3>
+        <p>All mortgages with rates, terms, balances, and due dates.</p>
+        <div class="bar"><button class="btn" id="loanTracker">Open</button></div>
+      </article>
+      <article class="card" data-cat="2">
+        <h3>💳 Expense Tracker</h3>
+        <p>Categorize recurring and one‑off costs for each property.</p>
+        <div class="bar"><button class="btn" id="expenseTracker">Open</button></div>
+      </article>
+      <article class="card" data-cat="2">
+        <h3>🧾 Closing Cost Estimator</h3>
+        <p>Estimate upfront cash needed per deal.</p>
+        <div class="bar"><button class="btn" id="closingCost">Open</button></div>
+      </article>
+      <article class="card" data-cat="2">
+        <h3>🔁 Refi Analyzer</h3>
+        <p>Rate/term vs cash‑out comparisons with break‑even.</p>
+        <div class="bar"><a class="btn" href="refi-analyzer.html">Open</a></div>
+      </article>
+      <article class="card" data-cat="2">
+        <h3>🛡️ Insurance & Tax Reminders</h3>
+        <p>Automatic reminders for renewals and due dates.</p>
+        <div class="bar"><button class="btn" id="renewalReminders">Configure</button></div>
+      </article>
+    </section>
+
+    <!-- 3) Property & Tenant Management (link out to Business/Rental Genie) -->
+    <div class="section-title"><span>🏘️ Property & Tenant Management</span><span class="muted">Operations live in Rental Genie (Business)</span></div>
+    <section class="grid">
+      <article class="card" data-cat="3">
+        <h3>🚀 Open Rental Genie</h3>
+        <p>Tenant portal, maintenance, renewals, and marketing.</p>
+        <div class="bar"><a class="btn" href="/business/rentalgenie/rental-genie.html">Go to Rental Genie</a></div>
+      </article>
+      <article class="card" data-cat="3">
+        <h3>🔗 Connect Ops Data</h3>
+        <p>Sync key ops metrics back here for unified KPIs.</p>
+        <div class="bar"><button class="btn" id="syncOps">Sync</button></div>
+      </article>
+    </section>
+
+    <!-- 4) Performance Monitoring -->
+    <div class="section-title"><span>📈 Performance Monitoring</span><span class="muted">Returns, equity, trends</span></div>
+    <section class="grid">
+      <article class="card" data-cat="4">
+        <h3>📊 Portfolio Dashboard</h3>
+        <p>Equity growth, cash flow trend, cap distribution.</p>
+        <div class="bar"><a class="btn" href="portfolio-report.html">Open</a></div>
+      </article>
+      <article class="card" data-cat="4">
+        <h3>💰 Net Worth Tracker</h3>
+        <p>Include property equity in your total net worth.</p>
+        <div class="bar"><button class="btn" id="netWorth">Open</button></div>
+      </article>
+      <article class="card" data-cat="4">
+        <h3>📈 Appreciation Estimator</h3>
+        <p>Forecast value growth by market assumptions.</p>
+        <div class="bar"><button class="btn" id="appreciation">Open</button></div>
+      </article>
+      <article class="card" data-cat="4">
+        <h3>🧮 Expense/Income Monitor</h3>
+        <p>Track property profitability ratios monthly.</p>
+        <div class="bar"><button class="btn" id="ratioMonitor">Open</button></div>
+      </article>
+      <article class="card" data-cat="4">
+        <h3>📑 Annual Report Generator</h3>
+        <p>CPA‑ready summary for taxes and lenders.</p>
+        <div class="bar"><a class="btn" href="portfolio-report.html">Generate</a></div>
+      </article>
+    </section>
+
+    <!-- 5) Tax & Compliance Automation -->
+    <div class="section-title"><span>🧾 Tax & Compliance Automation</span><span class="muted">Make tax time painless</span></div>
+    <section class="grid">
+      <article class="card" data-cat="5">
+        <h3>📉 Depreciation Tracker</h3>
+        <p>Auto‑calculate annual depreciation per asset.</p>
+        <div class="bar"><button class="btn" id="depreciation">Open</button></div>
+      </article>
+      <article class="card" data-cat="5">
+        <h3>🏛️ Property Tax Calendar</h3>
+        <p>Sync due dates and reminders to your calendar.</p>
+        <div class="bar"><button class="btn" id="taxCalendar">Configure</button></div>
+      </article>
+      <article class="card" data-cat="5">
+        <h3>🗂️ Document Vault</h3>
+        <p>Store deeds, leases, policies, receipts.</p>
+        <div class="bar"><button class="btn" id="vault">Open</button></div>
+      </article>
+      <article class="card" data-cat="5">
+        <h3>🏷️ Tax Category Assistant</h3>
+        <p>Suggest proper Schedule E/C categories for expenses.</p>
+        <div class="bar"><button class="btn" id="taxHelper">Open</button></div>
+      </article>
+      <article class="card" data-cat="5">
+        <h3>📤 CPA Export</h3>
+        <p>Export CSV/PDF for your accountant or QuickBooks.</p>
+        <div class="bar"><a class="btn" href="portfolio-report.html">Export</a></div>
+      </article>
+    </section>
+
+    <!-- 6) AI‑Powered Automations -->
+    <div class="section-title"><span>🤖 AI‑Powered Automation Ideas</span><span class="muted">Let the bots do the busywork</span></div>
+    <section class="grid">
+      <article class="card" data-cat="6">
+        <h3>🔮 Smart Rent Predictor</h3>
+        <p>ChatGPT + APIs → estimate rent from an address.</p>
+        <div class="bar"><button class="btn" id="rentAI">Run</button></div>
+      </article>
+      <article class="card" data-cat="6">
+        <h3>🧠 Analyzer from MLS/Link</h3>
+        <p>Paste a listing URL → get a full financial breakdown.</p>
+        <div class="bar"><button class="btn" id="mlsAI">Analyze</button></div>
+      </article>
+      <article class="card" data-cat="6">
+        <h3>👤 Tenant Screening Summary</h3>
+        <p>AI summarizes applications and highlights risks.</p>
+        <div class="bar"><button class="btn" id="tenantAI">Open</button></div>
+      </article>
+      <article class="card" data-cat="6">
+        <h3>🛠️ Maintenance Routing</h3>
+        <p>Classify requests, suggest priority & vendor.</p>
+        <div class="bar"><button class="btn" id="maintAI">Open</button></div>
+      </article>
+      <article class="card" data-cat="6">
+        <h3>🧮 Tax Optimization Genie</h3>
+        <p>Find missed deductions, summarize yearly savings.</p>
+        <div class="bar"><button class="btn" id="taxAI">Run</button></div>
+      </article>
+    </section>
+
+    <!-- 7) Planning & Growth -->
+    <div class="section-title"><span>📅 Planning & Growth</span><span class="muted">From goals → equity snowball → exit</span></div>
+    <section class="grid">
+      <article class="card" data-cat="7">
+        <h3>🎯 Goal Planner</h3>
+        <p>Set passive‑income targets and back into unit count.</p>
+        <div class="bar"><button class="btn" id="goalPlanner">Open</button></div>
+      </article>
+      <article class="card" data-cat="7">
+        <h3>❄️ Equity Snowball</h3>
+        <p>Model growing equity and reinvestment timelines.</p>
+        <div class="bar"><button class="btn" id="snowball">Open</button></div>
+      </article>
+      <article class="card" data-cat="7">
+        <h3>🔁 1031 Exchange Tracker</h3>
+        <p>Track deadlines and replacement properties.</p>
+        <div class="bar"><a class="btn" href="1031-tracker.html">Open</a></div>
+      </article>
+      <article class="card" data-cat="7">
+        <h3>🚪 Exit Strategy Planner</h3>
+        <p>Sell, refi, or hold scenarios with tax effects (beta).</p>
+        <div class="bar"><button class="btn" id="exitPlan">Open</button></div>
+      </article>
+    </section>
+
+    <!-- Properties (existing pattern) -->
+    <h2 class="section-title" style="gap:12px"><span>🏠 Your Properties</span><span class="muted">Tap a card → Edit/Analyze</span></h2>
+    <section class="grid" id="propGrid"></section>
+
+    <div class="back"><a href="../../dashboard/category.html">⬅️ Back</a></div>
+  </main>
+
+  <!-- Slide-in edit/analyze panel (same UX) -->
+  <aside class="panel" id="panel">
+    <header>
+      <strong id="panelTitle">Edit Property</strong>
+      <button class="btn warn" id="closePanel">✖</button>
+    </header>
+    <div class="content">
+      <form id="panelForm">
+        <label>🏷️ Name</label><input id="p_name" />
+        <label>📍 Address</label><input id="p_address" />
+        <label>💰 Current Value (ARV)</label><input type="number" id="p_value" step="0.01" />
+        <label>📉 Loan Balance</label><input type="number" id="p_loan" step="0.01" />
+        <label>💵 Monthly Rent</label><input type="number" id="p_rent" step="0.01" />
+        <label>🧾 Other Monthly Income</label><input type="number" id="p_other" step="0.01" />
+        <label>📦 Fixed Monthly Expenses</label><input type="number" id="p_fixed" step="0.01" />
+        <label>📈 Variable Expenses (% of income)</label><input type="number" id="p_varpct" step="0.01" />
+        <label>📝 Notes</label><textarea id="p_notes"></textarea>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn save" id="saveProp">✅ Save</button>
+          <a class="btn" href="deal-analyzer.html" id="quickAnalyze">📐 Quick Analyze</a>
+        </div>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Supabase + Logic -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const client = supabase.createClient('YOUR_SUPABASE_URL','YOUR_SUPABASE_PUBLIC_ANON_KEY');
+
+    const grid = document.getElementById('propGrid');
+    const panel = document.getElementById('panel');
+    const panelTitle = document.getElementById('panelTitle');
+
+    let currentProperty = null;
+
+    function money(n){ if(n===null||n===undefined||isNaN(n)) return '—';
+      return '$' + Number(n).toLocaleString(undefined,{minimumFractionDigits:0}); }
+
+    async function load(){
+      const { data: session } = await client.auth.getUser();
+      const uid = session?.user?.id;
+      const { data, error } = await client
+        .from('properties')
+        .select('id,name,address,status,estimated_value:arv,loan_balance,monthly_rent,rent_other,monthly_fixed,variable_expenses_pct')
+        .order('created_at',{ascending:false});
+      if(error){ grid.innerHTML = `<div class="card">Error: ${error.message}</div>`; return; }
+
+      let totalValue=0, totalEquity=0, totalCash=0, capSum=0, capCount=0;
+      grid.innerHTML = '';
+      (data||[]).forEach(p=>{
+        const value = p.estimated_value || 0;
+        const loan = p.loan_balance || 0;
+        const rent = (p.monthly_rent||0) + (p.rent_other||0);
+        const fixed = p.monthly_fixed || 0;
+        const varPct = (p.variable_expenses_pct||0)/100;
+        const opex = fixed + rent*varPct;
+        const cashflow = rent - opex; // replace with rent - opex - debt if you store monthly_payment
+        const noi = rent - opex;
+        const cap = value>0 ? (noi*12)/value : null;
+        const equity = Math.max(value - loan, 0);
+
+        totalValue += value; totalEquity += equity; totalCash += cashflow;
+        if(cap!==null && isFinite(cap)){ capSum += cap; capCount++; }
+
+        const el = document.createElement('article');
+        el.className='card prop';
+        el.innerHTML = `
+          <div class="top">
+            <strong>${p.name||'Unnamed'}</strong>
+            <span class="pill">${p.status||'—'}</span>
+          </div>
+          <div class="meta">
+            <div>Value: <b>${money(value)}</b></div>
+            <div>Loan: <b>${money(loan)}</b></div>
+            <div>Equity: <b>${money(equity)}</b></div>
+            <div>Cash Flow: <b>${money(cashflow)}</b>/mo</div>
+            <div>Cap Rate: <b>${cap? (cap*100).toFixed(1)+'%':'—'}</b></div>
+            <div>Rent: <b>${money(rent)}</b>/mo</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button class="btn" onclick='openPanel(${JSON.stringify(p)})'>✏️ Edit / Analyze</button>
+            <a class="btn" href="deal-analyzer.html?property=${encodeURIComponent(p.name||'')}">📐 Deal Sheet</a>
+          </div>`;
+        grid.appendChild(el);
+      });
+
+      document.getElementById('kpiValue').textContent = money(totalValue);
+      document.getElementById('kpiEquity').textContent = money(totalEquity);
+      document.getElementById('kpiCashflow').textContent = money(totalCash);
+      document.getElementById('kpiCap').textContent = capCount? ((capSum/capCount)*100).toFixed(1)+'%':'—';
+      document.getElementById('kpiCoc').textContent = '—'; // set when you store cash-in
+
+      document.getElementById('recalcBtn').onclick = load;
+    }
+
+    function openPanel(p){
+      currentProperty = p;
+      panelTitle.textContent = `Edit: ${p.name||'Property'}`;
+      panel.classList.add('open');
+      set('p_name', p.name); set('p_address', p.address); set('p_value', p.estimated_value);
+      set('p_loan', p.loan_balance); set('p_rent', p.monthly_rent); set('p_other', p.rent_other);
+      set('p_fixed', p.monthly_fixed); set('p_varpct', p.variable_expenses_pct); set('p_notes', p.notes);
+    }
+    function set(id,v){ const el=document.getElementById(id); if(el) el.value = (v??''); }
+
+    async function saveCurrent(){
+      if(!currentProperty) return;
+      const payload = {
+        name: v('p_name'), address: v('p_address'),
+        arv: n('p_value'), loan_balance: n('p_loan'), monthly_rent: n('p_rent'), rent_other: n('p_other'),
+        monthly_fixed: n('p_fixed'), variable_expenses_pct: n('p_varpct'), notes: v('p_notes')
+      };
+      const { error } = await client.from('properties').update(payload).eq('id', currentProperty.id);
+      if(error) alert('❌ '+error.message); else { panel.classList.remove('open'); load(); }
+    }
+    function v(id){ return document.getElementById(id).value; }
+    function n(id){ const x=parseFloat(v(id)); return isNaN(x)? null:x; }
+
+    // Tabs filtering
+    const tabs = document.getElementById('tabs');
+    tabs.addEventListener('click', e=>{
+      const t = e.target.closest('.tab'); if(!t) return;
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const cat = t.getAttribute('data-cat');
+      document.querySelectorAll('[data-cat]').forEach(c=>{
+        c.style.display = (cat === null || c.getAttribute('data-cat')===cat) ? '' : 'none';
+      });
+      // scroll to first visible section title
+      window.scrollTo({top: t.offsetTop - 80, behavior: 'smooth'});
+    });
+
+    document.getElementById('saveProp').onclick = saveCurrent;
+    document.getElementById('closePanel').onclick = ()=> panel.classList.remove('open');
+
+    load();
+  </script>
+</body>
+</html>

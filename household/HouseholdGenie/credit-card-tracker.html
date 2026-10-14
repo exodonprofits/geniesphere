@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Credit Card Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center">💳 Credit Card Tracker</h1>
+
+    <!-- Add Card Button -->
+    <div class="text-center mb-6">
+      <a href="credit-card-form.html" class="bg-green-600 text-white px-6 py-2 rounded-full shadow hover:bg-green-700 transition">➕ Add New Card</a>
+    </div>
+
+    <!-- Cards Container -->
+    <div id="cardsContainer" class="space-y-10">
+      <!-- Cards will be injected here -->
+    </div>
+
+    <!-- Back Button -->
+    <div class="text-center mt-10">
+      <a href="household-genie.html" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-full shadow hover:bg-blue-700 transition">⬅️ Back to Household Genie</a>
+    </div>
+  </div>
+
+<script>
+  const supabase = createClient('https://your-project.supabase.co', 'public-anon-key');
+
+  async function loadCreditCards() {
+    const user = await supabase.auth.getUser();
+    if (!user || !user.data?.user) {
+      document.getElementById('cardsContainer').innerHTML = '<p class="text-center">Please log in to view your credit cards.</p>';
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('credit_cards')
+      .select('*')
+      .eq('user_id', user.data.user.id)
+      .order('renewal_date');
+
+    if (error) {
+      document.getElementById('cardsContainer').innerHTML = '<p class="text-center text-red-600">Error loading cards.</p>';
+      console.error(error);
+      return;
+    }
+
+    if (!data.length) {
+      document.getElementById('cardsContainer').innerHTML = '<p class="text-center">No credit cards saved yet.</p>';
+      return;
+    }
+
+    const container = document.getElementById('cardsContainer');
+    container.innerHTML = '';
+
+    data.forEach(card => {
+      const cardEl = document.createElement('div');
+      cardEl.className = 'bg-white rounded-2xl shadow-lg p-6';
+      cardEl.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <h2 class="text-xl font-semibold mb-2">Card Info</h2>
+            <p><strong>Card Name:</strong> ${card.card_name}</p>
+            <p><strong>Last 4 Digits:</strong> **** ${card.last_four}</p>
+            <p><strong>Credit Limit:</strong> $${card.credit_limit}</p>
+            <p><strong>Available Credit:</strong> $${card.available_credit}</p>
+            <p><strong>Due Date:</strong> ${card.due_date}</p>
+            <p><strong>Closing Date:</strong> ${card.closing_date}</p>
+          </div>
+          <div>
+            <h2 class="text-xl font-semibold mb-2">Rewards & APR</h2>
+            <p><strong>Reward Type:</strong> ${card.reward_type}</p>
+            <p><strong>Points Balance:</strong> ${card.points_balance} pts</p>
+            <p><strong>Annual Fee:</strong> $${card.annual_fee}</p>
+            <p><strong>APR:</strong> ${card.apr}%</p>
+            <p><strong>Renewal Date:</strong> ${card.renewal_date}</p>
+          </div>
+        </div>
+        <div class="mb-4">
+          <h2 class="text-xl font-semibold mb-2">⏰ Reminders & Alerts</h2>
+          <ul class="list-disc list-inside space-y-2">
+            <li>💡 Next payment due on <strong>${card.due_date}</strong></li>
+            <li>📬 Statement closes on <strong>${card.closing_date}</strong></li>
+            <li>⚠️ Spend alert set for > $500/month</li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="text-xl font-semibold mb-2">🔗 Links & Actions</h2>
+          <ul class="list-inside list-disc space-y-2">
+            <li><a href="${card.portal_url}" target="_blank" class="text-blue-600 underline">Login to Card Portal</a></li>
+            <li><a href="#" class="text-blue-600 underline">Upload Statement PDF</a></li>
+            <li><a href="#" class="text-blue-600 underline">Report Fraud or Dispute</a></li>
+          </ul>
+        </div>
+      `;
+      container.appendChild(cardEl);
+    });
+  }
+
+  loadCreditCards();
+</script>
+
+</body>
+</html>

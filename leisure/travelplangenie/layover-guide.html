@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Layover Guide – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #0077b6; --ocean-deep: #023e8a; --teal: #00b4d8;
+  --coral: #e76f51; --coral-dark: #c1551c;
+  --off-white: #f8fafc; --gray-light: #f1f5f9; --gray-border: #e2e8f0;
+  --text: #1e293b; --text-muted: #64748b;
+  --radius: 10px; --radius-lg: 16px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+  /* Layover accent — rust/terracotta for urgency */
+  --rust: #c0440a; --rust-light: #ea580c; --rust-pale: #fff7ed; --rust-border: #fed7aa;
+  --green: #15803d; --green-pale: #dcfce7;
+  --amber: #b45309; --amber-pale: #fffbeb;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; padding: 2rem 1rem 3rem; }
+
+.vg-header { position: sticky; top: 0; z-index: 40; background: linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%); box-shadow: 0 2px 20px rgba(2,62,138,0.25); }
+.vg-nav { max-width: 1240px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vg-brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.vg-brand img { width: 46px; height: 46px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+.vg-title { font-family: 'Playfair Display',serif; font-weight: 700; font-size: 1.4rem; color: #fff; }
+.vg-right { display: flex; align-items: center; gap: 12px; }
+.nav-chip { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; height: 38px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); font-size: 0.88rem; font-weight: 500; transition: background var(--transition); white-space: nowrap; }
+.nav-chip:hover { background: rgba(255,255,255,0.24); }
+
+.page-banner { background: #eaf4fb; border-bottom: 1px solid #c9e4f5; padding: 1.4rem 1.5rem; }
+.page-banner-inner { max-width: 1100px; margin: 0 auto; }
+.page-banner h1 { font-family: 'Playfair Display',serif; font-size: clamp(1.2rem,2.5vw,1.55rem); font-weight: 700; color: var(--ocean-deep); margin-bottom: 0.2rem; }
+.page-banner p { font-size: 0.87rem; color: var(--text-muted); }
+
+/* TIMELINE WIDGET — rust accent */
+.timeline-widget { background: var(--rust-pale); border: 1px solid var(--rust-border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+.timeline-widget-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+.timeline-widget-title { font-family: 'Playfair Display',serif; font-size: 0.95rem; font-weight: 700; color: var(--rust); }
+.timeline-duration { font-family: 'DM Sans',monospace; font-size: 1.3rem; font-weight: 700; color: var(--rust); letter-spacing: -0.02em; }
+.timeline-bar-wrap { position: relative; height: 40px; margin-bottom: 0.5rem; }
+.timeline-bar-bg { position: absolute; inset: 50% 0; transform: translateY(-50%); height: 8px; background: #fcd9b0; border-radius: 999px; overflow: hidden; }
+.timeline-bar-fill { height: 100%; background: linear-gradient(90deg,var(--rust),var(--rust-light)); border-radius: 999px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+.timeline-milestones { position: absolute; inset: 0; display: flex; align-items: center; }
+.milestone { position: absolute; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+.milestone-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fcd9b0; background: #fff7ed; position: relative; z-index: 2; transition: all var(--transition); }
+.milestone.reached .milestone-dot { background: var(--rust); border-color: var(--rust); }
+.milestone-label { font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; position: absolute; top: 24px; letter-spacing: 0.03em; }
+.milestone.reached .milestone-label { color: var(--rust); font-weight: 600; }
+.fits-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+.fits-tag { font-size: 0.75rem; font-weight: 500; padding: 3px 10px; border-radius: 999px; border: 1px solid; display: inline-flex; align-items: center; gap: 4px; }
+.fits-tag.possible { background: var(--green-pale); border-color: #86efac; color: var(--green); }
+.fits-tag.borderline { background: var(--amber-pale); border-color: #fcd34d; color: var(--amber); }
+
+.planner-layout { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; }
+@media (max-width: 860px) { .planner-layout { grid-template-columns: 1fr; } }
+
+.planning-card { background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 2rem; border: 1px solid var(--gray-border); }
+.planning-card h2 { font-family: 'Playfair Display',serif; font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+.step-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+.field { margin-bottom: 1.25rem; }
+.field label { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; }
+.required-star { color: var(--coral); }
+.opt-tag { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; background: var(--gray-light); border-radius: 999px; padding: 1px 8px; }
+.vg-input, .vg-select { width: 100%; padding: 0.65rem 1rem; border: 1px solid var(--gray-border); border-radius: var(--radius); font-family: 'DM Sans',sans-serif; font-size: 0.92rem; color: var(--text); background: var(--gray-light); outline: none; transition: border-color var(--transition), background var(--transition); }
+.vg-input:focus, .vg-select:focus { border-color: var(--ocean); background: #fff; box-shadow: 0 0 0 3px rgba(0,119,182,0.1); }
+.vg-input::placeholder { color: #94a3b8; }
+.vg-select { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230077b6"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 2.5rem; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width:480px) { .two-col { grid-template-columns: 1fr; } }
+.section-label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; margin-top: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--gray-border); }
+
+.agent-tip { display: flex; align-items: flex-start; gap: 10px; background: linear-gradient(105deg,#eaf4fb,#f0f9ff); border: 1px solid #bae6fd; border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--ocean-deep); line-height: 1.55; }
+.agent-tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* INTEREST CHIPS */
+.interest-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.interest-chip { border: 1.5px solid var(--gray-border); border-radius: 999px; padding: 0.38rem 0.9rem; font-size: 0.82rem; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all var(--transition); background: #fff; user-select: none; }
+.interest-chip:hover { border-color: var(--rust-light); color: var(--rust); background: var(--rust-pale); }
+.interest-chip.active { border-color: var(--rust); background: var(--rust-pale); color: var(--rust); }
+
+.btn-generate { display: inline-flex; align-items: center; gap: 8px; padding: 0.85rem 2rem; border-radius: var(--radius); border: none; background: linear-gradient(135deg,#10b981,#059669); color: #fff; font-family: 'DM Sans',sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1.5rem; width: 100%; justify-content: center; transition: all var(--transition); box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
+.btn-generate:hover { background: linear-gradient(135deg,#059669,#047857); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.45); }
+.btn-generate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.spinner-overlay { position: fixed; inset: 0; background: rgba(2,62,138,0.55); backdrop-filter: blur(4px); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+.spinner-overlay.active { display: flex; }
+.spinner-box { background: #fff; border-radius: var(--radius-lg); padding: 2.5rem 3rem; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.spinner { width: 48px; height: 48px; border: 3px solid rgba(0,119,182,0.2); border-top: 3px solid var(--ocean); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.25rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.results-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; display: none; margin-top: 1.5rem; }
+.results-card.visible { display: block; }
+.results-header { background: linear-gradient(105deg,#023e8a,#0077b6); padding: 1.25rem 1.5rem; color: #fff; }
+.results-header h3 { font-family: 'Playfair Display',serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.2rem; }
+.results-header p { font-size: 0.84rem; opacity: 0.8; }
+.results-body { padding: 1.5rem; font-size: 0.92rem; line-height: 1.75; color: var(--text); }
+.results-body strong { color: var(--ocean-deep); }
+.results-body a { color: var(--ocean); }
+.results-body a:hover { text-decoration: underline; }
+
+.affiliate-sidebar { display: flex; flex-direction: column; gap: 1rem; }
+.deal-banner { background: linear-gradient(135deg,#023e8a,#0077b6); border-radius: var(--radius-lg); padding: 1.1rem; color: #fff; }
+.deal-banner h3 { font-size: 0.92rem; font-weight: 600; margin-bottom: 0.4rem; }
+.deal-banner p { font-size: 0.82rem; opacity: 0.85; margin-bottom: 0.75rem; line-height: 1.5; }
+.deal-btn { display: block; text-align: center; background: var(--coral); color: #fff; padding: 0.55rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: background var(--transition); }
+.deal-btn:hover { background: var(--coral-dark); }
+.affiliate-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 1.1rem; box-shadow: var(--shadow); }
+.affiliate-card-title { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+.affiliate-link { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--gray-light); border: 1px solid var(--gray-border); text-decoration: none; color: var(--text); margin-bottom: 0.5rem; font-size: 0.88rem; font-weight: 500; transition: all var(--transition); }
+.affiliate-link:last-child { margin-bottom: 0; }
+.affiliate-link:hover { background: #eaf4fb; border-color: var(--teal); transform: translateX(2px); }
+.affiliate-link .arr { font-size: 0.75rem; color: var(--text-muted); }
+.affiliate-link:hover .arr { color: var(--ocean); }
+.affiliate-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.6rem; font-style: italic; }
+.info-box { background: var(--gray-light); border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 1rem; font-size: 0.83rem; color: var(--text-muted); line-height: 1.65; }
+.info-box strong { color: var(--text); }
+
+footer { background: linear-gradient(105deg,#023e8a 0%,#0077b6 100%); color: rgba(255,255,255,0.85); padding: 3rem 1.5rem 2rem; }
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-brand { font-family: 'Playfair Display',serif; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+.footer-tagline { font-size: 0.85rem; opacity: 0.7; }
+.footer-subscribe { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-email { padding: 0.65rem 1rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.12); color: #fff; font-family: 'DM Sans',sans-serif; font-size: 0.9rem; flex: 1; min-width: 180px; outline: none; }
+.footer-email::placeholder { color: rgba(255,255,255,0.5); }
+.footer-sub-btn { padding: 0.65rem 1.2rem; background: var(--coral); color: #fff; border: none; cursor: pointer; border-radius: 9px; font-size: 0.9rem; font-weight: 600; font-family: 'DM Sans',sans-serif; transition: background var(--transition); }
+.footer-sub-btn:hover { background: var(--coral-dark); }
+.footer-links { display: flex; gap: 1.2rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+.footer-copy { margin-top: 2rem; font-size: 0.8rem; opacity: 0.55; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12); }
+.error-msg { color: #ef4444; font-size: 0.8rem; margin-top: 0.3rem; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) window.supabase = createClient('https://pbojacnagutipfhcxltj.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+</script>
+
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html"><img src="images/nav-icon.png" alt="Voyage Genie"/><span class="vg-title">Voyage Genie</span></a>
+    <div class="vg-right"><a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a><a class="nav-chip" href="index.html#travel-tools">🧰 Tools</a></div>
+  </div>
+</header>
+
+<div class="page-banner"><div class="page-banner-inner">
+  <h1>🔄 Layover Guide</h1>
+  <p>Turn dead time into the best part of your journey — lounges, city escapes, hidden terminals, and a minute-by-minute plan.</p>
+</div></div>
+
+<div class="spinner-overlay" id="spinnerOverlay">
+  <div class="spinner-box">
+    <div class="spinner"></div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1e293b;margin-bottom:0.3rem">Mapping your layover…</div>
+    <div style="font-size:0.85rem;color:#64748b">Building your personalised transit guide</div>
+  </div>
+</div>
+
+<main><div class="planner-layout">
+
+  <div class="planning-card">
+    <h2>Plan Your Layover</h2>
+    <p class="step-desc">Tell Genie your airport, how long you have, and what you want — get a precise, timed guide for exactly what to do.</p>
+
+    <!-- INTERACTIVE TIMELINE -->
+    <div class="timeline-widget">
+      <div class="timeline-widget-header">
+        <span class="timeline-widget-title">⏱️ What Your Layover Allows</span>
+        <span class="timeline-duration" id="timelineDuration">— h —m</span>
+      </div>
+      <div class="timeline-bar-wrap">
+        <div class="timeline-bar-bg"><div class="timeline-bar-fill" id="timelineBarFill"></div></div>
+        <div class="timeline-milestones" id="milestonesRow"></div>
+      </div>
+      <div class="fits-tags" id="whatFitsTags">
+        <span style="font-size:0.78rem;color:var(--text-muted)">Select your layover duration to see what's possible</span>
+      </div>
+    </div>
+
+    <div class="agent-tip">
+      <span class="agent-tip-icon">🔄</span>
+      <span>Genie gives you a <strong>minute-by-minute timeline</strong> — from clearing customs to being back at your departure gate — with real restaurant names, lounge access, and city escape options.</span>
+    </div>
+
+    <!-- AIRPORT -->
+    <div class="field">
+      <label for="airportSelect">🛬 Layover Airport <span class="required-star">*</span></label>
+      <select id="airportSelect" class="vg-select">
+        <option value="">-- Select Airport --</option>
+        <optgroup label="🇺🇸 United States"><option value="John F. Kennedy International (JFK), New York">New York JFK</option><option value="LaGuardia (LGA), New York">New York LaGuardia</option><option value="Newark Liberty (EWR)">Newark (EWR)</option><option value="Los Angeles International (LAX)">Los Angeles (LAX)</option><option value="Chicago O'Hare International (ORD)">Chicago O'Hare (ORD)</option><option value="Dallas/Fort Worth International (DFW)">Dallas/Fort Worth (DFW)</option><option value="Atlanta Hartsfield-Jackson (ATL)">Atlanta (ATL)</option><option value="San Francisco International (SFO)">San Francisco (SFO)</option><option value="Miami International (MIA)">Miami (MIA)</option><option value="Denver International (DEN)">Denver (DEN)</option><option value="Seattle-Tacoma International (SEA)">Seattle (SEA)</option><option value="Boston Logan International (BOS)">Boston (BOS)</option></optgroup>
+        <optgroup label="🇬🇧 United Kingdom"><option value="London Heathrow (LHR)">London Heathrow (LHR)</option><option value="London Gatwick (LGW)">London Gatwick (LGW)</option><option value="London Stansted (STN)">London Stansted (STN)</option><option value="Manchester Airport (MAN)">Manchester (MAN)</option></optgroup>
+        <optgroup label="🇪🇺 Europe"><option value="Amsterdam Schiphol (AMS)">Amsterdam (AMS)</option><option value="Frankfurt Airport (FRA)">Frankfurt (FRA)</option><option value="Paris Charles de Gaulle (CDG)">Paris CDG</option><option value="Munich Airport (MUC)">Munich (MUC)</option><option value="Madrid Barajas (MAD)">Madrid (MAD)</option><option value="Barcelona El Prat (BCN)">Barcelona (BCN)</option><option value="Rome Fiumicino (FCO)">Rome Fiumicino (FCO)</option><option value="Zurich Airport (ZRH)">Zurich (ZRH)</option><option value="Copenhagen Airport (CPH)">Copenhagen (CPH)</option><option value="Vienna International (VIE)">Vienna (VIE)</option><option value="Istanbul Airport (IST)">Istanbul (IST)</option></optgroup>
+        <optgroup label="🌏 Middle East"><option value="Dubai International (DXB)">Dubai (DXB)</option><option value="Hamad International, Doha (DOH)">Doha (DOH)</option><option value="Abu Dhabi International (AUH)">Abu Dhabi (AUH)</option></optgroup>
+        <optgroup label="🌏 Asia"><option value="Singapore Changi (SIN)">Singapore Changi (SIN)</option><option value="Hong Kong International (HKG)">Hong Kong (HKG)</option><option value="Tokyo Narita (NRT)">Tokyo Narita (NRT)</option><option value="Tokyo Haneda (HND)">Tokyo Haneda (HND)</option><option value="Seoul Incheon (ICN)">Seoul Incheon (ICN)</option><option value="Bangkok Suvarnabhumi (BKK)">Bangkok (BKK)</option><option value="Kuala Lumpur International (KUL)">Kuala Lumpur (KUL)</option><option value="Taipei Taoyuan (TPE)">Taipei (TPE)</option></optgroup>
+        <optgroup label="🌏 Oceania"><option value="Sydney Kingsford Smith (SYD)">Sydney (SYD)</option><option value="Melbourne Airport (MEL)">Melbourne (MEL)</option><option value="Auckland International (AKL)">Auckland (AKL)</option></optgroup>
+        <option value="OTHER">My airport isn't listed →</option>
+      </select>
+      <div id="customAirportWrap" class="hidden" style="margin-top:0.5rem"><input id="customAirport" type="text" class="vg-input" placeholder="Enter airport name or IATA code"/></div>
+      <div id="airportError" class="error-msg hidden">⚠ Please select your layover airport.</div>
+    </div>
+
+    <div class="two-col">
+      <div class="field"><label for="terminalArrival">🛬 Arriving Terminal <span class="opt-tag">Optional</span></label><input id="terminalArrival" type="text" class="vg-input" placeholder="e.g. T1, Terminal 2"/></div>
+      <div class="field"><label for="terminalDeparture">🛫 Departing Terminal <span class="opt-tag">Optional</span></label><input id="terminalDeparture" type="text" class="vg-input" placeholder="e.g. T3, International"/></div>
+    </div>
+
+    <!-- DURATION -->
+    <div class="section-label">Layover Duration <span class="required-star">*</span></div>
+    <div class="two-col">
+      <div class="field">
+        <label for="layoverHours">Hours</label>
+        <select id="layoverHours" class="vg-select" onchange="updateTimeline()">
+          <option value="">—</option>
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18">18</option><option value="20">20</option><option value="22">22</option><option value="24">24</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="layoverMins">Minutes</label>
+        <select id="layoverMins" class="vg-select" onchange="updateTimeline()">
+          <option value="0">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
+        </select>
+      </div>
+    </div>
+    <div id="durationError" class="error-msg hidden">⚠ Please select your layover duration.</div>
+
+    <!-- CONTEXT -->
+    <div class="section-label">Your Context</div>
+    <div class="two-col">
+      <div class="field">
+        <label for="arrivalTime">🕐 Arrival Time <span class="opt-tag">Optional</span></label>
+        <input id="arrivalTime" type="time" class="vg-input"/>
+      </div>
+      <div class="field">
+        <label for="visaStatus">🛂 Can you leave the airport?</label>
+        <select id="visaStatus" class="vg-select">
+          <option value="yes — I have a valid visa or don't need one">Yes — valid visa / visa-free</option>
+          <option value="not sure — I need advice on transit visa requirements">Not sure — need visa advice</option>
+          <option value="no — I only have airside transit">No — airside transit only</option>
+        </select>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label for="travellerType">👤 Travelling as</label>
+        <select id="travellerType" class="vg-select"><option value="solo traveller">Solo traveller</option><option value="couple">Couple</option><option value="family with young children">Family with young children</option><option value="group of friends">Group of friends</option><option value="business traveller">Business traveller</option></select>
+      </div>
+      <div class="field">
+        <label for="luggage">🧳 Luggage</label>
+        <select id="luggage" class="vg-select"><option value="carry-on only — no checked bags">Carry-on only</option><option value="checked bags — need to re-check or collect">Checked bags to deal with</option><option value="heavy luggage — need storage">Need luggage storage</option></select>
+      </div>
+    </div>
+
+    <!-- INTERESTS -->
+    <div class="section-label">What do you want from this layover?</div>
+    <div class="interest-grid" id="interestGrid">
+      <div class="interest-chip" data-val="sightseeing and local culture">🏛️ Sightseeing</div>
+      <div class="interest-chip" data-val="best local food">🍜 Local food</div>
+      <div class="interest-chip" data-val="airport lounge access">🛋️ Lounge</div>
+      <div class="interest-chip" data-val="shopping">🛍️ Shopping</div>
+      <div class="interest-chip" data-val="sleep or rest">😴 Rest</div>
+      <div class="interest-chip" data-val="work or productivity">💼 Work</div>
+      <div class="interest-chip" data-val="spa or shower">🚿 Spa / shower</div>
+      <div class="interest-chip" data-val="family-friendly activities">🎠 Family fun</div>
+      <div class="interest-chip" data-val="exercise or movement">🏃 Exercise</div>
+      <div class="interest-chip" data-val="quick city escape">🌆 City escape</div>
+    </div>
+
+    <div class="section-label">Budget &amp; Extras</div>
+    <div class="two-col">
+      <div class="field">
+        <label for="budget">💰 Layover Budget <span class="opt-tag">Optional</span></label>
+        <select id="budget" class="vg-select"><option value="">Any budget</option><option value="free options only">Free options only</option><option value="under $20">Under $20</option><option value="$20–$50">$20–$50</option><option value="$50–$100">$50–$100</option><option value="$100+">$100+ (premium)</option></select>
+      </div>
+      <div class="field">
+        <label for="extras">📝 Extra info <span class="opt-tag">Optional</span></label>
+        <input id="extras" type="text" class="vg-input" placeholder="e.g. Priority Pass, arriving 2am, travelling with infant"/>
+      </div>
+    </div>
+
+    <button class="btn-generate" id="generateBtn" onclick="generateGuide()">🔄 Plan My Layover</button>
+
+    <div class="results-card" id="resultsCard">
+      <div class="results-header"><h3 id="resultsTitle">Your Layover Plan</h3><p id="resultsSubtitle"></p></div>
+      <div class="results-body" id="resultsBody"></div>
+    </div>
+  </div>
+
+  <aside class="affiliate-sidebar">
+    <div class="deal-banner">
+      <h3>🧳 Store Your Bags</h3>
+      <p>Drop luggage and explore hands-free. Available at most major airports from $6/bag.</p>
+      <a href="https://usebounce.com" target="_blank" rel="noopener" class="deal-btn">Find Bounce Storage →</a>
+    </div>
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🛋️ Lounge Day Passes</div>
+      <a href="https://www.loungebuddy.com" target="_blank" rel="noopener" class="affiliate-link"><span>LoungeBuddy</span><span class="arr">↗</span></a>
+      <a href="https://www.prioritypass.com" target="_blank" rel="noopener" class="affiliate-link"><span>Priority Pass</span><span class="arr">↗</span></a>
+      <a href="https://www.dragonpass.com" target="_blank" rel="noopener" class="affiliate-link"><span>DragonPass</span><span class="arr">↗</span></a>
+      <p class="affiliate-note">We may earn a small commission at no cost to you.</p>
+    </div>
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🚆 City Connections</div>
+      <a href="https://www.omio.com" target="_blank" rel="noopener" class="affiliate-link"><span>Omio (trains &amp; buses)</span><span class="arr">↗</span></a>
+      <a href="https://www.thetrainline.com" target="_blank" rel="noopener" class="affiliate-link"><span>Trainline</span><span class="arr">↗</span></a>
+      <a href="https://www.grab.com" target="_blank" rel="noopener" class="affiliate-link"><span>Grab (Asia)</span><span class="arr">↗</span></a>
+      <a href="https://www.uber.com" target="_blank" rel="noopener" class="affiliate-link"><span>Uber</span><span class="arr">↗</span></a>
+    </div>
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🧳 Luggage Storage</div>
+      <a href="https://usebounce.com" target="_blank" rel="noopener" class="affiliate-link"><span>Bounce</span><span class="arr">↗</span></a>
+      <a href="https://www.nannybag.com" target="_blank" rel="noopener" class="affiliate-link"><span>Nannybag</span><span class="arr">↗</span></a>
+      <a href="https://www.stasher.com" target="_blank" rel="noopener" class="affiliate-link"><span>Stasher</span><span class="arr">↗</span></a>
+    </div>
+    <div class="info-box">
+      <p style="margin-bottom:0.4rem">⏱️ <strong>Add 30 min buffer</strong> to any city trip — traffic and security re-entry always take longer.</p>
+      <p style="margin-bottom:0.4rem">🛂 <strong>Check visa requirements</strong> before leaving the terminal.</p>
+      <p>📱 <strong>Set 3 alarms</strong> if resting in a lounge — missing your connection is costly.</p>
+    </div>
+  </aside>
+
+</div></main>
+
+<footer><div class="footer-inner">
+  <div class="footer-brand">✈️ Voyage Genie</div>
+  <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+  <div class="footer-subscribe"><input class="footer-email" placeholder="Enter your email" type="email"/><button class="footer-sub-btn">Subscribe</button></div>
+  <div class="footer-links"><a href="index.html">Home</a><a href="index.html#plan-trip">Plan</a><a href="index.html#travel-tools">Tools</a><a href="contact.html">Contact</a></div>
+</div>
+<div class="footer-copy" style="max-width:1100px;margin:0 auto;">© 2026 VoyageGenie.com – All rights reserved.</div>
+</footer>
+
+<script src="js/genie-chat.js" defer></script>
+<script>
+// INTEREST CHIPS
+document.querySelectorAll('.interest-chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('active')));
+// CUSTOM AIRPORT
+document.getElementById('airportSelect').addEventListener('change',function(){document.getElementById('customAirportWrap').classList.toggle('hidden',this.value!=='OTHER');});
+
+// TIMELINE
+const MILESTONES=[{mins:45,label:'45m',key:'45m'},{mins:120,label:'2h',key:'2h'},{mins:240,label:'4h',key:'4h'},{mins:360,label:'6h',key:'6h'},{mins:480,label:'8h',key:'8h'},{mins:720,label:'12h',key:'12h'},{mins:1440,label:'24h',key:'24h'}];
+const MAX_MINS=1440;
+const WHAT_FITS=[
+  {label:'🛋️ Airport lounge',minMins:0},{label:'🚿 Shower & freshen',minMins:45},{label:'🍽️ Sit-down meal',minMins:60},
+  {label:'💤 Power nap',minMins:90},{label:'🛍️ Duty-free shopping',minMins:90},{label:'🌆 Quick city escape',minMins:180},
+  {label:'🏛️ One landmark',minMins:240},{label:'🍜 Local restaurant',minMins:270},{label:'🏙️ Full city tour',minMins:480},
+  {label:'🏨 Airport hotel rest',minMins:360},{label:'🌃 Overnight stay',minMins:720},
+];
+
+function buildMilestones(){
+  const row=document.getElementById('milestonesRow'); row.innerHTML='';
+  MILESTONES.forEach(m=>{
+    const pct=Math.min(100,(m.mins/MAX_MINS)*100);
+    const el=document.createElement('div'); el.className='milestone'; el.id=`ms-${m.key}`; el.style.left=pct+'%';
+    el.innerHTML=`<div class="milestone-dot"></div><div class="milestone-label">${m.label}</div>`;
+    row.appendChild(el);
+  });
+}
+function updateTimeline(){
+  const h=parseInt(document.getElementById('layoverHours').value)||0;
+  const m=parseInt(document.getElementById('layoverMins').value)||0;
+  const total=h*60+m;
+  document.getElementById('timelineDuration').textContent=h>0&&m>0?`${h}h ${m}m`:h>0?`${h}h`:m>0?`${m}m`:'— h —m';
+  document.getElementById('timelineBarFill').style.width=(total>0?Math.min(100,(total/MAX_MINS)*100):0)+'%';
+  MILESTONES.forEach(ms=>{const el=document.getElementById(`ms-${ms.key}`);if(el)el.classList.toggle('reached',total>=ms.mins);});
+  const tags=document.getElementById('whatFitsTags');
+  if(!total){tags.innerHTML='<span style="font-size:0.78rem;color:var(--text-muted)">Select your layover duration to see what\'s possible</span>';return;}
+  tags.innerHTML='';
+  WHAT_FITS.forEach(item=>{
+    if(total<item.minMins-30)return;
+    const type=total>=item.minMins?'possible':'borderline';
+    const t=document.createElement('span'); t.className=`fits-tag ${type}`; t.textContent=item.label;
+    if(type==='borderline')t.title='Tight — only if everything goes smoothly';
+    tags.appendChild(t);
+  });
+}
+buildMilestones(); updateTimeline();
+
+function validate(){
+  let ok=true;
+  const a=document.getElementById('airportSelect').value,c=document.getElementById('customAirport').value.trim();
+  document.getElementById('airportError').classList.toggle('hidden',!!(a&&(a!=='OTHER'||c)));
+  if(!a||(a==='OTHER'&&!c))ok=false;
+  const h=document.getElementById('layoverHours').value;
+  document.getElementById('durationError').classList.toggle('hidden',!!h);
+  if(!h)ok=false;
+  return ok;
+}
+
+function buildPrompt(){
+  const g=id=>document.getElementById(id);
+  const ae=g('airportSelect');
+  const airport=ae.value==='OTHER'?g('customAirport').value.trim():ae.options[ae.selectedIndex]?.text||ae.value;
+  const h=g('layoverHours').value, m=g('layoverMins').value;
+  const total=(parseInt(h)||0)*60+(parseInt(m)||0);
+  const dur=h?`${h}h${m!=='0'?' '+m+'m':''}`:' not specified';
+  const interests=[...document.querySelectorAll('.interest-chip.active')].map(c=>c.dataset.val);
+  const extra=g('extras').value.trim();
+  return `Create a complete layover guide. Be specific to this exact airport.\n\nDetails:\n- Airport: ${airport}\n- Arriving terminal: ${g('terminalArrival').value.trim()||'not specified'}\n- Departing terminal: ${g('terminalDeparture').value.trim()||'not specified'}\n- Layover duration: ${dur} (${total} minutes)\n- Arrival time: ${g('arrivalTime').value||'not specified'}\n- Can leave airport: ${g('visaStatus').value}\n- Travelling as: ${g('travellerType').value}\n- Luggage: ${g('luggage').value}\n- Budget: ${g('budget').value||'any'}\n- Interests: ${interests.length?interests.join(', '):'general'}\n${extra?`- Extra: ${extra}`:''}\n\nSections:\n1. Quick Assessment (2–3 sentences)\n2. Minute-by-Minute Timeline (from arrival to gate, format: - HH:MM – HH:MM: activity)\n3. Best Spots Inside the Airport (3–5 named places — lounge, restaurant, quiet zone, shower)\n4. City Escape Guide (only if enough time and can exit — transport, what to see, when MUST return)\n5. Luggage Storage Options\n6. Lounge Access (what lounges, how to access, day-pass price)\n7. Insider Tips for ${airport} (3–4 specific tips)\n8. Visa / Transit Requirements if unsure\n\nFormat: No Markdown. Headings end with colon. Bullets use hyphen. Timeline format: - HH:MM – HH:MM: activity. Include real booking links as <a href="URL">text →</a>.`;
+}
+
+async function generateGuide(){
+  if(!validate())return;
+  const ov=document.getElementById('spinnerOverlay'),btn=document.getElementById('generateBtn');
+  ov.classList.add('active');btn.disabled=true;
+  const ae=document.getElementById('airportSelect');
+  const airport=ae.value==='OTHER'?document.getElementById('customAirport').value.trim():ae.options[ae.selectedIndex]?.text||ae.value;
+  const h=document.getElementById('layoverHours').value,m=document.getElementById('layoverMins').value;
+  const dur=h?`${h}h${m!=='0'?' '+m+'m':''}`:'-';
+  try{
+    const res=await fetch('https://exodonprofits.app.n8n.cloud/webhook/ai-tool-proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:buildPrompt()}]})});
+    const data=await res.json();const raw=data?.content?.map(b=>b.text||'').join('')||'';
+    if(!raw)throw new Error('Empty');renderResults(raw,airport,dur);
+  }catch(e){renderFallback(airport,dur);console.error('[Layover]',e);}
+  finally{ov.classList.remove('active');btn.disabled=false;}
+}
+
+function renderResults(raw,airport,dur){
+  document.getElementById('resultsTitle').textContent='Your Layover Plan';
+  document.getElementById('resultsSubtitle').textContent=`${airport} · ${dur} · personalised guide`;
+  let html=raw.trim();
+  if(!html.includes('<')){html=html.split('\n').map(l=>{const t=l.trim();if(!t)return '<br>';if(t.endsWith(':')&&t.length<90&&!t.startsWith('-'))return `<strong style="font-size:0.93rem;color:var(--ocean-deep);display:block;margin:16px 0 5px">${t}</strong>`;if(t.startsWith('- '))return `<div style="margin:3px 0 3px 14px">• ${t.slice(2)}</div>`;return `<span>${t}</span><br>`;}).join('');}
+  document.getElementById('resultsBody').innerHTML=`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:0.7rem 1rem;margin-bottom:1.25rem;font-size:0.81rem;color:#991b1b">⏱️ <strong style="color:#7f1d1d">Always verify your connection is safe before leaving the terminal.</strong> Buffer 45+ min for international gates.</div>${html}`;
+  document.getElementById('resultsCard').classList.add('visible');
+  document.getElementById('resultsCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderFallback(airport,dur){
+  document.getElementById('resultsTitle').textContent='Layover Guide';
+  document.getElementById('resultsSubtitle').textContent=`${airport} · ${dur} · general guide`;
+  document.getElementById('resultsBody').innerHTML=`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:0.7rem 1rem;margin-bottom:1.25rem;font-size:0.81rem;color:#991b1b">⏱️ Always verify your connection is safe before leaving the terminal.</div><strong style="color:var(--ocean-deep);display:block;margin-bottom:6px">Inside the Airport:</strong><div style="margin:3px 0 3px 14px">• Find the airport lounge — day pass ~$35–60 via <a href="https://www.loungebuddy.com" target="_blank">LoungeBuddy →</a></div><div style="margin:3px 0 3px 14px">• Shower facilities available at most major airports — ask at information desk</div><div style="margin:3px 0 3px 14px">• Store bags at <a href="https://usebounce.com" target="_blank">Bounce →</a> and explore hands-free</div><br><strong style="color:var(--ocean-deep);display:block;margin-bottom:6px">City Escape (if 4h+ layover):</strong><div style="margin:3px 0 3px 14px">• Check for direct rail or metro link from airport — fastest option</div><div style="margin:3px 0 3px 14px">• Budget 30–45 min each way + 45 min back at airport before boarding</div><div style="margin:3px 0 3px 14px">• Book a city tour on <a href="https://www.getyourguide.com" target="_blank">GetYourGuide →</a></div><br><strong style="color:var(--ocean-deep);display:block;margin-bottom:6px">Golden Rule:</strong><div style="margin:3px 0 3px 14px">• Be at your gate 45 min before international departure, 30 min domestic</div><div style="margin:3px 0 3px 14px">• Set multiple alarms if resting in a lounge</div>`;
+  document.getElementById('resultsCard').classList.add('visible');
+  document.getElementById('resultsCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+</script>
+</body>
+</html>

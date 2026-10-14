@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>🏈 Super Bowl Squares | GenieSphere Leisure</title>
+<meta name="description" content="Super Bowl Squares with a smart, easy-to-use grid, quick claim, and live scoreboard." />
+
+<style>
+  :root{
+    --bg:#0b1220;
+    --card:#121a2b;
+    --card-hover:#18233a;
+    --text:#e9f0ff;
+    --muted:#a9b6d9;
+    --accent:#3ee1a1;
+    --accent-2:#4aa3ff;
+    --brand-blue:#4c6ef5;
+    --ring:rgba(62,225,161,.35);
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --radius:7px;
+    --gap:14px;
+    --btn-radius:999px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:#0a0f1b;
+    color:var(--text);
+    font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+  }
+  .container{max-width:1440px;margin:0 auto;padding:24px}
+
+  .sr-only{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  }
+
+  /* Header (copied pattern from leisure.html) */
+  .site-header{
+    position:sticky;top:0;z-index:1000;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+    border-bottom:1px solid rgba(120,155,255,.15);
+    box-shadow:0 8px 22px rgba(0,0,0,.25);
+    backdrop-filter:saturate(120%) blur(10px);
+  }
+  .site-header-inner{
+    max-width:1440px;margin:0 auto;padding:16px 24px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .brand{
+    display:flex;align-items:center;gap:10px;
+    color:var(--text);text-decoration:none;font-weight:700;
+  }
+  .logo{
+    width:44px;height:44px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+    box-shadow:0 0 0 3px var(--ring),0 8px 24px rgba(62,225,161,.35);
+  }
+  .menu{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px;
+  }
+  .menu a{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:4px 2px;border-radius:0;text-decoration:none;color:var(--muted);
+    font-weight:500;border-bottom:2px solid transparent;background:transparent;
+    transition:color .15s ease,border-bottom-color .15s ease;
+  }
+  .menu a:hover{color:var(--text);border-bottom-color:var(--brand-blue)}
+  .menu a.active{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+  .menu a.ghost{color:var(--muted)}
+  .hamburger{
+    display:none;border:1px solid rgba(120,155,255,.25);
+    background:#0e1626;color:var(--text);
+    border-radius:8px;padding:8px 10px;cursor:pointer;
+  }
+  @media(max-width:720px){
+    .menu{display:none}
+    .hamburger{display:inline-flex}
+    .site-header-inner{padding:10px 12px}
+  }
+  .drawer{
+    position:fixed;inset:60px 12px auto 12px;
+    background:#0e1626;border:1px solid rgba(120,155,255,.2);
+    border-radius:var(--radius);padding:10px;display:none;z-index:1001;
+    box-shadow:0 18px 34px rgba(0,0,0,.45);
+  }
+  .drawer a{
+    display:block;margin:6px 0;padding:10px 12px;border-radius:var(--radius);
+    text-decoration:none;color:var(--text);background:#121a2b;
+    border:1px solid rgba(120,155,255,.15);
+  }
+  .drawer a.active{background:#18233a;border-color:rgba(62,225,161,.35)}
+
+  .user-menu{position:relative;display:flex;align-items:center;margin-left:auto}
+  .user-menu-toggle{
+    display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+    border:1px solid rgba(120,155,255,.35);background:#0e1626;color:var(--text);
+    font-size:14px;cursor:pointer;
+  }
+  .user-menu-toggle:hover{border-color:var(--accent)}
+  .user-menu-dropdown{
+    position:absolute;right:0;top:calc(100% + 6px);min-width:220px;
+    background:#0e1626;border-radius:var(--radius);
+    border:1px solid rgba(120,155,255,.25);
+    box-shadow:0 14px 34px rgba(0,0,0,.55);
+    padding:6px 0;display:none;z-index:1002;
+  }
+  .user-menu-dropdown a,
+  .user-menu-dropdown button{
+    display:block;width:100%;text-align:left;padding:8px 12px;
+    background:none;border:none;color:var(--text);font-size:14px;text-decoration:none;cursor:pointer;
+  }
+  .user-menu-dropdown a:hover,
+  .user-menu-dropdown button:hover{background:#121a2b}
+  .user-menu-divider{height:1px;margin:4px 0;background:rgba(148,163,184,.4)}
+  .dropdown-label{
+    font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.7;
+    padding:4px 14px 2px;
+  }
+  .auth-only{}
+
+  /* Page */
+  .hero{padding:16px 0 8px;text-align:center}
+  .title{font-size:clamp(24px,3.4vw,38px);margin:0 0 6px;font-weight:900}
+  .subtitle{color:var(--muted);margin:0 auto 18px;max-width:820px;font-size:15px}
+
+  .layout{
+    display:grid;
+    grid-template-columns: 420px 1fr;
+    gap: var(--gap);
+    align-items:start;
+  }
+  @media(max-width:1020px){ .layout{grid-template-columns:1fr} }
+
+  .panel{
+    background:linear-gradient(180deg,rgba(24,35,58,.75),rgba(18,26,43,.85));
+    border:1px solid rgba(120,155,255,.15);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:14px;
+  }
+
+  .panel h2{
+    margin:0 0 10px;
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .panel h2 .tiny{color:var(--muted);font-size:12px;font-weight:600}
+
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:520px){ .row{grid-template-columns:1fr} }
+
+  .field label{display:block;color:var(--muted);font-size:13px;font-weight:700;margin-bottom:6px}
+  .input, .select{
+    width:100%;
+    background:#0e1626;
+    border:1px solid rgba(120,155,255,.18);
+    border-radius:var(--radius);
+    padding:10px 12px;
+    color:var(--text);
+    font-size:14px;
+    outline:none;
+  }
+  .input:focus, .select:focus{
+    border-color:rgba(74,163,255,.45);
+    box-shadow:0 0 0 3px rgba(74,163,255,.15);
+  }
+
+  .btnbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:9px 14px;border-radius:var(--btn-radius);
+    text-decoration:none;color:#03101f;background:var(--accent-2);
+    font-weight:800;border:0;cursor:pointer;
+    box-shadow:0 8px 18px rgba(74,163,255,.25);
+    font-size:13px;
+  }
+  .btn.primary{
+    background:var(--accent);
+    color:#04131a;
+    box-shadow:0 8px 18px rgba(62,225,161,.22);
+  }
+  .btn.ghost{
+    background:transparent;color:var(--text);
+    border:1px solid rgba(120,155,255,.25);
+    box-shadow:none;
+  }
+  .btn.danger{
+    background:transparent;color:#ffd1d1;
+    border:1px solid rgba(255,120,120,.35);
+    box-shadow:none;
+  }
+  .btn:hover{filter:brightness(1.05)}
+
+  .helper{
+    margin-top:10px;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  /* Scoreboard */
+  .scoreboard{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    gap:10px;
+    background:#0e1626;
+    border:1px solid rgba(120,155,255,.18);
+    border-radius:var(--radius);
+    padding:12px;
+    margin-top:10px;
+  }
+  .teambox{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-weight:900;
+  }
+  .teamname{color:var(--text);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+  .teamscore{
+    font-size:22px;
+    padding:4px 10px;
+    border-radius:999px;
+    background:rgba(74,163,255,.20);
+    border:1px solid rgba(74,163,255,.25);
+  }
+  .gamedetails{
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.4;
+  }
+  .pill{
+    display:inline-flex;align-items:center;
+    padding:2px 8px;border-radius:999px;
+    font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;
+    background:rgba(62,225,161,.18);color:#e9fff6;
+    border:1px solid rgba(62,225,161,.22);
+  }
+
+  /* Grid */
+  .grid-wrap{overflow:auto;-webkit-overflow-scrolling:touch}
+  .grid{
+    display:grid;
+    grid-template-columns:  64px 92px repeat(10, minmax(56px, 1fr));
+    border:1px solid rgba(120,155,255,.22);
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:#0e1626;
+  
+    min-width: 720px;
+}
+  .cell{
+    border-right:1px solid rgba(120,155,255,.12);
+    border-bottom:1px solid rgba(120,155,255,.12);
+    min-height:46px;
+    padding:8px 6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:12px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .cell.header{
+    cursor:default;
+    background:rgba(24,35,58,.85);
+    color:#dbe7ff;
+    font-weight:900;
+    font-size:12px;
+  }
+  .cell.header.muted{color:var(--muted);font-weight:800}
+  .cell.num{
+    background:rgba(74,163,255,.25);
+    color:#03101f;
+    font-weight:900;
+    cursor:default;
+  }
+  .cell.claimed{
+    background:rgba(62,225,161,.18);
+    border-color:rgba(62,225,161,.22);
+  }
+  .cell.claimed .sub{
+    display:block;
+    color:var(--muted);
+    font-size:10px;
+    margin-top:2px;
+    font-weight:700;
+  }
+  .cell:hover{
+    background:rgba(255,255,255,.04);
+  }
+  .cell.header:hover,
+  .cell.num:hover{
+    background:inherit;
+  }
+
+  .cell.teamlabel{
+    background:rgba(24,35,58,.92);
+    color:#dbe7ff;
+    font-weight:900;
+    cursor:default;
+  }
+  .cell.teamlabel.top{
+    justify-content:center;
+    font-size:13px;
+    letter-spacing:.2px;
+  }
+  .cell.teamlabel.left{
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size:13px;
+    letter-spacing:.2px;
+  }
+
+  .cell:focus{
+    outline:none;
+    box-shadow:0 0 0 3px rgba(74,163,255,.15);
+    border-radius:6px;
+  }
+
+  /* Right panel */
+  .legend{
+    display:flex;flex-wrap:wrap;gap:8px;margin-top:10px
+  }
+  .legend .tag{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 10px;border-radius:999px;
+    background:#0e1626;border:1px solid rgba(120,155,255,.18);
+    color:var(--muted);font-size:12px;font-weight:800;
+  }
+  .dot{
+    width:10px;height:10px;border-radius:99px;background:rgba(255,255,255,.10);
+    border:1px solid rgba(120,155,255,.15);
+  }
+  .dot.claimed{background:rgba(62,225,161,.35);border-color:rgba(62,225,161,.45)}
+  .dot.empty{background:rgba(255,255,255,.08)}
+  .dot.num{background:rgba(74,163,255,.35);border-color:rgba(74,163,255,.45)}
+
+  .list{
+    margin:10px 0 0;
+    padding:0;
+    list-style:none;
+    display:grid;
+    gap:8px;
+  }
+  .list li{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:#0e1626;border:1px solid rgba(120,155,255,.12);
+    border-radius:var(--radius);
+    padding:10px 10px;
+  }
+  .who{
+    display:flex;flex-direction:column;gap:2px;
+    min-width:0;
+  }
+  .who strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .who span{font-size:12px;color:var(--muted)}
+  .mini-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .mini-btn{
+    padding:6px 10px;border-radius:999px;border:1px solid rgba(120,155,255,.22);
+    background:transparent;color:var(--text);cursor:pointer;font-weight:800;font-size:12px;
+  }
+  .mini-btn:hover{border-color:var(--accent)}
+  .mini-btn.danger{border-color:rgba(255,120,120,.35);color:#ffd1d1}
+  .mini-btn.danger:hover{border-color:rgba(255,120,120,.6)}
+
+  /* Modal */
+  .modal{
+    position:fixed;inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    z-index:1100;
+    background:rgba(0,0,0,.55);
+  }
+  .modal.open{display:flex}
+  .modal-card{
+    width:min(520px, 100%);
+    background:#0e1626;
+    border:1px solid rgba(120,155,255,.22);
+    border-radius:var(--radius);
+    box-shadow:0 18px 34px rgba(0,0,0,.6);
+    padding:14px;
+  }
+  .modal-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px
+  }
+  .modal-title{margin:0;font-size:15px;font-weight:900}
+  .closex{
+    border:1px solid rgba(120,155,255,.22);
+    background:transparent;color:var(--text);
+    border-radius:10px;
+    padding:6px 10px;
+    cursor:pointer;
+    font-weight:900;
+  }
+  .modal-body{display:grid;gap:10px}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+
+  /* Footer (copied pattern from leisure.html) */
+  .site-footer{
+    margin-top:32px;
+    padding:32px 0 28px;
+    border-top:1px solid rgba(120,155,255,.15);
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+  }
+  .site-footer-inner{max-width:1440px;margin:0 auto;padding:0 24px}
+  .footer-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px 28px;
+    align-items:start;
+  }
+  @media(max-width:900px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:560px){.footer-grid{grid-template-columns:1fr}}
+  .footer-col h4{margin:0 0 10px;font-size:14px}
+  .footer-col a{display:block;color:var(--muted);text-decoration:none;padding:4px 0;font-size:13px}
+  .footer-col a:hover{color:var(--text);text-decoration:underline}
+  .footer-bottom{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+    color:var(--muted);font-size:13px;margin-top:24px;padding-top:14px;
+    border-top:1px solid rgba(120,155,255,.12);text-align:center;
+  }
+  .social{display:flex;gap:16px;justify-content:center;font-size:18px}
+  .notice{
+    margin-top:10px;
+    background:#0e1626;
+    border:1px dashed rgba(120,155,255,.25);
+    border-radius:var(--radius);
+    padding:10px 12px;
+    color:var(--muted);
+    font-size:13px;
+  }
+  .kbd{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(120,155,255,.18);
+    padding:2px 6px;border-radius:7px;color:#dbe7ff;font-weight:800;font-size:12px;
+  }
+
+  /* Mobile polish */
+  @media(max-width:720px){
+    .container{padding:14px}
+    .panel{padding:12px}
+    .subtitle{font-size:14px}
+    .teamname{max-width:140px}
+  }
+  @media(max-width:560px){
+    .scoreboard{
+      grid-template-columns:1fr;
+      text-align:center;
+      gap:8px;
+    }
+    .gamedetails{order:3}
+  }
+  @media(max-width:420px){
+    .btn{width:100%;justify-content:center}
+    .btnbar{gap:8px}
+  }
+  @media (pointer:coarse){
+    .cell{min-height:52px;font-size:13px}
+    .mini-btn{padding:8px 12px}
+    .closex{padding:10px 12px}
+  }
+
+</style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img class="logo" src="../genie-logo.png" alt="GenieSphere" />
+        <strong>GenieSphere</strong>
+      </a>
+
+      <nav class="menu" aria-label="Primary">
+        <a class="ghost" href="../dashboard/household.html">🏠 Household</a>
+        <a class="ghost" href="../dashboard/business.html">🏢 Business</a>
+        <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+        <a class="active" href="../dashboard/leisure.html">🏝️ Leisure</a>
+      </nav>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-label="Open navigation">
+        ☰
+      </button>
+
+      <div class="user-menu" id="user-menu">
+        <button class="user-menu-toggle" id="user-menu-toggle" aria-expanded="false">
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <div class="dropdown-label">Areas</div>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/household.html">🏠 Household</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/business.html">🏢 Business</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/investment.html">📈 Investment</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/leisure.html">🏝️ Leisure</button>
+
+          <div class="user-menu-divider"></div>
+          <div class="dropdown-label">Account</div>
+          <button type="button" class="dropdown-nav" data-target="../onboarding/user_profile_form.html">👤 User profile</button>
+          <button type="button" class="dropdown-nav" data-target="../onboarding/display_settings.html">⚙️ Settings</button>
+
+          <div class="user-menu-divider"></div>
+          <button type="button" id="user-auth-action">Log in / Sign up</button>
+          <button type="button" id="user-signout-btn" class="auth-only">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="drawer" id="mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+    <a class="ghost" href="../dashboard/household.html">🏠 Household</a>
+    <a class="ghost" href="../dashboard/business.html">🏢 Business</a>
+    <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+    <a class="active" href="../dashboard/leisure.html">🏝️ Leisure</a>
+  </div>
+
+  <div class="container">
+    <!-- Hero -->
+    <section class="hero" aria-label="Super Bowl Squares">
+      <h1 class="title">🏈 Super Bowl Squares</h1>
+      <p class="subtitle">
+        Tap a square to claim it. Numbers can be locked until kickoff (classic rules).
+        Works offline with auto-save (no login needed).
+      </p>
+    </section>
+
+    <div class="layout">
+      <!-- Left: Setup -->
+      <section class="panel" aria-label="Setup">
+        <h2>
+          <span>⚙️ Setup</span>
+          <span class="tiny" id="autosave-label">Auto-saved</span>
+        </h2>
+
+        <div class="row">
+          <div class="field">
+            <label for="teamTop">Team Across (Top)</label>
+            <input id="teamTop" class="input" placeholder="e.g., Chiefs" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="teamLeft">Team Down (Left)</label>
+            <input id="teamLeft" class="input" placeholder="e.g., 49ers" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <label for="gameDate">📅 Game date</label>
+            <input id="gameDate" class="input" type="date" />
+          </div>
+          <div class="field">
+            <label for="gameSelect">🎮 Select game</label>
+            <select id="gameSelect" class="select">
+              <option value="">Auto (main game)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="helper" id="gameHelp" style="margin-top:6px">
+          If there are multiple games on that date, pick one. Otherwise it will auto-pick the main game.
+        </div>
+
+
+        <div class="row" style="display:none"></div>
+
+        <div class="row">
+          <div class="field">
+            <label for="buyIn">Buy-in (optional)</label>
+            <input id="buyIn" class="input" placeholder="e.g., $10 per square" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="lockNumbers">Numbers</label>
+            <select id="lockNumbers" class="select">
+              <option value="unlocked">Unlocked (show now)</option>
+              <option value="locked">Locked (hide until you reveal)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btnbar">
+          <button class="btn primary" id="btn-randomize">🔢 Randomize Numbers</button>
+          <button class="btn" id="btn-reveal">👀 Reveal Numbers</button>
+          <button class="btn ghost" id="btn-share">🔗 Share / Export</button>
+          <button class="btn primary" id="btn-copy-link">🔗 Copy Share Link</button>
+          <button class="btn danger" id="btn-reset">🧨 Reset Board</button>
+        </div>
+
+        <div class="scoreboard" aria-label="Live scoreboard">
+          <div class="teambox">
+            <span class="teamname" id="sb-left-name">Team A</span>
+            <span class="teamscore" id="sb-left-score">0</span>
+          </div>
+
+          <div class="gamedetails">
+            <div><span class="pill" id="sb-status">Manual</span></div>
+            <div>Q: <strong id="sb-q">-</strong> • Clock: <strong id="sb-clock">--:--</strong></div>
+            <div>Poss: <strong id="sb-pos">--</strong></div>
+          </div>
+
+          <div class="teambox">
+            <span class="teamscore" id="sb-right-score">0</span>
+            <span class="teamname" id="sb-right-name">Team B</span>
+          </div>
+        </div>
+
+        <div class="notice">
+          <strong>Smart tips:</strong>
+          <ul>
+            <li>Click a square → quick claim. Click again to edit or unclaim.</li>
+            <li><span class="kbd">Ctrl</span> + click can claim multiple squares quickly (desktop).</li>
+            <li>Use <em>Locked numbers</em> until kickoff, then hit “Reveal Numbers”.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Right: Board + Players -->
+      <section class="panel" aria-label="Board">
+        <h2>
+          <span>🧩 Board</span>
+          <span class="tiny"><span id="filled-count">0</span>/100 claimed</span>
+        </h2>
+
+        <div class="legend" aria-label="Legend">
+          <span class="tag"><span class="dot empty"></span> Empty</span>
+          <span class="tag"><span class="dot claimed"></span> Claimed</span>
+          <span class="tag"><span class="dot num"></span> Number row/col</span>
+        </div>
+
+        <div class="helper" id="board-caption">Set team names, randomize numbers, then start claiming squares.</div>
+
+        <div class="grid-wrap" aria-label="Squares grid">
+          <div class="grid" id="squareGrid" role="grid" aria-label="10 by 10 squares"></div>
+        </div>
+
+        <h2 style="margin-top:14px">
+          <span>👥 Players</span>
+          <span class="tiny">Tap a player to highlight their squares</span>
+        </h2>
+
+        <ul class="list" id="playersList" aria-label="Players list">
+          <li>
+            <div class="who">
+              <strong>No one yet</strong>
+              <span>Claim squares to see names here</span>
+            </div>
+            <div class="mini-actions">
+              <button class="mini-btn" disabled>—</button>
+            </div>
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h4>Travel</h4>
+            <a href="../leisure/travelplangenie/index.html">Trip Itineraries</a>
+            <a href="../dashboard/agent_users.html?agent=packing-genie">Packing Lists</a>
+            <a href="../dashboard/agent_users.html?agent=deals-genie">Flight &amp; Hotel Deals</a>
+            <a href="/leisure/trip-expensive-calculator.html">Trip Expense Splitter</a>
+          </div>
+          <div class="footer-col">
+            <h4>Entertainment</h4>
+            <a href="../dashboard/agent_users.html?agent=restaurant-genie">Restaurant Finder</a>
+            <a href="../dashboard/agent_users.html?agent=events-genie">Events Near Me</a>
+            <a href="../dashboard/agent_users.html?agent=movie-genie">Movie Night</a>
+          </div>
+          <div class="footer-col">
+            <h4>Lifestyle</h4>
+            <a href="../dashboard/agent_users.html?agent=hobby-genie">Hobby Coach</a>
+            <a href="../dashboard/agent_users.html?agent=trails-genie">Trails &amp; Outdoor</a>
+            <a href="../dashboard/agent_users.html?agent=bucketlist-genie">Bucket List</a>
+          </div>
+          <div class="footer-col">
+            <h4>Help</h4>
+            <a href="../onboarding/api-key-settings.html">API Keys</a>
+            <a href="../about.html">About</a>
+            <a href="../contact.html">Contact</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+          <div class="social" aria-label="Social">
+            <a href="#" aria-label="Twitter / X">🐦</a>
+            <a href="#" aria-label="YouTube">▶️</a>
+            <a href="#" aria-label="GitHub">🐙</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Claim/Edit Modal -->
+  <div class="modal" id="claimModal" role="dialog" aria-modal="true" aria-label="Claim square">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-title" id="modalTitle">Claim square</h3>
+        <button class="closex" id="modalClose" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="playerName">Name</label>
+          <input id="playerName" class="input" placeholder="e.g., Jimmy" autocomplete="off"/>
+        </div>
+        <div class="field">
+          <label for="notes">Note (optional)</label>
+          <input id="notes" class="input" placeholder="e.g., paid cash, Venmo, etc." autocomplete="off"/>
+        </div>
+
+        <div class="notice" id="modalHint">
+          Tip: leave blank and press “Unclaim” to clear this square.
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn ghost" id="btn-unclaim">🧽 Unclaim</button>
+        <button class="btn primary" id="btn-save-claim">✅ Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share/Export Modal -->
+  <div class="modal" id="shareModal" role="dialog" aria-modal="true" aria-label="Share board">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 class="modal-title">🔗 Share / Export</h3>
+        <button class="closex" id="shareClose" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="notice">
+          <strong>Easy mode:</strong> Copy this text and send it. Anyone can paste it here to restore the board.
+        </div>
+        <div class="field">
+          <label for="exportText">Board data</label>
+          <textarea id="exportText" class="input" rows="7" style="min-height:140px;resize:vertical"></textarea>
+        </div>
+        <div class="btnbar" style="margin-top:0">
+          <button class="btn ghost" id="btn-copy">📋 Copy</button>
+          <button class="btn" id="btn-import">⬇️ Import</button>
+        </div>
+        <div class="notice" style="margin-top:10px">
+          <strong>Short code sharing (no login):</strong> Generate a short code to share a clean link like <span class="kbd">#code=SB7KQ2</span>.
+        </div>
+
+        <div class="btnbar" style="margin-top:0">
+          <button class="btn primary" id="btn-generate-code" style="display:none">🧩 Generate Code</button>
+          <button class="btn ghost" id="btn-copy-code" disabled style="display:none">📋 Copy Code</button>
+          <button class="btn ghost" id="btn-copy-short-link" disabled style="display:none">🔗 Copy Short Link</button>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="shareCode">Short code</label>
+            <input id="shareCode" class="input" placeholder="Generate a code…" readonly />
+          </div>
+          <div class="field">
+            <label for="shareLink">Share link</label>
+            <input id="shareLink" class="input" placeholder="A shareable link will appear here…" readonly />
+          </div>
+        </div>
+
+        <div class="notice">
+          <strong>Advanced:</strong> for a true multi-user live game, connect this to Supabase Realtime (we can add next).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase client (kept for consistent header auth; safe if offline) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  // -----------------------------
+  // Small utilities
+  // -----------------------------
+  const $ = (id) => document.getElementById(id);
+  const clampText = (s, n=18) => (s || '').trim().slice(0,n);
+
+  // -----------------------------
+  // Persistent state (localStorage)
+  // -----------------------------
+  const STORE_KEY = 'gs_leisure_superbowl_squares_v2';
+
+  const defaultState = () => ({
+    selectedDate: null,
+    selectedEventId: null,
+    teams: { top: 'Team A', left: 'Team B' },
+    buyIn: '',
+    numbers: { top: Array(10).fill(null), left: Array(10).fill(null), revealed: true },
+    lockMode: 'unlocked',
+    claims: {}, // key: "r-c" -> { name, note, ts }
+    scoreboard: { leftScore: 0, rightScore: 0, q: '-', clock: '--:--', pos: '--', mode: 'manual' },
+    updatedAt: Date.now()
+  });
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      // defensive merge
+      return { ...defaultState(), ...parsed,
+        teams: { ...defaultState().teams, ...(parsed.teams || {}) },
+        numbers: { ...defaultState().numbers, ...(parsed.numbers || {}) },
+        scoreboard: { ...defaultState().scoreboard, ...(parsed.scoreboard || {}) }
+      };
+    }catch{
+      return defaultState();
+    }
+  }
+
+  function saveState(){
+    state.updatedAt = Date.now();
+    try{
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      if($('autosave-label')) $('autosave-label').textContent = 'Auto-saved';
+      if(autosaveTimer) clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(()=>{ if($('autosave-label')) $('autosave-label').textContent = 'Auto-saved ✓'; }, 300);
+    }catch(e){
+      console.warn('Autosave failed:', e);
+      if($('autosave-label')) $('autosave-label').textContent = 'Autosave unavailable';
+    }
+  }
+
+  let state = loadState();
+  let autosaveTimer = null;
+
+  // -----------------------------
+  // Header / auth menu (copied behavior from leisure.html)
+  // -----------------------------
+  // Year
+  $('year').textContent = new Date().getFullYear();
+
+  // Mobile drawer
+  (function(){
+    const d=$('mobile-drawer');
+    const b=$('hamburger');
+    if(!d || !b) return;
+    const open=()=>{ d.style.display='block'; b.setAttribute('aria-expanded','true'); };
+    const close=()=>{ d.style.display='none';  b.setAttribute('aria-expanded','false'); };
+    b.addEventListener('click',()=>{ b.getAttribute('aria-expanded')==='true' ? close() : open(); });
+    d.addEventListener('click',e=>{ if(e.target.tagName==='A') close(); });
+  })();
+
+  // Auth-aware header (kept consistent, works even if Supabase key not configured here)
+  let currentUser = null;
+  (async () => {
+    const nameLabel = $('user-name-label');
+    const menuToggle = $('user-menu-toggle');
+    const menuDropdown = $('user-menu-dropdown');
+    const signoutBtn = $('user-signout-btn');
+    const authActionBtn = $('user-auth-action');
+    const authOnlyEls = document.querySelectorAll('.auth-only');
+    const userMenu = $('user-menu');
+
+    let menuOpen = false;
+    function closeMenu(){
+      menuOpen = false;
+      if(menuDropdown) menuDropdown.style.display = 'none';
+      if(menuToggle) menuToggle.setAttribute('aria-expanded','false');
+    }
+    if (menuToggle && menuDropdown) {
+      menuToggle.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        menuOpen = !menuOpen;
+        menuDropdown.style.display = menuOpen ? 'block' : 'none';
+        menuToggle.setAttribute('aria-expanded', menuOpen ? 'true' : 'false');
+      });
+      document.addEventListener('click', (e)=>{
+        if (!menuOpen) return;
+        if (userMenu && !userMenu.contains(e.target)) closeMenu();
+      });
+    }
+
+    // If you want this page fully auth-aware, keep your existing Supabase URL/key here.
+    // Leaving it as-is (blank) prevents errors if you host this separately.
+    // You can safely replace these with your project's values.
+    const SUPABASE_URL = '';
+    const SUPABASE_ANON_KEY = '';
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !window.supabase) {
+      // No auth configured
+      if (nameLabel) nameLabel.textContent = 'Log in';
+      authOnlyEls.forEach(el => { el.style.display = 'none'; });
+      if (signoutBtn) signoutBtn.style.display = 'none';
+      if (authActionBtn) {
+        authActionBtn.style.display = 'block';
+        authActionBtn.textContent = 'Log in / Sign up';
+        authActionBtn.addEventListener('click', ()=>{ window.location.href = '../onboarding/login.html'; });
+      }
+      return;
+    }
+
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data: { user }, error } = await client.auth.getUser();
+    if (error) console.error('Error fetching user:', error);
+
+    if (user) {
+      currentUser = user;
+      const rawName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        (user.email ? user.email.split('@')[0] : '') ||
+        'Account';
+      if (nameLabel) nameLabel.textContent = rawName;
+      authOnlyEls.forEach(el => { el.style.display = ''; });
+      if (authActionBtn) {
+        authActionBtn.style.display = 'block';
+        authActionBtn.textContent = 'Switch / manage account';
+      }
+      if (signoutBtn) {
+        signoutBtn.style.display = 'block';
+        signoutBtn.addEventListener('click', async ()=>{
+          try { await client.auth.signOut(); } catch (e) { console.error('Error signing out:', e); }
+          window.location.href = '../index.html';
+        });
+      }
+    } else {
+      currentUser = null;
+      if (nameLabel) nameLabel.textContent = 'Log in';
+      authOnlyEls.forEach(el => { el.style.display = 'none'; });
+      if (signoutBtn) signoutBtn.style.display = 'none';
+      if (authActionBtn) {
+        authActionBtn.style.display = 'block';
+        authActionBtn.textContent = 'Log in / Sign up';
+        authActionBtn.addEventListener('click', ()=>{ window.location.href = '../onboarding/login.html'; });
+      }
+    }
+  })();
+
+  function goOrLogin(target){
+    if (currentUser) window.location.href = target;
+    else window.location.href = '../onboarding/login.html';
+  }
+  document.querySelectorAll('.dropdown-nav').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const target = this.getAttribute('data-target');
+      if (!target) return;
+      goOrLogin(target);
+    });
+  });
+
+  // -----------------------------
+  // Board rendering
+  // -----------------------------
+  const grid = $('squareGrid');
+
+  function buildGrid(){
+    grid.innerHTML = '';
+
+    const topTeam = ($('teamTop')?.value || state.teams.top || 'Team A').trim();
+    const leftTeam = ($('teamLeft')?.value || state.teams.left || 'Team B').trim();
+
+    // Row 1: top team label
+    grid.appendChild(makeCell(' ', { header:true, muted:true })); // corner for left team column
+    grid.appendChild(makeCell(' ', { header:true, muted:true })); // corner for row numbers column
+
+    const topLabel = document.createElement('div');
+    topLabel.className = 'cell header teamlabel top';
+    topLabel.textContent = topTeam || 'Team A';
+    topLabel.style.gridColumn = '3 / span 10';
+    topLabel.style.cursor = 'default';
+    topLabel.setAttribute('role','columnheader');
+    grid.appendChild(topLabel);
+
+    // Row 2: top numbers row
+    grid.appendChild(makeCell(' ', { header:true, muted:true })); // spacer under left team label col
+    grid.appendChild(makeCell(' ', { header:true, muted:true })); // spacer under row nums col
+
+    for (let c=0; c<10; c++){
+      const val = state.numbers.top[c];
+      const display = state.numbers.revealed ? (val ?? '—') : '🔒';
+      grid.appendChild(makeCell(display, { num:true, header:true, aria:`Top number ${c+1}` }));
+    }
+
+    // Left team label cell spanning 10 rows
+    const leftLabel = document.createElement('div');
+    leftLabel.className = 'cell header teamlabel left';
+    leftLabel.textContent = leftTeam || 'Team B';
+    leftLabel.style.gridColumn = '1';
+    leftLabel.style.gridRow = '3 / span 10';
+    leftLabel.style.cursor = 'default';
+    leftLabel.setAttribute('role','rowheader');
+    grid.appendChild(leftLabel);
+
+    // Rows: row numbers + squares
+    for (let r=0; r<10; r++){
+      const leftVal = state.numbers.left[r];
+      const leftDisplay = state.numbers.revealed ? (leftVal ?? '—') : '🔒';
+      grid.appendChild(makeCell(leftDisplay, { num:true, header:true, aria:`Left number ${r+1}` }));
+
+      for (let c=0; c<10; c++){
+        const key = `${r}-${c}`;
+        const claim = state.claims[key];
+        const label = claim?.name ? clampText(claim.name, 16) : '';
+        const note = claim?.note ? clampText(claim.note, 18) : '';
+
+        const cell = document.createElement('div');
+        cell.className = 'cell' + (claim?.name ? ' claimed' : '');
+        cell.setAttribute('role','gridcell');
+        cell.setAttribute('tabindex','0');
+        cell.dataset.key = key;
+
+        const content = claim?.name
+          ? `<div><strong>${escapeHtml(label)}</strong>${note ? `<span class="sub">${escapeHtml(note)}</span>` : ''}</div>`
+          : `<div style="color:var(--muted);font-weight:800">+</div>`;
+
+        cell.innerHTML = content;
+
+        cell.addEventListener('click', (e)=> openClaimModal(key, e));
+        cell.addEventListener('keydown', (e)=>{
+          if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openClaimModal(key, e); }
+        });
+
+        grid.appendChild(cell);
+      }
+    }
+
+    updateCaption();
+    updatePlayers();
+    updateScoreboardUI();
+  }
+
+  function makeCell(text, opts){
+    const d = document.createElement('div');
+    d.className = 'cell header' + (opts?.num ? ' num' : '') + (opts?.muted ? ' muted' : '');
+    d.textContent = String(text);
+    d.setAttribute('role', 'columnheader');
+    if(opts?.aria) d.setAttribute('aria-label', opts.aria);
+    return d;
+  }
+
+  function updateCaption(){
+    const top = $('teamTop').value.trim() || state.teams.top || 'Team A';
+    const left = $('teamLeft').value.trim() || state.teams.left || 'Team B';
+
+    state.teams.top = top;
+    state.teams.left = left;
+
+    $('sb-left-name').textContent = left;
+    $('sb-right-name').textContent = top;
+
+    $('board-caption').textContent = `Tap a square to claim. Team names are shown on the grid.`;
+
+    const claimed = Object.values(state.claims).filter(c => c && c.name).length;
+    $('filled-count').textContent = claimed;
+    saveState();
+  }
+
+  // -----------------------------
+  // Claim modal (smarter than prompt)
+  // -----------------------------
+  let currentKey = null;
+  let lastClickWasCtrl = false;
+
+  const claimModal = $('claimModal');
+  const shareModal = $('shareModal');
+
+  function openModal(el){ el.classList.add('open'); }
+  function closeModal(el){ el.classList.remove('open'); }
+
+  function openClaimModal(key, evt){
+    currentKey = key;
+    lastClickWasCtrl = !!(evt && (evt.ctrlKey || evt.metaKey));
+
+    const claim = state.claims[key] || {};
+    const [r,c] = key.split('-').map(Number);
+
+    $('modalTitle').textContent = `Square #${(r*10)+c+1} (Row ${r+1}, Col ${c+1})`;
+    $('playerName').value = claim.name || '';
+    $('notes').value = claim.note || '';
+    openModal(claimModal);
+
+    setTimeout(()=> $('playerName').focus(), 50);
+  }
+
+  $('modalClose').addEventListener('click', ()=> closeModal(claimModal));
+  claimModal.addEventListener('click', (e)=>{ if(e.target === claimModal) closeModal(claimModal); });
+
+  $('btn-unclaim').addEventListener('click', ()=>{
+    if(!currentKey) return;
+    delete state.claims[currentKey];
+    saveState();
+    buildGrid();
+  if(typeof loadGamesForDate === 'function') loadGamesForDate($('gameDate')?.value || state.selectedDate || null);
+    closeModal(claimModal);
+  });
+
+  $('btn-save-claim').addEventListener('click', ()=>{
+    if(!currentKey) return;
+    const name = $('playerName').value.trim();
+    const note = $('notes').value.trim();
+
+    if(!name){
+      // Treat empty as unclaim
+      delete state.claims[currentKey];
+    }else{
+      state.claims[currentKey] = { name, note, ts: Date.now() };
+    }
+    saveState();
+    buildGrid();
+
+    if(lastClickWasCtrl){
+      // keep open, move to next empty square
+      const next = findNextEmpty(currentKey);
+      if(next){
+        currentKey = next;
+        openClaimModal(next, { ctrlKey:true });
+      }else{
+        closeModal(claimModal);
+      }
+    }else{
+      closeModal(claimModal);
+    }
+  });
+
+  function findNextEmpty(fromKey){
+    const [r,c] = fromKey.split('-').map(Number);
+    const start = r*10 + c + 1;
+    for(let i=start; i<100; i++){
+      const nr = Math.floor(i/10), nc = i % 10;
+      const k = `${nr}-${nc}`;
+      if(!state.claims[k] || !state.claims[k].name) return k;
+    }
+    for(let i=0; i<start; i++){
+      const nr = Math.floor(i/10), nc = i % 10;
+      const k = `${nr}-${nc}`;
+      if(!state.claims[k] || !state.claims[k].name) return k;
+    }
+    return null;
+  }
+
+  $('btn-copy-link').addEventListener('click', async () => {
+  const link = makeShareUrl();
+  try {
+    await navigator.clipboard.writeText(link);
+    alert("Share link copied!");
+  } catch {
+    $('exportText').value = link;
+    $('exportText').focus();
+    $('exportText').select();
+    alert("Copy not available. Link is selected—copy manually.");
+  }
+});
+
+  // -----------------------------
+  // Players panel (smart grouping)
+  // -----------------------------
+  function updatePlayers(){
+    const list = $('playersList');
+    const entries = Object.entries(state.claims)
+      .filter(([,v])=>v && v.name)
+      .map(([k,v])=>({ key:k, name:v.name.trim(), note:v.note||'' }));
+
+    const byName = new Map();
+    for(const e of entries){
+      const n = e.name.toLowerCase();
+      if(!byName.has(n)) byName.set(n, { display:e.name, squares:[], notes:[] });
+      byName.get(n).squares.push(e.key);
+      if(e.note) byName.get(n).notes.push(e.note);
+    }
+
+    const players = Array.from(byName.values())
+      .sort((a,b)=> b.squares.length - a.squares.length || a.display.localeCompare(b.display));
+
+    list.innerHTML = '';
+    if(players.length === 0){
+      list.innerHTML = `
+        <li>
+          <div class="who">
+            <strong>No one yet</strong>
+            <span>Claim squares to see names here</span>
+          </div>
+          <div class="mini-actions">
+            <button class="mini-btn" disabled>—</button>
+          </div>
+        </li>`;
+      return;
+    }
+
+    players.forEach(p=>{
+      const li = document.createElement('li');
+      const note = p.notes.length ? ` • ${p.notes[0]}` : '';
+      li.innerHTML = `
+        <div class="who">
+          <strong>${escapeHtml(p.display)}</strong>
+          <span>${p.squares.length} square(s)${note ? escapeHtml(note) : ''}</span>
+        </div>
+        <div class="mini-actions">
+          <button class="mini-btn" data-action="highlight">✨ Highlight</button>
+          <button class="mini-btn danger" data-action="clear">🧽 Clear</button>
+        </div>
+      `;
+
+      li.querySelector('[data-action="highlight"]').addEventListener('click', ()=> highlightPlayer(p.display));
+      li.querySelector('[data-action="clear"]').addEventListener('click', ()=>{
+        const ok = confirm(`Clear all squares for "${p.display}"?`);
+        if(!ok) return;
+        for(const k of p.squares) delete state.claims[k];
+        saveState();
+        buildGrid();
+      });
+
+      list.appendChild(li);
+    });
+  }
+
+  function highlightPlayer(name){
+    const lower = name.toLowerCase();
+    const cells = grid.querySelectorAll('[data-key]');
+    cells.forEach(cell=>{
+      const claim = state.claims[cell.dataset.key];
+      const isMatch = claim?.name && claim.name.toLowerCase() === lower;
+      cell.style.outline = isMatch ? '2px solid rgba(62,225,161,.55)' : '';
+      cell.style.outlineOffset = isMatch ? '-2px' : '';
+    });
+    setTimeout(()=>{
+      const cells2 = grid.querySelectorAll('[data-key]');
+      cells2.forEach(cell=>{ cell.style.outline=''; cell.style.outlineOffset=''; });
+    }, 2500);
+  }
+
+  // -----------------------------
+  // Numbers (randomize + lock/reveal)
+  // -----------------------------
+  function shuffle(arr){
+    const a = arr.slice();
+    for (let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  $('btn-randomize').addEventListener('click', ()=>{
+    state.numbers.top = shuffle([0,1,2,3,4,5,6,7,8,9]);
+    state.numbers.left = shuffle([0,1,2,3,4,5,6,7,8,9]);
+
+    const mode = $('lockNumbers').value;
+    state.lockMode = mode;
+    state.numbers.revealed = (mode === 'unlocked');
+
+    saveState();
+    buildGrid();
+  });
+
+  $('btn-reveal').addEventListener('click', ()=>{
+    state.numbers.revealed = true;
+    state.lockMode = 'unlocked';
+    $('lockNumbers').value = 'unlocked';
+    saveState();
+    buildGrid();
+  });
+
+  $('lockNumbers').addEventListener('change', ()=>{
+    const mode = $('lockNumbers').value;
+    state.lockMode = mode;
+    state.numbers.revealed = (mode === 'unlocked');
+    saveState();
+    buildGrid();
+  });
+
+  // -----------------------------
+  // Share / Export
+  // -----------------------------
+
+  // -----------------------------
+  // Short-code sharing (NO login)
+  // -----------------------------
+  // Point these to your n8n webhooks:
+  // CREATE (POST): body { payload: {...} } -> returns { code, url?, expires_at? }
+  // LOAD (GET):  ?code=XXXX -> returns { payload: {...} }  (or returns payload directly)
+  const SHARE_CREATE_URL = ""; // e.g. https://YOUR-N8N-DOMAIN/webhook/sb-squares-share
+  const SHARE_GET_URL = "";    // e.g. https://YOUR-N8N-DOMAIN/webhook/sb-squares-load
+
+  function exportPayload(){
+    return {
+      v: 2,
+      selectedDate: state.selectedDate,
+      selectedEventId: state.selectedEventId,
+      teams: state.teams,
+      buyIn: state.buyIn,
+      numbers: state.numbers,
+      lockMode: state.lockMode,
+      claims: state.claims,
+      scoreboard: state.scoreboard
+    };
+  }
+
+  function makeCodeUrl(code){
+    const u = new URL(window.location.href);
+    u.hash = "code=" + encodeURIComponent(code);
+    return u.toString();
+  }
+
+  async function generateShortCode(){
+    if(!SHARE_CREATE_URL){
+      alert("Short-code sharing is not configured yet. Paste your n8n webhook URL into SHARE_CREATE_URL in this file.");
+      return;
+    }
+    const btn = $('btn-generate-code');
+    const prev = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "⏳ Generating…";
+    try{
+      const res = await fetch(SHARE_CREATE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payload: exportPayload() })
+      });
+      if(!res.ok) throw new Error("Create failed");
+      const data = await res.json();
+      const code = String(data.code || "").trim();
+      if(!code) throw new Error("No code returned");
+      const link = String(data.url || "").trim() || makeCodeUrl(code);
+
+      $('shareCode').value = code;
+      $('shareLink').value = link;
+
+      // enable copy buttons
+      if($('btn-copy-code')) $('btn-copy-code').disabled = false;
+      if($('btn-copy-short-link')) $('btn-copy-short-link').disabled = false;
+
+      // Copy link by default if allowed
+      try{ await navigator.clipboard.writeText(link); }catch(_){}
+      alert(`Code created: ${code}\n(Short link copied if allowed)`);
+    }catch(e){
+      console.warn(e);
+      alert("Could not generate code. Check your n8n webhook + database policies.");
+    }finally{
+      btn.disabled = false;
+      btn.textContent = prev;
+    }
+  }
+
+  async function tryLoadFromCodeInUrl(){
+    const hash = window.location.hash || "";
+    const m = hash.match(/code=([^&]+)/);
+    if(!m) return false;
+
+    const code = decodeURIComponent(m[1] || "").trim();
+    if(!code) return false;
+
+    if(!SHARE_GET_URL){
+      alert("This link contains a code, but SHARE_GET_URL is not configured on this page.");
+      return false;
+    }
+    try{
+      const res = await fetch(SHARE_GET_URL + "?code=" + encodeURIComponent(code));
+      if(!res.ok) throw new Error("Load failed");
+      const data = await res.json();
+      const payload = data.payload || data;
+
+      if(!payload || payload.v !== 2) throw new Error("Invalid payload");
+      state = { ...defaultState(), ...state, ...payload };
+      saveState();
+      hydrateInputs();
+      buildGrid();
+      return true;
+    }catch(e){
+      console.warn(e);
+      alert("Could not load this board. The code may be expired or invalid.");
+      return false;
+    }
+  }
+
+  async function copyText(val, okMsg){
+    try{
+      await navigator.clipboard.writeText(val);
+      alert(okMsg);
+    }catch{
+      // fallback: put into exportText box to select
+      if($('exportText')){
+        $('exportText').value = val;
+        $('exportText').focus();
+        $('exportText').select();
+      }
+      alert("Copy not available. The value is selected—copy manually.");
+    }
+  }
+  function toExport(){
+    // Keep it small: only what we need
+    const payload = {
+      v: 2,
+      teams: state.teams,
+      buyIn: state.buyIn,
+      numbers: state.numbers,
+      lockMode: state.lockMode,
+      claims: state.claims,
+      scoreboard: state.scoreboard
+    };
+    return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  }
+  function fromExport(str){
+    const raw = decodeURIComponent(escape(atob(str.trim())));
+    const payload = JSON.parse(raw);
+    if(!payload || !payload.v) throw new Error('Invalid export');
+    state = { ...defaultState(), ...state, ...payload };
+    saveState();
+    buildGrid();
+  }
+
+  $('btn-share').addEventListener('click', ()=>{
+    $('exportText').value = toExport();
+    if($('shareCode')) $('shareCode').value='';
+    if($('shareLink')) $('shareLink').value='';
+    if($('btn-copy-code')) $('btn-copy-code').disabled = true;
+    if($('btn-copy-short-link')) $('btn-copy-short-link').disabled = true;
+    openModal(shareModal);
+    setTimeout(()=> $('exportText').select(), 50);
+  });
+  $('shareClose').addEventListener('click', ()=> closeModal(shareModal));
+  shareModal.addEventListener('click', (e)=>{ if(e.target === shareModal) closeModal(shareModal); });
+
+  $('btn-copy').addEventListener('click', async ()=>{
+    const text = $('exportText').value.trim();
+    try{
+      await navigator.clipboard.writeText(text);
+      alert('Copied!');
+    }catch{
+      $('exportText').focus();
+      $('exportText').select();
+      alert('Copy not available. Select and copy manually.');
+    }
+  });
+
+  $('btn-import').addEventListener('click', ()=>{
+    const text = $('exportText').value.trim();
+    if(!text) return alert('Paste export text first.');
+    try{
+      fromExport(text);
+      alert('Imported!');
+    }catch(e){
+      alert('Import failed. Please check the text you pasted.');
+    }
+  });
+
+  function base64UrlEncode(str) {
+  const b64 = btoa(unescape(encodeURIComponent(str)));
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function base64UrlDecode(b64url) {
+  let b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+  while (b64.length % 4) b64 += "=";
+  const str = decodeURIComponent(escape(atob(b64)));
+  return str;
+}
+
+function exportPayload() {
+  // Keep it compact
+  return {
+    v: 2,
+    teams: state.teams,
+    buyIn: state.buyIn,
+    numbers: state.numbers,
+    lockMode: state.lockMode,
+    claims: state.claims,
+    scoreboard: state.scoreboard
+  };
+}
+
+function makeShareUrl() {
+  const json = JSON.stringify(exportPayload());
+  const encoded = base64UrlEncode(json);
+
+  const url = new URL(window.location.href);
+  // Put data in the URL hash so it won't hit server logs
+  url.hash = "s=" + encoded;
+  return url.toString();
+}
+
+function tryLoadFromUrl() {
+  const hash = window.location.hash || "";
+  const match = hash.match(/(?:^|#|&)s=([A-Za-z0-9\-_]+)/);
+  if (!match) return false;
+
+  try {
+    const decodedJson = base64UrlDecode(match[1]);
+    const payload = JSON.parse(decodedJson);
+
+    if (!payload || payload.v !== 2) return false;
+
+    state = { ...defaultState(), ...state, ...payload };
+    saveState();
+    hydrateInputs();
+    buildGrid();
+    return true;
+  } catch (e) {
+    console.warn("Failed to load shared board:", e);
+    return false;
+  }
+}
+
+  // Short-code UI handlers
+  if($('btn-generate-code')) $('btn-generate-code').addEventListener('click', generateShortCode);
+
+  if($('btn-copy-code')) $('btn-copy-code').addEventListener('click', ()=>{
+    const code = ($('shareCode')?.value || '').trim();
+    if(!code) return alert('Generate a code first.');
+    copyText(code, 'Code copied!');
+  });
+
+  if($('btn-copy-short-link')) $('btn-copy-short-link').addEventListener('click', ()=>{
+    const link = ($('shareLink')?.value || '').trim();
+    if(!link) return alert('Generate a code first.');
+    copyText(link, 'Short link copied!');
+  });
+
+
+  // -----------------------------
+  // Reset
+  // -----------------------------
+  $('btn-reset').addEventListener('click', ()=>{
+    const ok = confirm('Reset the entire board? This clears names and numbers.');
+    if(!ok) return;
+    state = defaultState();
+    saveState();
+    // keep input fields updated
+    hydrateInputs();
+    buildGrid();
+  });
+
+  
+  
+  // -----------------------------
+  // Game selector (date + dropdown)
+  // -----------------------------
+  const gameDateEl = $('gameDate');
+  const gameSelectEl = $('gameSelect');
+  const gameHelpEl = $('gameHelp');
+
+  function fmtToday(){
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  function yyyymmdd(dateStr){
+    return String(dateStr || '').replaceAll('-','');
+  }
+  function setGameHelp(msg){
+    if(gameHelpEl) gameHelpEl.textContent = msg;
+  }
+
+  async function loadGamesForDate(dateStr){
+    if(!ESPN_GAMES_URL || !gameSelectEl) return;
+    const dateParam = yyyymmdd(dateStr);
+    const url = dateParam ? `${ESPN_GAMES_URL}?date=${encodeURIComponent(dateParam)}` : ESPN_GAMES_URL;
+
+    gameSelectEl.disabled = true;
+    gameSelectEl.innerHTML = `<option value="">Loading…</option>`;
+
+    try{
+      const res = await fetch(url, { method:'GET' });
+      if(!res.ok) throw new Error(`Games list HTTP ${res.status}`);
+      const data = await res.json();
+      const games = Array.isArray(data.games) ? data.games : [];
+
+      gameSelectEl.innerHTML = '';
+      const optAuto = document.createElement('option');
+      optAuto.value = '';
+      optAuto.textContent = 'Auto (main game)';
+      gameSelectEl.appendChild(optAuto);
+
+      for(const g of games){
+        const opt = document.createElement('option');
+        opt.value = g.eventId;
+        opt.textContent = `${g.awayTeam} @ ${g.homeTeam}` + (g.status ? ` • ${(g.status || '').toUpperCase()}` : '');
+        opt.dataset.homeTeam = g.homeTeam || '';
+        opt.dataset.awayTeam = g.awayTeam || '';
+        gameSelectEl.appendChild(opt);
+      }
+
+      gameSelectEl.disabled = false;
+
+      if(!games.length){
+        setGameHelp('No games found for that date. Use Custom teams below.');
+        state.selectedEventId = null;
+        saveState();
+        return;
+      }
+
+      setGameHelp(games.length > 1 ? 'Multiple games available. Pick one from the dropdown.' : 'One game found — auto will use it (or select it to lock).');
+
+      // Restore selection if possible
+      if(state.selectedEventId && games.some(g => String(g.eventId) === String(state.selectedEventId))){
+        gameSelectEl.value = state.selectedEventId;
+        const opt = gameSelectEl.querySelector(`option[value="${CSS.escape(state.selectedEventId)}"]`);
+        if(opt) applySelectedGame(opt);
+      }else if(games.length === 1){
+        autoFillTeams(games[0].homeTeam, games[0].awayTeam);
+      }
+    }catch(e){
+      console.warn('Games list error:', e);
+      setGameHelp('Could not load games list (usually CORS). You can still type teams manually.');
+      gameSelectEl.innerHTML = `<option value="">Auto (main game)</option>`;
+      gameSelectEl.disabled = false;
+    }
+  }
+
+  function autoFillTeams(homeTeam, awayTeam){
+    // Left = Home, Top = Away
+    const topCurrent = ($('teamTop')?.value || '').trim();
+    const leftCurrent = ($('teamLeft')?.value || '').trim();
+    const isBlank = (s) => !s || s === 'Team A' || s === 'Team B';
+
+    if(awayTeam && isBlank(topCurrent)){
+      $('teamTop').value = awayTeam;
+      state.teams.top = awayTeam;
+    }
+    if(homeTeam && isBlank(leftCurrent)){
+      $('teamLeft').value = homeTeam;
+      state.teams.left = homeTeam;
+    }
+    saveState();
+    buildGrid();
+  }
+
+  function applySelectedGame(opt){
+    const eventId = opt.value;
+    const homeTeam = opt.dataset.homeTeam || '';
+    const awayTeam = opt.dataset.awayTeam || '';
+    state.selectedEventId = eventId || null;
+    autoFillTeams(homeTeam, awayTeam);
+  }
+
+  if(gameDateEl){
+    gameDateEl.value = state.selectedDate || fmtToday();
+    state.selectedDate = gameDateEl.value;
+    saveState();
+
+    gameDateEl.addEventListener('change', ()=>{
+      state.selectedDate = gameDateEl.value || null;
+      state.selectedEventId = null;
+      saveState();
+      loadGamesForDate(gameDateEl.value);
+    });
+  }
+
+  if(gameSelectEl){
+    gameSelectEl.addEventListener('change', ()=>{
+      const opt = gameSelectEl.options[gameSelectEl.selectedIndex];
+      if(!opt || !opt.value){
+        state.selectedEventId = null;
+        saveState();
+        return;
+      }
+      applySelectedGame(opt);
+    });
+  }
+
+// -----------------------------
+  // ESPN Live (via n8n proxy) - Auto teams + live scoreboard (NO login)
+  // -----------------------------
+  // Recommended: call ESPN from n8n (avoids CORS + lets you cache/throttle).
+  // Set LIVE_SCORE_URL to your n8n webhook, e.g.:
+  //   http://localhost/webhook/sb-espn-live
+  // When deployed:
+  //   https://YOUR-N8N-DOMAIN/webhook/sb-espn-live
+  const ESPN_GAMES_URL = "https://exodonprofits.app.n8n.cloud/webhook/sb-espn-games";
+  const LIVE_SCORE_URL = "https://exodonprofits.app.n8n.cloud/webhook/sb-espn-live";
+
+  async function fetchLiveFromN8n(){
+    if(!LIVE_SCORE_URL) return;
+    try{
+      const qp = new URLSearchParams();
+      if(state.selectedEventId) qp.set("eventId", state.selectedEventId);
+      if(state.selectedDate) qp.set("date", state.selectedDate.replaceAll("-",""));
+      const liveUrl = qp.toString() ? `${LIVE_SCORE_URL}?${qp.toString()}` : LIVE_SCORE_URL;
+      const res = await fetch(liveUrl, { method: "GET" });
+      if(!res.ok) throw new Error("Live fetch failed");
+      const data = await res.json();
+
+      // Expected: { topTeam, leftTeam, topScore, leftScore, quarter, clock, status, possession }
+      const topTeam = (data.topTeam || data.awayTeam || '').toString().trim();
+      const leftTeam = (data.leftTeam || data.homeTeam || '').toString().trim();
+
+      // Auto-fill teams only if user hasn't typed custom ones yet
+      const hasCustomTeams = (($('teamTop')?.value || '').trim().length > 0) || (($('teamLeft')?.value || '').trim().length > 0);
+      if(!hasCustomTeams && topTeam && leftTeam){
+        $('teamTop').value = topTeam;
+        $('teamLeft').value = leftTeam;
+        state.teams.top = topTeam;
+        state.teams.left = leftTeam;
+      }
+
+      // Update scoreboard
+      const leftScore = (data.leftScore ?? data.homeScore);
+      const rightScore = (data.topScore ?? data.awayScore);
+
+      if(Number.isFinite(+leftScore)) state.scoreboard.leftScore = +leftScore;
+      if(Number.isFinite(+rightScore)) state.scoreboard.rightScore = +rightScore;
+
+      state.scoreboard.q = (data.quarter ?? data.period ?? state.scoreboard.q);
+      state.scoreboard.clock = (data.clock ?? state.scoreboard.clock);
+      state.scoreboard.pos = (data.possession ?? state.scoreboard.pos);
+      state.scoreboard.mode = (data.status ? String(data.status).toLowerCase() : "espn");
+
+      saveState();
+      buildGrid(); // refresh team labels + scoreboard
+    }catch(e){
+      console.warn("Live scoreboard error:", e);
+    }
+  }
+
+  // Poll every 15 seconds when enabled
+  if(LIVE_SCORE_URL){
+    fetchLiveFromN8n();
+    setInterval(fetchLiveFromN8n, 15000);
+  }
+// -----------------------------
+  // Scoreboard (smart + easy)
+  // - Default: manual editing via click
+  // - Ready hook: n8n can write into localStorage or you can wire Supabase later
+  // -----------------------------
+  function updateScoreboardUI(){
+    $('sb-left-score').textContent = String(state.scoreboard.leftScore ?? 0);
+    $('sb-right-score').textContent = String(state.scoreboard.rightScore ?? 0);
+    $('sb-q').textContent = String(state.scoreboard.q ?? '-');
+    $('sb-clock').textContent = String(state.scoreboard.clock ?? '--:--');
+    $('sb-pos').textContent = String(state.scoreboard.pos ?? '--');
+    $('sb-status').textContent = (state.scoreboard.mode || 'manual').toUpperCase();
+  }
+
+  // click-to-edit scoreboard (easy for parties)
+  const sbEditTargets = ['sb-left-score','sb-right-score','sb-q','sb-clock','sb-pos'];
+  sbEditTargets.forEach(id=>{
+    $(id).addEventListener('click', ()=>{
+      const current = $(id).textContent.trim();
+      const next = prompt('Update value:', current);
+      if(next === null) return;
+      if(id === 'sb-left-score') state.scoreboard.leftScore = toIntSafe(next);
+      if(id === 'sb-right-score') state.scoreboard.rightScore = toIntSafe(next);
+      if(id === 'sb-q') state.scoreboard.q = String(next).trim() || '-';
+      if(id === 'sb-clock') state.scoreboard.clock = String(next).trim() || '--:--';
+      if(id === 'sb-pos') state.scoreboard.pos = String(next).trim() || '--';
+      state.scoreboard.mode = 'manual';
+      saveState();
+      updateScoreboardUI();
+    });
+  });
+
+  function toIntSafe(v){
+    const n = parseInt(String(v).replace(/[^\d-]/g,''), 10);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  // -----------------------------
+  // Inputs ↔ state (hydration)
+  // -----------------------------
+  function hydrateInputs(){
+    $('teamTop').value = state.teams.top || 'Team A';
+    $('teamLeft').value = state.teams.left || 'Team B';
+    $('buyIn').value = state.buyIn || '';
+    $('lockNumbers').value = state.lockMode || (state.numbers.revealed ? 'unlocked' : 'locked');
+
+    $('sb-left-name').textContent = state.teams.left || 'Team A';
+    $('sb-right-name').textContent = state.teams.top || 'Team B';
+ 
+
+    if($('gameDate') && state.selectedDate) $('gameDate').value = state.selectedDate;
+  }
+
+  ['teamTop','teamLeft'].forEach(id=>{
+    $(id).addEventListener('input', ()=> updateCaption());
+  });
+
+  $('buyIn').addEventListener('input', ()=>{
+    state.buyIn = $('buyIn').value || '';
+    saveState();
+  });
+
+  // -----------------------------
+  // Safety: escape HTML in names/notes
+  // -----------------------------
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, (m)=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+    }[m]));
+  }
+
+  // -----------------------------
+  // Initial render
+  // -----------------------------
+  hydrateInputs();
+  buildGrid();
+  // If opened from a short-code link (#code=XXXX), load that board
+  tryLoadFromCodeInUrl();
+// Auto-load shared link if present
+tryLoadFromUrl();
+
+  // Sync if another tab updates
+  window.addEventListener('storage', (e)=>{
+    if(e.key !== STORE_KEY) return;
+    state = loadState();
+    hydrateInputs();
+    buildGrid();
+    // Auto-load shared link if present
+tryLoadFromUrl();
+
+  });
+</script>
+
+</body>
+</html>

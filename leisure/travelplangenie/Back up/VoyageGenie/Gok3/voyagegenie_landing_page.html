@@ -1,0 +1,412 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoyageGenie – Plan Less. Explore More.</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .excursions { display: none; }
+    .excursions.active { display: flex; }
+    .card img { transition: transform 0.3s; }
+    .card:hover img { transform: scale(1.05); }
+    .overlay { 
+      position: absolute; 
+      top: 10px; 
+      left: 10px; 
+      background: rgba(0, 0, 0, 0.6); 
+      color: white; 
+      padding: 5px 10px; 
+      border-radius: 5px; 
+      font-size: 0.9rem; 
+    }
+    /* Header Styles */
+    header {
+      position: relative;
+      overflow: hidden;
+    }
+    .header-title {
+      opacity: 0;
+      transform: translateY(-20px);
+      animation: fadeSlideDown 1s ease-out forwards;
+    }
+    .header-tagline {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeSlideUp 1s ease-out 0.5s forwards;
+    }
+    @keyframes fadeSlideDown {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes fadeSlideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    #particles-js {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    .header-content {
+      position: relative;
+      z-index: 2;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    }
+    /* Slideshow Styles */
+    .slideshow {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .slideshow img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    .slideshow img.active {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+  <!-- Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">VoyageGenie</h1>
+      <ul class="flex space-x-6">
+        <li><a href="#home" class="hover:underline">Home</a></li>
+        <li><a href="#features" class="hover:underline">Features</a></li>
+        <li><a href="#plan" class="hover:underline">Plan Trip</a></li>
+        <li><a href="#contact" class="hover:underline">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <header id="home" class="text-white text-center py-16">
+    <div id="particles-js"></div>
+    <div class="slideshow" id="slideshow">
+      <!-- Images will be dynamically added by JavaScript -->
+    </div>
+    <div class="header-content">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4 header-title">VoyageGenie</h1>
+      <p class="text-lg md:text-xl header-tagline">Plan Less. Explore More.</p>
+    </div>
+  </header>
+
+  <!-- Travel Options -->
+  <section class="container max-w-7xl mx-auto px-4 py-12">
+    <h2 class="text-3xl font-bold mb-6 text-center">Choose Your Travel Style</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="card bg-white rounded-lg shadow-lg overflow-hidden text-center relative">
+        <img src="https://images.unsplash.com/photo-1519452575417-564c1407a9b1" alt="Beachfront all-inclusive resort with overwater bungalows and turquoise water" class="w-full h-48 object-cover" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0'; this.alt='Fallback travel scene';">
+        <div class="overlay">Relax in Paradise</div>
+        <div class="p-4">
+          <h3 class="text-xl font-semibold mb-2">All-inclusive Resort</h3>
+          <p class="text-sm text-gray-600 mb-4">Unwind with everything taken care of—sun, sand, and endless dining in a tropical oasis.</p>
+          <a href="trip_planning_form.html?type=resort" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 inline-block">Plan Now</a>
+        </div>
+      </div>
+      <div class="card bg-white rounded-lg shadow-lg overflow-hidden text-center relative">
+        <img src="https://images.unsplash.com/photo-1709922316380-0e3d54c6f5a5" alt="Modern cruise ship like Icon of the Seas docked in a port" class="w-full h-48 object-cover" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0'; this.alt='Fallback travel scene';">
+        <div class="overlay">Sail the Seas</div>
+        <div class="p-4">
+          <h3 class="text-xl font-semibold mb-2">Cruises</h3>
+          <p class="text-sm text-gray-600 mb-4">Experience luxury and adventure on the open seas with stunning views and amenities.</p>
+          <a href="trip_planning_form.html?type=cruise" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 inline-block">Plan Now</a>
+        </div>
+      </div>
+      <div class="card bg-white rounded-lg shadow-lg overflow-hidden text-center relative">
+        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2" alt="Modern hotel room and cozy Airbnb cabin split image" class="w-full h-48 object-cover" loading="lazy">
+        <div class="overlay">Stay Your Way</div>
+        <div class="p-4">
+          <h3 class="text-xl font-semibold mb-2">Airbnb or Hotel</h3>
+          <p class="text-sm text-gray-600 mb-4">Choose upscale hotels or unique, homey stays tailored to your travel style.</p>
+          <a href="trip_planning_form.html?type=airbnb" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 inline-block">Plan Now</a>
+        </div>
+      </div>
+      <div class="card bg-white rounded-lg shadow-lg overflow-hidden text-center relative">
+        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e" alt="Group hiking in a jungle with a waterfall" class="w-full h-48 object-cover" loading="lazy">
+        <div class="overlay">Seek Adventure</div>
+        <div class="p-4">
+          <h3 class="text-xl font-semibold mb-2">Unforgettable Adventure</h3>
+          <p class="text-sm text-gray-600 mb-4">From jungle treks to epic hikes, embark on thrilling experiences.</p>
+          <a href="trip_planning_form.html?type=adventure" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 inline-block">Plan Now</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Destination & Excursions -->
+  <section class="max-w-7xl mx-auto px-4 py-12 text-center">
+    <h2 class="text-3xl font-bold mb-6">Explore Excursions by Destination</h2>
+    <select id="destination" class="p-3 rounded-md border border-gray-300 bg-white text-gray-800" aria-label="Choose a destination">
+      <option value="">Select a Destination</option>
+      <option value="cancun">Cancun, Mexico</option>
+    </select>
+    <div id="cancun-excursions" class="excursions mt-8 flex flex-wrap gap-6 justify-center">
+      <div class="card bg-white rounded-lg shadow-lg overflow-hidden w-72">
+        <img src="https://images.unsplash.com/photo-1517486430290-35657bdcef51" alt="Chichen Itza Mayan ruins" class="w-full h-40 object-cover" loading="lazy">
+        <div class="p-4">
+          <h3 class="text-lg font-semibold">Chichen Itza Tour</h3>
+          <p class="text-sm text-gray-600">Explore the iconic Mayan ruins, including El Castillo, with a guided tour and cenote swim.</p>
+        </div>
+      </div>
+      <div class="card bg-white rounded-lg shadow-lg overflow-hidden w-72">
+        <img src="https://images.unsplash.com/photo-1512428813834-c177b91b7b03" alt="Catamaran sailing to Isla Mujeres" class="w-full h-40 object-cover" loading="lazy">
+        <div class="p-4">
+          <h3 class="text-lg font-semibold">Isla Mujeres Catamaran</h3>
+          <p class="text-sm text-gray-600">Sail to Isla Mujeres, snorkel coral reefs, and enjoy a beach buffet with an open bar.</p>
+        </div>
+      </div>
+      <div class="card bg-white rounded-lg shadow-lg overflow-hidden w-72">
+        <img src="https://images.unsplash.com/photo-1501555088652-021faa106b9b" alt="Xcaret Park jungle and river" class="w-full h-40 object-cover" loading="lazy">
+        <div class="p-4">
+          <h3 class="text-lg font-semibold">Xcaret Park</h3>
+          <p class="text-sm text-gray-600">Swim in underground rivers, meet wildlife, and enjoy a cultural show at Xcaret.</p>
+        </div>
+      </div>
+      <div class="card bg-white rounded-lg shadow-lg overflow-hidden w-72">
+        <img src="https://images.unsplash.com/photo-1533106497176-45ae19e68ba3" alt="Tulum ruins and cenote" class="w-full h-40 object-cover" loading="lazy">
+        <div class="p-4">
+          <h3 class="text-lg font-semibold">Tulum & Cenote Trip</h3>
+          <p class="text-sm text-gray-600">Visit Tulum’s coastal ruins and swim in a stunning cenote for a perfect day trip.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mission -->
+  <section class="mission max-w-3xl mx-auto px-4 py-12">
+    <h2 class="text-3xl font-bold mb-4">🎯 Our Mission</h2>
+    <p class="text-lg">At <strong>VoyageGenie</strong>, we empower you to <strong>plan less and explore more</strong>. Our AI crafts personalized travel itineraries—whether you crave relaxation, adventure, or unique experiences. Travel smarter, easier, and stress-free with us.</p>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="features max-w-3xl mx-auto px-4 py-12">
+    <h2 class="text-3xl font-bold mb-4">🔍 Why VoyageGenie?</h2>
+    <ul class="list-disc pl-6 space-y-2 text-lg">
+      <li>Instant trip planning tailored to your preferences and budget</li>
+      <li>Choose from resorts, cruises, Airbnbs, or unique adventures</li>
+      <li>AI-generated daily itineraries with local tips and booking links</li>
+      <li>Flexible, mobile-friendly planning from anywhere</li>
+      <li>Save hours of research with one simple form</li>
+    </ul>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="max-w-7xl mx-auto px-4 py-12">
+    <h2 class="text-3xl font-bold mb-6 text-center">🌟 What Travelers Say</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <p class="text-gray-600 italic">"VoyageGenie planned my Cancun trip in minutes! The itinerary was perfect, and I loved the local excursion suggestions."</p>
+        <p class="mt-4 font-semibold">– Sarah M.</p>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <p class="text-gray-600 italic">"The AI made my cruise planning so easy. Every detail was spot-on, from ports to activities."</p>
+        <p class="mt-4 font-semibold">– James T.</p>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <p class="text-gray-600 italic">"I found the perfect Airbnb and got a custom adventure plan. Saved me hours!"</p>
+        <p class="mt-4 font-semibold">– Emily R.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA with Booking Form -->
+  <section id="plan" class="cta max-w-3xl mx-auto px-4 py-12 text-center bg-white border border-gray-200 rounded-lg shadow-md">
+    <h2 class="text-3xl font-bold mb-4">✨ Start Planning Your Dream Trip</h2>
+    <p class="text-lg mb-6">Let our AI create your personalized itinerary in seconds. Fast, free, and fun!</p>
+    <a href="trip_planning_form.html" class="bg-blue-500 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-600 inline-block">Plan My Trip</a>
+  </section>
+
+  <!-- Social Short -->
+  <section class="social-short max-w-3xl mx-auto px-4 py-12 text-center">
+    <h2 class="text-3xl font-bold mb-4">📱 VoyageGenie in a Nutshell</h2>
+    <p class="text-lg">✈️ <strong>Plan Less. Explore More.</strong><br>
+    VoyageGenie.com uses AI to instantly plan trips tailored to you—from resorts and cruises to Airbnbs and local adventures.<br>
+    🌍 Your journey starts here.</p>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact" class="bg-gray-200 text-center py-8">
+    <p class="text-sm">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍</p>
+    <div class="mt-4 flex justify-center space-x-6">
+      <a href="#" class="text-blue-500 hover:underline">Facebook</a>
+      <a href="#" class="text-blue-500 hover:underline">Instagram</a>
+      <a href="#" class="text-blue-500 hover:underline">Contact Us</a>
+    </div>
+  </footer>
+
+  <!-- Particles.js for Particle Animation -->
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <script>
+    // Seasonal Image Arrays (5 images per season)
+    const seasons = {
+      spring: [
+        'https://images.unsplash.com/photo-1613321710159-225e63e10554', // Cherry blossoms
+        'https://images.unsplash.com/photo-1490750967868-88aa4486c946', // Tulip fields
+        'https://images.unsplash.com/photo-1588864087470-85e948a764d7', // Lush green meadow
+        'https://images.unsplash.com/photo-1588391498391-60cf48a1ef58', // Springtime mountain valley
+        'https://images.unsplash.com/photo-1592210454359-9043f067919b'  // Blooming lavender fields
+      ],
+      summer: [
+        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e', // Tropical beach
+        'https://images.unsplash.com/photo-1519046904884-53103b34b206', // Sunny island
+        'https://images.unsplash.com/photo-1501426026826-31c667bdf14d', // Coastal cliffs
+        'https://images.unsplash.com/photo-1506953823976-52e1c7807e22', // Mediterranean coastline
+        'https://images.unsplash.com/photo-1496412705862-e0088f16f791'  // Waterfall in a tropical jungle
+      ],
+      autumn: [
+        'https://images.unsplash.com/photo-1507521628349-deb7d3b4892a', // Autumn leaves
+        'https://images.unsplash.com/photo-1508921912186-1d1a45ebb3c1', // Fall forest
+        'https://images.unsplash.com/photo-1508962914676-134c09c59fd5', // Harvest fields
+        'https://images.unsplash.com/photo-1533228100845-08145b01de14', // Autumn mountain trail
+        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c'  // Pumpkin patch in fall
+      ],
+      winter: [
+        'https://images.unsplash.com/photo-1541508909312-34e5a9c2b885', // Snowy mountains
+        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c', // Icy lake
+        'https://images.unsplash.com/photo-1542601098-3adb3baeb1ec', // Winter village
+        'https://images.unsplash.com/photo-1517299321609-9d79456c548d', // Snow-covered forest
+        'https://images.unsplash.com/photo-1516724562728-afc8249f1d3f'  // Northern lights over snowy landscape
+      ]
+    };
+
+    // Fallback Image (in case any image fails to load)
+    const fallbackImage = 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0'; // Generic travel image
+
+    // Determine Season Based on Current Month
+    function getSeason() {
+      const month = new Date().getMonth(); // 0-11 (Jan-Dec)
+      if (month >= 2 && month <= 4) return 'spring';   // March-May
+      if (month >= 5 && month <= 7) return 'summer';   // June-August
+      if (month >= 8 && month <= 10) return 'autumn';  // September-November
+      return 'winter';                                  // December-February
+    }
+
+    // Initialize Slideshow
+    const slideshow = document.getElementById('slideshow');
+    const currentSeason = getSeason();
+    const images = seasons[currentSeason];
+
+    // Add Images to Slideshow with Error Handling
+    images.forEach((src, index) => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = `${currentSeason} travel scene ${index + 1}`;
+      img.loading = 'lazy';
+      if (index === 0) img.classList.add('active');
+
+      // Error Handling for Image Loading
+      img.onerror = () => {
+        img.src = fallbackImage;
+        img.alt = 'Fallback travel scene';
+      };
+
+      slideshow.appendChild(img);
+    });
+
+    // Slideshow Logic
+    let currentIndex = 0;
+    const slideshowImages = slideshow.querySelectorAll('img');
+    function nextSlide() {
+      slideshowImages[currentIndex].classList.remove('active');
+      currentIndex = (currentIndex + 1) % slideshowImages.length;
+      slideshowImages[currentIndex].classList.add('active');
+    }
+    setInterval(nextSlide, 5000); // Change image every 5 seconds
+
+    // Initialize Particles.js
+    particlesJS('particles-js', {
+      particles: {
+        number: { value: 50, density: { enable: true, value_area: 800 } },
+        color: { value: '#ffffff' },
+        shape: { type: 'circle' },
+        opacity: { value: 0.5, random: true },
+        size: { value: 3, random: true },
+        line_linked: { enable: false },
+        move: {
+          enable: true,
+          speed: 1,
+          direction: 'none',
+          random: true,
+          straight: false,
+          out_mode: 'out',
+          bounce: false
+        }
+      },
+      interactivity: {
+        detect_on: 'canvas',
+        events: { onhover: { enable: false }, onclick: { enable: false }, resize: true }
+      },
+      retina_detect: true
+    });
+
+    // Excursion Toggle
+    const destinationSelect = document.getElementById('destination');
+    const cancunExcursions = document.getElementById('cancun-excursions');
+    destinationSelect.addEventListener('change', () => {
+      cancunExcursions.classList.remove('active');
+      if (destinationSelect.value === 'cancun') {
+        cancunExcursions.classList.add('active');
+      }
+    });
+  </script>
+</body>
+</html>

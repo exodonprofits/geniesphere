@@ -1,0 +1,826 @@
+{
+  "name": "Adventure_Trip_Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "adventure-travel-agent",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "ca431949-35cf-441b-b28b-f727f6e1499c",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f0156e8f-8110-4e8a-b2dc-93f20ce0b554",
+      "name": "If OPTIONS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -416
+      ],
+      "id": "57573065-f44d-46bd-b9dc-69b896784275"
+    },
+    {
+      "parameters": {
+        "jsCode": "let method = $json.method;\nif (!method) { method = $json.headers?.[':method'] || 'POST'; }\nreturn [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        -176
+      ],
+      "id": "41af1883-9c40-405e-88a5-f108629e29d0"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.method).toUpperCase() }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d0428192-f30a-47b4-bd98-0b57ac708b45",
+      "name": "If Method",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\":\"Method not allowed\",\"status\":405}",
+        "options": {
+          "responseCode": 405,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond 405",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        370,
+        -304
+      ],
+      "id": "adv00001-0001-0001-0001-000000000001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\nif (!body || typeof body !== 'object') throw new Error('400: Request body is missing or invalid');\n\nconst safeArray = v => Array.isArray(v) ? v : (v ? [v] : []);\nconst normaliseAge = arr => arr.map(v => {\n  if (v === 'Kids')      return 'Kids_0_12';\n  if (v === 'Teens')     return 'Teens_13_19';\n  if (v === 'Adults')    return 'Adults_20_39';\n  if (v === 'MiddleAge') return 'Adults_40_59';\n  if (v === 'Seniors')   return 'Seniors_60plus';\n  return v;\n});\n\nconst flexDates = body.flexDates === 'yes' || body.flexDates === true || body.flexDates === 'true';\n\nconst destinationCity = (body.destinationCity || body.adventureDestination || '').trim();\nif (!destinationCity) throw new Error('400: destinationCity is required');\n\nif (!flexDates) {\n  const startDate = (body.startDate || '').trim();\n  const endDate   = (body.endDate   || '').trim();\n  if (!startDate || !endDate) throw new Error('400: startDate and endDate are required');\n  const d1 = new Date(startDate), d2 = new Date(endDate);\n  if (isNaN(d1) || isNaN(d2)) throw new Error('400: Invalid date format');\n  if (d2 < d1) throw new Error('400: endDate must be on or after startDate');\n}\n\nreturn [{ json: {\n  departureLocation:    (body.departureLocation || 'Not specified').trim(),\n  adventureDestination: destinationCity,\n  // adventure-specific\n  activityType:  body.activityType || 'Hiking',\n  intensity:     body.difficulty   || body.intensity || 'Intermediate',\n  environment:   safeArray(body.environment),\n  // new fields\n  travelPace:    body.travelPace  || 'Balanced',\n  budgetTier:    body.budgetTier  || 'Standard',\n  flexDates,\n  // standard\n  startDate:     (body.startDate || '').trim(),\n  endDate:       (body.endDate   || '').trim(),\n  tripType:      body.tripType   || 'Not specified',\n  groupSize:     body.groupSize  || '1',\n  ageRange:      normaliseAge(safeArray(body.ageRange)),\n  budget:        body.budget     || '0',\n  email:         (body.email     || '').trim()\n}}];"
+      },
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        128
+      ],
+      "id": "d51543fd-3ac9-4808-8e74-52d81ae6aae8"
+    },
+    {
+      "parameters": {
+        "jsCode": "const {\n  departureLocation, adventureDestination, activityType, intensity,\n  environment, travelPace, budgetTier, flexDates,\n  startDate, endDate, tripType, groupSize, ageRange, budget, email\n} = $json;\n\nconst fmt = v => Array.isArray(v) && v.length ? v.join(', ') : 'No preference';\n\nconst paceLabel = {\n  Relaxed:  'Relaxed & scenic (max 2 activities/day, recovery time, shorter distances)',\n  Balanced: 'Balanced (3–4 activities/day, mix of challenging and easy)',\n  Active:   'Packed & intense (full days, maximum challenge, back-to-back activities)',\n}[travelPace] || travelPace;\n\nconst tierLabel = {\n  Economy:  'Economy — budget gear rental, basic guesthouses, self-organised, local guides',\n  Standard: 'Standard — quality outfitters, guided tours, comfortable lodges or basecamp',\n  Elite:    'Elite — private guides, premium gear, luxury lodges, exclusive permits and access',\n}[budgetTier] || budgetTier;\n\nconst dateLine = flexDates\n  ? 'Flexible — suggest the optimal season for this activity and destination'\n  : (startDate && endDate ? `${startDate} to ${endDate}` : 'Not specified');\n\nconst prompt = `Please create a complete adventure trip itinerary with the following details:\n\n- Departure: ${departureLocation}\n- Destination: ${adventureDestination}\n- Dates: ${dateLine}\n- Activity Type: ${activityType}\n- Difficulty / Intensity: ${intensity}\n- Preferred Environments: ${fmt(environment)}\n- Trip Type: ${tripType}\n- Travel Pace: ${paceLabel}\n- Plan Tier: ${tierLabel}\n- Total Budget: $${budget} USD\n- Group Size: ${groupSize}\n- Age Ranges: ${fmt(ageRange)}\n\nPlease follow all formatting and content rules from the system prompt exactly.`;\n\nreturn [{ json: {\n  departureLocation, adventureDestination, activityType, intensity,\n  environment, travelPace, budgetTier, flexDates,\n  startDate, endDate, tripType, groupSize, ageRange, budget, email, prompt\n}}];"
+      },
+      "name": "Prepare Adventure Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        128
+      ],
+      "id": "279e7c2a-e7fc-4c6e-8e9f-16bd98888b8b"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert adventure travel agent at Voyage Genie. Create exciting, detailed, and safety-conscious itineraries. Every activity, guide service, accommodation, and flight suggestion must include a real clickable booking link.\n\n════════════════════════════════════\nBUDGET TIER — drives every recommendation\n════════════════════════════════════\nECONOMY tier:\n- Accommodation: Basic guesthouses, hostels, camping, teahouses. $20–60/night.\n- Guides: Local community guides, group tours, self-guided with maps. Under $30/person/day.\n- Gear: Basic rental from local shops. Budget transport (local buses, shared jeeps).\n- Links: Hostelworld, Booking.com budget, local guiding co-ops, AllTrails for self-guided.\n- Dining: Local dhabas, teahouses, street food. ~$10–20/day.\n\nSTANDARD tier:\n- Accommodation: Quality lodges, comfortable guesthouses, good campsites with facilities. $60–150/night.\n- Guides: Licensed professional guides, reputable tour operators, small groups. $50–100/person/day.\n- Gear: Quality rental or guided packages with equipment included.\n- Links: Viator, GetYourGuide, reputable operator websites, Booking.com.\n- Dining: Mix of lodge dining and local restaurants. ~$30–60/day.\n\nELITE tier:\n- Accommodation: Luxury lodges, private tented camps, boutique mountain resorts. $200+/night.\n- Guides: Private certified expert guides, porter teams, exclusive permits. $150–300+/person/day.\n- Gear: Premium equipment provided, helicopter transfers if applicable.\n- Links: Direct operator luxury packages, Abercrombie & Kent, private expedition outfitters.\n- Dining: Full lodge dining, private chef at camp, curated food packages. ~$80–150/day.\n\n════════════════════════════════════\nTRAVEL PACE ADAPTATION\n════════════════════════════════════\n- Relaxed: Max 2 activities/day. Built-in acclimatisation days. Short distances. Recovery afternoons. Never push through fatigue.\n- Balanced: 3–4 activities/day. Mix of challenging sections and easier walks. Active mornings, lighter afternoons.\n- Active (Packed & Intense): Full days from dawn. Maximum mileage/elevation. Back-to-back challenging segments. For experienced adventurers.\n\n════════════════════════════════════\nTRIP TYPE ADAPTATION\n════════════════════════════════════\n- Solo: Solo-safe routes, reputable group tours, check-in protocols, communication device recommendations.\n- Couple: Scenic romantic camps, private guide options, sunrise/sunset moments built in.\n- Family: Age-appropriate difficulty, shorter daily distances, fun stops for children, safety briefings.\n- Group: Group permit logistics, shared equipment options, group discount operators.\n\n════════════════════════════════════\nFLEXIBLE DATES\n════════════════════════════════════\nIf flexDates is true: recommend the optimal season — best weather windows, trail conditions, permit availability, crowd levels. Explain briefly why.\n\n════════════════════════════════════\nBOOKING LINKS — MANDATORY\n════════════════════════════════════\nEvery suggestion must include a real link using <a href=\"URL\">text →</a>:\n- Activities/Tours: https://www.viator.com/search?q=[destination+activity] or https://www.getyourguide.com/s/?q=[destination]\n- Accommodation: https://www.booking.com/searchresults.html?ss=[destination] or direct lodge site\n- Flights: https://www.skyscanner.com or https://www.google.com/travel/flights\n- Self-guided routes: https://www.alltrails.com/explore?q=[destination] or National Park official site\n- Insurance: https://www.worldnomads.com (essential for adventure travel)\nNEVER use placeholder URLs.\n\n════════════════════════════════════\nSECTIONS — include ALL in this order\n════════════════════════════════════\n1. Flights: (airlines, route, duration, price estimate, booking link)\n2. Adventure Activities: (specific activities matching type, intensity, and tier — with operator, cost, booking link per activity)\n3. Accommodation Options: (3 options matching tier — name, type, distance from activity area, price/night, booking link)\n4. Daily Schedule: (per day — Morning/Afternoon/Evening with distances, elevation gain where relevant. Day labels: <strong>Day 1: Arrival in [destination]</strong>. Density based on travelPace.)\n5. Must-Know Safety Tips: (gear checklist, altitude/weather warnings, emergency contacts, insurance advice)\n6. Estimated Food Budget: (per person per day, matched to tier)\n7. Cost Summary: (tab-separated — mandatory)\n8. Travel Tips: (permits, best season, local customs, communication, health precautions)\n\n════════════════════════════════════\nFORMATTING RULES\n════════════════════════════════════\n- No Markdown (no ###, **, | tables)\n- Section headings: plain text ending with colon\n- Bullets: leading hyphen (- item)\n- Day labels: <strong>Day 1: Arrival in [destination]</strong>\n- Cost Summary: tab-separated rows (Category\\tAmount)\n- <strong> on Total and Remaining Budget rows\n- Blank line between sections\n- Emojis welcome but purposeful\n\nExample Cost Summary:\nCost Summary:\nFlights\\t$600\nActivities\\t$430\nAccommodation\\t$1,400\nFood\\t$350\n<strong>Total</strong>\\t<strong>$2,780</strong>\n<strong>Remaining Budget</strong>\\t<strong>$220</strong>"
+            },
+            {
+              "content": "={{$json.prompt}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        768,
+        128
+      ],
+      "id": "c06bde85-39bc-44c5-ae78-3272de9d9a4b",
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage-Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── FIX 4: Added OpenAI empty response guard ──\n// ── FIX 5: Added markdown fence stripping ──\nconst rawContent = $node['OpenAI'].json?.message?.content;\n\nif (!rawContent || rawContent.trim() === '') {\n  const reason = $node['OpenAI'].json?.message?.finish_reason || 'unknown';\n  throw new Error(`OpenAI returned empty content. Finish reason: ${reason}. Check API quota or prompt length.`);\n}\n\n// Normalise literal \\t (AI sometimes outputs backslash-t instead of real tab)\n// then strip markdown code fences\nconst itineraryRaw = rawContent\n  .replace(/\\\\t/g, '\\t')\n  .replace(/```[\\w]*\\n?/g, '').replace(/```/g, '').trim();\n\nconst itineraryLines = itineraryRaw.split('\\n');\nlet formattedItinerary = '';\nlet inDailySchedule = false;\nlet inCostSummary   = false;\nlet scheduleLines   = [];\nlet costSummaryRows = [];\n\nconst formatDailySchedule = (lines) => {\n  let output = '<strong style=\"font-size:16px;color:#2a4a6e;display:block;margin:15px 0 5px 0;\">Daily Schedule:</strong>';\n  const joined = lines.join(' ');\n  const daySections = joined.match(/(Day \\d+:.*?)(?=(Day \\d+:|$))/g);\n  if (!daySections) return output + '<br>';\n  daySections.forEach((dayMatch, index) => {\n    const dayLabelMatch = dayMatch.match(/(Day \\d+:[^-]*)/);\n    if (!dayLabelMatch) return;\n    const dayLabel = dayLabelMatch[1].trim();\n    const subItems = dayMatch.match(/- (Morning|Afternoon|Evening):.*?(?=(Day \\d+:|- (Morning|Afternoon|Evening):|$))/g);\n    output += `<strong>${dayLabel}</strong>`;\n    if (subItems) { output += `<div style=\"margin:4px 0 8px 12px;\">${subItems.map(i => i.trim()).join('<br>')}</div>`; }\n    if (index < daySections.length - 1) output += '<br>';\n  });\n  return output + '<br>';\n};\n\nfor (let line of itineraryLines) {\n  line = line.trim();\n  if (!line) {\n    if (inDailySchedule) { formattedItinerary += formatDailySchedule(scheduleLines); inDailySchedule = false; scheduleLines = []; }\n    else if (inCostSummary) { inCostSummary = false; formattedItinerary += `<table style=\"border-collapse:collapse;width:100%;margin:10px 0;font-size:14px;\">${costSummaryRows.join('')}</table><br>`; costSummaryRows = []; }\n    else { formattedItinerary += '<br>'; }\n    continue;\n  }\n  const lower = line.toLowerCase();\n  if (lower.startsWith('daily schedule:')) { inDailySchedule = true; scheduleLines = []; continue; }\n  if (inDailySchedule) { scheduleLines.push(line); continue; }\n  if (lower.startsWith('cost summary:')) { formattedItinerary += `<strong style=\"font-size:16px;color:#2a4a6e;display:block;margin:15px 0 5px 0;\">Cost Summary:</strong>`; inCostSummary = true; continue; }\n  if (inCostSummary && line.includes('\\t')) {\n    const parts = line.split('\\t').map(s => s.trim());\n    const cat = parts[0] || ''; const cost = parts[1] || '';\n    const isBold = cat.startsWith('Total') || cat.startsWith('Remaining Budget');\n    const style = isBold ? 'border:1px solid #e0e0e0;padding:8px;background:#f0f0f0;font-weight:bold;' : 'border:1px solid #e0e0e0;padding:8px;';\n    costSummaryRows.push(`<tr><td style=\"${style}\">${cat}</td><td style=\"${style}\">${cost}</td></tr>`);\n    continue;\n  }\n  if (inCostSummary) { inCostSummary = false; formattedItinerary += `<table style=\"border-collapse:collapse;width:100%;margin:10px 0;font-size:14px;\">${costSummaryRows.join('')}</table><br>`; costSummaryRows = []; }\n  if (line.endsWith(':')) { formattedItinerary += `<strong style=\"font-size:16px;color:#2a4a6e;display:block;margin:15px 0 5px 0;\">${line}</strong>`; }\n  else { formattedItinerary += `${line}<br>`; }\n}\nif (inDailySchedule && scheduleLines.length > 0) formattedItinerary += formatDailySchedule(scheduleLines);\nif (costSummaryRows.length > 0) formattedItinerary += `<table style=\"border-collapse:collapse;width:100%;margin:10px 0;font-size:14px;\">${costSummaryRows.join('')}</table><br>`;\n\nreturn [{ json: { ...$json, itinerary: formattedItinerary } }];"
+      },
+      "name": "Format Daily Schedule",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        128
+      ],
+      "id": "format-daily-adv-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $node['Prepare Adventure Data'].json;\nconst fmt  = $node['Format Daily Schedule'].json;\nif (!prep || !fmt) throw new Error('Adventure Info: missing data from upstream nodes.');\nif (!fmt.itinerary || fmt.itinerary.trim() === '') throw new Error('Adventure Info: empty itinerary.');\nreturn [{ json: {\n  departureLocation:    prep.departureLocation,\n  adventureDestination: prep.adventureDestination,\n  activityType:         prep.activityType,\n  intensity:            prep.intensity,\n  environment:          prep.environment,\n  travelPace:           prep.travelPace,\n  budgetTier:           prep.budgetTier,\n  flexDates:            prep.flexDates,\n  startDate:            prep.startDate,\n  endDate:              prep.endDate,\n  tripType:             prep.tripType,\n  groupSize:            prep.groupSize,\n  ageRange:             prep.ageRange,\n  budget:               prep.budget,\n  email:                prep.email,\n  itinerary:            fmt.itinerary\n}}];"
+      },
+      "name": "Adventure Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        128
+      ],
+      "id": "8bf98f42-58d8-4314-ae93-0d9a24a528d0"
+    },
+    {
+      "parameters": {
+        "jsCode": "const destination  = $json.adventureDestination || 'Your Destination';\nconst departure    = $json.departureLocation    || 'Not specified';\nconst flexDates    = $json.flexDates            || false;\nconst travelDates  = flexDates\n  ? 'Flexible — Genie will suggest the optimal season'\n  : `${$json.startDate||'N/A'} to ${$json.endDate||'N/A'}`;\nconst budget       = $json.budget      || 'N/A';\nconst groupSize    = $json.groupSize   || 'N/A';\nconst tripType     = $json.tripType    || 'N/A';\nconst activityType = $json.activityType|| 'Not specified';\nconst intensity    = $json.intensity   || 'Not specified';\nconst travelPace   = $json.travelPace  || '';\nconst budgetTier   = $json.budgetTier  || 'Standard';\nconst ageRange     = Array.isArray($json.ageRange) ? $json.ageRange.join(', ') : ($json.ageRange||'');\nconst itineraryContent = $json.itinerary || 'Itinerary details not available.';\n\nconst tierBadge = { Economy: '🟢 Economy', Standard: '🔵 Standard', Elite: '⭐ Elite' }[budgetTier] || budgetTier;\nconst paceLabel = { Relaxed: '🌅 Relaxed', Balanced: '🌊 Balanced', Active: '🏄 Active' }[travelPace] || travelPace;\n\nconst metaRow = (label, value) =>\n  `<p style=\"color:#333;font-size:15px;margin:8px 0;line-height:1.5;\"><strong style=\"color:#023e8a;\">${label}:</strong> ${value}</p>`;\n\nconst emailHtml = `\n<div style=\"font-family:'Helvetica Neue',Arial,sans-serif;max-width:660px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:12px;\">\n  <div style=\"background:linear-gradient(105deg,#023e8a,#0077b6);padding:26px 28px;border-radius:10px 10px 0 0;text-align:center;\">\n    <h1 style=\"color:#fff;margin:0;font-size:26px;font-family:Georgia,serif;\">🏔️ Your Adventure Itinerary</h1>\n    <p style=\"color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:14px;\">Generated by Voyage Genie · ${tierBadge}</p>\n  </div>\n  <div style=\"background:#fff;padding:28px;border-radius:0 0 10px 10px;border:1px solid #e2e8f0;border-top:none;\">\n    <h2 style=\"color:#023e8a;font-size:18px;margin:0 0 16px;border-bottom:2px solid #eaf4fb;padding-bottom:10px;\">Trip Overview</h2>\n    ${metaRow('📍 Destination', destination)}\n    ${metaRow('✈️ Departing from', departure)}\n    ${metaRow('📅 Dates', travelDates)}\n    ${metaRow('🏞️ Activity', `${activityType} · ${intensity}`)}\n    ${metaRow('🧳 Trip Type', tripType)}\n    ${paceLabel ? metaRow('⚡ Travel Pace', paceLabel) : ''}\n    ${metaRow('⭐ Plan Tier', tierBadge)}\n    ${metaRow('👥 Group Size', groupSize)}\n    ${ageRange ? metaRow('👨‍👩‍👧 Age Ranges', ageRange) : ''}\n    ${metaRow('💵 Budget', '$' + budget)}\n    <hr style=\"border:0;border-top:1px solid #e2e8f0;margin:20px 0;\">\n    <h3 style=\"color:#023e8a;font-size:16px;margin:0 0 14px;\">Your Itinerary</h3>\n    <div style=\"background:#f8fafc;padding:20px;border-radius:8px;font-size:14px;line-height:1.7;color:#1e293b;border:1px solid #e2e8f0;\">\n      ${itineraryContent}\n    </div>\n    <hr style=\"border:0;border-top:1px solid #e2e8f0;margin:24px 0 16px;\">\n    <p style=\"color:#64748b;font-size:12px;text-align:center;margin:0;\">\n      Generated by <strong>Voyage Genie</strong> 🌟 &nbsp;|&nbsp; Plan Less, Explore More\n    </p>\n  </div>\n</div>`;\n\nconst sessionId = [Date.now().toString(36), Math.random().toString(36).slice(2,7)].join('-');\nconst subject   = `Your ${tierBadge} Adventure Itinerary for ${destination} – Voyage Genie`;\n\nconst formData = {\n  departureLocation:    departure,\n  destinationCity:      destination,\n  adventureDestination: destination,\n  activityType, intensity, travelPace, budgetTier, flexDates,\n  tripType, groupSize, budget,\n  startDate: $json.startDate || '',\n  endDate:   $json.endDate   || '',\n  ageRange:  $json.ageRange  || [],\n  environment: $json.environment || []\n};\n\nreturn [{ json: {\n  sessionId,\n  itineraryHtml:   itineraryContent,  // clean content for frontend display\n  emailHtml:       emailHtml,         // full branded wrapper for email sending\n  resolvedEmail:   ($json.email || '').trim(),\n  resolvedSubject: subject,\n  resolvedMessage: emailHtml,\n  formData\n}}];"
+      },
+      "name": "Resolve Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        128
+      ],
+      "id": "05c71cb2-4867-4733-899d-19d50ff6a189"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── FIX 10: Retry logic + skip-if-no-email (same as tropical/airbnb fixed versions) ──\nconst EMAIL_WEBHOOK = 'https://exodonprofits.app.n8n.cloud/webhook/send-email';\nconst MAX_RETRIES   = 2;\nconst RETRY_DELAY   = 1500;\n\nconst payload = {\n  resolvedEmail:   $json.resolvedEmail,\n  resolvedSubject: $json.resolvedSubject,\n  resolvedMessage: $json.resolvedMessage\n};\n\nif (!payload.resolvedEmail || payload.resolvedEmail === '') {\n  return $input.all();\n}\n\nconst sleep = (ms) => new Promise(r => setTimeout(r, ms));\nlet lastError;\nfor (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {\n  try {\n    await $http({ method: 'POST', url: EMAIL_WEBHOOK, body: payload, headers: { 'Content-Type': 'application/json' } });\n    return $input.all();\n  } catch (err) {\n    lastError = err;\n    if (attempt < MAX_RETRIES) await sleep(RETRY_DELAY);\n  }\n}\nconsole.error(`Email delivery failed after ${MAX_RETRIES} attempts: ${lastError?.message}`);\nreturn $input.all();"
+      },
+      "name": "Trigger Email Workflow",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        128
+      ],
+      "id": "c34af6a4-6efc-427f-9592-c0a113ecc6ea"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}"
+            },
+            {
+              "name": "itineraryHtml",
+              "value": "={{ $json.itineraryHtml }}"
+            },
+            {
+              "name": "redirectUrl",
+              "value": "adventure-trip-itinerary.html"
+            },
+            {
+              "name": "itineraryData",
+              "value": "={{ JSON.stringify($json.formData) }}"
+            },
+            {
+              "name": "emailHtml",
+              "value": "={{ $json.emailHtml }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Final Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        128
+      ],
+      "id": "3e55bcee-c582-426b-bb46-9c84b9a08d24"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: {\n  sessionId:     $json.sessionId,\n  redirectUrl:   $json.redirectUrl,\n  itineraryData: $json.itineraryData,\n  itineraryHtml: $json.itineraryHtml,\n  emailHtml:     $json.emailHtml\n}}];"
+      },
+      "name": "Clean Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2064,
+        128
+      ],
+      "id": "fd87ff44-8998-4d04-90db-cd209d83bd52"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ sessionId: $json.sessionId, itineraryHtml: $json.itineraryHtml, redirectUrl: $json.redirectUrl, itineraryData: $json.itineraryData }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return JSON Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2240,
+        128
+      ],
+      "id": "544bcd88-e6bc-486f-a43f-5f3a14341f5c"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "adventure-travel-agent-new-suggestion",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "New Suggestion Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        400
+      ],
+      "id": "48437673-d116-4d4e-a7dd-b2e941c2d240"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS New Suggestion",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        400
+      ],
+      "id": "f9a00ac4-5db5-4e03-9799-f3b796d082a4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS New Suggestion",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        272
+      ],
+      "id": "4f0fca24-20b9-44fc-bcc1-3f13f1b25c7e"
+    },
+    {
+      "parameters": {
+        "jsCode": "let method = $json.method;\nif (!method) { method = $json.headers?.[':method'] || 'POST'; }\nreturn [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method New Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        512
+      ],
+      "id": "de1127c4-f1f9-4e8a-9159-b2f716bbc50d"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.method).toUpperCase() }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Method New Suggestion",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        512
+      ],
+      "id": "4abe558b-62e4-4c1b-b98d-affd83b50466"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\":\"Method not allowed\",\"status\":405}",
+        "options": {
+          "responseCode": 405,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond 405 New Suggestion",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        370,
+        400
+      ],
+      "id": "adv00002-0002-0002-0002-000000000002"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── FIX 11: New Suggestion now has its own pipeline (was incorrectly routing into main Code node) ──\nconst body = $json.body || $json;\nconst destination  = body.destinationCity  || body.adventureDestination || 'unknown';\nconst activityType = body.activityType     || 'Hiking';\nconst intensity    = body.difficulty       || body.intensity || 'Intermediate';\nconst budget       = body.budget           || '0';\nconst tripType     = body.tripType         || 'Not specified';\nconst startDate    = body.startDate        || '';\nconst endDate      = body.endDate          || '';\n\nconst prompt = `The user has an adventure itinerary for ${destination} featuring ${activityType} at ${intensity} difficulty. Budget: $${budget}. Trip type: ${tripType}${startDate ? `. Dates: ${startDate} to ${endDate}` : ''}.\n\nSuggest 3 alternative adventure destinations that:\n- Offer a similar ${activityType} experience\n- Match the ${intensity} difficulty level\n- Fit within the same budget range\n- Suit a ${tripType} traveler\n\nFor each destination provide:\n- Destination name and country\n- Why it's a great ${activityType} alternative to ${destination}\n- Best time to visit\n- Estimated total cost (flights + accommodation + activities for the trip duration)\n- Top 3 specific activities or trails\n- A search link (Viator, AllTrails, or destination tourism site)\n\nFormat each suggestion with a clear bold heading and bullet points.`;\n\nreturn [{ json: { ...body, prompt } }];"
+      },
+      "name": "Prepare New Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        512
+      ],
+      "id": "adv00003-0003-0003-0003-000000000003"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an expert adventure travel consultant. Suggest specific, practical alternative destinations with real booking and information links."
+            },
+            {
+              "content": "={{$json.prompt}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "OpenAI New Suggestion",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        608,
+        512
+      ],
+      "id": "adv00004-0004-0004-0004-000000000004",
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage-Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawContent = $node['OpenAI New Suggestion'].json?.message?.content;\nif (!rawContent || rawContent.trim() === '') throw new Error('OpenAI New Suggestion returned empty content.');\nconst sessionId = [Date.now().toString(36), Math.random().toString(36).slice(2,7)].join('-');\nconst suggestionsHtml = rawContent.trim().replace(/\\*\\*(.*?)\\*\\*/g,'<strong>$1</strong>').replace(/\\n/g,'<br>');\nreturn [{ json: { sessionId, suggestions: rawContent.trim(), suggestionsHtml, itineraryHtml: suggestionsHtml } }];"
+      },
+      "name": "Format New Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        808,
+        512
+      ],
+      "id": "adv00005-0005-0005-0005-000000000005"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ sessionId: $json.sessionId, itineraryHtml: $json.itineraryHtml, suggestions: $json.suggestions }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return New Suggestion Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        512
+      ],
+      "id": "adv00006-0006-0006-0006-000000000006"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Method": {
+      "main": [
+        [
+          {
+            "node": "If Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 405",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Prepare Adventure Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Adventure Data": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Format Daily Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Adventure Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adventure Info": {
+      "main": [
+        [
+          {
+            "node": "Resolve Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Email Content": {
+      "main": [
+        [
+          {
+            "node": "Trigger Email Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Email Workflow": {
+      "main": [
+        [
+          {
+            "node": "Set Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Final Response": {
+      "main": [
+        [
+          {
+            "node": "Clean Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Output": {
+      "main": [
+        [
+          {
+            "node": "Return JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Suggestion Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Method New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Method New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "If Method New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Prepare New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 405 New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "OpenAI New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Format New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Return New Suggestion Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "adventure-planner-fixed-v1",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "gfpvIwD8O8Hz4z1O",
+  "tags": []
+}

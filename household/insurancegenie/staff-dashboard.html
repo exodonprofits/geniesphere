@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Dashboard — Salon Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<meta name="gs-config" content="/shared/config.json"/>
+<style>
+:root {
+  --bg:        #FDFAF6;
+  --s1:        #FFFFFF;
+  --s2:        #F5F0E8;
+  --s3:        #EDE6D8;
+  --border:    rgba(0,0,0,0.07);
+  --border2:   rgba(0,0,0,0.11);
+  --ink:       #1C1814;
+  --mid:       #6A6058;
+  --muted:     #A89A8E;
+  --blush:     #C4856A;
+  --blush-dim: rgba(196,133,106,0.12);
+  --amber:     #C4993A;
+  --amber-dim: rgba(196,153,58,0.12);
+  --teal:      #3D7A72;
+  --teal-dim:  rgba(61,122,114,0.12);
+  --rose:      #C45A4A;
+  --rose-dim:  rgba(196,90,74,0.1);
+  --violet:    #7A4EA8;
+  --radius:    12px;
+  --shadow:    0 2px 14px rgba(28,24,20,0.07);
+  --header-h:  58px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ── HEADER ── */
+.ap-header {
+  position: sticky; top: 0; z-index: 100;
+  height: var(--header-h);
+  background: rgba(253,250,246,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 14px;
+}
+.ap-logo-gem {
+  font-size: 20px; line-height: 1;
+  filter: drop-shadow(0 1px 4px rgba(196,133,106,0.3));
+}
+.ap-brandname {
+  font-family: 'DM Serif Display', serif;
+  font-size: 17px; color: var(--ink); white-space: nowrap;
+}
+.ap-brandname span { color: var(--blush); }
+.ap-brandtag { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.ap-nav { display: flex; margin-left: 8px; }
+.ap-nav a {
+  font-size: 13px; font-weight: 500; color: var(--mid);
+  text-decoration: none; padding: 6px 12px; border-radius: 8px;
+  transition: all .15s;
+}
+.ap-nav a:hover { background: var(--s2); color: var(--ink); }
+.ap-nav a.active { color: var(--blush); font-weight: 600; }
+.ap-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.ap-btn-primary {
+  background: var(--blush); color: white; border: none;
+  border-radius: 9px; padding: 7px 16px; font-size: 13px;
+  font-weight: 600; cursor: pointer; text-decoration: none;
+  font-family: 'DM Sans', sans-serif; transition: background .15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.ap-btn-primary:hover { background: #B5745A; }
+.ap-user-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--s2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 5px 10px 5px 6px;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: background .15s;
+}
+.ap-user-btn:hover { background: var(--s3); }
+.ap-user-avatar {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--blush-dim); color: var(--blush);
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.ap-user-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+.ap-user-chevron { font-size: 10px; color: var(--muted); }
+.ap-user-wrap { position: relative; }
+.ap-user-dropdown {
+  display: none; position: absolute; top: calc(100% + 8px); right: 0;
+  background: var(--s1); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 6px; min-width: 200px;
+  box-shadow: 0 8px 32px rgba(28,24,20,0.12); z-index: 200;
+}
+.ap-user-dropdown.open { display: block; }
+.ap-dd-item {
+  display: block; padding: 8px 12px; border-radius: 8px;
+  font-size: 13px; color: var(--ink); text-decoration: none;
+  transition: background .12s;
+}
+.ap-dd-item:hover { background: var(--s2); }
+.ap-dd-divider { height: 1px; background: var(--border); margin: 4px 0; }
+.ap-dd-item.danger { color: var(--rose); }
+
+/* ── MAIN ── */
+main {
+  max-width: 1100px; margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+
+/* ── GREETING ── */
+.greeting-bar {
+  background: linear-gradient(135deg, var(--blush-dim) 0%, var(--amber-dim) 100%);
+  border: 1px solid rgba(196,133,106,0.2);
+  border-radius: var(--radius); padding: 18px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.greeting-left { display: flex; align-items: center; gap: 14px; }
+.greeting-avatar {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--blush); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; flex-shrink: 0;
+}
+.greeting-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px; color: var(--ink);
+}
+.greeting-role { font-size: 12px; color: var(--mid); margin-top: 2px; }
+.greeting-time {
+  font-size: 13px; color: var(--mid); text-align: right;
+}
+.greeting-time strong { display: block; font-size: 22px; color: var(--ink); font-weight: 600; }
+
+/* ── KPIs ── */
+.sec-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted);
+  margin: 28px 0 14px;
+}
+.sec-title:first-child { margin-top: 0; }
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px; margin-bottom: 8px;
+}
+.kcard {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px;
+  text-decoration: none; color: var(--ink);
+  transition: all .2s; position: relative; overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.kcard::after {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%; border-radius: 3px 0 0 3px;
+}
+.kcard.blush::after { background: var(--blush); }
+.kcard.amber::after { background: var(--amber); }
+.kcard.teal::after  { background: var(--teal); }
+.kcard.rose::after  { background: var(--rose); }
+.kcard:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(28,24,20,0.1); }
+.khead { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.kmain { font-family: 'DM Serif Display', serif; font-size: 34px; color: var(--ink); line-height: 1; }
+.ksub  { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+/* ── QUICK ACTIONS ── */
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px; margin-bottom: 8px;
+}
+.quick-btn {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  text-decoration: none; color: var(--ink);
+  display: flex; align-items: center; gap: 14px;
+  transition: all .18s; box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.quick-btn:hover { background: var(--s2); transform: translateY(-2px); border-color: var(--border2); }
+.quick-icon { font-size: 26px; flex-shrink: 0; }
+.quick-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+.quick-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.quick-btn.primary { background: var(--blush); border-color: var(--blush); }
+.quick-btn.primary .quick-label,
+.quick-btn.primary .quick-sub { color: white; }
+.quick-btn.primary:hover { background: #B5745A; border-color: #B5745A; }
+
+/* ── SCHEDULE STRIP ── */
+.schedule-strip {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--shadow); margin-bottom: 8px;
+}
+.schedule-header {
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.schedule-header-title { font-size: 13px; font-weight: 600; }
+.schedule-header-link {
+  font-size: 12px; color: var(--blush); text-decoration: none; font-weight: 500;
+}
+.appt-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 18px; border-bottom: 1px solid var(--border);
+  transition: background .12s;
+}
+.appt-row:last-child { border-bottom: none; }
+.appt-row:hover { background: var(--s2); }
+.appt-time { font-size: 12px; font-weight: 600; color: var(--mid); width: 60px; flex-shrink: 0; }
+.appt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.appt-dot.booked    { background: var(--teal); }
+.appt-dot.checkedin { background: var(--amber); }
+.appt-dot.done      { background: var(--muted); }
+.appt-client { font-size: 13px; font-weight: 500; flex: 1; }
+.appt-service { font-size: 11px; color: var(--muted); }
+.appt-tech { font-size: 11px; color: var(--mid); text-align: right; }
+.appt-empty {
+  padding: 28px; text-align: center;
+  font-size: 13px; color: var(--muted);
+}
+
+/* ── TOOLS GRID ── */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+.tool-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 14px;
+  text-decoration: none; color: var(--ink);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; text-align: center;
+  transition: all .18s; box-shadow: var(--shadow);
+}
+.tool-card:hover { background: var(--s2); transform: translateY(-2px); }
+.tool-icon { font-size: 24px; }
+.tool-card p { font-size: 12px; font-weight: 500; color: var(--ink); line-height: 1.3; }
+
+/* ── MY SHIFT CARD ── */
+.shift-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+  display: flex; align-items: center; gap: 16px;
+  box-shadow: var(--shadow);
+}
+.shift-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--teal); flex-shrink: 0;
+  box-shadow: 0 0 0 3px var(--teal-dim);
+}
+.shift-dot.off { background: var(--muted); box-shadow: 0 0 0 3px rgba(168,154,142,0.15); }
+.shift-info { flex: 1; }
+.shift-label { font-size: 13px; font-weight: 600; }
+.shift-time { font-size: 12px; color: var(--mid); margin-top: 2px; }
+.shift-hours-badge {
+  background: var(--teal-dim); color: var(--teal);
+  border-radius: 8px; padding: 4px 10px;
+  font-size: 12px; font-weight: 600;
+}
+
+/* ── MOBILE NAV ── */
+.mnav-bar {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(253,250,246,0.96); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding: 8px 0 env(safe-area-inset-bottom,8px);
+  z-index: 100;
+}
+.mnav-inner { display: flex; }
+.mnav {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 3px; padding: 6px 4px;
+  text-decoration: none; color: var(--muted); font-size: 10px;
+  transition: color .15s;
+}
+.mnav .ico { font-size: 20px; }
+.mnav.active, .mnav:hover { color: var(--blush); }
+@media (max-width: 640px) {
+  .mnav-bar { display: block; }
+  main { padding-bottom: 90px; }
+  .ap-nav { display: none; }
+  .ap-btn-primary .btn-label { display: none; }
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .quick-grid { grid-template-columns: repeat(2, 1fr); }
+}
+/* ── Role-adaptive visibility ── */
+.role-receptionist { display: none; }
+.role-tech         { display: none; }
+body.is-receptionist .role-receptionist { display: flex; }
+body.is-tech         .role-tech         { display: flex; }
+/* tool-cards are flex-column */
+body.is-receptionist .role-receptionist.tool-card { display: flex; }
+body.is-tech         .role-tech.tool-card          { display: flex; }
+
+  /* ── DAILY CHORES WIDGET ── */
+  .chores-widget {
+    background: var(--s1); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow); margin-bottom: 24px;
+  }
+  .chores-widget-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px 12px; border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--blush-dim), var(--amber-dim));
+  }
+  .chores-widget-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 15px; color: var(--ink);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .chores-widget-meta { font-size: 11px; color: var(--mid); }
+  .chores-widget-link { font-size: 11px; color: var(--blush); font-weight: 600; text-decoration: none; }
+  .chores-widget-link:hover { text-decoration: underline; }
+  .chores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1px; background: var(--border);
+  }
+  .chore-assign-cell {
+    background: var(--s1); padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .chore-assign-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+  .chore-assign-info { flex: 1; min-width: 0; }
+  .chore-assign-chore { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); }
+  .chore-assign-name  { font-size: 13px; font-weight: 600; color: var(--ink); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chores-empty {
+    padding: 20px 18px; display: flex; align-items: center; gap: 12px;
+    font-size: 13px; color: var(--muted);
+  }
+  .chores-empty a { color: var(--blush); font-weight: 600; text-decoration: none; }
+  .chores-empty a:hover { text-decoration: underline; }
+  /* Highlight MY chore on staff dashboard */
+  .chore-assign-cell.mine { background: var(--blush-dim); }
+  .chore-assign-cell.mine .chore-assign-name { color: var(--blush); }
+
+  /* ── TIME OFF REQUEST STATUS ── */
+  .tor-widget {
+    background: var(--s1); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow); margin-bottom: 24px;
+  }
+  .tor-widget-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px 10px; border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--violet-dim, rgba(122,78,168,0.10)), var(--blush-dim));
+  }
+  .tor-widget-title {
+    font-family: 'DM Serif Display', serif; font-size: 14px; color: var(--ink);
+  }
+  .tor-widget-link { font-size: 11px; color: var(--blush); font-weight: 600; text-decoration: none; }
+  .tor-widget-link:hover { text-decoration: underline; }
+  .tor-req-list { display: flex; flex-direction: column; }
+  .tor-req-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 18px; border-bottom: 1px solid var(--border); gap: 12px;
+  }
+  .tor-req-row:last-child { border-bottom: none; }
+  .tor-req-info { flex: 1; min-width: 0; }
+  .tor-req-label { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .tor-req-dates { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .tor-req-note  { font-size: 11px; color: var(--teal); margin-top: 2px; font-style: italic; }
+  .tor-status-pill {
+    display: inline-flex; align-items: center; padding: 3px 10px;
+    border-radius: 20px; font-size: 10px; font-weight: 700;
+    border: 1px solid transparent; white-space: nowrap; flex-shrink: 0;
+  }
+  .tor-status-pill.pending  { background: var(--amber-dim); color: var(--amber); border-color: rgba(196,153,58,.25); }
+  .tor-status-pill.approved { background: var(--teal-dim);  color: var(--teal);  border-color: rgba(61,122,114,.25); }
+  .tor-status-pill.denied   { background: var(--rose-dim);  color: var(--rose);  border-color: rgba(196,90,74,.25); }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="ap-header">
+  <div class="ap-logo-gem">✦</div>
+  <div>
+    <div class="ap-brandname">Salon <span>Genie</span></div>
+    <div class="ap-brandtag" id="apBrandTag">Staff Portal</div>
+  </div>
+  <nav class="ap-nav" id="apNav">
+    <a href="appointment.html">Appointments</a>
+    <a href="check-in-queue.html">Queue</a>
+    <a href="pos.html">POS</a>
+    <a href="staff-shift.html">My Shifts</a>
+  </nav>
+  <div class="ap-right">
+    <a class="ap-btn-primary" href="appointment.html">
+      <span>+</span><span class="btn-label"> New Booking</span>
+    </a>
+    <div class="ap-user-wrap" id="apUserWrap">
+      <button class="ap-user-btn" id="apUserBtn" aria-haspopup="true" aria-expanded="false">
+        <div class="ap-user-avatar" id="apUserAvatar">?</div>
+        <span class="ap-user-name" id="apUserName">Loading…</span>
+        <span class="ap-user-chevron">▾</span>
+      </button>
+      <div class="ap-user-dropdown" id="apUserDropdown" role="menu">
+        <a class="ap-dd-item" href="appointment.html">🗓️ Appointments</a>
+        <a class="ap-dd-item" href="check-in-queue.html">✅ Check-In Queue</a>
+        <a class="ap-dd-item" href="pos.html">💻 POS</a>
+        <a class="ap-dd-item" href="customers.html">👥 Clients</a>
+        <a class="ap-dd-item" href="staff-clockin.html">⏱ Clock In / Out</a>
+        <a class="ap-dd-item" href="staff-shift.html">📅 My Schedule</a>
+        <a class="ap-dd-item" href="availability.html">✅ My Availability</a>
+        <a class="ap-dd-item" href="availability.html">🙋 Request Time Off</a>
+        <div class="ap-dd-divider"></div>
+        <a class="ap-dd-item danger" id="apSignOut" href="#">🚪 Sign out</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main id="main">
+
+  <!-- Greeting -->
+  <div class="greeting-bar">
+    <div class="greeting-left">
+      <div class="greeting-avatar" id="greetAvatar">R</div>
+      <div>
+        <div class="greeting-name" id="greetName">Good morning!</div>
+        <div class="greeting-role"><span id="greetRole">Staff</span> · <span id="greetBiz">—</span></div>
+      </div>
+    </div>
+    <div class="greeting-time">
+      <strong id="greetClock">--:--</strong>
+      <span id="greetDate">--</span>
+    </div>
+  </div>
+
+  <!-- My Shift -->
+  <div class="sec-title">🕐 My Shift Today</div>
+  <div class="shift-card" id="shiftCard">
+    <div class="shift-dot off" id="shiftDot"></div>
+    <div class="shift-info">
+      <div class="shift-label" id="shiftLabel">Loading shift…</div>
+      <div class="shift-time" id="shiftTime">—</div>
+    </div>
+    <div class="shift-hours-badge" id="shiftHours" style="display:none"></div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="sec-title">📅 Today — <span id="sgDate">—</span></div>
+  <div class="kpis" id="kpiRow">
+    <!-- Receptionist KPIs (shown for receptionist role) -->
+    <a class="kcard blush role-receptionist" href="appointment.html">
+      <div class="khead">Appointments</div>
+      <div class="kmain" id="kAppt">—</div>
+      <div class="ksub">booked today</div>
+    </a>
+    <a class="kcard amber role-receptionist" href="check-in-queue.html">
+      <div class="khead">Walk-ins</div>
+      <div class="kmain" id="kWalk">—</div>
+      <div class="ksub">so far today</div>
+    </a>
+    <a class="kcard rose role-receptionist" href="check-in-queue.html">
+      <div class="khead">Waiting</div>
+      <div class="kmain" id="kWaiting">—</div>
+      <div class="ksub">in queue now</div>
+    </a>
+    <!-- Tech KPIs (shown for technician / nail_tech / staff roles) -->
+    <a class="kcard blush role-tech" href="pos.html">
+      <div class="khead">My Services</div>
+      <div class="kmain" id="kServices">—</div>
+      <div class="ksub">completed today</div>
+    </a>
+    <a class="kcard amber role-tech" href="pos.html">
+      <div class="khead">My Tips</div>
+      <div class="kmain" id="kTips">$—</div>
+      <div class="ksub">collected today</div>
+    </a>
+    <!-- Shared KPIs -->
+    <a class="kcard teal" href="customers.html">
+      <div class="khead">Clients</div>
+      <div class="kmain" id="kClients">—</div>
+      <div class="ksub">visited this month</div>
+    </a>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="sec-title">⚡ Quick Actions</div>
+  <div class="quick-grid" id="quickGrid">
+    <!-- Receptionist actions -->
+    <a class="quick-btn primary role-receptionist" href="appointment.html?new=1">
+      <span class="quick-icon">🗓️</span>
+      <div>
+        <div class="quick-label">New Booking</div>
+        <div class="quick-sub">Schedule an appointment</div>
+      </div>
+    </a>
+    <a class="quick-btn role-receptionist" href="check-in-queue.html">
+      <span class="quick-icon">✅</span>
+      <div>
+        <div class="quick-label">Check-In Queue</div>
+        <div class="quick-sub">Walk-ins &amp; tickets</div>
+      </div>
+    </a>
+    <a class="quick-btn role-receptionist" href="checkin-kiosk.html">
+      <span class="quick-icon">📲</span>
+      <div>
+        <div class="quick-label">Self Check-In</div>
+        <div class="quick-sub">Open kiosk for clients</div>
+      </div>
+    </a>
+    <a class="quick-btn role-receptionist" href="customers.html">
+      <span class="quick-icon">👥</span>
+      <div>
+        <div class="quick-label">Client Lookup</div>
+        <div class="quick-sub">Find a client profile</div>
+      </div>
+    </a>
+    <!-- Tech actions -->
+    <a class="quick-btn primary role-tech" href="pos.html">
+      <span class="quick-icon">💻</span>
+      <div>
+        <div class="quick-label">Open POS</div>
+        <div class="quick-sub">Start your tickets</div>
+      </div>
+    </a>
+    <a class="quick-btn role-tech" href="check-in-queue.html">
+      <span class="quick-icon">✅</span>
+      <div>
+        <div class="quick-label">Client Queue</div>
+        <div class="quick-sub">See who&#39;s waiting</div>
+      </div>
+    </a>
+    <!-- Shared actions -->
+    <a class="quick-btn" href="pos.html">
+      <span class="quick-icon">💳</span>
+      <div>
+        <div class="quick-label">POS</div>
+        <div class="quick-sub">Checkout &amp; payment</div>
+      </div>
+    </a>
+    <a class="quick-btn" href="staff-shift.html">
+      <span class="quick-icon">📅</span>
+      <div>
+        <div class="quick-label">My Shifts</div>
+        <div class="quick-sub">Schedule &amp; requests</div>
+      </div>
+    </a>
+    <a class="quick-btn" href="staff-clockin.html">
+      <span class="quick-icon">⏱</span>
+      <div>
+        <div class="quick-label">Clock In / Out</div>
+        <div class="quick-sub">Track your hours</div>
+      </div>
+    </a>
+    <a class="quick-btn" href="availability.html">
+      <span class="quick-icon">✅</span>
+      <div>
+        <div class="quick-label">My Availability</div>
+        <div class="quick-sub">Update weekly hours</div>
+      </div>
+    </a>
+    <a class="quick-btn" href="availability.html">
+      <span class="quick-icon">🙋</span>
+      <div>
+        <div class="quick-label">Request Time Off</div>
+        <div class="quick-sub">PTO, sick, personal</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Today's Appointments -->
+  <div class="sec-title" id="scheduleTitle">📋 Today's Schedule</div>
+  <div class="schedule-strip">
+    <div class="schedule-header">
+      <div class="schedule-header-title">Upcoming appointments</div>
+      <a class="schedule-header-link" href="appointment.html">View full calendar →</a>
+    </div>
+    <div id="apptList">
+      <div class="appt-empty">Loading appointments…</div>
+    </div>
+  </div>
+
+
+  <!-- Daily Chores Widget -->
+  <div class="chores-widget" id="choreWidget" style="display:none">
+    <div class="chores-widget-head">
+      <div class="chores-widget-title">🧹 Today's Chore Assignments</div>
+      <span class="chores-widget-meta" id="choreSavedBy"></span>
+    </div>
+    <div id="choreWidgetBody">
+      <div class="chores-empty">Loading chores…</div>
+    </div>
+  </div>
+
+  <!-- Time Off Request Status Widget -->
+  <div class="tor-widget" id="torWidget" style="display:none">
+    <div class="tor-widget-head">
+      <div class="tor-widget-title">🙋 My Time Off Requests</div>
+      <a class="tor-widget-link" href="availability.html">+ New request →</a>
+    </div>
+    <div class="tor-req-list" id="torReqList"></div>
+  </div>
+
+  <!-- Other Tools -->
+  <div class="sec-title">🧰 Other Tools</div>
+  <div class="tools-grid">
+    <a class="tool-card" href="salon-booking-agent.html">
+      <div class="tool-icon">🤖</div><p>Booking Agent</p>
+    </a>
+    <a class="tool-card" href="salon-reception-agent.html">
+      <div class="tool-icon">💬</div><p>Reception AI</p>
+    </a>
+    <a class="tool-card" href="front-desk.html">
+      <div class="tool-icon">🔔</div><p>Front Desk</p>
+    </a>
+    <a class="tool-card" href="staff-shift.html">
+      <div class="tool-icon">🗓️</div><p>My Schedule</p>
+    </a>
+    <a class="tool-card" href="salon-notes.html">
+      <div class="tool-icon">📝</div><p>Salon Notes</p>
+    </a>
+    <a class="tool-card" href="reports.html">
+      <div class="tool-icon">📊</div><p>Reports</p>
+    </a>
+  </div>
+
+</main>
+
+<!-- Mobile Nav -->
+<nav class="mnav-bar">
+  <div class="mnav-inner">
+    <a class="mnav active" href="staff-dashboard.html"><div class="ico">🏠</div>Home</a>
+    <a class="mnav" href="appointment.html"><div class="ico">🗓️</div>Appts</a>
+    <a class="mnav" href="check-in-queue.html"><div class="ico">✅</div>Queue</a>
+    <a class="mnav" href="pos.html"><div class="ico">💻</div>POS</a>
+    <a class="mnav" href="customers.html"><div class="ico">👥</div>Clients</a>
+  </div>
+</nav>
+
+<script src="/shared/js/sb-client.js?v=0225"></script>
+<script type="module">
+import { requireAuth } from '/shared/js/core/auth.js';
+
+(async () => {
+  // ── Auth ──────────────────────────────────────────────────
+  let client, user;
+  try { ({ client, user } = await requireAuth({ agent: 'salon' })); }
+  catch(_) { return; }
+
+  // ── Live clock ────────────────────────────────────────────
+  function updateClock(){
+    const now = new Date();
+    const h = now.getHours(), m = now.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    document.getElementById('greetClock').textContent =
+      `${h%12||12}:${String(m).padStart(2,'0')} ${ampm}`;
+    document.getElementById('greetDate').textContent =
+      now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    document.getElementById('sgDate').textContent =
+      now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  }
+  updateClock(); setInterval(updateClock, 30000);
+
+  // ── User info ─────────────────────────────────────────────
+  const meta     = user.user_metadata || {};
+  const fullName = meta.full_name || meta.name || user.email?.split('@')[0] || 'Staff';
+  const initials = fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const hour     = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  document.getElementById('apUserName').textContent   = fullName.split(' ')[0];
+  document.getElementById('apUserAvatar').textContent = initials;
+  document.getElementById('greetAvatar').textContent  = initials;
+  document.getElementById('greetName').textContent    = `${greeting}, ${fullName.split(' ')[0]}!`;
+
+  // ── Detect role and apply body class ─────────────────────
+  let staffRole = 'staff';
+  try{
+    const { data: p } = await client.from('user_preferences')
+      .select('role').eq('user_id', user.id).maybeSingle();
+    if(p?.role) staffRole = String(p.role).toLowerCase();
+  }catch(_){}
+  if(!staffRole || staffRole === 'staff'){
+    try{
+      const db2 = client.schema ? client.schema('salon') : client;
+      const { data: emp2 } = await db2.from('employees')
+        .select('role, job_title').eq('user_id', user.id).maybeSingle();
+      if(emp2?.role) staffRole = String(emp2.role).toLowerCase();
+    }catch(_){}
+  }
+
+  const isReceptionist = staffRole === 'receptionist';
+  const isTech = ['technician','nail_tech','stylist','staff'].includes(staffRole);
+
+  document.body.classList.add(isReceptionist ? 'is-receptionist' : 'is-tech');
+
+  // Update role label in greeting and brandtag
+  const roleLabel = isReceptionist ? 'Receptionist'
+    : staffRole === 'nail_tech' ? 'Nail Tech'
+    : staffRole === 'stylist' ? 'Stylist'
+    : staffRole === 'technician' ? 'Technician'
+    : 'Staff';
+  document.getElementById('greetRole').textContent = roleLabel;
+  document.getElementById('apBrandTag').textContent = isReceptionist ? 'Front Desk' : 'Staff Portal';
+
+  // Update schedule section title for techs
+  if(isTech){
+    const st = document.getElementById('scheduleTitle');
+    if(st) st.textContent = '📋 My Appointments Today';
+  }
+
+  // ── Business ID ───────────────────────────────────────────
+  let bizId = new URLSearchParams(location.search).get('business_id');
+  if(!bizId){
+    try{
+      const { data: p } = await client.from('user_preferences')
+        .select('selected_business_id,active_business_id')
+        .eq('user_id', user.id).maybeSingle();
+      bizId = p?.selected_business_id || p?.active_business_id;
+    }catch(_){}
+  }
+  if(!bizId) try{ bizId = localStorage.getItem('gs.active_business_id'); }catch(_){}
+
+  // ── Business name ─────────────────────────────────────────
+  if(bizId){
+    try{
+      const db = client.schema ? client.schema('salon') : client;
+      const { data: biz } = await db.from('my_salons')
+        .select('salon_name').eq('id', bizId).maybeSingle();
+      if(biz?.salon_name) document.getElementById('greetBiz').textContent = biz.salon_name;
+    }catch(_){}
+  }
+
+  // ── Dropdown toggle ───────────────────────────────────────
+  const btn = document.getElementById('apUserBtn');
+  const dd  = document.getElementById('apUserDropdown');
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const open = dd.classList.toggle('open');
+    btn.setAttribute('aria-expanded', String(open));
+  });
+  document.addEventListener('click', () => dd.classList.remove('open'));
+  document.getElementById('apSignOut').addEventListener('click', async e => {
+    e.preventDefault();
+    await client.auth.signOut();
+    location.href = '/login.html';
+  });
+
+  // ── My shift today ────────────────────────────────────────
+  if(bizId){
+    try{
+      const db = client.schema ? client.schema('salon') : client;
+      // Find this user's employee record
+      const { data: emp } = await db.from('employees')
+        .select('id, full_name').eq('user_id', user.id).eq('business_id', bizId).maybeSingle();
+
+      if(emp){
+        const today = new Date().toISOString().slice(0,10);
+        const { data: shift } = await db.from('shifts')
+          .select('start_time, end_time, status')
+          .eq('employee_id', emp.id).eq('shift_date', today).maybeSingle();
+
+        const dot   = document.getElementById('shiftDot');
+        const label = document.getElementById('shiftLabel');
+        const time  = document.getElementById('shiftTime');
+        const badge = document.getElementById('shiftHours');
+
+        if(shift && shift.status === 'working' && shift.start_time){
+          dot.classList.remove('off');
+          label.textContent = 'On shift today';
+          const fmt = t => {
+            if(!t) return '';
+            const [h,m] = t.split(':').map(Number);
+            const ampm = h>=12?'PM':'AM';
+            return `${h%12||12}:${String(m).padStart(2,'0')} ${ampm}`;
+          };
+          time.textContent = `${fmt(shift.start_time)} – ${fmt(shift.end_time)}`;
+          // Calculate hours worked if clocked in
+          const { data: entry } = await db.from('time_entries')
+            .select('clock_in, hours_worked')
+            .eq('employee_id', emp.id).eq('business_id', bizId)
+            .is('clock_out', null).order('clock_in',{ascending:false}).limit(1).maybeSingle();
+          if(entry){
+            const hrs = ((Date.now() - new Date(entry.clock_in)) / 3600000).toFixed(1);
+            badge.textContent = `${hrs}h worked`;
+            badge.style.display = 'block';
+          }
+        } else if(shift && shift.status === 'off'){
+          label.textContent = 'Day off today';
+          time.textContent  = 'Enjoy your day!';
+        } else {
+          label.textContent = 'No shift scheduled';
+          time.textContent  = 'Contact your manager if this is incorrect';
+        }
+      }
+    }catch(_){}
+  }
+
+  // ── KPIs ──────────────────────────────────────────────────
+  if(bizId){
+    const todayStr = new Date().toISOString().slice(0,10);
+    const db = client.schema ? client.schema('salon') : client;
+
+    // Appointments today
+    try{
+      const { count } = await db.from('appointments')
+        .select('id', { count:'exact', head:true })
+        .eq('business_id', bizId)
+        .eq('appointment_date', todayStr);
+      document.getElementById('kAppt').textContent = count ?? '—';
+    }catch(_){}
+
+    // Check-ins today (walk-ins)
+    try{
+      const start = new Date(); start.setHours(0,0,0,0);
+      const { count } = await db.from('check_ins')
+        .select('id', { count:'exact', head:true })
+        .eq('business_id', bizId)
+        .gte('created_at', start.toISOString());
+      document.getElementById('kWalk').textContent = count ?? '—';
+    }catch(_){}
+
+    // Clients this month
+    try{
+      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+      const { count } = await db.from('customers')
+        .select('id', { count:'exact', head:true })
+        .eq('business_id', bizId)
+        .gte('updated_at', monthStart.toISOString());
+      document.getElementById('kClients').textContent = count ?? '—';
+    }catch(_){}
+
+    // Tickets waiting now
+    try{
+      const { count } = await db.from('check_ins')
+        .select('id', { count:'exact', head:true })
+        .eq('business_id', bizId)
+        .in('status', ['waiting', 'checked_in']);
+      document.getElementById('kWaiting').textContent = count ?? '—';
+    }catch(_){}
+
+    // ── Today's appointments list ────────────────────────────
+    try{
+      const { data: appts } = await db.from('appointments')
+        .select('appointment_time, customer_name, service_name, technician_name, status')
+        .eq('business_id', bizId)
+        .eq('appointment_date', todayStr)
+        .order('appointment_time', { ascending: true })
+        .limit(8);
+
+      const list = document.getElementById('apptList');
+      if(appts?.length){
+        const statusDot = s => {
+          if(s === 'checked_in' || s === 'in_progress') return 'checkedin';
+          if(s === 'completed' || s === 'done') return 'done';
+          return 'booked';
+        };
+        const fmtTime = t => {
+          if(!t) return '—';
+          const [h,m] = t.split(':').map(Number);
+          const ampm = h>=12?'PM':'AM';
+          return `${h%12||12}:${String(m).padStart(2,'0')} ${ampm}`;
+        };
+        list.innerHTML = appts.map(a => `
+          <div class="appt-row">
+            <div class="appt-time">${fmtTime(a.appointment_time)}</div>
+            <div class="appt-dot ${statusDot(a.status)}"></div>
+            <div style="flex:1;min-width:0;">
+              <div class="appt-client">${a.customer_name || 'Walk-in'}</div>
+              <div class="appt-service">${a.service_name || ''}</div>
+            </div>
+            <div class="appt-tech">${a.technician_name || ''}</div>
+          </div>`).join('');
+      } else {
+        list.innerHTML = '<div class="appt-empty">No appointments scheduled for today.</div>';
+      }
+    }catch(_){
+      document.getElementById('apptList').innerHTML =
+        '<div class="appt-empty">Could not load appointments.</div>';
+    }
+  }
+
+
+  // ── Load today's chore assignments ──────────────────────────────
+  if (bizId) {
+    try {
+      const todayDate = new Date().toISOString().slice(0, 10);
+      const dbS = client.schema ? client.schema('salon') : client;
+      const { data: choreRec } = await dbS.from('daily_chores')
+        .select('assignments, assigned_by, assigned_at')
+        .eq('business_id', bizId)
+        .eq('chore_date', todayDate)
+        .maybeSingle();
+
+      const widget = document.getElementById('choreWidget');
+      const body   = document.getElementById('choreWidgetBody');
+      const meta   = document.getElementById('choreSavedBy');
+
+      if (widget && body && choreRec) {
+        const time = choreRec.assigned_at
+          ? new Date(choreRec.assigned_at).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' })
+          : '';
+        if (meta) meta.textContent = (choreRec.assigned_by ? 'by ' + choreRec.assigned_by : '') + (time ? ' at ' + time : '');
+
+        const ICONS = { garbage:'🗑️', sweep:'🧹', hottowels:'🔥', laundry:'👕' };
+        const ORDER = ['garbage','sweep','hottowels','laundry'];
+        const LABELS = { garbage:'Garbage', sweep:'Sweep', hottowels:'Hot Towels', laundry:'Laundry' };
+
+        // Get staff member's first name for highlighting their chore
+        const myFirstName = fullName ? fullName.split(' ')[0] : null;
+
+        const cells = [];
+        ORDER.forEach(key => {
+          (choreRec.assignments[key] || []).forEach(name => {
+            const isMe = myFirstName && name.toLowerCase().startsWith(myFirstName.toLowerCase());
+            cells.push(`<div class="chore-assign-cell${isMe ? ' mine' : ''}">
+              <div class="chore-assign-icon">${ICONS[key] || '◦'}</div>
+              <div class="chore-assign-info">
+                <div class="chore-assign-chore">${LABELS[key]}</div>
+                <div class="chore-assign-name">${isMe ? '👉 ' + name : name}</div>
+              </div>
+            </div>`);
+          });
+        });
+
+        body.innerHTML = cells.length
+          ? `<div class="chores-grid">${cells.join('')}</div>`
+          : `<div class="chores-empty">No assignments recorded.</div>`;
+        widget.style.display = 'block';
+      } else if (widget && body) {
+        widget.style.display = 'none'; // no chores yet - stay hidden
+      }
+    } catch(_e) { /* daily_chores table not yet created */ }
+  }
+
+
+
+  // ── Load staff member's own time-off request status ──────────────────
+  if (bizId) {
+    try {
+      const db2 = client.schema ? client.schema('salon') : client;
+      // Get this user's employee record first
+      const { data: empTor } = await db2.from('employees')
+        .select('id').eq('user_id', user.id).eq('business_id', bizId).maybeSingle();
+
+      if (empTor?.id) {
+        const { data: torRows } = await db2.from('time_off_requests')
+          .select('id,from_date,to_date,type,type_label,status,review_notes')
+          .eq('employee_id', empTor.id)
+          .eq('business_id', bizId)
+          .order('requested_at', { ascending: false })
+          .limit(5);
+
+        const widget = document.getElementById('torWidget');
+        const list   = document.getElementById('torReqList');
+
+        if (widget && list && torRows && torRows.length) {
+          const TYPE_ICONS   = { pto:'🌴', personal:'🙂', sick:'🤒', family:'👨‍👩‍👧', unpaid:'📋' };
+          const STATUS_LABEL = { pending:'⏳ Pending', approved:'✓ Approved', denied:'✕ Denied' };
+          const STATUS_CLS   = { pending:'pending', approved:'approved', denied:'denied' };
+
+          list.innerHTML = torRows.map(r => {
+            const icon  = TYPE_ICONS[r.type] || '📋';
+            const label = r.type_label || r.type || 'Time Off';
+            const from  = r.from_date ? new Date(r.from_date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+            const to    = r.to_date   ? new Date(r.to_date  +'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+            const dates = r.from_date === r.to_date ? from : from + ' – ' + to;
+            const cls   = STATUS_CLS[r.status]   || 'pending';
+            const stxt  = STATUS_LABEL[r.status] || r.status;
+            return `<div class="tor-req-row">
+              <div class="tor-req-info">
+                <div class="tor-req-label">${icon} ${label}</div>
+                <div class="tor-req-dates">${dates}</div>
+                ${r.review_notes ? `<div class="tor-req-note">Manager: ${r.review_notes}</div>` : ''}
+              </div>
+              <span class="tor-status-pill ${cls}">${stxt}</span>
+            </div>`;
+          }).join('');
+
+          widget.style.display = 'block';
+        }
+      }
+    } catch(_e) { /* time_off_requests table not yet created */ }
+  }
+
+})();
+</script>
+</body>
+</html>

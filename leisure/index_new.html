@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Voyage Genie – AI-Powered Travel Planning</title>
+
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#f4f8fb;
+    --text:#0f172a;
+    --muted:#475569;
+    --muted-2:#64748b;
+    --card:#ffffff;
+    --border:#e5e7eb;
+    --shadow:0 10px 30px rgba(2, 6, 23, .10);
+    --shadow-sm:0 6px 18px rgba(2, 6, 23, .08);
+    --radius:7px;             /* GenieSphere standard */
+    --radius-lg:14px;
+    --blue:#4c6ef5;           /* brand blue hover */
+    --blue-2:#2563eb;
+    --teal:#14b8a6;
+    --teal-2:#0d9488;
+    --focus: 0 0 0 4px rgba(76,110,245,.22);
+    --focus-2: 0 0 0 4px rgba(20,184,166,.22);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Accessibility */
+  .skip-link{
+    position:absolute;
+    left:12px;
+    top:10px;
+    transform: translateY(-160%);
+    background:#0b1220;
+    color:#fff;
+    padding:10px 12px;
+    border-radius: 10px;
+    z-index: 9999;
+    font-weight:800;
+    letter-spacing:.2px;
+    transition: transform .18s ease;
+  }
+  .skip-link:focus{ transform: translateY(0); outline:none; box-shadow: var(--focus); }
+  :focus{ outline:none; }
+  :focus-visible{ box-shadow: var(--focus); border-radius: 10px; }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *{transition:none !important; animation:none !important;}
+  }
+
+  main {
+    flex: 1;
+    padding: 0;
+  }
+  .hidden { display: none; }
+
+  /* Keep existing option-card logic intact, but polish */
+  .option-card {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.6rem;
+    background: #fff;
+    box-shadow: 0 1px 0 rgba(2,6,23,.03);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .option-card:hover {
+    background-color: #f8fafc;
+    border-color: rgba(76,110,245,.35);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+  }
+  .error { border-color: #ef4444 !important; }
+  .error-message {
+    color: #ef4444;
+    font-size: 0.9rem;
+    margin-top: 0.35rem;
+  }
+  .section-icon { font-size: 1.5rem; margin-right: 0.5rem; }
+  .required::after { content: " *"; color: #ef4444; }
+  .optional { color: #6b7280; font-size: 0.875rem; margin-left: 0.5rem; }
+
+  /* Replace @apply blocks with industrial-grade button styling */
+  .custom-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.6rem;
+    padding: 0.9rem 1.2rem;
+    border-radius: var(--radius);
+    box-shadow: 0 10px 22px rgba(2,6,23,.10);
+    transition: transform .14s ease, filter .14s ease, box-shadow .14s ease, background-color .14s ease, color .14s ease;
+    font-weight: 800;
+    letter-spacing: .2px;
+    min-height: 48px;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .custom-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow); filter: brightness(1.02); }
+  .custom-btn:active{ transform: translateY(0); filter: brightness(.98); }
+  .custom-btn:focus-visible{ box-shadow: var(--focus), var(--shadow); }
+
+  .next-btn{
+    background: var(--blue);
+    color:#fff;
+  }
+  .next-btn:hover{ background: var(--blue-2); }
+  .next-btn:focus-visible{ box-shadow: var(--focus), var(--shadow); }
+
+  .prev-btn{
+    background: #64748b;
+    color:#fff;
+  }
+  .prev-btn:hover{ background: #475569; }
+
+  .generate-btn{
+    background: #16a34a;
+    color:#fff;
+  }
+  .generate-btn:hover{ background: #15803d; }
+
+  .btn-icon{ margin-right: .4rem; font-size: 1.25rem; line-height: 1; }
+
+  /* Planner section container polish */
+  .planning-section {
+    max-width: 1120px;
+    margin: 0 auto;
+    background: var(--card);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: clamp(18px, 2.2vw, 28px);
+    border: 1px solid rgba(2,6,23,.06);
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #60a5fa, var(--blue));
+    transition: width 0.3s ease;
+  }
+
+  select {
+    appearance: none;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232A6BCC"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center/16px;
+    padding-right: 40px !important;
+  }
+
+  /* HERO polish */
+  .hero-section{
+    color: white;
+    padding: clamp(56px, 7vw, 92px) 1rem;
+    text-align: center;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    transition: background-image 1s ease-in-out;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+    background-image:
+      linear-gradient(rgba(0,0,0,.52), rgba(0,0,0,.52)),
+      url('images/beachortropical.jpg');
+  }
+  .hero-section::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:
+      radial-gradient(900px 360px at 50% 10%, rgba(76,110,245,.25), transparent 55%),
+      radial-gradient(700px 300px at 20% 0%, rgba(20,184,166,.22), transparent 55%);
+    mix-blend-mode: screen;
+    opacity:.55;
+  }
+  .hero-section > * { position: relative; z-index: 1; }
+  .hero-section img{
+    filter: drop-shadow(0 14px 28px rgba(0,0,0,.25));
+  }
+
+  .hero-textbox{
+    background-color: rgba(255,255,255,0.92);
+    color: #0f172a;
+    border: 1px solid rgba(255,255,255,.55);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    min-height: 48px;
+    box-shadow: 0 10px 22px rgba(0,0,0,.18);
+    width: 100%;
+    transition: box-shadow .14s ease, transform .14s ease, background-color .14s ease;
+  }
+  .hero-textbox::placeholder { color: rgba(71,85,105,.95); }
+  .hero-textbox:focus{
+    box-shadow: var(--focus-2), 0 14px 28px rgba(0,0,0,.22);
+    background-color: rgba(255,255,255,0.98);
+  }
+
+  /* Ask Genie button (keep class name) */
+  .hero-textbox-submit {
+    display: inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.55rem;
+    border: 1px solid rgba(255,255,255,.18);
+    cursor: pointer;
+    background: linear-gradient(180deg, rgba(20,184,166,1), rgba(13,148,136,1));
+    color: #ffffff;
+    padding: 0.9rem 1.15rem;
+    border-radius: 12px;
+    font-weight: 900;
+    letter-spacing: .2px;
+    transition: transform 0.14s ease, filter 0.14s ease, box-shadow 0.14s ease;
+    box-shadow: 0 14px 28px rgba(0,0,0,.22);
+    white-space: nowrap;
+    min-height: 48px;
+  }
+  .hero-textbox-submit:hover { transform: translateY(-1px); filter: brightness(1.03); box-shadow: 0 18px 34px rgba(0,0,0,.26); }
+  .hero-textbox-submit:active { transform: translateY(0); filter: brightness(.98); }
+  .hero-textbox-submit:focus-visible { box-shadow: var(--focus-2), 0 18px 34px rgba(0,0,0,.26); }
+
+  /* Header polish (existing classes preserved) */
+  .vg-header{
+    position: sticky; top: 0; z-index: 40;
+    color:#fff;
+    background: linear-gradient(90deg,#60a5fa,#4f46e5);
+    box-shadow: 0 10px 24px rgba(2,6,23,.14);
+  }
+  .vg-nav{
+    max-width:1200px;
+    margin:0 auto;
+    padding: 12px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .vg-left{display:flex; align-items:center; gap:18px; min-width:0;}
+  .vg-brand{
+    display:flex; align-items:center; gap:10px;
+    color:#fff; text-decoration:none; white-space:nowrap;
+    border-radius: 10px;
+    padding: 6px 8px;
+    transition: background .14s ease, transform .14s ease;
+  }
+  .vg-brand:hover{ background: rgba(255,255,255,.12); transform: translateY(-1px); }
+  .vg-brand:active{ transform: translateY(0); }
+  .vg-brand img{
+    width:50px; height:50px; border-radius: var(--radius);
+    object-fit:contain;
+    background:rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.18);
+  }
+  .vg-title{font-weight:900; font-size:1.3rem; letter-spacing:.2px}
+
+  .nav-link{
+    color:#fff;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    transition: background .14s ease, transform .14s ease, filter .14s ease;
+  }
+  .nav-link:hover{
+    background: rgba(255,255,255,.14);
+    transform: translateY(-1px);
+    filter: brightness(1.02);
+    text-decoration:none;
+  }
+  .nav-link:active{ transform: translateY(0); }
+
+  .account-chip{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 12px;
+    background:rgba(255,255,255,.10);
+    border-radius:999px;
+    color:#eaf2ff;
+    text-decoration:none;
+    border: 1px solid rgba(255,255,255,.14);
+    transition: background .14s ease, transform .14s ease;
+  }
+  .account-chip:hover{ background:rgba(255,255,255,.18); transform: translateY(-1px); }
+  .account-chip:active{ transform: translateY(0); }
+
+  .menu-group, .plan-group{position:relative;}
+
+  .menu, .plan-menu{
+    position:absolute; top:100%; margin-top:8px;
+    min-width:240px;
+    padding: 8px;
+    background:#fff;
+    color:#111827;
+    border-radius: 14px;
+    box-shadow: 0 20px 46px rgba(2,6,23,.18);
+    display:none;
+    z-index:60;
+    border: 1px solid rgba(2,6,23,.08);
+  }
+  .menu{ right:0; }
+  .plan-menu{ right:0; }
+
+  .menu a, .plan-menu a{
+    display:block;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color:#0f172a;
+    text-decoration:none;
+    font-weight: 700;
+    transition: background .14s ease, color .14s ease, transform .14s ease;
+  }
+  .menu a:hover, .plan-menu a:hover{
+    background:#f1f5f9;
+    color: var(--blue);
+    transform: translateX(1px);
+  }
+
+  /* Existing hamburger kept; improved tap-target + focus */
+  .hamburger{
+    display:none;
+    flex-direction:column;
+    justify-content:space-between;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.10);
+    transition: background .14s ease, transform .14s ease, filter .14s ease;
+  }
+  .hamburger:hover{ background: rgba(255,255,255,.16); transform: translateY(-1px); }
+  .hamburger:active{ transform: translateY(0); }
+  .hamburger span{
+    width:100%;
+    height: 2.5px;
+    background-color: white;
+    border-radius: 999px;
+    transition: all 0.3s ease;
+  }
+
+  .nav-links{ display: flex; gap: 1.5rem; }
+
+  .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+  .hamburger.active span:nth-child(2) { opacity: 0; }
+  .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(7px, -7px); }
+
+  /* Cards / sections polish (Tailwind classes remain; this refines feel) */
+  section.bg-white, section.bg-gray-50{
+    scroll-margin-top: 90px;
+  }
+  section.bg-white{
+    background: #fff;
+  }
+  section.bg-gray-50{
+    background: #f8fafc;
+  }
+
+  /* Give consistent max-width rhythm and better spacing on mobile */
+  .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-xl{
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* Improve all anchor buttons used as CTAs */
+  a.inline-block.bg-blue-500,
+  a.bg-blue-500.text-white{
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: .2px;
+    box-shadow: 0 12px 22px rgba(37,99,235,.18);
+    transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+  }
+  a.inline-block.bg-blue-500:hover,
+  a.bg-blue-500.text-white:hover{
+    transform: translateY(-1px);
+    filter: brightness(1.03);
+    box-shadow: 0 16px 30px rgba(37,99,235,.22);
+  }
+  a.inline-block.bg-blue-500:active,
+  a.bg-blue-500.text-white:active{
+    transform: translateY(0);
+    filter: brightness(.99);
+  }
+  a.inline-block.bg-blue-500:focus-visible,
+  a.bg-blue-500.text-white:focus-visible{
+    box-shadow: var(--focus), 0 16px 30px rgba(37,99,235,.22);
+  }
+
+  /* Improve tiles (Helpful On-the-Go / Travel Tools) */
+  a.bg-white.p-6.rounded.shadow{
+    border-radius: 14px !important;
+    border: 1px solid rgba(2,6,23,.06);
+    transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;
+  }
+  a.bg-white.p-6.rounded.shadow:hover{
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+    border-color: rgba(76,110,245,.22);
+  }
+
+  /* Footer improvements */
+  footer{
+    border-top: 1px solid rgba(255,255,255,.18);
+  }
+  footer input[type="email"]{
+    min-height: 44px;
+    border-radius: 12px !important;
+    border: 1px solid rgba(15,23,42,.12);
+  }
+  footer button{
+    border-radius: 12px !important;
+    font-weight: 900;
+    letter-spacing: .2px;
+    min-height: 44px;
+    transition: transform .14s ease, filter .14s ease;
+  }
+  footer button:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+  footer button:active{ transform: translateY(0); filter: brightness(.98); }
+  footer button:focus-visible{ box-shadow: var(--focus-2); }
+
+  /* Floating chatbot polish */
+  .floating-chatbot{
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(180deg, #00c4b4, #009c8c);
+    color: white;
+    padding: 0.85rem;
+    border-radius: 999px;
+    box-shadow: 0 14px 30px rgba(2,6,23,.22);
+    font-size: 1.35rem;
+    z-index: 50;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,.18);
+    transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+  }
+  .floating-chatbot:hover{
+    transform: translateY(-2px);
+    filter: brightness(1.03);
+    box-shadow: 0 18px 38px rgba(2,6,23,.28);
+  }
+  .floating-chatbot:active{
+    transform: translateY(0);
+    filter: brightness(.98);
+  }
+
+  /* Mobile nav behavior (existing selectors preserved) */
+  @media (max-width: 640px) {
+    .hamburger { display: flex; }
+    .nav-links {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: linear-gradient(to bottom, #60a5fa, #4c6ef5);
+      width: 100%;
+      padding: 1rem;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+      border-bottom-left-radius: 14px;
+      border-bottom-right-radius: 14px;
+      border-top: 1px solid rgba(255,255,255,.18);
+    }
+    .nav-links.active { display: flex; }
+    .nav-links li { margin: 0.35rem 0; }
+    .nav-links a { font-size: 1.05rem; padding: 0.65rem 0.85rem; display: block; text-align: center; border-radius: 12px; }
+    .nav-brand h1 { font-size: 1.125rem; }
+    .dropdown-menu { position: static; display: none; width: 100%; box-shadow: none; }
+    .dropdown:hover .dropdown-menu { display: block; }
+  }
+
+  /* Header wrap for smaller widths */
+  @media (max-width: 860px){
+    .vg-nav{flex-wrap:wrap;}
+    .vg-left{width:100%;}
+    .vg-right{width:100%; justify-content:center; gap:14px;}
+  }
+
+  /* Subtle improvements to headings without changing Tailwind classes */
+  h1, h2, h3{ text-rendering: optimizeLegibility; }
+</style>
+
+<!-- Supabase bootstrap (safe to include if not already initialized) -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+</script>
+
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ===== Header (same as trip-dashboard) ===== -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <div class="vg-left">
+      <a class="vg-brand" href="index.html" aria-label="Voyage Genie Home">
+        <img src="images/nav-icon.png" alt="Voyage Genie"/>
+        <span class="vg-title">Voyage Genie</span>
+      </a>
+      <div class="plan-group">
+        <a href="#" id="planBtn" class="nav-link" aria-haspopup="true" aria-expanded="false">🧭 Plan a Trip ▾</a>
+        <div class="plan-menu" id="planMenu" role="menu" aria-label="Plan a Trip">
+          <a href="tropical-trip-planner.html" role="menuitem">🏖️ Tropical Resort</a>
+          <a href="cruise-trip-planner.html" role="menuitem">🚢 Cruise Adventure</a>
+          <a href="airbnb-trip-planner.html" role="menuitem">🏠 Airbnb Getaway</a>
+          <a href="adventure-trip-planner.html" role="menuitem">🌄 Adventure Trip</a>
+        </div>
+      </div>
+    </div>
+    <div class="vg-right">
+      <a id="myTripsLink" class="nav-link" href="trip-dashboard.html">📋 My Trips</a>
+      <div id="authSlot">
+        <a class="nav-link" id="signinStatic" href="login.html?next=trip-dashboard.html">🔑 Sign in</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- Hero Section -->
+  <section class="hero-section" id="home" aria-label="Voyage Genie hero">
+      <img alt="Voyage Genie Logo" class="mx-auto mb-6 w-40" src="images/hero_logo_full.png"/>
+      <h1 class="text-3xl md:text-4xl font-bold mb-4">Let Genie Curate Your Dream Getaway</h1>
+      <p class="text-lg md:text-xl mb-6">Plan less, explore more – your personalized adventure starts here.</p>
+
+      <div class="max-w-xl mx-auto flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <input class="hero-textbox px-4 py-2 rounded w-full" placeholder="Ask Genie: Bali retreat or Alaskan cruise?" type="text"/>
+        <!--button class="hero-textbox-submit bg-teal-500 text-white px-6 py-2 rounded font-semibold">Ask Genie</button-->
+        <button class="hero-textbox-submit" id="#">Ask Genie</button>
+      </div>
+
+      <p class="mt-6 text-sm md:text-base text-white" style="opacity:.92">
+        ✨ Industrial-grade travel planning: smarter routing, airport detection, and fast redirects to the right planner.
+      </p>
+  </section>
+
+  <!-- Travel Options Section -->
+  <section class="bg-white py-16" data-aos="fade-up" id="plan-trip">
+      <h2 class="text-3xl font-bold text-center mb-4 text-gray-800">Explore Travel Options</h2>
+      <p class="text-center text-gray-600 mb-12 px-4">
+        Choose a planning mode. Genie will guide your trip style, budget, and itinerary with advisory-level structure.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto px-4">
+        <div class="text-center shadow-lg p-4 rounded bg-white hover:scale-105 transition-transform" style="border-radius:14px; border:1px solid rgba(2,6,23,.06); box-shadow: var(--shadow-sm);">
+          <img class="rounded mb-4 h-32 w-full object-cover" src="images/beachortropical.jpg" alt="Tropical resort"/>
+          <h3 class="text-xl font-semibold">🏖️ Tropical Resort</h3>
+          <p class="text-gray-600">Sun, sand &amp; zero stress – all-inclusive paradise escapes.</p>
+          <a class="inline-block mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" href="tropical-trip-planner.html">Plan Now</a>
+        </div>
+
+        <div class="text-center shadow-lg p-4 rounded bg-white hover:scale-105 transition-transform" style="border-radius:14px; border:1px solid rgba(2,6,23,.06); box-shadow: var(--shadow-sm);">
+          <img class="rounded mb-4 h-32 w-full object-cover" src="images/cruise1.jpg" alt="Cruise adventure"/>
+          <h3 class="text-xl font-semibold">🚢 Cruise Adventure</h3>
+          <p class="text-gray-600">Wake up to new horizons and ocean breezes.</p>
+          <a class="inline-block mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" href="cruise-trip-planner.html">Plan Now</a>
+        </div>
+
+        <div class="text-center shadow-lg p-4 rounded bg-white hover:scale-105 transition-transform" style="border-radius:14px; border:1px solid rgba(2,6,23,.06); box-shadow: var(--shadow-sm);">
+          <img class="rounded mb-4 h-32 w-full object-cover" src="images/hotel.jpg" alt="Airbnb getaway"/>
+          <h3 class="text-xl font-semibold">🏠 Airbnb Getaway</h3>
+          <p class="text-gray-600">Stay cozy in unique homes across the world.</p>
+          <a class="inline-block mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" href="airbnb-trip-planner.html">Plan Now</a>
+        </div>
+
+        <div class="text-center shadow-lg p-4 rounded bg-white hover:scale-105 transition-transform" style="border-radius:14px; border:1px solid rgba(2,6,23,.06); box-shadow: var(--shadow-sm);">
+          <img class="rounded mb-4 h-32 w-full object-cover" src="images/adventure1.jpg" alt="Adventure trip"/>
+          <h3 class="text-xl font-semibold">🌄 Adventure Trip</h3>
+          <p class="text-gray-600">Thrill-seeking journeys into the wild and unknown.</p>
+          <a class="inline-block mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" href="adventure-trip-planner.html">Plan Now</a>
+        </div>
+      </div>
+  </section>
+
+  <!-- Explore Local Section -->
+  <section class="py-10 bg-gray-50" data-aos="fade-up" aria-label="Helpful on-the-go info">
+    <h2 class="text-2xl font-semibold text-center text-gray-800 mb-2">Helpful On-the-Go Info</h2>
+    <p class="text-center text-gray-600 mb-6 px-4">Quick tools for destination research, connectivity, driving tips, and emergencies.</p>
+    <div class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 px-4 text-center">
+      <a href="explore-this-destination.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">🧭 Explore Destination</h3>
+        <p class="text-sm text-gray-600">Attractions, dining, and activities nearby.</p>
+      </a>
+      <a href="esim-guide.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">📶 eSIM &amp; Internet</h3>
+        <p class="text-sm text-gray-600">Stay connected while traveling abroad.</p>
+      </a>
+      <a href="parking-tips.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">🚘 Parking &amp; Rental</h3>
+        <p class="text-sm text-gray-600">Local driving, parking tips &amp; car hire advice.</p>
+      </a>
+      <a href="emergency-info.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">🏥 Emergency Info</h3>
+        <p class="text-sm text-gray-600">Hospitals, police &amp; embassy contact details.</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- Travel Tools Section -->
+  <section class="py-10 bg-white" id="travel-tools" aria-label="Travel tools">
+    <h2 class="text-2xl font-semibold text-center text-gray-800 mb-2">Travel Tools</h2>
+    <p class="text-center text-gray-600 mb-8 px-4">
+      Handy tools to plan, split, convert, and prep while you’re on the move.
+    </p>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 text-center">
+      <a href="trip-expensive-splitter.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">🧮 Trip Expense Splitter</h3>
+        <p class="text-sm text-gray-600">Share costs, assign payers (families), and settle up fast.</p>
+      </a>
+
+      <a href="currency-converter.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">💱 Currency Converter</h3>
+        <p class="text-sm text-gray-600">Quick FX conversions with live rates.</p>
+      </a>
+
+      <a href="timezone-converter.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">🕒 Time Zone Helper</h3>
+        <p class="text-sm text-gray-600">Find meeting times across cities instantly.</p>
+      </a>
+
+      <a href="flight-status.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">✈️ Flight Status</h3>
+        <p class="text-sm text-gray-600">Track departures, arrivals, and delays.</p>
+      </a>
+
+      <a href="packing-checklist.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">🧳 Packing Checklist</h3>
+        <p class="text-sm text-gray-600">Smart, shareable lists by trip type.</p>
+      </a>
+
+      <a href="seat-finder.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">🪑 Seat Finder</h3>
+        <p class="text-sm text-gray-600">Find the best seats &amp; plane seat maps.</p>
+      </a>
+
+      <a href="tip-calculator.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">💵 Tip Calculator</h3>
+        <p class="text-sm text-gray-600">Local tipping norms + easy splits.</p>
+      </a>
+
+      <a href="visa-check.html" class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold mb-2">🛂 Visa Check</h3>
+        <p class="text-sm text-gray-600">Entry rules by passport &amp; destination.</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-16 bg-gray-50" data-aos="fade-up" id="features" aria-label="Why choose Voyage Genie">
+      <h2 class="text-3xl font-bold text-center mb-4 text-gray-800">Why Choose Voyage Genie?</h2>
+      <p class="text-center text-gray-600 mb-12 px-4">
+        Advisory-style planning that’s fast, personalized, and travel-ready — without the overwhelm.
+      </p>
+      <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+        <div class="bg-white p-6 rounded shadow-lg text-center" style="border-radius:14px; border:1px solid rgba(2,6,23,.06);">
+          <h3 class="text-xl font-semibold mb-2">✨ Personalized Itineraries</h3>
+          <p class="text-gray-600">Tailored travel plans for your vibe, budget, and style.</p>
+        </div>
+        <div class="bg-white p-6 rounded shadow-lg text-center" style="border-radius:14px; border:1px solid rgba(2,6,23,.06);">
+          <h3 class="text-xl font-semibold mb-2">🧠 AI-Powered Suggestions</h3>
+          <p class="text-gray-600">Get smart recommendations that adapt to you.</p>
+        </div>
+        <div class="bg-white p-6 rounded shadow-lg text-center" style="border-radius:14px; border:1px solid rgba(2,6,23,.06);">
+          <h3 class="text-xl font-semibold mb-2">🛫 Stress-Free Planning</h3>
+          <p class="text-gray-600">Let Genie handle the logistics while you dream.</p>
+        </div>
+      </div>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer class="bg-gradient-to-r from-blue-400 to-indigo-600 text-center py-8 text-sm text-white" id="contact">
+    <p class="mb-2">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍 | Plan Smarter with Genie</p>
+    <form class="flex flex-col sm:flex-row justify-center items-center gap-2 mt-4" aria-label="Email subscription">
+        <label class="sr-only" for="subscribeEmail">Enter your email</label>
+        <input id="subscribeEmail" class="px-4 py-2 rounded bg-white shadow border text-gray-800" placeholder="Enter your email" type="email"/>
+        <button class="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600" type="button">Subscribe</button>
+    </form>
+    <div class="mt-4">
+        <a class="mx-2 hover:underline text-white" href="#home">Home</a>
+        <a class="mx-2 hover:underline text-white" href="#plan-trip">Plan</a>
+        <a class="mx-2 hover:underline text-white" href="features.html">Features</a>
+        <a class="mx-2 hover:underline text-white" href="contact.html">Contact</a>
+    </div>
+</footer>
+
+<!-- Floating Chatbot Button -->
+<div class="floating-chatbot" title="Ask Genie" role="button" aria-label="Open Ask Genie">
+  💬
+</div>
+
+<script>
+    // Ask Genie functionality
+    const askGenieInput = document.querySelector('.hero-textbox');
+    const askGenieButton = document.querySelector('.hero-textbox-submit');
+
+    // Keyword sets for each planner page
+    const plannerKeywords = {
+        'tropical-trip-planner.html': [
+            'beach', 'tropical', 'resort', 'sun', 'sand', 'island', 'paradise',
+            'getaway', 'vacation', 'relax', 'all-inclusive', 'bali', 'maldives',
+            'caribbean', 'fiji', 'seychelles', 'phuket', 'cancun', 'tulum'
+        ],
+        'cruise-trip-planner.html': [
+            'cruise', 'ship', 'ocean', 'sea', 'voyage', 'boat', 'alaskan', 'caribbean cruise',
+            'mediterranean', 'sail', 'liner', 'nautical', 'ports'
+        ],
+        'airbnb-trip-planner.html': [
+            'airbnb', 'home', 'cozy', 'unique stay', 'vacation rental', 'apartment',
+            'cottage', 'villa', 'homestay', 'local stay'
+        ],
+        'adventure-trip-planner.html': [
+            'adventure', 'hiking', 'wild', 'outdoor', 'thrill', 'explore', 'trekking',
+            'camping', 'safari', 'mountain', 'jungle', 'expedition', 'backpacking'
+        ]
+    };
+
+    // List of popular travel destinations for parsing
+    const popularDestinations = [
+        'bali', 'maldives', 'caribbean', 'fiji', 'seychelles', 'phuket', 'cancun', 'tulum',
+        'alaska', 'mediterranean', 'caribbean', 'hawaii', 'santorini', 'paris', 'new york',
+        'tokyo', 'sydney', 'cape town', 'machu picchu', 'patagonia', 'iceland', 'banff'
+    ];
+
+    // Updated list of airports with accurate coordinates (latitude, longitude)
+    const airports = [
+        { code: 'JFK', name: 'John F. Kennedy International Airport', lat: 40.6413, lon: -73.7781, city: 'New York' },
+        { code: 'LAX', name: 'Los Angeles International Airport', lat: 33.9416, lon: -118.4085, city: 'Los Angeles' },
+        { code: 'ORD', name: 'Chicago O\'Hare International Airport', lat: 41.9742, lon: -87.9073, city: 'Chicago' },
+        { code: 'LHR', name: 'London Heathrow Airport', lat: 51.4700, lon: -0.4543, city: 'London' },
+        { code: 'NRT', name: 'Narita International Airport', lat: 35.7647, lon: 140.3864, city: 'Tokyo' },
+        { code: 'SYD', name: 'Sydney Kingsford Smith Airport', lat: -33.9399, lon: 151.1753, city: 'Sydney' },
+        { code: 'DPS', name: 'Ngurah Rai International Airport', lat: -8.7480, lon: 115.1672, city: 'Bali' },
+        { code: 'MIA', name: 'Miami International Airport', lat: 25.7959, lon: -80.2870, city: 'Miami' }
+    ];
+
+    // Function to calculate distance between two coordinates (Haversine formula)
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c; // Distance in km
+        return distance;
+    }
+
+    // Function to find the nearest airport
+    function findNearestAirport(userLat, userLon) {
+        let nearestAirport = airports[0];
+        let minDistance = getDistance(userLat, userLon, airports[0].lat, airports[0].lon);
+        console.log(`Distance to ${airports[0].name}: ${minDistance.toFixed(2)} km`);
+
+        for (let i = 1; i < airports.length; i++) {
+            const airport = airports[i];
+            const distance = getDistance(userLat, userLon, airport.lat, airport.lon);
+            console.log(`Distance to ${airport.name}: ${distance.toFixed(2)} km`);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestAirport = airport;
+            }
+        }
+        console.log(`Nearest airport selected: ${nearestAirport.name} (${nearestAirport.code}) at ${minDistance.toFixed(2)} km`);
+        return nearestAirport;
+    }
+
+    // Function to extract destination from query
+    function extractDestination(query) {
+        const words = query.toLowerCase().split(/\s+/);
+        for (const word of words) {
+            if (popularDestinations.includes(word)) {
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }
+        }
+        return query; // Fallback to the full query if no destination is matched
+    }
+
+    // Handle Ask Genie submission
+    function handleAskGenie() {
+        const query = askGenieInput.value.trim().toLowerCase();
+        console.log('Ask Genie query:', query);
+
+        if (!query) {
+            alert('Please enter a travel query, e.g., "beach getaway" or "Alaskan cruise".');
+            return;
+        }
+
+        // Find matching planner page
+        let redirectUrl = null;
+        for (const [url, keywords] of Object.entries(plannerKeywords)) {
+            if (keywords.some(keyword => query.includes(keyword))) {
+                redirectUrl = url;
+                break;
+            }
+        }
+
+        // Extract destination from query
+        const destination = extractDestination(query);
+
+        // Get user's location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLon = position.coords.longitude;
+                    console.log('User location:', userLat, userLon);
+
+                    // Find nearest airport
+                    const nearestAirport = findNearestAirport(userLat, userLon);
+
+                    if (redirectUrl) {
+                        // Redirect to the matching planner page with destination and departure airport as query params
+                        window.location.href = `${redirectUrl}?destination=${encodeURIComponent(destination)}&departureAirport=${encodeURIComponent(nearestAirport.code)}`;
+                    } else {
+                        // Redirect to tropical search form with pre-filled destination and departure airport
+                        window.location.href = `tropical-trip-planner.html?destination=${encodeURIComponent(destination)}&departureAirport=${encodeURIComponent(nearestAirport.code)}`;
+                    }
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    // Fallback if geolocation fails: redirect without departure airport
+                    if (redirectUrl) {
+                        window.location.href = `${redirectUrl}?destination=${encodeURIComponent(destination)}`;
+                    } else {
+                        window.location.href = `tropical-trip-planner.html?destination=${encodeURIComponent(destination)}`;
+                    }
+                }
+            );
+        } else {
+            console.error('Geolocation not supported');
+            // Fallback if geolocation is not supported
+            if (redirectUrl) {
+                window.location.href = `${redirectUrl}?destination=${encodeURIComponent(destination)}`;
+            } else {
+                window.location.href = `tropical-trip-planner.html?destination=${encodeURIComponent(destination)}`;
+            }
+        }
+    }
+
+    // Attach event listeners
+    askGenieButton.addEventListener('click', handleAskGenie);
+    askGenieInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleAskGenie();
+        }
+    });
+</script>
+
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'938c3e69cf02bf75',t:'MTc0NjA3MDY4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93bbd1894c8953db',t:'MTc0NjU2OTU0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93c0ffea7c9dbd03',t:'MTc0NjYyMzg2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+
+    if (hamburger && navLinks) {
+      hamburger.addEventListener('click', function () {
+        hamburger.classList.toggle('active');
+        navLinks.classList.toggle('active');
+      });
+
+      // Optional: close menu when a link is clicked (on mobile)
+      navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          navLinks.classList.remove('active');
+          hamburger.classList.remove('active');
+        });
+      });
+    }
+  });
+</script>
+
+<script type="module">
+  const sb = window.supabase;
+  const planBtn  = document.getElementById('planBtn');
+  const planMenu = document.getElementById('planMenu');
+  const toggle = (el, show)=>{ el.style.display = show ? 'block' : 'none'; };
+  if (planBtn && planMenu){
+    planBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const open = planMenu.style.display==='block';
+      toggle(planMenu, !open);
+      planBtn.setAttribute('aria-expanded', String(!open));
+    });
+    document.addEventListener('click', (e)=>{
+      if(!planMenu.contains(e.target) && e.target!==planBtn){
+        toggle(planMenu, false);
+        planBtn.setAttribute('aria-expanded','false');
+      }
+    });
+  }
+  const authSlot    = document.getElementById('authSlot');
+  const myTripsLink = document.getElementById('myTripsLink');
+  const nextParam   = encodeURIComponent('trip-dashboard.html');
+  function accountDOM(email){
+    const name = (email||'Account').split('@')[0];
+    const wrap = document.createElement('div');
+    wrap.className = 'menu-group';
+    wrap.innerHTML = `
+      <a href="#" class="account-chip" id="acctBtn" aria-haspopup="true" aria-expanded="false">🪪 ${name} ▾</a>
+      <div class="menu" id="acctMenu" role="menu" aria-label="Account">
+        <a href="account.html" role="menuitem">👤 Account</a>
+        <a href="#" id="signOutBtn" role="menuitem">🚪 Sign out</a>
+      </div>`;
+    return wrap;
+  }
+  function signinDOM(){
+    const a = document.createElement('a');
+    a.className = 'nav-link';
+    a.href = `login.html?next=${nextParam}`;
+    a.textContent = '🔑 Sign in';
+    return a;
+  }
+  async function renderAuth(){
+    try{
+      const { data:{ user } } = await sb.auth.getUser();
+      if(!authSlot) return;
+      authSlot.innerHTML = '';
+      if(user){
+        const node = accountDOM(user.email);
+        authSlot.appendChild(node);
+        const acctBtn  = node.querySelector('#acctBtn');
+        const acctMenu = node.querySelector('#acctMenu');
+        acctBtn.addEventListener('click',(e)=>{ e.preventDefault(); const open=acctMenu.style.display==='block'; toggle(acctMenu,!open); acctBtn.setAttribute('aria-expanded', String(!open)); });
+        document.addEventListener('click',(e)=>{ if(!acctMenu.contains(e.target) && e.target!==acctBtn){ toggle(acctMenu,false); acctBtn.setAttribute('aria-expanded','false'); }});
+        node.querySelector('#signOutBtn').addEventListener('click', async (e)=>{ e.preventDefault(); try{ await sb.auth.signOut(); } finally { location.href='login.html'; }});
+      } else {
+        authSlot.appendChild(signinDOM());
+      }
+    }catch{
+      /* keep default Sign in */
+    }
+  }
+  if (myTripsLink){
+    myTripsLink.addEventListener('click', async (e)=>{
+      try{
+        const { data:{ user } } = await sb.auth.getUser();
+        if(!user){ e.preventDefault(); location.href = `login.html?next=${nextParam}`; }
+      }catch{
+        e.preventDefault(); location.href = `login.html?next=${nextParam}`;
+      }
+    });
+  }
+
+  // 1) Ensure the client picks up a just-created session (e.g. after magic-link/OAuth)
+  await sb.auth.getSession();
+
+  // 2) Initial paint of the header
+  await renderAuth();
+
+  // 3) Re-render the header whenever auth state changes (login/logout/refresh)
+  sb.auth.onAuthStateChange(() => {
+    renderAuth();
+  });
+
+  addEventListener("DOMContentLoaded", () => {
+        const hero = document.querySelector('.hero-section');
+        if (!hero) return;
+
+        // Fallback that you KNOW exists in /images
+        const FALLBACK = "images/beachortropical.jpg";
+
+        // Your intended rotation set (make sure these exist on the server)
+        const CANDIDATES = [
+          "images/bg1.jpg","images/bg2.jpg","images/bg3.jpg",
+          "images/bg4.jpg","images/bg5.jpg","images/bg6.jpg",
+          "images/bg7.jpg","images/bg8.jpg","images/bg9.jpg"
+        ];
+
+        let i = Math.floor(Math.random() * CANDIDATES.length);
+
+        function setBg(url, triedAlt=false) {
+          const img = new Image();
+          img.onload = () => {
+            hero.style.backgroundImage =
+              `linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)), url('${url}')`;
+          };
+          img.onerror = () => {
+            // If this bg fails, fall back to a known-good image
+            if (!triedAlt) {
+              console.warn("Hero bg not found:", url, "→ using fallback:", FALLBACK);
+              setBg(FALLBACK, true);
+            }
+          };
+          img.src = url;
+        }
+
+        function rotate() {
+          const url = CANDIDATES[i];
+          i = (i + 1) % CANDIDATES.length;
+          setBg(url);
+        }
+
+        // CSS fallback will show immediately; then JS loads/rotates
+        rotate();
+        setInterval(rotate, 7000);
+      });
+</script>
+
+</body>
+</html>

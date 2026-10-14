@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Flight Status – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ocean:#0077b6;--ocean-deep:#023e8a;--teal:#00b4d8;
+  --coral:#e76f51;--green:#16a34a;--amber:#d97706;--red:#dc2626;
+  --off-white:#f8fafc;--gray-light:#f1f5f9;--gray-border:#e2e8f0;
+  --text:#1e293b;--text-muted:#64748b;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 2px 16px rgba(0,0,0,.07);--shadow-hover:0 10px 28px rgba(0,0,0,.12);
+  --t:.22s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+main{flex:1}
+.hidden{display:none!important}
+
+/* HEADER */
+.vg-header{position:sticky;top:0;z-index:40;background:linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%);box-shadow:0 2px 20px rgba(2,62,138,.25)}
+.vg-nav{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.vg-brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none}
+.vg-brand img{width:46px;height:46px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2)}
+.vg-title-brand{font-family:'Playfair Display',serif;font-weight:700;font-size:1.4rem;color:#fff}
+.vg-right{display:flex;align-items:center;gap:12px}
+.nav-chip{display:inline-flex;align-items:center;gap:8px;padding:0 14px;height:38px;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.22);font-size:.88rem;font-weight:500;transition:background var(--t);white-space:nowrap}
+.nav-chip:hover{background:rgba(255,255,255,.24)}
+.menu-group{position:relative}
+.menu{position:absolute;top:calc(100% + 8px);right:0;min-width:200px;padding:6px;background:#fff;border-radius:var(--radius);box-shadow:0 16px 40px rgba(0,0,0,.18);display:none;z-index:60;border:1px solid rgba(0,0,0,.06)}
+.menu a{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:.9rem}
+.menu a:hover{background:var(--gray-light);color:var(--ocean)}
+.menu-divider{height:1px;background:var(--gray-border);margin:6px 4px}
+.account-chip{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.22);font-size:.88rem;cursor:pointer}
+.account-chip:hover{background:rgba(255,255,255,.24)}
+
+/* BANNER */
+.page-banner{background:linear-gradient(135deg,#eaf4fb,#f0f9ff);border-bottom:1px solid #c9e4f5;padding:1.5rem 1.5rem 1.25rem}
+.page-banner-inner{max-width:1200px;margin:0 auto}
+.page-banner h1{font-family:'Playfair Display',serif;font-size:clamp(1.3rem,2.5vw,1.7rem);font-weight:700;color:var(--ocean-deep);margin-bottom:.3rem}
+.page-banner p{font-size:.88rem;color:var(--text-muted)}
+
+/* LAYOUT */
+.page-body{max-width:1200px;margin:0 auto;padding:1.75rem 1.25rem 3rem;display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start}
+@media(max-width:900px){.page-body{grid-template-columns:1fr}}
+
+/* CARDS */
+.vg-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+.card-hd{padding:1rem 1.25rem;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.card-title{font-size:1rem;font-weight:600}
+.card-bd{padding:1.25rem}
+
+/* INPUTS */
+.vg-input,.vg-select{width:100%;border:1px solid var(--gray-border);border-radius:var(--radius);padding:.6rem .9rem;background:var(--gray-light);font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;transition:border-color var(--t),background var(--t)}
+.vg-input:focus,.vg-select:focus{border-color:var(--ocean);background:#fff;box-shadow:0 0 0 3px rgba(0,119,182,.1)}
+.field-label{font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
+
+/* BUTTONS */
+.vg-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gray-border);border-radius:8px;padding:.5rem .9rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;color:var(--text);cursor:pointer;transition:all var(--t);white-space:nowrap;text-decoration:none}
+.vg-btn:hover{background:var(--gray-light);transform:translateY(-1px)}
+.vg-btn-ocean{background:var(--ocean);color:#fff;border-color:var(--ocean)}
+.vg-btn-ocean:hover{background:var(--ocean-deep)}
+.vg-btn-sm{padding:.3rem .65rem;font-size:.78rem}
+
+/* FLIGHT SEARCH — big inputs */
+.flight-input{width:100%;border:2px solid var(--gray-border);border-radius:12px;padding:.75rem 1rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:600;color:var(--text);outline:none;transition:border-color var(--t);text-transform:uppercase}
+.flight-input::placeholder{text-transform:none;font-weight:400;font-size:.95rem;color:#94a3b8}
+.flight-input:focus{border-color:var(--ocean);box-shadow:0 0 0 4px rgba(0,119,182,.1)}
+.airline-badge{display:none;align-items:center;gap:.5rem;margin-top:.4rem;font-size:.82rem;color:var(--ocean-deep);font-weight:500}
+.airline-badge.show{display:flex}
+
+/* FLIGHT TRACKER VISUAL */
+.flight-track{background:linear-gradient(135deg,var(--ocean-deep),var(--ocean));border-radius:14px;padding:1.5rem;color:#fff;position:relative;overflow:hidden;margin-bottom:1rem}
+.flight-track::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:rgba(255,255,255,.05);border-radius:50%}
+.ft-route{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem}
+.ft-airport{text-align:center;flex:0 0 auto}
+.ft-code{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;line-height:1}
+.ft-city{font-size:.72rem;opacity:.7;margin-top:2px}
+.ft-line{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.ft-plane{font-size:1.5rem;transition:transform var(--t)}
+.ft-dashes{width:100%;height:1px;border-top:2px dashed rgba(255,255,255,.3)}
+.ft-flight-num{font-size:.72rem;opacity:.7}
+.ft-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+.ft-stat{background:rgba(255,255,255,.1);border-radius:8px;padding:.6rem .75rem;text-align:center}
+.ft-stat .fs-val{font-size:1rem;font-weight:700;font-variant-numeric:tabular-nums}
+.ft-stat .fs-lbl{font-size:.65rem;opacity:.65;margin-top:2px}
+
+/* STATUS BADGE */
+.status-badge{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.35rem .9rem;font-size:.82rem;font-weight:700}
+.status-on-time{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.status-delayed{background:#fef3c7;color:#92400e;border:1px solid #fde047}
+.status-cancelled{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.status-unknown{background:var(--gray-light);color:var(--text-muted);border:1px solid var(--gray-border)}
+.status-landed{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+
+/* SOURCE LINKS */
+.source-links{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.source-link{display:flex;align-items:center;gap:.65rem;padding:.7rem .9rem;border-radius:10px;border:1px solid var(--gray-border);background:var(--gray-light);text-decoration:none;color:var(--text);font-size:.85rem;font-weight:500;transition:all var(--t)}
+.source-link:hover{background:#eaf4fb;border-color:var(--teal);color:var(--ocean);transform:translateX(2px)}
+.source-link .src-icon{font-size:1.1rem;flex-shrink:0}
+.source-link .src-body{flex:1;min-width:0}
+.source-link .src-name{font-weight:600;font-size:.85rem}
+.source-link .src-desc{font-size:.72rem;color:var(--text-muted)}
+.source-link .src-arr{margin-left:auto;font-size:.7rem;color:var(--text-muted)}
+
+/* SAVED TABLE */
+.saved-table{width:100%;border-collapse:collapse}
+.saved-table th{background:var(--gray-light);padding:6px 10px;text-align:left;font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--gray-border)}
+.saved-table td{padding:7px 10px;border-bottom:1px solid var(--gray-border);font-size:.82rem;vertical-align:middle}
+.saved-table tr:last-child td{border-bottom:none}
+.saved-table tr:hover td{background:var(--gray-light);cursor:pointer}
+.saved-table .flight-col{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ocean-deep)}
+.saved-table .route-col{color:var(--text-muted);font-size:.78rem}
+
+/* NOTES */
+.note-item{display:flex;align-items:flex-start;gap:.6rem;padding:.6rem .75rem;border:1px solid var(--gray-border);border-radius:9px;font-size:.83rem;background:#fff;margin-bottom:.4rem}
+.note-time{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ocean);flex-shrink:0;font-size:.78rem}
+.note-text{flex:1;line-height:1.4}
+.note-del{flex-shrink:0;color:var(--text-muted);cursor:pointer;font-size:.9rem;padding:0 2px}
+.note-del:hover{color:var(--red)}
+
+/* DISRUPTION TIPS */
+.tip-item{padding:.7rem .9rem;border-radius:10px;font-size:.82rem;line-height:1.5;margin-bottom:.5rem}
+.tip-item:last-child{margin-bottom:0}
+.tip-item strong{display:block;font-size:.8rem;margin-bottom:3px}
+.tip-green{background:#f0fdf4;border:1px solid #86efac}
+.tip-blue{background:#eff6ff;border:1px solid #bfdbfe}
+.tip-amber{background:#fefce8;border:1px solid #fde047}
+.tip-red{background:#fef2f2;border:1px solid #fca5a5}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,.96);color:#fff;padding:10px 18px;border-radius:9px;font-size:.85rem;font-weight:500;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* AIRPORT STATUS PILL */
+.airport-pill{display:inline-flex;align-items:center;gap:.35rem;border-radius:999px;padding:.3rem .75rem;font-size:.78rem;font-weight:600;border:1px solid var(--gray-border);background:#fff;cursor:pointer;transition:all var(--t);text-decoration:none}
+.airport-pill:hover{background:#eaf4fb;border-color:var(--teal);color:var(--ocean)}
+
+/* FOOTER */
+footer{background:linear-gradient(105deg,#023e8a 0%,#0077b6 100%);color:rgba(255,255,255,.85);padding:2.5rem 1.5rem 2rem}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-brand{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:.3rem}
+.footer-copy{font-size:.78rem;opacity:.55;margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.12)}
+.footer-links{display:flex;gap:1rem;margin-top:.9rem;flex-wrap:wrap}
+.footer-links a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+.footer-links a:hover{color:#fff}
+
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+@media(max-width:540px){.form-grid-3,.form-grid-2{grid-template-columns:1fr}.source-links{grid-template-columns:1fr}}
+.gap-sm{display:flex;flex-wrap:wrap;gap:.5rem}
+@media print{.vg-header,.page-banner,footer,.no-print{display:none!important}body{background:#fff}.vg-card{box-shadow:none;border:1px solid #ddd}}
+</style>
+</head>
+<body>
+
+<script type="module">
+  import{createClient}from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if(!window.supabase)window.supabase=createClient('https://pbojacnagutipfhcxltj.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+</script>
+
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html"><img src="images/nav-icon.png" alt="Voyage Genie"/><span class="vg-title-brand">Voyage Genie</span></a>
+    <div class="vg-right">
+      <a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a>
+      <div id="authSlot"><a class="nav-chip" href="login.html?next=flight-status.html">🔑 Sign in</a></div>
+    </div>
+  </div>
+</header>
+
+<div class="page-banner">
+  <div class="page-banner-inner">
+    <h1>✈️ Flight Status Tracker</h1>
+    <p>Track departures, arrivals &amp; delays · Saved flights · Gate notes · Direct links to live data</p>
+  </div>
+</div>
+
+<main>
+<div class="page-body">
+
+  <!-- LEFT: Main -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- Search Card -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">🔍 Search Your Flight</div>
+        <div class="gap-sm no-print">
+          <button class="vg-btn vg-btn-sm" onclick="setToday()">📅 Today</button>
+          <button class="vg-btn vg-btn-sm" onclick="saveFlight()">💾 Save</button>
+          <button class="vg-btn vg-btn-sm" onclick="shareLink()">🔗 Share</button>
+          <button class="vg-btn vg-btn-sm" onclick="window.print()">🖨️ Print</button>
+        </div>
+      </div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:.85rem">
+
+        <!-- Flight number — big input -->
+        <div>
+          <label class="field-label">Flight Number</label>
+          <input id="flightNo" class="flight-input" placeholder="e.g. AA 2256  ·  DL 101  ·  UA 823" oninput="onFlightInput()" autocomplete="off" spellcheck="false"/>
+          <div class="airline-badge" id="airlineBadge">
+            <span id="airlineEmoji">✈️</span>
+            <span id="airlineName"></span>
+            <span id="airlineCode" style="color:var(--text-muted);font-size:.78rem"></span>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div>
+            <label class="field-label">Date</label>
+            <input id="date" type="date" class="vg-input" oninput="buildLinks()"/>
+          </div>
+          <div>
+            <label class="field-label">From (IATA)</label>
+            <input id="from" class="vg-input" placeholder="e.g. ORD" oninput="onAirportInput('from')" autocomplete="off" spellcheck="false" maxlength="4" style="text-transform:uppercase;font-weight:600"/>
+          </div>
+          <div>
+            <label class="field-label">To (IATA)</label>
+            <input id="to" class="vg-input" placeholder="e.g. PUJ" oninput="onAirportInput('to')" autocomplete="off" spellcheck="false" maxlength="4" style="text-transform:uppercase;font-weight:600"/>
+          </div>
+        </div>
+
+        <!-- Airport hints -->
+        <div id="fromHint" style="font-size:.78rem;color:var(--ocean-deep);margin-top:-4px;font-weight:500" class="hidden"></div>
+        <div id="toHint"   style="font-size:.78rem;color:var(--ocean-deep);margin-top:-4px;font-weight:500" class="hidden"></div>
+
+      </div>
+    </div>
+
+    <!-- FLIGHT VISUAL CARD -->
+    <div id="flightVisual" class="hidden">
+      <div class="flight-track">
+        <div class="ft-route">
+          <div class="ft-airport">
+            <div class="ft-code" id="vtFrom">—</div>
+            <div class="ft-city" id="vtFromCity"></div>
+          </div>
+          <div class="ft-line">
+            <div class="ft-dashes"></div>
+            <div class="ft-plane" id="vtPlane">✈️</div>
+            <div class="ft-flight-num" id="vtFlightNum"></div>
+          </div>
+          <div class="ft-airport" style="text-align:right">
+            <div class="ft-code" id="vtTo">—</div>
+            <div class="ft-city" id="vtToCity"></div>
+          </div>
+        </div>
+        <div class="ft-stats">
+          <div class="ft-stat">
+            <div class="fs-val" id="vtDate">—</div>
+            <div class="fs-lbl">Date</div>
+          </div>
+          <div class="ft-stat">
+            <div class="fs-val" id="vtAirline">—</div>
+            <div class="fs-lbl">Airline</div>
+          </div>
+          <div class="ft-stat">
+            <div class="fs-val" id="vtStatus">—</div>
+            <div class="fs-lbl">Status</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE STATUS LINKS -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">🛰️ Check Live Status</div>
+        <span style="font-size:.75rem;color:var(--text-muted)">Opens real-time data in a new tab</span>
+      </div>
+      <div class="card-bd">
+        <div class="source-links" id="sourceLinks">
+          <a class="source-link" id="lkFlightAware" href="https://flightaware.com/live/" target="_blank" rel="noopener">
+            <span class="src-icon">🛰️</span><div class="src-body"><div class="src-name">FlightAware</div><div class="src-desc">Real-time tracking, gate info</div></div><span class="src-arr">↗</span>
+          </a>
+          <a class="source-link" id="lkFR24" href="https://www.flightradar24.com/" target="_blank" rel="noopener">
+            <span class="src-icon">🌍</span><div class="src-body"><div class="src-name">Flightradar24</div><div class="src-desc">Live map, aircraft type</div></div><span class="src-arr">↗</span>
+          </a>
+          <a class="source-link" id="lkGoogle" href="https://www.google.com/search?q=flight+status" target="_blank" rel="noopener">
+            <span class="src-icon">🔍</span><div class="src-body"><div class="src-name">Google Flights</div><div class="src-desc">Quick status snapshot</div></div><span class="src-arr">↗</span>
+          </a>
+          <a class="source-link" id="lkAirline" href="#" target="_blank" rel="noopener">
+            <span class="src-icon">🏛️</span><div class="src-body"><div class="src-name" id="lkAirlineName">Airline Website</div><div class="src-desc">Official check-in & gate info</div></div><span class="src-arr">↗</span>
+          </a>
+          <a class="source-link" href="https://www.fly.faa.gov/ois/ois.jsp" target="_blank" rel="noopener">
+            <span class="src-icon">🛡️</span><div class="src-body"><div class="src-name">FAA Delay Advisories</div><div class="src-desc">US airport delay & ground stops</div></div><span class="src-arr">↗</span>
+          </a>
+          <a class="source-link" id="lkFlightStats" href="#" target="_blank" rel="noopener">
+            <span class="src-icon">📊</span><div class="src-body"><div class="src-name">FlightStats</div><div class="src-desc">On-time history & delays</div></div><span class="src-arr">↗</span>
+          </a>
+        </div>
+
+        <!-- Airport status quick links -->
+        <div style="margin-top:1rem">
+          <div class="field-label" style="margin-bottom:.5rem">Airport Status Shortcuts</div>
+          <div class="gap-sm" id="airportPills">
+            <a class="airport-pill" href="https://www.fly.faa.gov/ois/ois.jsp" target="_blank" rel="noopener">🛡️ FAA All Airports</a>
+            <a class="airport-pill" href="https://www.atcscc.faa.gov/" target="_blank" rel="noopener">📡 ATC Command Center</a>
+            <a class="airport-pill" id="apFromPill" href="#" target="_blank" rel="noopener" style="display:none">📍 Departure Airport</a>
+            <a class="airport-pill" id="apToPill" href="#" target="_blank" rel="noopener" style="display:none">🎯 Arrival Airport</a>
+          </div>
+        </div>
+
+        <div style="margin-top:.85rem;padding:.75rem;background:#fefce8;border:1px solid #fde047;border-radius:10px;font-size:.8rem;color:#92400e;line-height:1.5">
+          ⚠️ <strong>We don't fetch live data directly</strong> — click the links above to get real-time status. Airline websites are most accurate for gate changes and boarding times.
+        </div>
+      </div>
+    </div>
+
+    <!-- DISRUPTION TIPS -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">💡 If Your Flight Is Disrupted</div></div>
+      <div class="card-bd">
+        <div class="tip-item tip-green">
+          <strong>✅ Delayed under 2 hours</strong>
+          Check the airline app for updated gate info. Grab water and food — delays often extend. Don't leave the gate area.
+        </div>
+        <div class="tip-item tip-amber">
+          <strong>⚠️ Delayed 2+ hours</strong>
+          You may be entitled to a meal voucher. Ask at the gate. If connecting, ask the agent to rebook your connection proactively.
+        </div>
+        <div class="tip-item tip-red">
+          <strong>🚫 Cancelled flight</strong>
+          Call the airline's reservations line (hold times are shorter than gate lines). Use the airline app to rebook. EU passengers: EC261 entitles you to compensation for cancellations within airline control.
+        </div>
+        <div class="tip-item tip-blue">
+          <strong>💳 Travel insurance &amp; credit cards</strong>
+          Many premium credit cards cover trip delay, interruption, and missed connections. File a claim with your card's travel protection — keep all receipts.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- Gate Notes -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">📝 Gate Notes</div>
+        <button class="vg-btn vg-btn-sm" onclick="clearNotes()">Clear</button>
+      </div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:.65rem">
+        <p style="font-size:.78rem;color:var(--text-muted)">Log gate changes, boarding times, and delays as you hear them.</p>
+        <div>
+          <label class="field-label">Time</label>
+          <input id="noteTime" type="time" class="vg-input"/>
+        </div>
+        <div>
+          <label class="field-label">Note</label>
+          <input id="noteText" class="vg-input" placeholder="e.g. Gate changed to B12, boarding 14:40" onkeydown="if(event.key==='Enter')addNote()"/>
+        </div>
+        <button class="vg-btn vg-btn-ocean" onclick="addNote()">➕ Add Note</button>
+        <div id="notesList" style="margin-top:.25rem"></div>
+      </div>
+    </div>
+
+    <!-- Saved Flights -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">🗂️ Saved Flights</div>
+        <button class="vg-btn vg-btn-sm" onclick="clearFlights()">Clear All</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="saved-table">
+          <thead>
+            <tr><th>Flight</th><th>Route</th><th>Date</th><th></th></tr>
+          </thead>
+          <tbody id="savedBody">
+            <tr><td colspan="4" style="padding:1.25rem;text-align:center;color:var(--text-muted);font-size:.85rem">No saved flights yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Airline Contact Quick Reference -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">📞 Major Airline Contacts</div></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:.4rem;font-size:.82rem">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem" id="airlineContacts"></div>
+        <p style="font-size:.72rem;color:var(--text-muted);margin-top:.4rem">Tip: Call the airline's international line — hold times are often shorter than the US number.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+</main>
+
+<div id="toast"></div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-links">
+      <a href="index.html">Home</a><a href="trip-dashboard.html">My Trips</a>
+      <a href="seat-finder.html">Seat Finder</a><a href="packing-checklist.html">Packing</a>
+    </div>
+    <div class="footer-copy">© 2025 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- Auth -->
+<script type="module">
+  const sb=window.supabase,authSlot=document.getElementById('authSlot');
+  function toggle(el,show){if(el)el.style.display=show?'block':'none';}
+  async function renderAuth(){
+    try{
+      const{data:{user}}=await sb.auth.getUser();authSlot.innerHTML='';
+      if(user){
+        const name=(user.email||'Account').split('@')[0];
+        const wrap=document.createElement('div');wrap.className='menu-group';
+        wrap.innerHTML=`<a href="#" class="account-chip" id="acctBtn"><span>🪪</span><span>${name}</span><span style="font-size:.65rem;opacity:.8">▾</span></a>
+          <div class="menu" id="acctMenu"><a href="account.html">👤 Account</a><div class="menu-divider"></div><a href="#" id="signOutBtn">🚪 Sign out</a></div>`;
+        authSlot.appendChild(wrap);
+        const btn=wrap.querySelector('#acctBtn'),menu=wrap.querySelector('#acctMenu');
+        btn.addEventListener('click',e=>{e.preventDefault();const o=menu.style.display==='block';toggle(menu,!o);});
+        document.addEventListener('click',e=>{if(!menu.contains(e.target)&&e.target!==btn)toggle(menu,false);});
+        wrap.querySelector('#signOutBtn').addEventListener('click',async e=>{e.preventDefault();await sb.auth.signOut();location.href='login.html';});
+      }else{
+        const a=document.createElement('a');a.className='nav-chip';a.href='login.html?next=flight-status.html';a.textContent='🔑 Sign in';
+        authSlot.appendChild(a);
+      }
+    }catch{}
+  }
+  renderAuth();
+</script>
+
+<!-- FLIGHT STATUS LOGIC -->
+<script>
+const $ = id => document.getElementById(id);
+const STORE = { flights:'vg_fs_list_v2', notes:'vg_fs_notes_v2' };
+let _toastTimer;
+
+function toast(msg, ms=1800){
+  const t=$('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+// ── Airline database ──────────────────────────────────────────────────────────
+const AIRLINES = {
+  'AA':{ name:'American Airlines', emoji:'🇺🇸', url:'https://www.aa.com/travelInformation/flights/status', phone:'1-800-433-7300' },
+  'DL':{ name:'Delta Air Lines',   emoji:'🔵', url:'https://www.delta.com/us/en/travel-planning-center/check-in/flight-status', phone:'1-800-221-1212' },
+  'UA':{ name:'United Airlines',   emoji:'🔵', url:'https://www.united.com/en/us/flightstatus', phone:'1-800-864-8331' },
+  'WN':{ name:'Southwest Airlines',emoji:'❤️', url:'https://www.southwest.com/air/flight-status/', phone:'1-800-435-9792' },
+  'B6':{ name:'JetBlue',           emoji:'🔵', url:'https://www.jetblue.com/travel/flight-status', phone:'1-800-538-2583' },
+  'AS':{ name:'Alaska Airlines',   emoji:'🔵', url:'https://www.alaskaair.com/status/', phone:'1-800-252-7522' },
+  'F9':{ name:'Frontier Airlines', emoji:'🟢', url:'https://www.flyfrontier.com/', phone:'1-801-401-9000' },
+  'NK':{ name:'Spirit Airlines',   emoji:'🟡', url:'https://www.spirit.com/', phone:'1-855-728-3555' },
+  'SY':{ name:'Sun Country',       emoji:'🟡', url:'https://www.suncountry.com/', phone:'1-651-905-2737' },
+  'HA':{ name:'Hawaiian Airlines', emoji:'🌺', url:'https://www.hawaiianairlines.com/flight-status', phone:'1-800-367-5320' },
+  'BA':{ name:'British Airways',   emoji:'🇬🇧', url:'https://www.britishairways.com/travel/flightstatus', phone:'+44-20-8738-5050' },
+  'VS':{ name:'Virgin Atlantic',   emoji:'🇬🇧', url:'https://www.virginatlantic.com/flights/fids', phone:'+44-344-209-7777' },
+  'LH':{ name:'Lufthansa',         emoji:'🇩🇪', url:'https://www.lufthansa.com/de/en/flight-status', phone:'+49-69-86-799-799' },
+  'AF':{ name:'Air France',        emoji:'🇫🇷', url:'https://www.airfrance.us/information/flight-status', phone:'+33-9-69-39-02-15' },
+  'KL':{ name:'KLM',               emoji:'🇳🇱', url:'https://www.klm.com/travel/us_en/fly_klm/flight_information/flight_status/', phone:'+31-20-649-9123' },
+  'IB':{ name:'Iberia',            emoji:'🇪🇸', url:'https://www.iberia.com/flight-status/', phone:'+34-901-111-500' },
+  'EK':{ name:'Emirates',          emoji:'🇦🇪', url:'https://www.emirates.com/us/english/manage-booking/flight-status/', phone:'+971-600-555-555' },
+  'EY':{ name:'Etihad Airways',    emoji:'🇦🇪', url:'https://www.etihad.com/en-us/fly-etihad/our-fleet/flight-status', phone:'+971-2-599-0000' },
+  'QR':{ name:'Qatar Airways',     emoji:'🇶🇦', url:'https://www.qatarairways.com/en-us/flight-status.html', phone:'+974-4023-0000' },
+  'SQ':{ name:'Singapore Airlines',emoji:'🇸🇬', url:'https://www.singaporeair.com/en_UK/us/travel-info/flight-status/', phone:'+65-6223-8888' },
+  'CX':{ name:'Cathay Pacific',    emoji:'🇭🇰', url:'https://www.cathaypacific.com/cx/en_US/flight-information/flight-status.html', phone:'+852-2747-1888' },
+  'NH':{ name:'All Nippon Airways (ANA)', emoji:'🇯🇵', url:'https://www.ana.co.jp/en/us/guide/flightinfo/', phone:'+81-570-029-333' },
+  'JL':{ name:'Japan Airlines',    emoji:'🇯🇵', url:'https://www.jal.co.jp/en/flight_info/', phone:'+81-570-025-031' },
+  'KE':{ name:'Korean Air',        emoji:'🇰🇷', url:'https://www.koreanair.com/content/koreanair/en_us/travel-information/flight-information/flightschedule/', phone:'+82-2-2656-2001' },
+  'CA':{ name:'Air China',         emoji:'🇨🇳', url:'https://www.airchina.us/', phone:'+86-10-95583' },
+  'MH':{ name:'Malaysia Airlines', emoji:'🇲🇾', url:'https://www.malaysiaairlines.com/my/en/flight-info/flight-status.html', phone:'+60-3-7843-3000' },
+  'TG':{ name:'Thai Airways',      emoji:'🇹🇭', url:'https://www.thaiairways.com/en_US/customer-service/flight-status.page', phone:'+66-2-356-1111' },
+  'QF':{ name:'Qantas',            emoji:'🇦🇺', url:'https://www.qantas.com/au/en/travel-info/flight-status.html', phone:'+61-2-9691-3636' },
+  'AC':{ name:'Air Canada',        emoji:'🇨🇦', url:'https://www.aircanada.com/us/en/aco/home/book/flight-status-and-updates/flight-status.html', phone:'1-888-247-2262' },
+  'AM':{ name:'Aeroméxico',        emoji:'🇲🇽', url:'https://aeromexico.com/en-us/flight-status', phone:'+52-55-5133-4000' },
+  'LA':{ name:'LATAM Airlines',    emoji:'🌎', url:'https://www.latamairlines.com/us/en/flight-status', phone:'+56-2-2565-1234' },
+  'G3':{ name:'Gol Airlines',      emoji:'🇧🇷', url:'https://www.voegol.com.br/', phone:'+55-11-5033-4000' },
+  'TK':{ name:'Turkish Airlines',  emoji:'🇹🇷', url:'https://www.turkishairlines.com/en-us/flights/flight-status/', phone:'+90-212-444-0849' },
+  'AY':{ name:'Finnair',           emoji:'🇫🇮', url:'https://www.finnair.com/us-en/fly/flight-status', phone:'+358-9-818-0800' },
+  'SK':{ name:'SAS Scandinavian',  emoji:'🇸🇪', url:'https://www.flysas.com/en/us/flight-info/', phone:'+47-64-81-6050' },
+  'LX':{ name:'Swiss International',emoji:'🇨🇭',url:'https://www.swiss.com/us/en/fly/flight-status', phone:'+41-44-564-3939' },
+  'OS':{ name:'Austrian Airlines',  emoji:'🇦🇹', url:'https://www.austrian.com/us/en/flightstatus', phone:'+43-5-1766-1000' },
+  'AZ':{ name:'ITA Airways',        emoji:'🇮🇹', url:'https://www.itaairways.com/en/service/flight-status.html', phone:'+39-06-8596-0020' },
+  'VY':{ name:'Vueling',            emoji:'🇪🇸', url:'https://www.vueling.com/en/fly-with-vueling/flight-tracker', phone:'+34-931-518-158' },
+  'FR':{ name:'Ryanair',            emoji:'🟡', url:'https://www.ryanair.com/us/en/useful-info/flight-tracker', phone:'+44-871-246-0000' },
+  'U2':{ name:'easyJet',            emoji:'🟠', url:'https://www.easyjet.com/en/check-in', phone:'+44-330-365-5000' },
+  'W6':{ name:'Wizz Air',           emoji:'🟣', url:'https://wizzair.com/', phone:'+36-1-777-9996' },
+  'WZ':{ name:'Wizz Air',           emoji:'🟣', url:'https://wizzair.com/', phone:'+36-1-777-9996' },
+};
+
+// ── Airport database (IATA → name, city) ──────────────────────────────────
+const AIRPORTS = {
+  'ORD':['Chicago O\'Hare','Chicago, IL'],'MDW':['Chicago Midway','Chicago, IL'],
+  'LAX':['Los Angeles Intl','Los Angeles, CA'],'SFO':['San Francisco Intl','San Francisco, CA'],
+  'JFK':['John F. Kennedy','New York, NY'],'LGA':['LaGuardia','New York, NY'],'EWR':['Newark Liberty','Newark, NJ'],
+  'MIA':['Miami Intl','Miami, FL'],'FLL':['Fort Lauderdale','Fort Lauderdale, FL'],
+  'DFW':['Dallas/Fort Worth','Dallas, TX'],'DAL':['Dallas Love Field','Dallas, TX'],
+  'ATL':['Hartsfield-Jackson','Atlanta, GA'],
+  'DEN':['Denver Intl','Denver, CO'],
+  'PHX':['Phoenix Sky Harbor','Phoenix, AZ'],
+  'LAS':['Harry Reid Intl','Las Vegas, NV'],
+  'SEA':['Seattle-Tacoma','Seattle, WA'],
+  'BOS':['Logan Intl','Boston, MA'],
+  'IAD':['Washington Dulles','Washington, DC'],'DCA':['Reagan National','Washington, DC'],'BWI':['Baltimore-Washington','Baltimore, MD'],
+  'HNL':['Daniel K. Inouye','Honolulu, HI'],
+  'ANC':['Ted Stevens','Anchorage, AK'],
+  'MCO':['Orlando Intl','Orlando, FL'],
+  'TPA':['Tampa Intl','Tampa, FL'],
+  'MSP':['Minneapolis-St. Paul','Minneapolis, MN'],
+  'DTW':['Detroit Metro Wayne','Detroit, MI'],
+  'CLT':['Charlotte Douglas','Charlotte, NC'],
+  'PHL':['Philadelphia Intl','Philadelphia, PA'],
+  'IAH':['Houston Bush','Houston, TX'],'HOU':['William P. Hobby','Houston, TX'],
+  'SAN':['San Diego Intl','San Diego, CA'],
+  'PDX':['Portland Intl','Portland, OR'],
+  'STL':['St. Louis Lambert','St. Louis, MO'],
+  'MCI':['Kansas City Intl','Kansas City, MO'],
+  'SLC':['Salt Lake City Intl','Salt Lake City, UT'],
+  'MSY':['Louis Armstrong','New Orleans, LA'],
+  'PUJ':['Punta Cana Intl','Punta Cana, DO'],
+  'CUN':['Cancún Intl','Cancún, Mexico'],
+  'MEX':['Benito Juárez','Mexico City, Mexico'],
+  'GRU':['São Paulo Guarulhos','São Paulo, Brazil'],
+  'EZE':['Ezeiza Intl','Buenos Aires, Argentina'],
+  'BOG':['El Dorado Intl','Bogotá, Colombia'],
+  'LIM':['Jorge Chávez','Lima, Peru'],
+  'LHR':['London Heathrow','London, UK'],'LGW':['London Gatwick','London, UK'],'STN':['London Stansted','London, UK'],
+  'CDG':['Paris Charles de Gaulle','Paris, France'],'ORY':['Paris Orly','Paris, France'],
+  'AMS':['Amsterdam Schiphol','Amsterdam, Netherlands'],
+  'FRA':['Frankfurt Intl','Frankfurt, Germany'],'MUC':['Munich Intl','Munich, Germany'],
+  'MAD':['Adolfo Suárez','Madrid, Spain'],'BCN':['Barcelona El Prat','Barcelona, Spain'],
+  'FCO':['Rome Fiumicino','Rome, Italy'],'MXP':['Milan Malpensa','Milan, Italy'],
+  'ZRH':['Zurich Intl','Zurich, Switzerland'],
+  'VIE':['Vienna Intl','Vienna, Austria'],
+  'DXB':['Dubai Intl','Dubai, UAE'],'AUH':['Abu Dhabi Intl','Abu Dhabi, UAE'],
+  'DOH':['Hamad Intl','Doha, Qatar'],
+  'IST':['Istanbul Intl','Istanbul, Turkey'],
+  'CAI':['Cairo Intl','Cairo, Egypt'],
+  'JNB':['O.R. Tambo','Johannesburg, South Africa'],
+  'NBO':['Jomo Kenyatta','Nairobi, Kenya'],
+  'DEL':['Indira Gandhi Intl','Delhi, India'],'BOM':['Chhatrapati Shivaji','Mumbai, India'],
+  'BKK':['Suvarnabhumi','Bangkok, Thailand'],
+  'SGP':['Changi Airport','Singapore'],'SIN':['Changi Airport','Singapore'],
+  'HKG':['Hong Kong Intl','Hong Kong'],
+  'NRT':['Tokyo Narita','Tokyo, Japan'],'HND':['Tokyo Haneda','Tokyo, Japan'],
+  'ICN':['Incheon Intl','Seoul, South Korea'],
+  'PVG':['Shanghai Pudong','Shanghai, China'],'PEK':['Beijing Capital','Beijing, China'],
+  'SYD':['Sydney Kingsford Smith','Sydney, Australia'],
+  'MEL':['Melbourne Airport','Melbourne, Australia'],
+  'AKL':['Auckland Airport','Auckland, New Zealand'],
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+function normFlight(s){ return (s||'').replace(/\s+/g,'').toUpperCase(); }
+function parseCarrier(s){ const m=normFlight(s).match(/^([A-Z]{2,3})/); return m?m[1]:''; }
+
+function onFlightInput(){
+  const raw=$('flightNo').value.trim();
+  const code=parseCarrier(raw);
+  const airline=AIRLINES[code];
+  const badge=$('airlineBadge');
+  if(airline&&code){
+    $('airlineEmoji').textContent=airline.emoji;
+    $('airlineName').textContent=airline.name;
+    $('airlineCode').textContent='('+code+')';
+    badge.classList.add('show');
+    $('lkAirlineName').textContent=airline.name+' Status';
+    $('lkAirline').href=airline.url;
+  }else{
+    badge.classList.remove('show');
+    $('lkAirlineName').textContent='Airline Website';
+    $('lkAirline').href='#';
+  }
+  buildLinks(); updateVisual();
+}
+
+function onAirportInput(field){
+  const val=$( field ).value.toUpperCase();
+  $( field ).value=val;
+  const hint=$(field+'Hint');
+  const ap=AIRPORTS[val];
+  if(ap&&val.length===3){
+    hint.textContent='📍 '+ap[0]+', '+ap[1];
+    hint.classList.remove('hidden');
+    // Show airport shortcut pills
+    if(field==='from'){
+      const p=$('apFromPill');
+      p.textContent='📍 '+val+' — '+ap[0];
+      p.href=`https://www.google.com/search?q=${encodeURIComponent(ap[0]+' airport delays status')}`;
+      p.style.display='inline-flex';
+    }
+    if(field==='to'){
+      const p=$('apToPill');
+      p.textContent='🎯 '+val+' — '+ap[0];
+      p.href=`https://www.google.com/search?q=${encodeURIComponent(ap[0]+' airport arrivals status')}`;
+      p.style.display='inline-flex';
+    }
+  }else{
+    hint.classList.add('hidden');
+    if(field==='from') $('apFromPill').style.display='none';
+    if(field==='to')   $('apToPill').style.display='none';
+  }
+  buildLinks(); updateVisual();
+}
+
+function buildLinks(){
+  const flight=normFlight($('flightNo').value);
+  const date=$('date').value||'';
+  const from=($('from').value||'').toUpperCase();
+  const to=($('to').value||'').toUpperCase();
+  const code=parseCarrier(flight);
+  const numOnly=flight.replace(/^[A-Z]+/,'');
+  const airline=AIRLINES[code];
+
+  // FlightAware
+  $('lkFlightAware').href=flight
+    ?`https://flightaware.com/live/flight/${code}${numOnly}`
+    :'https://flightaware.com/live/';
+
+  // Flightradar24
+  $('lkFR24').href=flight
+    ?`https://www.flightradar24.com/data/flights/${code.toLowerCase()}${numOnly}`
+    :'https://www.flightradar24.com/';
+
+  // Google
+  const gq=[flight,from&&'from '+from,to&&'to '+to,date].filter(Boolean).join(' ');
+  $('lkGoogle').href=`https://www.google.com/search?q=${encodeURIComponent((gq||'flight')+' flight status')}`;
+
+  // FlightStats
+  $('lkFlightStats').href=flight
+    ?`https://www.flightstats.com/v2/flight-tracker/${code}/${numOnly}?year=${date.slice(0,4)}&month=${parseInt(date.slice(5,7))||1}&date=${parseInt(date.slice(8,10))||1}`
+    :'https://www.flightstats.com/';
+
+  // Airline
+  if(airline){
+    $('lkAirline').href=airline.url;
+    $('lkAirlineName').textContent=airline.name+' Status';
+  }
+}
+
+function updateVisual(){
+  const flight=normFlight($('flightNo').value);
+  const from=($('from').value||'').toUpperCase();
+  const to=($('to').value||'').toUpperCase();
+  const date=$('date').value;
+  const code=parseCarrier(flight);
+  const airline=AIRLINES[code];
+
+  if(!flight&&!from&&!to){ $('flightVisual').classList.add('hidden'); return; }
+  $('flightVisual').classList.remove('hidden');
+
+  $('vtFrom').textContent=from||'???';
+  $('vtTo').textContent=to||'???';
+  $('vtFromCity').textContent=AIRPORTS[from]?.[1]||'';
+  $('vtToCity').textContent=AIRPORTS[to]?.[1]||'';
+  $('vtFlightNum').textContent=flight||'';
+  $('vtPlane').textContent=airline?.emoji||'✈️';
+  $('vtDate').textContent=date?new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
+  $('vtAirline').textContent=airline?.name||code||'—';
+  $('vtStatus').textContent='Check live ↗';
+}
+
+function setToday(){
+  const d=new Date(), pad=n=>String(n).padStart(2,'0');
+  $('date').value=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  buildLinks(); updateVisual();
+}
+
+// ── Saved flights ──────────────────────────────────────────────────────────────
+function getFlights(){ try{return JSON.parse(localStorage.getItem(STORE.flights)||'[]');}catch{return[]} }
+function setFlights(a){ localStorage.setItem(STORE.flights,JSON.stringify(a)); renderSaved(); }
+
+function saveFlight(){
+  const flight=normFlight($('flightNo').value);
+  if(!flight){ toast('Enter a flight number first'); return; }
+  const row={
+    flight, date:$('date').value||'',
+    from:($('from').value||'').toUpperCase(),
+    to:($('to').value||'').toUpperCase(),
+    code:parseCarrier(flight), at:new Date().toISOString()
+  };
+  const list=getFlights(); list.unshift(row); setFlights(list.slice(0,30));
+  toast('✅ Flight saved!');
+}
+function removeFlight(i){ const l=getFlights();l.splice(i,1);setFlights(l); }
+function clearFlights(){ if(confirm('Clear all saved flights?')) setFlights([]); }
+function loadFlight(i){
+  const r=getFlights()[i]; if(!r) return;
+  $('flightNo').value=r.flight;
+  $('date').value=r.date;
+  $('from').value=r.from;
+  $('to').value=r.to;
+  onFlightInput();
+  if(r.from) onAirportInput('from');
+  if(r.to)   onAirportInput('to');
+  toast('✅ Flight loaded');
+}
+
+function renderSaved(){
+  const body=$('savedBody');
+  const rows=getFlights();
+  if(!rows.length){ body.innerHTML='<tr><td colspan="4" style="padding:1.25rem;text-align:center;color:var(--text-muted);font-size:.85rem">No saved flights yet</td></tr>'; return; }
+  body.innerHTML=rows.map((r,i)=>{
+    const airline=AIRLINES[r.code];
+    const emoji=airline?.emoji||'✈️';
+    const dateStr=r.date?new Date(r.date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}):'—';
+    return `<tr onclick="loadFlight(${i})" title="Click to load">
+      <td class="flight-col">${emoji} ${r.flight||'—'}</td>
+      <td class="route-col">${r.from||'?'} → ${r.to||'?'}</td>
+      <td style="font-size:.78rem;color:var(--text-muted)">${dateStr}</td>
+      <td><button class="vg-btn vg-btn-sm" style="color:#dc2626;border-color:#fca5a5" onclick="event.stopPropagation();removeFlight(${i})">🗑️</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Notes ──────────────────────────────────────────────────────────────────────
+function noteKey(){
+  const f=normFlight($('flightNo').value)||'GEN';
+  const d=$('date').value||'0000';
+  return `${STORE.notes}:${f}:${d}`;
+}
+function getNotes(){ try{return JSON.parse(localStorage.getItem(noteKey())||'[]');}catch{return[]} }
+function setNotes(a){ localStorage.setItem(noteKey(),JSON.stringify(a)); renderNotes(); }
+
+function addNote(){
+  const t=$('noteTime').value||new Date().toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+  const x=$('noteText').value.trim(); if(!x){ toast('Enter a note'); return; }
+  const list=getNotes(); list.unshift({t,x,at:new Date().toISOString()});
+  setNotes(list.slice(0,50)); $('noteText').value=''; toast('Note added');
+}
+function clearNotes(){ setNotes([]); }
+function removeNote(i){ const l=getNotes();l.splice(i,1);setNotes(l); }
+
+function renderNotes(){
+  const wrap=$('notesList');
+  const rows=getNotes();
+  if(!rows.length){ wrap.innerHTML='<div style="font-size:.82rem;color:var(--text-muted)">No notes yet — add gate changes, boarding times, etc.</div>'; return; }
+  wrap.innerHTML=rows.map((n,i)=>`
+    <div class="note-item">
+      <span class="note-time">${n.t}</span>
+      <span class="note-text">${n.x}</span>
+      <span class="note-del" onclick="removeNote(${i})" title="Remove">×</span>
+    </div>`).join('');
+}
+
+// ── Airline contacts panel ────────────────────────────────────────────────────
+function renderAirlineContacts(){
+  const panel=$('airlineContacts');
+  const topAirlines=['AA','DL','UA','WN','B6','AS','BA','LH','EK','QR','SQ','AC'];
+  panel.innerHTML=topAirlines.map(code=>{
+    const a=AIRLINES[code]; if(!a) return '';
+    return `<div style="border:1px solid var(--gray-border);border-radius:8px;padding:.5rem .65rem;font-size:.75rem">
+      <div style="font-weight:600;margin-bottom:2px">${a.emoji} ${a.name.split(' ').slice(0,2).join(' ')}</div>
+      <div style="color:var(--text-muted)">${a.phone}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Share & URL ───────────────────────────────────────────────────────────────
+function shareLink(){
+  const u=new URL(location.href);
+  ['flightNo','date','from','to'].forEach(id=>{const v=$(id).value;if(v)u.searchParams.set(id,v);});
+  navigator.clipboard?.writeText(u.toString()).then(()=>toast('🔗 Link copied!')).catch(()=>alert(u.toString()));
+}
+function applyFromURL(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('flightNo')) $('flightNo').value=p.get('flightNo');
+  if(p.get('date'))     $('date').value=p.get('date');
+  if(p.get('from'))     $('from').value=p.get('from');
+  if(p.get('to'))       $('to').value=p.get('to');
+  if(p.get('flightNo')) onFlightInput();
+  if(p.get('from'))     onAirportInput('from');
+  if(p.get('to'))       onAirportInput('to');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.saveFlight=saveFlight; window.removeFlight=removeFlight; window.clearFlights=clearFlights;
+window.loadFlight=loadFlight; window.addNote=addNote; window.clearNotes=clearNotes;
+window.removeNote=removeNote; window.shareLink=shareLink; window.setToday=setToday;
+window.onFlightInput=onFlightInput; window.onAirportInput=onAirportInput;
+
+function init(){
+  setToday();
+  applyFromURL();
+  renderSaved();
+  renderNotes();
+  renderAirlineContacts();
+  buildLinks();
+  updateVisual();
+}
+init();
+</script>
+</body>
+</html>

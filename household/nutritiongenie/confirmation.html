@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Confirmation | GenieSphere</title>
+  <link href="../gs.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="form-section">
+    <h2 style="text-align:center;">✅ Review Your Information</h2>
+    <div id="reviewSection"></div>
+    <div class="form-navigation" style="margin-top: 2rem; display: flex; justify-content: space-between;">
+      <button class="button" onclick="goBack()">⬅️ Back</button>
+      <button class="button" onclick="generateMealPlan()">🍽️ Generate My Meal Plan</button>
+      <button class="back-button" onclick="cancelForm()">❌ Cancel</button>
+    </div>
+  </div>
+
+  <script src="meal-plan-logic.js"></script>
+  <script>
+    function loadReviewData() {
+      const rawData = JSON.parse(localStorage.getItem('nutritionFormData'));
+      const data = {};
+      for (const [key, value] of Object.entries(rawData)) {
+        data[key] = Array.isArray(value) ? value.join(", ") : value;
+      }
+
+      const section = document.getElementById("reviewSection");
+      section.innerHTML = `
+        <h3>👤 Personal Information</h3>
+        <ul>
+          <li><strong>Name:</strong> ${data.name}</li>
+          <li><strong>Age Range:</strong> ${data.age_range}</li>
+          <li><strong>Gender:</strong> ${data.gender}</li>
+          <li><strong>Start Date:</strong> ${data.start_date}</li>
+          <li><strong>End Date:</strong> ${data.end_date}</li>
+        </ul>
+        <h3>💊 Health & Dietary Preferences</h3>
+        <ul>
+          <li><strong>Medical Conditions:</strong> ${data.medical}</li>
+          <li><strong>Allergies:</strong> ${data.allergies}</li>
+          <li><strong>Dietary Restrictions:</strong> ${data.diet}</li>
+          <li><strong>Nutritional Goals:</strong> ${data.goals}</li>
+        </ul>
+        <h3>🍽️ Meal Preferences</h3>
+        <ul>
+          <li><strong>Meals per Day:</strong> ${data.meals_per_day}</li>
+          <li><strong>Disliked Foods:</strong> ${data.disliked_foods}</li>
+          <li><strong>Cuisine Preferences:</strong> ${data.cuisine}</li>
+          <li><strong>Preferred Meal Types:</strong> ${data.meal_type}</li>
+        </ul>
+        <h3>👨‍🍳 Cooking & Lifestyle Habits</h3>
+        <ul>
+          <li><strong>Cooking Skill:</strong> ${data.cooking_skill}</li>
+          <li><strong>Kitchen Equipment:</strong> ${data.equipment}</li>
+        </ul>
+        <h3>🛒 Shopping & Budget</h3>
+        <ul>
+          <li><strong>Grocery Budget:</strong> $${data.grocery_budget}</li>
+          <li><strong>Pantry Staples:</strong> ${data.pantry}</li>
+        </ul>`;
+    }
+
+    function goBack() {
+      window.history.back();
+    }
+
+    function toArray(val) {
+      if (!val) return [];
+      return Array.isArray(val) ? val : [val];
+    }
+
+    
+    function cancelForm() {
+      localStorage.removeItem('nutritionFormData');
+      window.location.href = "nutrition-form.html";
+    }
+
+    window.onload = loadReviewData;
+  
+function generateMealPlan() {
+(async () => {
+  const formData = JSON.parse(localStorage.getItem('nutritionFormData'));
+
+  const spinnerOverlay = document.createElement('div');
+  spinnerOverlay.className = 'spinner-overlay';
+  spinnerOverlay.innerHTML = `
+    <div class="ai-spinner">
+      <div class="ai-spinner-core"></div>
+      <div class="ai-spinner-particle"></div>
+      <div class="ai-spinner-particle"></div>
+      <div class="ai-spinner-particle"></div>
+      <div class="ai-spinner-timer" id="timer">0</div>
+    </div>
+    <span class="spinner-text">Generating Meal Plan...</span>
+    <style>
+      .spinner-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .spinner-text {
+        color: white;
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-left: 1rem;
+      }
+      .ai-spinner {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .ai-spinner-core {
+        width: 20px;
+        height: 20px;
+        background: #00d4ff;
+        border-radius: 50%;
+        box-shadow: 0 0 15px #00d4ff, 0 0 30px #00d4ff;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+      .ai-spinner-particle {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: #00d4ff;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #00d4ff;
+      }
+      .ai-spinner-particle:nth-child(2) {
+        animation: orbit1 2s infinite linear;
+      }
+      .ai-spinner-particle:nth-child(3) {
+        animation: orbit2 2s infinite linear;
+      }
+      .ai-spinner-particle:nth-child(4) {
+        animation: orbit3 2s infinite linear;
+      }
+      .ai-spinner-timer {
+        position: absolute;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+      }
+      @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.7; }
+        50% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.7; }
+      }
+      @keyframes orbit1 {
+        0% { transform: rotate(0deg) translateX(25px) rotate(0deg); }
+        100% { transform: rotate(360deg) translateX(25px) rotate(-360deg); }
+      }
+      @keyframes orbit2 {
+        0% { transform: rotate(120deg) translateX(25px) rotate(0deg); }
+        100% { transform: rotate(480deg) translateX(25px) rotate(-360deg); }
+      }
+      @keyframes orbit3 {
+        0% { transform: rotate(240deg) translateX(25px) rotate(0deg); }
+        100% { transform: rotate(600deg) translateX(25px) rotate(-360deg); }
+      }
+    </style>
+  `;
+  document.body.appendChild(spinnerOverlay);
+
+  let seconds = 0;
+  const timerInterval = setInterval(() => {
+    seconds++;
+    document.getElementById("timer").textContent = seconds;
+  }, 1000);
+
+  const result = await generateMealPlanFromData({
+    personal_info: {
+      name: formData.name,
+      age_range: formData.age_range,
+      gender: formData.gender,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+    },
+    health_dietary_preferences: {
+      medical_conditions: Array.isArray(formData.medical) ? formData.medical : [formData.medical],
+      allergies: Array.isArray(formData.allergies) ? formData.allergies : [formData.allergies],
+      dietary_restrictions: Array.isArray(formData.diet) ? formData.diet : [formData.diet],
+      nutritional_goals: formData.goals,
+    },
+    meal_preferences: {
+      meals_per_day: formData.meals_per_day,
+      cuisine_preferences: Array.isArray(formData.cuisine) ? formData.cuisine : [formData.cuisine],
+      disliked_foods: formData.disliked_foods,
+      preferred_meal_types: Array.isArray(formData.meal_type) ? formData.meal_type : [formData.meal_type],
+    },
+    cooking_lifestyle_habits: {
+      cooking_skill_level: formData.cooking_skill,
+      available_kitchen_equipment: Array.isArray(formData.equipment) ? formData.equipment : [formData.equipment],
+    },
+    shopping_budget: {
+      weekly_grocery_budget: formData.grocery_budget,
+      pantry_staples_available: Array.isArray(formData.pantry) ? formData.pantry : [formData.pantry],
+    }
+  });
+
+  clearInterval(timerInterval);
+  spinnerOverlay.remove();
+  localStorage.setItem("mealPlanHtml", result);
+  localStorage.setItem("groceryList", JSON.stringify([]));
+  window.location.href = "meal-plan.html";
+})();
+}
+</script>

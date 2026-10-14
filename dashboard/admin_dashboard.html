@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GenieSphere Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root {
+      --primary: #2BFFD9;
+      --secondary: #7C3AED;
+      --background: #0F172A;
+      --text: #F8FAFC;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .user-info {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .user-info span {
+      margin-right: 1rem;
+    }
+
+    .user-info button {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .header {
+      text-align: center;
+      margin-top: 60px;
+    }
+
+    .header h1 {
+      font-size: 2.4rem;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 10px 0;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      color: #cbd5e1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin: 40px auto;
+      min-width: 1280px;
+      width: 80%;
+    }
+
+    @media (max-width: 1024px) {
+      .grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    a.card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 30px 20px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    a.card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 24px rgba(43, 255, 217, 0.15);
+    }
+
+    .card .icon {
+      font-size: 45px;
+      margin-bottom: 15px;
+    }
+
+    .card h2 {
+      margin: 10px 0 5px;
+      font-size: 1.4rem;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .card p {
+      margin: 4px 0;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+
+    .card .desc {
+      font-size: 1rem;
+      color: #e4e7ec;
+      margin-top: 8px;
+    }
+
+    .back-button {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: var(--background);
+      text-decoration: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 1rem;
+      font-weight: 600;
+      font-size: 1rem;
+      margin: 40px 0;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+
+    .back-button:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+    
+    body.invisible {
+      visibility: hidden;
+    }
+
+    .section-divider {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 30px 0 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      text-align: center;
+      flex-wrap: wrap;
+      line-height: 1.4;
+    }
+
+    .section-divider::before,
+    .section-divider::after {
+      content: "";
+      flex: 1 1 40px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #94a3b8, transparent);
+      margin: 0 10px;
+      opacity: 0.4;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 480px) {
+      .section-divider {
+        font-size: 0.9rem;
+        flex-direction: row;
+      }
+    }
+
+    /* Genie Logo with Title */
+    .genie-logo-header {
+      vertical-align: middle;
+      width: 85px;
+      height: 85px;
+      margin-right: 20px;
+      border-radius: 50%;
+      box-shadow:
+        0 0 30px rgba(43, 255, 217, 0.6),
+        0 0 60px rgba(124, 58, 237, 0.3);
+      object-fit: cover;
+    }
+
+
+</style>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  const supabase = createClient('https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+
+    document.body.classList.add("invisible"); // Hide page initially
+
+  async function enforceAdminAccess() {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (!user || userError) {
+      // No user session, redirect to login
+      window.location.href = "../onboarding/login.html";
+      return;
+    }
+
+    const { data: prefs, error } = await supabase
+      .from('user_preferences')
+      .select('role')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error || !prefs || prefs.role !== 'admin') {
+      alert("Access denied. Admins only.");
+      window.location.href = "../index.html";
+      return;
+    }
+
+    // Passed all checks – show user info and page
+    const bar = document.getElementById("user-bar");
+    if (bar) {
+      bar.innerHTML = `<span>User: ${user.email}</span><button onclick="logout()">Logout</button>`;
+    }
+
+    document.body.classList.remove("invisible"); // 👈 Show page only if valid
+  }
+
+  window.logout = async function () {
+    await supabase.auth.signOut();
+    window.location.href = "../onboarding/login.html";
+  }
+
+  enforceAdminAccess();
+</script>
+
+</head>
+<body>
+<div id="user-bar" class="user-info"></div>
+<div class="header">
+<h1><img src="/shared/assets/logo/genie-logo-tran.png" alt="GenieSphere Logo" class="genie-logo-header" />GenieSphere</h1>
+<p>Automate your routines, simplify operations, and unleash AI to do more with less—at home and in business.</p>
+</div>
+<div class="grid">
+  <!-- Divider -->
+  <div class="section-divider">🛠️ AI Categories</div>
+  <!-- Main Categories -->
+  <a class="card" href="personal.html">
+    <div class="icon">🏡</div>
+    <h2>Personal</h2>
+    <p class="desc">Manage meals, bills, kids’ education, and daily routines to save time and reduce stress.</p>
+  </a>
+
+  <a class="card" href="business.html">
+    <div class="icon">🧑‍💼</div>
+    <h2>Business</h2>
+    <p class="desc">Automate salon, catering, payroll, marketing, and customer service tasks to save staff costs.</p>
+  </a>
+
+  <a class="card" href="leisure.html">
+    <div class="icon">✈️</div>
+    <h2>Leisure</h2>
+    <p class="desc">Plan vacations, organize activities, and enjoy smart lifestyle tools built for busy lives.</p>
+  </a>
+
+  <a class="card" href="investment.html">
+    <div class="icon">📈</div>
+    <h2>Investment</h2>
+    <p class="desc">Track bills, retirement goals, and stock opportunities using AI-powered finance tools.</p>
+  </a>
+
+  <!-- Divider -->
+  <div class="section-divider">🛠️ Admin Tools</div>
+
+  <!-- Admin Tools -->
+  <a class="card" href="manage-agents.html">
+    <div class="icon">🧠</div>
+    <h2>Manage AI Agents</h2>
+    <p class="desc">View and edit Ai agents</p>
+  </a>
+
+  <a class="card" href="manage-agent-tasks.html">
+    <div class="icon">🤖</div>
+    <h2>Manage AI Agent Tasks</h2>
+    <p class="desc">View and edit AI agent tasks.</p>
+  </a>
+
+  <a class="card" href="admin_user_dashboard.html">
+    <div class="icon">👥</div>
+    <h2>Manage Users</h2>
+    <p class="desc">View and edit user roles, agents, and business links.</p>
+  </a>
+
+  <a class="card" href="user_management.html">
+    <div class="icon">🧑‍💼</div>
+    <h2>Manage My Profile</h2>
+    <p class="desc">Add, edit, and view my profile.</p>
+  </a>
+
+  <a class="card" href="token-management.html">
+    <div class="icon">🪙</div>
+    <h2>Tokenized GenieSphere</h2>
+    <p class="desc">Manage usage tokens, track redemptions, and power access across all agents.</p>
+  </a>
+
+  <a class="card" href="affiliate-links.html">
+    <div class="icon">🔗</div>
+    <h2>Manage Affiliate Links</h2>
+    <p class="desc">Add or update tracking links for travel, food, tools, etc.</p>
+  </a>
+</div>
+
+<a class="back-button" href="../index.html">⬅️ Back to Home</a>
+
+<footer style="margin-top: 2rem; text-align: center; font-size: 0.875rem; color: #94A3B8;">
+  <div style="margin-bottom: 1rem; line-height: 2;">
+    <!-- Legal -->
+    <a href="privacy.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Privacy Policy</a> |
+    <a href="terms_of_services.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Terms of Service</a> |
+    <a href="terms_token_use.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Token Use Terms</a> |
+
+    <!-- Support -->
+    <a href="user_guide.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">User Guide</a> |
+    <a href="support_help.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Support & Help</a> |
+    <a href="contact.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Contact</a> |
+
+    <!-- Access & Monetization -->
+    <a href="pricing.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Pricing & Plans</a> |
+    <a href="referral_program.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Referral Program</a> |
+
+    <!-- Community & Feedback -->
+    <a href="community_hub.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Community Hub</a> |
+    <a href="feedback.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Feedback</a> |
+    <a href="newsletter.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Newsletter Signup</a> |
+
+    <!-- Roadmap & Status -->
+    <a href="changelog.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Changelog</a> |
+    <a href="roadmap.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Roadmap</a> |
+    <a href="coming_soon.html" style="color: #94A3B8; text-decoration: none; margin: 0 1rem;">Coming Soon</a>
+  </div>
+  <div>
+    © 2025 GenieSphere. All rights reserved.
+  </div>
+</footer>
+
+
+</body>
+</html>

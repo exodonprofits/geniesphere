@@ -1,0 +1,147 @@
+{
+  "name": "GenieSphere - ESPN Games List + Live Proxy (Squares)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "sb-espn-games",
+        "httpMethod": "GET",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "Webhook_Games",
+      "name": "Webhook - Games List (GET)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 180]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "options": {
+          "timeout": 20000,
+          "followRedirect": true
+        }
+      },
+      "id": "HTTP_ESPN_Games",
+      "name": "Fetch ESPN Scoreboard (for list)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 180]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json;\nconst events = Array.isArray(body?.events) ? body.events : [];\n\nfunction mapEvent(e){\n  const comp = e?.competitions?.[0];\n  const competitors = comp?.competitors || [];\n  const home = competitors.find(c => c?.homeAway === 'home');\n  const away = competitors.find(c => c?.homeAway === 'away');\n\n  return {\n    eventId: String(e?.id || ''),\n    name: e?.name || e?.shortName || 'Game',\n    shortName: e?.shortName || e?.name || 'Game',\n    startTime: e?.date || null,\n    status: e?.status?.type?.state || 'unknown',\n    homeTeam: home?.team?.displayName || home?.team?.name || 'Home',\n    awayTeam: away?.team?.displayName || away?.team?.name || 'Away'\n  };\n}\n\nconst games = events.map(mapEvent).filter(g => g.eventId);\n\n// Sort: in-progress first, then upcoming, then finished; then by time\nconst rank = (s) => (s === 'in' ? 0 : s === 'pre' ? 1 : s === 'post' ? 2 : 3);\ngames.sort((a,b)=> rank(a.status) - rank(b.status) || (Date.parse(a.startTime||'') - Date.parse(b.startTime||'')));\n\nreturn [{ games }];"
+      },
+      "id": "Parse_Games",
+      "name": "Parse Games List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 180]
+    },
+    {
+      "parameters": {
+        "path": "sb-espn-live",
+        "httpMethod": "GET",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "Webhook_Live",
+      "name": "Webhook - Live (GET)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 420]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "options": {
+          "timeout": 20000,
+          "followRedirect": true
+        }
+      },
+      "id": "HTTP_ESPN_Live",
+      "name": "Fetch ESPN Scoreboard (for live)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 420]
+    },
+    {
+      "parameters": {
+        "jsCode": "function pickFallback(events) {\n  if (!Array.isArray(events) || events.length === 0) return null;\n\n  // Prefer Super Bowl wording, then in-progress, then pre\n  const score = (e) => {\n    const status = e?.status?.type?.state || '';\n    const name = (e?.name || '').toLowerCase();\n    const shortName = (e?.shortName || '').toLowerCase();\n\n    const isSB = name.includes('super bowl') || shortName.includes('super bowl');\n    let s = isSB ? 1000 : 0;\n\n    if (status === 'in') s += 500;\n    if (status === 'pre') s += 200;\n    if (status === 'post') s += 50;\n\n    const start = Date.parse(e?.date || '') || 0;\n    s += Math.floor(start / 1e9);\n\n    return s;\n  };\n\n  return events.slice().sort((a,b)=> score(b) - score(a))[0];\n}\n\nconst q = $json.query || {};\nconst wantedId = (q.eventId || '').toString().trim();\n\nconst body = $items('Fetch ESPN Scoreboard (for live)')[0].json;\nconst events = Array.isArray(body?.events) ? body.events : [];\n\nlet game = null;\nif (wantedId) {\n  game = events.find(e => String(e?.id || '') === wantedId) || null;\n}\nif (!game) {\n  game = pickFallback(events);\n}\nif (!game) return [{ error: 'NO_GAMES', message: 'No games found.' }];\n\nconst comp = game?.competitions?.[0];\nconst competitors = comp?.competitors || [];\nconst home = competitors.find(c => c?.homeAway === 'home');\nconst away = competitors.find(c => c?.homeAway === 'away');\n\nconst homeName = home?.team?.displayName || home?.team?.name || 'Home';\nconst awayName = away?.team?.displayName || away?.team?.name || 'Away';\n\nconst homeScore = parseInt(home?.score ?? '0', 10);\nconst awayScore = parseInt(away?.score ?? '0', 10);\n\nconst statusState = game?.status?.type?.state || 'unknown';\nconst quarter = game?.status?.period ?? '-';\nconst clock = game?.status?.displayClock ?? '--:--';\n\nreturn [{\n  eventId: String(game?.id || ''),\n  leftTeam: homeName,\n  topTeam: awayName,\n  leftScore: Number.isFinite(homeScore) ? homeScore : 0,\n  topScore: Number.isFinite(awayScore) ? awayScore : 0,\n  quarter,\n  clock,\n  status: statusState,\n  possession: '--'\n}];"
+      },
+      "id": "Parse_Live",
+      "name": "Parse Live (supports eventId)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 420]
+    }
+  ],
+  "connections": {
+    "Webhook - Games List (GET)": {
+      "main": [
+        [
+          {
+            "node": "Fetch ESPN Scoreboard (for list)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch ESPN Scoreboard (for list)": {
+      "main": [
+        [
+          {
+            "node": "Parse Games List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Live (GET)": {
+      "main": [
+        [
+          {
+            "node": "Fetch ESPN Scoreboard (for live)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch ESPN Scoreboard (for live)": {
+      "main": [
+        [
+          {
+            "node": "Parse Live (supports eventId)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  ],
+  "active": false,
+  "settings": {
+    "executionTimeout": 60,
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  }
+}

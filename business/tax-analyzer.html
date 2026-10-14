@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>🧾 Tax Analyzer | GenieSphere</title>
+  <meta name="description" content="Review personal or business taxes before filing. Find safe deductions, catch common misses, and reduce red flags."/>
+  <meta name="gs-config" content="/shared/config.json" />
+
+  <style>
+    /* =========================================================
+       GenieSphere Theme System (copied from household.html)
+       - Toggle via 🎨 Appearance (saved in localStorage)
+       ========================================================= */
+    :root{
+      --ring: rgba(76,110,245,.25);
+      --container: 1440px;
+      --radius: 7px;
+      --radius-lg: 14px;
+      --btn-radius: 999px;
+
+      --space-1: 6px;
+      --space-2: 10px;
+      --space-3: 14px;
+      --space-4: 18px;
+      --space-5: 24px;
+      --space-6: 32px;
+
+      --shadow: 0 16px 38px rgba(15,23,42,.16);
+      --shadow-soft: 0 10px 24px rgba(15,23,42,.10);
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+
+    /* Theme A: Calm Future (default) */
+    body.theme-calm{
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-2: #f1f4ff;
+      --text: #111827;
+      --muted: #4b5563;
+
+      --primary: #4c6ef5;
+      --accent: #22c55e;
+
+      --border: rgba(148,163,184,.70);
+      --border-strong: rgba(148,163,184,.92);
+
+      --shadow: 0 18px 38px rgba(15,23,42,.14);
+      --shadow-soft: 0 10px 26px rgba(15,23,42,.10);
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+
+    /* Theme B: Soft Futuristic */
+    body.theme-future{
+      --bg: #0f172a;
+      --panel: #111c36;
+      --panel-2: #162447;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+
+      --primary: #6366f1;
+      --accent: #22d3ee;
+
+      --border: rgba(71,85,105,.65);
+      --border-strong: rgba(71,85,105,.95);
+
+      --shadow: 0 18px 44px rgba(0,0,0,.52);
+      --shadow-soft: 0 10px 26px rgba(0,0,0,.34);
+      --focus: 0 0 0 4px rgba(34,211,238,.16);
+    }
+
+    /* Theme C: Nature + Tech */
+    body.theme-nature{
+      --bg: #f6f9f7;
+      --panel: #ffffff;
+      --panel-2: #eef5f1;
+      --text: #0f172a;
+      --muted: #475569;
+
+      --primary: #16a34a;
+      --accent: #38bdf8;
+
+      --border: rgba(148,163,184,.70);
+      --border-strong: rgba(148,163,184,.92);
+
+      --shadow: 0 18px 38px rgba(15,23,42,.12);
+      --shadow-soft: 0 10px 26px rgba(15,23,42,.09);
+      --focus: 0 0 0 4px rgba(22,163,74,.16);
+    }
+
+    /* Theme D: Pro Dark */
+    body.theme-dark{
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --panel-2: #0e1626;
+      --text: #e9f0ff;
+      --muted: #a9b6d9;
+
+      --primary: #4c6ef5;
+      --accent: #3ee1a1;
+
+      --border: rgba(120,155,255,.22);
+      --border-strong: rgba(120,155,255,.42);
+
+      --shadow: 0 18px 44px rgba(0,0,0,.50);
+      --shadow-soft: 0 10px 26px rgba(0,0,0,.30);
+      --focus: 0 0 0 4px rgba(76,110,245,.22);
+    }
+
+    /* Page variable mapping */
+    body{
+      --card: var(--panel);
+      --card-hover: var(--panel-2);
+      --accent-2: var(--primary);
+      --brand-blue: var(--primary);
+      --shadow: var(--shadow-soft);
+      --gap: 18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background: var(--bg);
+      color:var(--text);
+      font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+    }
+    .sr-only{
+      position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+      overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+    }
+    .container{max-width:var(--container);margin:0 auto;padding:24px}
+
+    /* ===== Header (same UX behavior as household.html) ===== */
+    .site-header{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background:var(--panel);
+      border-bottom:1px solid var(--border);
+      box-shadow:0 8px 22px rgba(0,0,0,.25);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+    .site-header-inner{
+      max-width:var(--container);
+      margin:0 auto;
+      padding:16px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--text);
+      text-decoration:none;
+      font-weight:700;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+      box-shadow:0 0 0 3px var(--ring),0 8px 24px rgba(62,225,161,.35);
+      object-fit:cover;
+    }
+    .menu{
+      display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+      font-size:14px;
+    }
+    .menu a{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 2px;
+      text-decoration:none;color:var(--muted);
+      font-weight:500;
+      border-bottom:2px solid transparent;
+      transition:color .15s ease, border-bottom-color .15s ease;
+    }
+    .menu a:hover{ color:var(--text); border-bottom-color:var(--brand-blue); }
+    .menu a.active{ color:var(--text); border-bottom-color:var(--accent); font-weight:600; }
+    .menu a.ghost{ color:var(--muted); }
+
+    .user-menu{ position:relative; display:flex; align-items:center; margin-left:auto; }
+    .user-menu-toggle{
+      display:flex;align-items:center;gap:6px;
+      padding:6px 12px;border-radius:999px;
+      border:1px solid var(--border-strong);
+      background:var(--panel-2);
+      color:var(--text);
+      font-size:14px;
+      cursor:pointer;
+    }
+    .user-menu-toggle:hover{ border-color:var(--accent); }
+    .user-menu-dropdown{
+      position:absolute; right:0; top:calc(100% + 6px);
+      min-width:240px;
+      background:var(--panel-2);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      box-shadow:0 14px 34px rgba(0,0,0,.55);
+      padding:6px 0;
+      display:none;
+      z-index:1002;
+      margin-right:4px;
+    }
+    .user-menu-dropdown a,
+    .user-menu-dropdown button{
+      display:block;width:100%;
+      text-align:left;
+      padding:8px 14px;
+      background:none;border:none;
+      color:var(--text);
+      font-size:14px;
+      text-decoration:none;
+      cursor:pointer;
+    }
+    .user-menu-dropdown a:hover,
+    .user-menu-dropdown button:hover{ background:var(--panel); }
+    .user-menu-divider{ height:1px; margin:4px 0; background:rgba(148,163,184,.4); }
+    .dropdown-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      opacity:.7;
+      padding:4px 14px 2px;
+    }
+    .auth-only{}
+
+    .hamburger{ display:none; }
+    .theme-gear{
+      display:none;
+      align-items:center;justify-content:center;
+      width:38px;height:38px;border-radius:999px;
+      border:1px solid var(--border-strong);
+      background:var(--panel-2);color:var(--text);
+      cursor:pointer;
+    }
+    .theme-gear:hover{ border-color: var(--accent); }
+
+    @media(max-width:720px){
+      /* Mobile behavior (matches household.html):
+         - Hide top header links/buttons
+         - Username dropdown becomes main navigation
+         - Bottom tabs for 4 main areas
+      */
+      .menu{display:none}
+      .hamburger{display:none}
+      .drawer{display:none}
+      .theme-gear{display:none}
+      .site-header-inner{padding:10px 12px}
+      .user-menu-toggle{padding-inline:10px;}
+    }
+
+    /* ===== Hero ===== */
+    .hero{ text-align:center; padding:16px 0 8px; }
+    .title{ font-size:clamp(26px,4vw,40px); margin:0 0 6px; font-weight:900; }
+    .subtitle{ color:var(--muted); margin:0 auto 18px; max-width:920px; font-size:15px; }
+
+    /* ===== Trust strip ===== */
+    .trust{
+      max-width:var(--container);
+      margin:0 auto 16px;
+      border-radius:var(--radius);
+      border:1px dashed var(--border-strong);
+      background:rgba(12,19,35,.95);
+      padding:10px 12px;
+      font-size:13px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:center;
+    }
+    .trust strong{ color:var(--text); }
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      background:var(--panel-2);
+      border:1px solid var(--border);
+      color:var(--text);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    /* ===== Layout ===== */
+    .layout{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    /* ===== Card ===== */
+    .card{
+      background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.90));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card-head{
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom:1px solid var(--border);
+    }
+    .card-title{
+      display:flex;align-items:center;gap:10px;
+      font-weight:900;
+      font-size:15px;
+    }
+    .card-sub{ color:var(--muted); font-size:13px; }
+    .card-body{ padding:14px; }
+
+    /* ===== Stepper ===== */
+    .stepper{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .step{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--muted);
+      font-size:12px;
+      font-weight:900;
+      user-select:none;
+    }
+    .step.active{
+      color:var(--text);
+      border-color:rgba(76,110,245,.55);
+      box-shadow:var(--focus);
+    }
+    .step.done{
+      color:var(--text);
+      border-color:rgba(62,225,161,.45);
+    }
+
+    /* ===== Form controls ===== */
+    .grid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    @media(max-width:640px){ .grid2{ grid-template-columns:1fr; } }
+
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    .label{
+      font-weight:900;
+      font-size:13px;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .help{ font-size:12px; color:var(--muted); margin-top:-2px; }
+
+    .input, .select, .textarea{
+      width:100%;
+      background:var(--panel-2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      color:var(--text);
+      font-size:14px;
+      outline:none;
+    }
+    .textarea{ min-height:92px; resize:vertical; }
+    .input:focus, .select:focus, .textarea:focus{
+      border-color:rgba(74,163,255,.45);
+      box-shadow:0 0 0 3px rgba(74,163,255,.15);
+    }
+
+    .radio-row, .check-row{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-top:6px;
+    }
+    @media(max-width:640px){
+      .radio-row, .check-row{ grid-template-columns: 1fr; }
+    }
+    .choice{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:10px 12px;
+      border-radius:12px;
+      background:var(--panel-2);
+      border:1px solid var(--border);
+      cursor:pointer;
+      user-select:none;
+    }
+    .choice:hover{ border-color: rgba(76,110,245,.55); }
+    .choice input{ margin-top:3px; }
+    .choice strong{ display:block; font-size:13px; }
+    .choice span{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+
+    .seg{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:6px;
+    }
+    .seg button{
+      padding:9px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:900;
+      font-size:13px;
+    }
+    .seg button.active{
+      border-color: rgba(76,110,245,.65);
+      box-shadow: var(--focus);
+    }
+
+    /* ===== Buttons ===== */
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 16px;
+      border-radius:var(--btn-radius);
+      text-decoration:none;
+      font-weight:900;
+      border:0;
+      cursor:pointer;
+      font-size:14px;
+      white-space:nowrap;
+      background:var(--accent-2);
+      color:#03101f;
+      box-shadow:0 8px 18px rgba(74,163,255,.25);
+    }
+    .btn.primary{
+      background:var(--accent);
+      color:#04131a;
+      box-shadow:0 8px 18px rgba(62,225,161,.25);
+    }
+    .btn.ghost{
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:none;
+    }
+    .btn:hover{ filter:brightness(1.05); }
+    .btn-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    /* ===== Review sidebar ===== */
+    .side-list{ margin:0; padding-left:18px; color:var(--muted); font-size:13px; }
+    .side-box{
+      margin-top:12px;
+      background:var(--panel-2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
+    }
+    .side-box h4{
+      margin:0 0 8px;
+      font-size:13px;
+      font-weight:900;
+      color:var(--text);
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      font-size:13px;
+      color:var(--muted);
+      margin:6px 0;
+    }
+    .kv strong{ color:var(--text); }
+
+    /* ===== Step panels ===== */
+    .panel{ display:none; }
+    .panel.active{ display:block; }
+
+    /* ===== Footer (same as household.html; hidden on small screens) ===== */
+    .site-footer{
+      margin-top:30px;
+      padding:22px 0 34px;
+      border-top:1px solid var(--border);
+      background:rgba(10,16,28,.9);
+      color:var(--muted);
+    }
+    .site-footer-inner{ max-width:var(--container); margin:0 auto; padding:0 24px; }
+    .footer-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+    .footer-col h4{ margin:0 0 10px; color:var(--text); font-size:14px; }
+    .footer-col a{ display:block; color:var(--muted); text-decoration:none; margin:6px 0; font-size:13px; }
+    .footer-col a:hover{ color:var(--text); }
+    .footer-bottom{
+      margin-top:18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      font-size:12px;
+    }
+    .social{ display:flex; gap:10px; }
+    .social a{
+      width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+      border-radius:999px;border:1px solid var(--border);background:var(--panel-2);
+      color:var(--text);text-decoration:none;
+    }
+    @media (max-width: 600px){
+      .site-footer{ display:none !important; }
+    }
+
+    /* ===== Mobile Bottom Nav (4 tabs) ===== */
+    .mobile-nav{
+      position:fixed; left:0; right:0; bottom:0;
+      display:none;
+      z-index:1200;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      background:var(--panel);
+      border-top:1px solid var(--border);
+      box-shadow:0 -10px 24px rgba(0,0,0,.18);
+    }
+    .mobile-nav-inner{
+      max-width:var(--container);
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+    }
+    .mnav{
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:4px;
+      padding:10px 8px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--muted);
+      font-weight:900;
+      font-size:11px;
+      text-decoration:none;
+    }
+    .mnav .ico{ font-size:16px; line-height:1; }
+    .mnav.active{
+      color:var(--text);
+      border-color:rgba(76,110,245,.55);
+      box-shadow:var(--focus);
+    }
+    .mobile-pad{ display:none; height:86px; }
+    @media (max-width: 860px){
+      .mobile-nav{ display:block; }
+      .mobile-pad{ display:block; }
+      main.page{ padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+    }
+
+    /* Theme modal */
+    .theme-overlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.62);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:2000;
+      padding:18px;
+    }
+    .theme-modal{
+      width:min(720px, 96vw);
+      border-radius:var(--radius-lg);
+      border:1px solid var(--border);
+      background:var(--panel);
+      box-shadow:0 30px 90px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .theme-modal-header{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .theme-modal-title{ display:flex; flex-direction:column; gap:2px; }
+    .theme-modal-title strong{ font-size:15px; }
+    .theme-modal-title span{ font-size:13px; color:var(--muted); }
+    .theme-close{
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--text);
+      border-radius:999px;
+      padding:8px 10px;
+      cursor:pointer;
+    }
+    .theme-close:hover{ border-color: var(--accent); }
+    .theme-modal-body{ padding: 14px; }
+    .theme-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    @media (max-width: 560px){ .theme-grid{ grid-template-columns:1fr; } }
+    .theme-option{
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--text);
+      padding: 12px;
+      cursor:pointer;
+      text-align:left;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .theme-option:hover{ border-color: rgba(76,110,245,.55); }
+    .theme-option.selected{
+      border-color: rgba(76,110,245,.85);
+      box-shadow: var(--focus);
+    }
+    .theme-option-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .theme-option-name{ margin:0; font-weight:900; font-size:14px; }
+    .theme-option-desc{ margin:0; font-size:12px; color:var(--muted); }
+    .theme-option-tag{
+      font-size:11px;
+      font-weight:900;
+      padding:4px 8px;
+      background: rgba(76,110,245,.16);
+      border:1px solid rgba(76,110,245,.35);
+      border-radius: 999px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .theme-modal-footer{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+
+<body class="theme-dark">
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img alt="GenieSphere" class="logo" src="../genie-logo.png"/>
+        <strong>GenieSphere</strong>
+      </a>
+
+      <nav aria-label="Primary" class="menu">
+        <a class="ghost" href="../dashboard/household.html">🏠 Household</a>
+        <a class="active" href="../dashboard/business.html">🏢 Business</a>
+        <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+        <a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+      </nav>
+
+      <button class="theme-gear" id="openThemeBtn" type="button" aria-label="Open appearance settings">⚙️</button>
+
+      <!-- User menu / login dropdown -->
+      <div class="user-menu" id="user-menu">
+        <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle">
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+
+        <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <div class="dropdown-label">Areas</div>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/household.html">🏠 Household</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/business.html">🏢 Business</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/investment.html">📈 Investment</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/leisure.html">🏝️ Leisure</button>
+
+          <div class="user-menu-divider"></div>
+          <div class="dropdown-label">Account</div>
+          <button class="dropdown-nav" data-target="../onboarding/user_profile_form.html" type="button">👤 User profile</button>
+          <button class="dropdown-nav" data-target="../onboarding/display_settings.html" type="button">⚙️ Settings</button>
+          <button id="dropdown-open-appearance" type="button">🎨 Appearance</button>
+          <div class="user-menu-divider"></div>
+          <button id="user-auth-action" type="button">Log in / Sign up</button>
+          <button class="auth-only" id="user-signout-btn" type="button">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <!-- Hero -->
+      <section class="hero">
+        <h1 class="title">🧾 Tax Analyzer</h1>
+        <p class="subtitle">
+          Review your <strong>personal</strong> or <strong>business</strong> taxes before you file.
+          GenieSphere helps you find safe deductions, catch common misses, and reduce “red flag” risk — with clear next steps.
+        </p>
+      </section>
+
+      <div class="trust" role="note" aria-label="Tax Analyzer safety notes">
+        <span class="pill">🛡️ <strong>Defensible-first</strong> recommendations</span>
+        <span class="pill">🧾 Tracks “why” for deductions</span>
+        <span class="pill">🚫 No shady loopholes</span>
+        <span class="pill">👀 Red-flag awareness (audit-bait protection)</span>
+      </div>
+
+      <section class="layout" aria-label="Tax Analyzer form and review">
+        <!-- Left: Wizard -->
+        <div class="card" id="wizardCard">
+          <div class="card-head">
+            <div>
+              <div class="card-title">🧠 Smart Pre-Filing Review</div>
+              <div class="card-sub" id="stepSubtitle">Step 1 of 4 • Choose Personal or Business</div>
+            </div>
+            <div class="stepper" aria-label="Steps">
+              <div class="step active" data-step="1">1</div>
+              <div class="step" data-step="2">2</div>
+              <div class="step" data-step="3">3</div>
+              <div class="step" data-step="4">4</div>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <!-- STEP 1 -->
+            <div class="panel active" data-panel="1">
+              <div class="field">
+                <div class="label">🧭 What are you reviewing today?</div>
+                <div class="help">Pick one — we’ll tailor the questions so the user types as little as possible.</div>
+
+                <div class="radio-row" role="radiogroup" aria-label="Tax type">
+                  <label class="choice">
+                    <input type="radio" name="tax_type" value="personal"/>
+                    <div>
+                      <strong>👤 Personal Tax</strong>
+                      <span>W-2, 1099, investments, rentals (personal filings)</span>
+                    </div>
+                  </label>
+
+                  <label class="choice">
+                    <input type="radio" name="tax_type" value="business"/>
+                    <div>
+                      <strong>🏢 Business Tax</strong>
+                      <span>LLC / S-Corp / Schedule C and business expenses</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <div class="label">📅 Tax year</div>
+                <div class="help">Example: 2025 (most people are filing last year’s return).</div>
+                <select class="select" id="taxYear">
+                  <option value="2025" selected>2025</option>
+                  <option value="2024">2024</option>
+                  <option value="2026">2026</option>
+                </select>
+              </div>
+
+              <div class="btn-row">
+                <span></span>
+                <button class="btn primary" type="button" id="next1">Next ➜</button>
+              </div>
+            </div>
+
+            <!-- STEP 2: Core info -->
+            <div class="panel" data-panel="2">
+              <div id="personalCore" style="display:none;">
+                <div class="grid2">
+                  <div class="field">
+                    <div class="label">🧑‍👩‍👧 Filing status</div>
+                    <select class="select" id="filingStatus">
+                      <option value="">Select…</option>
+                      <option>Single</option>
+                      <option>Married filing jointly</option>
+                      <option>Married filing separately</option>
+                      <option>Head of household</option>
+                      <option>Qualifying surviving spouse</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <div class="label">📍 State</div>
+                    <input class="input" id="state" placeholder="e.g., IL" autocomplete="address-level1"/>
+                  </div>
+                  <div class="field">
+                    <div class="label">👶 Dependents</div>
+                    <input class="input" id="dependents" type="number" min="0" placeholder="0"/>
+                    <div class="help">Just a number is enough.</div>
+                  </div>
+                  <div class="field">
+                    <div class="label">🧾 Primary income type</div>
+                    <select class="select" id="personalIncomeType">
+                      <option value="">Select…</option>
+                      <option>W-2 only</option>
+                      <option>W-2 + 1099</option>
+                      <option>1099 / self-employed</option>
+                      <option>Rental income</option>
+                      <option>Investments / trading</option>
+                      <option>Mixed (multiple sources)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div id="businessCore" style="display:none;">
+                <div class="grid2">
+                  <div class="field">
+                    <div class="label">🏷️ Entity type</div>
+                    <select class="select" id="entityType">
+                      <option value="">Select…</option>
+                      <option>Single-member LLC</option>
+                      <option>Multi-member LLC</option>
+                      <option>S-Corp</option>
+                      <option>Schedule C (sole prop)</option>
+                      <option>Partnership</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <div class="label">🧰 Industry</div>
+                    <input class="input" id="industry" placeholder="e.g., Salon, Real Estate, Consulting"/>
+                  </div>
+                  <div class="field">
+                    <div class="label">💵 Revenue range</div>
+                    <select class="select" id="revenueRange">
+                      <option value="">Select…</option>
+                      <option>&lt; $50k</option>
+                      <option>$50k – $150k</option>
+                      <option>$150k – $500k</option>
+                      <option>$500k – $1M</option>
+                      <option>$1M+</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <div class="label">🧾 Bookkeeping quality</div>
+                    <select class="select" id="booksQuality">
+                      <option value="">Select…</option>
+                      <option>Clean & reconciled</option>
+                      <option>Some gaps</option>
+                      <option>Messy / unsure</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="side-box" id="scorpBox" style="display:none;">
+                  <h4>⚠️ S-Corp checkpoint</h4>
+                  <div class="help">These help avoid common red flags (owner comp / benefits / distributions).</div>
+                  <div class="grid2" style="margin-top:10px;">
+                    <div class="field">
+                      <div class="label">💼 Owner W-2 salary (annual)</div>
+                      <input class="input" id="ownerSalary" placeholder="e.g., 80000"/>
+                    </div>
+                    <div class="field">
+                      <div class="label">💸 Owner distributions (annual)</div>
+                      <input class="input" id="ownerDistro" placeholder="e.g., 60000"/>
+                    </div>
+                    <div class="field">
+                      <div class="label">🩺 Health insurance paid by company?</div>
+                      <select class="select" id="scorpHealth">
+                        <option value="">Select…</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                        <option>Not sure</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <div class="label">🧓 Retirement contributions?</div>
+                      <select class="select" id="scorpRetire">
+                        <option value="">Select…</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                        <option>Not sure</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn ghost" type="button" data-back>⬅️ Back</button>
+                <button class="btn primary" type="button" id="next2">Next ➜</button>
+              </div>
+            </div>
+
+            <!-- STEP 3: Deductions -->
+            <div class="panel" data-panel="3">
+              <div id="personalDeductions" style="display:none;">
+                <div class="field">
+                  <div class="label">✅ Common personal deductions (check all that apply)</div>
+                  <div class="help">Quick checks only. GenieSphere will ask for details later if needed.</div>
+                  <div class="check-row">
+                    <label class="choice"><input type="checkbox" value="hsa"/><div><strong>💚 HSA contributions</strong><span>Health Savings Account (if eligible)</span></div></label>
+                    <label class="choice"><input type="checkbox" value="ira"/><div><strong>🏦 IRA contributions</strong><span>Traditional IRA (possibly deductible)</span></div></label>
+                    <label class="choice"><input type="checkbox" value="student_loan"/><div><strong>🎓 Student loan interest</strong><span>If applicable</span></div></label>
+                    <label class="choice"><input type="checkbox" value="charity"/><div><strong>❤️ Charity donations</strong><span>Cash + non-cash</span></div></label>
+                    <label class="choice"><input type="checkbox" value="childcare"/><div><strong>👶 Childcare / dependent care</strong><span>Potential credits</span></div></label>
+                    <label class="choice"><input type="checkbox" value="education"/><div><strong>📚 Education expenses</strong><span>Potential credits</span></div></label>
+                    <label class="choice"><input type="checkbox" value="medical"/><div><strong>🩺 Medical expenses</strong><span>Usually itemized threshold applies</span></div></label>
+                    <label class="choice"><input type="checkbox" value="rental"/><div><strong>🏠 Rentals</strong><span>Depreciation, repairs, mileage, etc.</span></div></label>
+                    <label class="choice"><input type="checkbox" value="trading"/><div><strong>📈 Investing / trading</strong><span>Wash sales, 1099-B, MTM considerations</span></div></label>
+                    <label class="choice"><input type="checkbox" value="other"/><div><strong>➕ Something else</strong><span>We’ll capture it in notes</span></div></label>
+                  </div>
+                </div>
+
+                <div class="field" style="margin-top:12px;">
+                  <div class="label">📝 Notes (optional)</div>
+                  <textarea class="textarea" id="personalNotes" placeholder="Example: “I sold options weekly”, “rental repairs were big this year”, “moved states mid-year”…"></textarea>
+                </div>
+              </div>
+
+              <div id="businessDeductions" style="display:none;">
+                <div class="field">
+                  <div class="label">🧾 Business expense categories (check what you have)</div>
+                  <div class="help">We’re building a deduction map that is “normal” for your industry (to avoid weird ratios).</div>
+                  <div class="check-row">
+                    <label class="choice"><input type="checkbox" value="vehicle"/><div><strong>🚗 Vehicle</strong><span>Mileage or actual (business %)</span></div></label>
+                    <label class="choice"><input type="checkbox" value="home_office"/><div><strong>🏠 Home office</strong><span>Square footage + exclusive use</span></div></label>
+                    <label class="choice"><input type="checkbox" value="software"/><div><strong>🤖 Software / AI tools</strong><span>Subscriptions, SaaS, hosting</span></div></label>
+                    <label class="choice"><input type="checkbox" value="marketing"/><div><strong>📣 Marketing</strong><span>Ads, promos, website, SEO</span></div></label>
+                    <label class="choice"><input type="checkbox" value="meals"/><div><strong>🍽️ Meals</strong><span>Business purpose & documentation</span></div></label>
+                    <label class="choice"><input type="checkbox" value="travel"/><div><strong>✈️ Travel</strong><span>Business purpose + itinerary</span></div></label>
+                    <label class="choice"><input type="checkbox" value="contractors"/><div><strong>🧾 Contractors</strong><span>1099 tracking & compliance</span></div></label>
+                    <label class="choice"><input type="checkbox" value="insurance"/><div><strong>🛡️ Insurance</strong><span>Business policies</span></div></label>
+                    <label class="choice"><input type="checkbox" value="rent"/><div><strong>🏢 Rent / utilities</strong><span>Office/shop space</span></div></label>
+                    <label class="choice"><input type="checkbox" value="education"/><div><strong>📚 Training</strong><span>Skills tied to your business</span></div></label>
+                  </div>
+                </div>
+
+                <div class="field" style="margin-top:12px;">
+                  <div class="label">🧩 Multi-entity situation?</div>
+                  <div class="help">This is a big audit trigger when handled poorly — we’ll recommend clean allocation.</div>
+                  <div class="seg" aria-label="Multi-entity selector">
+                    <button type="button" data-seg="multi" data-value="no" class="active">No</button>
+                    <button type="button" data-seg="multi" data-value="yes">Yes</button>
+                  </div>
+                </div>
+
+                <div class="field" id="multiEntityNotesWrap" style="display:none; margin-top:12px;">
+                  <div class="label">📝 Shared expense notes</div>
+                  <div class="help">Example: “One company pays software used by all” or “management fees”.</div>
+                  <textarea class="textarea" id="multiEntityNotes" placeholder="Describe shared expenses, if any…"></textarea>
+                </div>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn ghost" type="button" data-back>⬅️ Back</button>
+                <button class="btn primary" type="button" id="next3">Next ➜</button>
+              </div>
+            </div>
+
+            <!-- STEP 4: Risk preference + submit -->
+            <div class="panel" data-panel="4">
+              <div class="field">
+                <div class="label">🧯 How conservative do you want to be?</div>
+                <div class="help">This controls how “tight” the recommendations are. Balanced is usually best.</div>
+                <div class="seg" aria-label="Risk preference">
+                  <button type="button" data-seg="risk" data-value="conservative">🟢 Very Conservative</button>
+                  <button type="button" data-seg="risk" data-value="balanced" class="active">🟡 Balanced</button>
+                  <button type="button" data-seg="risk" data-value="optimized">🔵 Optimized but Safe</button>
+                </div>
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <div class="label">📎 Attachments</div>
+                <div class="help">Optional: add summary files later (W-2, 1099, P&amp;L). For now we’ll keep this as “info-only”.</div>
+                <input class="input" type="file" id="attachments" multiple/>
+              </div>
+
+              <div class="side-box" style="margin-top:12px;">
+                <h4>✅ What you’ll get after you submit</h4>
+                <ul class="side-list">
+                  <li>Missing deductions checklist (safe + realistic)</li>
+                  <li>Red-flag warnings (ratios, missing docs, weird categories)</li>
+                  <li>Action steps: “fix this before filing”</li>
+                  <li>Optional: CPA-ready summary later</li>
+                </ul>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn ghost" type="button" data-back>⬅️ Back</button>
+                <button class="btn primary" type="button" id="submitBtn">✅ Run Tax Review</button>
+              </div>
+
+              <div id="submitMsg" class="help" style="margin-top:10px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live preview -->
+        <aside class="card" aria-label="Your selections preview">
+          <div class="card-head">
+            <div>
+              <div class="card-title">👀 Your Snapshot</div>
+              <div class="card-sub">This updates as you answer — so it feels like a real assistant.</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="kv"><span>Tax type</span><strong id="pvType">—</strong></div>
+            <div class="kv"><span>Tax year</span><strong id="pvYear">2025</strong></div>
+            <div class="kv"><span>Risk preference</span><strong id="pvRisk">Balanced</strong></div>
+
+            <div class="side-box">
+              <h4>🧾 Deductions captured</h4>
+              <ul class="side-list" id="pvDeductions"><li>None yet</li></ul>
+            </div>
+
+            <div class="side-box">
+              <h4>🛡️ “Red flag” check we’ll run</h4>
+              <ul class="side-list">
+                <li>Unusual ratios (meals/travel vs revenue)</li>
+                <li>Owner comp (S-Corp) reasonableness</li>
+                <li>Missing 1099 compliance signals</li>
+                <li>Home office / vehicle documentation</li>
+                <li>Trading wash sale awareness (if selected)</li>
+              </ul>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <!-- Footer -->
+      <footer class="site-footer">
+        <div class="site-footer-inner">
+          <div class="footer-grid">
+            <div class="footer-col">
+              <h4>Business Tools</h4>
+              <a href="/business/salon-genie.html">Salon Genie</a>
+              <a href="/business/quote-checker.html">Quote Checker</a>
+              <a href="/business/tax-analyser.html">Tax Analyzer</a>
+            </div>
+            <div class="footer-col">
+              <h4>Household</h4>
+              <a href="/dashboard/household.html">Household Dashboard</a>
+              <a href="/household/bill-reminders.html">Bill Reminders</a>
+              <a href="/household/doc-vault.html">Document Vault</a>
+            </div>
+            <div class="footer-col">
+              <h4>Investment</h4>
+              <a href="/dashboard/investment.html">Investment Dashboard</a>
+              <a href="/investment/options-screener.html">Options Screener</a>
+              <a href="/investment/watchlist.html">Watchlist</a>
+            </div>
+            <div class="footer-col">
+              <h4>Help</h4>
+              <a href="/onboarding/api-key-settings.html">API Keys</a>
+              <a href="/about.html">About</a>
+              <a href="/contact.html">Contact</a>
+            </div>
+          </div>
+
+          <div class="footer-bottom">
+            <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+            <div aria-label="Social" class="social">
+              <a aria-label="Twitter / X" href="#">🐦</a>
+              <a aria-label="YouTube" href="#">▶️</a>
+              <a aria-label="GitHub" href="#">🐙</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      <!-- Spacer so content isn't hidden behind the mobile bottom nav -->
+      <div class="mobile-pad" aria-hidden="true"></div>
+
+      <!-- ===== MOBILE BOTTOM NAV ===== -->
+      <nav class="mobile-nav" aria-label="GenieSphere mobile navigation">
+        <div class="mobile-nav-inner">
+          <a class="mnav" href="../dashboard/household.html" data-nav="household"><div class="ico">🏠</div><div>Household</div></a>
+          <a class="mnav active" href="../dashboard/business.html" data-nav="business"><div class="ico">🏢</div><div>Business</div></a>
+          <a class="mnav" href="../dashboard/investment.html" data-nav="investment"><div class="ico">📈</div><div>Investment</div></a>
+          <a class="mnav" href="../dashboard/leisure.html" data-nav="leisure"><div class="ico">🏝️</div><div>Leisure</div></a>
+        </div>
+      </nav>
+    </div>
+  </main>
+
+  <!-- Supabase client loaded at the bottom like household.html -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // Force GSConfig to use /shared/config.json (works from /dashboard/* and /onboarding/*)
+    async function loadConfig(){
+      const meta = document.querySelector('meta[name="gs-config"]');
+      const url  = meta?.content || '/shared/config.json';
+      const res  = await fetch(url, { cache: 'no-store' });
+      if(!res.ok) throw new Error('[GSConfig] Failed to load ' + url);
+      const cfg = await res.json();
+      if(!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) throw new Error('[GSConfig] Missing supabaseUrl or supabaseAnonKey in config');
+      return cfg;
+    }
+    const CONFIG_PROMISE = loadConfig();
+
+    async function getClient(){
+      const cfg = await CONFIG_PROMISE;
+      return window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+    }
+
+    // Auth UI + dropdown behavior (same pattern as household.html)
+    (async function initAuthHeader(){
+      const toggle   = document.getElementById('user-menu-toggle');
+      const dropdown = document.getElementById('user-menu-dropdown');
+      const nameLbl  = document.getElementById('user-name-label');
+      const authBtn  = document.getElementById('user-auth-action');
+      const signout  = document.getElementById('user-signout-btn');
+
+      function closeDropdown(){ dropdown.style.display='none'; toggle.setAttribute('aria-expanded','false'); }
+      function openDropdown(){ dropdown.style.display='block'; toggle.setAttribute('aria-expanded','true'); }
+
+      toggle.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const isOpen = dropdown.style.display === 'block';
+        isOpen ? closeDropdown() : openDropdown();
+      });
+      document.addEventListener('click', ()=> closeDropdown());
+
+      dropdown.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.dropdown-nav');
+        if(!btn) return;
+        const target = btn.getAttribute('data-target');
+        if(target) window.location.href = target;
+      });
+
+      // Supabase session
+      let client;
+      try{
+        client = await getClient();
+      }catch(err){
+        console.warn(err);
+        nameLbl.textContent = 'Log in';
+        authBtn.textContent = 'Log in / Sign up';
+        signout.style.display = 'none';
+        return;
+      }
+
+      async function refreshUser(){
+        const { data } = await client.auth.getUser();
+        const user = data?.user;
+        if(user){
+          const label = user.user_metadata?.full_name || user.email || 'Account';
+          nameLbl.textContent = label;
+          authBtn.style.display = 'none';
+          signout.style.display = 'block';
+        }else{
+          nameLbl.textContent = 'Log in';
+          authBtn.style.display = 'block';
+          signout.style.display = 'none';
+        }
+      }
+      await refreshUser();
+      client.auth.onAuthStateChange(async ()=> refreshUser());
+
+      authBtn.addEventListener('click', ()=>{
+        window.location.href = '../login.html?redirect=' + encodeURIComponent(window.location.pathname);
+      });
+
+      signout.addEventListener('click', async ()=>{
+        await client.auth.signOut();
+        window.location.href = '../login.html?redirect=' + encodeURIComponent(window.location.pathname);
+      });
+    })();
+
+    // Footer year
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+
+  <script>
+    // ===== Tax Analyzer Wizard Logic =====
+    const state = {
+      tax_type: null,
+      tax_year: "2025",
+      risk: "balanced",
+      deductions: [],
+      multi: "no"
+    };
+
+    const stepSubtitle = document.getElementById('stepSubtitle');
+    const pvType = document.getElementById('pvType');
+    const pvYear = document.getElementById('pvYear');
+    const pvRisk = document.getElementById('pvRisk');
+    const pvDeductions = document.getElementById('pvDeductions');
+
+    function setSubtitle(step){
+      const map = {
+        1: "Step 1 of 4 • Choose Personal or Business",
+        2: "Step 2 of 4 • Basics (minimal typing)",
+        3: "Step 3 of 4 • Deductions & categories",
+        4: "Step 4 of 4 • Risk preference & submit"
+      };
+      stepSubtitle.textContent = map[step] || "";
+    }
+
+    function setStep(step){
+      document.querySelectorAll('.panel').forEach(p=>{
+        p.classList.toggle('active', p.getAttribute('data-panel') === String(step));
+      });
+      document.querySelectorAll('.step').forEach(s=>{
+        const n = Number(s.getAttribute('data-step'));
+        s.classList.toggle('active', n === step);
+        s.classList.toggle('done', n < step);
+      });
+      setSubtitle(step);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updatePreview(){
+      pvType.textContent = state.tax_type ? (state.tax_type === 'personal' ? 'Personal' : 'Business') : '—';
+      pvYear.textContent = state.tax_year || '—';
+      pvRisk.textContent = state.risk === 'conservative' ? 'Very Conservative' : state.risk === 'optimized' ? 'Optimized but Safe' : 'Balanced';
+
+      pvDeductions.innerHTML = "";
+      if(!state.deductions.length){
+        pvDeductions.innerHTML = "<li>None yet</li>";
+      }else{
+        state.deductions.slice(0, 10).forEach(x=>{
+          const li = document.createElement('li');
+          li.textContent = x;
+          pvDeductions.appendChild(li);
+        });
+      }
+    }
+
+    // Step 1: tax type selection
+    document.querySelectorAll('input[name="tax_type"]').forEach(r=>{
+      r.addEventListener('change', ()=>{
+        state.tax_type = r.value;
+        updatePreview();
+
+        // show relevant sections in step 2/3
+        document.getElementById('personalCore').style.display = state.tax_type === 'personal' ? 'block' : 'none';
+        document.getElementById('businessCore').style.display = state.tax_type === 'business' ? 'block' : 'none';
+
+        document.getElementById('personalDeductions').style.display = state.tax_type === 'personal' ? 'block' : 'none';
+        document.getElementById('businessDeductions').style.display = state.tax_type === 'business' ? 'block' : 'none';
+      });
+    });
+
+    document.getElementById('taxYear').addEventListener('change', (e)=>{
+      state.tax_year = e.target.value;
+      updatePreview();
+    });
+
+    // Step 2: show S-corp box only when selected
+    const entityType = document.getElementById('entityType');
+    if(entityType){
+      entityType.addEventListener('change', (e)=>{
+        const isScorp = (e.target.value || "").toLowerCase().includes("s-corp");
+        document.getElementById('scorpBox').style.display = isScorp ? 'block' : 'none';
+      });
+    }
+
+    // Step 3: multi-entity toggle
+    document.querySelectorAll('button[data-seg="multi"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('button[data-seg="multi"]').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        state.multi = btn.getAttribute('data-value');
+        document.getElementById('multiEntityNotesWrap').style.display = state.multi === 'yes' ? 'block' : 'none';
+      });
+    });
+
+    // Step 4: risk toggle
+    document.querySelectorAll('button[data-seg="risk"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('button[data-seg="risk"]').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        state.risk = btn.getAttribute('data-value');
+        updatePreview();
+      });
+    });
+
+    // Collect deductions (checkboxes) from step 3
+    function wireCheckboxCapture(rootId){
+      const root = document.getElementById(rootId);
+      if(!root) return;
+
+      root.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+        cb.addEventListener('change', ()=>{
+          const label = cb.closest('.choice')?.querySelector('strong')?.textContent?.trim() || cb.value;
+          if(cb.checked){
+            if(!state.deductions.includes(label)) state.deductions.push(label);
+          }else{
+            state.deductions = state.deductions.filter(x=>x !== label);
+          }
+          updatePreview();
+        });
+      });
+    }
+    wireCheckboxCapture('personalDeductions');
+    wireCheckboxCapture('businessDeductions');
+
+    // Nav buttons
+    document.getElementById('next1').addEventListener('click', ()=>{
+      if(!state.tax_type){
+        alert("Please choose Personal or Business.");
+        return;
+      }
+      setStep(2);
+    });
+    document.getElementById('next2').addEventListener('click', ()=> setStep(3));
+    document.getElementById('next3').addEventListener('click', ()=> setStep(4));
+
+    document.querySelectorAll('[data-back]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const current = Number(document.querySelector('.panel.active')?.getAttribute('data-panel') || 1);
+        setStep(Math.max(1, current - 1));
+      });
+    });
+
+    // Submit (stub): stores payload in localStorage for now
+    document.getElementById('submitBtn').addEventListener('click', async ()=>{
+      const msg = document.getElementById('submitMsg');
+      msg.textContent = "";
+
+      const payload = buildPayload();
+      try{
+        localStorage.setItem('gs_tax_analyzer_last_submission', JSON.stringify(payload));
+      }catch(_){}
+
+      // Placeholder: later you’ll call n8n webhook here
+      msg.textContent = "Saved! Next step: wire this to your n8n /tax-review webhook to generate the AI report.";
+    });
+
+    function buildPayload(){
+      const base = {
+        tax_type: state.tax_type,
+        tax_year: state.tax_year,
+        risk_preference: state.risk,
+        deductions: state.deductions
+      };
+
+      if(state.tax_type === 'personal'){
+        return Object.assign(base, {
+          filing_status: document.getElementById('filingStatus')?.value || null,
+          state: document.getElementById('state')?.value || null,
+          dependents: Number(document.getElementById('dependents')?.value || 0),
+          income_type: document.getElementById('personalIncomeType')?.value || null,
+          notes: document.getElementById('personalNotes')?.value || null
+        });
+      }
+
+      return Object.assign(base, {
+        entity_type: document.getElementById('entityType')?.value || null,
+        industry: document.getElementById('industry')?.value || null,
+        revenue_range: document.getElementById('revenueRange')?.value || null,
+        books_quality: document.getElementById('booksQuality')?.value || null,
+        scorp_owner_salary: document.getElementById('ownerSalary')?.value || null,
+        scorp_owner_distributions: document.getElementById('ownerDistro')?.value || null,
+        scorp_health_insurance: document.getElementById('scorpHealth')?.value || null,
+        scorp_retirement: document.getElementById('scorpRetire')?.value || null,
+        multi_entity: state.multi,
+        shared_expense_notes: document.getElementById('multiEntityNotes')?.value || null
+      });
+    }
+
+    // Init
+    updatePreview();
+  </script>
+
+  <!-- Theme Modal (shared) -->
+  <div class="theme-overlay" id="themeOverlay" role="dialog" aria-modal="true" aria-labelledby="themeTitle" style="display:none;">
+    <div class="theme-modal">
+      <div class="theme-modal-header">
+        <div class="theme-modal-title">
+          <strong id="themeTitle">🎨 Appearance</strong>
+          <span>Choose a theme. We’ll remember your preference.</span>
+        </div>
+        <button class="theme-close" id="closeThemeBtn" type="button" aria-label="Close appearance settings">✕</button>
+      </div>
+
+      <div class="theme-modal-body">
+        <div class="theme-grid" id="themeGrid">
+          <button class="theme-option" type="button" data-theme="theme-calm">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌿 Calm Future</p>
+                <p class="theme-option-desc">Bright, calm, and easy.</p>
+              </div>
+              <span class="theme-option-tag">Default</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-future">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌌 Soft Futuristic</p>
+                <p class="theme-option-desc">Indigo + cyan glow.</p>
+              </div>
+              <span class="theme-option-tag">Futuristic</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-nature">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌱 Nature + Tech</p>
+                <p class="theme-option-desc">Calm green + sky blue trust.</p>
+              </div>
+              <span class="theme-option-tag">Household</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-dark">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌑 Pro Dark</p>
+                <p class="theme-option-desc">Best for night use.</p>
+              </div>
+              <span class="theme-option-tag">Dark</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="theme-modal-footer">
+        <button class="btn ghost" id="resetThemeBtn" type="button">Reset</button>
+        <button class="btn primary" id="doneThemeBtn" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dropdown "Appearance" -> open the same theme modal (mobile-friendly)
+    (function(){
+      const openFromDropdown = document.getElementById('dropdown-open-appearance');
+      const openThemeBtn = document.getElementById('openThemeBtn');
+      if(openFromDropdown && openThemeBtn){
+        openFromDropdown.addEventListener('click', ()=> openThemeBtn.click());
+      }
+    })();
+  </script>
+
+  <script>
+    // Theme Switcher (shared)
+    (function ThemeSwitcher(){
+      const STORAGE_KEY = 'geniesphere_theme';
+      const THEMES = ['theme-calm','theme-future','theme-nature','theme-dark'];
+      const DEFAULT_THEME = 'theme-dark';
+
+      const overlay = document.getElementById('themeOverlay');
+      const openBtn = document.getElementById('openThemeBtn');
+      const closeBtn = document.getElementById('closeThemeBtn');
+      const doneBtn = document.getElementById('doneThemeBtn');
+      const resetBtn = document.getElementById('resetThemeBtn');
+      const themeGrid = document.getElementById('themeGrid');
+
+      function saveTheme(theme){ try { localStorage.setItem(STORAGE_KEY, theme); } catch(_){ } }
+      function getTheme(){ try { return localStorage.getItem(STORAGE_KEY); } catch(_){ return null; } }
+
+      function updateSelected(theme){
+        if(!themeGrid) return;
+        themeGrid.querySelectorAll('.theme-option').forEach(btn => {
+          btn.classList.toggle('selected', btn.getAttribute('data-theme') === theme);
+        });
+      }
+
+      function applyTheme(theme){
+        THEMES.forEach(t => document.body.classList.remove(t));
+        document.body.classList.add(theme);
+        updateSelected(theme);
+      }
+
+      function openModal(){
+        if(!overlay) return;
+        overlay.classList.add('open');
+        overlay.style.display = 'flex';
+        const first = themeGrid?.querySelector('.theme-option');
+        setTimeout(()=> first && first.focus(), 40);
+      }
+      function closeModal(){
+        if(!overlay) return;
+        overlay.classList.remove('open');
+        overlay.style.display = 'none';
+        openBtn && openBtn.focus();
+      }
+
+      const saved = getTheme();
+      const theme = (saved && THEMES.includes(saved)) ? saved : DEFAULT_THEME;
+      applyTheme(theme);
+
+      if(openBtn) openBtn.addEventListener('click', openModal);
+      if(closeBtn) closeBtn.addEventListener('click', closeModal);
+      if(doneBtn) doneBtn.addEventListener('click', closeModal);
+
+      if(overlay){
+        overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal(); });
+      }
+      document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && overlay?.classList.contains('open')) closeModal(); });
+
+      if(themeGrid){
+        themeGrid.addEventListener('click', (e)=>{
+          const btn = e.target.closest('.theme-option');
+          if(!btn) return;
+          const next = btn.getAttribute('data-theme');
+          if(!THEMES.includes(next)) return;
+          applyTheme(next);
+          saveTheme(next);
+        });
+      }
+
+      if(resetBtn){
+        resetBtn.addEventListener('click', ()=>{
+          applyTheme(DEFAULT_THEME);
+          saveTheme(DEFAULT_THEME);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

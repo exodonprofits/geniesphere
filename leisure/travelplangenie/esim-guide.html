@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>eSIM Guide – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ocean:#0077b6;--ocean-deep:#023e8a;--teal:#00b4d8;
+  --coral:#e76f51;--coral-dark:#c1551c;--green:#16a34a;--amber:#d97706;
+  --off-white:#f8fafc;--gray-light:#f1f5f9;--gray-border:#e2e8f0;
+  --text:#1e293b;--text-muted:#64748b;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 2px 16px rgba(0,0,0,.07);--shadow-hover:0 10px 28px rgba(0,0,0,.12);
+  --t:.22s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+main{flex:1}
+.hidden{display:none!important}
+
+/* HEADER */
+.vg-header{position:sticky;top:0;z-index:40;background:linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%);box-shadow:0 2px 20px rgba(2,62,138,.25)}
+.vg-nav{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.vg-brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none}
+.vg-brand img{width:46px;height:46px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2)}
+.vg-title-brand{font-family:'Playfair Display',serif;font-weight:700;font-size:1.4rem;color:#fff}
+.vg-right{display:flex;align-items:center;gap:12px}
+.nav-chip{display:inline-flex;align-items:center;gap:8px;padding:0 14px;height:38px;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.22);font-size:.88rem;font-weight:500;transition:background var(--t);white-space:nowrap}
+.nav-chip:hover{background:rgba(255,255,255,.24)}
+.menu-group{position:relative}
+.menu{position:absolute;top:calc(100% + 8px);right:0;min-width:200px;padding:6px;background:#fff;border-radius:var(--radius);box-shadow:0 16px 40px rgba(0,0,0,.18);display:none;z-index:60;border:1px solid rgba(0,0,0,.06)}
+.menu a{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:.9rem}
+.menu a:hover{background:var(--gray-light);color:var(--ocean)}
+.menu-divider{height:1px;background:var(--gray-border);margin:6px 4px}
+.account-chip{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.22);font-size:.88rem;cursor:pointer}
+.account-chip:hover{background:rgba(255,255,255,.24)}
+
+/* BANNER */
+.page-banner{background:linear-gradient(135deg,#eaf4fb,#f0f9ff);border-bottom:1px solid #c9e4f5;padding:1.5rem 1.5rem 1.25rem}
+.page-banner-inner{max-width:1200px;margin:0 auto}
+.page-banner h1{font-family:'Playfair Display',serif;font-size:clamp(1.3rem,2.5vw,1.7rem);font-weight:700;color:var(--ocean-deep);margin-bottom:.3rem}
+.page-banner p{font-size:.88rem;color:var(--text-muted)}
+
+/* LAYOUT */
+.page-body{max-width:1200px;margin:0 auto;padding:1.75rem 1.25rem 3rem;display:grid;grid-template-columns:1fr 320px;gap:1.5rem;align-items:start}
+@media(max-width:960px){.page-body{grid-template-columns:1fr}}
+
+/* CARDS */
+.vg-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+.card-hd{padding:1rem 1.25rem;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.card-title{font-size:1rem;font-weight:600}
+.card-bd{padding:1.25rem}
+
+/* INPUTS */
+.vg-input,.vg-select{width:100%;border:1px solid var(--gray-border);border-radius:var(--radius);padding:.6rem .9rem;background:var(--gray-light);font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;transition:border-color var(--t),background var(--t)}
+.vg-input:focus,.vg-select:focus{border-color:var(--ocean);background:#fff;box-shadow:0 0 0 3px rgba(0,119,182,.1)}
+.field-label{font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
+
+/* BUTTONS */
+.vg-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gray-border);border-radius:8px;padding:.5rem .9rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;color:var(--text);cursor:pointer;transition:all var(--t);white-space:nowrap;text-decoration:none}
+.vg-btn:hover{background:var(--gray-light);transform:translateY(-1px)}
+.vg-btn-ocean{background:var(--ocean);color:#fff;border-color:var(--ocean)}
+.vg-btn-ocean:hover{background:var(--ocean-deep)}
+.vg-btn-sm{padding:.3rem .65rem;font-size:.78rem}
+
+/* DEVICE DETECT BANNER */
+.device-banner{border-radius:12px;padding:.85rem 1.1rem;display:flex;align-items:center;gap:.85rem;flex-wrap:wrap;margin-bottom:1rem}
+.device-banner.compatible{background:#f0fdf4;border:1px solid #86efac}
+.device-banner.check{background:#fefce8;border:1px solid #fde047}
+.device-banner.unknown{background:var(--gray-light);border:1px solid var(--gray-border)}
+.db-icon{font-size:1.6rem;flex-shrink:0}
+.db-text{flex:1;min-width:0}
+.db-title{font-weight:700;font-size:.92rem}
+.db-sub{font-size:.78rem;color:var(--text-muted);margin-top:2px}
+
+/* FORM GRID */
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+@media(max-width:560px){.form-grid-3,.form-grid-2{grid-template-columns:1fr}}
+
+/* PROVIDER CARDS */
+.provider-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+@media(max-width:500px){.provider-grid{grid-template-columns:1fr}}
+.provider-card{border:2px solid var(--gray-border);border-radius:var(--radius-lg);padding:1rem 1.1rem;background:#fff;transition:all var(--t);display:flex;flex-direction:column;gap:.5rem;position:relative}
+.provider-card:hover{border-color:var(--ocean);box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+.provider-card.top-pick{border-color:#86efac;background:linear-gradient(180deg,#f0fdf4,#fff)}
+.provider-card.top-pick::before{content:'⭐ Top Pick';position:absolute;top:-1px;right:12px;background:#16a34a;color:#fff;font-size:.65rem;font-weight:700;padding:3px 10px;border-radius:0 0 8px 8px;letter-spacing:.04em}
+.pv-header{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.pv-name{font-weight:700;font-size:.95rem;color:var(--text)}
+.pv-logo{font-size:1.3rem}
+.pv-type{font-size:.72rem;font-weight:600;border-radius:999px;padding:2px 8px;display:inline-block}
+.pv-type.unlimited{background:#dbeafe;color:#1e40af}
+.pv-type.data{background:#e0f2fe;color:#075985}
+.pv-type.global{background:#f3e8ff;color:#7c3aed}
+.pv-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.35rem;margin-top:.25rem}
+.pv-stat{background:var(--gray-light);border-radius:7px;padding:.35rem .45rem;text-align:center}
+.pv-stat .sv{font-size:.8rem;font-weight:700;color:var(--ocean-deep)}
+.pv-stat .sl{font-size:.62rem;color:var(--text-muted)}
+.pv-desc{font-size:.78rem;color:var(--text-muted);line-height:1.4}
+.pv-tags{display:flex;flex-wrap:wrap;gap:.3rem}
+.pv-tag{font-size:.68rem;border-radius:999px;padding:2px 7px;background:var(--gray-light);border:1px solid var(--gray-border);color:var(--text-muted)}
+.pv-tag.good{background:#f0fdf4;border-color:#86efac;color:#166534}
+.pv-tag.warn{background:#fefce8;border-color:#fde047;color:#92400e}
+.pv-actions{display:flex;gap:.4rem;margin-top:.35rem}
+
+/* SCORE BAR */
+.score-bar{display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--text-muted)}
+.score-track{flex:1;height:5px;background:var(--gray-border);border-radius:999px;overflow:hidden}
+.score-fill{height:100%;background:linear-gradient(90deg,var(--ocean),var(--teal));border-radius:999px;transition:width .5s ease}
+
+/* INSTALL STEPS */
+.install-tabs{display:flex;gap:0;border-bottom:2px solid var(--gray-border);margin-bottom:1.1rem}
+.install-tab{padding:.55rem 1rem;background:none;border:none;border-bottom:3px solid transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all var(--t);margin-bottom:-2px}
+.install-tab:hover{color:var(--ocean)}
+.install-tab.active{color:var(--ocean);border-bottom-color:var(--ocean)}
+.install-pane{display:none}
+.install-pane.active{display:block}
+.step-list{counter-reset:steps;display:flex;flex-direction:column;gap:.65rem}
+.step-item{display:flex;align-items:flex-start;gap:.75rem;padding:.75rem .9rem;background:var(--gray-light);border-radius:10px;border:1px solid var(--gray-border)}
+.step-num{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--ocean),var(--teal));color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-body{flex:1;font-size:.85rem;line-height:1.5}
+.step-body strong{color:var(--ocean-deep)}
+.step-tip{display:inline-flex;align-items:center;gap:.3rem;background:#fefce8;border:1px solid #fde047;border-radius:6px;padding:2px 8px;font-size:.72rem;color:#92400e;margin-top:.3rem}
+
+/* TROUBLESHOOT */
+.trouble-item{border:1px solid var(--gray-border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:.6rem}
+.trouble-q{padding:.85rem 1rem;font-weight:600;font-size:.88rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:var(--text);user-select:none;transition:background var(--t)}
+.trouble-q:hover{background:var(--gray-light)}
+.trouble-q.open{background:#eaf4fb;color:var(--ocean-deep)}
+.trouble-a{padding:0 1rem .9rem;font-size:.84rem;color:var(--text-muted);line-height:1.6;display:none}
+.trouble-a.open{display:block}
+.trouble-chevron{font-size:.7rem;transition:transform .2s}
+.trouble-chevron.open{transform:rotate(180deg)}
+
+/* COMPATIBILITY TABLE */
+.compat-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.compat-table th{background:var(--gray-light);padding:6px 10px;text-align:left;font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--gray-border)}
+.compat-table td{padding:7px 10px;border-bottom:1px solid var(--gray-border);vertical-align:middle}
+.compat-table tr:last-child td{border-bottom:none}
+.compat-yes{color:#16a34a;font-weight:700}
+.compat-no{color:#dc2626;font-weight:700}
+.compat-check{color:#d97706;font-weight:700}
+
+/* SIDEBAR LINKS */
+.ext-link{display:flex;align-items:center;gap:.65rem;padding:.65rem .9rem;border-radius:10px;border:1px solid var(--gray-border);background:var(--gray-light);text-decoration:none;color:var(--text);font-size:.85rem;font-weight:500;transition:all var(--t);margin-bottom:.5rem}
+.ext-link:last-child{margin-bottom:0}
+.ext-link:hover{background:#eaf4fb;border-color:var(--teal);color:var(--ocean);transform:translateX(3px)}
+.ext-link .el-arr{margin-left:auto;font-size:.7rem;color:var(--text-muted)}
+.ext-link:hover .el-arr{color:var(--ocean)}
+
+/* SAVED PLAN */
+.saved-plan-card{background:linear-gradient(135deg,#eaf4fb,#f0f9ff);border:1px solid #bae6fd;border-radius:12px;padding:.85rem 1rem;font-size:.85rem}
+.saved-plan-card .sp-brand{font-weight:700;font-size:1rem;color:var(--ocean-deep);margin-bottom:.3rem}
+.saved-plan-card .sp-detail{color:var(--text-muted);font-size:.8rem}
+
+/* TOOL GRID */
+.tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+.tool-link{display:flex;align-items:center;gap:.5rem;padding:.5rem .7rem;border-radius:8px;border:1px solid var(--gray-border);background:#fff;text-decoration:none;color:var(--text);font-size:.8rem;font-weight:500;transition:all var(--t)}
+.tool-link:hover{background:#eaf4fb;border-color:var(--teal);color:var(--ocean)}
+
+/* NOTES */
+.note-box{border-radius:10px;padding:.75rem 1rem;font-size:.82rem;line-height:1.5}
+.note-green{background:#f0fdf4;border:1px solid #86efac}
+.note-amber{background:#fefce8;border:1px solid #fde047}
+.note-red{background:#fef2f2;border:1px solid #fca5a5}
+.note-blue{background:#eff6ff;border:1px solid #bfdbfe}
+.note-box strong{display:block;font-size:.8rem;margin-bottom:2px}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,.96);color:#fff;padding:10px 18px;border-radius:9px;font-size:.85rem;font-weight:500;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* FOOTER */
+footer{background:linear-gradient(105deg,#023e8a 0%,#0077b6 100%);color:rgba(255,255,255,.85);padding:2.5rem 1.5rem 2rem}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-brand{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:.3rem}
+.footer-copy{font-size:.78rem;opacity:.55;margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.12)}
+.footer-links{display:flex;gap:1rem;margin-top:.9rem;flex-wrap:wrap}
+.footer-links a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+.footer-links a:hover{color:#fff}
+
+.gap-sm{display:flex;flex-wrap:wrap;gap:.5rem}
+@media print{.vg-header,.page-banner,footer,.no-print{display:none!important}body{background:#fff}.vg-card{box-shadow:none;border:1px solid #ddd}}
+</style>
+</head>
+<body>
+
+<script type="module">
+  import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if(!window.supabase)window.supabase=createClient('https://pbojacnagutipfhcxltj.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+</script>
+
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html"><img src="images/nav-icon.png" alt="Voyage Genie"/><span class="vg-title-brand">Voyage Genie</span></a>
+    <div class="vg-right">
+      <a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a>
+      <div id="authSlot"><a class="nav-chip" href="login.html?next=esim-guide.html">🔑 Sign in</a></div>
+    </div>
+  </div>
+</header>
+
+<div class="page-banner">
+  <div class="page-banner-inner">
+    <h1>📶 eSIM Travel Guide</h1>
+    <p>Find the right plan, check your device, install in minutes — no SIM card swap needed</p>
+  </div>
+</div>
+
+<main>
+<div class="page-body">
+
+  <!-- LEFT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- Device compatibility banner -->
+    <div class="device-banner unknown" id="deviceBanner">
+      <span class="db-icon" id="deviceIcon">📱</span>
+      <div class="db-text">
+        <div class="db-title" id="deviceTitle">Checking your device…</div>
+        <div class="db-sub" id="deviceSub">eSIM compatibility depends on your device model and carrier unlock status</div>
+      </div>
+    </div>
+
+    <!-- Plan finder -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">🔍 Find Your Plan</div>
+        <div class="gap-sm no-print">
+          <button class="vg-btn vg-btn-sm" onclick="shareLink()">🔗 Share</button>
+          <button class="vg-btn vg-btn-sm" onclick="window.print()">🖨️ Print</button>
+        </div>
+      </div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:.85rem">
+        <div class="form-grid-3">
+          <div>
+            <label class="field-label">Destination</label>
+            <select id="region" class="vg-select" onchange="suggest();updateLinks()">
+              <option value="">Select region…</option>
+              <optgroup label="Americas">
+                <option value="USA">🇺🇸 USA</option>
+                <option value="Canada">🇨🇦 Canada</option>
+                <option value="Mexico">🇲🇽 Mexico</option>
+                <option value="Caribbean">🌴 Caribbean</option>
+                <option value="South America">🌎 South America</option>
+              </optgroup>
+              <optgroup label="Europe">
+                <option value="EU">🇪🇺 EU / Schengen (30+ countries)</option>
+                <option value="UK">🇬🇧 UK / Ireland</option>
+                <option value="Turkey">🇹🇷 Turkey</option>
+              </optgroup>
+              <optgroup label="Middle East & Africa">
+                <option value="UAE">🇦🇪 UAE / Dubai</option>
+                <option value="Africa">🌍 Africa</option>
+              </optgroup>
+              <optgroup label="Asia">
+                <option value="Japan">🇯🇵 Japan</option>
+                <option value="South Korea">🇰🇷 South Korea</option>
+                <option value="Thailand">🇹🇭 Thailand</option>
+                <option value="Vietnam">🇻🇳 Vietnam</option>
+                <option value="Indonesia">🇮🇩 Indonesia / Bali</option>
+                <option value="Singapore">🇸🇬 Singapore</option>
+                <option value="Philippines">🇵🇭 Philippines</option>
+                <option value="India">🇮🇳 India</option>
+                <option value="China">🇨🇳 China (special rules)</option>
+                <option value="Southeast Asia">🌏 SE Asia Multi-country</option>
+              </optgroup>
+              <optgroup label="Pacific">
+                <option value="Australia">🇦🇺 Australia</option>
+                <option value="New Zealand">🇳🇿 New Zealand</option>
+                <option value="Hawaii">🌺 Hawaii</option>
+              </optgroup>
+              <optgroup label="Multi-region">
+                <option value="Global">🌐 Global / Multi-region</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Trip Length</label>
+            <select id="length" class="vg-select" onchange="suggest()">
+              <option value="1-3">1–3 days (weekend)</option>
+              <option value="4-7">4–7 days (1 week)</option>
+              <option value="8-14" selected>8–14 days (2 weeks)</option>
+              <option value="15-30">15–30 days (1 month)</option>
+              <option value="30+">30+ days (long stay)</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Data Usage</label>
+            <select id="usage" class="vg-select" onchange="suggest()">
+              <option value="light">🟢 Light — maps, chat, email</option>
+              <option value="standard" selected>🔵 Standard — social, photos</option>
+              <option value="heavy">🟠 Heavy — video calls, streaming</option>
+              <option value="unlimited">🔴 Unlimited — no limits</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Suggestion results -->
+        <div id="suggestionsWrap">
+          <div style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:.88rem">Select a destination above to see recommended plans</div>
+        </div>
+
+        <div class="note-box note-amber">
+          ⚠️ <strong style="display:inline">Important:</strong> Prices change frequently — always verify on the provider's site before purchasing. Check coverage maps for remote areas.
+        </div>
+      </div>
+    </div>
+
+    <!-- Install guide -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">⚙️ How to Install Your eSIM</div></div>
+      <div class="card-bd">
+        <div class="install-tabs">
+          <button class="install-tab active" onclick="switchInstall('iphone',this)">📱 iPhone</button>
+          <button class="install-tab" onclick="switchInstall('android',this)">🤖 Android</button>
+          <button class="install-tab" onclick="switchInstall('samsung',this)">📲 Samsung</button>
+          <button class="install-tab" onclick="switchInstall('pixel',this)">🔵 Pixel</button>
+        </div>
+
+        <!-- iPhone -->
+        <div class="install-pane active" id="pane-iphone">
+          <div class="note-box note-green" style="margin-bottom:.85rem">
+            ✅ <strong style="display:inline">Supported:</strong> iPhone XS/XR and newer. Must be carrier-unlocked or on a compatible plan.
+          </div>
+          <div class="step-list">
+            <div class="step-item"><div class="step-num">1</div><div class="step-body">Purchase your eSIM plan and <strong>open the QR code on a separate screen</strong> (laptop, tablet, or printed). You cannot scan a QR on the same device you're installing to.<div class="step-tip">💡 Some providers also offer "Direct Install" via their app — no QR needed</div></div></div>
+            <div class="step-item"><div class="step-num">2</div><div class="step-body">Go to <strong>Settings → Cellular → Add eSIM</strong>. Tap <strong>"Use QR Code"</strong> and scan. If you have an activation code instead, tap "Enter Details Manually".</div></div>
+            <div class="step-item"><div class="step-num">3</div><div class="step-body">Name the eSIM (e.g., "Trip Japan") when prompted. Set <strong>Default Line</strong> = your home SIM for calls/texts. Set <strong>Cellular Data</strong> = your new eSIM.<div class="step-tip">⚠️ Turn off "Allow Cellular Data Switching" to avoid unexpected charges on your home SIM</div></div></div>
+            <div class="step-item"><div class="step-num">4</div><div class="step-body">Go back to <strong>Settings → Cellular → [Your eSIM]</strong> and enable <strong>Data Roaming</strong>. Wait 30–60 seconds for the carrier to connect. Test by opening a website not in your browser cache.</div></div>
+            <div class="step-item"><div class="step-num">5</div><div class="step-body"><strong>iPhone 14+ (US models):</strong> These are eSIM-only — no physical SIM slot. You can store multiple eSIMs but only activate one at a time for data. Install your travel eSIM the same way.</div></div>
+          </div>
+        </div>
+
+        <!-- Android (generic) -->
+        <div class="install-pane" id="pane-android">
+          <div class="note-box note-blue" style="margin-bottom:.85rem">
+            ℹ️ Steps vary slightly by Android version and manufacturer. Most Android 10+ devices with eSIM support follow this path.
+          </div>
+          <div class="step-list">
+            <div class="step-item"><div class="step-num">1</div><div class="step-body">Purchase your plan and get the QR code ready on another screen or device.</div></div>
+            <div class="step-item"><div class="step-num">2</div><div class="step-body">Go to <strong>Settings → Network & Internet → SIMs</strong> (or "Mobile Network" on some devices). Tap the <strong>+ Add SIM / Add eSIM</strong> button and choose "Scan QR code".</div></div>
+            <div class="step-item"><div class="step-num">3</div><div class="step-body">After installation, set the eSIM as your <strong>preferred data SIM</strong>. Keep your physical SIM active for calls and SMS if needed.<div class="step-tip">⚠️ Disable data roaming on your physical SIM to avoid surprise roaming charges</div></div></div>
+            <div class="step-item"><div class="step-num">4</div><div class="step-body">Enable <strong>Data Roaming</strong> on the eSIM profile. Check signal and test connectivity. If no data, check the APN settings (see Troubleshooting).</div></div>
+          </div>
+        </div>
+
+        <!-- Samsung -->
+        <div class="install-pane" id="pane-samsung">
+          <div class="note-box note-green" style="margin-bottom:.85rem">
+            ✅ <strong style="display:inline">Supported:</strong> Galaxy S20 and newer, Galaxy Z Fold/Flip series, Note 20+. Some carrier-locked models may not support eSIM.
+          </div>
+          <div class="step-list">
+            <div class="step-item"><div class="step-num">1</div><div class="step-body">Get the QR code ready on another screen. Open <strong>Settings → Connections → SIM Card Manager</strong>.</div></div>
+            <div class="step-item"><div class="step-num">2</div><div class="step-body">Tap <strong>"Add eSIM"</strong> or <strong>"Add mobile plan"</strong>. Select "Scan QR code from service provider" and scan.</div></div>
+            <div class="step-item"><div class="step-num">3</div><div class="step-body">Once added, go to SIM Card Manager and set the eSIM as your <strong>preferred SIM for mobile data</strong>. Toggle off data on your physical SIM.<div class="step-tip">💡 Samsung One UI lets you name each SIM — call them "Home" and "Travel" for clarity</div></div></div>
+            <div class="step-item"><div class="step-num">4</div><div class="step-body">Enable <strong>Data Roaming</strong> in SIM Card Manager for your eSIM. Wait for the network icon to show the carrier name, then test data.</div></div>
+          </div>
+        </div>
+
+        <!-- Pixel -->
+        <div class="install-pane" id="pane-pixel">
+          <div class="note-box note-green" style="margin-bottom:.85rem">
+            ✅ <strong style="display:inline">Supported:</strong> Pixel 3 and newer. Pixel 3a, 4, 4a, 5, 6, 7, 8 series all support eSIM. Must be unlocked.
+          </div>
+          <div class="step-list">
+            <div class="step-item"><div class="step-num">1</div><div class="step-body">Get the QR code ready on a separate screen. Go to <strong>Settings → Network & Internet → SIMs → Add SIM</strong>.</div></div>
+            <div class="step-item"><div class="step-num">2</div><div class="step-body">Tap <strong>"Download a SIM instead?"</strong> at the bottom, then <strong>"Next"</strong>. Scan your QR code when prompted.<div class="step-tip">💡 Pixel also supports downloading eSIMs through the Google Fi app if you use Google Fi</div></div></div>
+            <div class="step-item"><div class="step-num">3</div><div class="step-body">Set the downloaded eSIM as your <strong>preferred SIM for data</strong>. In SIMs settings, tap your eSIM and enable <strong>Mobile data</strong> and <strong>Roaming</strong>.</div></div>
+            <div class="step-item"><div class="step-num">4</div><div class="step-body">Disable data roaming on your physical SIM. Test connectivity by opening a fresh webpage or running a speed test.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Troubleshooting -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">🛠️ Troubleshooting</div></div>
+      <div class="card-bd">
+        <div class="trouble-item">
+          <div class="trouble-q" onclick="toggleTrouble(this)"><span>📵 No data / signal bar shows "No Service"</span><span class="trouble-chevron">▼</span></div>
+          <div class="trouble-a">
+            <ol style="padding-left:1.2rem;display:flex;flex-direction:column;gap:.4rem;margin-top:.3rem">
+              <li>Toggle <strong>Airplane mode</strong> on for 10 seconds, then off. Wait 30 seconds.</li>
+              <li>Confirm <strong>Cellular Data is set to your eSIM</strong>, not your physical SIM.</li>
+              <li>Check <strong>Data Roaming is ON</strong> specifically for the eSIM profile — not just globally.</li>
+              <li>Manually select a network: Settings → Cellular → Network Selection → Manual. Pick any carrier, then switch back to Automatic.</li>
+              <li>If still failing, your eSIM may need an <strong>APN</strong> configured. Check the provider's support page for their APN settings and enter manually.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="trouble-item">
+          <div class="trouble-q" onclick="toggleTrouble(this)"><span>📞 No calls or SMS through eSIM</span><span class="trouble-chevron">▼</span></div>
+          <div class="trouble-a">
+            <p style="margin-top:.3rem">Most travel eSIMs are <strong>data-only</strong> — this is expected. For calls and texts while abroad:</p>
+            <ul style="padding-left:1.2rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+              <li>Keep your <strong>physical SIM active</strong> for calls/SMS (just disable its data)</li>
+              <li>Use <strong>WhatsApp, FaceTime Audio, Google Voice, or Skype</strong> over data</li>
+              <li>Enable <strong>Wi-Fi Calling</strong> on your home SIM (works internationally over the eSIM's data)</li>
+              <li>For iMessage/SMS over data: enable "Send as SMS" fallback with Wi-Fi Calling on</li>
+            </ul>
+          </div>
+        </div>
+        <div class="trouble-item">
+          <div class="trouble-q" onclick="toggleTrouble(this)"><span>⚡ Very slow speeds despite having data</span><span class="trouble-chevron">▼</span></div>
+          <div class="trouble-a">
+            <ul style="padding-left:1.2rem;margin-top:.3rem;display:flex;flex-direction:column;gap:.3rem">
+              <li><strong>Check your data balance</strong> — many plans throttle to 2G/3G after the high-speed data is used</li>
+              <li>Some plans cap speeds at <strong>1–5 Mbps</strong> even on "unlimited" plans — check the fine print</li>
+              <li>Try toggling between <strong>5G/LTE/3G</strong> in network settings — sometimes 4G LTE is faster than 5G in congested areas</li>
+              <li>Holafly and similar unlimited plans are known to throttle after 1–2 GB in some regions</li>
+            </ul>
+          </div>
+        </div>
+        <div class="trouble-item">
+          <div class="trouble-q" onclick="toggleTrouble(this)"><span>🗑️ eSIM deleted / can't reinstall after reset</span><span class="trouble-chevron">▼</span></div>
+          <div class="trouble-a">
+            <ul style="padding-left:1.2rem;margin-top:.3rem;display:flex;flex-direction:column;gap:.3rem">
+              <li><strong>eSIMs cannot be reinstalled</strong> once deleted on most providers — the QR code becomes invalid</li>
+              <li>Before resetting your device, go to <strong>Settings → Cellular → [eSIM] → Remove eSIM</strong> first (keeps it in provider's system on some platforms)</li>
+              <li>Contact the provider immediately — many will re-issue a new QR within 24h if you still have data remaining</li>
+              <li>Airalo and Holafly typically offer a re-installation QR if you contact support within the validity period</li>
+            </ul>
+          </div>
+        </div>
+        <div class="trouble-item">
+          <div class="trouble-q" onclick="toggleTrouble(this)"><span>🇨🇳 China — special eSIM considerations</span><span class="trouble-chevron">▼</span></div>
+          <div class="trouble-a">
+            <p style="margin-top:.3rem">China has <strong>strict internet restrictions</strong> — most eSIM data plans will block Google, WhatsApp, Instagram, and many other services.</p>
+            <ul style="padding-left:1.2rem;margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+              <li>A <strong>VPN must be set up before entering China</strong> — it's very difficult to download or configure once inside</li>
+              <li>Recommended eSIM providers with some China support: <strong>Airalo (China plan)</strong>, <strong>Ubigi</strong></li>
+              <li>Hong Kong eSIMs work normally without restrictions</li>
+              <li>Consider using <strong>China Unicom or China Mobile</strong> local SIMs for better local coverage</li>
+            </ul>
+          </div>
+        </div>
+        <div style="margin-top:.85rem;display:flex;flex-wrap:wrap;gap:.5rem">
+          <a id="lkAPN" class="vg-btn" href="https://www.google.com/search?q=APN+settings+travel+esim" target="_blank" rel="noopener">🔧 Look up APN settings</a>
+          <a id="lkSpeedTest" class="vg-btn" href="https://www.speedtest.net/" target="_blank" rel="noopener">⚡ Run a speed test</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Device compatibility table -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">📋 Device Compatibility Quick Reference</div></div>
+      <div style="overflow-x:auto">
+        <table class="compat-table">
+          <thead><tr><th>Device</th><th>eSIM?</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>iPhone XS / XR (2018)</strong></td><td class="compat-yes">✅ Yes</td><td>First iPhones with eSIM</td></tr>
+            <tr><td><strong>iPhone 11, 12, 13 series</strong></td><td class="compat-yes">✅ Yes</td><td>Physical + eSIM dual SIM</td></tr>
+            <tr><td><strong>iPhone 14 (US model)</strong></td><td class="compat-yes">✅ eSIM only</td><td>No physical SIM slot in USA version</td></tr>
+            <tr><td><strong>iPhone 15, 16 series</strong></td><td class="compat-yes">✅ eSIM only (USA)</td><td>International models have SIM slot</td></tr>
+            <tr><td><strong>Samsung Galaxy S20–S25</strong></td><td class="compat-yes">✅ Yes</td><td>Some carrier-locked models may not</td></tr>
+            <tr><td><strong>Samsung Galaxy Z Fold / Flip</strong></td><td class="compat-yes">✅ Yes</td><td>All foldable models support eSIM</td></tr>
+            <tr><td><strong>Samsung Galaxy A series</strong></td><td class="compat-check">⚠️ Some</td><td>A54, A34 yes; older A series no</td></tr>
+            <tr><td><strong>Google Pixel 3 / 3a</strong></td><td class="compat-yes">✅ Yes</td><td>First Pixels with eSIM</td></tr>
+            <tr><td><strong>Google Pixel 4–8 series</strong></td><td class="compat-yes">✅ Yes</td><td>All support eSIM</td></tr>
+            <tr><td><strong>OnePlus 12, 12R</strong></td><td class="compat-yes">✅ Yes</td><td>Unlocked models</td></tr>
+            <tr><td><strong>Motorola Edge / Razr (2023+)</strong></td><td class="compat-yes">✅ Yes</td><td>Check model specifically</td></tr>
+            <tr><td><strong>iPad Pro (2018+), iPad Air (2020+)</strong></td><td class="compat-yes">✅ Yes</td><td>Cellular models only</td></tr>
+            <tr><td><strong>iPhone SE 2nd gen</strong></td><td class="compat-yes">✅ Yes</td><td>2020 SE supports eSIM</td></tr>
+            <tr><td><strong>Older Android / Budget phones</strong></td><td class="compat-no">❌ Likely no</td><td>Check manufacturer specs</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-bd" style="padding-top:.75rem;padding-bottom:.75rem">
+        <p style="font-size:.78rem;color:var(--text-muted)">⚠️ Even compatible devices can be locked to a single carrier by your network provider. Call your carrier to confirm eSIM is enabled on your account and request an unlock if needed.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- Saved plan -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">💾 Saved Plan</div>
+        <button class="vg-btn vg-btn-sm" onclick="clearSave()">Clear</button>
+      </div>
+      <div class="card-bd">
+        <div id="savedPlanWrap">
+          <p style="font-size:.82rem;color:var(--text-muted)">Save a plan from the recommendations below to keep it handy.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Provider quick links -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">🛒 Buy eSIM Plans</div></div>
+      <div class="card-bd">
+        <a class="ext-link" id="lkAiralo" href="https://www.airalo.com" target="_blank" rel="noopener">
+          <span>📱</span><div style="flex:1"><div style="font-weight:600;font-size:.85rem">Airalo</div><div style="font-size:.72rem;color:var(--text-muted)">200+ countries · app-based · most popular</div></div><span class="el-arr">↗</span>
+        </a>
+        <a class="ext-link" id="lkHolafly" href="https://holafly.com" target="_blank" rel="noopener">
+          <span>♾️</span><div style="flex:1"><div style="font-weight:600;font-size:.85rem">Holafly</div><div style="font-size:.72rem;color:var(--text-muted)">Unlimited data plans · 160+ countries</div></div><span class="el-arr">↗</span>
+        </a>
+        <a class="ext-link" id="lkUbigi" href="https://www.ubigi.com" target="_blank" rel="noopener">
+          <span>🌐</span><div style="flex:1"><div style="font-weight:600;font-size:.85rem">Ubigi</div><div style="font-size:.72rem;color:var(--text-muted)">Strong Asia & Europe coverage</div></div><span class="el-arr">↗</span>
+        </a>
+        <a class="ext-link" id="lkGigsky" href="https://www.gigsky.com" target="_blank" rel="noopener">
+          <span>🛩️</span><div style="flex:1"><div style="font-weight:600;font-size:.85rem">GigSky</div><div style="font-size:.72rem;color:var(--text-muted)">Apple devices · global roaming</div></div><span class="el-arr">↗</span>
+        </a>
+        <a class="ext-link" href="https://esimdb.com" target="_blank" rel="noopener">
+          <span>🔎</span><div style="flex:1"><div style="font-weight:600;font-size:.85rem">eSIMDB</div><div style="font-size:.72rem;color:var(--text-muted)">Compare plans from all providers</div></div><span class="el-arr">↗</span>
+        </a>
+        <a class="ext-link" href="https://www.esim.net" target="_blank" rel="noopener">
+          <span>📊</span><div style="flex:1"><div style="font-weight:600;font-size:.85rem">eSIM.net</div><div style="font-size:.72rem;color:var(--text-muted)">Price comparison & reviews</div></div><span class="el-arr">↗</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Key tips -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">💡 Key Tips</div></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:.55rem">
+        <div class="note-box note-green"><strong>✅ Install before you travel</strong>You can install an eSIM on WiFi at home — activate it when you land. No roaming charges during setup.</div>
+        <div class="note-box note-blue"><strong>💳 Carrier unlock</strong>Your phone must be carrier-unlocked. Most phones bought outright or paid off are unlocked — call your carrier to confirm.</div>
+        <div class="note-box note-amber"><strong>⚠️ Keep your home SIM</strong>Leave your physical SIM in the phone but disable its data abroad. This way you still receive calls and 2FA texts.</div>
+        <div class="note-box note-red"><strong>🚫 Don't delete the eSIM</strong>Deleting an eSIM profile usually makes the QR invalid. You'd need to contact the provider for a new one.</div>
+      </div>
+    </div>
+
+    <!-- Other tools -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">🧰 Travel Tools</div></div>
+      <div class="card-bd">
+        <div class="tool-grid">
+          <a class="tool-link" href="currency-converter.html">💱 Currency</a>
+          <a class="tool-link" href="timezone-converter.html">🕒 Time Zones</a>
+          <a class="tool-link" href="tip-calculator.html">💵 Tip Calc</a>
+          <a class="tool-link" href="flight-status.html">✈️ Flights</a>
+          <a class="tool-link" href="seat-finder.html">🪑 Seat Finder</a>
+          <a class="tool-link" href="visa-check.html">🛂 Visa Check</a>
+          <a class="tool-link" href="packing-checklist.html">🧳 Packing</a>
+          <a class="tool-link" href="emergency-info.html">🆘 Emergency</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</main>
+
+<div id="toast"></div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-links">
+      <a href="index.html">Home</a><a href="trip-dashboard.html">My Trips</a>
+      <a href="features.html">Features</a><a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-copy">© 2025 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- Auth -->
+<script type="module">
+  const sb=window.supabase,authSlot=document.getElementById('authSlot');
+  function toggle(el,show){if(el)el.style.display=show?'block':'none';}
+  async function renderAuth(){
+    try{
+      const{data:{user}}=await sb.auth.getUser();authSlot.innerHTML='';
+      if(user){
+        const name=(user.email||'Account').split('@')[0];
+        const wrap=document.createElement('div');wrap.className='menu-group';
+        wrap.innerHTML=`<a href="#" class="account-chip" id="acctBtn"><span>🪪</span><span>${name}</span><span style="font-size:.65rem;opacity:.8">▾</span></a>
+          <div class="menu" id="acctMenu"><a href="account.html">👤 Account</a><div class="menu-divider"></div><a href="#" id="signOutBtn">🚪 Sign out</a></div>`;
+        authSlot.appendChild(wrap);
+        const btn=wrap.querySelector('#acctBtn'),menu=wrap.querySelector('#acctMenu');
+        btn.addEventListener('click',e=>{e.preventDefault();const o=menu.style.display==='block';toggle(menu,!o);});
+        document.addEventListener('click',e=>{if(!menu.contains(e.target)&&e.target!==btn)toggle(menu,false);});
+        wrap.querySelector('#signOutBtn').addEventListener('click',async e=>{e.preventDefault();await sb.auth.signOut();location.href='login.html';});
+      }else{
+        const a=document.createElement('a');a.className='nav-chip';a.href='login.html?next=esim-guide.html';a.textContent='🔑 Sign in';
+        authSlot.appendChild(a);
+      }
+    }catch{}
+  }
+  renderAuth();
+</script>
+
+<!-- ESIM LOGIC -->
+<script>
+const $ = id => document.getElementById(id);
+const STORE_KEY = 'vg_esim_saved_v2';
+let _toastTimer;
+
+function toast(msg, ms=1800){
+  const t=$('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+// ── Provider database ──────────────────────────────────────────────────────────
+const PROVIDERS = {
+  airalo: {
+    name:'Airalo', icon:'📱', color:'#0ea5e9',
+    tagline:'Most popular · instant QR · app install',
+    url:'https://www.airalo.com',
+    strengths:['Huge selection','App-based top-up','Very easy setup','Best for Asia'],
+    regions:['USA','Canada','Mexico','EU','UK','Japan','South Korea','Thailand','Vietnam','Indonesia','Singapore','Philippines','Australia','New Zealand','Global','Southeast Asia','Caribbean','South America','India','UAE','Turkey','Hawaii','Africa'],
+    dataTypes:['data'],
+    typical:{ price:'$5–$25', data:'1–10 GB', validity:'7–30 days' },
+    score:{ ease:95, coverage:90, value:85, support:80 }
+  },
+  holafly: {
+    name:'Holafly', icon:'♾️', color:'#8b5cf6',
+    tagline:'Unlimited data · no top-up needed',
+    url:'https://holafly.com',
+    strengths:['Truly unlimited data','Great for heavy users','Clear pricing','Good for EU'],
+    regions:['USA','Canada','Mexico','EU','UK','Japan','South Korea','Thailand','Vietnam','Australia','New Zealand','Global','Caribbean','South America','UAE','Turkey'],
+    dataTypes:['unlimited'],
+    typical:{ price:'$19–$49', data:'Unlimited', validity:'5–90 days' },
+    score:{ ease:90, coverage:80, value:75, support:85 }
+  },
+  ubigi: {
+    name:'Ubigi', icon:'🌐', color:'#0077b6',
+    tagline:'Strong Asia & Europe · top-up from app',
+    url:'https://www.ubigi.com',
+    strengths:['Excellent Asia coverage','App top-up','Good Europe','Multiple devices'],
+    regions:['USA','Canada','EU','UK','Japan','South Korea','Thailand','Vietnam','Indonesia','Singapore','Philippines','India','China','Global','Southeast Asia','Australia','UAE'],
+    dataTypes:['data'],
+    typical:{ price:'$5–$30', data:'1–20 GB', validity:'30 days' },
+    score:{ ease:80, coverage:88, value:82, support:78 }
+  },
+  gigsky: {
+    name:'GigSky', icon:'🛩️', color:'#059669',
+    tagline:'Apple-partnered · no app needed',
+    url:'https://www.gigsky.com',
+    strengths:['Apple Watch support','No app required','Good global coverage','Reliable'],
+    regions:['USA','Canada','EU','UK','Japan','Australia','New Zealand','Global','UAE','South Korea','Singapore'],
+    dataTypes:['data','global'],
+    typical:{ price:'$10–$40', data:'1–5 GB', validity:'30 days' },
+    score:{ ease:85, coverage:75, value:70, support:82 }
+  },
+  nomad: {
+    name:'Nomad', icon:'🗺️', color:'#d97706',
+    tagline:'Good value · Southeast Asia specialist',
+    url:'https://www.getnomad.app',
+    strengths:['Competitive pricing','SE Asia specialist','iOS & Android','Clean app'],
+    regions:['Japan','South Korea','Thailand','Vietnam','Indonesia','Singapore','Philippines','Southeast Asia','Australia','New Zealand','EU','Global'],
+    dataTypes:['data'],
+    typical:{ price:'$5–$20', data:'1–10 GB', validity:'15–30 days' },
+    score:{ ease:85, coverage:78, value:90, support:75 }
+  },
+  sims: {
+    name:'SimOptions', icon:'💡', color:'#e76f51',
+    tagline:'Price comparison + aggregator',
+    url:'https://www.simoptions.com',
+    strengths:['Compare multiple providers','Good for obscure destinations','Transparent pricing'],
+    regions:['USA','Canada','Mexico','EU','UK','Africa','South America','Global','India'],
+    dataTypes:['data','unlimited'],
+    typical:{ price:'$3–$25', data:'1–20 GB', validity:'7–30 days' },
+    score:{ ease:75, coverage:85, value:88, support:72 }
+  },
+};
+
+// ── Region → best providers ────────────────────────────────────────────────────
+function getProvidersForRegion(region){
+  if(!region) return [];
+  return Object.entries(PROVIDERS)
+    .filter(([,p]) => p.regions.includes(region))
+    .sort(([,a],[,b]) => {
+      const scoreA = (a.score.ease + a.score.coverage + a.score.value)/3;
+      const scoreB = (b.score.ease + b.score.coverage + b.score.value)/3;
+      return scoreB - scoreA;
+    })
+    .map(([key, p]) => ({key, ...p}));
+}
+
+// ── Usage → filter / sort ──────────────────────────────────────────────────────
+function sortByUsage(providers, usage){
+  if(usage === 'unlimited' || usage === 'heavy'){
+    // Put unlimited providers first
+    return [...providers].sort((a,b) => {
+      const aUn = a.dataTypes.includes('unlimited') ? 1 : 0;
+      const bUn = b.dataTypes.includes('unlimited') ? 1 : 0;
+      return bUn - aUn;
+    });
+  }
+  if(usage === 'light'){
+    // Sort by value
+    return [...providers].sort((a,b) => b.score.value - a.score.value);
+  }
+  return providers;
+}
+
+// ── Data recommendation text ──────────────────────────────────────────────────
+function getDataRec(usage, length){
+  const map = {
+    light:    { '1-3':'500 MB–1 GB', '4-7':'1–2 GB', '8-14':'2–3 GB', '15-30':'3–5 GB', '30+':'5–8 GB' },
+    standard: { '1-3':'1–2 GB',      '4-7':'2–5 GB', '8-14':'5–10 GB','15-30':'10–15 GB','30+':'15–20 GB' },
+    heavy:    { '1-3':'3–5 GB',      '4-7':'5–10 GB','8-14':'10–20 GB','15-30':'20–30 GB','30+':'Unlimited' },
+    unlimited:{ '1-3':'Unlimited',   '4-7':'Unlimited','8-14':'Unlimited','15-30':'Unlimited','30+':'Unlimited' },
+  };
+  return (map[usage]||map.standard)[length] || '5–10 GB';
+}
+
+// ── Render suggestions ────────────────────────────────────────────────────────
+function suggest(){
+  const region = $('region').value;
+  const length = $('length').value || '8-14';
+  const usage  = $('usage').value  || 'standard';
+  const wrap   = $('suggestionsWrap');
+
+  if(!region){
+    wrap.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:.88rem">Select a destination above to see recommended plans</div>';
+    return;
+  }
+
+  let providers = getProvidersForRegion(region);
+  providers = sortByUsage(providers, usage);
+  const dataRec = getDataRec(usage, length);
+
+  if(!providers.length){
+    wrap.innerHTML=`<div class="note-box note-amber">No specific eSIM providers found for this region. Try "Global" or check <a href="https://esimdb.com" target="_blank" rel="noopener" style="color:var(--ocean)">eSIMDB</a> for all available plans.</div>`;
+    return;
+  }
+
+  const usageLabel = {light:'Light usage',standard:'Standard usage',heavy:'Heavy usage',unlimited:'Unlimited'}[usage]||'';
+  const lengthLabel = {'1-3':'1–3 days','4-7':'4–7 days','8-14':'8–14 days','15-30':'15–30 days','30+':'30+ days'}[length]||'';
+
+  let html = `<div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.75rem">
+    Showing ${providers.length} providers for <strong>${region}</strong> · ${lengthLabel} · ${usageLabel} · Recommended data: <strong>${dataRec}</strong>
+  </div><div class="provider-grid">`;
+
+  providers.forEach((p, idx) => {
+    const isTop = idx === 0;
+    const avgScore = Math.round((p.score.ease + p.score.coverage + p.score.value)/3);
+    const unlimitedNote = (usage==='unlimited'||usage==='heavy') && p.dataTypes.includes('unlimited') ? '<span class="pv-tag good">✅ Unlimited available</span>' : '';
+    const chinaNote = region==='China' && p.name==='Airalo' ? '<span class="pv-tag warn">⚠️ VPN needed for China</span>' : '';
+
+    html += `<div class="provider-card${isTop?' top-pick':''}">
+      <div class="pv-header">
+        <div class="pv-name">${p.icon} ${p.name}</div>
+        <span class="pv-type ${p.dataTypes.includes('unlimited')?'unlimited':p.dataTypes.includes('global')?'global':'data'}">${p.dataTypes.includes('unlimited')?'Unlimited':p.dataTypes.includes('global')?'Global':'Data'}</span>
+      </div>
+      <div class="pv-desc">${p.tagline}</div>
+      <div class="pv-stats">
+        <div class="pv-stat"><div class="sv">${p.typical.price}</div><div class="sl">Est. price</div></div>
+        <div class="pv-stat"><div class="sv">${p.typical.data}</div><div class="sl">Data</div></div>
+        <div class="pv-stat"><div class="sv">${p.typical.validity}</div><div class="sl">Validity</div></div>
+      </div>
+      <div class="score-bar"><span style="width:52px;flex-shrink:0">Match</span><div class="score-track"><div class="score-fill" style="width:${avgScore}%"></div></div><span>${avgScore}%</span></div>
+      <div class="pv-tags">
+        ${p.strengths.slice(0,2).map(s=>`<span class="pv-tag good">${s}</span>`).join('')}
+        ${unlimitedNote}${chinaNote}
+      </div>
+      <div class="pv-actions">
+        <a class="vg-btn vg-btn-ocean vg-btn-sm" href="${p.url}" target="_blank" rel="noopener">Buy Plan ↗</a>
+        <button class="vg-btn vg-btn-sm" onclick="savePlan('${p.name}','${p.icon}','${region}','${length}','${usage}','${p.typical.price}','${dataRec}','${p.url}')">💾 Save</button>
+      </div>
+    </div>`;
+  });
+
+  html += '</div>';
+
+  // Region-specific note
+  const regionNotes = {
+    China: `<div class="note-box note-red" style="margin-top:.85rem">🇨🇳 <strong>China VPN warning:</strong> Most internet services are blocked in China (Google, WhatsApp, Instagram, etc.). You MUST install and configure a VPN before entering China. Set it up at home.</div>`,
+    Japan: `<div class="note-box note-blue" style="margin-top:.85rem">🇯🇵 <strong>Japan tip:</strong> Japan has exceptional LTE/5G coverage. Airalo Japan plans are excellent value. IIJmio and Mobal are also well-regarded Japan-specific providers.</div>`,
+    EU: `<div class="note-box note-green" style="margin-top:.85rem">🇪🇺 <strong>EU tip:</strong> EU eSIM plans typically cover all 30+ Schengen countries under one plan. You don't need separate plans for each country.</div>`,
+    USA: `<div class="note-box note-blue" style="margin-top:.85rem">🇺🇸 <strong>USA tip:</strong> If you're visiting the US from abroad, T-Mobile network eSIMs (via Airalo) offer the best coverage. AT&T-based eSIMs are also widely available.</div>`,
+    Indonesia: `<div class="note-box note-amber" style="margin-top:.85rem">🇮🇩 <strong>Bali/Indonesia tip:</strong> Local SIM cards (Telkomsel, XL) are widely available at airports and are very cheap — often $5 for 10–30 GB. An eSIM is more convenient but local SIMs give better value in Indonesia.</div>`,
+    Thailand: `<div class="note-box note-amber" style="margin-top:.85rem">🇹🇭 <strong>Thailand tip:</strong> DTAC (Airalo) and TrueMove eSIM plans work very well. AIS is the strongest network in rural areas. Local SIMs are also very affordable at Suvarnabhumi airport.</div>`,
+  };
+  if(regionNotes[region]) html += regionNotes[region];
+
+  wrap.innerHTML = html;
+}
+
+// ── Save / Load plan ──────────────────────────────────────────────────────────
+function savePlan(name, icon, region, length, usage, price, data, url){
+  const plan = {name, icon, region, length, usage, price, data, url, at: new Date().toISOString()};
+  localStorage.setItem(STORE_KEY, JSON.stringify(plan));
+  renderSaved();
+  toast(`✅ ${name} saved!`);
+}
+function clearSave(){ localStorage.removeItem(STORE_KEY); renderSaved(); toast('Cleared'); }
+function renderSaved(){
+  const wrap = $('savedPlanWrap');
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw){ wrap.innerHTML='<p style="font-size:.82rem;color:var(--text-muted)">Save a plan from the recommendations below to keep it handy.</p>'; return; }
+    const p = JSON.parse(raw);
+    const lengthMap = {'1-3':'1–3 days','4-7':'4–7 days','8-14':'8–14 days','15-30':'15–30 days','30+':'30+ days'};
+    wrap.innerHTML = `<div class="saved-plan-card">
+      <div class="sp-brand">${p.icon} ${p.name}</div>
+      <div class="sp-detail">📍 ${p.region} · ${lengthMap[p.length]||p.length}</div>
+      <div class="sp-detail">📊 ${p.data} · Est. ${p.price}</div>
+      <div style="margin-top:.6rem">
+        <a class="vg-btn vg-btn-ocean vg-btn-sm" href="${p.url}" target="_blank" rel="noopener">Buy Now ↗</a>
+      </div>
+    </div>`;
+  } catch { wrap.innerHTML='<p style="font-size:.82rem;color:var(--text-muted)">No plan saved yet.</p>'; }
+}
+
+// ── Device detect ─────────────────────────────────────────────────────────────
+function detectDevice(){
+  const ua = navigator.userAgent || '';
+  const banner = $('deviceBanner');
+  let title, sub, cls, icon;
+
+  if(/iPhone/.test(ua)){
+    const match = ua.match(/iPhone OS (\d+)/);
+    const ver = match ? parseInt(match[1]) : 0;
+    // iPhone XS = iOS 12 era. But we can't reliably detect model from UA alone.
+    title = 'iPhone detected — likely eSIM compatible';
+    sub = 'iPhone XS/XR (2018) and newer support eSIM. Check Settings → Cellular → Add eSIM to confirm.';
+    cls = 'compatible'; icon = '📱✅';
+  } else if(/iPad/.test(ua)){
+    title = 'iPad detected — cellular models support eSIM';
+    sub = 'iPad Pro (2018+), iPad Air (2020+), iPad mini (2021+) support eSIM on cellular models.';
+    cls = 'check'; icon = '📱⚠️';
+  } else if(/Pixel\/([4-9]|[1-9]\d)/.test(ua) || /Pixel 4|Pixel 5|Pixel 6|Pixel 7|Pixel 8|Pixel 9/.test(ua)){
+    title = 'Google Pixel detected — eSIM supported';
+    sub = 'Pixel 3 and newer support eSIM. Follow the Pixel installation tab above.';
+    cls = 'compatible'; icon = '🔵✅';
+  } else if(/SM-G9|SM-S9|SM-F|SM-Z|Galaxy S20|Galaxy S21|Galaxy S22|Galaxy S23|Galaxy S24|Galaxy S25/.test(ua)){
+    title = 'Samsung Galaxy detected — eSIM likely supported';
+    sub = 'Galaxy S20 series and newer, Z Fold/Flip series support eSIM. Some carrier-locked models may not.';
+    cls = 'compatible'; icon = '📱✅';
+  } else if(/Android/.test(ua)){
+    title = 'Android device detected — eSIM compatibility varies';
+    sub = 'Check your device settings: Settings → Network & Internet → SIMs → Add eSIM. If the option exists, you\'re eSIM-ready.';
+    cls = 'check'; icon = '🤖⚠️';
+  } else {
+    title = 'Desktop / unknown device';
+    sub = 'Use this guide to check your phone\'s eSIM compatibility. Check the compatibility table below.';
+    cls = 'unknown'; icon = '💻';
+  }
+
+  banner.className = `device-banner ${cls}`;
+  $('deviceIcon').textContent = icon;
+  $('deviceTitle').textContent = title;
+  $('deviceSub').textContent = sub;
+
+  // Also pre-select region based on timezone
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    const regionSel = $('region');
+    if(!regionSel.value){
+      if(/America\/New_York|America\/Chicago|America\/Denver|America\/Los_Angeles|America\/Phoenix/.test(tz)) regionSel.value = 'USA';
+      else if(/America\/Toronto|America\/Vancouver/.test(tz)) regionSel.value = 'Canada';
+      else if(/Europe\//.test(tz)) regionSel.value = 'EU';
+      else if(/Asia\/Tokyo/.test(tz)) regionSel.value = 'Japan';
+      else if(/Australia\//.test(tz)) regionSel.value = 'Australia';
+    }
+  } catch{}
+}
+
+// ── Install tabs ──────────────────────────────────────────────────────────────
+window.switchInstall = function(id, btn){
+  document.querySelectorAll('.install-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.install-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+};
+
+// ── Troubleshoot accordion ────────────────────────────────────────────────────
+window.toggleTrouble = function(qEl){
+  const aEl = qEl.nextElementSibling;
+  const chev = qEl.querySelector('.trouble-chevron');
+  const isOpen = aEl.classList.contains('open');
+  document.querySelectorAll('.trouble-a.open').forEach(el=>el.classList.remove('open'));
+  document.querySelectorAll('.trouble-q.open').forEach(el=>el.classList.remove('open'));
+  document.querySelectorAll('.trouble-chevron.open').forEach(el=>el.classList.remove('open'));
+  if(!isOpen){ aEl.classList.add('open'); qEl.classList.add('open'); chev?.classList.add('open'); }
+};
+
+// ── Update links when region changes ─────────────────────────────────────────
+function updateLinks(){
+  const region = $('region').value||'travel';
+  $('lkAPN').href = `https://www.google.com/search?q=${encodeURIComponent('APN settings eSIM '+region)}`;
+  $('lkAiralo').href  = region ? `https://www.airalo.com/search?q=${encodeURIComponent(region)}` : 'https://www.airalo.com';
+  $('lkHolafly').href = region ? `https://holafly.com/?s=${encodeURIComponent(region)}` : 'https://holafly.com';
+}
+
+// ── Share link ────────────────────────────────────────────────────────────────
+window.shareLink = function(){
+  const u=new URL(location.href);
+  ['region','length','usage'].forEach(id=>{const v=$(id)?.value;if(v)u.searchParams.set(id,v);});
+  navigator.clipboard?.writeText(u.toString()).then(()=>toast('🔗 Link copied!')).catch(()=>alert(u.toString()));
+};
+
+// ── Apply URL params ──────────────────────────────────────────────────────────
+function applyURL(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('region'))$('region').value=p.get('region');
+  if(p.get('length'))$('length').value=p.get('length');
+  if(p.get('usage')) $('usage').value=p.get('usage');
+}
+
+// ── Expose globals ────────────────────────────────────────────────────────────
+window.savePlan = savePlan;
+window.clearSave = clearSave;
+window.suggest = suggest;
+window.updateLinks = updateLinks;
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init(){
+  detectDevice();
+  applyURL();
+  renderSaved();
+  updateLinks();
+  // Auto-suggest if region was pre-selected from URL or timezone
+  if($('region').value) suggest();
+  else setTimeout(suggest, 100);
+}
+init();
+</script>
+</body>
+</html>

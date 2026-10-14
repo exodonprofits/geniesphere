@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🏡 Personal | GenieSphere</title>
+  <meta name="description" content="Personal AI agents: Household, Family Calendar, Nutrition, Wellness, Car Care, and more." />
+
+  <style>
+
+    :root{
+      --bg: #0b1220;
+      --card: #121a2b;
+      --card-hover: #18233a;
+      --text: #e9f0ff;
+      --muted: #a9b6d9;
+      --accent: #3ee1a1;   /* GenieSphere green */
+      --accent-2: #4aa3ff; /* Navigation blue */
+      --ring: rgba(62,225,161,.35);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --gap: 18px;
+      --btn-radius: 999px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:#0a0f1b;
+      color:var(--text);
+      font: 500 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    /* Layout */
+    .container{ max-width:1200px; margin:0 auto; padding:24px; }
+
+  /* === Enhanced Header (App Bar) === */
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    /* Match Footer: full-width background and top border */
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    
+    background: linear-gradient(180deg, rgba(9, 14, 25, .85), rgba(11, 18, 32, .9));
+    border-bottom: 1px solid rgba(120, 155, 255, .15); /* Keep border on bottom */
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .25); /* Keep header shadow */
+    backdrop-filter: saturate(120%) blur(10px); /* Keep for the sticky effect */
+  }
+  .site-header-inner {
+    /* Match Footer: container width and centering */
+    max-width: 1200px;
+    margin: 0 auto;
+
+    padding: 20px 24px; /* Use 24px side padding to match .container/.site-footer-inner */
+    
+    /* Retained Appbar content styles */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
+    text-decoration: none
+  }
+
+  .logo {
+    width: 50px; /* Reduced logo size for a cleaner app-bar look */
+    height: 50px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #6af0c4, #3ee1a1 40%, #1c9369 75%);
+    box-shadow: 0 0 0 4px var(--ring), 0 8px 24px rgba(62, 225, 161, .35)
+    
+  }
+
+  .menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap
+  }
+
+  .menu a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    text-decoration: none;
+    color: #03101f;
+    background: var(--accent-2);
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(74, 163, 255, .25);
+    transition: transform .15s ease, box-shadow .15s ease
+  }
+  .menu a:hover{ transform:translateY(-1px) } /* Add missing hover state */
+
+  .menu a.ghost {
+    background: #0e1626;
+    color: var(--text);
+    border: 1px solid rgba(120, 155, 255, .2);
+    box-shadow: none
+  }
+
+  .menu a.active {
+    background: var(--accent);
+    color: #04131a;
+    box-shadow: 0 8px 20px rgba(62, 225, 161, .25)
+  }
+
+  .hamburger {
+    display: none;
+    border: 1px solid rgba(120, 155, 255, .25);
+    background: #0e1626;
+    color: var(--text);
+    border-radius: 12px;
+    padding: 8px 10px;
+    cursor: pointer
+  }
+
+  /* Updated media query for consistency with footer/inner padding */
+  @media(max-width:720px) {
+    .menu {
+      display: none
+    }
+    .hamburger {
+      display: inline-flex
+    }
+    .site-header-inner {
+      padding: 10px 12px; /* Reduce padding on small screen */
+    }
+  }
+
+  .drawer {
+    position: fixed;
+    inset: 60px 12px auto 12px;
+    background: #0e1626;
+    border: 1px solid rgba(120, 155, 255, .2);
+    border-radius: 14px;
+    padding: 10px;
+    display: none;
+    z-index: 1001;
+    box-shadow: 0 18px 34px rgba(0, 0, 0, .45)
+  }
+
+  .drawer a {
+    display: block;
+    margin: 6px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+    background: #121a2b;
+    border: 1px solid rgba(120, 155, 255, .15)
+  }
+
+  .drawer a.active {
+    background: var(--card-hover); /* Replaced hardcoded #18233a with var(--card-hover) */
+    border-color: rgba(62, 225, 161, .35)
+  }
+    /* Buttons (nav pills) */
+    .btn{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 18px; border-radius:var(--btn-radius);
+      text-decoration:none; color:#03101f; background:var(--accent-2);
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+      box-shadow: 0 8px 20px rgba(74,163,255,.25); font-weight:700; border:0; cursor:pointer;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 12px 26px rgba(74,163,255,.35); }
+    .btn.primary{ background:var(--accent); color:#04131a; box-shadow:0 8px 20px rgba(62,225,161,.25); }
+
+    /* Hero */
+    .hero{ text-align:center; padding: 10px 0 6px; }
+    .title{ font-size: clamp(26px, 4vw, 40px); margin:0 0 6px; font-weight:900; }
+    .subtitle{ color:var(--muted); margin:0 auto 18px; max-width:780px; }
+
+    /* Ask Genie (Personal) */
+    .ask{
+      max-width:1200px; /* REVISED: Changed from 1200px to 980px for better centering */
+      margin: 0 auto 22px;
+      background: linear-gradient(180deg, rgba(24,35,58,.75), rgba(18,26,43,.75));
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(120,155,255,.15);
+    }
+    .ask-row{ display:flex; gap:12px; }
+    .input{
+      flex:1; display:flex; align-items:center; gap:10px;
+      background:#0e1626; border:1px solid rgba(120,155,255,.18);
+      border-radius: var(--btn-radius); padding:12px 16px; color:var(--text);
+      outline:none;
+    }
+    .input:focus{ border-color: rgba(74,163,255,.45); box-shadow: 0 0 0 4px rgba(74,163,255,.15); }
+    .ask-btn{ white-space:nowrap; }
+    .hint{ margin-top:10px; color:var(--muted); font-size:14px; }
+    .visually-hidden{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0;
+    }
+
+    /* Section headings */
+    .section-title{
+      margin:28px 0 12px;
+      font-size: clamp(18px, 2.2vw, 22px);
+      letter-spacing:.2px;
+      display:flex; align-items:center; gap:10px;
+    }
+
+    /* Cards grid */
+    .grid{ display:grid; gap: var(--gap); grid-template-columns: repeat(1, 1fr); }
+    @media (min-width:760px){ .grid{ grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width:1060px){ .grid{ grid-template-columns: repeat(3, 1fr); } }
+
+    .card{
+      display:block; text-decoration:none; color:inherit;
+      background: linear-gradient(180deg, rgba(24,35,58,.7), rgba(18,26,43,.9));
+      border:1px solid rgba(120,155,255,.15);
+      border-radius: var(--radius); padding:20px;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+      box-shadow: var(--shadow); min-height: 160px;
+    }
+    .card:hover{ transform: translateY(-2px); background: var(--card-hover); border-color: rgba(62,225,161,.35); box-shadow: 0 14px 34px rgba(0,0,0,.45); }
+    .card .icon{ font-size:28px; margin-bottom:10px; }
+    .card h3{ margin:0 0 6px; font-size:18px; letter-spacing:.2px; display:flex; align-items:center; gap:8px; }
+    .card p{ margin:0; color:var(--muted); font-size:14.5px; }
+
+    /* Utility */
+    .sr-only{ position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
+
+    /* NEW: Today Overview (collapsible) → "Quick Peek" */
+    details.overview{ max-width:1200px; margin: 12px auto 16px; background: linear-gradient(180deg, rgba(24,35,58,.65), rgba(18,26,43,.85)); border:1px solid rgba(120,155,255,.15); border-radius: var(--radius); box-shadow: var(--shadow); }
+    details.overview > summary{ list-style:none; cursor:pointer; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; }
+    details.overview[open] > summary{ border-bottom:1px solid rgba(120,155,255,.12); }
+    .summary-title{ display:flex; align-items:center; gap:10px; font-weight:900; }
+    .summary-badges{ display:flex; gap:8px; flex-wrap:wrap; }
+    .summary-badge{ font-size:12px; font-weight:800; border-radius:999px; padding:4px 10px; background:var(--accent-2); color:#03101f; }
+    .summary-badge.dim{ opacity:.7; }
+    .overview-content{ display:grid; gap:14px; grid-template-columns: repeat(3, 1fr); padding:12px; }
+    @media (max-width:900px){ .overview-content{ grid-template-columns:1fr; } }
+
+    .mini-card{ background:#0e1626; border:1px solid rgba(120,155,255,.12); border-radius:12px; padding:12px; min-height:120px; }
+    .mini-title{ margin:0 0 8px; font-size:14px; letter-spacing:.3px; color:#d7e4ff; display:flex; align-items:center; gap:8px; }
+    .mini-list{ margin:0; padding-left:18px; color:var(--muted); }
+
+/* Personal budget tool */
+    .budget-tool{ margin-top:12px; }
+    .budget-form-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:6px; }
+    .budget-form-row .input{ flex:1 1 180px; min-width:0; }
+    .budget-results{ margin-top:10px; color:var(--muted); font-size:14px; }
+    .budget-results-rows{ display:grid; gap:6px; margin-top:6px; }
+    .budget-results-rows div{ display:flex; justify-content:space-between; gap:8px; }
+    .budget-results-rows strong{ font-weight:600; }
+    @media(max-width:600px){
+      .budget-form-row{ flex-direction:column; align-items:stretch; }
+      .budget-form-row .btn{ width:100%; justify-content:center; }
+    }
+
+    /* NEW: Pill counts on existing cards */
+    .pill{ display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:20px; padding:0 6px; border-radius:999px; font-size:12px; font-weight:800; background:var(--accent-2); color:#03101f; box-shadow:0 6px 14px rgba(74,163,255,.25); }
+    .pill.warn{ background:var(--accent); color:#04131a; box-shadow:0 6px 14px rgba(62,225,161,.25); }
+    .pill.dim{ opacity:.65 }
+    
+    /* Footer */
+    .site-footer{
+      margin-top:46px; padding:32px 0 28px; border-top:1px solid rgba(120,155,255,.15);
+      margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+      background:linear-gradient(180deg, rgba(9,14,25,.85), rgba(11,18,32,.9))
+    }
+    .site-footer-inner{ max-width:1200px; margin:0 auto; padding:0 24px; }
+    .footer-grid{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px 28px; align-items:start; }
+    @media (max-width:900px){ .footer-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+    @media (max-width:560px){ .footer-grid{ grid-template-columns:1fr; } }
+    .footer-col h4{ margin:0 0 10px; font-size:14px; }
+    .footer-col a{ display:block; color:var(--muted); text-decoration:none; padding:4px 0; }
+    .footer-col a:hover{ color:var(--text); text-decoration:underline; }
+    .footer-bottom{
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+      color:var(--muted); font-size:14px; margin-top:24px; padding-top:14px;
+      border-top:1px solid rgba(120,155,255,.12); text-align:center
+    }
+    .social{ display:flex; gap:16px; justify-content:center }
+  </style></style>
+
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="site-header">
+    <div class="site-header-inner">
+        
+        <a class="brand" href="../index.html">
+        <img class="logo" src="../genie-logo.png" alt="GenieSphere"/>
+        <strong>GenieSphere</strong>
+        </a>
+        
+        <nav class="menu" aria-label="Primary">
+        <a class="active" href="personal.html">🏡 Personal</a>
+        <a class="ghosh" href="business.html">🏢 Business</a>
+        <a class="ghost" href="investment.html">📈 Investment</a>
+        <a class="ghost" href="leisure.html">🏝️ Leisure</a>
+        <a class="ghost" id="btn-settings">⚙️ Personal Settings</a>
+        </nav>
+        
+        <button class="hamburger" id="hamburger" aria-expanded="false">☰</button>
+    </div>
+    </header>
+
+    <!-- main -->
+    <div class="container">
+        <!-- Hero -->
+        <section class="hero" aria-labelledby="hero-title">
+        <h1 class="title" id="hero-title">🏡 Personal</h1>
+        <p class="subtitle">One glance shows what needs attention today—bills, groceries, calendar, car care, and meds.</p>
+        </section>
+
+        <!-- Ask Genie (Personal scope) -->
+        <section class="ask" aria-label="Ask Genie – Personal">
+        <form class="ask-row" id="ask-form-personal">
+            <label class="sr-only" for="ask-input-personal">Describe what you need (Personal)</label>
+            <input id="ask-input-personal" class="input" type="text"
+                placeholder="e.g., what's due this week, make grocery list, add soccer 5:30, schedule oil change…"
+                autocomplete="on" />
+            <button class="btn ask-btn primary" type="submit">🔮 Ask Personal Genie</button>
+        </form>
+        <div id="quick-start"></div>
+        <div id="quick-actions"></div>
+
+        <div class="hint">Try: “credit card due this week” • “groceries for diabetic dinners” • “oil change reminder for Escalade”</div>
+        </section>
+
+        <!-- ⚡ Quick Peek (collapsible) -->
+        <details class="overview" id="quick-peek" open>
+        <summary>
+            <span class="summary-title">⚡ Quick Peek</span>
+            <span class="summary-badges">
+            <span class="summary-badge" id="badge-bills">Bills: 0</span>
+            <span class="summary-badge" id="badge-groceries">Groceries: 0</span>
+            <span class="summary-badge" id="badge-events">0 events</span>
+            <span class="summary-badge" id="badge-car">Car: 0</span>
+            <span class="summary-badge dim" id="badge-meds">Meds: 0</span>
+            </span>
+        </summary>
+        <div class="overview-content">
+            <div class="mini-card">
+            <h3 class="mini-title">🧾 Bills Due Soon (7 days)</h3>
+            <ul class="mini-list" id="list-bills"><li>No upcoming bills</li></ul>
+            </div>
+            <div class="mini-card">
+            <h3 class="mini-title">🛒 Groceries (This Week)</h3>
+            <ul class="mini-list" id="list-groceries"><li>Add items from Nutrition Engine</li></ul>
+            </div>
+            <div class="mini-card">
+            <h3 class="mini-title">🗓 Today’s Schedule</h3>
+            <ul class="mini-list" id="list-schedule"><li>Connect Calendar to see events</li></ul>
+            </div>
+            <div class="mini-card">
+            <h3 class="mini-title">🚗 Car & Maintenance</h3>
+            <ul class="mini-list" id="list-car"><li>All clear</li></ul>
+            </div>
+            <div class="mini-card">
+            <h3 class="mini-title">💊 Meds & Health</h3>
+            <ul class="mini-list" id="list-meds"><li>No meds due</li></ul>
+            </div>
+        </div>
+        </details>
+
+        <!-- Today inline strip (compact highlights) -->
+        <div id="today-strip" style="margin:6px 0 10px;display:none">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <strong>🗓️ Today:</strong>
+            <span id="today-items" class="hint"></span>
+        </div>
+        </div>
+
+        <!-- Daily Essentials (cards remain) -->
+        <h2 class="section-title">🏠 Daily Essentials</h2>
+        <div class="grid">
+        <a class="card" id="link-household" href="../personal/householdgenie/household-genie.html">
+            <div class="icon">💡</div>
+            <h3>Household Genie</h3>
+            <p>Bill tracking, tasks, inventory, and appointments.</p>
+        </a>
+        <a class="card" id="link-calendar" href="../personal/familyscheduler/family-scheduler.html">
+            <div class="icon">📅</div>
+            <h3>Family Scheduler <small class="pill" data-pill="calendar" aria-label="Calendar reminders"></small></h3>
+            <p>Shared calendar for kids’ events and tasks.</p>
+        </a>
+        <a class="card" id="link-nutrition" href="../personal/nutritiongenie/nutrition-genie.html">
+            <div class="icon">🍱</div>
+            <h3>Nutrition Engine</h3>
+            <p>AI-generated meal plans and grocery lists.</p>
+        </a>
+        <a class="card" id="link-wellness" href="../personal/wellnessscheduler/wellness_scheduler.html">
+            <div class="icon">🧘‍♀️</div>
+            <h3>Wellness Scheduler</h3>
+            <p>Mindfulness, workouts, and habit reminders.</p>
+        </a>
+        <a class="card" id="link-carcare" href="../personal/carcaretracker/car-care.html">
+            <div class="icon">🚗</div>
+            <h3>Car Care Tracker <small class="pill" data-pill="car_care" aria-label="Car reminders"></small></h3>
+            <p>Maintenance, insurance, and service logs.</p>
+        </a>
+        </div>
+
+        <!-- (rest of original sections unchanged) -->
+        <h2 class="section-title">🎯 Family Planning &amp; Management</h2>
+        <div class="grid">
+        <a class="card" id="link-college" href="../personal/collegegenie/college-genie.html">
+            <div class="icon">🏫</div>
+            <h3>College Genie</h3>
+            <p>FAFSA, major selection, career prep, and checklist.</p>
+        </a>
+        <a class="card" id="link-gifts" href="../personal/gift-planner.html">
+            <div class="icon">🎁</div>
+            <h3>Gift Planner</h3>
+            <p>Organize gifts by person, budget, and date.</p>
+        </a>
+        <a class="card" id="link-pet" href="../personal/petgenie/pet-genie.html">
+            <div class="icon">🐾</div>
+            <h3>Pet Genie</h3>
+            <p>Vet visits, food, and pet care reminders.</p>
+        </a>
+        <a class="card" id="link-inventory" href="#">
+            <div class="icon">📦</div>
+            <h3>Home Inventory</h3>
+            <p>Track household items for moving or insurance.</p>
+        </a>
+        </div>
+
+        <h2 class="section-title">📦 Extras &amp; Personalization</h2>
+        <div class="grid">
+        <a class="card" id="link-relationship" href="#">
+            <div class="icon">👨‍👩‍👧‍👦</div>
+            <h3>Relationship Genie</h3>
+            <p>Track birthdays, quality time, and family goals.</p>
+        </a>
+        <a class="card" id="link-memory" href="#">
+            <div class="icon">📖</div>
+            <h3>Memory Book</h3>
+            <p>Save family moments, milestones, and journals.</p>
+        </a>
+        <a class="card" id="link-shopping" href="../personal/shopping-assistant.html">
+            <div class="icon">🛍️</div>
+            <h3>Shopping Assistant</h3>
+            <p>Create lists, track spending, and wishlist items.</p>
+        </a>
+        </div>
+
+        <h2 class="section-title">🩺 Health &amp; Wellness</h2>
+        <div class="grid">
+        <a class="card" id="link-medlog" href="#">
+            <div class="icon">💊</div>
+            <h3>Medication Logger <small class="pill" data-pill="meds" aria-label="Medication reminders"></small></h3>
+            <p>Track meds, doses, refills, and reminders.</p>
+        </a>
+        <a class="card" id="link-appt" href="#">
+            <div class="icon">🏥</div>
+            <h3>Doctor &amp; Dentist Visits</h3>
+            <p>Manage appointments and follow-up tasks.</p>
+        </a>
+        <a class="card" id="link-vitals" href="#">
+            <div class="icon">📈</div>
+            <h3>Vitals &amp; Symptoms</h3>
+            <p>Log glucose, BP, sleep, steps—see trends.</p>
+        </a>
+        </div>
+
+        <h2 class="section-title">🧾 Finance &amp; Documents</h2>
+        <div class="grid">
+        <!-- PATCH: Receipts now points to receipts.html -->
+        <a class="card" id="link-receipts" href="../personal/receipts/receipts.html">
+            <div class="icon">🧾</div>
+            <h3>Receipts &amp; Warranties</h3>
+            <p>Scan receipts, track warranties, and returns.</p>
+        </a>
+        <a class="card" id="link-ids" href="#">
+            <div class="icon">🪪</div>
+            <h3>ID &amp; Passport Vault</h3>
+            <p>Track expirations, renewals, and reminders.</p>
+        </a>
+        <a class="card" id="link-budget" href="#personal-budget-tool">
+            <div class="icon">📊</div>
+            <h3>Personal Budget</h3>
+            <p>Monthly plan for bills, savings, and goals.</p>
+        </a>
+        </div>
+
+        <div id="personal-budget-tool" class="mini-card budget-tool">
+          <h3 class="mini-title">💰 Personal Spending Guide</h3>
+          <p class="hint">Enter your monthly take-home income and GenieSphere will suggest a simple plan for needs, wants, and savings.</p>
+          <div class="budget-form-row">
+            <label for="monthly-income" class="visually-hidden">Monthly take-home income</label>
+            <input id="monthly-income" type="number" class="input" placeholder="Monthly take-home (e.g. 5000)" min="0" step="100"/>
+            <button type="button" class="btn primary" onclick="updatePersonalBudgetCard()">Calculate</button>
+          </div>
+          <div id="budget-results" class="budget-results">
+            <p class="hint">Tip: Use your after-tax income so the percentages feel realistic.</p>
+          </div>
+        </div>
+
+
+        <h2 class="section-title">🏠 Home &amp; Maintenance</h2>
+        <div class="grid">
+        <a class="card" id="link-repairs" href="#">
+            <div class="icon">🛠️</div>
+            <h3>Repairs &amp; Projects</h3>
+            <p>Track quotes, materials, and progress photos.</p>
+        </a>
+        <a class="card" id="link-utilities" href="#">
+            <div class="icon">🔌</div>
+            <h3>Utilities &amp; Subscriptions <small class="pill" data-pill="bills" aria-label="Bill reminders"></small></h3>
+            <p>Due dates, autopay, and price increases.</p>
+        </a>
+        <a class="card" id="link-cleaning" href="#">
+            <div class="icon">🧹</div>
+            <h3>Cleaning &amp; Chores <small class="pill" data-pill="chores" aria-label="Chore reminders"></small></h3>
+            <p>Weekly chore schedule &amp; rotation for kids.</p>
+        </a>
+        </div>
+
+        <h2 class="section-title">🎒 Kids &amp; School</h2>
+        <div class="grid">
+        <a class="card" id="link-homework" href="#">
+            <div class="icon">📚</div>
+            <h3>Homework Helper</h3>
+            <p>Ask AI for explanations &amp; step-by-step help.</p>
+        </a>
+        <!-- PATCH: Lunch planner deep-link into Nutrition Engine -->
+        <a class="card" id="link-lunch" href="../personal/nutritiongenie/nutrition-genie.html?preset=school-lunch">
+            <div class="icon">🥪</div>
+            <h3>School Lunch Planner</h3>
+            <p>Healthy menus, prep lists, and reminders.</p>
+        </a>
+        <a class="card" id="link-activities" href="#">
+            <div class="icon">⚽</div>
+            <h3>Activities &amp; Rides</h3>
+            <p>Practice schedules and carpool coordination.</p>
+        </a>
+        </div>
+
+        <h2 class="section-title">🧳 Travel &amp; Logistics</h2>
+        <div class="grid">
+        <a class="card" id="link-packing" href="#">
+            <div class="icon">🧥</div>
+            <h3>Packing Lists</h3>
+            <p>Auto-generate outfits and essentials by trip.</p>
+        </a>
+        <a class="card" id="link-docs" href="#">
+            <div class="icon">🛂</div>
+            <h3>Travel Docs &amp; Visas</h3>
+            <p>Store confirmations and visa requirements.</p>
+        </a>
+        <a class="card" id="link-itin" href="../leisure/travelplangenie/index.html">
+            <div class="icon">🗺️</div>
+            <h3>Trip Itinerary</h3>
+            <p>AI itineraries with dining &amp; transport.</p>
+        </a>
+        </div>
+
+        <h2 class="section-title">🛡️ Safety &amp; Insurance</h2>
+        <div class="grid">
+        <a class="card" id="link-road" href="#">
+            <div class="icon">🚧</div>
+            <h3>Roadside &amp; Emergencies</h3>
+            <p>ICE contacts, steps, and checklists.</p>
+        </a>
+        <a class="card" id="link-policies" href="../dashboard/agent_users.html?agent=insurance-genie">
+            <div class="icon">📄</div>
+            <h3>Personal Policies <small class="pill" data-pill="insurance" aria-label="Insurance reminders"></small></h3>
+            <p>Auto, home, health—compare &amp; renew.</p>
+        </a>
+        <a class="card" id="link-medkit" href="#">
+            <div class="icon">🧰</div>
+            <h3>Home Med Kit</h3>
+            <p>Supplies list with expiry reminders.</p>
+        </a>
+        </div>
+
+        <h2 class="section-title">🗂️ Life Admin</h2>
+        <div class="grid">
+        <a class="card" id="link-forms" href="#">
+            <div class="icon">✍️</div>
+            <h3>Forms &amp; Letters</h3>
+            <p>Draft letters for claims, disputes, requests.</p>
+        </a>
+        <a class="card" id="link-reminders" href="#">
+            <div class="icon">⏰</div>
+            <h3>Smart Reminders</h3>
+            <p>Birthdays, renewals, doctor visits, bills.</p>
+        </a>
+        <a class="card" id="link-contacts" href="#">
+            <div class="icon">📇</div>
+            <h3>Family Contacts</h3>
+            <p>Who to call for what—shared directory.</p>
+        </a>
+        </div>
+
+        <h2 class="section-title">🎉 Celebrations &amp; Social</h2>
+        <div class="grid">
+        <a class="card" id="link-party-planner" href="../personal/partygenie/party-planner.html">
+          <div class="icon">🎉</div>
+          <h3>Party Planner</h3>
+          <p>Theme, menu, timeline, checklist & RSVP.</p>
+        </a>
+
+        <a class="card" id="link-events" href="../personal/party-events.html">
+            <div class="icon">🎂</div>
+            <h3>Party &amp; Events</h3>
+            <p>Plan menu, decor, guest list, thank-yous.</p>
+        </a>
+        <a class="card" id="link-photo" href="#">
+            <div class="icon">📸</div>
+            <h3>Photo Organizer</h3>
+            <p>Auto-label &amp; group albums by person/event.</p>
+        </a>
+        <a class="card" id="link-cards" href="#">
+            <div class="icon">💌</div>
+            <h3>Cards &amp; Messages</h3>
+            <p>Write personalized wishes in seconds.</p>
+        </a>
+        </div>
+
+        <h2 class="section-title">🧠 Learning &amp; Language</h2>
+        <div class="grid">
+        <a class="card" id="link-english" href="#">
+            <div class="icon">🇺🇸</div>
+            <h3>English Coach</h3>
+            <p>Practice speaking, grammar, and interviews.</p>
+        </a>
+        <a class="card" id="link-vietnamese" href="#">
+            <div class="icon">🇻🇳</div>
+            <h3>Vietnamese Coach</h3>
+            <p>Luyện nói/viết, từ vựng theo chủ đề.</p>
+        </a>
+        <a class="card" id="link-skills" href="#">
+            <div class="icon">🛠️</div>
+            <h3>New Skills</h3>
+            <p>Learn budgeting, cooking, DIY, and more.</p>
+        </a>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div class="footer-grid">
+            <div class="footer-col">
+                <h4>Operations</h4>
+                <a href="../dashboard/agent_users.html?agent=projects-genie">Projects &amp; Tasks</a>
+                <a href="../dashboard/agent_users.html?agent=team-scheduler">Team Scheduler</a>
+                <a href="../dashboard/agent_users.html?agent=vendors-genie">Vendor Management</a>
+            </div>
+            <div class="footer-col">
+                <h4>Finance</h4>
+                <a href="../dashboard/agent_users.html?agent=invoices-genie">Invoices &amp; Payments</a>
+                <a href="../dashboard/agent_users.html?agent=payroll-genie">Payroll</a>
+                <a href="../dashboard/agent_users.html?agent=budget-genie">Budgeting</a>
+            </div>
+            <div class="footer-col">
+                <h4>Marketing</h4>
+                <a href="../dashboard/agent_users.html?agent=marketing-genie">Campaign Planner</a>
+                <a href="../dashboard/agent_users.html?agent=crm-genie">CRM &amp; Leads</a>
+                <a href="../dashboard/agent_users.html?agent=content-genie">Content Library</a>
+            </div>
+            <div class="footer-col">
+                <h4>Help</h4>
+                <a href="../onboarding/api-key-settings.html">API Keys</a>
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+            </div>
+            </div>
+            <div class="footer-bottom">
+            <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+            <div class="social" aria-label="Social">
+                <a href="#" aria-label="Twitter">🐦</a>
+                <a href="#" aria-label="YouTube">▶️</a>
+                <a href="#" aria-label="GitHub">🐙</a>
+            </div>
+            </div>
+        </div>
+        </footer>
+
+    </div>
+
+  <script>
+    // Year stamp
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Simple Personal router
+    const ROUTES = {
+      "nutrition": document.getElementById('link-nutrition'),
+      "meal": document.getElementById('link-nutrition'),
+      "lunch": document.getElementById('link-nutrition'),
+      "dinner": document.getElementById('link-nutrition'),
+      "calendar": document.getElementById('link-calendar'),
+      "event": document.getElementById('link-calendar'),
+      "birthday": document.getElementById('link-calendar'),
+      "car": document.getElementById('link-carcare'),
+      "oil": document.getElementById('link-carcare'),
+      "maintenance": document.getElementById('link-carcare'),
+      "habit": document.getElementById('link-wellness'),
+      "workout": document.getElementById('link-wellness'),
+      "mindfulness": document.getElementById('link-wellness'),
+      "household": document.getElementById('link-household'),
+      "bill": document.getElementById('link-utilities'),
+      "task": document.getElementById('link-household'),
+      "receipt": document.getElementById('link-receipts'),
+      "passport": document.getElementById('link-ids'),
+      "id": document.getElementById('link-ids'),
+      "budget": document.getElementById('link-budget'),
+      "repair": document.getElementById('link-repairs'),
+      "utility": document.getElementById('link-utilities'),
+      "subscription": document.getElementById('link-utilities'),
+      "chore": document.getElementById('link-cleaning'),
+      "homework": document.getElementById('link-homework'),
+      "school": document.getElementById('link-lunch'),
+      "activity": document.getElementById('link-activities'),
+      "packing": document.getElementById('link-packing'),
+      "visa": document.getElementById('link-docs'),
+      "trip": document.getElementById('link-itin'),
+      "insurance": document.getElementById('link-policies'),
+      "emergency": document.getElementById('link-road'),
+      "forms": document.getElementById('link-forms'),
+      "remind": document.getElementById('link-reminders'),
+      "contact": document.getElementById('link-contacts'),
+      "party": document.getElementById('link-events'),
+      "photo": document.getElementById('link-photo'),
+      "card": document.getElementById('link-cards'),
+      "english": document.getElementById('link-english'),
+      "vietnamese": document.getElementById('link-vietnamese'),
+      "learn": document.getElementById('link-skills')
+    };
+
+    document.getElementById('ask-form-personal').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const q = document.getElementById('ask-input-personal').value.toLowerCase();
+      try{ localStorage.setItem("geniesphere_last_query", q); }catch(_){ }
+      for(const key of Object.keys(ROUTES)){
+        if(q.includes(key)){
+          ROUTES[key]?.click();
+          return;
+        }
+      }
+      document.getElementById('link-household').click();
+    });
+
+    // Settings button → profile settings
+    document.getElementById('btn-settings')?.addEventListener('click',()=>{
+      window.location.href = '../personal/profile-settings.html';
+    });
+
+    // -------- Quick Peek plumbing (localStorage demo; swap to Supabase later) --------
+    const STORAGE_KEY = "gs_reminders_demo";
+    const loadReminders = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } };
+
+    const SOURCE_MAP = {
+      calendar: { pill: 'calendar', linkId: 'link-calendar', emoji:'📅' },
+      bills:    { pill: 'bills', linkId: 'link-utilities', emoji:'🧾' },
+      car:      { pill: 'car_care', linkId: 'link-carcare', emoji:'🚗' },
+      meds:     { pill: 'meds', linkId: 'link-medlog', emoji:'💊' },
+      chores:   { pill: 'chores', linkId: 'link-cleaning', emoji:'🧹' },
+      insurance:{ pill: 'insurance', linkId: 'link-policies', emoji:'📄' },
+    };
+
+    function formatTime(iso){
+      try{
+        const d = new Date(iso);
+        const h = d.getHours();
+        const m = String(d.getMinutes()).padStart(2,'0');
+        const ampm = h>=12?'PM':'AM';
+        const hh = h%12 || 12;
+        return `${hh}:${m} ${ampm}`;
+      }catch{ return ''; }
+    }
+
+    function updateQuickPeek(){
+      const data = loadReminders();
+      const start = new Date(); start.setHours(0,0,0,0);
+      const endToday = new Date(); endToday.setHours(23,59,59,999);
+
+      const billsSoon = data.filter(r=> r.source_type==='bills' && r.due_at && (new Date(r.due_at) - start) <= 7*86400000);
+      const eventsToday = data.filter(r=> r.source_type==='calendar' && r.due_at && new Date(r.due_at) >= start && new Date(r.due_at) <= endToday);
+      const carSoon = data.filter(r=> r.source_type==='car' && r.due_at && (new Date(r.due_at) - start) <= 14*86400000);
+      const medsToday = data.filter(r=> r.source_type==='meds' && r.due_at && new Date(r.due_at) >= start && new Date(r.due_at) <= endToday);
+
+      // fill lists
+      const fill = (id, arr, fmt)=>
+        document.getElementById(id).innerHTML = (arr.length? arr.map(fmt).join('') : '<li>Nothing to show</li>');
+      fill('list-bills', billsSoon, (b)=> `<li>${b.title||'Bill'} • due ${new Date(b.due_at).toLocaleDateString()}</li>`);
+      fill('list-groceries', [], (x)=>`<li>${x}</li>`);
+      fill('list-schedule', eventsToday, (e)=> `<li>${e.title||'Event'} • ${formatTime(e.due_at)}</li>`);
+      fill('list-car', carSoon, (c)=> `<li>${c.title||'Car service'} • ${new Date(c.due_at).toLocaleDateString()}</li>`);
+      fill('list-meds', medsToday, (m)=> `<li>${m.title||'Medication'} • ${formatTime(m.due_at)}</li>`);
+
+      // badges
+      document.getElementById('badge-bills').textContent = `Bills: ${billsSoon.length}`;
+      document.getElementById('badge-groceries').textContent = `Groceries: 0`;
+      document.getElementById('badge-events').textContent = `${eventsToday.length} events`;
+      document.getElementById('badge-car').textContent = `Car: ${carSoon.length}`;
+      const medsBadge = document.getElementById('badge-meds'); medsBadge.textContent = `Meds: ${medsToday.length}`; medsBadge.classList.toggle('dim', medsToday.length===0);
+
+      const todayStrip = document.getElementById('today-strip');
+      const todayItems = document.getElementById('today-items');
+      const combined = [...eventsToday, ...medsToday, ...billsSoon.filter(b=> new Date(b.due_at) <= endToday)];
+      if(combined.length){
+        const hl = combined.slice(0,5).map(r=> `${(SOURCE_MAP[r.source_type]?.emoji)||'🔔'} ${r.title}${r.due_at ? ' • ' + formatTime(r.due_at): ''}`);
+        todayItems.textContent = hl.join('   •   ');
+        todayStrip.style.display='block';
+      } else { todayStrip.style.display='none'; }
+
+      // badge counts on cards
+      const counts = {};
+      ;[/* placeholder arrays if needed */].forEach(r=>{ const k=r.source_type||'misc'; counts[k]=(counts[k]||0)+1; });
+      document.querySelectorAll('.pill[data-pill]').forEach(el=>{ el.textContent=''; el.classList.remove('warn','dim'); el.style.display='none'; });
+      Object.keys(counts).forEach(src=>{
+        const map = SOURCE_MAP[src]; if(!map) return; const el = document.querySelector(`.pill[data-pill="${map.pill}"]`); if(!el) return;
+        el.textContent = counts[src]; el.style.display='inline-flex'; if(counts[src]>=3) el.classList.add('warn'); if(counts[src]===1) el.classList.add('dim');
+        const link = document.getElementById(map.linkId); if(link){ el.style.cursor='pointer'; el.onclick=()=> link.click(); }
+      });
+    }
+
+    updateQuickPeek();
+    window.addEventListener('storage', (e)=>{ if(e.key===STORAGE_KEY) updateQuickPeek(); });
+      
+
+    // Personal budget helper
+    function getPersonalBudgetPlan(netIncome){
+      let needsPct, wantsPct, savingsPct, label;
+      if(netIncome <= 0 || !isFinite(netIncome)) return null;
+
+      if(netIncome < 3000){
+        needsPct = 0.70; wantsPct = 0.15; savingsPct = 0.15;
+        label = "Essentials-Focused Plan";
+      }else if(netIncome < 7000){
+        needsPct = 0.55; wantsPct = 0.25; savingsPct = 0.20;
+        label = "Balanced Standard Plan";
+      }else if(netIncome < 12000){
+        needsPct = 0.45; wantsPct = 0.25; savingsPct = 0.30;
+        label = "Growth Plan";
+      }else{
+        needsPct = 0.35; wantsPct = 0.20; savingsPct = 0.45;
+        label = "Wealth Accelerator Plan";
+      }
+
+      return {
+        label,
+        needs: {
+          total: netIncome * needsPct,
+          housing: netIncome * needsPct * 0.50,
+          transport: netIncome * needsPct * 0.20,
+          food: netIncome * needsPct * 0.20,
+          bills: netIncome * needsPct * 0.10
+        },
+        wants: {
+          total: netIncome * wantsPct,
+          eatingOut: netIncome * wantsPct * 0.40,
+          shopping: netIncome * wantsPct * 0.40,
+          travelFun: netIncome * wantsPct * 0.20
+        },
+        savings: {
+          total: netIncome * savingsPct,
+          emergency: netIncome * savingsPct * 0.40,
+          investing: netIncome * savingsPct * 0.40,
+          extraDebtGoals: netIncome * savingsPct * 0.20
+        }
+      };
+    }
+
+    function updatePersonalBudgetCard(){
+      const input = document.getElementById('monthly-income');
+      const resultsEl = document.getElementById('budget-results');
+      if(!input || !resultsEl) return;
+
+      const raw = input.value.trim();
+      const income = Number(raw);
+      if(!raw || !income || income <= 0){
+        resultsEl.innerHTML = '<p class="hint">Enter your monthly take-home income to see a suggested breakdown.</p>';
+        return;
+      }
+
+      const plan = getPersonalBudgetPlan(income);
+      if(!plan){
+        resultsEl.innerHTML = '<p class="hint">Please enter a valid income amount.</p>';
+        return;
+      }
+
+      const fmt = (v)=> {
+        return '$' + Math.round(v).toLocaleString();
+      };
+
+      resultsEl.innerHTML = `
+        <p class="hint"><strong>Plan:</strong> ${plan.label}</p>
+        <div class="budget-results-rows">
+          <div><span><strong>Needs</strong> (home, car, food, bills)</span><span>${fmt(plan.needs.total)}</span></div>
+          <div><span>&nbsp;&nbsp;• Housing</span><span>${fmt(plan.needs.housing)}</span></div>
+          <div><span>&nbsp;&nbsp;• Transportation</span><span>${fmt(plan.needs.transport)}</span></div>
+          <div><span>&nbsp;&nbsp;• Food &amp; groceries</span><span>${fmt(plan.needs.food)}</span></div>
+          <div><span>&nbsp;&nbsp;• Utilities &amp; insurance</span><span>${fmt(plan.needs.bills)}</span></div>
+          <div><span><strong>Wants</strong> (fun &amp; lifestyle)</span><span>${fmt(plan.wants.total)}</span></div>
+          <div><span>&nbsp;&nbsp;• Eating out &amp; coffee</span><span>${fmt(plan.wants.eatingOut)}</span></div>
+          <div><span>&nbsp;&nbsp;• Shopping &amp; beauty</span><span>${fmt(plan.wants.shopping)}</span></div>
+          <div><span>&nbsp;&nbsp;• Travel &amp; experiences</span><span>${fmt(plan.wants.travelFun)}</span></div>
+          <div><span><strong>Savings</strong> (future &amp; safety)</span><span>${fmt(plan.savings.total)}</span></div>
+          <div><span>&nbsp;&nbsp;• Emergency fund</span><span>${fmt(plan.savings.emergency)}</span></div>
+          <div><span>&nbsp;&nbsp;• Investing &amp; retirement</span><span>${fmt(plan.savings.investing)}</span></div>
+          <div><span>&nbsp;&nbsp;• Extra debt / special goals</span><span>${fmt(plan.savings.extraDebtGoals)}</span></div>
+        </div>
+      `;
+    }
+
+    // Auto-init if income already filled (e.g. from browser autofill)
+    window.addEventListener('load', ()=> {
+      const input = document.getElementById('monthly-income');
+      if(input && input.value){
+        updatePersonalBudgetCard();
+      }
+    });
+
+
+    // Mobile menu + active link handling
+    (function(){
+      const drawer = document.getElementById('mobile-drawer');
+      const btn = document.getElementById('hamburger');
+      const open = ()=>{ if(drawer){ drawer.style.display='block'; } btn.setAttribute('aria-expanded','true'); };
+      const close = ()=>{ if(drawer){ drawer.style.display='none'; } btn.setAttribute('aria-expanded','false'); };
+      btn?.addEventListener('click', ()=>{ const isOpen = btn.getAttribute('aria-expanded')==='true'; isOpen? close(): open(); });
+      drawer?.addEventListener('click', (e)=>{ if(e.target.tagName==='A') close(); });
+      // settings in drawer
+      document.getElementById('btn-settings-mobile')?.addEventListener('click',()=>{ window.location.href = '../personal/profile-settings.html'; });
+    })();
+
+  </script>
+  <link rel="preload" href="personal-agents.json" as="fetch" crossorigin="anonymous" />
+  <script defer src="ask-router-personal.js"></script>
+  <script defer src="personal-loader.js"></script>
+</body>
+</html>

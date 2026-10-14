@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GenieSphere — My Overview</title>
+<meta name="description" content="Unified personal overview dashboard for GenieSphere."/>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   GENIESPHERE OVERVIEW
+   Neutral hub — each area card uses its own identity color
+   Area color system:
+     Household  → Teal      #22D3EE / #0891B2
+     Business   → Navy Blue #3B82F6 / #1D4ED8
+     Investment → Amber     #F59E0B / #B45309
+     Leisure    → Coral     #F97316 / #C2410C
+     Finance    → Violet    #8B5CF6 / #6D28D9
+═══════════════════════════════════════════════════════════ */
+:root{
+  --area-accent: #22D3EE;
+  --area-dim:    rgba(34,211,238,.10);
+  --area-dark:   #0E7490;
+  --bg:#F5F7FA;
+  --panel:#FFFFFF;
+  --panel-soft:#F0F4F8;
+  --text:#111827;
+  --muted:#6B7280;
+  --muted-2:#9CA3AF;
+  --line:#E5EAF0;
+  --line-2:#D1D9E0;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.08);
+  --radius:16px;
+  --radius-lg:22px;
+  --max:1440px;
+
+  /* Area colors */
+  --teal:       #22D3EE; --teal-dark:#0891B2; --teal-dim:rgba(34,211,238,.10); --teal-bd:rgba(34,211,238,.28);
+  --navy:       #3B82F6; --navy-dark:#1D4ED8; --navy-dim:rgba(59,130,246,.10); --navy-bd:rgba(59,130,246,.28);
+  --amber:      #F59E0B; --amber-dark:#B45309;--amber-dim:rgba(245,158,11,.10);--amber-bd:rgba(245,158,11,.28);
+  --coral:      #F97316; --coral-dark:#C2410C;--coral-dim:rgba(249,115,22,.10);--coral-bd:rgba(249,115,22,.28);
+  --violet:     #8B5CF6; --violet-dark:#6D28D9;--violet-dim:rgba(139,92,246,.10);--violet-bd:rgba(139,92,246,.28);
+  --brand:      #22D3EE;
+
+  /* Status */
+  --ok-bg:#F0FDF4; --ok-bd:#86EFAC; --ok-txt:#15803D;
+  --warn-bg:#FFFBEB;--warn-bd:#FCD34D;--warn-txt:#92400E;
+  --bad-bg:#FEF2F2; --bad-bd:#FCA5A5;--bad-txt:#B91C1C;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+
+
+/* Area accent dots on nav */
+.nav-link[data-area="household"]:hover,.nav-link[data-area="household"].active{background:var(--teal-dim);color:var(--teal-dark)}
+.nav-link[data-area="business"]:hover,.nav-link[data-area="business"].active{background:var(--navy-dim);color:var(--navy-dark)}
+.nav-link[data-area="investment"]:hover,.nav-link[data-area="investment"].active{background:var(--amber-dim);color:var(--amber-dark)}
+.nav-link[data-area="leisure"]:hover,.nav-link[data-area="leisure"].active{background:var(--ocean-dim);color:var(--ocean-dark)}
+.nav-link[data-area="finance"]:hover,.nav-link[data-area="finance"].active{background:var(--violet-dim);color:var(--violet-dark)}
+
+
+
+
+
+
+
+
+
+
+.user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:var(--panel-soft)}
+
+
+.mobile-only{display:none} .auth-only{display:none}
+
+/* ── PAGE ── */
+.page{max-width:var(--max);margin:0 auto;padding:28px 24px 56px}
+
+/* ── MODE BANNER ── */
+.mode-banner{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-bottom:18px;padding:10px 14px;border-radius:12px;
+  border:1px solid var(--line);background:var(--panel);
+  box-shadow:var(--shadow);
+}
+.mode-banner-badge{
+  display:inline-flex;align-items:center;border-radius:999px;
+  padding:5px 10px;font-size:11px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;border:1px solid var(--line);background:var(--panel-soft);
+}
+.mode-demo .mode-banner-badge{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-txt)}
+.mode-live .mode-banner-badge{background:var(--teal-dim);border-color:var(--teal-bd);color:var(--teal-dark)}
+.mode-guest .mode-banner-badge{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn-txt)}
+
+/* ── HERO ── */
+.hero{
+  display:grid;grid-template-columns:1.3fr .7fr;gap:20px;
+  background:linear-gradient(135deg,rgba(34,211,238,.07),rgba(255,255,255,.0));
+  border:1px solid var(--line);border-radius:var(--radius-lg);
+  padding:28px;box-shadow:var(--shadow);margin-bottom:24px;
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:7px;margin-bottom:12px;
+  border:1px solid var(--teal-bd);background:var(--teal-dim);
+  color:var(--teal-dark);border-radius:999px;padding:6px 12px;
+  font-size:12px;font-weight:700;letter-spacing:.04em;
+}
+.hero h1{margin:0 0 10px;font-size:clamp(30px,4vw,46px);line-height:1.05;letter-spacing:-.04em;font-weight:800}
+.hero p{margin:0;color:var(--muted);font-size:15px;max-width:680px;line-height:1.65}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.mini-pill{
+  background:var(--panel-soft);border:1px solid var(--line-2);
+  border-radius:999px;padding:6px 11px;font-size:12px;color:var(--muted);font-weight:600;
+}
+.badge-good{color:var(--ok-txt);border-color:var(--ok-bd);background:var(--ok-bg)}
+.badge-warn{color:var(--warn-txt);border-color:var(--warn-bd);background:var(--warn-bg)}
+.badge-alert{color:var(--bad-txt);border-color:var(--bad-bd);background:var(--bad-bg)}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  border:none;cursor:pointer;border-radius:999px;padding:10px 18px;
+  font-weight:700;font-size:14px;transition:filter .15s,transform .12s;
+  font-family:inherit;
+}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-primary{background:var(--teal);color:#022c36}
+.btn-secondary{background:var(--text);color:#fff}
+.btn-secondary:hover{background:#374151}
+.ghost-link{
+  display:inline-flex;align-items:center;justify-content:center;
+  border-radius:999px;padding:10px 14px;
+  border:1px solid var(--line-2);background:var(--panel-soft);
+  font-weight:600;font-size:14px;color:var(--text);
+  transition:border-color .14s;
+}
+.ghost-link:hover{border-color:var(--line)}
+.hero-side{display:grid;gap:14px;align-content:start}
+.insight{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.insight-title{margin:0 0 10px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.insight-list{margin:0;padding-left:18px;color:var(--text);font-size:14px}
+.insight-list li{margin:7px 0}
+.briefing{
+  margin-top:16px;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);padding:14px 16px;
+  display:flex;align-items:flex-start;gap:12px;box-shadow:var(--shadow);
+}
+.briefing-icon{
+  width:38px;height:38px;border-radius:10px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  background:linear-gradient(135deg,var(--teal-dim),rgba(34,211,238,.04));
+  border:1px solid var(--teal-bd);
+}
+.briefing-label{margin:0 0 3px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.briefing-text{margin:0;font-size:14px;color:var(--text);font-weight:500;line-height:1.55}
+.status{
+  display:inline-flex;align-items:center;gap:7px;border-radius:999px;
+  padding:6px 12px;font-size:12px;font-weight:600;
+  border:1px solid var(--line);background:var(--panel-soft);color:var(--muted);
+}
+.status.good{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-txt)}
+.status.warn{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn-txt)}
+.status.error{background:var(--bad-bg);border-color:var(--bad-bd);color:var(--bad-txt)}
+
+/* ── TODAY FOCUS PANEL ── */
+.focus-panel{display:grid;grid-template-columns:1.4fr .6fr;gap:16px;margin-bottom:24px}
+.focus-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:20px}
+.focus-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.focus-title{margin:0;font-size:20px;letter-spacing:-.03em;font-weight:700}
+.focus-sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+.focus-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.focus-item{border:1px solid var(--line);background:var(--panel-soft);border-radius:14px;padding:14px}
+.focus-kicker{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.focus-value{font-size:28px;font-weight:800;letter-spacing:-.03em;margin:0 0 4px}
+.focus-note{color:var(--muted);font-size:12px;margin:0;line-height:1.5}
+.last-active-card{display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.last-active-badge{display:inline-flex;align-items:center;gap:8px;width:max-content;border:1px solid var(--line-2);background:var(--panel-soft);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.last-active-name{margin:0;font-size:26px;line-height:1.05;letter-spacing:-.03em;font-weight:800}
+.last-active-copy{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.55}
+.last-active-meta{display:grid;gap:8px}
+.last-active-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);background:var(--panel-soft);border-radius:12px;color:var(--muted);font-size:13px;font-weight:600}
+
+/* ── SECTIONS ── */
+.section{margin-bottom:24px}
+.section-header{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:14px}
+.section-title{margin:0;font-size:20px;letter-spacing:-.03em;font-weight:700}
+.section-subtitle{margin:4px 0 0;color:var(--muted);font-size:13px}
+.section-link{font-weight:700;color:var(--teal-dark);font-size:14px;white-space:nowrap}
+
+/* ── METRIC CARDS ── */
+.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.card-title{margin:0 0 10px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.metric{font-size:30px;font-weight:800;letter-spacing:-.04em;margin:0}
+.metric-sub{margin-top:6px;color:var(--muted);font-size:13px}
+
+/* ── AREA HUB CARDS — each with its own identity ── */
+.hub-card{
+  display:flex;flex-direction:column;gap:14px;
+  min-height:200px;
+  border-radius:var(--radius-lg);padding:22px;
+  border:1px solid var(--line);background:var(--panel);
+  box-shadow:var(--shadow);
+  position:relative;overflow:hidden;
+  transition:box-shadow .2s,transform .2s;
+}
+.hub-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+
+/* Color bar at top of each hub card */
+.hub-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+}
+.hub-card.household::before{background:linear-gradient(90deg,#22D3EE,#06B6D4)}
+.hub-card.business::before {background:linear-gradient(90deg,#3B82F6,#2563EB)}
+.hub-card.investment::before{background:linear-gradient(90deg,#F59E0B,#D97706)}
+.hub-card.leisure::before  {background:linear-gradient(90deg,#F97316,#EA580C)}
+.hub-card.finance::before  {background:linear-gradient(90deg,#8B5CF6,#7C3AED)}
+.hub-card.tools::before    {background:linear-gradient(90deg,#6B7280,#4B5563)}
+
+.hub-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.hub-icon{
+  width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+}
+.hub-card.household .hub-icon{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.25)}
+.hub-card.business  .hub-icon{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25)}
+.hub-card.investment.hub-icon,.hub-card.investment .hub-icon{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25)}
+.hub-card.leisure   .hub-icon{background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.25)}
+.hub-card.finance   .hub-icon{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25)}
+.hub-card.tools     .hub-icon{background:var(--panel-soft);border:1px solid var(--line-2)}
+
+.hub-name{margin:0;font-size:18px;letter-spacing:-.03em;font-weight:700}
+.hub-copy{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+
+/* Area pill badge */
+.area-pill{
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;
+  white-space:nowrap;flex-shrink:0;
+}
+.hub-card.household .area-pill{background:var(--teal-dim);color:var(--teal-dark);border:1px solid var(--teal-bd)}
+.hub-card.business  .area-pill{background:var(--navy-dim);color:var(--navy-dark);border:1px solid var(--navy-bd)}
+.hub-card.investment.area-pill,.hub-card.investment .area-pill{background:var(--amber-dim);color:var(--amber-dark);border:1px solid var(--amber-bd)}
+.hub-card.leisure   .area-pill{background:var(--coral-dim);color:var(--coral-dark);border:1px solid var(--coral-bd)}
+.hub-card.finance   .area-pill{background:var(--violet-dim);color:var(--violet-dark);border:1px solid var(--violet-bd)}
+.hub-card.tools     .area-pill{background:var(--panel-soft);color:var(--muted);border:1px solid var(--line-2)}
+
+.hub-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hub-stat{background:var(--panel-soft);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+.hub-stat span{display:block;font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.hub-stat strong{display:block;font-size:20px;font-weight:800;letter-spacing:-.03em}
+
+/* Colored stat values per area */
+.hub-card.household .hub-stat strong{color:var(--teal-dark)}
+.hub-card.business  .hub-stat strong{color:var(--navy-dark)}
+.hub-card.investment .hub-stat strong{color:var(--amber-dark)}
+.hub-card.leisure   .hub-stat strong{color:var(--coral-dark)}
+.hub-card.finance   .hub-stat strong{color:var(--violet-dark)}
+
+.hub-actions{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+/* Area-tinted open buttons */
+.hub-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 16px;border-radius:999px;
+  font-size:13px;font-weight:700;border:none;
+  cursor:pointer;transition:filter .15s;font-family:inherit;
+}
+.hub-btn:hover{filter:brightness(1.08)}
+.hub-card.household .hub-btn.primary{background:var(--teal);color:#022c36}
+.hub-card.business  .hub-btn.primary{background:var(--navy);color:#fff}
+.hub-card.investment .hub-btn.primary{background:var(--amber);color:#431407}
+.hub-card.leisure   .hub-btn.primary{background:var(--coral);color:#fff}
+.hub-card.finance   .hub-btn.primary{background:var(--violet);color:#fff}
+.hub-card.tools     .hub-btn.primary{background:var(--text);color:#fff}
+.hub-btn.ghost{background:var(--panel-soft);border:1px solid var(--line-2);color:var(--text)}
+
+/* ── QUICK ACTIONS ── */
+.action-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.action-btn{
+  display:flex;align-items:center;gap:12px;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;box-shadow:var(--shadow);min-height:72px;
+  transition:box-shadow .18s,transform .18s,border-color .18s;
+}
+.action-btn:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);border-color:var(--line-2)}
+.action-icon{
+  width:40px;height:40px;border-radius:12px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;font-size:19px;
+  background:var(--panel-soft);border:1px solid var(--line);
+}
+.action-text strong{display:block;font-size:14px;font-weight:700;margin-bottom:2px}
+.action-text span{color:var(--muted);font-size:12px;line-height:1.4}
+
+/* ── TOOLS LIST ── */
+.tool-list{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.tool-card{
+  border:1px solid var(--line);background:var(--panel);border-radius:var(--radius);
+  padding:16px;box-shadow:var(--shadow);min-height:120px;
+  transition:box-shadow .18s,transform .18s;
+}
+.tool-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.tool-card h4{margin:12px 0 5px;font-size:14px;font-weight:700}
+.tool-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+
+/* ── ACTIVITY ── */
+.activity-list{display:grid;gap:10px}
+.activity-item{
+  display:grid;grid-template-columns:auto 1fr auto;
+  gap:12px;align-items:start;padding:14px 16px;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--panel);box-shadow:var(--shadow);
+}
+.activity-mark{
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;background:var(--panel-soft);border:1px solid var(--line);font-size:16px;
+}
+.activity-main strong{display:block;font-size:14px;font-weight:600;margin-bottom:2px}
+.activity-main span{color:var(--muted);font-size:13px}
+.activity-time{color:var(--muted);font-size:12px;font-weight:600;white-space:nowrap}
+.empty{padding:16px;border:1px dashed var(--line-2);border-radius:var(--radius);background:var(--panel-soft);color:var(--muted);font-size:13px}
+
+/* ── MOBILE NAV ── */
+.mobile-nav{
+  position:fixed;left:0;right:0;bottom:0;display:none;z-index:1200;
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,.96);border-top:1px solid var(--line);
+  box-shadow:0 -4px 16px rgba(0,0,0,.08);backdrop-filter:blur(12px);
+}
+.mobile-nav-inner{max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.mnav{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;padding:6px 4px;border-radius:10px;border:1px solid transparent;
+  background:transparent;color:var(--muted-2);font-weight:600;font-size:10px;
+  text-decoration:none;transition:all .14s;
+}
+.mnav .ico{font-size:17px;line-height:1}
+.mnav>div:last-child{display:none}
+.mnav.active{color:var(--teal-dark);border-color:var(--teal-bd);background:var(--teal-dim)}
+.mobile-pad{display:none;height:70px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1200px){
+  .hero{grid-template-columns:1fr}
+  .focus-panel{grid-template-columns:1fr}
+  .focus-grid{grid-template-columns:repeat(2,1fr)}
+  .grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tool-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .search{display:none}
+}
+@media(max-width:860px){
+  .mobile-nav{display:block}
+  .mobile-pad{display:block}
+  .page{padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+}
+@media(max-width:820px){
+  
+  .mobile-only{display:block}
+  .hub-stats{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+  .tool-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .page{padding:18px 14px 34px}
+  
+  .hero{padding:20px}
+  .hero h1{font-size:28px}
+  .focus-grid,.grid-4,.action-grid,.tool-list{grid-template-columns:1fr}
+  .userbox{width:100%;justify-content:flex-end}
+  .hub-stats{grid-template-columns:repeat(3,1fr)}
+}
+.site-footer{margin-top:40px;padding:26px 0 34px;border-top:1px solid var(--line,#E5EAF0);background:var(--panel,#FFFFFF)}
+.site-footer-inner{max-width:1440px;margin:0 auto;padding:0 24px}
+.footer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+@media(max-width:860px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.site-footer{display:none!important}}
+.footer-col h4{margin:0 0 10px;color:var(--text,#111827);font-size:13px;font-weight:700}
+.footer-col a{display:block;color:var(--muted,#6B7280);text-decoration:none;margin:5px 0;font-size:13px;transition:color .13s}
+.footer-col a:hover{color:var(--biz-blue,#2563eb)}
+.footer-bottom{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted-2,#9CA3AF)}
+.social{display:flex;gap:8px}
+.social a{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--line-2,#D1D9E0);background:var(--panel-soft,#F0F4F8);color:var(--muted,#6B7280);transition:border-color .13s,color .13s}
+/* ── TOPBAR — Standard across all pages ── */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(14px) saturate(180%);
+  border-bottom:1px solid var(--line,#E5EAF0);
+  box-shadow:0 1px 0 var(--line,#E5EAF0),0 2px 10px rgba(0,0,0,.04);
+}
+.topbar-inner{
+  max-width:var(--max,1440px);margin:0 auto;
+  padding:0 24px;height:60px;
+  display:flex;align-items:center;gap:16px;
+}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text,#111827)}
+.brand-mark{
+  width:36px;height:36px;border-radius:50%;flex:0 0 auto;
+  background:radial-gradient(circle at 30% 30%,#7ef1c7 0%,#34d399 45%,#0f9f68 100%);
+  box-shadow:0 0 0 3px rgba(52,211,153,.18),0 4px 12px rgba(52,211,153,.14);
+}
+.brand-name{font-size:18px;font-weight:800;letter-spacing:-.03em;color:var(--text,#111827)}
+.nav{display:flex;align-items:center;gap:2px;flex-wrap:wrap;margin-left:12px}
+.nav-link{
+  color:var(--muted,#6B7280);font-weight:500;font-size:13px;
+  padding:6px 10px;border-radius:8px;border-bottom:2px solid transparent;
+  transition:background .14s,color .14s;text-decoration:none;
+}
+.nav-link:hover{background:var(--area-dim,rgba(0,0,0,.05));color:var(--area-dark,var(--text,#111827))}
+.nav-link.active{background:var(--area-dim,rgba(0,0,0,.05));color:var(--area-dark,var(--text,#111827));font-weight:700;border-bottom-color:var(--area-accent,#2563eb)}
+.userbox{display:flex;align-items:center;gap:10px;margin-left:auto}
+.search{
+  width:240px;max-width:26vw;border:1px solid var(--line-2,#D1D9E0);
+  border-radius:999px;background:var(--panel-soft,#F0F4F8);
+  padding:9px 14px;color:var(--text,#111827);outline:none;
+  font-size:13px;font-family:inherit;
+  transition:border-color .14s,box-shadow .14s;
+}
+.search:focus{border-color:var(--area-accent,#2563eb);box-shadow:0 0 0 3px var(--area-dim,rgba(37,99,235,.1))}
+.search::placeholder{color:var(--muted-2,#9CA3AF)}
+.user-menu{position:relative;display:flex;align-items:center}
+.user-menu-toggle{
+  display:flex;align-items:center;gap:7px;padding:8px 14px;
+  border-radius:999px;border:1px solid var(--line-2,#D1D9E0);
+  background:var(--panel,#FFFFFF);color:var(--text,#111827);
+  font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
+  box-shadow:0 1px 2px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.06);
+  transition:border-color .14s,box-shadow .14s;
+  white-space:nowrap;
+}
+.user-menu-toggle:hover{border-color:var(--area-accent,#2563eb);box-shadow:0 2px 8px rgba(0,0,0,.10)}
+.user-menu-toggle .avatar{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--area-dim,rgba(37,99,235,.12));
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:var(--area-dark,#1D4ED8);
+  flex-shrink:0;
+}
+.user-menu-dropdown{
+  position:absolute;right:0;top:calc(100% + 8px);min-width:240px;
+  background:var(--panel,#FFFFFF);border-radius:16px;
+  border:1px solid var(--line,#E5EAF0);
+  box-shadow:0 4px 6px rgba(0,0,0,.04),0 20px 48px rgba(0,0,0,.13);
+  padding:6px 0;display:none;z-index:2005;
+}
+.user-menu.open .user-menu-dropdown{display:block}
+.user-menu-dropdown a,.user-menu-dropdown button{
+  display:flex;align-items:center;gap:9px;
+  width:100%;text-align:left;padding:9px 14px;
+  background:none;border:none;color:var(--text,#111827);
+  font-size:13px;cursor:pointer;transition:background .12s;
+  font-family:inherit;text-decoration:none;border-radius:0;
+}
+.user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:var(--panel-soft,#F0F4F8)}
+.user-menu-divider{height:1px;margin:4px 8px;background:var(--line,#E5EAF0)}
+.dropdown-label{
+  font-size:10px;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--muted-2,#9CA3AF);padding:8px 14px 3px;font-weight:700;
+}
+.mobile-only{display:none}
+.auth-only{display:none}
+@media(max-width:820px){.nav{display:none}.mobile-only{display:block}}
+@media(max-width:640px){.search{display:none}.topbar-inner{padding:0 14px}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/index.html">
+      <div class="brand-mark"></div>
+      <div class="brand-name">GenieSphere</div>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-link  active" href="/dashboard/overview.html">🧭 Overview</a>
+      <a class="nav-link" href="/dashboard/household.html">🏡 Household</a>
+      <a class="nav-link" href="/dashboard/business.html">🏢 Business</a>
+      <a class="nav-link" href="/dashboard/investment.html">📈 Investment</a>
+      <a class="nav-link" href="/dashboard/leisure.html">🌴 Leisure</a>
+      <a class="nav-link" href="/dashboard/finance.html">💼 Finance</a>
+    </nav>
+    <div class="userbox">
+      <input class="search" type="search" placeholder="Search tools, tasks, bills, trips…" aria-label="Search GenieSphere"/>
+      <div class="user-menu" id="user-menu">
+        <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle" type="button">
+          <span class="avatar" aria-hidden="true">👤</span>
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="user-menu-dropdown" id="user-menu-dropdown" aria-hidden="true">
+          <div class="mobile-only">
+            <div class="dropdown-label">Areas</div>
+            <button class="dropdown-nav" data-target="/dashboard/overview.html" type="button">🧭 Overview</button>
+            <button class="dropdown-nav" data-target="/dashboard/household.html" type="button">🏡 Household</button>
+            <button class="dropdown-nav" data-target="/dashboard/business.html" type="button">🏢 Business</button>
+            <button class="dropdown-nav" data-target="/dashboard/investment.html" type="button">📈 Investment</button>
+            <button class="dropdown-nav" data-target="/dashboard/leisure.html" type="button">🌴 Leisure</button>
+            <button class="dropdown-nav" data-target="/dashboard/finance.html" type="button">💼 Finance</button>
+            <div class="user-menu-divider"></div>
+          </div>
+          <div class="dropdown-label">Account</div>
+          <button class="dropdown-nav" data-target="/onboarding/user_profile_form.html" type="button">👤 User profile</button>
+          <button class="dropdown-nav" data-target="/onboarding/display_settings.html" type="button">⚙️ Settings</button>
+          <div class="user-menu-divider"></div>
+          <button id="user-auth-action" type="button">Log in / Sign up</button>
+          <button class="auth-only" id="user-signout-btn" type="button">🚪 Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+
+  <!-- MODE BANNER -->
+  <div class="mode-banner" id="modeBanner" hidden>
+    <span class="mode-banner-badge" id="modeBadge">Demo Mode</span>
+    <span id="modeBannerText">Viewing sample GenieSphere data.</span>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <div class="eyebrow" id="heroEyebrow">✨ My Overview</div>
+      <h1 id="heroTitle">Good <span id="greetingTime">morning</span>, <span id="firstName">there</span>.</h1>
+      <p id="heroIntro">Here is your full GenieSphere snapshot across household, business, investment, leisure, and finance — designed to show what needs attention first.</p>
+      <div class="pill-row">
+        <span class="mini-pill badge-alert"><span id="urgentCount">0</span> urgent items</span>
+        <span class="mini-pill badge-warn"><span id="weekCount">0</span> things tracked this week</span>
+        <span class="mini-pill badge-good" id="netPill">Loading finance snapshot…</span>
+      </div>
+      <div class="hero-actions" id="heroActions">
+        <a class="btn btn-primary" href="#quick-actions" id="heroPrimaryBtn">⚡ Open Quick Actions</a>
+        <a class="btn btn-secondary" href="/dashboard/finance.html" id="heroSecondaryBtn">💼 View Finance</a>
+      </div>
+      <div class="briefing" aria-label="Daily briefing">
+        <div class="briefing-icon">🧠</div>
+        <div>
+          <p class="briefing-label" id="briefingLabel">Daily Briefing</p>
+          <p class="briefing-text" id="dailyBriefingText">Loading your daily summary…</p>
+        </div>
+      </div>
+    </div>
+    <div class="hero-side">
+      <div class="insight">
+        <h3 class="insight-title">🧠 Genie Insight</h3>
+        <ul class="insight-list" id="insightList"><li>Loading insights…</li></ul>
+      </div>
+      <div class="insight">
+        <h3 class="insight-title">📅 Today</h3>
+        <div style="font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px" id="todayDate">—</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:12px" id="todayTime">—</div>
+        <span class="status" id="pageStatus">Connecting…</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TODAY FOCUS -->
+  <section class="focus-panel" aria-label="Today Focus" id="focusPanel">
+    <article class="focus-card">
+      <div class="focus-header">
+        <div>
+          <h2 class="focus-title">🎯 Today Focus</h2>
+          <p class="focus-sub">A fast strip of what matters most right now.</p>
+        </div>
+        <span class="status" id="focusStatus">Syncing…</span>
+      </div>
+      <div class="focus-grid">
+        <div class="focus-item">
+          <div class="focus-kicker">💳 Bills due</div>
+          <p class="focus-value" id="focusBills">—</p>
+          <p class="focus-note" id="focusBillsNote">Checking bill records…</p>
+        </div>
+        <div class="focus-item">
+          <div class="focus-kicker">✅ Open tasks</div>
+          <p class="focus-value" id="focusTasks">—</p>
+          <p class="focus-note" id="focusTasksNote">Checking task sources…</p>
+        </div>
+        <div class="focus-item">
+          <div class="focus-kicker">💼 Net this month</div>
+          <p class="focus-value" id="focusNet">$0</p>
+          <p class="focus-note" id="focusNetNote">Waiting for finance summary…</p>
+        </div>
+      </div>
+    </article>
+    <article class="focus-card last-active-card">
+      <div>
+        <span class="last-active-badge">🕘 Last active</span>
+        <h2 class="last-active-name" id="lastActiveName">Overview</h2>
+        <p class="last-active-copy" id="lastActiveCopy">We'll remember the last area you opened so you can jump back in faster.</p>
+      </div>
+      <div class="last-active-meta">
+        <div class="last-active-row">
+          <span>Resume where you left off</span>
+          <span id="lastActiveWhen">This session</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn btn-primary" href="/dashboard/overview.html" id="resumeLastActiveBtn" style="font-size:13px;padding:9px 16px">↩️ Resume</a>
+          <a class="ghost-link" href="/dashboard/overview.html" id="openOverviewBtn" style="font-size:13px;padding:9px 14px">Overview</a>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ATTENTION -->
+  <section class="section" id="attentionSection">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">⚠️ Attention Needed Today</h2>
+        <p class="section-subtitle">Real-time counts from your GenieSphere data.</p>
+      </div>
+    </div>
+    <div class="grid-4">
+      <article class="card"><h3 class="card-title">Tracked Bills</h3><p class="metric" id="attBills">—</p><div class="metric-sub" id="attBillsSub">Checking household bills…</div></article>
+      <article class="card"><h3 class="card-title">Open Tasks</h3><p class="metric" id="attTasks">—</p><div class="metric-sub" id="attTasksSub">Checking active tasks…</div></article>
+      <article class="card"><h3 class="card-title">Appointments</h3><p class="metric" id="attAppts">—</p><div class="metric-sub" id="attApptsSub">Checking calendar events…</div></article>
+      <article class="card"><h3 class="card-title">Alerts</h3><p class="metric" id="attAlerts">—</p><div class="metric-sub" id="attAlertsSub">Checking AI suggestions…</div></article>
+    </div>
+  </section>
+
+  <!-- MONEY SNAPSHOT -->
+  <section class="section" id="moneySection">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">💰 Unified Money Snapshot</h2>
+        <p class="section-subtitle">Pulled from your finance views across all workspaces.</p>
+      </div>
+      <a class="section-link" href="/dashboard/finance.html">Open Finance →</a>
+    </div>
+    <div class="grid-4">
+      <article class="card"><h3 class="card-title">Money In</h3><p class="metric" id="moneyIn">$0</p><div class="metric-sub" id="moneyInSub">This month</div></article>
+      <article class="card"><h3 class="card-title">Money Out</h3><p class="metric" id="moneyOut">$0</p><div class="metric-sub" id="moneyOutSub">This month</div></article>
+      <article class="card"><h3 class="card-title">Net</h3><p class="metric" id="moneyNet">$0</p><div class="metric-sub" id="moneyNetSub">After expenses</div></article>
+      <article class="card"><h3 class="card-title">Top Category</h3><p class="metric" style="font-size:22px" id="moneyTopCategory">—</p><div class="metric-sub" id="moneyTopCategorySub">Largest expense this month</div></article>
+    </div>
+  </section>
+
+  <!-- QUICK ACTIONS -->
+  <section class="section" id="quick-actions">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">⚡ Quick Actions</h2>
+        <p class="section-subtitle">One-click access to your most-used tools.</p>
+      </div>
+    </div>
+    <div class="action-grid">
+      <a class="action-btn" href="/dashboard/finance.html"><div class="action-icon">💸</div><div class="action-text"><strong>Add Expense</strong><span>Log a business or personal expense</span></div></a>
+      <a class="action-btn" href="#"><div class="action-icon">✅</div><div class="action-text"><strong>Add Task</strong><span>Create a task for home or business</span></div></a>
+      <a class="action-btn" href="/dashboard/investment.html"><div class="action-icon">📊</div><div class="action-text"><strong>Log Trade</strong><span>Save trade activity to Investment</span></div></a>
+      <a class="action-btn" href="/dashboard/leisure.html"><div class="action-icon">🧳</div><div class="action-text"><strong>Plan Trip</strong><span>Open Leisure travel planner</span></div></a>
+      <a class="action-btn" href="/business/expense-receipt-scanner.html"><div class="action-icon">🧾</div><div class="action-text"><strong>Upload Receipt</strong><span>Capture and categorize spending</span></div></a>
+      <a class="action-btn" href="/dashboard/finance.html"><div class="action-icon">💼</div><div class="action-text"><strong>Open Finance</strong><span>See money in, out, and net</span></div></a>
+      <a class="action-btn" href="#"><div class="action-icon">📅</div><div class="action-text"><strong>Open Calendar</strong><span>Review appointments and reminders</span></div></a>
+      <a class="action-btn" href="/dashboard/business.html"><div class="action-icon">✉️</div><div class="action-text"><strong>Check Inbox</strong><span>Business workflows and alerts</span></div></a>
+    </div>
+  </section>
+
+  <!-- CATEGORY OVERVIEW — area cards with color identities -->
+  <section class="section" id="categoryOverviewSection">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">🧭 Your Areas</h2>
+        <p class="section-subtitle">Each area has its own identity and live counts.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+
+      <!-- HOUSEHOLD — Teal -->
+      <article class="hub-card household">
+        <div class="hub-top">
+          <div class="hub-icon">🏡</div>
+          <div style="flex:1;min-width:0">
+            <h3 class="hub-name">Household</h3>
+            <p class="hub-copy">Bills, home tasks, family reminders, vehicles, and recurring needs.</p>
+          </div>
+          <span class="area-pill">Personal</span>
+        </div>
+        <div class="hub-stats">
+          <div class="hub-stat"><span>Bills</span><strong id="hhBills">—</strong></div>
+          <div class="hub-stat"><span>Tasks</span><strong id="hhTasks">—</strong></div>
+          <div class="hub-stat"><span>Vehicles</span><strong id="hhVehicles">—</strong></div>
+        </div>
+        <div class="hub-actions">
+          <a class="hub-btn primary" href="/dashboard/household.html">Open Household →</a>
+          <a class="hub-btn ghost" href="/dashboard/household.html">View Bills</a>
+        </div>
+      </article>
+
+      <!-- BUSINESS — Navy Blue -->
+      <article class="hub-card business">
+        <div class="hub-top">
+          <div class="hub-icon">🏢</div>
+          <div style="flex:1;min-width:0">
+            <h3 class="hub-name">Business</h3>
+            <p class="hub-copy">Staff, payroll, operations, customers, inventory, and performance.</p>
+          </div>
+          <span class="area-pill">Work</span>
+        </div>
+        <div class="hub-stats">
+          <div class="hub-stat"><span>Businesses</span><strong id="bizCount">—</strong></div>
+          <div class="hub-stat"><span>Tasks</span><strong id="bizTasks">—</strong></div>
+          <div class="hub-stat"><span>Transactions</span><strong id="bizTx">—</strong></div>
+        </div>
+        <div class="hub-actions">
+          <a class="hub-btn primary" href="/dashboard/business.html">Open Business →</a>
+          <a class="hub-btn ghost" href="/dashboard/business.html">Payroll</a>
+        </div>
+      </article>
+
+      <!-- INVESTMENT — Amber -->
+      <article class="hub-card investment">
+        <div class="hub-top">
+          <div class="hub-icon">📈</div>
+          <div style="flex:1;min-width:0">
+            <h3 class="hub-name">Investment</h3>
+            <p class="hub-copy">Portfolio, trade journal, watchlists, options, and market reviews.</p>
+          </div>
+          <span class="area-pill">Active</span>
+        </div>
+        <div class="hub-stats">
+          <div class="hub-stat"><span>Watchlists</span><strong id="invWatchlists">—</strong></div>
+          <div class="hub-stat"><span>Ideas</span><strong id="invIdeas">—</strong></div>
+          <div class="hub-stat"><span>Review</span><strong id="invReview">Ready</strong></div>
+        </div>
+        <div class="hub-actions">
+          <a class="hub-btn primary" href="/dashboard/investment.html">Open Investment →</a>
+          <a class="hub-btn ghost" href="/dashboard/investment.html">Analyze Chart</a>
+        </div>
+      </article>
+
+      <!-- LEISURE — Coral -->
+      <article class="hub-card leisure">
+        <div class="hub-top">
+          <div class="hub-icon">🌴</div>
+          <div style="flex:1;min-width:0">
+            <h3 class="hub-name">Leisure</h3>
+            <p class="hub-copy">Trips, itineraries, saved ideas, bookings, and life planning.</p>
+          </div>
+          <span class="area-pill">Lifestyle</span>
+        </div>
+        <div class="hub-stats">
+          <div class="hub-stat"><span>Trips</span><strong id="leiTrips">—</strong></div>
+          <div class="hub-stat"><span>Upcoming</span><strong id="leiUpcoming">—</strong></div>
+          <div class="hub-stat"><span>Saved</span><strong id="leiIdeas">—</strong></div>
+        </div>
+        <div class="hub-actions">
+          <a class="hub-btn primary" href="/dashboard/leisure.html">Open Leisure →</a>
+          <a class="hub-btn ghost" href="/dashboard/leisure.html">Trip Planner</a>
+        </div>
+      </article>
+
+      <!-- FINANCE — Violet -->
+      <article class="hub-card finance">
+        <div class="hub-top">
+          <div class="hub-icon">💼</div>
+          <div style="flex:1;min-width:0">
+            <h3 class="hub-name">Finance</h3>
+            <p class="hub-copy">Unified money overview across business and personal life.</p>
+          </div>
+          <span class="area-pill">Unified</span>
+        </div>
+        <div class="hub-stats">
+          <div class="hub-stat"><span>Net month</span><strong id="finNetCard">$0</strong></div>
+          <div class="hub-stat"><span>Top expense</span><strong id="finTopCard">—</strong></div>
+          <div class="hub-stat"><span>Transactions</span><strong id="finRecentCard">0</strong></div>
+        </div>
+        <div class="hub-actions">
+          <a class="hub-btn primary" href="/dashboard/finance.html">Open Finance →</a>
+          <a class="hub-btn ghost" href="/dashboard/finance.html">Transactions</a>
+        </div>
+      </article>
+
+      <!-- TOOLS -->
+      <article class="hub-card tools">
+        <div class="hub-top">
+          <div class="hub-icon">🤖</div>
+          <div style="flex:1;min-width:0">
+            <h3 class="hub-name">Most Used Tools</h3>
+            <p class="hub-copy">Ready for personalization using recent activity and pinned favorites.</p>
+          </div>
+          <span class="area-pill">Adaptive</span>
+        </div>
+        <div class="hub-stats">
+          <div class="hub-stat"><span>Receipts</span><strong>Ready</strong></div>
+          <div class="hub-stat"><span>Payroll</span><strong>Ready</strong></div>
+          <div class="hub-stat"><span>Trade log</span><strong>Ready</strong></div>
+        </div>
+        <div class="hub-actions">
+          <a class="hub-btn primary" href="#">Open Tools →</a>
+          <a class="hub-btn ghost" href="#">Manage Favorites</a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- MOST USED TOOLS -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">⭐ Your Most Used Tools</h2>
+        <p class="section-subtitle">Static for now — ready to be dynamic with usage tracking.</p>
+      </div>
+    </div>
+    <div class="tool-list">
+      <article class="tool-card"><div style="font-size:22px">🧾</div><h4>Receipt Scanner</h4><p>Capture business and household receipts quickly.</p></article>
+      <article class="tool-card"><div style="font-size:22px">💵</div><h4>Payroll Manager</h4><p>Run payroll workflows and review pay activity.</p></article>
+      <article class="tool-card"><div style="font-size:22px">📌</div><h4>Task Center</h4><p>Manage open tasks across household and business.</p></article>
+      <article class="tool-card"><div style="font-size:22px">📉</div><h4>Option Analyzer</h4><p>Review covered calls, puts, and setups.</p></article>
+      <article class="tool-card"><div style="font-size:22px">✈️</div><h4>Travel Planner</h4><p>Build and update trips with AI support.</p></article>
+    </div>
+  </section>
+
+  <!-- RECENT ACTIVITY -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">📜 Recent Activity</h2>
+        <p class="section-subtitle">Unified recent finance activity from your workspaces.</p>
+      </div>
+      <a class="section-link" href="/dashboard/finance.html">View Finance →</a>
+    </div>
+    <div class="activity-list" id="activityList">
+      <div class="empty">Loading recent activity…</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- MOBILE NAV -->
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>All Areas</h4>
+        <a href="/dashboard/overview.html">🧭 Overview</a>
+        <a href="/dashboard/household.html">🏡 Household</a>
+        <a href="/dashboard/business.html">🏢 Business</a>
+        <a href="/dashboard/investment.html">📈 Investment</a>
+        <a href="/dashboard/leisure.html">🌴 Leisure</a>
+        <a href="/dashboard/finance.html">💼 Finance</a>
+      </div>
+      <div class="footer-col">
+        <h4>Top Tools</h4>
+        <a href="/business/expense-receipt-scanner.html">Receipt Scanner</a>
+        <a href="/investment/trade-journal.html">Trade Journal</a>
+        <a href="/leisure/travelplangenie/index.html">Trip Planner</a>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <a href="/household/cargenie/car-care.html">Car Care Tracker</a>
+        <a href="/leisure/travelplangenie/index.html">Trip Planner</a>
+        <a href="/household/household-insurance.html">Safety &amp; Insurance</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="/onboarding/api-key-settings.html">API Keys</a>
+        <a href="/about.html">About</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+      <div aria-label="Social" class="social">
+        <a aria-label="Twitter / X" href="#">🐦</a>
+        <a aria-label="YouTube" href="#">▶️</a>
+        <a aria-label="GitHub" href="#">🐙</a>
+      </div>
+    </div>
+  </div>
+</footer>
+<div aria-hidden="true" class="mobile-pad"></div>
+<nav aria-label="GenieSphere mobile navigation" class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <a class="mnav active" data-nav="overview" href="/dashboard/overview.html"><div class="ico">🧭</div><div>Overview</div></a>
+    <a class="mnav" data-nav="household" href="/dashboard/household.html"><div class="ico">🏡</div><div>Home</div></a>
+    <a class="mnav" data-nav="business" href="/dashboard/business.html"><div class="ico">🏢</div><div>Business</div></a>
+    <a class="mnav" data-nav="investment" href="/dashboard/investment.html"><div class="ico">📈</div><div>Invest</div></a>
+    <a class="mnav" data-nav="leisure" href="/dashboard/leisure.html"><div class="ico">🏝️</div><div>Leisure</div></a>
+    <a class="mnav" data-nav="finance" href="/dashboard/finance.html"><div class="ico">💼</div><div>Finance</div></a>
+  </div>
+</nav>
+
+<!-- SCRIPTS — all original JS preserved exactly -->
+<script>
+window.GS_CONFIG_URL = "/shared/config.json";
+window.GS_CONFIG_PATH = "/shared/config.json";
+</script>
+<script src="/shared/js/app-config.js?v=20260208b"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/shared/js/gs-client.js?v=20260208b"></script>
+<script src="/shared/js/hub-badges.js"></script>
+<script src="/shared/js/auth-header.js?v=20260208b"></script>
+
+<script>
+(function(){
+  const $ = (id)=>document.getElementById(id);
+  const fmt = (n)=>{
+    const v = Number(n||0);
+    return v.toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:0});
+  };
+  const monthStart = ()=>{
+    const d = new Date();
+    return new Date(Date.UTC(d.getFullYear(), d.getMonth(), 1)).toISOString().slice(0,10);
+  };
+  const setStatus = (text, cls)=>{ const el=$("pageStatus"); if(!el)return; el.textContent=text; el.className="status "+(cls||""); };
+  const setFocusStatus = (text, cls)=>{ const el=$("focusStatus"); if(!el)return; el.textContent=text; el.className="status "+(cls||""); };
+  const setText = (id, value)=>{ const el=$(id); if(el) el.textContent=value; };
+
+  const PAGE_MODES = { DEMO:"demo", LIVE:"live", GUEST:"guest" };
+
+  const DEMO_OVERVIEW = {
+    firstName:"there", urgentCount:4, weekCount:18,
+    income:18250, expense:5770, net:12480, topCategory:"Operations",
+    bills:3, tasks:7, appts:2, alerts:4,
+    watchlists:3, ideas:6, trips:2, upcoming:1, savedIdeas:9,
+    vehicles:5, businesses:2, transactions:14,
+    recent:[
+      {icon:"💰",title:"Client payment received",sub:"Salon Genie · $1,240",time:"Today"},
+      {icon:"💸",title:"Insurance payment logged",sub:"Household · $285",time:"Mar 12"},
+      {icon:"💰",title:"Rental income posted",sub:"Rental Genie · $2,100",time:"Mar 10"}
+    ],
+    insights:[
+      "Unified finance is net positive this month at $12,480.",
+      "You currently have 2 tracked workspaces in GenieSphere.",
+      "You have 3 tracked bills ready for review."
+    ]
+  };
+
+  function getRequestedMode(){
+    const params=new URLSearchParams(window.location.search);
+    const mode=String(params.get("mode")||"").toLowerCase();
+    return mode===PAGE_MODES.DEMO?PAGE_MODES.DEMO:null;
+  }
+  function setBodyMode(mode){
+    document.body.classList.remove("mode-demo","mode-live","mode-guest");
+    document.body.classList.add(`mode-${mode}`);
+    document.body.setAttribute("data-mode",mode);
+  }
+  function showModeBanner(mode,text){
+    const banner=$("modeBanner"),badge=$("modeBadge"),copy=$("modeBannerText");
+    if(!banner||!badge||!copy)return;
+    banner.hidden=false;
+    badge.textContent=mode===PAGE_MODES.DEMO?"Demo Mode":mode===PAGE_MODES.LIVE?"Live Mode":"Guest Mode";
+    copy.textContent=text||"";
+  }
+  function setHeroContent({eyebrow,titleHtml,intro,briefingLabel,primaryText,primaryHref,secondaryText,secondaryHref}){
+    setText("heroEyebrow",eyebrow);
+    const titleEl=$("heroTitle"); if(titleEl) titleEl.innerHTML=titleHtml;
+    setText("heroIntro",intro);
+    setText("briefingLabel",briefingLabel||"Daily Briefing");
+    const pb=$("heroPrimaryBtn"); if(pb){pb.textContent=primaryText;pb.href=primaryHref;}
+    const sb=$("heroSecondaryBtn"); if(sb){sb.textContent=secondaryText;sb.href=secondaryHref;}
+  }
+  function getGreetingTime(){ const h=new Date().getHours(); return h<12?"morning":h<18?"afternoon":"evening"; }
+
+  function renderActivity(items){
+    const el=$("activityList"); if(!el)return;
+    if(!items||!items.length){ el.innerHTML='<div class="empty">No recent activity yet.</div>'; return; }
+    el.innerHTML=items.map(item=>`
+      <div class="activity-item">
+        <div class="activity-mark">${item.icon}</div>
+        <div class="activity-main"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.sub)}</span></div>
+        <div class="activity-time">${escapeHtml(item.time)}</div>
+      </div>`).join("");
+  }
+  function renderInsights(items){
+    const list=$("insightList"); if(!list)return;
+    list.innerHTML=(items||[]).map(item=>`<li>${escapeHtml(item)}</li>`).join("");
+  }
+  function setAttentionCounts(data){
+    const bills=Number(data?.bills||0),tasks=Number(data?.tasks||0),appts=Number(data?.appts||0),alerts=Number(data?.alerts||0);
+    setText("attBills",String(bills)); setText("attBillsSub",bills?`${bills} item(s) need review.`:"No bill alerts.");
+    setText("attTasks",String(tasks)); setText("attTasksSub",tasks?`${tasks} active task(s).`:"No active tasks.");
+    setText("attAppts",String(appts)); setText("attApptsSub",appts?`${appts} scheduled today.`:"No appointments.");
+    setText("attAlerts",String(alerts)); setText("attAlertsSub",alerts?`${alerts} AI reminders available.`:"No alerts.");
+  }
+  function setMoneySnapshot(data){
+    const income=Number(data?.income||0),expense=Number(data?.expense||0),net=Number(data?.net||0),topCategory=data?.topCategory||"—";
+    setText("moneyIn",fmt(income)); setText("moneyOut",fmt(expense));
+    setText("moneyNet",(net>=0?"+":"-")+fmt(Math.abs(net)).replace("-",""));
+    setText("moneyTopCategory",topCategory);
+    setText("netPill",net>=0?`💰 Net positive ${fmt(net)}`:`💸 Net negative ${fmt(Math.abs(net))}`);
+  }
+  function setCategoryDemoStats(){
+    setText("hhBills","3"); setText("hhTasks","5"); setText("hhVehicles","5");
+    setText("bizCount","2"); setText("bizTasks","4"); setText("bizTx","14");
+    setText("invWatchlists","3"); setText("invIdeas","6"); setText("invReview","Ready");
+    setText("leiTrips","2"); setText("leiUpcoming","1"); setText("leiIdeas","9");
+  }
+  function setGuestCards(){
+    setAttentionCounts({bills:0,tasks:0,appts:0,alerts:0});
+    setMoneySnapshot({income:0,expense:0,net:0,topCategory:"Log in to load data"});
+    renderActivity([]);
+    renderInsights(["Log in to load your personalized GenieSphere insights.","Use demo mode to preview the full experience first.","Your real dashboards will appear here after sign-in."]);
+  }
+  function setDateContext(){
+    const now=new Date();
+    const greeting=now.getHours()<12?"morning":now.getHours()<18?"afternoon":"evening";
+    setText("greetingTime",greeting);
+    setText("todayDate",now.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}));
+    setText("todayTime",now.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})+" local time");
+  }
+  async function getClient(){
+    if(window.GSClient&&typeof window.GSClient.getAsync==="function") return await window.GSClient.getAsync();
+    throw new Error("Shared auth client not found.");
+  }
+  function getFirstName(user){
+    const meta=user?.user_metadata||{};
+    const full=meta.full_name||meta.name||meta.display_name||"";
+    const email=user?.email||"";
+    const fallback=email?email.split("@")[0]:"there";
+    return (full||fallback).trim().split(/\s+/)[0]||"there";
+  }
+  async function countFirstSuccess(client,candidates){
+    for(const c of candidates){
+      try{
+        let q=client.from(c.table).select(c.select||"id",{count:"exact"}).limit(1);
+        if(typeof c.mutate==="function") q=c.mutate(q);
+        const {count,error}=await q;
+        if(!error) return {value:count||0,table:c.table};
+      }catch(_){}
+    }
+    return {value:0,table:null};
+  }
+  async function loadCounts(client,user,workspaceIds){
+    const bills=await countFirstSuccess(client,[{table:"user_bills"}]);
+    setText("attBills",String(bills.value)); setText("attBillsSub",bills.table?"Tracked bill records":"No bill table found yet"); setText("hhBills",String(bills.value));
+    const tasks=await countFirstSuccess(client,[{table:"tasks"},{table:"global_tasks"},{table:"household_tasks"},{table:"ops_tasks"}]);
+    setText("attTasks",String(tasks.value)); setText("attTasksSub",tasks.table?"Open task source connected":"No task source found yet"); setText("hhTasks",String(tasks.value)); setText("bizTasks",String(tasks.value));
+    const appts=await countFirstSuccess(client,[{table:"calendar_events"},{table:"appointments"}]);
+    setText("attAppts",String(appts.value)); setText("attApptsSub",appts.table?"Tracked appointments":"No appointment source yet");
+    const alerts=await countFirstSuccess(client,[{table:"user_genie_suggestions"}]);
+    setText("attAlerts",String(alerts.value)); setText("attAlertsSub",alerts.table?"AI suggestions available":"No alert source yet");
+    const vehicles=await countFirstSuccess(client,[{table:"vehicles"}]); setText("hhVehicles",String(vehicles.value));
+    const watchlists=await countFirstSuccess(client,[{table:"watchlists"}]); setText("invWatchlists",String(watchlists.value)); setText("invIdeas",watchlists.value?String(watchlists.value):"0");
+    const trips=await countFirstSuccess(client,[{table:"trips"}]); setText("leiTrips",String(trips.value)); setText("leiUpcoming",trips.value?String(trips.value):"0"); setText("leiIdeas",trips.value?String(trips.value):"0");
+    setText("urgentCount",String(Math.max(0,alerts.value||0)));
+    setText("weekCount",String((bills.value||0)+(tasks.value||0)+(appts.value||0)));
+    return {bills:bills.value||0,tasks:tasks.value||0,appts:appts.value||0,alerts:alerts.value||0};
+  }
+  async function loadWorkspaces(client,user){
+    try{
+      const {data,error}=await client.from("business_profiles").select("id,business_name,business_type").eq("owner_id",user.id).order("business_name",{ascending:true});
+      if(error) throw error;
+      const all=data||[];
+      setText("bizCount",String(all.filter(r=>String(r.business_type||"").toLowerCase()!=="personal").length));
+      return all;
+    }catch(_){ setText("bizCount","0"); return []; }
+  }
+  async function loadFinance(client,user){
+    const ms=monthStart();
+    let income=0,expense=0,net=0,topCategory="—";
+    try{
+      const {data,error}=await client.from("v_finance_month_summary_all").select("*").eq("user_id",user.id).eq("month_start",ms).limit(1);
+      if(!error&&data&&data[0]){ income=Number(data[0].income_total||0); expense=Number(data[0].expense_total||0); net=income-expense; }
+    }catch(_){}
+    try{
+      const {data,error}=await client.from("v_finance_top_categories_month_all").select("*").eq("user_id",user.id).eq("month_start",ms).eq("kind","expense").order("total_amount",{ascending:false}).limit(1);
+      if(!error&&data&&data[0]) topCategory=data[0].category_name||"—";
+    }catch(_){}
+    setText("moneyIn",fmt(income)); setText("moneyOut",fmt(expense));
+    setText("moneyNet",(net>=0?"+":"-")+fmt(Math.abs(net)).replace("-",""));
+    setText("moneyTopCategory",topCategory);
+    setText("finNetCard",(net>=0?"+":"-")+fmt(Math.abs(net)).replace("-",""));
+    setText("finTopCard",topCategory);
+    setText("netPill",net>=0?"💰 Net positive this month":"💸 Net negative this month");
+    return {income,expense,net,topCategory};
+  }
+  function setTodayFocus(data){
+    setText("focusBills",String(data.bills||0));
+    setText("focusBillsNote",data.bills?`${data.bills} tracked bill${data.bills===1?"":"s"} ready for review.`:"No household bills are currently tracked.");
+    setText("focusTasks",String(data.tasks||0));
+    setText("focusTasksNote",data.tasks?`${data.tasks} open task${data.tasks===1?"":"s"} across connected sources.`:"No open tasks were found.");
+    const net=Number(data.net||0);
+    setText("focusNet",(net>=0?"+":"-")+fmt(Math.abs(net)).replace("-",""));
+    setText("focusNetNote",net>=0?"You are net positive this month.":"You are net negative this month.");
+    setFocusStatus("Ready","good");
+  }
+  function setDailyBriefing(data){
+    const bills=Number(data.bills||0),tasks=Number(data.tasks||0),net=Number(data.net||0);
+    const netPhrase=net>=0?`Finance is net positive at ${fmt(net)} this month`:`Finance is net negative at ${fmt(Math.abs(net))} this month`;
+    const parts=[];
+    parts.push(`Good ${$("greetingTime")?.textContent||"day"}, ${$("firstName")?.textContent||"there"} —`);
+    parts.push(`${bills} bill${bills===1?"":"s"} ${bills===1?"needs":"need"} review`);
+    parts.push(`${tasks} open task${tasks===1?"":"s"} ${tasks===1?"is":"are"} waiting`);
+    parts.push(netPhrase.toLowerCase());
+    parts.push(`and your last active area was ${data.lastActiveLabel||"Overview"}.`);
+    const el=$("dailyBriefingText"); if(el) el.textContent=parts.join(" ");
+  }
+  const LAST_ACTIVE_KEY="geniesphere_last_active_v1";
+  function recordLastActive(){
+    try{ localStorage.setItem(LAST_ACTIVE_KEY,JSON.stringify({area:"overview",label:"🧭 Overview",href:"/dashboard/overview.html",ts:new Date().toISOString()})); }catch(_){}
+  }
+  function timeAgoLabel(iso){
+    if(!iso) return "Previously";
+    const dt=new Date(iso); if(isNaN(dt)) return "Previously";
+    const mins=Math.max(0,Math.floor((Date.now()-dt.getTime())/60000));
+    if(mins<1) return "Just now";
+    if(mins<60) return `${mins} min ago`;
+    const hrs=Math.floor(mins/60);
+    if(hrs<24) return `${hrs} hr ago`;
+    const days=Math.floor(hrs/24);
+    return `${days} day${days===1?"":"s"} ago`;
+  }
+  function loadLastActive(){
+    const defaults={area:"overview",label:"🧭 Overview",href:"/dashboard/overview.html",ts:new Date().toISOString()};
+    let payload=defaults;
+    try{ const raw=localStorage.getItem(LAST_ACTIVE_KEY); if(raw){const p=JSON.parse(raw); if(p&&p.href&&p.label) payload=p;} }catch(_){}
+    setText("lastActiveName",payload.label);
+    setText("lastActiveWhen",timeAgoLabel(payload.ts));
+    const copyEl=$("lastActiveCopy");
+    if(copyEl) copyEl.textContent=payload.area==="overview"?"Your last active area is the overview. Use it as your command center or jump into a category.":`Your last active area was ${payload.label.replace(/^\S+\s/,"")}.`;
+    const resumeBtn=$("resumeLastActiveBtn"); if(resumeBtn) resumeBtn.href=payload.href||defaults.href;
+  }
+  async function loadRecentActivity(client,user,workspaces){
+    const activityEl=$("activityList");
+    const ids=(workspaces||[]).map(r=>r.id).filter(Boolean);
+    const activity=[];
+    if(ids.length){
+      try{
+        const {data,error}=await client.from("finance_transactions").select("occurred_on,created_at,description,amount,direction,agent_id,workspace_id").in("workspace_id",ids).order("occurred_on",{ascending:false}).order("created_at",{ascending:false}).limit(6);
+        if(!error&&data){
+          data.forEach(row=>{
+            const when=row.occurred_on||row.created_at||"";
+            const dt=when?new Date(when):null;
+            activity.push({
+              icon:String(row.direction||"").toLowerCase()==="expense"?"💸":"💰",
+              title:row.description||"Finance transaction",
+              sub:(row.agent_id?(row.agent_id+" · "):"")+fmt(row.amount||0),
+              time:dt&&!isNaN(dt)?dt.toLocaleDateString(undefined,{month:"short",day:"numeric"}):"Recent"
+            });
+          });
+          setText("finRecentCard",String(data.length||0));
+          setText("bizTx",String(data.length||0));
+        }
+      }catch(_){}
+    }
+    if(!activity.length){ activityEl.innerHTML='<div class="empty">No recent finance activity yet. Once transactions begin flowing into finance_transactions, this feed will populate automatically.</div>'; return; }
+    activityEl.innerHTML=activity.map(item=>`
+      <div class="activity-item">
+        <div class="activity-mark">${item.icon}</div>
+        <div class="activity-main"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.sub)}</span></div>
+        <div class="activity-time">${escapeHtml(item.time)}</div>
+      </div>`).join("");
+  }
+  function escapeHtml(s){ return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+  async function loadInsights(summary,counts,workspaces){
+    const list=[];
+    list.push(summary.net>=0?`Unified finance is net positive this month at ${fmt(summary.net)}.`:`Unified finance is net negative this month at ${fmt(summary.net)}.`);
+    list.push(workspaces.length?`You currently have ${workspaces.length} tracked workspace${workspaces.length===1?"":"s"} in GenieSphere.`:"No owned workspaces found yet.");
+    list.push(counts.bills>0?`You have ${counts.bills} tracked household bill${counts.bills===1?"":"s"} ready for review.`:"No household bill records were found yet.");
+    list.push(summary.topCategory&&summary.topCategory!=="—"?`Top expense category this month is ${summary.topCategory}.`:"No expense category insight available yet.");
+    const insightList=$("insightList"); if(insightList) insightList.innerHTML=list.map(text=>`<li>${escapeHtml(text)}</li>`).join("");
+  }
+  async function resolveClientAndUser(){
+    try{ const client=await getClient(); const {data:sess}=await client.auth.getSession(); return {client,user:sess?.session?.user||null}; }
+    catch(_){ return {client:null,user:null}; }
+  }
+  function applyDemoMode(){
+    setBodyMode(PAGE_MODES.DEMO);
+    showModeBanner(PAGE_MODES.DEMO,"Viewing sample GenieSphere data for public visitors.");
+    document.title="GenieSphere — Overview Demo";
+    setText("user-name-label","Try GenieSphere");
+    setStatus("Demo data loaded","good"); setFocusStatus("Demo mode","good");
+    setHeroContent({eyebrow:"✨ GenieSphere Overview",titleHtml:"One place for life, business, money, and growth.",intro:"Preview how GenieSphere helps organize household, business, investment, leisure, and finance with AI-powered dashboards and fast actions.",briefingLabel:"Demo Briefing",primaryText:"⚡ Explore Quick Actions",primaryHref:"#quick-actions",secondaryText:"🔐 Log in / Sign up",secondaryHref:"/onboarding/login.html"});
+    setText("firstName","there");
+    setText("urgentCount",String(DEMO_OVERVIEW.urgentCount));
+    setText("weekCount",String(DEMO_OVERVIEW.weekCount));
+    setMoneySnapshot(DEMO_OVERVIEW);
+    setTodayFocus({bills:DEMO_OVERVIEW.bills,tasks:DEMO_OVERVIEW.tasks,net:DEMO_OVERVIEW.net});
+    setDailyBriefing({bills:DEMO_OVERVIEW.bills,tasks:DEMO_OVERVIEW.tasks,net:DEMO_OVERVIEW.net,lastActiveLabel:"Demo Overview"});
+    setAttentionCounts(DEMO_OVERVIEW);
+    setCategoryDemoStats();
+    renderActivity(DEMO_OVERVIEW.recent);
+    renderInsights(DEMO_OVERVIEW.insights);
+    const authAction=$("user-auth-action"),signoutBtn=$("user-signout-btn");
+    if(authAction) authAction.textContent="Log in / Sign up";
+    if(signoutBtn) signoutBtn.style.display="none";
+  }
+  async function applyLiveMode(client,user){
+    setBodyMode(PAGE_MODES.LIVE);
+    showModeBanner(PAGE_MODES.LIVE,"Viewing your personal GenieSphere data.");
+    document.title="GenieSphere — My Overview";
+    const firstName=getFirstName(user);
+    setText("firstName",firstName); setText("user-name-label",firstName);
+    setStatus("Connected","good"); setFocusStatus("Syncing…","");
+    setHeroContent({eyebrow:"✨ My Overview",titleHtml:`Good <span id="greetingTime">${escapeHtml(getGreetingTime())}</span>, <span id="firstName">${escapeHtml(firstName)}</span>.`,intro:"Here is your full GenieSphere snapshot across household, business, investment, leisure, and finance — designed to show what needs attention first.",briefingLabel:"Daily Briefing",primaryText:"⚡ Open Quick Actions",primaryHref:"#quick-actions",secondaryText:"💼 View Finance Dashboard",secondaryHref:"/dashboard/finance.html"});
+    const workspaces=await loadWorkspaces(client,user);
+    const finance=await loadFinance(client,user);
+    const counts=await loadCounts(client,user,workspaces.map(r=>r.id));
+    setTodayFocus({bills:counts.bills||0,tasks:counts.tasks||0,net:finance.net||0});
+    setDailyBriefing({bills:counts.bills||0,tasks:counts.tasks||0,net:finance.net||0,lastActiveLabel:$("lastActiveName")?.textContent||"Overview"});
+    await loadRecentActivity(client,user,workspaces);
+    await loadInsights(finance,{bills:counts.bills||0,tasks:counts.tasks||0},workspaces);
+    recordLastActive();
+    const authAction=$("user-auth-action"),signoutBtn=$("user-signout-btn");
+    if(authAction) authAction.textContent="Open profile";
+    if(signoutBtn) signoutBtn.style.display="block";
+  }
+  function applyGuestMode(){
+    setBodyMode(PAGE_MODES.GUEST);
+    showModeBanner(PAGE_MODES.GUEST,"Log in to load your real GenieSphere dashboard, or explore the demo first.");
+    document.title="GenieSphere — Welcome";
+    setText("user-name-label","Log in");
+    setStatus("Guest mode","warn"); setFocusStatus("Waiting for sign-in","warn");
+    setHeroContent({eyebrow:"✨ Welcome to GenieSphere",titleHtml:"Your AI command center for modern life.",intro:"Log in to load your personal data, or explore the interactive demo to preview household, business, investment, leisure, and finance dashboards.",briefingLabel:"Getting Started",primaryText:"🎯 Try Demo",primaryHref:"/dashboard/overview.html?mode=demo",secondaryText:"🔐 Log in / Sign up",secondaryHref:"/onboarding/login.html"});
+    setText("firstName","there"); setText("urgentCount","0"); setText("weekCount","0");
+    setGuestCards();
+    setText("dailyBriefingText","Choose Try Demo to preview sample dashboards, or log in to load your personal GenieSphere data.");
+    const authAction=$("user-auth-action"),signoutBtn=$("user-signout-btn");
+    if(authAction) authAction.textContent="Log in / Sign up";
+    if(signoutBtn) signoutBtn.style.display="none";
+  }
+  function initUserMenu(){
+    const wrap=$("user-menu"),toggle=$("user-menu-toggle"),menu=$("user-menu-dropdown");
+    if(!wrap||!toggle||!menu) return;
+    const openMenu=()=>{ wrap.classList.add("open"); toggle.setAttribute("aria-expanded","true"); menu.setAttribute("aria-hidden","false"); };
+    const closeMenu=()=>{ wrap.classList.remove("open"); toggle.setAttribute("aria-expanded","false"); menu.setAttribute("aria-hidden","true"); };
+    closeMenu();
+    toggle.addEventListener("click",(e)=>{ e.preventDefault(); e.stopPropagation(); wrap.classList.contains("open")?closeMenu():openMenu(); });
+    document.addEventListener("click",(e)=>{ if(!wrap.contains(e.target)) closeMenu(); });
+    document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeMenu(); });
+    menu.querySelectorAll(".dropdown-nav").forEach(btn=>{
+      btn.addEventListener("click",()=>{ const target=btn.getAttribute("data-target"); closeMenu(); if(target) window.location.href=target; });
+    });
+    const authAction=$("user-auth-action");
+    if(authAction){ authAction.addEventListener("click",()=>{ closeMenu(); const mode=document.body.getAttribute("data-mode"); if(mode===PAGE_MODES.LIVE){window.location.href="/onboarding/user_profile_form.html";return;} window.location.href=`/onboarding/login.html?next=${encodeURIComponent(location.pathname+location.search)}`; }); }
+    const signoutBtn=$("user-signout-btn");
+    if(signoutBtn){ signoutBtn.addEventListener("click",async()=>{ closeMenu(); try{ const client=await getClient(); await client.auth.signOut(); }catch(_){} window.location.href="/index.html"; }); }
+  }
+  async function applyAuthMenuState(){
+    const authAction=$("user-auth-action"),signoutBtn=$("user-signout-btn"),nameLabel=$("user-name-label");
+    try{
+      const {user}=await resolveClientAndUser();
+      if(user){ const first=getFirstName(user); if(nameLabel) nameLabel.textContent=first; if(authAction) authAction.textContent="Open profile"; if(signoutBtn) signoutBtn.style.display="block"; }
+      else{ if(nameLabel) nameLabel.textContent="Log in"; if(authAction) authAction.textContent="Log in / Sign up"; if(signoutBtn) signoutBtn.style.display="none"; }
+    }catch(_){ if(nameLabel) nameLabel.textContent="Log in"; if(authAction) authAction.textContent="Log in / Sign up"; if(signoutBtn) signoutBtn.style.display="none"; }
+  }
+  async function init(){
+    setDateContext(); loadLastActive(); initUserMenu(); await applyAuthMenuState();
+    setStatus("Connecting…",""); setFocusStatus("Syncing…","");
+    try{
+      const forcedMode=getRequestedMode();
+      if(forcedMode===PAGE_MODES.DEMO){ applyDemoMode(); return; }
+      const {client,user}=await resolveClientAndUser();
+      if(user&&client){ await applyLiveMode(client,user); return; }
+      applyGuestMode();
+    }catch(err){ console.error("[overview] init error:",err); applyGuestMode(); setStatus("Fallback mode","warn"); }
+  }
+  init();
+})();
+</script>
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Dashboard</h4>
+        <a href="/dashboard/household.html">🏡 Household</a>
+        <a href="/dashboard/business.html">🏢 Business</a>
+        <a href="/dashboard/investment.html">📈 Investment</a>
+      </div>
+      <div class="footer-col">
+        <h4>More</h4>
+        <a href="/dashboard/leisure.html">🌴 Leisure</a>
+        <a href="/dashboard/finance.html">💼 Finance</a>
+        <a href="/dashboard/overview.html">🧭 Overview</a>
+      </div>
+      <div class="footer-col">
+        <h4>Tools</h4>
+        <a href="/business/expense-receipt-scanner.html">Receipt Scanner</a>
+        <a href="/investment/trade-journal.html">Trade Journal</a>
+        <a href="/leisure/travelplangenie/index.html">Trip Planner</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="/onboarding/api-key-settings.html">API Keys</a>
+        <a href="/about.html">About</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+      <div aria-label="Social" class="social">
+        <a aria-label="Twitter / X" href="#">🐦</a>
+        <a aria-label="YouTube" href="#">▶️</a>
+        <a aria-label="GitHub" href="#">🐙</a>
+      </div>
+    </div>
+  </div>
+</footer>
+<div aria-hidden="true" class="mobile-pad"></div>
+<nav class="mobile-nav" aria-label="GenieSphere mobile navigation">
+  <div class="mobile-nav-inner">
+      <a class="mnav active" href="/dashboard/overview.html" data-nav="overview"><div class="ico">🧭</div><div>Overview</div></a>
+      <a class="mnav" href="/dashboard/household.html" data-nav="household"><div class="ico">🏡</div><div>Home</div></a>
+      <a class="mnav" href="/dashboard/business.html" data-nav="business"><div class="ico">🏢</div><div>Business</div></a>
+      <a class="mnav" href="/dashboard/investment.html" data-nav="investment"><div class="ico">📈</div><div>Invest</div></a>
+      <a class="mnav" href="/dashboard/leisure.html" data-nav="leisure"><div class="ico">🏝️</div><div>Leisure</div></a>
+      <a class="mnav" href="/dashboard/finance.html" data-nav="finance"><div class="ico">💼</div><div>Finance</div></a>
+  </div>
+</nav>
+<script>
+/* ── User menu — standard across all pages ── */
+(function(){
+  var wrap=document.getElementById('user-menu');
+  var toggle=document.getElementById('user-menu-toggle');
+  var menu=document.getElementById('user-menu-dropdown');
+  if(!wrap||!toggle||!menu)return;
+  function openMenu(){wrap.classList.add('open');toggle.setAttribute('aria-expanded','true');menu.setAttribute('aria-hidden','false');}
+  function closeMenu(){wrap.classList.remove('open');toggle.setAttribute('aria-expanded','false');menu.setAttribute('aria-hidden','true');}
+  closeMenu();
+  toggle.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();wrap.classList.contains('open')?closeMenu():openMenu();});
+  document.addEventListener('click',function(e){if(wrap&&!wrap.contains(e.target))closeMenu();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu();});
+  menu.querySelectorAll('.dropdown-nav[data-target]').forEach(function(btn){
+    btn.addEventListener('click',function(){var t=btn.getAttribute('data-target');closeMenu();if(t)window.location.href=t;});
+  });
+  var authBtn=document.getElementById('user-auth-action');
+  if(authBtn)authBtn.addEventListener('click',function(){closeMenu();window.location.href='/onboarding/login.html';});
+  var signoutBtn=document.getElementById('user-signout-btn');
+  if(signoutBtn)signoutBtn.addEventListener('click',function(){
+    closeMenu();
+    try{if(window.GSClient)window.GSClient.getAsync().then(function(c){c.auth.signOut();});}catch(e){}
+    setTimeout(function(){window.location.href='/index.html';},300);
+  });
+  /* Populate username from auth session */
+  (function(){
+    var lbl=document.getElementById('user-name-label');
+    if(!lbl)return;
+    function setName(n){lbl.textContent=n||'Log in';}
+    try{
+      if(window.GSClient){
+        window.GSClient.getAsync().then(function(c){
+          return c.auth.getSession();
+        }).then(function(r){
+          var user=r&&r.data&&r.data.session&&r.data.session.user;
+          if(user){
+            var meta=user.user_metadata||{};
+            var name=(meta.full_name||meta.name||user.email||'').split(/\s+/)[0]||'Account';
+            setName(name);
+            if(authBtn)authBtn.textContent='My account';
+            document.querySelectorAll('.auth-only').forEach(function(el){el.style.display='block';});
+          }
+        }).catch(function(){});
+      }
+    }catch(e){}
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,619 @@
+{
+  "name": "Airbnb Trip Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "airbnb-travel-agent",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        120
+      ],
+      "id": "a9e7f42e-1c51-40f5-b029-b832f327177e",
+      "webhookId": "74daa5fa-326b-464b-96eb-fa94f6109ffd"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -200,
+        120
+      ],
+      "id": "671ab52c-3139-4aa3-98fb-7e6a2f12faae"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9367f09a-cde4-4402-9731-740d15300139"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Request Details:', JSON.stringify($json, null, 2)); let method = $json.method; if (!method) { method = $json.headers[':method'] || 'POST'; } return [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "8d0c2de9-e60a-403f-925b-91d2faf2e2ae"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.method).toUpperCase() }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Method",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        240
+      ],
+      "id": "40f70a80-1705-4ae9-b0e8-43c270741ff2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.body;\nconsole.log('Incoming form data ($json.body):', JSON.stringify(data, null, 2));\nreturn [{ json: {\n  departureLocation: data.departureLocation || 'Not specified',\n  destinationCity: data.destinationCity || 'Not specified',\n  accommodationType: data.accommodationType || 'Entire Home',\n  amenities: data.amenities || [],\n  bedrooms: data.bedrooms || '1',\n  bathrooms: data.bathrooms || '1',\n  startDate: data.startDate || 'N/A',\n  endDate: data.endDate || 'N/A',\n  tripType: data.tripType || 'N/A',\n  groupSize: data.groupSize || '1',\n  ageRange: data.ageRange || [],\n  budget: data.budget || '0',\n  email: data.email || 'unknown'\n} }];"
+      },
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        120
+      ],
+      "id": "6946521b-2aad-49d1-ab5b-d1acd11db952"
+    },
+    {
+      "parameters": {
+        "jsCode": "const {\n  departureLocation,\n  destinationCity,\n  accommodationType,\n  amenities,\n  bedrooms,\n  bathrooms,\n  startDate,\n  endDate,\n  tripType,\n  groupSize,\n  ageRange,\n  budget,\n  email\n} = $json;\nconsole.log('Preparing prompt with departureLocation:', departureLocation);\nreturn [{ json: {\n  departureLocation,\n  destinationCity,\n  accommodationType,\n  amenities,\n  bedrooms,\n  bathrooms,\n  startDate,\n  endDate,\n  tripType,\n  groupSize,\n  ageRange,\n  budget,\n  email,\n  prompt: `You are an experienced and helpful AI travel agent specializing in Airbnb and hotel stays. Your goal is to create exciting, practical, and well-organized travel itineraries tailored to each user's preferences. Be friendly, informative, and concise.\n- Departure Location: ${departureLocation}\n- Destination: ${destinationCity}\n- Accommodation Type: ${accommodationType}\n- Key Amenities: ${Array.isArray(amenities) ? amenities.join(', ') : amenities || 'Not specified'}\n- Number of Bedrooms: ${bedrooms}\n- Number of Bathrooms: ${bathrooms}\n- Travel Dates: ${startDate} to ${endDate}\n- Trip Type: ${tripType}\n- Group Size: ${groupSize}\n- Age Ranges: ${Array.isArray(ageRange) ? ageRange.join(', ') : ageRange || 'Not specified'}\n- Budget: $${budget}\n\nCreate a complete itinerary for this trip focusing on an Airbnb or hotel stay. Include recommendations for:\n1. Flights (specific airlines and routes from ${departureLocation || 'the nearest major airport'} to ${destinationCity}, with estimated costs)\n2. Accommodation options (specific Airbnb listings or hotels matching the accommodation type, amenities, and room preferences; include estimated cost per night and total cost for the trip, and provide at least one alternative option)\n3. Daily schedule with activities, dining options, and sights (include morning, afternoon, and evening plans for each day)\n4. Estimated food budget (daily cost and recommendations for dining, considering local cuisine)\n5. A cost summary table (flights, accommodation, activities, food, total, and remaining budget). This section is mandatory and must always be included. If no costs are available, use placeholder values (e.g., Flights\\t$0). Ensure the table includes all categories: Flights, Accommodation, Activities, Food, Total, and Remaining Budget, in that order.\n6. Travel tips specific to the destination and Airbnb/hotel experience\n\nRespond in a clean and organized layout with sections. Include hyperlinks to Airbnb listings, hotels, activities, or dining options where relevant, using <a href=\"URL\">Description</a> format. Use real, functional URLs where users can book or learn more (e.g., Airbnb, hotel websites, attraction sites). Do not use placeholder URLs like \"https://example.com\". Ensure the Cost Summary section is formatted as a tab-separated table (e.g., Flights\\t$1,000).` }\n}];"
+      },
+      "name": "Prepare Airbnb Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        120
+      ],
+      "id": "23cbff16-c57b-4e3d-9ed1-8f6e753eb4b2"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "You are an experienced and helpful AI travel agent specializing in Airbnb and hotel stays. Your goal is to create exciting, practical, and well-organized travel itineraries tailored to each user's preferences. Be friendly, informative, and concise.\n\nWhen suggesting Airbnb listings, hotels, attractions, restaurants, or activities, include relevant hyperlinks so users can easily click through to book or learn more. Ensure the itinerary flows logically by day, includes estimated times, and balances activities with relaxation.\n\nAlways provide valuable travel tips and local insights to enhance the experience. Format your responses in a clean and organized layout with the following guidelines to ensure compatibility with HTML email rendering:\n- Use plain text without Markdown syntax (e.g., do not use ### for headings, ** for bold!k2 | ÊNÚ∑x‰BÓÊ◊IæTÔ!ƒ_~¨0d`di^es$wÚiP≠@dh#0s}j y=®ñittU9In h6™In DmxNdfklnn˘er†by i"@lNnÄòQn˝/< \*Gdxemt{:U2¨ X/DmCmliŒdcu+%îOprK/w9*]",!bÑaal˘§[Îx'dw¨t:O", =¥°&m6}f}Çuwa*od}8Hp+o7\Äxth eCpqhenP*i8 ·t vaE°sdrr¸c;C"dsq~4Hkzl ÒMov-bo`LoL	~gíBÌºumorı0sDa(sitq,\n-`gs‚t`e&b'9U"€ul}+pπ"ree9I».L&mN_‘x*{P vô†Í ıurO@wktl·{,e].3†caUircTul$œy(◊`jw"‹‰i ~EP®gÒt0hkæH¨rs˛ƒH{b-eekfie$f?å/giooÑ#}Âoovëtho dx	R!o#`erz0CliG(vsh$„ØIÈqÉedÈoo,§msuivkees®%FﬁØ\*+VotU‡/	`FÊ"“e˝eini~g¶¡˜tsa0†$ .'Æà‚KOyd85s¸t%1,10$I;tUcÂ(6∑=vm6gv)wsf≤†bmR ’Áuq| a|‰(SFoSmOMÏÔ06meEƒW(lfb]\{<a'D$U¡zÙg{Ã>±Ddl(—†Íˆ`N! lenu! cgQÂ~`sgcLiœÊv8hHÇπÆmudi™f˛$Ã(UmTIälinE†yn:Ùie‘q QT6\.<0YN#|utu‡-WOjiK(ï‰mbm ≈¡Ropvm‘s]°|oaiM/rfbÂ)Â~ÒcumcÌt<@Ësdd§KsRe+vÈEˇ1p2mpÚ3Ìqv·M5%`o7`notºÏC'p|q%–~Zz/ o4Óﬂ| 6m`a‘i~n?s…`}Îo."‡Ij&‚Â RÎñÈ`ÂiêËna<he ¢f[`q *fåÂ/,($-s`sVqru†`ãÈe‹©ﬂn,`hmsÙËÍa.ÈmnØ ur >Â\`mÔ&‰ZM!oro\4§wkze¨ÙB_Tbmv90r4†'ie …¸hMrbu0"oVy(2 [HtlI„!+Ø(‡“%†a(·edÄSE4a”$vAhm8Ì◊%ui≠îwi·ih>\ˆ^Ó\im`!"Ó|d`epn~Jmq‘7\jlh}\$”8ﬁj- Bl=A ¡iz†„>as2$¢WÚto" A⁄-Édaxgsdq!y;ê(ÀM, a`ciB·s 11r0AM\nmpıAtaaAÙuE Cort84w04 8eJ#eFÚÛßÓ\vn"Ãm~*@a$ sec¥\0ÙlA˜r'g'WÆdu}v!.c.ÙÇ=Bfov$7yvË§ƒˆ≈∆c,-y>jJ/AGB'M}˝lTib 
+{Paef7
+~F/ Qmvbw;`C/p˝0-BAeR|~id@ra:v{Ödt°iNUÃwLÙOgn HAZl !osı=†•≥8xíÚmÚ·∂y∑(v- $540toqe.)f/Ò?∏Ô+qjtSCj°!\hokj$Íi%Hrecm\bztqs1ˆcirb%£c#oorgÈM#Ø120v46G~bo£i1vÊ DÈR‚Õ`8/m:‹b%`ALPet<·÷HV∫ÿcTh$Iˆ.CGo EÔ¡Ω–g$n,Ji.i`Ckptª(.;0`UÂ≥lwH|$ lp0v0btgzAtfgLÄ7 /ioQl›Ó5 ≠≈ˇã8 4aâh0l~="h<&ê{;+oh†t`,ÈBvh7ÁfC-\¬> wÌk p”1âWuel hhnofo<ÓÆ|g\~LA,* Qghf4m|ms\nf±Ú$ ™ @Shfqn Dn Lkw†AL7gtu˜‘Nm0gqnifgfOjpiva±~tLAx¨†cÓea$enZK"!izcn'NL)±fÙqwOgfrÑŒ‰fcha§®Vraft "§ØtÚaÌ]`“CQ4^/+Uven…F◊û¯ìu˛3u %t0Qknvq≤≈Gªi3eEJ-er\v‹~·d¯ :(Ëlly˜g∑6 " GrKfg	|*`o";72ÚaTn2xT˙-"MÎ◊(i(l*»+Lm˜Oo$ ˆ$Dkboßí“iIET~≠Bb≥4ernoN.Z†XiÎ Bt!êtH-xhc$Y˘vÎgEbÉ(ÁÁv5£wenccgªkvb?[Ho˜ %d O‚)foil+4OfdbÓatbyLN|Æ,p|mmpgn†=` ^ëg'u;\b-®iily†Hoy‰: `ïòÎ`dw Pe∑ŒnTl-%‘/uk,('/s ø`@q1Û8(Ê3¥@rt„qers}éÌh\n#Ôy¥ RqmËa;yí\L¯a“–aq‘6Ÿp\nIbknÎukdq~ÎnT¿Au‰Dwsgtif)1Êas\t†1¥àzo∆k/≈D“ 350‘*æìdbgÓÖ>Po|`l¸{±~jŒg‹~/froˆÙw218
+St∞oÊgüz"§YwzÁNg∑S%u`ın/~c BplgµTºcs¥Ú˚~CHXtºvprgMc3%!qò8ßBpÛk.°V‰n\nT≤§Ám0„Tv∫‹Ùo†pQ_k0sWÍaÉzgn*®fN‚lC‚Åôc$ÚuN∑y(∑eq`Í`z¨‚åFÁÊèX~≈+e&zhn£3yıre4a∏≥ß4G8Gta“oUodxÂ`˚Èq(zœöñ\é%†{P locEh#vacgÛ iuedooL`twcks!®èΩÿm-§∆¸oC§acT1vqÙÎ5b hN4e§waµwtxgo 3©≥q2ÙiMe ∫õØéÍòáLN!Gbhœy$ï˚gz 4a·s"¥Õ¢D∑s Qg'mÍuc7`iÊ†˘je‚XAVg`RﬂË8we˚6syr†!AE@BnÂE†‹)aCK'&àé°  b0#& * l!$bCÔ4Mª28}Úµuc"à¶  0(( 2 #}#N††`
+` &†$d∞[N*¢∞!  : 40 b/¨ÂND6≤nt,o[6z:Í5—ˆ'm¯x}#
+  Q2ºd`   ≤qµb$! † ‡Æ† ’
+d †0%†( ]&
+2f § § ®n`eiwO]‰? {-˛)†(† 8]bâ`  2†!i¡Œe&~Ä Op?nm"$x ¢5"  |{xD™<$;j®/n.∏Ó◊ddes}hÁoÎgiaikÜnqmnGm™0t1 ,"†„$h≤wjuÜ[moÓv:*—Ó)bÄ‡%È°toc)º`wo : {`0   Ä %∑+0. ,   3 30F!0&@i>è † bådMm"?"æ"•ˇÊ8t44?6319-4µt$'93*<-f`V5A1∂W#8£‰",
+ D)‡ ¢¢C≤4p’l,k-uq¢>`{h§F£4(&dj¢◊8~kmA·è/* 
+a †%Ä   2†")db84#(WÓ÷±{+YËb›5Å∑(n0,
+(Ä†Ñ†f0l Æ~A-è   "WOxPed0GfmÈ$pb®  p∫"∫}
+,¢$,dt=äp 0†∂~i†#""õò Ç$! pqram•@cpe&: [Orr"°®† "DhwnDap!7cœnST.opRx,S„≠~o‚„Y∑p-Ù#kE¬qIr`zb¢dqlc•›$ÊÁ:Ó;œ„Ï'g ai }rÜkdl…/p`oHù#]âzÛÓz*iessqÁÂ/∂Cdntenp8T8"7No‚CAÊes!6~!ÓoUntßzsÁnso$!"ËC‡%hobè∞mn≈9 sG¥Ú{53( ADhªydrw5ıÇ@"Ÿ9$nqlN:${ﬂ| †epCs §–`nmbd	kl:abØrÍhB&‰¯ÙqS|PreÕlcÈdáon¨\~!†∆eStiÆ‡tiM~cix1:§imvHN+NrgwΩkoÈVËioCg|ˇ®4|`¢„Q„\mig‰a[NŒTppm*®aÏ2Bnbz@;‡Ommo‰Eso]nQ9rÔ@?  see˜a4`e3:‡q]¯2s¨enit·U€<n* ‚vƒf|JÌs:Å¸f`NjÆ#$Vo/Ìsx~` :°t(tgi≥:)‰)≤˛o¿Ω†qp,rommk,V  stÈ˛VmÈvE8puh2cN"nr¸0TTavC,0m@eg`.≈:$o}ˆ`b™m§J{e,|.e†Z0!pT˘Ï·∫aktcoc.u`)PT]xe†\f&†gr©}pDh6e6†È2‚NÎ.gp^∑x[Íª%-Tn •©')xuJG%∫ iisr"≠Afe“aO7a	g $2Zdk%E
+°q fpzbºkgFuDUdpo†<AIail:†ËIB„j2.e¶):¨X.®!r,l%v$nπ4YÈ|ˆe&˝\´S
+8$h)‚ÌÏé=:   2gÅic ;†2D)Rnn …Ôbj"(*""( <  t1rd≤≤""jxj].jde3-Úa2ı$‚tı&L„ †(%"di¿≈ˆUz˘…in*:&0*Ä    
+*ÙlsYtÈkO*<$
+‡8≤r`   5†w0, 0"Ä; 0$1# c`! }Æ(d !Ù†xbÈØ">$ }U)ywA3e¥/8-Ò)}Â90Êç≈$e8ˆ#/;e 
+ 5H=""`0[&5` † d"pq2@l%>UVy*zÄ¯
+h  &p*" 8C_¨È0§#cook5Ëlcti~e‘JKj ø!'bzÆN.EeWhÈ.ÁDionCity || 'Your Destination';\nconst travelDates = `${$json.startDate || 'N/A'} to ${$json.endDate || 'N/A'}`;\nconst departure = $json.departureLocation || 'Not specified';\nconst accommodationType = $json.accommodationType || 'Not specified';\nconst amenities = Array.isArray($json.amenities) ? $json.amenities.join(', ') : $json.amenities || 'Not specified';\nconst bedrooms = $json.bedrooms || 'Not specified';\nconst bathrooms = $json.bathrooms || 'Not specified';\nconst tripType = $json.tripType || 'N/A';\nconst groupSize = $json.groupSize || 'N/A';\nconst ageRange = Array.isArray($json.ageRange) ? $json.ageRange.join(', ') : $json.ageRange || 'Not specified';\nconst budget = $json.budget || 'N/A';\nlet itineraryRaw = $json.itinerary || 'Itinerary details not available.';\nconsole.log('Initial itineraryRaw:', itineraryRaw);\nconsole.log('Checking for Cost Summary in itineraryRaw (case-insensitive)...');\nif (!itineraryRaw.toLowerCase().includes('cost summary:')) {\n  console.log('Cost Summary missing, adding fallback');\n  itineraryRaw += '\\n\\nCost Summary:\\nFlights\\t$0\\nAccommodation\\t$0\\nActivities\\t$0\\nFood\\t$0\\n<strong>Total</strong>\\t<strong>$0</strong>\\n<strong>Remaining Budget</strong>\\t<strong>$' + budget + '</strong>';\n} else {\n  console.log('Cost Summary found in itineraryRaw');\n}\nconsole.log('itineraryRaw after fallback check:', itineraryRaw);\nconst itineraryLines = itineraryRaw.split('\\n');\nlet itinerary = '';\nlet inTable = false;\nlet tableRows = [];\nfor (let line of itineraryLines) {\n  line = line.trim();\n  if (!line) {\n    itinerary += '<br>';\n    continue;\n  }\n  if (line.toLowerCase().startsWith('cost summary:')) {\n    inTable = true;\n    tableRows = [];\n    itinerary += `<strong style=\"font-size: 16px; color: #2a4a6e; display: block; margin: 15px 0 5px 0;\">${line}</strong>`;\n    continue;\n  }\n  if (inTable && (line.startsWith('Total') || line.startsWith('Remaining Budget'))) {\n    const [category, cost] = line.split('\\t').map(item => item.trim());\n    tableRows.push(`<tr><td style=\"border: 1px solid #e0e0e0; padding: 8px; background-color: #f0f0f0; font-weight: bold;\">${category}</td><td style=\"border: 1px solid #e0e0e0; padding: 8px; background-color: #f0f0f0; font-weight: bold;\">${cost}</td></tr>`);\n    continue;\n  }\n  if (inTable && line.includes('\\t')) {\n    const [category, cost] = line.split('\\t').map(item => item.trim());\n    tableRows.push(`<tr><td style=\"border: 1px solid #e0e0e0; padding: 8px;\">${category}</td><td style=\"border: 1px solid #e0e0e0; padding: 8px;\">${cost}</td></tr>`);\n    continue;\n  }\n  if (inTable && !line.includes('\\t')) {\n    inTable = false;\n    itinerary += `<table style=\"border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px;\" cellpadding=\"0\" cellspacing=\"0\">${tableRows.join('')}</table><br>`;\n  }\n  if (!inTable) {\n    if (line.endsWith(':')) {\n      itinerary += `<strong style=\"font-size: 16px; color: #2a4a6e; display: block; margin: 15px 0 5px 0;\">${line}</strong>`;\n    } else {\n      itinerary += line + '<br>';\n    }\n  }\n}\nif (inTable) {\n  itinerary += `<table style=\"border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px;\" cellpadding=\"0\" cellspacing=\"0\">${tableRows.join('')}</table><br>`;\n}\nconsole.log('Final itinerary HTML:', itinerary);\nconst subject = `Your Airbnb & Hotel Itinerary for ${destination} - Voyage Genie`;\nconst message = `<div style=\"font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f7f7f7; padding: 25px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);\"><div style=\"background-color: #2a4a6e; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;\"><h1 style=\"color: #ffffff; margin: 0; font-size: 28px;\">üè† Your Airbnb & Hotel Itinerary</h1></div><div style=\"padding: 25px; background-color: #ffffff; border-radius: 0 0 10px 10px;\"><h2 style=\"color: #2a4a6e; font-size: 22px; margin: 0 0 15px 0; text-align: left;\">Departing from: ${departure}</h2><h2 style=\"color: #2a4a6e; font-size: 22px; margin: 0 0 15px 0; text-align: left;\">Destination: ${destination}</h2><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5; text-align: left;\"><strong>Travel Dates:</strong> ${travelDates}</p><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5; text-align: left;\"><strong>Accommodation Type:</strong> ${accommodationType}</p><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5; text-align: left;\"><strong>Key Amenities:</strong> ${amenities}</p><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5; text-align: left;\"><strong>Number of Bedrooms:</strong> ${bedrooms}</p><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5; text-align: left;\"><strong>Number of Bathrooms:</strong> ${bathrooms}</p><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5; text-align: left;\"><strong>Trip Type:</strong> ${tripType}</p><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5; text-align: left;\"><strong>Age Range:</strong> ${ageRange}</p><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5; text-align: left;\"><strong>Budget:</strong> $${budget} (for ${groupSize} travelers)</p><hr style=\"border: 0; border-top: 1px solid #e0e0e0; margin: 25px 0;\"><h3 style=\"color: #2a4a6e; font-size: 18px; margin: 0 0 15px 0; text-align: left;\">Itinerary Details</h3><div style=\"background-color: #f9f9f9; padding: 20px; border-radius: 6px; font-size: 14px; line-height: 1.6; color: #333333;\">${itinerary}</div><hr style=\"border: 0; border-top: 1px solid #e0e0e0; margin: 25px 0;\"><p style=\"color: #666666; font-size: 12px; text-align: center; margin: 0;\">Generated by <strong>Voyage Genie</strong> üåü</p></div></div>`;\n\nconst sessionId = Date.now().toString();\nconsole.log('Returning itineraryHtml directly with sessionId:', sessionId);\n\nreturn [{ json: { sessionId: sessionId, itineraryHtml: message, resolvedEmail: $json.email || 'jtran112675@gmail.com', resolvedSubject: subject, resolvedMessage: message, formData: { departureLocation: departure, destinationCity: destination, startDate: $json.startDate, endDate: $json.endDate, budget: budget, groupSize: groupSize } } }];"
+      },
+      "name": "Resolve Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        120
+      ],
+      "id": "c93a1379-889d-42db-9d7f-dc47f87fc88e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const url = 'https://exodonprofits.app.n8n.cloud/webhook/send-email';\nconst payload = {\n  resolvedEmail: $json.resolvedEmail,\n  resolvedSubject: $json.resolvedSubject,\n  resolvedMessage: $json.resolvedMessage\n};\ntry {\n  const response = await $http({\n    method: 'POST',\n    url: url,\n    body: payload,\n    headers: { 'Content-Type': 'application/json' }\n  });\n  console.log('Email trigger response:', response);\n} catch (error) {\n  console.error('Error triggering email workflow:', error.message);\n}\nreturn $input.all();"
+      },
+      "name": "Trigger Email Workflow",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        120
+      ],
+      "id": "b094b21b-6b7d-4155-8130-c97617e46e8e"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}"
+            },
+            {
+              "name": "redirectUrl",
+              "value": "/travel/airbnb_trip_itinerary.html"
+            },
+            {
+              "name": "itineraryData",
+              "value": "={{ JSON.stringify($json.formData) }}"
+            },
+            {
+              "name": "itineraryHtml",
+              "value": "={{ $json.itineraryHtml }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Final Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        120
+      ],
+      "id": "056f8318-58c2-437d-a1c0-fc964aa40ed6"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { sessionId: $json.sessionId, redirectUrl: $json.redirectUrl, itineraryData: $json.itineraryData, itineraryHtml: $json.itineraryHtml } }];"
+      },
+      "name": "Clean Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1820,
+        120
+      ],
+      "id": "17cd8446-5186-4ab6-a33c-8afcd27715a1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return JSON Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2020,
+        120
+      ],
+      "id": "c050ae45-027b-44ef-bbc5-6b9955a321c3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET,OPTIONS",
+        "path": "get-itinerary",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Get Itinerary Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        460
+      ],
+      "id": "321e0a51-fea0-4111-9d82-02860330194d",
+      "webhookId": "abcdef12-3456-7890-abcd-ef1234567890"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS for Get Itinerary",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        420
+      ],
+      "id": "b06932af-f44b-481d-8576-e424abd8088e"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS for Get Itinerary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        360
+      ],
+      "id": "5d5f817d-bc28-44aa-a272-f020c48de6e8"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Retrieve Itinerary node called, but itineraryHtml is now passed directly in the initial response.');\nreturn [{ json: { itineraryHtml: 'This endpoint is no longer needed.' } }];"
+      },
+      "name": "Retrieve Itinerary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        480
+      ],
+      "id": "7169fccc-c2df-47bd-abcf-56296b75b5f5"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return Itinerary Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        340,
+        480
+      ],
+      "id": "8f1f5ab4-c63f-4ce0-bdf2-a932df8cadc1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "airbnb-travel-agent-new-suggestion",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Oriw˘v",ä ‡ PA(    &<)(b"u˘MΩk": b"$¢)$   a†§#2 % m
+@ 0¢V†d  0†*‰ cH  0†4à   $z bf·imÇ "m„Qusc(√O'0z˝li	llå^ÂImv5ofs"Ì
+  ˘)Éy 0  ‡†4 "vanﬁÏ:∞"P^QTbœXtá\"e $"`$   ∏ ·(\dÇ%Ä£"•H¥(0(1$0kJ`ÕÈë†   2 …b%" ,"~mm"Z ∫a{d1s)G~.szo|ƒ,|GwØ	¿`eR·b,êlj)  $»î∫Á" !`¿2eNuD"`B#on5u.‚)5˘xe"ì„$`f"H§"h†#0ÇYí(∫!(`l †a® 0]é ‚3	@ $ ¿AΩi"!†&ŸÜx`(#H+e=,‡ 
+,$!„OaqÕ&£nLe ’FGÂ1§Ynå"Wgb	ÔNk"l+à†*r+b4…Å$`;`"núlikndew5vGwD&˜Eb`wejÉ:C®  ∞"6UIs ∑Uz3iKd&2 1,QÜ<`  ™x„5mıc-";*ÀH0∞  °2 $+v45ù "0°!6°Rp 0∂! ],,∞&6 "i,~5¢'1a#)c¥,`5¶<f)©©n00≥qÓ¢lsd∞a)j∂Æ>Ñ†  ÿ'Çkefh?´;- ˙ 
+1:∂}6∑•®g&-c‘g,y1Úª$<uz
+:10rJqdgh‡‡y4
+®à∞õ&
+!   $H p!biiœed`z¢: ∂Ëh   †B$"g"Ôx@BÓ˜"∫@:‚‡>``"¢0!!2mpÖo".Y":`[     (!&""ca3eGsf3iÙA3O6>D¶Ùa7J` ††8 „ 	, P˛paV`ÍcraÙËoCô&stzia®~/† † ¢ † #b¢v·‚ÛÕ#,&/ 4(–§¨  D 0i.´ß*@  (0! a2cktaÙhoNs≤ [. ®p7.  !†`*ˇ*` , ê!$‰Ä!¥∞"",eVvü¡∏e5Åz"ÍõŸ{$j2/[v¸~t¯od1qı"$" j •  `¿D0 0cpÈcIt∂(d7g:n!tAoO!D A$˛êÄ   `<"††"Ìpgr!pkÚf> À( $ 0 ‰ e`28 !'4tu9¯v73*∏.v|za¬, !81bß  & "Ñ®± *O`ïS(˜imb8H+wpe°jc èK§0( t†‡d!0`¢ÎÔ≈-Ô#< !Ni\:wsdope≤eºev.`yuaoP (#$aJ*`  ! ("¸0 0¢é¿$-i0 b˝°Rj` 2∞!00U,∫°Äd    `"'`.ÌJu˜gfor":Ñ(a~$*
+` P∞0 ±`º%p 0 ·h$bctPmv "÷:jª}j¬¨Å)®0=,:Ë‰H°` "~¢…'":02	£‡ˇRTIJ&2e3±Rebg%t)’.f4N 0å4:
+Ty0eﬂt:`xN.9◊5P-r3%9ŸbÚ,
+`"dJ-`&$y"=”5ÚqÈØ+"π2N≤, %`"$"isa5io+*n4Z*! ®0`¯-r0⁄ !   0*©004Ú$&(‹lB*∞2  )"ANb^!∂ p{vc˙lµ´Õ	&≠<Wa<MΩW'-d4qÙ2a4r5Û%(` , !!$†h{
+¢""4!`*xq3$MGperp&21y,¯˜!b  "ov¥iln‚ÑS|™`$Êcyh0"‰ `ena}ßz! Rferkgßde¿ORIOS)~ƒw S}/^mz^aw~f(B¢ † †‰!∂π`d**8"J	n?|oÊWs©c'1gÏ{EsBÔp,Ùb«e‚jooLf=I  ≤∞(b|Q∞gEÚ3mÍ";®
+0"`5È!posir˝6!2†J –0  ! h6.4 b#d£"80
+D  00],ÈAÜÅ !¢Yπ¢j·#CRE<u!•Êbp9å>B?·2%rxÁc~7C>4Ω2¡`  (}^ä$  {ä¶&$("®*N]VaÌqt%rS.
+ B  ) ® ±!≠ÚC/dfÇ>®cwoLy}Uç,_c8'PtQur4‡UfgWl;:'n hQONìu0a~ÔHgi+UÍ9/˙(/Ul¸!3s	ı`O,'p=&ÒhGd"ee£cson.W_\ho$ª\.f !cidP œ&!$?‰ ¢lut~Ôt`<"$ªrbÏ»ßchuRÿAñkevh~4É◊&›|†'PœSN'fyUˇCapern{s Xaoæ qÄ<?,<Kqonl oiD‡+ 3`gVˆ+*e |0M5;•)∞!±|(
+(p#$°`{·li/†*De‚u/ dt`gÑnEw‡RE#CSg¸mÉf bò † (( ∞Yp%¢¢#N8n-lo&%y4„·≤K>„‰u"§`*≤`U!`ıcaaCGÚS Ôó> ~/b†c   BÔ7dtionj⁄+[
++ `(íB¨0Ñâ r0"B-†©∂z   yl(qj`+`d*aDÇh™g3d4u•v	a6b:•Ca≠b‡ mm¶a¥@£&m2mπ"™C/4 u,µ1 w6†pj$$#V„v|%aturÚ:?~	`0Ä–a°h`"„n|faÙhGnÛ"z q)`   †"!a£sbEhko=J*ß{Ó d8e  H  ¢ °ªAs%WdÓ7…^`ve"x feiqh¨KÑ   †∞≤DÄ"|YP©‘c-k@!pmÔo ;†ãwÂ~À$u"lí ,Ë  †(Ä`‡ *v%¬“¸on` ˙õ  !(Ëx`:∞"}%Jb.  3"† ®«Ojty¥"˜kÇ"2 Y∆‚ !¿" ™ﬂ,X0˚
+#!!‡$P ` †$  2‚fDfÙVil ; ø9i≤*wpF`., *;d~/met¿o4´/toU4#rC}s•8)%z}†,
+5t ! "†¨ $†0†bicdTW9p6e¶3 íQog‹#(Œ  !86$&  t"Üofm`Ùmª≤"w™B&d °! ,"!‰  0 bkpe:7 [6ÚˆÊf'úR1∞@   .å($!# 
+†7/p•r‚¥i:n">Ä¢etUAi˛≠& `@"%,a†  £0& ¢6p/ı"ˇ†B*imteÚOjeRapivŒEUQlY!ä(   0($  ∞™|‚a¢°  0"'ah }†\1†""Äó$([l
+ !e",¢! !®bcuebinÅWj≤: "!Nî"(!®¿d0!()}l)0jÂ a!!*G3Ba˜o%v!Qx(0$0î$~/* ` (®.¢Œaoe:1"	f Öß|xÕb åev¿ıO7uS÷ko~∏$åDÑA%b‹!0‡"˙&,wonodeπm"psu.kj∏.0  0b"Üe9Pm\-Ú”mn:á2zlâ`∏p&§&Ú.„@T˙nn#:(P#()!1!! º1∞® – <†(   92•a0!$jPY,
+ † ! ∞n	∏``ng6Ñ&‰Ünc8#?Ó`◊bè#Âpn≠a4‚5g65æ’n:"
+5j° < (©Yç6  
+zI~Lcdq2∫D{¥`Ì!§¢c?kxGstokF#| {
+$í4˚2We2xWn}":$?"`È! bD"eqak":`[ä†$`"`0, "-™Èâ‰ k" {ä$"q ! † ‡n0&ÓKdıÜ>$'I&Op6¡]LS#Ï ( † "¢`0""$tqTÂblêpmc9.§
+"!°!!F †(à¢#2Àneu¯" >
+Ä $!8l1$"$† d Ä† \
+ †8(*}ˇ8 `D„# q"IBc~QTyMJS∞f`;
+ Äπ †!≤MqAf¢aZ( 	$ ≠2 {Lp0!®∞$ $ cJ $ fd"Ω0†  LoÂd&;dã‚ewponxB:y FQXejî+&
+È`E0 ¨(` *wIu ÇBÂ-Kb."8††! Içv°$$‚»NÂtx&:(î*.o  2†¿ËànmH00`  0"Y,>p"§"0i A[†‡4H"$8¢! [B  G1 (  ‰(h¡3nohq>É®#Vu“u] MevKo|"ÈK!i° 8i∞†0!02í∂onEL0±ˇ`aé",
+8 "Ä   † "Ä"(ll'h£; 0ã  !  ¯ * +$ 	® "#!Y
+∏∞("#q◊† Ëaà
+   0Ñr5gbiG&‡oD`.∞kzO P  Åbiai>r
+k⁄<h`Ë"°hÄ~j `†5# †1°´*0      $†) #nèd$ ;("K&%Î#3hoÙÛ
+  A $ò0bÄ/ †?CMc?¶ÕxÓc"i¬ Ä	†  " åD©≤kfdG;ª4h  R˘0!e!˝
+( 1!$72N `·‡)} !!!‹lZ ©  2Ee$etx¢ `: kK `#"¯m`k‚
+
+![ ¸%ÅÚ  (*!!- · Bx{ !†`
+Ñ !580!"llde: ‚g`g,( (0$ b!,!å*TqrL"1*m·iÔ`,ã)8 ∞- 4"! ‡‚“ne%yf®2
+ 3(!98#H$t"Ä:31 h‹‡  " †_ã®  (]8.Ep&OO@G.0`
+ !0-  *l·bn$*®AKAk! "d0‡[ä™0"      {
+            "node": "Prepare Airbnb Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Airbnb Data": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Airbnb Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airbnb Info": {
+      "main": [
+        [
+          {
+            "node": "Resolve Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Email Content": {
+      "main": [
+        [
+          {
+            "node": "Trigger Email Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Email Workflow": {
+      "main": [
+        [
+          {
+            "node": "Set Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Final Response": {
+      "main": [
+        [
+          {
+            "node": "Clean Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Output": {
+      "main": [
+        [
+          {
+            "node": "Return JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Itinerary Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS for Get Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS for Get Itinerary": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS for Get Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retrieve Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Itinerary": {
+      "main": [
+        [
+          {
+            "node": "Return Itinerary Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Suggestion Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Method New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Method New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "If Method New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  ],
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fixed-escaped-quotes",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "airbnb-workflow-id",
+  "tags": []
+}

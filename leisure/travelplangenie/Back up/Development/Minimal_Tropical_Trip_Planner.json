@@ -1,0 +1,125 @@
+[
+  {
+    "name": "Tropical_Trip_Planner",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "tropical-travel-agent",
+          "responseMode": "lastNode",
+          "responseCode": 200,
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "GET, POST, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                }
+              ]
+            }
+          }
+        },
+        "id": "webhook-001",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          0,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const data = $json.body || {};\n\nreturn [{\n  json: {\n    departureLocation: data.customAirport || data.departureLocation || \"Not provided\",\n    destination: data.customDestination || data.destination || \"Not specified\",\n    budget: data.budget || \"~\",\n    tripType: data.tripType || \"N/A\",\n    groupSize: data.groupSize || \"1\",\n    ageRange: Array.isArray(data.ageRange) ? data.ageRange : (data.ageRange ? [data.ageRange] : [\"~\"]),\n    dayActivity: Array.isArray(data.dayActivity) ? data.dayActivity.join(\", \") : (data.dayActivity || \"none\"),\n    nightActivity: Array.isArray(data.nightActivity) ? data.nightActivity.join(\", \") : (data.nightActivity || \"none\"),\n    startDate: data.startDate || \"N/A\",\n    endDate: data.endDate || \"N/A\",\n    email: data.email || \"unknown\"\n  }\n}];"
+        },
+        "id": "code-001",
+        "name": "Code",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          200,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const travel = $node[\"Code\"].json;\n\n// Calculate the number of days between startDate and endDate\nconst startDate = new Date(travel.startDate);\nconst endDate = new Date(travel.endDate);\nconst timeDiff = endDate - startDate;\nconst days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1;\n\n// Generate daily activities for Turks & Caicos\nlet dailyActivities = '';\n\n// Day 1: Arrival and light activities\ndailyActivities += `### Day 1: Arrival in Turks & Caicos (July 1)\n` +\n  `- **Morning**: Flight from ${travel.departureLocation} to Providenciales (PLS).\n` +\n  `- **Afternoon**: Check into your hotel near Grace Bay Beach.\n` +\n  `- **Evening**: Dinner at a local restaurant like Coco Bistro. 🍽️ [Reservation](https://cocobistro.tc/)\n\n`;\n\n// Day 2: Beach Relaxation\ndailyActivities += `### Day 2: Beach Relaxation (July 2)\n` +\n  `- **Morning**: Relax at Grace Bay Beach, one of the world's best beaches. 🌊\n` +\n  `- **Afternoon**: Lunch at Somewhere Café and Lounge. 🍽️ [Menu](https://somewherecafeandlounge.com/)\n` +\n  `- **Evening**: Enjoy nightlife at Danny Buoy's. 🎶 [Info](https://www.dannybuoys.com/)\n\n`;\n\n// Day 3: Snorkeling Adventure\ndailyActivities += `### Day 3: Snorkeling Adventure (July 3)\n` +\n  `- **Morning**: Book a snorkeling tour to the Turks & Caicos Barrier Reef. 🏄‍♂️ [Tour Info](https://www.dive.tc/)\n` +\n  `- **Afternoon**: Continue relaxing at Grace Bay Beach.\n` +\n  `- **Evening**: Attend a local music event in Providenciales. 🎶\n\n`;\n\n// Day 4: Island Excursion\ndailyActivities += `### Day 4: Island Excursion (July 4)\n` +\n  `- **Morning**: Take an island-hopping excursion to North Caicos and Middle Caicos. 🚤 [Tour Info](https://www.turksandcaicostourism.com/island-hopping/)\n` +\n  `- **Afternoon**: Visit Mudjin Harbour for stunning views.\n` +\n  `- **Evening**: Beach bonfire at your hotel. 🔥\n\n`;\n\n// Day 5: Adventure Sports\ndailyActivities += `### Day 5: Adventure Sports (July 5)\n` +\n  `- **Morning**: Go kiteboarding or paddleboarding at Long Bay Beach. 🪂 [Booking](https://www.kiteprovo.com/)\n` +\n  `- **Afternoon**: Relax at Sapodilla Bay, a quieter beach spot.\n` +\n  `- **Evening**: Fine dining at Infiniti Restaurant. 🍽️ [Reservation](https://infinitirestaurant.com/)\n\n`;\n\n// Day 6: Departure\ndailyActivities += `### Day 6: Departure (July 6)\n` +\n  `- **Morning**: Spend your final morning relaxing at Grace Bay Beach. 🌊\n` +\n  `- **Afternoon**: Check out of your hotel and catch your flight back to ${travel.departureLocation}.\n`;\n\n// Generate the itinerary in the requested format\nlet itinerary = `🌍 Trip Plan: ${travel.destination}\n` +\n  `(${travel.startDate} to ${travel.endDate})\n` +\n  `📍 Departure Location: ${travel.departureLocation}\n\n` +\n  `💸 Budget: $${travel.budget} (for ${travel.groupSize} people)\n\n` +\n  `✈️ Flights\n` +\n  `**Departure City:** ${travel.departureLocation}\n` +\n  `**Airlines:** Delta, American Airlines, Air France\n` +\n  `**Estimated Cost:** ~ depends on location\n` +\n  `**Tips:** Book 3-4 months early, check direct or 1-stop flights\n\n` +\n  `🏨 Accommodation\n` +\n  `**Example:** Hotel near Grace Bay Beach\n` +\n  `**Cost:** $200–$400 per night\n` +\n  `**Tip:** Consider boutique hotels or resorts for a luxurious experience\n` +\n  `[Book Hotels](https://www.booking.com/searchresults.html?dest_id=-2621515&dest_type=city)\n\n` +\n  `📆 Daily Activities\n` +\n  `${dailyActivities}\n\n` +\n  `🍽️ Food Budget\n` +\n  `Estimate $50–$70/day per person for meals. Explore local eateries and markets.\n\n` +\n  `📊 Estimated Cost Summary\n` +\n  `**Category** | **Cost**\n` +\n  `Flights | ~\n` +\n  `Accommodation | ~\n` +\n  `Activities | ~\n` +\n  `Food | ~\n` +\n  `**Total** | ~\n\n` +\n  `💡 Travel Tips\n` +\n  `- 🚌 Consider renting a car for flexibility\n` +\n  `- 🌦️ Pack for warm, sunny weather with occasional rain\n` +\n  `- 🗣️ English is widely spoken, but a friendly \"hello\" goes a long way\n` +\n  `- 🔐 Watch out for common tourist scams\n` +\n  `- ✨ Enjoy your personalized adventure!\n\n` +\n  `This itinerary was automatically created by your AI Travel Agent powered by ChatGPT\n`;\n\nreturn [{\n  json: {\n    destination: travel.destination,\n    departureLocation: travel.departureLocation,\n    startDate: travel.startDate,\n    endDate: travel.endDate,\n    groupSize: travel.groupSize,\n    budget: travel.budget,\n    tripType: travel.tripType,\n    ageRange: travel.ageRange,\n    dayActivity: travel.dayActivity,\n    nightActivity: travel.nightActivity,\n    email: travel.email,\n    itinerary: itinerary\n  }\n}];"
+        },
+        "id": "travel-info-001",
+        "name": "Travel Info",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          400,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const trip = $json;\n\n// Generate a unique ID for this itinerary\nconst itineraryId = Date.now().toString();\n\n// Prepare the itinerary data\nconst itineraryData = {\n  tripTitle: `🌍 Trip Plan: ${trip.destination}`,\n  departure: trip.departureLocation,\n  dates: `${trip.startDate} to ${trip.endDate}`,\n  groupSize: trip.groupSize,\n  budget: `$${trip.budget}`,\n  tripType: trip.tripType,\n  ageRange: Array.isArray(trip.ageRange) ? trip.ageRange.join(\", \") : trip.ageRange,\n  dayActivity: trip.dayActivity,\n  nightActivity: trip.nightActivity,\n  email: trip.email,\n  itinerary: trip.itinerary\n};\n\n// Use a relative path for the redirect\nconst baseUrl = '/travel';\nconst redirectUrl = `${baseUrl}/tropical_trip_itinerary.html?itineraryId=${itineraryId}`;\n\nreturn [{\n  json: {\n    redirectUrl: redirectUrl,\n    itineraryId: itineraryId,\n    itineraryData: itineraryData\n  }\n}];"
+        },
+        "id": "return-html-001",
+        "name": "Return HTML",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          600,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "path": "send-itinerary-email",
+          "responseMode": "lastNode",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "GET, POST, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type"
+                }
+              ]
+            }
+          }
+        },
+        "id": "send-email-webhook-001",
+        "name": "Send Email Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          0,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const itineraryId = $json.query.itineraryId;\nconst email = $json.query.email;\n\n// Retrieve itinerary data from the query parameters\nconst itineraryData = {\n  destination: $json.query.destination || 'Unknown',\n  departure: $json.query.departure || 'Not provided',\n  dates: $json.query.dates || 'N/A',\n  groupSize: $json.query.groupSize || '1',\n  budget: $json.query.budget || '~',\n  tripType: $json.query.tripType || 'N/A',\n  ageRange: $json.query.ageRange || '~',\n  dayActivity: $json.query.dayActivity || 'None',\n  nightActivity: $json.query.nightActivity || 'None',\n  itinerary: $json.query.itinerary || 'No itinerary found.'\n};\n\nconst itineraryLink = `/travel/tropical_trip_itinerary.html?itineraryId=${itineraryId}`;\n\nreturn [{\n  json: {\n    email: email,\n    subject: `Your AI Travel Plan for ${itineraryData.destination}`,\n    message: `<div style=\"font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;\"><h2 style=\"color:#2a4a6e;\">🌍 Trip Plan: ${itineraryData.destination}</h2><p><strong>Date:</strong> ${itineraryData.dates}</p><p><strong>Departure From:</strong> ${itineraryData.departure}</p><p><strong>Budget:</strong> ${itineraryData.budget} (for ${itineraryData.groupSize} people)</p><p><strong>Trip Type:</strong> ${itineraryData.tripType}</p><p><strong>Age Ranges:</strong> ${itineraryData.ageRange}</p><p><strong>Day Activities:</strong> ${itineraryData.dayActivity}</p><p><strong>Night Activities:</strong> ${itineraryData.nightActivity}</p><p><strong>Access Your Itinerary:</strong> <a href=\"${itineraryLink}\">${itineraryLink}</a></p><hr><pre style=\"white-space: pre-wrap; font-size: 14px;\">${itineraryData.itinerary}</pre><hr><p style=\"font-size:12px; color:#999;\">Generated by Voyage Genie ✨</p></div>`\n  }\n}];"
+        },
+        "id": "prepare-email-data-001",
+        "name": "Prepare Email Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          200,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "sendTo

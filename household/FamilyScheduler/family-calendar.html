@@ -1,0 +1,582 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Family Calendar</title>
+<style>
+  :root{
+    --bg:#f6f8fb;
+    --card:#ffffff;
+    --border:#e5e7eb;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --accent:#2563eb;
+    --accent-weak:#dbeafe;
+    --chip:#eef2ff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+    color:var(--text);
+    background:var(--bg);
+  }
+  /* Top bar */
+  header{
+    position:sticky; top:0; z-index:10;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px;
+    background:var(--card); border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex; align-items:center; gap:10px}
+  .brand .dot{width:8px; height:8px; background:#111; border-radius:50%}
+  .brand h1{font-size:18px; margin:0; font-weight:700}
+  .controls{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .btn{
+    background:#fff; border:1px solid var(--border); padding:8px 12px; border-radius:999px;
+    font-size:14px; cursor:pointer;
+  }
+  .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent) }
+  .btn.ghost{ background:transparent }
+  .btn:disabled{opacity:.5; cursor:not-allowed}
+  .chip{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:var(--chip); font-size:13px; cursor:pointer; user-select:none}
+  .chip input{display:none}
+  .chip .swatch{width:10px; height:10px; border-radius:50%}
+  .chip.active{outline:2px solid var(--accent-weak); background:#fff}
+  .section{padding:10px 16px; background:var(--card); border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:center; overflow-x:auto}
+  .section::-webkit-scrollbar{height:8px}
+  .section::-webkit-scrollbar-thumb{background:#d1d5db; border-radius:8px}
+  /* Shell */
+  .shell{
+    display:grid; grid-template-columns:64px 1fr; gap:0; height:calc(100% - 112px);
+  }
+  /* Left rail */
+  .rail{
+    background:var(--card); border-right:1px solid var(--border); padding:8px;
+    display:flex; flex-direction:column; gap:12px; align-items:center;
+  }
+  .rail .icon{
+    width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
+    display:grid;place-items:center;background:#fff; font-size:18px; cursor:pointer;
+  }
+  /* Calendar grid */
+  .calendar{
+    position:relative;
+    overflow:auto;
+    background:#fafbff;
+  }
+  .week-header{
+    position:sticky; top:0; z-index:5;
+    display:grid; grid-template-columns:100px repeat(7, minmax(140px,1fr));
+    background:var(--card); border-bottom:1px solid var(--border);
+  }
+  .week-header .cell{
+    padding:10px; border-left:1px solid var(--border); text-align:center;
+    font-weight:600;
+  }
+  .week-header .time-col{border-left:none; text-align:right; padding-right:8px; font-weight:500; color:var(--muted)}
+  .grid{
+    position:relative;
+    display:grid; grid-template-columns:100px repeat(7, minmax(140px,1fr));
+    min-height:1200px;
+  }
+  .time-col{
+    border-right:1px solid var(--border); background:#fff;
+  }
+  .time-slot{
+    height:60px; border-bottom:1px dashed #eaecef; padding-right:8px; text-align:right; font-size:12px; color:#9ca3af; line-height:60px;
+  }
+  .day-col{
+    position:relative; border-left:1px solid var(--border); background:#fff;
+    background-image: linear-gradient(to bottom, transparent 59px, #f3f4f6 60px);
+    background-size: 100% 60px;
+    min-height:1200px;
+  }
+  .event{
+    position:absolute; left:6px; right:6px;
+    border-radius:10px; padding:8px 10px;
+    color:#111827; background:#e5e7eb; border:1px solid #d1d5db;
+    box-shadow: 0 1px 0 rgba(0,0,0,.05);
+    overflow:hidden;
+    cursor:pointer;
+  }
+  .event .who{font-size:11px; font-weight:700; display:flex; align-items:center; gap:6px; margin-bottom:2px}
+  .event .who .dot{width:8px;height:8px;border-radius:50%}
+  .event .title{font-size:13px; font-weight:600}
+  .event .time{font-size:11px; color:#374151}
+  .event .loc{font-size:11px; color:#6b7280}
+  .floating{position:fixed; right:16px; bottom:16px; z-index:20}
+  .fab{width:52px;height:52px;border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-size:24px; border:none; cursor:pointer; box-shadow:0 10px 20px rgba(37,99,235,.35)}
+  /* Modal */
+  dialog{border:none; border-radius:14px; width:min(560px, 92vw); padding:0; box-shadow:0 20px 50px rgba(0,0,0,.2)}
+  .modal{padding:16px}
+  .modal h3{margin:0 0 12px 0}
+  .form{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .form .row{display:flex; flex-direction:column; gap:6px}
+  label{font-size:12px; color:#374151}
+  input,select,textarea{
+    width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font-size:14px; background:#fff;
+  }
+  textarea{min-height:70px; grid-column:1/-1}
+  .modal .actions{display:flex; justify-content:space-between; align-items:center; margin-top:12px}
+  .danger{color:#b91c1c; background:#fee2e2; border:1px solid #fecaca}
+  .tiny{font-size:12px; color:#6b7280}
+  /* Responsive */
+  @media (max-width: 900px){
+    .shell{grid-template-columns:48px 1fr}
+    .week-header, .grid{grid-template-columns:60px repeat(7, minmax(120px,1fr))}
+    .time-slot{height:50px; line-height:50px}
+    .day-col{background-size:100% 50px; min-height:1000px}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="dot"></div>
+      <h1 id="familyName">Miller Family</h1>
+    </div>
+    <div class="controls">
+      <button class="btn" id="prevBtn">◀︎</button>
+      <div id="weekLabel" class="tiny">Week</div>
+      <button class="btn" id="nextBtn">▶︎</button>
+      <button class="btn" id="todayBtn">Today</button>
+      <button class="btn" id="exportBtn" title="Export JSON">Export</button>
+      <input type="file" id="importFile" style="display:none" accept="application/json"/>
+      <button class="btn" id="importBtn" title="Import JSON">Import</button>
+      <button class="btn primary" id="addBtn">+ Add Event</button>
+    </div>
+  </header>
+
+  <!-- Member chips / filters -->
+  <div class="section" id="memberChips"></div>
+
+  <div class="shell">
+    <aside class="rail" aria-label="secondary apps">
+      <div class="icon" title="Calendar">📅</div>
+      <div class="icon" title="Meals">🍽️</div>
+      <div class="icon" title="Photos">🖼️</div>
+      <div class="icon" title="Lists">📝</div>
+      <div class="icon" title="Sleep">😴</div>
+      <div class="icon" title="Settings" id="settingsBtn">⚙️</div>
+    </aside>
+    <main class="calendar">
+      <div class="week-header" id="weekHeader"></div>
+      <div class="grid" id="grid"></div>
+    </main>
+  </div>
+
+  <div class="floating"><button class="fab" id="fab">＋</button></div>
+
+  <!-- Event Modal -->
+  <dialog id="eventDialog">
+    <form method="dialog" class="modal" id="eventForm">
+      <h3 id="modalTitle">Add Event</h3>
+      <div class="form">
+        <div class="row">
+          <label>Title</label>
+          <input id="title" required placeholder="e.g., Guitar Lesson"/>
+        </div>
+        <div class="row">
+          <label>Who</label>
+          <select id="member"></select>
+        </div>
+        <div class="row">
+          <label>Date</label>
+          <input type="date" id="date" required/>
+        </div>
+        <div class="row">
+          <label>Location</label>
+          <input id="location" placeholder="Optional"/>
+        </div>
+        <div class="row">
+          <label>Start</label>
+          <input type="time" id="start" required value="10:00"/>
+        </div>
+        <div class="row">
+          <label>End</label>
+          <input type="time" id="end" required value="11:00"/>
+        </div>
+        <textarea id="notes" placeholder="Notes (optional)"></textarea>
+      </div>
+      <div class="actions">
+        <div style="display:flex; gap:8px">
+          <button class="btn danger" id="deleteBtn" type="button" style="display:none">Delete</button>
+        </div>
+        <div style="display:flex; gap:8px">
+          <button class="btn" id="cancelBtn">Cancel</button>
+          <button class="btn primary" id="saveBtn" type="submit">Save</button>
+        </div>
+      </div>
+      <input type="hidden" id="eventId"/>
+    </form>
+  </dialog>
+
+  <!-- Settings Modal -->
+  <dialog id="settingsDialog">
+    <div class="modal">
+      <h3>Settings</h3>
+      <div class="form">
+        <div class="row" style="grid-column:1 / -1">
+          <label>Family Name</label>
+          <input id="familyInput" placeholder="e.g., Miller Family"/>
+        </div>
+        <div class="row" style="grid-column:1 / -1">
+          <label>Members & Colors</label>
+          <div id="memberEditor"></div>
+          <button class="btn tiny" id="addMemberBtn" type="button">＋ Add Member</button>
+        </div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <span class="tiny">Changes save automatically</span>
+        <button class="btn" id="closeSettings">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+<script>
+(() => {
+  // ----- Data & Storage -----
+  const STORAGE_EVENTS = 'familyCalendarEventsV1';
+  const STORAGE_MEMBERS = 'familyCalendarMembersV1';
+  const STORAGE_FAMILY  = 'familyCalendarFamilyV1';
+  const defaultMembers = [
+    { id:'ellie',  name:'Ellie',  color:'#fca5a5' },
+    { id:'david',  name:'David',  color:'#93c5fd' },
+    { id:'john',   name:'John',   color:'#86efac' },
+    { id:'lainey', name:'Lainey', color:'#c4b5fd' },
+    { id:'maddy',  name:'Maddy',  color:'#fcd34d' },
+  ];
+  const defaultFamily = 'Miller Family';
+
+  let members = load(STORAGE_MEMBERS) || defaultMembers;
+  let familyName = load(STORAGE_FAMILY) || defaultFamily;
+  let events = (load(STORAGE_EVENTS) || []).map(e => ({...e, start:e.start||'10:00', end:e.end||'11:00'}));
+
+  function save(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+  function load(key){ try { return JSON.parse(localStorage.getItem(key)); } catch(e){ return null; } }
+
+  // ----- Utilities -----
+  const pad = n => (n<10?'0':'')+n;
+  const fmtDate = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const parseTime = (t) => { const [h,m]=t.split(':').map(Number); return h*60+m; };
+  const minutesToTop = (mins, startHour) => ( (mins - startHour*60) );
+
+  // Week helpers (week starts on Monday)
+  function startOfWeek(date){
+    const d = new Date(date);
+    const day = (d.getDay()+6)%7; // Mon=0 .. Sun=6
+    d.setDate(d.getDate() - day);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+  function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+
+  // ----- State -----
+  let currentWeek = startOfWeek(new Date());
+  let startHour = 8; // 8 AM
+  let endHour = 21;  // 9 PM
+  let activeMemberFilter = new Set(members.map(m=>m.id)); // show all by default
+
+  // ----- Elements -----
+  const weekHeader = document.getElementById('weekHeader');
+  const grid = document.getElementById('grid');
+  const weekLabel = document.getElementById('weekLabel');
+  const familyNameEl = document.getElementById('familyName');
+  const memberChips = document.getElementById('memberChips');
+  const settingsBtn = document.getElementById('settingsBtn');
+
+  // Modal elements
+  const dialog = document.getElementById('eventDialog');
+  const modalTitle = document.getElementById('modalTitle');
+  const titleInput = document.getElementById('title');
+  const dateInput = document.getElementById('date');
+  const startInput = document.getElementById('start');
+  const endInput = document.getElementById('end');
+  const memberSelect = document.getElementById('member');
+  const locationInput = document.getElementById('location');
+  const notesInput = document.getElementById('notes');
+  const eventIdInput = document.getElementById('eventId');
+  const deleteBtn = document.getElementById('deleteBtn');
+
+  // Settings elements
+  const settingsDialog = document.getElementById('settingsDialog');
+  const familyInput = document.getElementById('familyInput');
+  const memberEditor = document.getElementById('memberEditor');
+  const addMemberBtn = document.getElementById('addMemberBtn');
+
+  // ----- Rendering -----
+  function renderWeekHeader(){
+    weekHeader.innerHTML = '';
+    const timeCell = document.createElement('div');
+    timeCell.className='cell time-col';
+    timeCell.textContent='';
+    weekHeader.appendChild(timeCell);
+    for(let i=0;i<7;i++){
+      const day = addDays(currentWeek, i);
+      const lbl = day.toLocaleDateString(undefined,{weekday:'short', day:'numeric'});
+      const cell = document.createElement('div');
+      cell.className='cell';
+      cell.textContent = lbl;
+      weekHeader.appendChild(cell);
+    }
+  }
+
+  function renderGrid(){
+    grid.innerHTML = '';
+    // Time column
+    const timeCol = document.createElement('div');
+    timeCol.className='time-col';
+    for(let h=startHour; h<=endHour; h++){
+      const slot = document.createElement('div');
+      slot.className='time-slot';
+      slot.textContent = (h%12===0?12:h%12) + (h<12?' AM':' PM');
+      timeCol.appendChild(slot);
+    }
+    grid.appendChild(timeCol);
+    // 7 day columns
+    for(let i=0;i<7;i++){
+      const day = addDays(currentWeek, i);
+      const dateStr = fmtDate(day);
+      const col = document.createElement('div');
+      col.className='day-col';
+      col.dataset.date = dateStr;
+      col.addEventListener('dblclick', () => openModal({ date: dateStr }));
+      grid.appendChild(col);
+    }
+
+    // Render events
+    for(const e of events){
+      const d = new Date(e.date);
+      const weekStart = +startOfWeek(currentWeek);
+      const thisWeekStart = +startOfWeek(d);
+      if(weekStart !== thisWeekStart) continue; // not in this week
+      if(!activeMemberFilter.has(e.member)) continue; // filtered out
+      const dayIndex = (d.getDay()+6)%7;
+      const col = grid.children[1 + dayIndex]; // after timeCol
+      const ev = document.createElement('div');
+      ev.className='event';
+      // Color from member
+      const mem = members.find(m=>m.id===e.member);
+      const bg = mem ? mem.color : '#e5e7eb';
+      ev.style.background = bg;
+      ev.style.borderColor = bg;
+      // Position
+      const startM = parseTime(e.start);
+      const endM = parseTime(e.end);
+      const totalMpx = (endHour - startHour) * 60;
+      const colHeight = col.getBoundingClientRect().height || ( (endHour-startHour)*60 );
+      const top = Math.max(0, minutesToTop(startM, startHour));
+      const height = Math.max(30, endM - startM);
+      ev.style.top = top + 'px';
+      ev.style.height = height + 'px';
+      ev.innerHTML = `
+        <div class="who"><span class="dot" style="background:${bg}"></span>${mem ? mem.name : ''}</div>
+        <div class="title">${escapeHtml(e.title)}</div>
+        <div class="time">${e.start}–${e.end}</div>
+        ${e.location?`<div class="loc">📍 ${escapeHtml(e.location)}</div>`:''}
+      `;
+      ev.addEventListener('click', () => openModal(e));
+      col.appendChild(ev);
+    }
+
+    // Week label
+    const end = addDays(currentWeek,6);
+    weekLabel.textContent = currentWeek.toLocaleDateString(undefined,{month:'short', day:'numeric'}) +
+      ' – ' +
+      end.toLocaleDateString(undefined,{month:'short', day:'numeric', year:'numeric'});
+  }
+
+  function renderMemberChips(){
+    memberChips.innerHTML = '';
+    members.forEach(m => {
+      const chip = document.createElement('label');
+      chip.className = 'chip' + (activeMemberFilter.has(m.id)?' active':'');
+      chip.innerHTML = `<span class="swatch" style="background:${m.color}"></span>${m.name}`;
+      chip.addEventListener('click', () => {
+        if(activeMemberFilter.has(m.id)){ activeMemberFilter.delete(m.id); chip.classList.remove('active'); }
+        else { activeMemberFilter.add(m.id); chip.classList.add('active'); }
+        renderGrid();
+      });
+      memberChips.appendChild(chip);
+    });
+  }
+
+  function renderMemberSelect(){
+    memberSelect.innerHTML = '';
+    members.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id; opt.textContent = m.name;
+      memberSelect.appendChild(opt);
+    });
+  }
+
+  function renderSettings(){
+    familyNameEl.textContent = familyName;
+    familyInput.value = familyName;
+    memberEditor.innerHTML = '';
+    members.forEach(m => {
+      const row = document.createElement('div');
+      row.style.display='grid';
+      row.style.gridTemplateColumns='1fr 120px 40px';
+      row.style.gap='8px';
+      row.style.marginBottom='8px';
+      row.innerHTML = `
+        <input value="${m.name}" data-id="${m.id}" data-field="name"/>
+        <input type="color" value="${m.color}" data-id="${m.id}" data-field="color"/>
+        <button class="btn danger tiny" data-id="${m.id}">✕</button>
+      `;
+      // Events
+      row.querySelector('input[data-field="name"]').addEventListener('input', (e)=>{
+        const id = e.target.dataset.id; const v = e.target.value;
+        const mm = members.find(x=>x.id===id); mm.name = v; save(STORAGE_MEMBERS, members); renderMemberChips(); renderMemberSelect(); renderGrid();
+      });
+      row.querySelector('input[data-field="color"]').addEventListener('input', (e)=>{
+        const id = e.target.dataset.id; const v = e.target.value;
+        const mm = members.find(x=>x.id===id); mm.color = v; save(STORAGE_MEMBERS, members); renderMemberChips(); renderGrid();
+      });
+      row.querySelector('button').addEventListener('click', ()=>{
+        if(!confirm('Remove member and their color? (Events remain, but will show default)')) return;
+        members = members.filter(x=>x.id!==m.id);
+        activeMemberFilter.delete(m.id);
+        save(STORAGE_MEMBERS, members); renderMemberChips(); renderMemberSelect(); renderSettings(); renderGrid();
+      });
+      memberEditor.appendChild(row);
+    });
+  }
+
+  // ----- Modal logic -----
+  function openModal(e){
+    modalTitle.textContent = e.id ? 'Edit Event' : 'Add Event';
+    titleInput.value = e.title || '';
+    dateInput.value = e.date || fmtDate(new Date());
+    startInput.value = e.start || '10:00';
+    endInput.value   = e.end   || '11:00';
+    locationInput.value = e.location || '';
+    notesInput.value = e.notes || '';
+    renderMemberSelect();
+    memberSelect.value = e.member || (members[0] && members[0].id);
+    eventIdInput.value = e.id || '';
+    deleteBtn.style.display = e.id ? '' : 'none';
+    dialog.showModal();
+  }
+
+  document.getElementById('cancelBtn').addEventListener('click', (ev)=>{ ev.preventDefault(); dialog.close(); });
+  document.getElementById('eventForm').addEventListener('submit', (ev)=>{
+    ev.preventDefault();
+    const id = eventIdInput.value || String(Date.now());
+    const newEv = {
+      id,
+      title: titleInput.value.trim(),
+      member: memberSelect.value,
+      date: dateInput.value,
+      start: startInput.value,
+      end: endInput.value,
+      location: locationInput.value.trim(),
+      notes: notesInput.value.trim(),
+    };
+    const exists = events.findIndex(x=>x.id===id);
+    if(exists>=0) events[exists] = newEv; else events.push(newEv);
+    save(STORAGE_EVENTS, events);
+    dialog.close(); renderGrid();
+  });
+  deleteBtn.addEventListener('click', ()=>{
+    if(!confirm('Delete this event?')) return;
+    const id = eventIdInput.value;
+    events = events.filter(x=>x.id!==id);
+    save(STORAGE_EVENTS, events);
+    dialog.close(); renderGrid();
+  });
+
+  // ----- Navigation -----
+  document.getElementById('prevBtn').addEventListener('click', ()=>{ currentWeek = addDays(currentWeek, -7); renderWeekHeader(); renderGrid(); });
+  document.getElementById('nextBtn').addEventListener('click', ()=>{ currentWeek = addDays(currentWeek, 7); renderWeekHeader(); renderGrid(); });
+  document.getElementById('todayBtn').addEventListener('click', ()=>{ currentWeek = startOfWeek(new Date()); renderWeekHeader(); renderGrid(); });
+
+  // FAB / Add buttons
+  document.getElementById('fab').addEventListener('click', ()=> openModal({}));
+  document.getElementById('addBtn').addEventListener('click', ()=> openModal({}));
+
+  // ----- Export / Import -----
+  document.getElementById('exportBtn').addEventListener('click', ()=>{
+    const payload = { familyName, members, events };
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'family-calendar-backup.json'; a.click();
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', async (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    try{
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if(data.familyName) { familyName = data.familyName; save(STORAGE_FAMILY, familyName); }
+      if(Array.isArray(data.members)) { members = data.members; save(STORAGE_MEMBERS, members); }
+      if(Array.isArray(data.events)) { events = data.events; save(STORAGE_EVENTS, events); }
+      activeMemberFilter = new Set(members.map(m=>m.id));
+      init();
+      alert('Imported!');
+    }catch(err){ alert('Invalid file.'); }
+    e.target.value = '';
+  });
+
+  // ----- Settings -----
+  settingsBtn.addEventListener('click', ()=>{ renderSettings(); settingsDialog.showModal(); });
+  document.getElementById('closeSettings').addEventListener('click', ()=> settingsDialog.close());
+  familyInput.addEventListener('input', (e)=>{
+    familyName = e.target.value || defaultFamily;
+    save(STORAGE_FAMILY, familyName);
+    familyNameEl.textContent = familyName;
+  });
+  addMemberBtn.addEventListener('click', ()=>{
+    const id = 'm'+Math.random().toString(36).slice(2,7);
+    const colors=['#fca5a5','#fdba74','#fde68a','#a7f3d0','#93c5fd','#c4b5fd','#f9a8d4'];
+    const color = colors[Math.floor(Math.random()*colors.length)];
+    const m = {id, name:'New Member', color};
+    members.push(m); save(STORAGE_MEMBERS, members);
+    activeMemberFilter.add(id);
+    renderSettings(); renderMemberChips(); renderMemberSelect(); renderGrid();
+  });
+
+  // ----- Escape HTML -----
+  function escapeHtml(str){ return (str||'').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s])); }
+
+  // ----- Init -----
+  function seedDemo(){
+    if(events.length) return;
+    const today = new Date();
+    const sw = startOfWeek(today);
+    const mk = (d, s, e, who, title, loc='') => ({
+      id: String(Date.now()+Math.random()),
+      date: fmtDate(addDays(sw, d)),
+      start:s, end:e, member:who, title, location:loc, notes:''
+    });
+    events.push(
+      mk(2,'09:45','11:00','ellie','Coffee With Diane','Cafe'),
+      mk(2,'10:30','11:00','lainey','History Test','School'),
+      mk(3,'11:30','12:15','john','House Cleaner','Home'),
+      mk(4,'10:30','12:00','lainey','Emma's Birthday Party'),
+      mk(5,'10:15','11:45','david','Golf'),
+      mk(6,'12:30','13:00','maddy','Pottery Class')
+    );
+    save(STORAGE_EVENTS, events);
+  }
+
+  function init(){
+    familyNameEl.textContent = familyName;
+    renderWeekHeader();
+    renderMemberChips();
+    renderGrid();
+  }
+
+  seedDemo();
+  init();
+})();
+</script>
+</body>
+</html>

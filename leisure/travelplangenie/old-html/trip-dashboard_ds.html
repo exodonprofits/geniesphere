@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Trips – Voyage Genie</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+
+<style>
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --secondary: #6b7280;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+    }
+    
+    /* Improved Navigation */
+    nav {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    .nav-brand h1 {
+      background: linear-gradient(to right, #ffffff, #e0e7ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Main Content */
+    main {
+      flex: 1;
+      padding: 2rem 1rem;
+      background-color: #f8fafc;
+    }
+    
+    .page-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    
+    .page-header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #4f46e5, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .page-header p {
+      color: #64748b;
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    /* Trip Cards */
+    .trip-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.25rem;
+      transition: all 0.3s ease;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .trip-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .trip-card h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .trip-card .dates {
+      font-size: 0.875rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .trip-card .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 500;
+    }
+    
+    .badge-draft {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+    
+    .badge-planned {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    
+    .btn-danger {
+      background-color: var(--danger);
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background-color: #dc2626;
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background-color: var(--secondary);
+      color: white;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #4b5563;
+      transform: translateY(-1px);
+    }
+    
+    .btn-success {
+      background-color: var(--success);
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background-color: #059669;
+      transform: translateY(-1px);
+    }
+    
+    /* Action Buttons Container */
+    .action-buttons {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1.25rem;
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      border: 1px dashed #cbd5e1;
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      color: #cbd5e1;
+      margin-bottom: 1rem;
+    }
+    
+    .empty-state h3 {
+      font-size: 1.25rem;
+      color: #334155;
+      margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+      color: #64748b;
+      max-width: 400px;
+      margin: 0 auto 1.5rem;
+    }
+    
+    /* Footer */
+    footer {
+      background-color: #1e293b;
+      color: #e2e8f0;
+      padding: 2rem 1rem;
+    }
+    
+    footer a {
+      color: #e2e8f0;
+      transition: color 0.2s;
+    }
+    
+    footer a:hover {
+      color: white;
+      text-decoration: none;
+    }
+    
+    .social-links a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: #334155;
+      color: white;
+      transition: all 0.2s;
+    }
+    
+    .social-links a:hover {
+      background-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .page-header h1 {
+        font-size: 2rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .action-buttons .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+    
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .trip-card {
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+    
+    /* Loading Spinner */
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-left: 8px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+</style>
+</head>
+<body>
+<nav class="text-white sticky top-0 z-10">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center nav-menu">
+    <a aria-label="Go to Home" class="nav-brand flex items-center" href="index.html">
+      <img alt="Voyage Genie Icon" class="h-8 w-auto mr-2" src="images/nav-icon.png"/>
+      <h1 class="text-2xl font-bold">Voyage Genie</h1>
+    </a>
+
+    <div aria-label="Toggle navigation menu" class="hamburger md:hidden flex flex-col justify-between w-6 h-5 cursor-pointer" role="button" tabindex="0">
+      <span class="block w-full h-0.5 bg-white transition-all"></span>
+      <span class="block w-full h-0.5 bg-white transition-all"></span>
+      <span class="block w-full h-0.5 bg-white transition-all"></span>
+    </div>
+
+    <ul class="nav-links hidden md:flex space-x-6">
+      <li><a class="hover:text-blue-200 transition-colors" href="index.html#home">Home</a></li>
+      <li class="dropdown relative group">
+        <a class="hover:text-blue-200 transition-colors flex items-center" href="#">
+          Plan A Trip <i class="fas fa-chevron-down ml-1 text-sm"></i>
+        </a>
+        <ul class="dropdown-menu absolute hidden group-hover:block bg-white text-gray-800 min-w-[400px] rounded-lg shadow-xl mt-2 py-2 z-20">
+          <li><a class="block px-4 py-2 hover:bg-blue-50" href="tropical-trip-planner.html"><i class="fas fa-umbrella-beach mr-2 text-blue-500"></i> Tropical Resort</a></li>
+          <li><a class="block px-4 py-2 hover:bg-blue-50" href="cruise-trip-planner.html"><i class="fas fa-ship mr-2 text-blue-500"></i> Cruise Adventure</a></li>
+          <li><a class="block px-4 py-2 hover:bg-blue-50" href="airbnb-trip-planner.html"><i class="fas fa-home mr-2 text-blue-500"></i> Airbnb Getaway</a></li>
+          <li><a class="block px-4 py-2 hover:bg-blue-50" href="adventure-trip-planner.html"><i class="fas fa-mountain mr-2 text-blue-500"></i> Adventure Trip</a></li>
+        </ul>
+      </li>
+      <li><a class="text-blue-200 font-medium" href="#" onclick="checkAuthAndRedirect(event)">My Trips</a></li>
+      <li><a class="hover:text-blue-200 transition-colors" href="features.html">Features</a></li>
+      <li><a class="hover:text-blue-200 transition-colors" href="contact.html">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container mx-auto px-4 py-8 max-w-4xl">
+  <header class="page-header mb-10">
+    <h1><i class="fas fa-suitcase mr-3"></i> My Travel Adventures</h1>
+    <p>Manage your saved trips, edit details, or start new adventures</p>
+    <p class="text-sm mt-4 text-amber-600 bg-amber-50 inline-block px-3 py-1 rounded-full">
+      <i class="fas fa-info-circle mr-1"></i> Your trips are saved in your account and accessible across devices
+    </p>
+  </header>
+
+  <div id="tripList" class="mb-12">
+    <!-- Trip cards will be rendered here -->
+  </div>
+
+  <div class="text-center space-y-4">
+    <div>
+      <a href="index.html" class="btn btn-primary">
+        <i class="fas fa-plus mr-2"></i> Plan New Trip
+      </a>
+    </div>
+    
+    <div>
+      <a href="packing-assistant.html" class="btn btn-success">
+        <i class="fas fa-suitcase-rolling mr-2"></i> Generate Packing List
+      </a>
+    </div>
+    
+    <div>
+      <button onclick="clearAllTrips()" class="btn btn-danger">
+        <i class="fas fa-trash-alt mr-2"></i> Clear All Trips
+      </button>
+    </div>
+  </div>
+</main>
+
+<footer class="py-12">
+  <div class="max-w-7xl mx-auto px-4 text-center">
+    <div class="flex justify-center space-x-6 mb-6">
+      <a href="#" class="social-links"><i class="fab fa-facebook-f"></i></a>
+      <a href="#" class="social-links"><i class="fab fa-instagram"></i></a>
+      <a href="#" class="social-links"><i class="fab fa-twitter"></i></a>
+      <a href="contact.html" class="social-links"><i class="fas fa-envelope"></i></a>
+    </div>
+    
+    <div class="flex flex-wrap justify-center gap-4 mb-6">
+      <a href="index.html#home" class="hover:text-white">Home</a>
+      <a href="features.html" class="hover:text-white">Features</a>
+      <a href="contact.html" class="hover:text-white">Contact</a>
+      <a href="privacy.html" class="hover:text-white">Privacy Policy</a>
+      <a href="terms.html" class="hover:text-white">Terms of Service</a>
+    </div>
+    
+    <p class="text-sm text-slate-400">
+      © 2025 VoyageGenie.com – Plan Less, Explore More <i class="fas fa-plane ml-1"></i><i class="fas fa-globe-americas ml-1"></i>
+    </p>
+  </div>
+</footer>
+
+<script>
+  // Mobile navigation toggle
+  document.querySelector('.hamburger').addEventListener('click', function() {
+    this.classList.toggle('active');
+    document.querySelector('.nav-links').classList.toggle('hidden');
+  });
+</script>
+
+<script type="module">
+  // Your existing JavaScript code here
+  // (Keep all the trip management functions the same)
+  
+  // Enhanced renderTrips function with better empty state
+  async function renderTrips() {
+    let trips = [];
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData && userData.user) {
+      const { data, error } = await supabase
+        .from('user_trips')
+        .select('*')
+        .eq('user_id', userData.user.id);
+
+      if (!error && data) {
+        trips = data.map(row => row.trip_data);
+      }
+    }
+
+    const tripListEl = document.getElementById('tripList');
+    
+    if (!trips.length) {
+      tripListEl.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-suitcase"></i>
+          <h3>No Trips Planned Yet</h3>
+          <p>Start planning your next adventure and it will appear here</p>
+          <a href="index.html" class="btn btn-primary mt-4">
+            <i class="fas fa-plus mr-2"></i> Plan Your First Trip
+          </a>
+        </div>
+      `;
+      return;
+    }
+
+    tripListEl.innerHTML = trips.map((trip, index) => `
+      <div class="trip-card">
+        <h3>
+          <i class="fas fa-map-marker-alt text-rose-500"></i>
+          ${trip.destination || trip.destinationCity || trip.cruiseRegion || 'Unnamed Trip'}
+          <span class="badge badge-draft">Draft</span>
+        </h3>
+        <p class="dates">
+          <i class="far fa-calendar text-slate-400"></i>
+          ${trip.startDate || '—'} to ${trip.endDate || '—'}
+        </p>
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="viewTrip(${index})">
+            <i class="far fa-eye mr-1"></i> View
+          </button>
+          <button class="btn btn-secondary" onclick="editTrip(${index})">
+            <i class="far fa-edit mr-1"></i> Edit
+          </button>
+          <button class="btn btn-secondary" onclick="duplicateTrip(${index})">
+            <i class="far fa-copy mr-1"></i> Duplicate
+          </button>
+          <button class="btn btn-danger" onclick="deleteTrip(${index})">
+            <i class="far fa-trash-alt mr-1"></i> Delete
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+</script>
+<script type="module" src="auth-handler.js"></script>
+</body>
+</html>

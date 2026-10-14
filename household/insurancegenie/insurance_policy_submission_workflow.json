@@ -1,0 +1,79 @@
+{
+  "name": "Insurance Policy Submission",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "insurance-policy-submit",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "\nconst policies = [];\n\nconst keys = [\n  'name', 'email', 'policy_type', 'ownership', 'business_name',\n  'provider', 'monthly_premium', 'yearly_premium', 'coverage_amount',\n  'deductible', 'effective_date', 'expiration_date', 'bundled', 'notes'\n];\n\nconst length = $json['policy_type[]'].length;\n\nfor (let i = 0; i < length; i++) {\n  const policy = {};\n  for (const key of keys) {\n    const arr = $json[`${key}[]`] || [];\n    policy[key] = arr[i] || '';\n  }\n  policies.push({ json: policy });\n}\n\nreturn policies;\n"
+      },
+      "name": "Format Policies",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "sheetId": "<your-google-sheet-id>",
+        "range": "InsurancePolicies!A1",
+        "options": {
+          "valueInputMode": "USER_ENTERED"
+        }
+      },
+      "name": "Add to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [
+        740,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "your-credential-id",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format Policies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Policies": {
+      "main": [
+        [
+          {
+            "node": "Add to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false
+}

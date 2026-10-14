@@ -1,0 +1,121 @@
+{
+  "name": "Quote Checker — Refine (analysis_id + ZIP/Trade → Re-evaluate)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "quote-checker/refine",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "Webhook_Refine",
+      "name": "Webhook (Refine)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [280, 260]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{$json.analysis_id}}"
+      },
+      "id": "Get_Stored",
+      "name": "Data Store (Get prior result)",
+      "type": "n8n-nodes-base.dataStore",
+      "typeVersion": 1,
+      "position": [520, 260]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $items('Webhook (Refine)')[0].json;\nconst prior = $input.item.json;\n\nif (!body.analysis_id) throw new Error('Missing analysis_id');\nif (!prior || Object.keys(prior).length === 0) throw new Error('No stored data found for this analysis_id');\n\nconst zip = (body.zip || '').toString().trim();\nconst trade = (body.trade || '').toString().trim();\n\n// Keep inputs consistent\nprior.inputs = prior.inputs || {};\nprior.inputs.zip = zip || prior.inputs.zip || '';\nprior.inputs.trade = trade || prior.inputs.trade || '';\n\nreturn [{ json: { analysis_id: body.analysis_id, prior, zip, trade } }];"
+      },
+      "id": "Merge_Overrides",
+      "name": "Merge ZIP/Trade Overrides",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{'Bearer ' + $env.OPENAI_API_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"input\": [\n    {\n      \"role\": \"system\",\n      \"content\": [\n        {\"type\":\"input_text\",\"text\":\"You are a construction quote analyst. Return ONLY valid JSON (no markdown). Improve confidence only when overrides add real clarity.\"}\n      ]\n    },\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\"type\":\"input_text\",\"text\":\"Re-evaluate the previous analysis using user overrides (zip/trade). Return EXACTLY the same schema as before: analysis_id, inputs, detected, evaluation, extracted.\\n\\nRules:\\n- Use trade_override if provided; otherwise keep prior detected.trade.\\n- Use zip_override if provided; otherwise keep prior job zip/location.\\n- If now sufficient info exists (ZIP/location + clear scope/line items), you may change price_fairness from Unclear to Likely Fair/Possibly High/Possibly Low and raise confidence.\\n- If still insufficient, keep price_fairness as Unclear (Low) but keep improving questions and missing items.\\n\\nanalysis_id={{$json.analysis_id}}\\nzip_override={{$json.zip}}\\ntrade_override={{$json.trade}}\\n\\nPRIOR JSON:\\n<<<{{JSON.stringify($json.prior)}}>>>\"}\n      ]\n    }\n  ]\n}",
+        "options": { "timeout": 300000 }
+      },
+      "id": "OpenAI_Refine",
+      "name": "OpenAI (Refine via Responses API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1000, 260]
+    },
+    {
+      "parameters": {
+        "jsCode": "function pickText(resp) {\n  const out = resp?.body?.output || resp?.output;\n  if (!Array.isArray(out)) return '';\n  for (const item of out) {\n    const content = item?.content;\n    if (!Array.isArray(content)) continue;\n    for (const c of content) {\n      if ((c?.type === 'output_text' || c?.type === 'text') && typeof c?.text === 'string') return c.text;\n    }\n  }\n  return '';\n}\n\nconst raw = $input.item.json;\nconst text = pickText(raw);\nif (!text) throw new Error('No text returned from OpenAI Responses API');\n\nlet parsed;\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  const start = text.indexOf('{');\n  const end = text.lastIndexOf('}');\n  if (start === -1 || end === -1) throw e;\n  parsed = JSON.parse(text.slice(start, end + 1));\n}\n\nreturn [{ json: parsed }];"
+      },
+      "id": "Parse_Refine_JSON",
+      "name": "Parse OpenAI JSON (Refine)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1240, 260]
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{$json.analysis_id}}",
+        "value": "={{$json}}"
+      },
+      "id": "Store_Updated",
+      "name": "Data Store (Update analysis_id → result)",
+      "type": "n8n-nodes-base.dataStore",
+      "typeVersion": 1,
+      "position": [1480, 260]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "Respond_Refine",
+      "name": "Respond to Webhook (Refine)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1720, 260]
+    }
+  ],
+  "connections": {
+    "Webhook (Refine)": {
+      "main": [[{ "node": "Data Store (Get prior result)", "type": "main", "index": 0 }]]
+    },
+    "Data Store (Get prior result)": {
+      "main": [[{ "node": "Merge ZIP/Trade Overrides", "type": "main", "index": 0 }]]
+    },
+    "Merge ZIP/Trade Overrides": {
+      "main": [[{ "node": "OpenAI (Refine via Responses API)", "type": "main", "index": 0 }]]
+    },
+    "OpenAI (Refine via Responses API)": {
+      "main": [[{ "node": "Parse OpenAI JSON (Refine)", "type": "main", "index": 0 }]]
+    },
+    "Parse OpenAI JSON (Refine)": {
+      "main": [[{ "node": "Data Store (Update analysis_id → result)", "type": "main", "index": 0 }]]
+    },
+    "Data Store (Update analysis_id → result)": {
+      "main": [[{ "node": "Respond to Webhook (Refine)", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionTimeout": 300,
+    "saveExecutionProgress": true
+  },
+  "versionId": "1"
+}

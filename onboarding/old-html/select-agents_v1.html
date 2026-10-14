@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Agents | GenieSphere</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #0f172a, #1e293b);
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #2BFFD9, #7C3AED);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #cbd5e1;
+      margin-bottom: 2rem;
+      text-align: center;
+      max-width: 500px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .agent-option {
+      background-color: #1e293b;
+      padding: 1rem 1.5rem;
+      border-radius: 1rem;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    input[type="checkbox"] {
+      display: none;
+    }
+
+    input[type="checkbox"]:checked + label {
+      border-color: #2BFFD9;
+      background-color: #334155;
+    }
+
+    button {
+      margin-top: 2rem;
+      background: linear-gradient(45deg, #2BFFD9, #7C3AED);
+      color: #0f172a;
+      font-weight: bold;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Select Your AI Assistants</h1>
+  <p>Choose the agents you'd like to activate in your GenieSphere dashboard.</p>
+
+  <form action="/dashboard/index.html" method="get">
+
+    <!-- Personal -->
+    <input type="checkbox" id="household-genie" name="agents" value="Household Genie">
+    <label for="household-genie" class="agent-option">Household Genie</label>
+
+    <!-- Business -->
+    <input type="checkbox" id="salon-genie" name="agents" value="Salon Genie">
+    <label for="salon-genie" class="agent-option">Salon Genie</label>
+
+    <input type="checkbox" id="rental-genie" name="agents" value="Rental Genie">
+    <label for="rental-genie" class="agent-option">Rental Genie</label>
+
+    <input type="checkbox" id="payroll-master" name="agents" value="Payroll Master">
+    <label for="payroll-master" class="agent-option">Payroll Master</label>
+
+    <!-- Leisure -->
+    <input type="checkbox" id="smart-travel-hub" name="agents" value="Smart Travel Hub">
+    <label for="smart-travel-hub" class="agent-option">Smart Travel Hub</label>
+
+    <!-- Investment -->
+    <input type="checkbox" id="market-intelligence" name="agents" value="Market Intelligence">
+    <label for="market-intelligence" class="agent-option">Market Intelligence</label>
+
+    <button type="submit">Continue to Dashboard</button>
+  </form>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const supabase = window.supabase.createClient(
+    'https://pbojacnagutipfhcxltj.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+  );
+
+  async function handleAgentSubmit(event) {
+    event.preventDefault();
+    const userId = localStorage.getItem('genie_user_id');
+    if (!userId) return alert("You must be logged in.");
+
+    const selected = Array.from(document.querySelectorAll('input[name="agents"]:checked')).map(el => el.value);
+
+    const { error } = await supabase
+      .from('user_agents')
+      .upsert({ user_id: userId, agents: selected }, { onConflict: ['user_id'] });
+
+    if (error) {
+      alert('Error saving agents: ' + error.message);
+    } else {
+      window.location.href = '/dashboard/index.html';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('form').addEventListener('submit', handleAgentSubmit);
+  });
+</script>
+
+</body>
+</html>

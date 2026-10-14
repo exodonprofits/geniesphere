@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Tip Calculator – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ocean:#0077b6;--ocean-deep:#023e8a;--teal:#00b4d8;
+  --coral:#e76f51;--green:#16a34a;--amber:#d97706;
+  --off-white:#f8fafc;--gray-light:#f1f5f9;--gray-border:#e2e8f0;
+  --text:#1e293b;--text-muted:#64748b;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 2px 16px rgba(0,0,0,.07);--shadow-hover:0 10px 28px rgba(0,0,0,.12);
+  --transition:.22s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+main{flex:1}
+.hidden{display:none!important}
+
+/* HEADER */
+.vg-header{position:sticky;top:0;z-index:40;background:linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%);box-shadow:0 2px 20px rgba(2,62,138,.25)}
+.vg-nav{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.vg-brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none}
+.vg-brand img{width:46px;height:46px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2)}
+.vg-title-brand{font-family:'Playfair Display',serif;font-weight:700;font-size:1.4rem;color:#fff}
+.vg-right{display:flex;align-items:center;gap:12px}
+.nav-chip{display:inline-flex;align-items:center;gap:8px;padding:0 14px;height:38px;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.22);font-size:.88rem;font-weight:500;transition:background var(--transition);white-space:nowrap}
+.nav-chip:hover{background:rgba(255,255,255,.24)}
+.menu-group{position:relative}
+.menu{position:absolute;top:calc(100% + 8px);right:0;min-width:200px;padding:6px;background:#fff;color:var(--text);border-radius:var(--radius);box-shadow:0 16px 40px rgba(0,0,0,.18);display:none;z-index:60;border:1px solid rgba(0,0,0,.06)}
+.menu a{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:.9rem}
+.menu a:hover{background:var(--gray-light);color:var(--ocean)}
+.menu-divider{height:1px;background:var(--gray-border);margin:6px 4px}
+.account-chip{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.22);font-size:.88rem;cursor:pointer}
+.account-chip:hover{background:rgba(255,255,255,.24)}
+
+/* BANNER */
+.page-banner{background:linear-gradient(135deg,#eaf4fb,#f0f9ff);border-bottom:1px solid #c9e4f5;padding:1.5rem 1.5rem 1.25rem}
+.page-banner-inner{max-width:1200px;margin:0 auto}
+.page-banner h1{font-family:'Playfair Display',serif;font-size:clamp(1.3rem,2.5vw,1.7rem);font-weight:700;color:var(--ocean-deep);margin-bottom:.3rem}
+.page-banner p{font-size:.88rem;color:var(--text-muted)}
+
+/* LAYOUT */
+.page-body{max-width:1200px;margin:0 auto;padding:1.75rem 1.25rem 3rem;display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start}
+@media(max-width:900px){.page-body{grid-template-columns:1fr}}
+
+/* CARDS */
+.vg-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+.card-hd{padding:1rem 1.25rem;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.card-title{font-size:1rem;font-weight:600}
+.card-bd{padding:1.25rem}
+
+/* INPUTS */
+.vg-input,.vg-select{width:100%;border:1px solid var(--gray-border);border-radius:var(--radius);padding:.6rem .9rem;background:var(--gray-light);font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;transition:border-color var(--transition),background var(--transition)}
+.vg-input:focus,.vg-select:focus{border-color:var(--ocean);background:#fff;box-shadow:0 0 0 3px rgba(0,119,182,.1)}
+.field-label{font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
+
+/* BUTTONS */
+.vg-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gray-border);border-radius:8px;padding:.5rem .9rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;color:var(--text);cursor:pointer;transition:all var(--transition);white-space:nowrap}
+.vg-btn:hover{background:var(--gray-light);transform:translateY(-1px)}
+.vg-btn-ocean{background:var(--ocean);color:#fff;border-color:var(--ocean)}
+.vg-btn-ocean:hover{background:var(--ocean-deep)}
+.vg-btn-sm{padding:.3rem .65rem;font-size:.78rem}
+
+/* BILL INPUT — large */
+.bill-input{width:100%;border:2px solid var(--gray-border);border-radius:12px;padding:.85rem 1rem .85rem 2.2rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:2rem;font-weight:700;color:var(--text);outline:none;transition:border-color var(--transition);font-variant-numeric:tabular-nums}
+.bill-input:focus{border-color:var(--ocean);box-shadow:0 0 0 4px rgba(0,119,182,.1)}
+.bill-wrap{position:relative}
+.bill-symbol{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);font-size:1.3rem;font-weight:700;color:var(--text-muted);pointer-events:none}
+
+/* TIP % CHIPS */
+.tip-chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.tip-chip{border:2px solid var(--gray-border);border-radius:10px;padding:.55rem .9rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all var(--transition);display:flex;flex-direction:column;align-items:center;gap:2px;min-width:58px}
+.tip-chip:hover{border-color:var(--ocean);color:var(--ocean);background:#eaf4fb}
+.tip-chip.active{border-color:var(--ocean);background:var(--ocean);color:#fff}
+.tip-chip .pct-label{font-size:.68rem;font-weight:500;opacity:.7}
+
+/* RESULT CARD */
+.result-hero{border-radius:14px;padding:1.4rem 1.5rem;background:linear-gradient(135deg,var(--ocean-deep),var(--ocean));color:#fff;position:relative;overflow:hidden}
+.result-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,.06);border-radius:50%}
+.result-hero::after{content:'';position:absolute;bottom:-30px;left:-20px;width:100px;height:100px;background:rgba(255,255,255,.04);border-radius:50%}
+.result-main-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:.3rem}
+.result-main-val{font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.result-sub{font-size:.82rem;opacity:.7;margin-top:.4rem}
+
+/* RESULT STATS ROW */
+.result-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-top:1rem}
+.stat-box{background:#fff;border:1px solid var(--gray-border);border-radius:10px;padding:.75rem .85rem;text-align:center}
+.stat-box .sv{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ocean-deep)}
+.stat-box .sl{font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+/* SPLIT TABLE */
+.split-table{width:100%;border-collapse:collapse}
+.split-table th{font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;padding:6px 10px;border-bottom:1px solid var(--gray-border);text-align:left;background:var(--gray-light)}
+.split-table td{padding:8px 10px;border-bottom:1px solid var(--gray-border);font-size:.88rem;vertical-align:middle}
+.split-table tr:last-child td{border-bottom:none}
+.split-table .amount-col{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ocean-deep)}
+.person-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--ocean),var(--teal));color:#fff;font-size:.72rem;font-weight:700;flex-shrink:0}
+
+/* COUNTRY FLAG / STATUS */
+.country-note{border-radius:10px;padding:.75rem 1rem;font-size:.83rem;line-height:1.5;display:flex;gap:.65rem;align-items:flex-start}
+.country-note.ok   {background:#f0fdf4;border:1px solid #86efac}
+.country-note.warn {background:#fefce8;border:1px solid #fde047}
+.country-note.no   {background:#fff1f2;border:1px solid #fda4af}
+.country-note.info {background:#eff6ff;border:1px solid #bfdbfe}
+.note-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.note-body strong{display:block;font-size:.82rem;font-weight:700;margin-bottom:2px}
+
+/* SERVICE CARDS */
+.service-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+@media(max-width:480px){.service-grid{grid-template-columns:1fr}}
+.service-card{border:2px solid var(--gray-border);border-radius:10px;padding:.65rem .8rem;cursor:pointer;transition:all var(--transition);background:#fff;text-align:left;display:flex;flex-direction:column;gap:2px}
+.service-card:hover{border-color:var(--ocean);background:#eaf4fb}
+.service-card.active{border-color:var(--ocean);background:#eaf4fb}
+.sc-icon{font-size:1.3rem;line-height:1}
+.sc-name{font-size:.85rem;font-weight:600;color:var(--text)}
+.sc-range{font-size:.72rem;color:var(--text-muted)}
+
+/* CUSTOM TIP INPUT */
+.custom-tip-row{display:flex;align-items:center;gap:.5rem;margin-top:.5rem}
+.custom-tip-input{width:90px;border:2px solid var(--gray-border);border-radius:8px;padding:.45rem .75rem;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;text-align:center;outline:none;transition:border-color var(--transition)}
+.custom-tip-input:focus{border-color:var(--ocean);box-shadow:0 0 0 3px rgba(0,119,182,.1)}
+
+/* QUICK SPLIT */
+.party-btns{display:flex;gap:.4rem;flex-wrap:wrap}
+.party-btn{width:38px;height:38px;border-radius:8px;border:1.5px solid var(--gray-border);background:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;transition:all var(--transition);display:flex;align-items:center;justify-content:center}
+.party-btn:hover{border-color:var(--ocean);color:var(--ocean);background:#eaf4fb}
+.party-btn.active{border-color:var(--ocean);background:var(--ocean);color:#fff}
+
+/* HISTORY */
+.history-list{display:flex;flex-direction:column;gap:.4rem}
+.history-item{display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border:1px solid var(--gray-border);border-radius:9px;cursor:pointer;transition:all var(--transition);background:#fff;font-size:.82rem}
+.history-item:hover{background:#eaf4fb;border-color:var(--teal)}
+.history-time{margin-left:auto;font-size:.7rem;color:var(--text-muted)}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,.96);color:#fff;padding:10px 18px;border-radius:9px;font-size:.85rem;font-weight:500;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* FOOTER */
+footer{background:linear-gradient(105deg,#023e8a 0%,#0077b6 100%);color:rgba(255,255,255,.85);padding:2.5rem 1.5rem 2rem}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-brand{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:.3rem}
+.footer-copy{font-size:.78rem;opacity:.55;margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.12)}
+.footer-links{display:flex;gap:1rem;margin-top:.9rem;flex-wrap:wrap}
+.footer-links a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+.footer-links a:hover{color:#fff}
+
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+@media(max-width:480px){.form-grid-2,.form-grid-3{grid-template-columns:1fr}}
+.section-gap{margin-top:1rem}
+.divider{height:1px;background:var(--gray-border);margin:.85rem 0}
+</style>
+</head>
+<body>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+</script>
+
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html">
+      <img src="images/nav-icon.png" alt="Voyage Genie"/>
+      <span class="vg-title-brand">Voyage Genie</span>
+    </a>
+    <div class="vg-right">
+      <a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a>
+      <div id="authSlot">
+        <a class="nav-chip" href="login.html?next=tip-calculator.html">🔑 Sign in</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="page-banner">
+  <div class="page-banner-inner">
+    <h1>💵 Tip Calculator</h1>
+    <p>Local tipping norms for 30+ countries · Bill splitting · Quick keypad entry</p>
+  </div>
+</div>
+
+<main>
+<div class="page-body">
+
+  <!-- LEFT: Inputs -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- Bill Entry -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">🧾 Bill Amount</div>
+        <div style="display:flex;gap:.4rem;align-items:center">
+          <label class="field-label" style="margin:0">Currency</label>
+          <select id="currencySel" class="vg-select" style="width:auto;padding:.3rem .6rem;font-size:.82rem" onchange="updateCurrencySymbol()">
+            <option value="USD">USD $</option>
+            <option value="EUR">EUR €</option>
+            <option value="GBP">GBP £</option>
+            <option value="JPY">JPY ¥</option>
+            <option value="CAD">CAD $</option>
+            <option value="AUD">AUD $</option>
+            <option value="MXN">MXN $</option>
+            <option value="THB">THB ฿</option>
+            <option value="INR">INR ₹</option>
+            <option value="BRL">BRL R$</option>
+            <option value="SGD">SGD $</option>
+            <option value="AED">AED د.إ</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-bd">
+        <div class="bill-wrap">
+          <span class="bill-symbol" id="billSymbol">$</span>
+          <input id="bill" class="bill-input" type="number" min="0" step="0.01" placeholder="0.00" oninput="calculate()"/>
+        </div>
+        <!-- Quick amounts -->
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.65rem">
+          <span style="font-size:.75rem;color:var(--text-muted);align-self:center">Quick:</span>
+          <button class="vg-btn vg-btn-sm" onclick="setBill(20)">$20</button>
+          <button class="vg-btn vg-btn-sm" onclick="setBill(50)">$50</button>
+          <button class="vg-btn vg-btn-sm" onclick="setBill(100)">$100</button>
+          <button class="vg-btn vg-btn-sm" onclick="setBill(150)">$150</button>
+          <button class="vg-btn vg-btn-sm" onclick="setBill(200)">$200</button>
+          <button class="vg-btn vg-btn-sm" onclick="setBill(250)">$250</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Country + Service -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">🌍 Where &amp; What</div></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:.85rem">
+        <div>
+          <label class="field-label">Country / Region</label>
+          <select id="region" class="vg-select" onchange="onRegionChange()"></select>
+        </div>
+
+        <!-- Country note -->
+        <div id="countryNote" class="country-note info">
+          <span class="note-icon">ℹ️</span>
+          <div class="note-body"><strong>Select a country</strong>Tipping customs vary widely — we'll show local norms.</div>
+        </div>
+
+        <div>
+          <label class="field-label">Service Type</label>
+          <div class="service-grid" id="serviceGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tip % Selector -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">💰 Tip Percentage</div></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:.85rem">
+        <div class="tip-chips" id="tipChips"></div>
+        <div class="custom-tip-row">
+          <input id="customTip" class="custom-tip-input" type="number" min="0" step="0.5" placeholder="—" oninput="onCustomTipInput()"/>
+          <span style="font-size:1rem;font-weight:600;color:var(--text-muted)">%</span>
+          <span style="font-size:.82rem;color:var(--text-muted)">custom</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Split & Options -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">👥 Split the Bill</div></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:.85rem">
+
+        <div>
+          <label class="field-label">Party Size</label>
+          <div class="party-btns" id="partyBtns"></div>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem">
+            <input id="customParty" class="vg-input" style="width:80px" type="number" min="1" placeholder="10+" oninput="onCustomParty()"/>
+            <span style="font-size:.82rem;color:var(--text-muted)">people (custom)</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-grid-2">
+          <div>
+            <label class="field-label">Tax / Service on bill</label>
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <input id="taxPct" class="vg-input" style="width:80px" type="number" min="0" step=".5" value="0" oninput="calculate()"/>
+              <span style="color:var(--text-muted);font-size:.9rem">%</span>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">Rounding</label>
+            <select id="rounding" class="vg-select" onchange="calculate()">
+              <option value="none">None</option>
+              <option value="tip">Round tip</option>
+              <option value="total">Round total</option>
+              <option value="perperson">Round per person</option>
+            </select>
+          </div>
+        </div>
+
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem">
+          <input id="tipBeforeTax" type="checkbox" onchange="calculate()" style="width:16px;height:16px;accent-color:var(--ocean)"/>
+          Tip on pre-tax amount
+        </label>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- RESULT HERO -->
+    <div class="result-hero">
+      <div class="result-main-label">Total to pay</div>
+      <div class="result-main-val" id="outTotal">—</div>
+      <div class="result-sub" id="outSubline">Enter a bill amount above</div>
+    </div>
+
+    <!-- STAT BOXES -->
+    <div class="result-stats">
+      <div class="stat-box">
+        <div class="sv" id="outTipPct">—</div>
+        <div class="sl">Tip %</div>
+      </div>
+      <div class="stat-box">
+        <div class="sv" id="outTipAmt">—</div>
+        <div class="sl">Tip Amount</div>
+      </div>
+      <div class="stat-box">
+        <div class="sv" id="outPerPerson">—</div>
+        <div class="sl">Per Person</div>
+      </div>
+    </div>
+
+    <!-- SPLIT TABLE -->
+    <div class="vg-card" id="splitCard">
+      <div class="card-hd">
+        <div class="card-title">🍽️ Split Detail</div>
+        <div style="display:flex;gap:.4rem">
+          <button class="vg-btn vg-btn-sm" onclick="copyResult()">📋 Copy</button>
+          <button class="vg-btn vg-btn-sm" onclick="shareLink()">🔗 Share</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="split-table">
+          <thead>
+            <tr><th>Person</th><th>Bill Share</th><th>Tip Share</th><th>Total</th></tr>
+          </thead>
+          <tbody id="splitBody">
+            <tr><td colspan="4" style="text-align:center;padding:1.25rem;color:var(--text-muted);font-size:.85rem">Enter bill amount to see split</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TIPPING NORMS -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">🌐 Global Tipping Norms</div></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:.6rem;font-size:.82rem">
+        <div class="country-note ok">
+          <span class="note-icon">✅</span>
+          <div class="note-body"><strong>Expected: USA, Canada, Mexico</strong>15–22% at restaurants is standard. Not tipping is considered rude.</div>
+        </div>
+        <div class="country-note warn">
+          <span class="note-icon">⚠️</span>
+          <div class="note-body"><strong>Optional: Europe, Australia, NZ</strong>Service charge often included. Small rounding or 5–10% for good service appreciated.</div>
+        </div>
+        <div class="country-note no">
+          <span class="note-icon">🚫</span>
+          <div class="note-body"><strong>Not customary: Japan, South Korea, China</strong>Tipping can be considered rude or refused. Excellent service is standard.</div>
+        </div>
+        <div class="country-note info">
+          <span class="note-icon">💡</span>
+          <div class="note-body"><strong>DCC / Service charge trap</strong>Always check your bill for "service charge" or "gratuity" before adding extra — double-tipping is common at tourist venues.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">🕐 History</div>
+        <button class="vg-btn vg-btn-sm" onclick="clearHistory()">Clear</button>
+      </div>
+      <div class="card-bd">
+        <div class="history-list" id="historyList">
+          <span style="font-size:.82rem;color:var(--text-muted)">No saved calculations yet</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</main>
+
+<div id="toast"></div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="trip-dashboard.html">My Trips</a>
+      <a href="currency-converter.html">Currency</a>
+      <a href="packing-checklist.html">Packing</a>
+    </div>
+    <div class="footer-copy">© 2025 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- Auth -->
+<script type="module">
+  const sb = window.supabase;
+  const authSlot = document.getElementById('authSlot');
+  function toggle(el, show){ if(el) el.style.display = show ? 'block' : 'none'; }
+  async function renderAuth(){
+    try {
+      const { data:{ user } } = await sb.auth.getUser();
+      authSlot.innerHTML = '';
+      if (user) {
+        const name = (user.email||'Account').split('@')[0];
+        const wrap = document.createElement('div'); wrap.className='menu-group';
+        wrap.innerHTML=`<a href="#" class="account-chip" id="acctBtn"><span>🪪</span><span>${name}</span><span style="font-size:.65rem;opacity:.8">▾</span></a>
+          <div class="menu" id="acctMenu"><a href="account.html">👤 Account</a><div class="menu-divider"></div><a href="#" id="signOutBtn">🚪 Sign out</a></div>`;
+        authSlot.appendChild(wrap);
+        const btn=wrap.querySelector('#acctBtn'),menu=wrap.querySelector('#acctMenu');
+        btn.addEventListener('click',e=>{e.preventDefault();const o=menu.style.display==='block';toggle(menu,!o);});
+        document.addEventListener('click',e=>{if(!menu.contains(e.target)&&e.target!==btn)toggle(menu,false);});
+        wrap.querySelector('#signOutBtn').addEventListener('click',async e=>{e.preventDefault();await sb.auth.signOut();location.href='login.html';});
+      } else {
+        const a=document.createElement('a');a.className='nav-chip';a.href='login.html?next=tip-calculator.html';a.textContent='🔑 Sign in';
+        authSlot.appendChild(a);
+      }
+    } catch{}
+  }
+  renderAuth();
+</script>
+
+<!-- TIP CALCULATOR LOGIC -->
+<script>
+const $ = id => document.getElementById(id);
+
+// ── Region data ───────────────────────────────────────────────────────────────
+const REGIONS = [
+  { value:'USA', label:'🇺🇸 USA', flag:'🇺🇸',
+    status:'expected',
+    note:'Tipping is expected and is a significant part of server income. Not tipping is considered rude.',
+    defaults:{ Restaurant:[18,20,22], Bar:[15,18,20], Taxi:[10,15,18], Hotel:[5,10], Delivery:[15,18,20], Spa:[18,20] } },
+  { value:'Canada', label:'🇨🇦 Canada', flag:'🇨🇦',
+    status:'expected',
+    note:'Similar to USA. Restaurants 15–20%, bars 10–18%. GST/HST on your bill — tip on pre-tax is common.',
+    defaults:{ Restaurant:[15,18,20], Bar:[12,15,18], Taxi:[10,12,15], Hotel:[3,5,10], Delivery:[10,15,18], Spa:[15,18,20] } },
+  { value:'UK', label:'🇬🇧 UK / Ireland', flag:'🇬🇧',
+    status:'optional', serviceChargeCommon:true,
+    note:'10–12.5% optional. Many restaurants add a service charge — check your bill first.',
+    defaults:{ Restaurant:[0,10,12.5], Bar:[0,5,10], Taxi:[0,5,10], Hotel:[0,5], Delivery:[0,5,10], Spa:[10,15] } },
+  { value:'France', label:'🇫🇷 France', flag:'🇫🇷',
+    status:'optional', serviceChargeCommon:true,
+    note:'"Service compris" (service included) is required by law. Extra tip of a few euros for great service is appreciated.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5], Taxi:[0,5,10], Hotel:[0,2,5], Delivery:[0,5], Spa:[5,10] } },
+  { value:'Italy', label:'🇮🇹 Italy', flag:'🇮🇹',
+    status:'optional', serviceChargeCommon:true,
+    note:'Coperto (cover charge) is standard. Tipping ~5–10% for good service is appreciated but not required.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5], Taxi:[0,5,10], Hotel:[0,2,5], Delivery:[0,5], Spa:[5,10] } },
+  { value:'SpainPortugal', label:'🇪🇸 Spain / Portugal', flag:'🇪🇸',
+    status:'optional',
+    note:'Not mandatory. Small rounding or up to 10% in tourist areas. Locals typically leave coins.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5], Taxi:[0,5,10], Hotel:[0,2,5], Delivery:[0,5], Spa:[5,10] } },
+  { value:'Germany', label:'🇩🇪 Germany / Austria', flag:'🇩🇪',
+    status:'optional',
+    note:'Rounding up is standard (aufgerundet). 5–10% for good service at restaurants.',
+    defaults:{ Restaurant:[5,7.5,10], Bar:[0,5], Taxi:[0,5,10], Hotel:[0,2,5], Delivery:[0,5], Spa:[5,10] } },
+  { value:'Nordics', label:'🇸🇪 Nordics (SE/NO/DK/FI)', flag:'🇸🇪',
+    status:'optional', serviceChargeCommon:true,
+    note:'Service charge often included. Tipping not expected but 5–10% for exceptional service is fine.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5], Taxi:[0,5], Hotel:[0,5], Delivery:[0,5], Spa:[5,10] } },
+  { value:'Netherlands', label:'🇳🇱 Netherlands', flag:'🇳🇱',
+    status:'optional',
+    note:'Not required. Rounding up or 5–10% for good service.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5], Taxi:[0,5,10], Hotel:[0,2,5], Delivery:[0,5], Spa:[5,10] } },
+  { value:'Greece', label:'🇬🇷 Greece', flag:'🇬🇷',
+    status:'optional',
+    note:'Tipping appreciated. Restaurants ~5–10%. Rounding taxis.',
+    defaults:{ Restaurant:[5,10], Bar:[5,10], Taxi:[0,5,10], Hotel:[0,2,5], Delivery:[5,10], Spa:[10] } },
+  { value:'Turkey', label:'🇹🇷 Turkey', flag:'🇹🇷',
+    status:'optional',
+    note:'5–10% common at tourist restaurants. Taxi: round up.',
+    defaults:{ Restaurant:[5,10], Bar:[5,10], Taxi:[0,5,10], Hotel:[0,5], Delivery:[5,10], Spa:[10] } },
+  { value:'Mexico', label:'🇲🇽 Mexico', flag:'🇲🇽',
+    status:'expected',
+    note:'10–15% at restaurants. Resorts may add a service charge. Taxi: round up or 10%.',
+    defaults:{ Restaurant:[10,12,15], Bar:[10,15], Taxi:[0,5,10], Hotel:[5,10], Delivery:[10,15], Spa:[15,18] } },
+  { value:'Brazil', label:'🇧🇷 Brazil', flag:'🇧🇷',
+    status:'optional', serviceChargeCommon:true,
+    note:'10% service charge often added to the bill. Extra is optional and appreciated.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5,10], Taxi:[0,5], Hotel:[0,5,10], Delivery:[5,10], Spa:[10] } },
+  { value:'Argentina', label:'🇦🇷 Argentina', flag:'🇦🇷',
+    status:'optional',
+    note:'10% is common at sit-down restaurants. Taxis: round up.',
+    defaults:{ Restaurant:[0,10], Bar:[0,10], Taxi:[0,5], Hotel:[0,5], Delivery:[5,10], Spa:[10] } },
+  { value:'Japan', label:'🇯🇵 Japan', flag:'🇯🇵',
+    status:'not-customary',
+    note:'Tipping is not part of Japanese culture and may cause embarrassment or be refused. Excellent service is standard everywhere.',
+    defaults:{ Restaurant:[0], Bar:[0], Taxi:[0], Hotel:[0], Delivery:[0], Spa:[0] } },
+  { value:'SouthKorea', label:'🇰🇷 South Korea', flag:'🇰🇷',
+    status:'not-customary',
+    note:'Not customary. High-end hotels may include service. Do not tip taxi drivers.',
+    defaults:{ Restaurant:[0], Bar:[0], Taxi:[0], Hotel:[0], Delivery:[0], Spa:[0] } },
+  { value:'China', label:'🇨🇳 China', flag:'🇨🇳',
+    status:'not-customary',
+    note:'Not customary in mainland China. Some tourist-oriented venues may accept tips.',
+    defaults:{ Restaurant:[0,5], Bar:[0], Taxi:[0], Hotel:[0,5], Delivery:[0], Spa:[0] } },
+  { value:'HongKong', label:'🇭🇰 Hong Kong', flag:'🇭🇰',
+    status:'optional', serviceChargeCommon:true,
+    note:'10% service charge common. Small extra tip optional in restaurants.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5], Taxi:[0,5], Hotel:[0,5], Delivery:[0,5], Spa:[10] } },
+  { value:'Singapore', label:'🇸🇬 Singapore', flag:'🇸🇬',
+    status:'optional', serviceChargeCommon:true,
+    note:'10% service charge added by law. Additional tip not expected.',
+    defaults:{ Restaurant:[0,5], Bar:[0,5], Taxi:[0,5], Hotel:[0,5], Delivery:[0,5], Spa:[5,10] } },
+  { value:'Thailand', label:'🇹🇭 Thailand', flag:'🇹🇭',
+    status:'optional',
+    note:'Not expected but appreciated. 20–50 baht for good service. 5–10% at restaurants in tourist areas.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5,10], Taxi:[0,5], Hotel:[0,5,10], Delivery:[0,5], Spa:[5,10,15] } },
+  { value:'Vietnam', label:'🇻🇳 Vietnam', flag:'🇻🇳',
+    status:'optional',
+    note:'Not customary but appreciated in tourist areas. 5–10% for good service.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5], Taxi:[0,5], Hotel:[0,5,10], Delivery:[0,5], Spa:[5,10] } },
+  { value:'Indonesia', label:'🇮🇩 Indonesia / Bali', flag:'🇮🇩',
+    status:'optional',
+    note:'10% service often included. Extra tips (20,000–50,000 IDR) appreciated by resort and spa staff.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5,10], Taxi:[0,5], Hotel:[5,10], Delivery:[0,5], Spa:[10,15] } },
+  { value:'India', label:'🇮🇳 India', flag:'🇮🇳',
+    status:'optional',
+    note:'Not mandatory but common. 5–10% at sit-down restaurants. Taxi: round up.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5,10], Taxi:[0,5], Hotel:[0,5,10], Delivery:[5,10], Spa:[10] } },
+  { value:'UAE', label:'🇦🇪 UAE / Dubai', flag:'🇦🇪',
+    status:'optional', serviceChargeCommon:true,
+    note:'10% service charge common at restaurants. Extra tip appreciated but not expected.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0,5,10], Taxi:[0,5,10], Hotel:[0,5,10], Delivery:[5,10], Spa:[10,15] } },
+  { value:'Australia', label:'🇦🇺 Australia / NZ', flag:'🇦🇺',
+    status:'optional',
+    note:'Minimum wage is high so tipping is not expected. 5–10% for exceptional service is appreciated.',
+    defaults:{ Restaurant:[0,5,10], Bar:[0], Taxi:[0], Hotel:[0,5], Delivery:[0,5,10], Spa:[5,10] } },
+  { value:'SouthAfrica', label:'🇿🇦 South Africa', flag:'🇿🇦',
+    status:'expected',
+    note:'10–15% expected at sit-down restaurants. Petrol/parking attendants expect a small tip.',
+    defaults:{ Restaurant:[10,12,15], Bar:[10,15], Taxi:[10], Hotel:[5,10], Delivery:[10,15], Spa:[10,15] } },
+  { value:'Egypt', label:'🇪🇬 Egypt', flag:'🇪🇬',
+    status:'expected',
+    note:'Baksheesh (tipping) is expected and important. 10–15% at restaurants.',
+    defaults:{ Restaurant:[10,15], Bar:[10,15], Taxi:[10], Hotel:[5,10], Delivery:[10], Spa:[10,15] } },
+  { value:'Morocco', label:'🇲🇦 Morocco', flag:'🇲🇦',
+    status:'expected',
+    note:'10% at restaurants. Guides expect tips — typically 50–100 MAD per day.',
+    defaults:{ Restaurant:[10,15], Bar:[10], Taxi:[0,5,10], Hotel:[5,10], Delivery:[5,10], Spa:[10] } },
+  { value:'Custom', label:'🌐 Other / Custom', flag:'🌐',
+    status:'optional',
+    note:'Use your judgment based on local context. When in doubt, 10% is a safe default for good service.',
+    defaults:{ Restaurant:[0,10,15], Bar:[0,5,10], Taxi:[0,5,10], Hotel:[0,5,10], Delivery:[0,10,15], Spa:[10,15] } }
+];
+
+const SERVICE_TYPES = [
+  { key:'Restaurant', icon:'🍽️', label:'Restaurant', range:'' },
+  { key:'Bar',        icon:'🍺', label:'Bar / Cafe',  range:'' },
+  { key:'Taxi',       icon:'🚕', label:'Taxi / Ride', range:'' },
+  { key:'Hotel',      icon:'🏨', label:'Hotel / Housekeeping', range:'' },
+  { key:'Delivery',   icon:'📦', label:'Food Delivery', range:'' },
+  { key:'Spa',        icon:'💆', label:'Spa / Massage', range:'' },
+];
+
+const CURRENCY_SYMBOLS = { USD:'$',EUR:'€',GBP:'£',JPY:'¥',CAD:'$',AUD:'$',MXN:'$',THB:'฿',INR:'₹',BRL:'R$',SGD:'$',AED:'AED' };
+
+let currentRegion = null;
+let currentService = 'Restaurant';
+let currentTipPct = 18;
+let currentParty = 2;
+let _toastTimer;
+
+function toast(msg, ms=1800) {
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>t.classList.remove('show'), ms);
+}
+
+function money(n, currency) {
+  const cur = $('currencySel').value || 'USD';
+  try { return new Intl.NumberFormat(undefined,{style:'currency',currency:cur,maximumFractionDigits:2}).format(n); }
+  catch { return CURRENCY_SYMBOLS[cur]+(n||0).toFixed(2); }
+}
+function moneyShort(n) { return money(n, $('currencySel').value); }
+
+// ── Build region select ───────────────────────────────────────────────────────
+function buildRegions() {
+  const sel = $('region');
+  REGIONS.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.value; opt.textContent = r.label;
+    sel.appendChild(opt);
+  });
+  sel.value = 'USA';
+}
+
+// ── Build service type cards ──────────────────────────────────────────────────
+function buildServiceCards() {
+  const grid = $('serviceGrid');
+  grid.innerHTML = '';
+  SERVICE_TYPES.forEach(s => {
+    const region = currentRegion;
+    const defs = region?.defaults?.[s.key] || [];
+    const range = defs.length
+      ? (defs[0] === 0 && defs.length > 1
+          ? `${defs[0]}–${defs[defs.length-1]}%`
+          : `${defs[0]}–${defs[defs.length-1]}%`)
+      : '';
+    const card = document.createElement('button');
+    card.className = 'service-card' + (s.key === currentService ? ' active' : '');
+    card.innerHTML = `<span class="sc-icon">${s.icon}</span><span class="sc-name">${s.label}</span>${range?`<span class="sc-range">${range}</span>`:''}`;
+    card.onclick = () => { currentService = s.key; buildServiceCards(); renderTipChips(); calculate(); };
+    grid.appendChild(card);
+  });
+}
+
+// ── Build tip % chips ─────────────────────────────────────────────────────────
+function renderTipChips() {
+  const region = currentRegion;
+  const defs = region?.defaults?.[currentService] || [0, 10, 15, 18, 20];
+  const box = $('tipChips'); box.innerHTML = '';
+
+  defs.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'tip-chip' + (p === currentTipPct ? ' active' : '');
+    const label = p === 0 ? 'None' : (p % 1 === 0 ? p.toFixed(0) : p.toFixed(1)) + '%';
+    const sublabel = p === 0 ? 'No tip' : getTipLabel(p);
+    btn.innerHTML = `<span style="font-size:1rem;font-weight:800">${label}</span><span class="pct-label">${sublabel}</span>`;
+    btn.onclick = () => { currentTipPct = p; $('customTip').value=''; renderTipChips(); calculate(); };
+    box.appendChild(btn);
+  });
+}
+
+function getTipLabel(p) {
+  if (p === 0) return 'No tip';
+  if (p < 5)   return 'Small';
+  if (p < 10)  return 'Low';
+  if (p < 15)  return 'Standard';
+  if (p < 18)  return 'Good';
+  if (p < 22)  return 'Great';
+  return 'Generous';
+}
+
+function onCustomTipInput() {
+  const val = parseFloat($('customTip').value);
+  if (!isNaN(val) && val >= 0) { currentTipPct = val; renderTipChips(); calculate(); }
+}
+
+// ── Party size buttons ────────────────────────────────────────────────────────
+function buildPartyBtns() {
+  const box = $('partyBtns'); box.innerHTML = '';
+  [1,2,3,4,5,6,8,10].forEach(n => {
+    const btn = document.createElement('button');
+    btn.className = 'party-btn' + (n === currentParty ? ' active' : '');
+    btn.textContent = n;
+    btn.onclick = () => { currentParty = n; $('customParty').value=''; buildPartyBtns(); calculate(); };
+    box.appendChild(btn);
+  });
+}
+function onCustomParty() {
+  const v = parseInt($('customParty').value);
+  if (!isNaN(v) && v >= 1) { currentParty = v; buildPartyBtns(); calculate(); }
+}
+
+// ── Country note ──────────────────────────────────────────────────────────────
+function updateCountryNote() {
+  const r = currentRegion;
+  if (!r) return;
+  const box = $('countryNote');
+  const statusMap = {
+    'expected':     { cls:'ok',   icon:'✅' },
+    'optional':     { cls:'warn', icon:'⚠️' },
+    'not-customary':{ cls:'no',   icon:'🚫' },
+  };
+  const s = statusMap[r.status] || statusMap.optional;
+  box.className = 'country-note ' + s.cls;
+  box.innerHTML = `<span class="note-icon">${s.icon}</span>
+    <div class="note-body">
+      <strong>${r.flag} ${r.label.replace(/^[^\s]+\s/,'')}</strong>
+      ${r.note}
+      ${r.serviceChargeCommon ? ' <span style="color:var(--amber);font-weight:600">Check bill for service charge before tipping.</span>' : ''}
+    </div>`;
+}
+
+// ── On region change ──────────────────────────────────────────────────────────
+function onRegionChange() {
+  currentRegion = REGIONS.find(r => r.value === $('region').value) || REGIONS[0];
+  // Set default tip % from first chip of current service
+  const defs = currentRegion.defaults[currentService] || [0];
+  currentTipPct = defs[Math.min(1, defs.length-1)]; // pick middle default
+  $('customTip').value = '';
+  updateCountryNote();
+  buildServiceCards();
+  renderTipChips();
+  calculate();
+}
+
+// ── Currency symbol ───────────────────────────────────────────────────────────
+function updateCurrencySymbol() {
+  const cur = $('currencySel').value;
+  $('billSymbol').textContent = CURRENCY_SYMBOLS[cur] || '$';
+  calculate();
+}
+
+function setBill(n) { $('bill').value = n; calculate(); }
+
+// ── CALCULATE ─────────────────────────────────────────────────────────────────
+function calculate() {
+  const billAmt = parseFloat($('bill').value || '0') || 0;
+  const tipP    = currentTipPct;
+  const taxP    = parseFloat($('taxPct').value || '0') || 0;
+  const party   = Math.max(1, currentParty);
+  const tipBeforeTax = $('tipBeforeTax').checked;
+  const roundMode = $('rounding').value;
+
+  if (!billAmt) {
+    $('outTotal').textContent = '—';
+    $('outSubline').textContent = 'Enter a bill amount above';
+    $('outTipPct').textContent = tipP + '%';
+    $('outTipAmt').textContent = '—';
+    $('outPerPerson').textContent = '—';
+    $('splitBody').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.25rem;color:var(--text-muted);font-size:.85rem">Enter bill amount to see split</td></tr>';
+    return;
+  }
+
+  let baseForTip = billAmt;
+  if (tipBeforeTax && taxP > 0) {
+    baseForTip = billAmt / (1 + taxP / 100);
+  }
+
+  let tipAmt = baseForTip * (tipP / 100);
+  let total  = billAmt + tipAmt;
+  let perP   = total / party;
+
+  switch (roundMode) {
+    case 'tip':       { const r=Math.round(tipAmt); total+=(r-tipAmt); tipAmt=r; perP=total/party; break; }
+    case 'total':     { total=Math.round(total); perP=total/party; break; }
+    case 'perperson': { perP=Math.round(perP); total=perP*party; tipAmt=total-billAmt; break; }
+  }
+
+  // Update hero
+  $('outTotal').textContent = moneyShort(total);
+  $('outSubline').textContent = `${moneyShort(billAmt)} bill + ${moneyShort(tipAmt)} tip`;
+  $('outTipPct').textContent = (tipP%1===0?tipP.toFixed(0):tipP.toFixed(1)) + '%';
+  $('outTipAmt').textContent = moneyShort(tipAmt);
+  $('outPerPerson').textContent = moneyShort(perP);
+
+  // Split table
+  const billShare = billAmt / party;
+  const tipShare  = tipAmt  / party;
+  $('splitBody').innerHTML = Array.from({length: party}, (_, i) =>
+    `<tr>
+      <td><div style="display:flex;align-items:center;gap:.5rem"><span class="person-badge">${i+1}</span>Person ${i+1}</div></td>
+      <td class="amount-col">${moneyShort(billShare)}</td>
+      <td class="amount-col">${moneyShort(tipShare)}</td>
+      <td class="amount-col" style="font-weight:800">${moneyShort(perP)}</td>
+    </tr>`
+  ).join('');
+
+  // Save to history
+  saveHistory({ bill: billAmt, tip: tipAmt, total, party, perP, tipP, region: $('region').value, service: currentService, at: new Date().toISOString() });
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+const HIST_KEY = 'vg_tip_hist_v2';
+function getHistory()  { try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]');}catch{return[]} }
+function setHistory(h) { localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0,15))); }
+
+let _lastHistHash = '';
+function saveHistory(r) {
+  const hash = `${r.bill}-${r.tipP}-${r.party}`;
+  if (hash === _lastHistHash) return; // avoid saving on every keystroke
+  _lastHistHash = hash;
+  const h = getHistory(); h.unshift(r); setHistory(h); renderHistory();
+}
+function clearHistory() { setHistory([]); renderHistory(); toast('Cleared'); }
+function renderHistory() {
+  const list = $('historyList');
+  const items = getHistory();
+  if (!items.length) { list.innerHTML='<span style="font-size:.82rem;color:var(--text-muted)">No saved calculations yet</span>'; return; }
+  const region = (v) => REGIONS.find(r=>r.value===v);
+  list.innerHTML = items.slice(0,6).map((h,i) => {
+    const r = region(h.region);
+    const elapsed = timeAgo(h.at);
+    return `<div class="history-item" onclick="loadHistory(${i})">
+      <span>${r?.flag||'🌐'}</span>
+      <span style="font-weight:600">${moneyCompact(h.bill)}</span>
+      <span style="color:var(--text-muted)">→</span>
+      <span style="color:var(--ocean);font-weight:700">${moneyCompact(h.total)}</span>
+      <span style="color:var(--text-muted);font-size:.78rem">${h.tipP}% · ${h.party}ppl</span>
+      <span class="history-time">${elapsed}</span>
+    </div>`;
+  }).join('');
+}
+function moneyCompact(n) {
+  const cur = $('currencySel').value||'USD';
+  const sym = CURRENCY_SYMBOLS[cur]||'$';
+  return sym + Number(n||0).toFixed(0);
+}
+function loadHistory(i) {
+  const h = getHistory()[i]; if (!h) return;
+  $('bill').value = h.bill;
+  $('region').value = h.region; onRegionChange();
+  currentService = h.service; currentTipPct = h.tipP; currentParty = h.party;
+  buildServiceCards(); renderTipChips(); buildPartyBtns(); calculate();
+  toast('✅ Loaded from history');
+}
+function timeAgo(iso) {
+  const s=Math.floor((Date.now()-new Date(iso))/1000);
+  if(s<60)return'just now'; if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago';
+}
+
+// ── Copy / Share ──────────────────────────────────────────────────────────────
+function copyResult() {
+  const bill=parseFloat($('bill').value||'0'),party=currentParty;
+  if(!bill){toast('Enter a bill amount first');return;}
+  const tipAmt=bill*(currentTipPct/100),total=bill+tipAmt,perP=total/party;
+  const region=REGIONS.find(r=>r.value===$('region').value);
+  const txt=`${region?.flag||''} Tip Calculator — ${region?.label||''}\nBill: ${moneyShort(bill)}\nTip (${currentTipPct}%): ${moneyShort(tipAmt)}\nTotal: ${moneyShort(total)}\nPer person (${party}): ${moneyShort(perP)}\nVia Voyage Genie`;
+  navigator.clipboard?.writeText(txt).then(()=>toast('📋 Copied!')).catch(()=>toast('Copy failed'));
+}
+function shareLink() {
+  const u=new URL(location.href);
+  u.searchParams.set('region',$('region').value);
+  u.searchParams.set('service',currentService);
+  u.searchParams.set('bill',$('bill').value||'0');
+  u.searchParams.set('tip',String(currentTipPct));
+  u.searchParams.set('party',String(currentParty));
+  navigator.clipboard?.writeText(u.toString()).then(()=>toast('🔗 Link copied!')).catch(()=>alert(u.toString()));
+}
+
+// ── Apply URL params ──────────────────────────────────────────────────────────
+function applyURL() {
+  const p=new URLSearchParams(location.search);
+  if(p.get('region')) $('region').value=p.get('region');
+  if(p.get('bill'))   $('bill').value=p.get('bill');
+  if(p.get('tip'))    currentTipPct=parseFloat(p.get('tip'));
+  if(p.get('party'))  currentParty=parseInt(p.get('party'));
+  if(p.get('service'))currentService=p.get('service');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init() {
+  buildRegions();
+  applyURL();
+  currentRegion = REGIONS.find(r=>r.value===$('region').value)||REGIONS[0];
+  updateCountryNote();
+  buildServiceCards();
+  renderTipChips();
+  buildPartyBtns();
+  updateCurrencySymbol();
+  renderHistory();
+  calculate();
+}
+
+window.onRegionChange=onRegionChange; window.onCustomTipInput=onCustomTipInput;
+window.onCustomParty=onCustomParty; window.updateCurrencySymbol=updateCurrencySymbol;
+window.setBill=setBill; window.copyResult=copyResult; window.shareLink=shareLink;
+window.clearHistory=clearHistory; window.loadHistory=loadHistory;
+
+init();
+</script>
+</body>
+</html>

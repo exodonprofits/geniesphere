@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📡 Phone, TV & Internet Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-4 text-center">📡 Phone, TV & Internet Tracker</h1>
+    <div id="records" class="space-y-4"></div>
+    <div class="text-center mt-6 space-y-4">
+      <a href="add-phone-tv-internet.html" class="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition w-max mx-auto">
+        ➕ Add Service
+      </a>
+      <a href="household-genie.html" class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition w-max mx-auto">
+        🏠 Back to Household Genie
+      </a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabase = createClient('https://pbojacnagutipfhcxltj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+
+    async function fetchRecords() {
+      const user = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from('household_bills')
+        .select('*')
+        .eq('user_id', user.data.user.id)
+        .eq('category', 'telecom')
+        .order('due_date', { ascending: true });
+
+      if (error) return document.getElementById('records').innerText = 'Failed to load records.';
+
+      const container = document.getElementById('records');
+      data.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl shadow p-4';
+        card.innerHTML = `
+          <h2 class="text-xl font-bold">${item.service_type} - ${item.provider}</h2>
+          <p>💵 $${item.amount} / month</p>
+          <p>📆 Due: ${item.due_date || 'N/A'}</p>
+          <p>🔗 <a href="${item.portal_url}" class="text-blue-600 underline" target="_blank">Access Portal</a></p>
+          <p>📝 ${item.notes || 'No notes'}</p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    fetchRecords();
+  </script>
+</body>
+</html>

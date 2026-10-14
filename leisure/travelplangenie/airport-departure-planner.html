@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Airport Departure Planner – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #0077b6; --ocean-deep: #023e8a; --teal: #00b4d8;
+  --coral: #e76f51; --coral-dark: #c1551c;
+  --off-white: #f8fafc; --gray-light: #f1f5f9; --gray-border: #e2e8f0;
+  --text: #1e293b; --text-muted: #64748b;
+  --radius: 10px; --radius-lg: 16px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+  /* Tool accent — amber/orange: urgency, time pressure */
+  --accent: #d97706; --accent-light: #fffbeb; --accent-border: #fde68a;
+  --green: #059669; --green-light: #f0fdf4; --green-border: #bbf7d0;
+  --red: #dc2626; --red-light: #fef2f2; --red-border: #fecaca;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; padding: 2rem 1rem 3rem; }
+
+/* HEADER */
+.vg-header { position: sticky; top: 0; z-index: 40; background: linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%); box-shadow: 0 2px 20px rgba(2,62,138,0.25); }
+.vg-nav { max-width: 1240px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vg-brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.vg-brand img { width: 46px; height: 46px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+.vg-title { font-family: 'Playfair Display',serif; font-weight: 700; font-size: 1.4rem; color: #fff; }
+.vg-right { display: flex; align-items: center; gap: 12px; }
+.nav-chip { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; height: 38px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); font-size: 0.88rem; font-weight: 500; transition: background var(--transition); white-space: nowrap; }
+.nav-chip:hover { background: rgba(255,255,255,0.24); }
+
+/* PAGE BANNER */
+.page-banner { background: #eaf4fb; border-bottom: 1px solid #c9e4f5; padding: 1.4rem 1.5rem; }
+.page-banner-inner { max-width: 1100px; margin: 0 auto; }
+.page-banner h1 { font-family: 'Playfair Display',serif; font-size: clamp(1.2rem,2.5vw,1.55rem); font-weight: 700; color: var(--ocean-deep); margin-bottom: 0.2rem; }
+.page-banner p { font-size: 0.87rem; color: var(--text-muted); }
+
+/* LAYOUT */
+.planner-layout { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; }
+@media (max-width: 860px) { .planner-layout { grid-template-columns: 1fr; } }
+
+/* FORM CARD */
+.planning-card { background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 2rem; border: 1px solid var(--gray-border); }
+.planning-card h2 { font-family: 'Playfair Display',serif; font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+.step-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+/* FIELDS */
+.field { margin-bottom: 1.25rem; }
+.field label { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; flex-wrap: wrap; }
+.required-star { color: var(--coral); }
+.opt-tag { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; background: var(--gray-light); border-radius: 999px; padding: 1px 8px; }
+.vg-input, .vg-select { width: 100%; padding: 0.65rem 1rem; border: 1px solid var(--gray-border); border-radius: var(--radius); font-family: 'DM Sans',sans-serif; font-size: 0.92rem; color: var(--text); background: var(--gray-light); outline: none; transition: border-color var(--transition), background var(--transition); }
+.vg-input:focus, .vg-select:focus { border-color: var(--ocean); background: #fff; box-shadow: 0 0 0 3px rgba(0,119,182,0.1); }
+.vg-input::placeholder { color: #94a3b8; }
+.vg-select { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230077b6"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 2.5rem; }
+.two-col { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+@media (min-width: 540px) { .two-col { grid-template-columns: 1fr 1fr; } }
+.two-col--short { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 380px) { .two-col--short { grid-template-columns: 1fr; } }
+.section-label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; margin-top: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--gray-border); }
+
+/* AGENT TIP */
+.agent-tip { display: flex; align-items: flex-start; gap: 10px; background: linear-gradient(105deg,#eaf4fb,#f0f9ff); border: 1px solid #bae6fd; border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--ocean-deep); line-height: 1.55; }
+.agent-tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* LIVE STATUS WIDGET — amber accent */
+.status-widget { background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+.status-widget-title { font-family: 'Playfair Display',serif; font-size: 0.95rem; font-weight: 700; color: #92400e; margin-bottom: 0.25rem; }
+.status-widget-desc { font-size: 0.81rem; color: var(--text-muted); margin-bottom: 1rem; }
+.status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 480px) { .status-grid { grid-template-columns: 1fr; } }
+.status-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 0.9rem 1rem; text-align: center; position: relative; overflow: hidden; }
+.status-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--status-color, var(--gray-border)); transition: background var(--transition); }
+.status-card.green::before { background: var(--green); }
+.status-card.amber::before { background: var(--accent); }
+.status-card.red::before   { background: var(--red); }
+.status-label { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.35rem; }
+.status-value { font-family: 'Playfair Display',serif; font-size: 1.4rem; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 0.3rem; }
+.status-value.green { color: var(--green); }
+.status-value.amber { color: var(--accent); }
+.status-value.red   { color: var(--red); }
+.status-sub { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
+.status-bar-wrap { margin-top: 1rem; }
+.status-bar-label { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.35rem; display: flex; justify-content: space-between; }
+.status-bar-track { height: 6px; background: var(--gray-border); border-radius: 999px; overflow: hidden; }
+.status-bar-fill { height: 100%; border-radius: 999px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); background: var(--green); }
+.status-bar-fill.amber { background: var(--accent); }
+.status-bar-fill.red   { background: var(--red); }
+
+/* LEAVE-BY BANNER */
+.leave-banner { display: none; border-radius: var(--radius); padding: 1rem 1.25rem; font-size: 0.95rem; font-weight: 600; line-height: 1.5; margin-top: 0.85rem; border: 1px solid; }
+.leave-banner.green { background: var(--green-light); border-color: var(--green-border); color: #14532d; }
+.leave-banner.amber { background: var(--accent-light); border-color: var(--accent-border); color: #78350f; }
+.leave-banner.red   { background: var(--red-light);   border-color: var(--red-border);   color: #7f1d1d; }
+
+/* SUBMIT */
+.btn-generate { display: inline-flex; align-items: center; gap: 8px; padding: 0.85rem 2rem; border-radius: var(--radius); border: none; background: linear-gradient(135deg,#10b981,#059669); color: #fff; font-family: 'DM Sans',sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1.5rem; width: 100%; justify-content: center; transition: all var(--transition); box-shadow: 0 4px 14px rgba(16,185,129,0.35); -webkit-tap-highlight-color: transparent; }
+.btn-generate:hover { background: linear-gradient(135deg,#059669,#047857); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.45); }
+.btn-generate:active { transform: scale(0.98); }
+.btn-generate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* SPINNER */
+.spinner-overlay { position: fixed; inset: 0; background: rgba(2,62,138,0.55); backdrop-filter: blur(4px); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; padding: 1rem; }
+.spinner-overlay.active { display: flex; }
+.spinner-box { background: #fff; border-radius: var(--radius-lg); padding: 2.5rem 3rem; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2); width: 100%; max-width: 300px; }
+.spinner { width: 48px; height: 48px; border: 3px solid rgba(0,119,182,0.2); border-top: 3px solid var(--ocean); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.25rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* RESULTS */
+.results-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; display: none; margin-top: 1.5rem; }
+.results-card.visible { display: block; }
+.results-header { background: linear-gradient(105deg,#023e8a,#0077b6); padding: 1.25rem 1.5rem; color: #fff; }
+.results-header h3 { font-family: 'Playfair Display',serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.2rem; }
+.results-header p { font-size: 0.84rem; opacity: 0.8; }
+.results-body { padding: 1.5rem; font-size: 0.92rem; line-height: 1.75; color: var(--text); }
+.results-body strong { color: var(--ocean-deep); }
+.results-body a { color: var(--ocean); }
+.results-body a:hover { text-decoration: underline; }
+
+/* SIDEBAR */
+.affiliate-sidebar { display: flex; flex-direction: column; gap: 1rem; }
+.deal-banner { background: linear-gradient(135deg,#023e8a,#0077b6); border-radius: var(--radius-lg); padding: 1.1rem; color: #fff; }
+.deal-banner h3 { font-size: 0.92rem; font-weight: 600; margin-bottom: 0.4rem; }
+.deal-banner p { font-size: 0.82rem; opacity: 0.85; margin-bottom: 0.75rem; line-height: 1.5; }
+.deal-btn { display: block; text-align: center; background: var(--coral); color: #fff; padding: 0.55rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: background var(--transition); }
+.deal-btn:hover { background: var(--coral-dark); }
+.affiliate-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 1.1rem; box-shadow: var(--shadow); }
+.affiliate-card-title { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+.affiliate-link { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--gray-light); border: 1px solid var(--gray-border); text-decoration: none; color: var(--text); margin-bottom: 0.5rem; font-size: 0.88rem; font-weight: 500; transition: all var(--transition); }
+.affiliate-link:last-child { margin-bottom: 0; }
+.affiliate-link:hover { background: #eaf4fb; border-color: var(--teal); transform: translateX(2px); }
+.affiliate-link .arr { font-size: 0.75rem; color: var(--text-muted); }
+.affiliate-link:hover .arr { color: var(--ocean); }
+.affiliate-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.6rem; font-style: italic; }
+.quick-rule { display: flex; align-items: flex-start; gap: 9px; padding: 0.6rem 0; border-bottom: 1px solid var(--gray-border); font-size: 0.83rem; line-height: 1.55; }
+.quick-rule:last-child { border-bottom: none; }
+
+/* FOOTER */
+footer { background: linear-gradient(105deg,#023e8a 0%,#0077b6 100%); color: rgba(255,255,255,0.85); padding: 3rem 1.5rem 2rem; }
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-brand { font-family: 'Playfair Display',serif; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+.footer-tagline { font-size: 0.85rem; opacity: 0.7; }
+.footer-subscribe { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-email { padding: 0.65rem 1rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.12); color: #fff; font-family: 'DM Sans',sans-serif; font-size: 0.9rem; flex: 1; min-width: 180px; outline: none; }
+.footer-email::placeholder { color: rgba(255,255,255,0.5); }
+.footer-sub-btn { padding: 0.65rem 1.2rem; background: var(--coral); color: #fff; border: none; cursor: pointer; border-radius: 9px; font-size: 0.9rem; font-weight: 600; font-family: 'DM Sans',sans-serif; transition: background var(--transition); }
+.footer-sub-btn:hover { background: var(--coral-dark); }
+.footer-links { display: flex; gap: 1.2rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+.footer-copy { margin-top: 2rem; font-size: 0.8rem; opacity: 0.55; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12); }
+.error-msg { color: #ef4444; font-size: 0.8rem; margin-top: 0.3rem; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) window.supabase = createClient('https://pbojacnagutipfhcxltj.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+</script>
+
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html"><img src="images/nav-icon.png" alt="Voyage Genie"/><span class="vg-title">Voyage Genie</span></a>
+    <div class="vg-right">
+      <a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a>
+      <a class="nav-chip" href="index.html#travel-tools">🧰 Tools</a>
+    </div>
+  </div>
+</header>
+
+<div class="page-banner"><div class="page-banner-inner">
+  <h1>🛫 Airport Departure Planner</h1>
+  <p>Real-time drive time to your airport, live delay status, and exactly when to leave — so you never miss a flight.</p>
+</div></div>
+
+<div class="spinner-overlay" id="spinnerOverlay">
+  <div class="spinner-box">
+    <div class="spinner"></div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1e293b;margin-bottom:0.3rem">Checking traffic & airport…</div>
+    <div style="font-size:0.85rem;color:#64748b">Fetching live data for your route</div>
+  </div>
+</div>
+
+<main>
+<div class="planner-layout">
+
+  <div class="planning-card">
+    <h2>Plan Your Airport Departure</h2>
+    <p class="step-desc">Enter your origin and flight details — Genie checks live traffic, current airport delays, and tells you the safest time to leave.</p>
+
+    <!-- LIVE STATUS WIDGET -->
+    <div class="status-widget" id="statusWidget">
+      <div class="status-widget-title">🔴 Live Status — Fill in your details to check</div>
+      <div class="status-widget-desc">Traffic conditions and airport delay data will appear here after you run the check.</div>
+      <div class="status-grid">
+        <div class="status-card" id="trafficCard">
+          <div class="status-label">Drive Time</div>
+          <div class="status-value" id="driveTimeVal">—</div>
+          <div class="status-sub" id="driveTimeSub">Enter origin & airport</div>
+        </div>
+        <div class="status-card" id="delayCard">
+          <div class="status-label">Airport Delays</div>
+          <div class="status-value" id="delayVal">—</div>
+          <div class="status-sub" id="delaySub">Enter your airport</div>
+        </div>
+      </div>
+      <div class="status-bar-wrap" id="delayBarWrap" style="display:none">
+        <div class="status-bar-label"><span>Airport delay level</span><span id="delayPct">—</span></div>
+        <div class="status-bar-track"><div class="status-bar-fill" id="delayBar" style="width:0%"></div></div>
+      </div>
+      <div class="leave-banner" id="leaveBanner"></div>
+    </div>
+
+    <div class="agent-tip">
+      <span class="agent-tip-icon">🛫</span>
+      <span>Genie checks <strong>live traffic</strong> from your location to the airport, <strong>current flight delay data</strong> at your terminal, and gives you a personalised "leave by" time with buffer built in.</span>
+    </div>
+
+    <!-- ORIGIN -->
+    <div class="section-label">Where are you leaving from?</div>
+    <div class="field">
+      <label for="origin">🏠 Your Origin Address <span class="required-star">*</span></label>
+      <input type="text" id="origin" class="vg-input" placeholder="e.g. Grand Wailea Resort, Maui · or a full address · or city"/>
+      <div id="originError" class="error-msg hidden">⚠ Please enter your origin address.</div>
+    </div>
+
+    <!-- AIRPORT -->
+    <div class="section-label">Your Airport</div>
+    <div class="field">
+      <label for="airportSelect">✈️ Departure Airport <span class="required-star">*</span></label>
+      <select id="airportSelect" class="vg-select">
+        <option value="">-- Select Airport --</option>
+        <optgroup label="🇺🇸 United States">
+          <option value="John F. Kennedy International Airport, New York" data-iata="JFK">New York JFK</option>
+          <option value="LaGuardia Airport, New York" data-iata="LGA">New York LaGuardia (LGA)</option>
+          <option value="Newark Liberty International Airport, New Jersey" data-iata="EWR">Newark (EWR)</option>
+          <option value="Los Angeles International Airport" data-iata="LAX">Los Angeles (LAX)</option>
+          <option value="Chicago O'Hare International Airport" data-iata="ORD">Chicago O'Hare (ORD)</option>
+          <option value="Dallas Fort Worth International Airport" data-iata="DFW">Dallas/Fort Worth (DFW)</option>
+          <option value="Hartsfield-Jackson Atlanta International Airport" data-iata="ATL">Atlanta (ATL)</option>
+          <option value="San Francisco International Airport" data-iata="SFO">San Francisco (SFO)</option>
+          <option value="Miami International Airport" data-iata="MIA">Miami (MIA)</option>
+          <option value="Denver International Airport" data-iata="DEN">Denver (DEN)</option>
+          <option value="Seattle-Tacoma International Airport" data-iata="SEA">Seattle (SEA)</option>
+          <option value="Boston Logan International Airport" data-iata="BOS">Boston (BOS)</option>
+          <option value="Orlando International Airport" data-iata="MCO">Orlando (MCO)</option>
+          <option value="Las Vegas Harry Reid International Airport" data-iata="LAS">Las Vegas (LAS)</option>
+          <option value="Kahului Airport, Maui" data-iata="OGG">Maui – Kahului (OGG)</option>
+          <option value="Daniel K. Inouye International Airport, Honolulu" data-iata="HNL">Honolulu (HNL)</option>
+          <option value="Phoenix Sky Harbor International Airport" data-iata="PHX">Phoenix (PHX)</option>
+          <option value="Charlotte Douglas International Airport" data-iata="CLT">Charlotte (CLT)</option>
+        </optgroup>
+        <optgroup label="🇬🇧 United Kingdom">
+          <option value="London Heathrow Airport" data-iata="LHR">London Heathrow (LHR)</option>
+          <option value="London Gatwick Airport" data-iata="LGW">London Gatwick (LGW)</option>
+          <option value="London Stansted Airport" data-iata="STN">London Stansted (STN)</option>
+          <option value="Manchester Airport, Manchester" data-iata="MAN">Manchester (MAN)</option>
+          <option value="Edinburgh Airport" data-iata="EDI">Edinburgh (EDI)</option>
+        </optgroup>
+        <optgroup label="🇪🇺 Europe">
+          <option value="Amsterdam Airport Schiphol" data-iata="AMS">Amsterdam (AMS)</option>
+          <option value="Frankfurt Airport" data-iata="FRA">Frankfurt (FRA)</option>
+          <option value="Paris Charles de Gaulle Airport" data-iata="CDG">Paris CDG</option>
+          <option value="Munich Airport" data-iata="MUC">Munich (MUC)</option>
+          <option value="Madrid Barajas Airport" data-iata="MAD">Madrid (MAD)</option>
+          <option value="Barcelona El Prat Airport" data-iata="BCN">Barcelona (BCN)</option>
+          <option value="Rome Fiumicino Airport" data-iata="FCO">Rome Fiumicino (FCO)</option>
+          <option value="Zurich Airport" data-iata="ZRH">Zurich (ZRH)</option>
+          <option value="Copenhagen Airport" data-iata="CPH">Copenhagen (CPH)</option>
+          <option value="Vienna International Airport" data-iata="VIE">Vienna (VIE)</option>
+          <option value="Istanbul Airport" data-iata="IST">Istanbul (IST)</option>
+          <option value="Athens International Airport" data-iata="ATH">Athens (ATH)</option>
+          <option value="Lisbon Airport" data-iata="LIS">Lisbon (LIS)</option>
+        </optgroup>
+        <optgroup label="🌏 Middle East">
+          <option value="Dubai International Airport" data-iata="DXB">Dubai (DXB)</option>
+          <option value="Hamad International Airport, Doha" data-iata="DOH">Doha (DOH)</option>
+          <option value="Abu Dhabi International Airport" data-iata="AUH">Abu Dhabi (AUH)</option>
+        </optgroup>
+        <optgroup label="🌏 Asia">
+          <option value="Singapore Changi Airport" data-iata="SIN">Singapore Changi (SIN)</option>
+          <option value="Hong Kong International Airport" data-iata="HKG">Hong Kong (HKG)</option>
+          <option value="Tokyo Narita International Airport" data-iata="NRT">Tokyo Narita (NRT)</option>
+          <option value="Tokyo Haneda Airport" data-iata="HND">Tokyo Haneda (HND)</option>
+          <option value="Seoul Incheon International Airport" data-iata="ICN">Seoul Incheon (ICN)</option>
+          <option value="Bangkok Suvarnabhumi Airport" data-iata="BKK">Bangkok (BKK)</option>
+          <option value="Kuala Lumpur International Airport" data-iata="KUL">Kuala Lumpur (KUL)</option>
+          <option value="Ngurah Rai International Airport, Bali" data-iata="DPS">Bali (DPS)</option>
+          <option value="Ninoy Aquino International Airport, Manila" data-iata="MNL">Manila (MNL)</option>
+        </optgroup>
+        <optgroup label="🌏 Oceania">
+          <option value="Sydney Kingsford Smith Airport" data-iata="SYD">Sydney (SYD)</option>
+          <option value="Melbourne Airport" data-iata="MEL">Melbourne (MEL)</option>
+          <option value="Auckland Airport" data-iata="AKL">Auckland (AKL)</option>
+        </optgroup>
+        <option value="OTHER" data-iata="">Other airport…</option>
+      </select>
+      <div id="customAirportWrap" class="hidden" style="margin-top:0.5rem">
+        <input type="text" id="customAirport" class="vg-input" placeholder="Full airport name, e.g. Cancun International Airport"/>
+      </div>
+      <div id="airportError" class="error-msg hidden">⚠ Please select your departure airport.</div>
+    </div>
+
+    <div class="field">
+      <label for="terminal">🚪 Terminal <span class="opt-tag">Optional but helps</span></label>
+      <input type="text" id="terminal" class="vg-input" placeholder="e.g. Terminal 1, International, T5"/>
+    </div>
+
+    <!-- FLIGHT DETAILS -->
+    <div class="section-label">Your Flight</div>
+    <div class="two-col">
+      <div class="field">
+        <label for="flightDate">📅 Flight Date <span class="required-star">*</span></label>
+        <input type="date" id="flightDate" class="vg-input"/>
+        <div id="dateError" class="error-msg hidden">⚠ Required.</div>
+      </div>
+      <div class="field">
+        <label for="flightTime">🕐 Scheduled Departure <span class="required-star">*</span></label>
+        <input type="time" id="flightTime" class="vg-input"/>
+        <div id="timeError" class="error-msg hidden">⚠ Required.</div>
+      </div>
+    </div>
+
+    <div class="two-col--short">
+      <div class="field">
+        <label for="flightType">✈️ Flight Type</label>
+        <select id="flightType" class="vg-select">
+          <option value="domestic">Domestic</option>
+          <option value="international">International</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="travellerType">👤 Travelling as</label>
+        <select id="travellerType" class="vg-select">
+          <option value="solo traveller with carry-on only">Solo — carry-on only</option>
+          <option value="solo traveller with checked bags">Solo — checked bags</option>
+          <option value="couple">Couple</option>
+          <option value="family with young children">Family with kids</option>
+          <option value="group">Group (5+)</option>
+          <option value="business traveller">Business traveller</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="extras">📝 Anything else? <span class="opt-tag">Optional</span></label>
+      <input type="text" id="extras" class="vg-input" placeholder="e.g. need wheelchair assistance, first time at this airport, Priority Pass lounge"/>
+    </div>
+
+    <button class="btn-generate" id="generateBtn" onclick="checkDeparture()">
+      🛫 Check My Departure
+    </button>
+
+    <div class="results-card" id="resultsCard">
+      <div class="results-header"><h3 id="resultsTitle">Your Departure Plan</h3><p id="resultsSubtitle"></p></div>
+      <div class="results-body" id="resultsBody"></div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="affiliate-sidebar">
+
+    <div class="deal-banner">
+      <h3>🚖 Book Your Airport Transfer</h3>
+      <p>Pre-book a taxi or private car — know the cost before you leave and avoid surge pricing.</p>
+      <a href="airport-transfer-planner.html" class="deal-btn">Compare Transfers →</a>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">⚡ Departure Rules</div>
+      <div class="quick-rule"><span style="font-size:1rem;flex-shrink:0">🇺🇸</span><span><strong>Domestic US:</strong> Arrive 2h before. Peak hours (Mon morning, Fri evening) add 30 min.</span></div>
+      <div class="quick-rule"><span style="font-size:1rem;flex-shrink:0">🌍</span><span><strong>International:</strong> Arrive 3h before. Some routes (UK, Middle East) need 3.5h.</span></div>
+      <div class="quick-rule"><span style="font-size:1rem;flex-shrink:0">👨‍👩‍👧</span><span><strong>Families with kids</strong> should add 30–45 min on top of any estimate.</span></div>
+      <div class="quick-rule"><span style="font-size:1rem;flex-shrink:0">🧳</span><span><strong>Checked bags</strong> add ~20 min at check-in vs. carry-on only.</span></div>
+      <div class="quick-rule"><span style="font-size:1rem;flex-shrink:0">🔴</span><span><strong>Never cut it under 90 min</strong> at a major international airport — ever.</span></div>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🛋️ Lounge Access</div>
+      <a href="airport-lounge-finder.html" class="affiliate-link"><span>Find Airport Lounges</span><span class="arr">↗</span></a>
+      <a href="https://www.loungebuddy.com" target="_blank" rel="noopener" class="affiliate-link"><span>LoungeBuddy Day Pass</span><span class="arr">↗</span></a>
+      <a href="https://www.prioritypass.com" target="_blank" rel="noopener" class="affiliate-link"><span>Priority Pass</span><span class="arr">↗</span></a>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🔗 Related Tools</div>
+      <a href="flight-status.html" class="affiliate-link"><span>✈️ Flight Status Tracker</span><span class="arr">↗</span></a>
+      <a href="airport-transfer-planner.html" class="affiliate-link"><span>🚖 Airport Transfer Planner</span><span class="arr">↗</span></a>
+      <a href="layover-guide.html" class="affiliate-link"><span>🔄 Layover Guide</span><span class="arr">↗</span></a>
+      <a href="packing-checklist.html" class="affiliate-link"><span>🧳 Packing Checklist</span><span class="arr">↗</span></a>
+      <p class="affiliate-note">All tools are free to use.</p>
+    </div>
+
+  </aside>
+</div>
+</main>
+
+<footer><div class="footer-inner">
+  <div class="footer-brand">✈️ Voyage Genie</div>
+  <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+  <div class="footer-subscribe"><input class="footer-email" placeholder="Enter your email" type="email"/><button class="footer-sub-btn">Subscribe</button></div>
+  <div class="footer-links"><a href="index.html">Home</a><a href="index.html#plan-trip">Plan</a><a href="index.html#travel-tools">Tools</a><a href="contact.html">Contact</a></div>
+</div>
+<div class="footer-copy" style="max-width:1100px;margin:0 auto;">© 2025 VoyageGenie.com – All rights reserved. Traffic and delay data is live but Genie adds safety buffers. Always allow extra time.</div>
+</footer>
+
+<script src="js/genie-chat.js" defer></script>
+
+<script>
+const N8N_WEBHOOK = 'https://exodonprofits.app.n8n.cloud/webhook/airport-departure';
+
+// Airport select — show custom input for "Other"
+document.getElementById('airportSelect').addEventListener('change', function() {
+  document.getElementById('customAirportWrap').classList.toggle('hidden', this.value !== 'OTHER');
+});
+
+// Set today as min date
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('flightDate').min = new Date().toISOString().split('T')[0];
+});
+
+// Live status widget update after checking
+function updateStatusWidget(data) {
+  const { driveMinutes, driveText, trafficLevel, delayLevel, delayPct, leaveBySummary } = data;
+
+  // Drive time card
+  const trafficCard = document.getElementById('trafficCard');
+  const driveVal    = document.getElementById('driveTimeVal');
+  const driveSub    = document.getElementById('driveTimeSub');
+  if (driveText) {
+    driveVal.textContent = driveText;
+    driveSub.textContent = trafficLevel === 'green' ? 'Traffic is clear' : trafficLevel === 'amber' ? 'Moderate traffic' : 'Heavy traffic delays';
+    driveVal.className = 'status-value ' + (trafficLevel || 'amber');
+    trafficCard.className = 'status-card ' + (trafficLevel || 'amber');
+  }
+
+  // Delay card
+  const delayCard = document.getElementById('delayCard');
+  const delayVal  = document.getElementById('delayVal');
+  const delaySub  = document.getElementById('delaySub');
+  if (delayLevel !== undefined) {
+    const delayLabels = { green: 'On Time', amber: 'Some Delays', red: 'Major Delays' };
+    delayVal.textContent = delayLabels[delayLevel] || '—';
+    delayVal.className   = 'status-value ' + delayLevel;
+    delayCard.className  = 'status-card ' + delayLevel;
+    delaySub.textContent = delayPct ? `~${delayPct}% of flights affected` : 'Based on live airport data';
+  }
+
+  // Delay bar
+  if (delayPct !== undefined) {
+    document.getElementById('delayBarWrap').style.display = 'block';
+    const fill = document.getElementById('delayBar');
+    const pct  = Math.min(100, delayPct);
+    fill.style.width = pct + '%';
+    fill.className   = 'status-bar-fill ' + (pct < 20 ? 'green' : pct < 50 ? 'amber' : 'red');
+    document.getElementById('delayPct').textContent = pct + '% delayed';
+  }
+
+  // Leave-by banner
+  if (leaveBySummary) {
+    const banner = document.getElementById('leaveBanner');
+    const level  = trafficLevel === 'red' || delayLevel === 'red' ? 'red' : trafficLevel === 'amber' || delayLevel === 'amber' ? 'amber' : 'green';
+    banner.textContent = leaveBySummary;
+    banner.className   = 'leave-banner ' + level;
+    banner.style.display = 'block';
+  }
+
+  // Update widget header
+  document.querySelector('.status-widget-title').textContent = '🟢 Live Status — Updated';
+  document.querySelector('.status-widget-desc').textContent  = 'Data fetched just now. Refresh before you leave for the most current traffic.';
+}
+
+function validate() {
+  let ok = true;
+  const origin  = document.getElementById('origin').value.trim();
+  const airport = document.getElementById('airportSelect').value;
+  const custom  = document.getElementById('customAirport').value.trim();
+  const date    = document.getElementById('flightDate').value;
+  const time    = document.getElementById('flightTime').value;
+  document.getElementById('originError').classList.toggle('hidden', !!origin);
+  document.getElementById('airportError').classList.toggle('hidden', !!(airport && (airport !== 'OTHER' || custom)));
+  document.getElementById('dateError').classList.toggle('hidden', !!date);
+  document.getElementById('timeError').classList.toggle('hidden', !!time);
+  if (!origin) ok = false;
+  if (!airport || (airport === 'OTHER' && !custom)) ok = false;
+  if (!date) ok = false;
+  if (!time) ok = false;
+  return ok;
+}
+
+function getAirportName() {
+  const sel = document.getElementById('airportSelect');
+  if (sel.value === 'OTHER') return document.getElementById('customAirport').value.trim();
+  return sel.options[sel.selectedIndex]?.text || sel.value;
+}
+
+function getAirportIATA() {
+  const sel = document.getElementById('airportSelect');
+  return sel.options[sel.selectedIndex]?.dataset?.iata || '';
+}
+
+async function checkDeparture() {
+  if (!validate()) return;
+  const overlay = document.getElementById('spinnerOverlay');
+  const btn     = document.getElementById('generateBtn');
+  overlay.classList.add('active');
+  btn.disabled = true;
+
+  const origin      = document.getElementById('origin').value.trim();
+  const airportName = getAirportName();
+  const iata        = getAirportIATA();
+  const terminal    = document.getElementById('terminal').value.trim();
+  const flightDate  = document.getElementById('flightDate').value;
+  const flightTime  = document.getElementById('flightTime').value;
+  const flightType  = document.getElementById('flightType').value;
+  const traveller   = document.getElementById('travellerType').value;
+  const extras      = document.getElementById('extras').value.trim();
+
+  try {
+    const res  = await fetch(N8N_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ origin, airportName, iata, terminal, flightDate, flightTime, flightType, traveller, extras })
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    // Update live widget if structured data returned
+    if (data.driveText || data.driveMinutes || data.delayLevel) {
+      updateStatusWidget(data);
+    }
+
+    // Render AI narrative
+    const html = data.resultHtml || data.result || '';
+    if (!html) throw new Error('No content returned.');
+
+    document.getElementById('resultsTitle').textContent   = `✈️ ${airportName}`;
+    document.getElementById('resultsSubtitle').textContent = `${flightDate} · ${flightTime} · ${flightType}`;
+    document.getElementById('resultsBody').innerHTML = `
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:0.7rem 1rem;margin-bottom:1.25rem;font-size:0.81rem;color:#78350f">
+        ⏱️ <strong style="color:#92400e">Always allow extra time.</strong> Traffic and airport conditions can change quickly — check again 1–2 hours before departure.
+      </div>
+      ${html}`;
+    document.getElementById('resultsCard').classList.add('visible');
+    document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch(err) {
+    renderFallback(airportName, flightType);
+    console.error('[Departure Planner]', err);
+  } finally {
+    overlay.classList.remove('active');
+    btn.disabled = false;
+  }
+}
+
+function renderFallback(airportName, flightType) {
+  const isIntl = flightType === 'international';
+  const baseBuffer = isIntl ? 180 : 120;
+  document.getElementById('resultsTitle').textContent   = 'General Departure Guide';
+  document.getElementById('resultsSubtitle').textContent = `${airportName} · offline estimate`;
+  document.getElementById('resultsBody').innerHTML = `
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:0.7rem 1rem;margin-bottom:1.25rem;font-size:0.81rem;color:#991b1b">
+      ⚠️ Could not fetch live data. Using standard time estimates below.
+    </div>
+    <strong style="color:var(--ocean-deep);display:block;margin-bottom:6px">Recommended arrival buffer:</strong>
+    <div style="margin:3px 0 3px 14px">• ${isIntl ? 'International flight: arrive <strong>3 hours</strong> before departure' : 'Domestic flight: arrive <strong>2 hours</strong> before departure'}</div>
+    <div style="margin:3px 0 3px 14px">• Add 30–45 min if travelling with children or checked bags</div>
+    <div style="margin:3px 0 3px 14px">• Add your drive time on top — check <a href="https://maps.google.com" target="_blank">Google Maps</a> for current traffic</div>
+    <br>
+    <strong style="color:var(--ocean-deep);display:block;margin-bottom:6px">At the airport:</strong>
+    <div style="margin:3px 0 3px 14px">• Check-in closes 45–60 min before departure for most airlines</div>
+    <div style="margin:3px 0 3px 14px">• Security: allow 20–45 min depending on time of day</div>
+    <div style="margin:3px 0 3px 14px">• International passport control: add another 15–30 min</div>`;
+  document.getElementById('resultsCard').classList.add('visible');
+  document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>

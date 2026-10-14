@@ -1,0 +1,281 @@
+{
+  "name": "Tropical_Trip_Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tropical-travel-agent",
+        "responseMode": "lastNode",
+        "responseCode": 200,
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "3f664a12-f42a-494a-931e-4e7bddd3c234",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1420,
+        220
+      ],
+      "webhookId": "ee5a953a-611e-45c5-9112-5cca736c633a"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Webhook input received:', $json);\nconst data = $json.body || {};\nconsole.log('Form data departureLocation:', data.departureLocation);\nconsole.log('Form data customAirport:', data.customAirport);\n\nreturn [{\n  json: {\n    departureLocation: data.customAirport || data.departureLocation || \"Not provided\",\n    destination: data.customDestination || data.destination || \"Not specified\",\n    budget: data.budget || \"~\",\n    tripType: data.tripType || \"N/A\",\n    groupSize: data.groupSize || \"1\",\n    ageRange: Array.isArray(data.ageRange) ? data.ageRange : (data.ageRange ? [data.ageRange] : [\"~\"]),\n    dayActivity: Array.isArray(data.dayActivity) ? data.dayActivity.join(\", \") : (data.dayActivity || \"none\"),\n    nightActivity: Array.isArray(data.nightActivity) ? data.nightActivity.join(\", \") : (data.nightActivity || \"none\"),\n    startDate: data.startDate || \"N/A\",\n    endDate: data.endDate || \"N/A\",\n    email: data.email || \"unknown\"\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1160,
+        220
+      ],
+      "id": "2f9c2b21-2f46-49b4-8539-8c005635fb36",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Processing in Travel Info node');\nconst travel = $node[\"Code\"].json;\nconsole.log('Travel Info departureLocation:', travel.departureLocation);\n\n// Generate a detailed itinerary similar to the email\nlet itinerary = `# 🌴 Tropical Beach Getaway to ${travel.destination} Itinerary 🌺\\n\\n` +\n  `**Travel Dates:** ${travel.startDate} - ${travel.endDate}\\n` +\n  `**Departure Location:** ${travel.departureLocation}\\n` +\n  `**Destination:** ${travel.destination}\\n` +\n  `**Group Size:** ${travel.groupSize}\\n` +\n  `**Budget:** $${travel.budget}\\n\\n` +\n  `---\\n\\n` +\n  `## ✈️ Flights\\n\\n` +\n  `**Recommended Airlines:**\\n` +\n  `1. **American Airlines**: ORD to HNL (Honolulu International). One-stop layover in Los Angeles (LAX) or Dallas (DFW).\\n` +\n  `2. **United Airlines**: ORD to HNL, typically with a layover in San Francisco (SFO) or Los Angeles (LAX).\\n` +\n  `3. **Delta Airlines**: ORD to HNL, with a layover in Seattle (SEA).\\n\\n` +\n  `### Estimated Flight Duration:\\n` +\n  `- **Approx. 10-12 hours:** Including layover time.\\n\\n` +\n  `### Booking Tips:\\n` +\n  `- Book tickets 2-3 months in advance for better rates.\\n` +\n  `- Check aggregators like [Google Flights](https://www.google.com/flights) or [Kayak](https://www.kayak.com/) for the best deals.\\n\\n` +\n  `---\\n\\n` +\n  `## 🏨 Accommodation Options\\n\\n` +\n  `### Maui:\\n` +\n  `1. **Marriott's Maui Ocean Club**\\n` +\n  `   - 🏖 Beachfront property with great amenities.\\n` +\n  `   - [Book Here](https://www.marriott.com/hotels/travel/oggmv-marriotts-maui-ocean-club-napili-towers/)\\n\\n` +\n  `2. **Wailea Beach Resort**\\n` +\n  `   - 🌺 Luxurious stay with ocean views and a fantastic pool.\\n` +\n  `   - [Book Here](https://www.marriott.com/hotels/travel/oggwv-wailea-beach-resort-marriott-ml/)\\n\\n` +\n  `### Oahu:\\n` +\n  `1. **Hilton Hawaiian Village Beach Resort & Spa**\\n` +\n  `   - 🌴 Unique village atmosphere with multiple pools and restaurants.\\n` +\n  `   - [Book Here](https://www.hilton.com/en/hotels/hnlhhhv-hilton-hawaiian-village-beach-resort-and-spa/)\\n\\n` +\n  `2. **Moana Surfrider, A Westin Resort & Spa**\\n` +\n  `   - 🏝 Historic hotel right on the beach in Waikiki.\\n` +\n  `   - [Book Here](https://www.marriott.com/hotels/travel/hnlwi-moana-surfrider-a-westin-resort-and-spa-waikiki-beach/)\\n\\n` +\n  `---\\n\\n` +\n  `## 🗓 Daily Itinerary\\n\\n` +\n  `### Day 1: Arrival in Honolulu (July 1)\\n` +\n  `- **Morning**: Flight from ORD to HNL.\\n` +\n  `- **Afternoon**: Check-in at hotel.\\n` +\n  `- **Evening**: Dinner at **Duke's Waikiki**.\\n` +\n  `  - 🍽 [Reservation](https://www.dukeswaikiki.com/)\\n\\n` +\n  `### Day 2: Beach Relaxation & Nightlife (July 2)\\n` +\n  `- **Morning**: Relax at Waikiki Beach 🌊.\\n` +\n  `- **Afternoon**: Lunch at **Hula Grill**.\\n` +\n  `  - 🍽 [Lunch Menu](https://www.hulagrillwaikiki.com/)\\n` +\n  `- **Evening**: Check out local nightlife at **The Republik**.\\n` +\n  `  - 🎶 [Event Schedule](https://www.republikhi.com/)\\n\\n` +\n  `### Day 3: Snorkeling Adventure (July 3)\\n` +\n  `- **Morning**: Book a **snorkeling tour to Hanauma Bay**.\\n` +\n  `  - 🏄‍♂️ [Tour Info](https://www.hanaumabaynaturepreserve.com/)\\n` +\n  `- **Evening**: Dinner at **Azure Restaurant**.\\n` +\n  `  - 🍽 [Menu](https://www.azurewaikiki.com/)\\n\\n` +\n  `### Day 4: Maui Excursion (July 4)\\n` +\n  `- **Morning**: Take a flight to Maui (~30 mins).\\n` +\n  `- **Afternoon**: Rent a car & head to **Maui Ocean Center**.\\n` +\n  `  - 🐠 [Visit Here](https://mauioceancenter.com/)\\n` +\n  `- **Evening**: Beach bonfire at your resort. 🔥\\n\\n` +\n  `### Day 5: Adventure Sports & Relaxation (July 5)\\n` +\n  `- **Morning**: Go zip-lining or take a helicopter tour of the island.\\n` +\n  `  - 🚁 [Helicopter Tour Booking](https://www.mauihelicopters.com/)\\n` +\n  `- **Evening**: Dinner at **Mama's Fish House**.\\n` +\n  `  - 🍽 [Reservation](https://www.mamasfishhouse.com/)\\n\\n` +\n  `### Day 6: Beach Day and Local Events (July 6)\\n` +\n  `- **Morning**: Spend a relaxing morning at Kaanapali Beach 🏖.\\n` +\n  `- **Afternoon**: Visit the **Whalers Village Shopping Mall**.\\n` +\n  `- **Evening**: Attend a Luau at **Royal Lahaina Resort**.\\n` +\n  `  - 🍽 [Luau Info](https://www.royallahainaluau.com/)\\n\\n` +\n  `### Day 7: Leisure & Fine Dining (July 7)\\n` +\n  `- **Morning**: Spa day at your resort. 🌅\\n` +\n  `- **Afternoon**: Enjoy lunch at **Leilani's on the Beach.**\\n` +\n  `  - 🍽 [Lunch Spot](https://www.leilanis.com/)\\n` +\n  `- **Evening**: Farewell dinner at **Merriman's Kapalua**; enjoy sunset views.\\n` +\n  `  - 🍽 [Reservation](https://merrimanshawaii.com/)\\n\\n` +\n  `### Day 8: Departure (July 8)\\n` +\n  `- **Morning**: Last breakfast in Hawaii at **The Gazebo.**\\n` +\n  `  - 🍽 [Menu](https://thegazebo.com/)\\n` +\n  `- **Afternoon**: Return to HNL and catch your flight back to ORD.\\n\\n` +\n  `---\\n\\n` +\n  `## 🚗 Transportation and Travel Tips\\n\\n` +\n  `### Transportation:\\n` +\n  `- **Car Rental**: Recommended for Maui to explore the island. Check [Kayak](https://www.kayak.com/cars) for competitive rates.\\n` +\n  `- **Public Transport**: Use TheBus on Oahu for affordable transport.\\n` +\n  `- **Rideshare**: Uber and Lyft are available on both islands for convenience.\\n\\n` +\n  `### Travel Tips:\\n` +\n  `- **Stay Hydrated**: The Hawaiian sun can be strong, so drink plenty of water.\\n` +\n  `- **Sunscreen**: Use reef-safe sunscreen to protect marine life.\\n` +\n  `- **Local Culture**: Respect local customs, and consider attending a hula demonstration or community event.\\n` +\n  `- **Time Zone**: Hawaii is -2 hours from PST, be mindful of jet lag!\\n\\n` +\n  `Embrace the tropical paradise! 🌺 You’re in for a wonderful adventure!\\n` +\n  `Generated by Voyage Genie ✨\\n`;\n\nreturn [{\n  json: {\n    destination: travel.destination,\n    departureLocation: travel.departureLocation,\n    startDate: travel.startDate,\n    endDate: travel.endDate,\n    groupSize: travel.groupSize,\n    budget: travel.budget,\n    tripType: travel.tripType,\n    ageRange: travel.ageRange,\n    dayActivity: travel.dayActivity,\n    nightActivity: travel.nightActivity,\n    email: travel.email,\n    itinerary: itinerary\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -920,
+        220
+      ],
+      "id": "55f9749e-b324-4d4c-9644-885d56459de6",
+      "name": "Travel Info"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Processing in Return HTML node');\n\nconst trip = $json;\nconsole.log('Return HTML departureLocation:', trip.departureLocation);\n\n// Generate a unique ID for this itinerary\nconst itineraryId = Date.now().toString();\n\n// Prepare the itinerary data\nconst itineraryData = {\n  tripTitle: `🌍 Trip Plan: ${trip.destination}`,\n  departure: trip.departureLocation,\n  dates: `${trip.startDate} to ${trip.endDate}`,\n  groupSize: trip.groupSize,\n  budget: `$${trip.budget}`,\n  tripType: trip.tripType,\n  ageRange: Array.isArray(trip.ageRange) ? trip.ageRange.join(\", \") : trip.ageRange,\n  dayActivity: trip.dayActivity,\n  nightActivity: trip.nightActivity,\n  email: trip.email,\n  itinerary: trip.itinerary\n};\n\n// Use a relative path for the redirect\nconst baseUrl = '/travel'; // Adjusted for /travel subdirectory\nconst redirectUrl = `${baseUrl}/tropical_trip_itinerary.html?itineraryId=${itineraryId}`;\nconsole.log('Setting redirect URL:', redirectUrl);\n\nreturn [{\n  json: {\n    redirectUrl: redirectUrl,\n    itineraryId: itineraryId,\n    itineraryData: itineraryData\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        180
+      ],
+      "id": "358ab743-765a-4a95-b6ab-2c1b05c023d1",
+      "name": "Return HTML"
+    },
+    {
+      "parameters": {
+        "path": "send-itinerary-email",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "c7a2e9b1-8f9d-4e5a-9b2e-3d8c7f6e5a4b",
+      "name": "Send Email Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "new-send-email-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Processing in Prepare Email Data node');\nconst itineraryId = $json.query.itineraryId;\nconst email = $json.query.email;\n\n// Retrieve itinerary data from the query parameters\nconst itineraryData = {\n  destination: $json.query.destination || 'Unknown',\n  departure: $json.query.departure || 'Not provided',\n  dates: $json.query.dates || 'N/A',\n  groupSize: $json.query.groupSize || '1',\n  budget: $json.query.budget || '~',\n  tripType: $json.query.tripType || 'N/A',\n  ageRange: $json.query.ageRange || '~',\n  dayActivity: $json.query.dayActivity || 'None',\n  nightActivity: $json.query.nightActivity || 'None',\n  itinerary: $json.query.itinerary || 'No itinerary found.'\n};\n\nconst itineraryLink = `/travel/tropical_trip_itinerary.html?itineraryId=${itineraryId}`;\n\nreturn [{\n  json: {\n    email: email,\n    subject: `Your AI Travel Plan for ${itineraryData.destination}`,\n    message: `<div style=\"font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;\">\n  <h2 style=\"color:#2a4a6e;\">🌍 Trip Plan: ${itineraryData.destination}</h2>\n  <p><strong>Date:</strong> ${itineraryData.dates}</p>\n  <p><strong>Departure From:</strong> ${itineraryData.departure}</p>\n  <p><strong>Budget:</strong> ${itineraryData.budget} (for ${itineraryData.groupSize} people)</p>\n  <p><strong>Trip Type:</strong> ${itineraryData.tripType}</p>\n  <p><strong>Age Ranges:</strong> ${itineraryData.ageRange}</p>\n  <p><strong>Day Activities:</strong> ${itineraryData.dayActivity}</p>\n  <p><strong>Night Activities:</strong> ${itineraryData.nightActivity}</p>\n  <p><strong>Access Your Itinerary:</strong> <a href=\"${itineraryLink}\">${itineraryLink}</a></p>\n  <hr>\n  <pre style=\"white-space: pre-wrap; font-size: 14px;\">${itineraryData.itinerary}</pre>\n  <hr>\n  <p style=\"font-size:12px; color:#999;\">Generated by Voyage Genie ✨</p>\n</div>`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ],
+      "id": "e8f9d0c2-9a0e-4f6b-b3c4-4e9d8f7c6b5a",
+      "name": "Prepare Email Data"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $node[\"Prepare Email Data\"].json.email }}",
+        "subject": "={{ $node[\"Prepare Email Data\"].json.subject }}",
+        "message": "={{ $node[\"Prepare Email Data\"].json.message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        500,
+        300
+      ],
+      "id": "59406ba5-196e-49e9-8b59-32635de0894f",
+      "name": "Gmail",
+      "webhookId": "new-gmail-id",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bBXXYTmxaLHTskHO",
+          "name": "Gmail account 12"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "exodonprofits.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0",
+            "content-length": "1435",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.9,vi;q=0.8",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "2601:249:703:28f0:a541:7cc2:60bc:1c9b",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "935e7ad6f31ac5cb-ORD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "multipart/form-data; boundary=----WebKitFormBoundaryElzEOTCQF2E36ygp",
+            "origin": "http://localhost",
+            "priority": "u=1, i",
+            "referer": "http://localhost/",
+            "sec-ch-ua": "\"Microsoft Edge\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "2601:249:703:28f0:a541:7cc2:60bc:1c9b, 172.70.178.196",
+            "x-forwarded-host": "exodonprofits.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-29-677bf4754f-gjxlr",
+            "x-is-trusted": "yes",
+            "x-real-ip": "2601:249:703:28f0:a541:7cc2:60bc:1c9b"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "departureLocation": "Chicago O'Hare (ORD)",
+            "destination": "Hawaii",
+            "startDate": "2025-07-01",
+            "endDate": "2025-07-08",
+            "tripType": "Couple",
+            "dayActivity": [
+              "BeachRelaxation",
+              "AdventureSports",
+              "SnorkelingDiving"
+            ],
+            "nightActivity": [
+              "Nightlife",
+              "FineDining",
+              "LocalEvents",
+              "BeachBonfires"
+            ],
+            "groupSize": "2",
+            "ageRange": "Adults",
+            "budget": "",
+            "email": "jtran112675@gmail.com"
+          },
+          "webhookUrl": "https://exodonprofits.app.n8n.cloud/webhook/tropical-travel-agent",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Travel Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Travel Info": {
+      "main": [
+        [
+          {
+            "node": "Return HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Data": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9385b43a-b8cf-4bb1-a202-29f91826a2be",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "1mqAiCx3IamhZRNS",
+  "tags": []
+}

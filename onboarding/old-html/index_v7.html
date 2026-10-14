@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GenieSphere — Your AI Agent Hub</title>
+  <meta name="description" content="GenieSphere is the AI hub for Home, Business, Investing, and Travel. Choose your life area and Genie routes you to the right agent." />
+
+  <style>
+    /* =========================================================
+       GenieSphere Theme System (non-technical friendly)
+       - Default theme: Calm Future (light)
+       - Toggle via ⚙️ Appearance (saved in localStorage)
+       ========================================================= */
+
+    :root{
+      /* layout */
+      --container: 1200px;
+      --radius: 7px;
+      --radius-lg: 14px;
+      --btn-radius: 999px;
+
+      /* motion/shadow */
+      --shadow: 0 16px 38px rgba(15,23,42,.16);
+      --shadow-soft: 0 10px 24px rgba(15,23,42,.10);
+
+      /* focus */
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+
+    /* Theme A: Calm Future (default) */
+    body.theme-calm{
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-2: #f1f4ff;
+      --text: #111827;
+      --muted: #4b5563;
+
+      --primary: #4c6ef5;
+      --accent: #22c55e;
+
+      --border: rgba(148,163,184,.70);
+      --border-strong: rgba(148,163,184,.90);
+
+      --shadow: 0 18px 38px rgba(15,23,42,.14);
+      --shadow-soft: 0 10px 26px rgba(15,23,42,.10);
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+
+    /* Theme B: Soft Futuristic */
+    body.theme-future{
+      --bg: #0f172a;
+      --panel: #111c36;
+      --panel-2: #162447;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+
+      --primary: #6366f1;
+      --accent: #22d3ee;
+
+      --border: rgba(71,85,105,.65);
+      --border-strong: rgba(71,85,105,.95);
+
+      --shadow: 0 18px 44px rgba(0,0,0,.52);
+      --shadow-soft: 0 10px 26px rgba(0,0,0,.34);
+      --focus: 0 0 0 4px rgba(34,211,238,.16);
+    }
+
+    /* Theme C: Nature + Tech */
+    body.theme-nature{
+      --bg: #f6f9f7;
+      --panel: #ffffff;
+      --panel-2: #eef5f1;
+      --text: #0f172a;
+      --muted: #475569;
+
+      --primary: #16a34a;
+      --accent: #38bdf8;
+
+      --border: rgba(148,163,184,.70);
+      --border-strong: rgba(148,163,184,.90);
+
+      --shadow: 0 18px 38px rgba(15,23,42,.12);
+      --shadow-soft: 0 10px 26px rgba(15,23,42,.09);
+      --focus: 0 0 0 4px rgba(22,163,74,.16);
+    }
+
+    /* Theme D: Pro Dark */
+    body.theme-dark{
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --panel-2: #0e1626;
+      --text: #e9f0ff;
+      --muted: #a9b6d9;
+
+      --primary: #4c6ef5;
+      --accent: #3ee1a1;
+
+      --border: rgba(120,155,255,.22);
+      --border-strong: rgba(120,155,255,.38);
+
+      --shadow: 0 18px 44px rgba(0,0,0,.50);
+      --shadow-soft: 0 10px 26px rgba(0,0,0,.30);
+      --focus: 0 0 0 4px rgba(76,110,245,.22);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      color:var(--text);
+      font: 500 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 800px at 10% -10%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 60%),
+        radial-gradient(1200px 800px at 110% 10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 55%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg) 100%);
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    a:focus, button:focus, input:focus { outline:none; box-shadow:var(--focus); }
+
+    .sr-only{
+      position:absolute !important;
+      width:1px !important;
+      height:1px !important;
+      padding:0 !important;
+      margin:-1px !important;
+      overflow:hidden !important;
+      clip:rect(0,0,0,0) !important;
+      white-space:nowrap !important;
+      border:0 !important;
+    }
+
+    .container{
+      max-width:var(--container);
+      margin:0 auto;
+      padding:24px;
+    }
+
+    /* Header */
+    .site-header{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      border-bottom:1px solid var(--border);
+      box-shadow: 0 10px 24px rgba(0,0,0,.08);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+
+    .site-header-inner{
+      max-width:var(--container);
+      margin:0 auto;
+      padding:14px 24px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+/*
+      .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 700;
+  }
+*/
+  .logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #6af0c4, #3ee1a1 40%, #1c9369 75%);
+    box-shadow: 0 0 0 3px var(--ring), 0 8px 24px rgba(62, 225, 161, .35);
+  }
+
+    .brand-mark{
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      background: radial-gradient(circle at 30% 30%,
+        color-mix(in srgb, var(--accent) 65%, white),
+        var(--accent) 38%,
+        color-mix(in srgb, var(--primary) 40%, black) 78%);
+      box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent), 0 10px 26px color-mix(in srgb, var(--accent) 18%, transparent);
+      display:block;
+    }
+    .brand-name{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+    }
+    .brand-name strong{ font-size:15px; }
+    .brand-name span{ font-size:12px; color:var(--muted); font-weight:700; }
+
+    .nav-links{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin-left:14px;
+      flex-wrap:wrap;
+      font-size:14px;
+    }
+    .nav-links a{
+      color:var(--muted);
+      padding:4px 2px;
+      border-bottom:2px solid transparent;
+      transition:color .15s ease, border-bottom-color .15s ease;
+    }
+    .nav-links a:hover{
+      color:var(--text);
+      border-bottom-color:var(--primary);
+    }
+
+    .header-actions{
+      margin-left:auto;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 14px;
+      border-radius:var(--btn-radius);
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--text);
+      font-weight:800;
+      font-size:14px;
+      cursor:pointer;
+      transition:transform .15s ease, border-color .15s ease, background .15s ease, filter .15s ease;
+    }
+    .pill:hover{
+      border-color:var(--border-strong);
+      background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+      transform:translateY(-1px);
+    }
+
+    .pill.primary{
+      background:var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 70%, black);
+      color:#071021;
+      box-shadow:0 12px 26px color-mix(in srgb, var(--primary) 22%, transparent);
+    }
+    .pill.primary:hover{ filter:brightness(1.02); }
+
+    .pill.ghost{ background:transparent; }
+
+    .hamburger{
+      display:none;
+      padding:10px 12px;
+      border-radius:var(--btn-radius);
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--text);
+      cursor:pointer;
+    }
+
+    .mobile-drawer{
+      display:none;
+      border-top:1px solid var(--border);
+      padding:10px 24px 16px;
+      max-width:var(--container);
+      margin:0 auto;
+      background: color-mix(in srgb, var(--panel) 96%, transparent);
+    }
+    .mobile-drawer a{
+      display:block;
+      padding:10px 8px;
+      color:var(--muted);
+      border-radius:var(--radius);
+    }
+    .mobile-drawer a:hover{
+      background: color-mix(in srgb, var(--panel-2) 65%, transparent);
+      color:var(--text);
+    }
+
+    @media (max-width: 860px){
+      .nav-links{ display:none; }
+      .hamburger{ display:inline-flex; align-items:center; gap:8px; }
+    }
+
+    /* Hero */
+    .hero{
+      padding:32px 0 8px;
+      text-align:center;
+    }
+    .hero-title{
+      margin:0 0 10px;
+      font-size:clamp(28px, 4vw, 46px);
+      line-height:1.12;
+      font-weight:950;
+      letter-spacing:-.2px;
+    }
+    .hero-subtitle{
+      margin:0 auto 18px;
+      max-width:900px;
+      color:var(--muted);
+      font-size:clamp(15px, 1.7vw, 18px);
+      font-weight:650;
+    }
+
+    .hero-badges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:center;
+      margin:16px auto 0;
+      max-width:980px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:var(--btn-radius);
+      border:1px solid var(--border);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      color:var(--text);
+      font-size:13px;
+      font-weight:800;
+    }
+
+    /* Sections */
+    .section{ margin-top:26px; text-align:left; }
+    .section-title{
+      margin:0 0 10px;
+      font-size:18px;
+      font-weight:950;
+      letter-spacing:.2px;
+    }
+    .section-desc{
+      margin:0 0 16px;
+      color:var(--muted);
+      max-width:860px;
+      font-weight:650;
+    }
+
+    /* Area cards */
+    .area-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:16px;
+      margin-top:16px;
+    }
+    @media (min-width: 860px){
+      .area-grid{ grid-template-columns:1fr 1fr; }
+    }
+
+    .area-card{
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      border:1px solid var(--border);
+      border-radius:var(--radius-lg);
+      padding:18px;
+      box-shadow:var(--shadow-soft);
+      transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .area-card:hover{
+      transform:translateY(-2px);
+      border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+      box-shadow:var(--shadow);
+    }
+
+    .area-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .area-name{
+      margin:0;
+      font-size:20px;
+      font-weight:950;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .area-tag{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--border);
+      background: color-mix(in srgb, var(--panel-2) 40%, transparent);
+      padding:6px 10px;
+      border-radius:var(--btn-radius);
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .area-copy{
+      margin:10px 0 14px;
+      color:var(--muted);
+      font-weight:650;
+    }
+
+    .mini-list{
+      margin:0 0 14px;
+      padding:0;
+      list-style:none;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      color:var(--text);
+      font-size:14px;
+      font-weight:650;
+    }
+    .mini-list li{ display:flex; gap:8px; align-items:flex-start; }
+    .mini-list .dot{
+      width:8px; height:8px;
+      border-radius:50%;
+      background: color-mix(in srgb, var(--primary) 85%, white);
+      margin-top:8px;
+      flex:0 0 auto;
+    }
+
+    .area-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      margin-top:6px;
+    }
+
+    .cta{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 16px;
+      border-radius:var(--btn-radius);
+      background:var(--primary);
+      border:1px solid color-mix(in srgb, var(--primary) 75%, black);
+      color:#071021;
+      font-weight:950;
+      cursor:pointer;
+      box-shadow:0 12px 26px color-mix(in srgb, var(--primary) 22%, transparent);
+      transition:filter .15s ease, transform .15s ease;
+    }
+    .cta:hover{ filter:brightness(1.02); transform:translateY(-1px); }
+
+    .cta.secondary{
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:none;
+      font-weight:900;
+    }
+    .cta.secondary:hover{
+      border-color:var(--border-strong);
+      background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+    }
+
+    /* Proof section */
+    .proof{
+      margin-top:26px;
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      border:1px solid var(--border);
+      border-radius:var(--radius-lg);
+      padding:18px;
+      box-shadow:var(--shadow-soft);
+    }
+
+    .proof-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+      margin-top:12px;
+    }
+    @media (min-width: 860px){
+      .proof-grid{ grid-template-columns:1fr 1fr 1fr; }
+    }
+
+    .proof-item{
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:14px;
+      background: color-mix(in srgb, var(--panel-2) 65%, transparent);
+    }
+
+    .proof-item h4{
+      margin:0 0 6px;
+      font-size:14px;
+      font-weight:950;
+      letter-spacing:.2px;
+    }
+    .proof-item p{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+      font-weight:650;
+    }
+
+    /* Bottom CTA */
+    .bottom-cta{
+      margin-top:26px;
+      text-align:center;
+      padding:18px;
+      border-radius:var(--radius-lg);
+      border:1px solid var(--border);
+      background:
+        radial-gradient(900px 380px at 30% 0%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 60%),
+        radial-gradient(900px 380px at 70% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%),
+        color-mix(in srgb, var(--panel) 92%, transparent);
+      box-shadow:var(--shadow-soft);
+    }
+
+    .bottom-cta h3{
+      margin:0 0 6px;
+      font-size:20px;
+      font-weight:950;
+    }
+    .bottom-cta p{
+      margin:0 auto 14px;
+      max-width:820px;
+      color:var(--muted);
+      font-weight:650;
+    }
+    .bottom-actions{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+
+    /* Footer */
+    .footer{
+      margin-top:30px;
+      padding:18px 0 10px;
+      color:var(--muted);
+      font-size:14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      border-top:1px solid var(--border);
+      font-weight:650;
+    }
+
+    .footer-links{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    .footer-links a{
+      color:var(--muted);
+      border-bottom:1px solid transparent;
+    }
+    .footer-links a:hover{
+      color:var(--text);
+      border-bottom-color:var(--primary);
+    }
+
+    /* =========================================================
+       Theme Switcher UI (Gear + Modal)
+       ========================================================= */
+    .theme-gear{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:40px;
+      height:40px;
+      border-radius:var(--btn-radius);
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--text);
+      cursor:pointer;
+      transition:transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    .theme-gear:hover{
+      transform:translateY(-1px);
+      border-color:var(--accent);
+      background: color-mix(in srgb, var(--panel-2) 50%, transparent);
+    }
+
+    .theme-overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.40);
+      backdrop-filter: blur(6px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      padding:18px;
+    }
+    .theme-overlay.open{ display:flex; }
+
+    .theme-modal{
+      width:min(720px, 100%);
+      background: color-mix(in srgb, var(--panel) 96%, transparent);
+      border:1px solid var(--border);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .theme-modal-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background: color-mix(in srgb, var(--panel) 96%, transparent);
+    }
+    .theme-modal-title{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .theme-modal-title strong{
+      font-size:16px;
+      letter-spacing:.2px;
+      font-weight:950;
+    }
+    .theme-modal-title span{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:650;
+    }
+
+    .theme-close{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:36px;
+      height:36px;
+      border-radius:var(--btn-radius);
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--text);
+      cursor:pointer;
+    }
+    .theme-close:hover{
+      border-color:var(--primary);
+      background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+    }
+
+    .theme-modal-body{ padding:16px; }
+
+    .theme-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    @media (min-width: 740px){
+      .theme-grid{ grid-template-columns:1fr 1fr; }
+    }
+
+    .theme-option{
+      width:100%;
+      text-align:left;
+      border:1px solid var(--border);
+      border-radius:var(--radius-lg);
+      padding:14px;
+      cursor:pointer;
+      background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+      transition:transform .15s ease, border-color .15s ease, background .15s ease;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .theme-option:hover{
+      transform:translateY(-1px);
+      border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+    }
+    .theme-option.selected{
+      border-color:var(--accent);
+      box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+    .theme-option-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .theme-option-name{
+      margin:0;
+      font-size:15px;
+      font-weight:950;
+    }
+    .theme-option-tag{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--border);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      padding:6px 10px;
+      border-radius:var(--btn-radius);
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .theme-option-desc{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:650;
+    }
+
+    .theme-swatches{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .swatch{
+      width:18px;
+      height:18px;
+      border-radius:6px;
+      border:1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    }
+
+    .theme-modal-footer{
+      padding:14px 16px;
+      border-top:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      background: color-mix(in srgb, var(--panel) 96%, transparent);
+    }
+
+    .theme-footer-left{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:650;
+    }
+
+    .theme-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .theme-btn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:var(--btn-radius);
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--text);
+      font-weight:900;
+      cursor:pointer;
+      transition:transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    .theme-btn:hover{
+      transform:translateY(-1px);
+      border-color:var(--border-strong);
+      background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+    }
+    .theme-btn.primary{
+      background:var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 75%, black);
+      color:#071021;
+      box-shadow:0 12px 26px color-mix(in srgb, var(--primary) 22%, transparent);
+    }
+  </style>
+</head>
+
+<body class="theme-calm">
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img class="logo" src="../genie-logo.png" alt="GenieSphere" />
+        <span class="brand-name">
+          <strong>GenieSphere</strong>
+          <span>AI Agent Hub</span>
+        </span>
+      </a>
+
+      <!-- Desktop (compact links) -->
+      <nav class="nav-links" aria-label="Primary">
+        <a href="areas.html">Areas</a>
+        <a href="how-it-works.html">How it works</a>
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+
+      <!-- Actions -->
+      <div class="header-actions">
+        <button class="hamburger" id="hamburgerBtn" type="button" aria-expanded="false" aria-controls="mobileDrawer">
+          ☰ <span class="sr-only">Open menu</span>
+        </button>
+
+        <!-- ✅ Theme gear belongs in the header (not floating in the page) -->
+        <button class="theme-gear" id="openThemeBtn" type="button" aria-label="Open appearance settings">⚙️</button>
+
+        <a class="pill ghost" href="onboarding/login.html">Log in</a>
+        <a class="pill primary" href="onboarding/signup.html">Get Started</a>
+      </div>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div class="mobile-drawer" id="mobileDrawer" aria-label="Mobile Menu">
+      <a href="areas.html">Areas</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="features.html">Features</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="onboarding/login.html">Log in</a>
+      <a href="onboarding/signup.html">Get Started</a>
+    </div>
+  </header>
+
+  <main class="container" id="top">
+    <!-- Hero -->
+    <section class="hero" aria-labelledby="heroTitle">
+      <h1 class="hero-title" id="heroTitle">One AI Platform. Many Life Problems.</h1>
+      <p class="hero-subtitle">
+        GenieSphere gives you AI assistants for your <strong>home</strong>, <strong>business</strong>, <strong>money</strong>, and <strong>travel</strong>.
+        Pick what you need help with — Genie routes you to the right agent.
+      </p>
+
+      <div class="hero-badges" aria-label="Value highlights">
+        <span class="badge">🤖 AI employees, not software</span>
+        <span class="badge">⚡ Built for non-technical users</span>
+        <span class="badge">📱 Mobile-first, simple flows</span>
+        <span class="badge">🔒 Secure accounts & role-based access</span>
+      </div>
+    </section>
+
+    <!-- Choose area -->
+    <section class="section" id="areas" aria-labelledby="areasTitle">
+      <h2 class="section-title" id="areasTitle">What do you want help with?</h2>
+      <p class="section-desc">
+        Choose your life area to see the AI agents designed for it. You can add more agents anytime after signup.
+      </p>
+
+      <div class="area-grid">
+        <!-- Home -->
+        <article class="area-card" aria-labelledby="homeTitle">
+          <div class="area-head">
+            <h3 class="area-name" id="homeTitle">🏡 Home & Family AI</h3>
+            <span class="area-tag">Personal</span>
+          </div>
+          <p class="area-copy">Meals, bills, schedules, reminders, receipts, school planning — simplified.</p>
+          <ul class="mini-list">
+            <li><span class="dot"></span><span>Weekly meal plans + shopping lists</span></li>
+            <li><span class="dot"></span><span>Bill tracking + due date reminders</span></li>
+            <li><span class="dot"></span><span>Family calendar + daily “what’s next”</span></li>
+          </ul>
+          <div class="area-actions">
+            <a class="cta" href="dashboard/personal.html">Explore Home AI →</a>
+            <a class="cta secondary" href="onboarding/signup.html">Start free</a>
+          </div>
+        </article>
+
+        <!-- Business / Trade -->
+        <article class="area-card" aria-labelledby="bizTitle">
+          <div class="area-head">
+            <h3 class="area-name" id="bizTitle">🏢 Business & Trade AI</h3>
+            <span class="area-tag">Service</span>
+          </div>
+          <p class="area-copy">AI assistants for rentals, HVAC, salons, payroll, scheduling, customers — without admin overload.</p>
+          <ul class="mini-list">
+            <li><span class="dot"></span><span>🏠 Rental Genie: leases, rent, maintenance</span></li>
+            <li><span class="dot"></span><span>🛠️ HVAC Genie: dispatch, follow-ups, estimates</span></li>
+            <li><span class="dot"></span><span>💅 Salon Genie: appointments, payroll, inventory</span></li>
+          </ul>
+          <div class="area-actions">
+            <a class="cta" href="dashboard/business.html">Explore Business AI →</a>
+            <a class="cta secondary" href="onboarding/signup.html">Start free</a>
+          </div>
+        </article>
+
+        <!-- Investing -->
+        <article class="area-card" aria-labelledby="investTitle">
+          <div class="area-head">
+            <h3 class="area-name" id="investTitle">📊 Money & Investing AI</h3>
+            <span class="area-tag">Wealth</span>
+          </div>
+          <p class="area-copy">Market intelligence, watchlists, options tools, long-term planning — education first.</p>
+          <ul class="mini-list">
+            <li><span class="dot"></span><span>Screeners (RSI / IV / momentum)</span></li>
+            <li><span class="dot"></span><span>Valuation tools + dashboards</span></li>
+            <li><span class="dot"></span><span>Strategy helpers (covered calls, etc.)</span></li>
+          </ul>
+          <div class="area-actions">
+            <a class="cta" href="dashboard/investing.html">Explore Investing AI →</a>
+            <a class="cta secondary" href="onboarding/signup.html">Start free</a>
+          </div>
+        </article>
+
+        <!-- Travel -->
+        <article class="area-card" aria-labelledby="travelTitle">
+          <div class="area-head">
+            <h3 class="area-name" id="travelTitle">✈️ Travel & Lifestyle AI</h3>
+            <span class="area-tag">Leisure</span>
+          </div>
+          <p class="area-copy">Effortless itineraries, dining plans, packing lists, cruises, group trips.</p>
+          <ul class="mini-list">
+            <li><span class="dot"></span><span>Day-by-day itineraries (family/group-friendly)</span></li>
+            <li><span class="dot"></span><span>Food & reservations planning</span></li>
+            <li><span class="dot"></span><span>Packing + logistics</span></li>
+          </ul>
+          <div class="area-actions">
+            <a class="cta" href="dashboard/leisure.html">Explore Travel AI →</a>
+            <a class="cta secondary" href="onboarding/signup.html">Start free</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- How it works / Trust -->
+    <section class="proof" id="how" aria-labelledby="howTitle">
+      <h2 class="section-title" id="howTitle">How GenieSphere works</h2>
+      <p class="section-desc">
+        GenieSphere is a hub that routes you to specialized AI agents. Each agent is designed for a specific job —
+        like a virtual assistant that never forgets, follows up automatically, and keeps things organized.
+      </p>
+
+      <div class="proof-grid" role="list">
+        <div class="proof-item" role="listitem">
+          <h4>1) Choose your area</h4>
+          <p>Home, Business, Investing, or Travel. Pick what matters right now.</p>
+        </div>
+        <div class="proof-item" role="listitem">
+          <h4>2) Use the right agent</h4>
+          <p>Each agent is built for a workflow — not a generic chatbot.</p>
+        </div>
+        <div class="proof-item" role="listitem">
+          <h4>3) Keep it simple</h4>
+          <p>Mobile-friendly forms, clear prompts, and minimal typing.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="bottom-cta" aria-labelledby="ctaTitle">
+      <h3 id="ctaTitle">Ready to try GenieSphere?</h3>
+      <p>Create an account, pick your area, and start using your first agent in minutes.</p>
+      <div class="bottom-actions">
+        <a class="cta" href="onboarding/signup.html">Get Started Free →</a>
+        <a class="cta secondary" href="features.html">See Features</a>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+      <div class="footer-links" aria-label="Footer links">
+        <a href="areas.html">Areas</a>
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Theme Modal -->
+  <div class="theme-overlay" id="themeOverlay" role="dialog" aria-modal="true" aria-labelledby="themeTitle">
+    <div class="theme-modal">
+      <div class="theme-modal-header">
+        <div class="theme-modal-title">
+          <strong id="themeTitle">⚙️ Appearance</strong>
+          <span>Choose a theme. We’ll remember your preference.</span>
+        </div>
+        <button class="theme-close" id="closeThemeBtn" type="button" aria-label="Close appearance settings">✕</button>
+      </div>
+
+      <div class="theme-modal-body">
+        <div class="theme-grid" id="themeGrid">
+          <button class="theme-option" type="button" data-theme="theme-calm">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌿 Calm Future</p>
+                <p class="theme-option-desc">Best for non-technical users. Bright, clean, easy.</p>
+              </div>
+              <span class="theme-option-tag">Default</span>
+            </div>
+            <div class="theme-swatches" aria-hidden="true">
+              <span class="swatch" style="background:#f5f7fb"></span>
+              <span class="swatch" style="background:#ffffff"></span>
+              <span class="swatch" style="background:#4c6ef5"></span>
+              <span class="swatch" style="background:#22c55e"></span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-future">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌌 Soft Futuristic</p>
+                <p class="theme-option-desc">AI vibe without being “too techy”. Indigo + cyan glow.</p>
+              </div>
+              <span class="theme-option-tag">Futuristic</span>
+            </div>
+            <div class="theme-swatches" aria-hidden="true">
+              <span class="swatch" style="background:#0f172a"></span>
+              <span class="swatch" style="background:#111c36"></span>
+              <span class="swatch" style="background:#6366f1"></span>
+              <span class="swatch" style="background:#22d3ee"></span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-nature">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌱 Nature + Tech</p>
+                <p class="theme-option-desc">Great for trades. Calm green + sky blue trust.</p>
+              </div>
+              <span class="theme-option-tag">Trades</span>
+            </div>
+            <div class="theme-swatches" aria-hidden="true">
+              <span class="swatch" style="background:#f6f9f7"></span>
+              <span class="swatch" style="background:#ffffff"></span>
+              <span class="swatch" style="background:#16a34a"></span>
+              <span class="swatch" style="background:#38bdf8"></span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-dark">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌑 Pro Dark</p>
+                <p class="theme-option-desc">Best for night + power users.</p>
+              </div>
+              <span class="theme-option-tag">Dark</span>
+            </div>
+            <div class="theme-swatches" aria-hidden="true">
+              <span class="swatch" style="background:#0b1220"></span>
+              <span class="swatch" style="background:#121a2b"></span>
+              <span class="swatch" style="background:#4c6ef5"></span>
+              <span class="swatch" style="background:#3ee1a1"></span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="theme-modal-footer">
+        <div class="theme-footer-left">
+          Tip: Calm Future is easiest in daylight (trade owners + families).
+        </div>
+        <div class="theme-actions">
+          <button class="theme-btn" id="resetThemeBtn" type="button">↩ Reset</button>
+          <button class="theme-btn primary" id="doneThemeBtn" type="button">✅ Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Mobile drawer
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileDrawer = document.getElementById('mobileDrawer');
+
+    function setDrawer(open){
+      mobileDrawer.style.display = open ? 'block' : 'none';
+      hamburgerBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    let drawerOpen = false;
+    hamburgerBtn.addEventListener('click', () => {
+      drawerOpen = !drawerOpen;
+      setDrawer(drawerOpen);
+    });
+
+    mobileDrawer.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        drawerOpen = false;
+        setDrawer(false);
+      });
+    });
+
+    // Theme Switcher
+    (function ThemeSwitcher(){
+      const STORAGE_KEY = 'geniesphere_theme';
+      const THEMES = ['theme-calm','theme-future','theme-nature','theme-dark'];
+      const DEFAULT_THEME = 'theme-calm';
+
+      const overlay = document.getElementById('themeOverlay');
+      const openBtn = document.getElementById('openThemeBtn');
+      const closeBtn = document.getElementById('closeThemeBtn');
+      const doneBtn = document.getElementById('doneThemeBtn');
+      const resetBtn = document.getElementById('resetThemeBtn');
+      const themeGrid = document.getElementById('themeGrid');
+
+      function saveTheme(theme){
+        try { localStorage.setItem(STORAGE_KEY, theme); } catch(_){}
+      }
+      function getTheme(){
+        try { return localStorage.getItem(STORAGE_KEY); } catch(_) { return null; }
+      }
+
+      function updateSelected(theme){
+        themeGrid.querySelectorAll('.theme-option').forEach(btn => {
+          btn.classList.toggle('selected', btn.getAttribute('data-theme') === theme);
+        });
+      }
+
+      function applyTheme(theme){
+        THEMES.forEach(t => document.body.classList.remove(t));
+        document.body.classList.add(theme);
+        updateSelected(theme);
+      }
+
+      function openModal(){
+        overlay.classList.add('open');
+        const first = themeGrid.querySelector('.theme-option');
+        setTimeout(()=> first.focus(), 40);
+      }
+      function closeModal(){
+        overlay.classList.remove('open');
+        openBtn.focus();
+      }
+
+      // init
+      const saved = getTheme();
+      const theme = (saved && THEMES.includes(saved)) ? saved : DEFAULT_THEME;
+      applyTheme(theme);
+
+      // events
+      openBtn.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+      doneBtn.addEventListener('click', closeModal);
+
+      overlay.addEventListener('click', (e)=>{
+        if(e.target === overlay) closeModal();
+      });
+
+      document.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape' && overlay.classList.contains('open')) closeModal();
+      });
+
+      themeGrid.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.theme-option');
+        if(!btn) return;
+        const next = btn.getAttribute('data-theme');
+        if(!THEMES.includes(next)) return;
+        applyTheme(next);
+        saveTheme(next);
+      });
+
+      resetBtn.addEventListener('click', ()=>{
+        applyTheme(DEFAULT_THEME);
+        saveTheme(DEFAULT_THEME);
+      });
+    })();
+  </script>
+</body>
+</html>

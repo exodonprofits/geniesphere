@@ -1,0 +1,88 @@
+{
+  "name": "AI Insurance Savings Agent",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookPath": "insurance-agent",
+      "httpMethod": "POST",
+      "responseMode": "onReceived",
+      "responseData": "lastNode",
+      "responseContentType": "json"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Clean and structure incoming form data\nreturn {\n  json: {\n    name: $json.name,\n    email: $json.email,\n    zipCode: $json.zipCode,\n    cars: $json.cars,\n    drivers: $json.drivers,\n    currentInsurance: $json.currentInsurance,\n    coveragePreferences: $json.coveragePreferences\n  }\n};"
+      },
+      "id": "2",
+      "name": "Prepare Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "prompt": "Based on the following user data, recommend 3 car insurance options that optimize both savings and coverage. Include estimated savings, suggested companies, and reasons for each.\n\nName: {{$json.name}}\nZIP: {{$json.zipCode}}\nCars: {{$json.cars}}\nDrivers: {{$json.drivers}}\nCurrent Insurance: {{$json.currentInsurance}}\nPreferences: {{$json.coveragePreferences}}",
+        "temperature": 0.7
+      },
+      "id": "3",
+      "name": "AI Recommendation",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 1,
+      "position": [
+        750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "your@email.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "Your Personalized Car Insurance Savings Plan",
+        "text": "={{$json.choices[0].text}}"
+      },
+      "id": "4",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          "Prepare Input"
+        ]
+      ]
+    },
+    "Prepare Input": {
+      "main": [
+        [
+          "AI Recommendation"
+        ]
+      ]
+    },
+    "AI Recommendation": {
+      "main": [
+        [
+          "Send Email"
+        ]
+      ]
+    }
+  }
+}

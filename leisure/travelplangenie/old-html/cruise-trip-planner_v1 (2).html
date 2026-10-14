@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cruise Trip Planner – Voyage Genie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0d2137;
+      --deep-sea: #0a3d62;
+      --ocean: #1a6fa8;
+      --wave: #2196b4;
+      --seafoam: #00c9a7;
+      --gold: #e8a44a;
+      --gold-light: #f5c678;
+      --cream: #faf8f3;
+      --white: #ffffff;
+      --mist: #f0f5fb;
+      --text: #1a2638;
+      --text-light: #5a7a99;
+      --border: #d0e0ee;
+      --error: #e05c5c;
+      --shadow: 0 8px 40px rgba(13,33,55,0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* === ANIMATED OCEAN BACKGROUND === */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(26,111,168,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(0,201,167,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 80%, rgba(232,164,74,0.08) 0%, transparent 40%),
+        linear-gradient(160deg, #0d2137 0%, #0a3d62 50%, #0d2137 100%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* === NAV === */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,33,55,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 0 2rem;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 70px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-brand .brand-icon {
+      font-size: 1.8rem;
+    }
+    .nav-brand h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.5px;
+    }
+    .nav-brand h1 span { color: var(--gold); }
+    .nav-links { display: flex; align-items: center; gap: 0.25rem; list-style: none; }
+    .nav-links a {
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.5rem 0.85rem;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); background: rgba(255,255,255,0.1); }
+    .dropdown { position: relative; }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      padding: 8px;
+      min-width: 200px;
+      border: 1px solid var(--border);
+    }
+    .dropdown-menu li { list-style: none; }
+    .dropdown-menu a {
+      color: var(--text) !important;
+      display: block;
+      padding: 10px 14px !important;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    .dropdown-menu a:hover { background: var(--mist) !important; color: var(--navy) !important; }
+    .dropdown:hover .dropdown-menu { display: block; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .hamburger span { width: 22px; height: 2px; background: white; border-radius: 2px; transition: 0.3s; }
+
+    /* === MAIN CONTENT === */
+    main {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+    }
+
+    .planner-card {
+      background: var(--white);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 700px;
+      overflow: hidden;
+    }
+
+    /* Card header */
+    .card-header {
+      background: linear-gradient(135deg, var(--deep-sea) 0%, var(--ocean) 100%);
+      padding: 2.5rem 2.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-header::after {
+      content: '🚢';
+      position: absolute;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 5rem;
+      opacity: 0.15;
+    }
+    .card-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 0.35rem;
+    }
+    .card-header p {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.95rem;
+    }
+
+    /* Progress bar */
+    .progress-section {
+      padding: 1.5rem 2.5rem 0;
+    }
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.6rem;
+    }
+    .progress-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-light);
+    }
+    .progress-step-count {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--ocean);
+    }
+    .progress-track {
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--ocean), var(--seafoam));
+      border-radius: 99px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 25%;
+    }
+    .step-dots {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.75rem;
+      padding: 0 0;
+    }
+    .step-dot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+    .step-dot .dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      transition: 0.3s;
+    }
+    .step-dot.active .dot { background: var(--ocean); color: white; }
+    .step-dot.done .dot { background: var(--seafoam); color: white; }
+
+    /* Form body */
+    .form-body { padding: 2rem 2.5rem 2.5rem; }
+
+    .step { display: none; animation: fadeStep 0.3s ease; }
+    .step.active { display: block; }
+    @keyframes fadeStep { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .step-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 0.25rem;
+    }
+    .step-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-light);
+      margin-bottom: 2rem;
+    }
+
+    /* Form fields */
+    .field-group { margin-bottom: 1.5rem; }
+    .field-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-light);
+      margin-bottom: 0.5rem;
+    }
+    .field-label .required { color: var(--error); }
+    .field-label .optional { font-weight: 400; text-transform: none; letter-spacing: 0; color: #aaa; font-size: 0.8rem; }
+    .field-hint {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-bottom: 0.6rem;
+    }
+
+    select, input[type="text"], input[type="email"], input[type="number"], input[type="date"] {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+    }
+    select {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%231a6fa8"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 18px;
+      padding-right: 2.5rem;
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--ocean);
+      box-shadow: 0 0 0 3px rgba(26,111,168,0.12);
+    }
+    select.error, input.error { border-color: var(--error); }
+    .error-msg {
+      display: none;
+      font-size: 0.8rem;
+      color: var(--error);
+      margin-top: 0.35rem;
+    }
+    .error-msg.show { display: block; }
+
+    .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    /* Option cards */
+    .options-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+    .option-card {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--white);
+      user-select: none;
+    }
+    .option-card:hover { border-color: var(--ocean); background: var(--mist); }
+    .option-card input { accent-color: var(--ocean); width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
+    .option-card label { cursor: pointer; font-size: 0.93rem; color: var(--text); flex: 1; }
+    .option-card.selected { border-color: var(--ocean); background: rgba(26,111,168,0.06); }
+
+    .options-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+
+    /* Navigation buttons */
+    .form-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      gap: 1rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 2rem;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-prev {
+      background: var(--mist);
+      color: var(--text-light);
+      border: 1.5px solid var(--border);
+    }
+    .btn-prev:hover { background: var(--border); color: var(--text); }
+    .btn-next {
+      background: var(--ocean);
+      color: white;
+      margin-left: auto;
+    }
+    .btn-next:hover { background: var(--deep-sea); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,111,168,0.35); }
+    .btn-generate {
+      background: linear-gradient(135deg, var(--seafoam) 0%, #00a587 100%);
+      color: white;
+      margin-left: auto;
+      font-size: 1rem;
+      padding: 0.9rem 2.25rem;
+    }
+    .btn-generate:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,201,167,0.4); }
+
+    /* Spinner overlay */
+    .spinner-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(13,33,55,0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      gap: 1.5rem;
+    }
+    .spinner-ship {
+      font-size: 3.5rem;
+      animation: sailFloat 2s ease-in-out infinite;
+    }
+    @keyframes sailFloat {
+      0%, 100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-12px) rotate(3deg); }
+    }
+    .spinner-waves {
+      font-size: 1.5rem;
+      opacity: 0.6;
+      animation: wavePulse 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes wavePulse { from { opacity: 0.4; } to { opacity: 0.9; } }
+    .spinner-text {
+      color: white;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    .spinner-subtext {
+      color: rgba(255,255,255,0.55);
+      font-size: 0.85rem;
+    }
+    .spinner-timer-pill {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.8);
+      padding: 0.35rem 1rem;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Floating chat button */
+    .floating-chat {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--seafoam), var(--ocean));
+      color: white;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0,201,167,0.4);
+      cursor: pointer;
+      border: none;
+      z-index: 50;
+      transition: transform 0.2s;
+    }
+    .floating-chat:hover { transform: scale(1.1); }
+
+    /* Footer */
+    footer {
+      position: relative;
+      z-index: 1;
+      background: rgba(13,33,55,0.6);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 2rem;
+      text-align: center;
+    }
+    footer p { color: rgba(255,255,255,0.45); font-size: 0.82rem; }
+    footer a { color: rgba(255,255,255,0.55); text-decoration: none; margin: 0 0.75rem; font-size: 0.82rem; }
+    footer a:hover { color: var(--gold); }
+    .footer-links { margin-top: 0.75rem; }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .hamburger { display: flex; }
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 70px;
+        left: 0;
+        right: 0;
+        background: var(--navy);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .nav-links.open { display: flex; }
+      .nav-links a { font-size: 1rem; padding: 0.75rem 1rem; }
+      .card-header { padding: 1.75rem 1.5rem 1.5rem; }
+      .card-header::after { display: none; }
+      .form-body { padding: 1.5rem; }
+      .progress-section { padding: 1.25rem 1.5rem 0; }
+      .date-row { grid-template-columns: 1fr; }
+      .options-2col { grid-template-columns: 1fr; }
+      .card-header h2 { font-size: 1.5rem; }
+      main { padding: 1.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-brand">
+        <span class="brand-icon">🌊</span>
+        <h1>Voyage<span>Genie</span></h1>
+      </a>
+      <div class="hamburger" id="hamburger" role="button" aria-label="Toggle menu" tabindex="0">
+        <span></span><span></span><span></span>
+      </div>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li class="dropdown">
+          <a href="#">Plan A Trip ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="tropical-trip-planner.html">🏖️ Tropical Resort</a></li>
+            <li><a href="cruise-trip-planner.html">🚢 Cruise Adventure</a></li>
+            <li><a href="airbnb-trip-planner.html">🏠 Airbnb Getaway</a></li>
+            <li><a href="adventure-trip-planner.html">🌄 Adventure Trip</a></li>
+          </ul>
+        </li>
+        <li><a href="trip-dashboard.html">📋 My Trips</a></li>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+    <div class="planner-card">
+      <!-- Header -->
+      <div class="card-header">
+        <h2>Plan Your Cruise Adventure</h2>
+        <p>Tell us your preferences — we'll craft your perfect voyage</p>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-section">
+        <div class="progress-info">
+          <span class="progress-label">Your Progress</span>
+          <span class="progress-step-count" id="stepCounter">Step 1 of 4</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="step-dots">
+          <div class="step-dot active" id="dot1"><div class="dot">⚓</div><span>Voyage</span></div>
+          <div class="step-dot" id="dot2"><div class="dot">🛏️</div><span>Cabin</span></div>
+          <div class="step-dot" id="dot3"><div class="dot">👥</div><span>Group</span></div>
+          <div class="step-dot" id="dot4"><div class="dot">💵</div><span>Budget</span></div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="form-body">
+        <form id="travelForm">
+
+          <!-- STEP 1: Travel Details -->
+          <div id="step1" class="step active">
+            <h3 class="step-title">Travel Details</h3>
+            <p class="step-subtitle">Where are you setting sail from, and where do you want to go?</p>
+
+            <div class="field-group">
+              <label class="field-label">⚓ Departure Port <span class="required">*</span></label>
+              <select id="portSelect" name="departurePort" required>
+                <option value="">— Select Departure Port —</option>
+                <optgroup label="🇺🇸 United States">
+                  <option value="Miami, FL">Miami, FL</option>
+                  <option value="Port Canaveral, FL">Port Canaveral, FL</option>
+                  <option value="Fort Lauderdale, FL">Fort Lauderdale, FL</option>
+                  <option value="Galveston, TX">Galveston, TX</option>
+                  <option value="Los Angeles, CA">Los Angeles, CA</option>
+                  <option value="Seattle, WA">Seattle, WA</option>
+                  <option value="New York, NY">New York, NY</option>
+                  <option value="Baltimore, MD">Baltimore, MD</option>
+                </optgroup>
+                <optgroup label="🇨🇦 Canada">
+                  <option value="Vancouver, BC">Vancouver, BC</option>
+                  <option value="Montreal, QC">Montreal, QC</option>
+                </optgroup>
+                <optgroup label="🌍 International">
+                  <option value="Barcelona, Spain">Barcelona, Spain</option>
+                  <option value="Rome (Civitavecchia), Italy">Rome (Civitavecchia), Italy</option>
+                  <option value="Southampton, UK">Southampton, UK</option>
+                  <option value="Dubai, UAE">Dubai, UAE</option>
+                  <option value="Singapore">Singapore</option>
+                  <option value="Sydney, Australia">Sydney, Australia</option>
+                </optgroup>
+                <option value="OTHER">✏️ Other (specify below)</option>
+              </select>
+              <div id="customPortDiv" class="hidden" style="margin-top: 0.5rem;">
+                <input type="text" id="customPort" name="customDeparturePort" placeholder="Enter your departure port" />
+              </div>
+              <div class="error-msg" id="portError">Please select a departure port.</div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">🌍 Cruise Region / Destination <span class="required">*</span></label>
+              <select id="regionSelect" name="cruiseRegion" required>
+                <option value="">— Select Region —</option>
+                <option value="Caribbean">🌴 Caribbean</option>
+                <option value="Mediterranean">🏛️ Mediterranean</option>
+                <option value="Alaska">🗻 Alaska</option>
+                <option value="Bahamas">🏝️ Bahamas</option>
+                <option value="Mexico Riviera">🌵 Mexico Riviera</option>
+                <option value="Northern Europe / Scandinavia">🌃 Northern Europe / Scandinavia</option>
+                <option value="Hawaii">🌺 Hawaii</option>
+                <option value="South America">🌎 South America</option>
+                <option value="Asia">🏯 Asia</option>
+                <option value="Australia / New Zealand">🦘 Australia / New Zealand</option>
+                <option value="Transatlantic">🌊 Transatlantic</option>
+                <option value="OTHER">✏️ Other (specify below)</option>
+              </select>
+              <div id="customRegionDiv" class="hidden" style="margin-top: 0.5rem;">
+                <input type="text" id="customRegion" name="customCruiseRegion" placeholder="Enter your destination" />
+              </div>
+              <div class="error-msg" id="regionError">Please select a cruise region.</div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">📅 Travel Dates <span class="required">*</span></label>
+              <div class="date-row">
+                <div>
+                  <label class="field-hint">Departure</label>
+                  <input type="date" id="startDate" name="startDate" required />
+                  <div class="error-msg" id="startDateError">Please select a start date.</div>
+                </div>
+                <div>
+                  <label class="field-hint">Return</label>
+                  <input type="date" id="endDate" name="endDate" required />
+                  <div class="error-msg" id="endDateError">Please select an end date.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">⏳ Cruise Duration <span class="required">*</span></label>
+              <select id="cruiseDuration" name="cruiseDuration" required>
+                <option value="">— Select Duration —</option>
+                <option value="3-4">3–4 Nights (Short Getaway)</option>
+                <option value="5-7">5–7 Nights (Classic Cruise)</option>
+                <option value="8-9">8–9 Nights</option>
+                <option value="10-14">10–14 Nights (Extended Voyage)</option>
+                <option value="15+">15+ Nights (Grand Voyage)</option>
+              </select>
+              <div class="error-msg" id="durationError">Please select a cruise duration.</div>
+            </div>
+          </div>
+
+          <!-- STEP 2: Cruise Preferences -->
+          <div id="step2" class="step">
+            <h3 class="step-title">Cruise Preferences</h3>
+            <p class="step-subtitle">Tell us what excites you most about your cruise experience.</p>
+
+            <div class="field-group">
+              <label class="field-label">🎉 Onboard Experiences <span class="optional">(Optional — select all that apply)</span></label>
+              <div class="options-2col">
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="fineDining" name="onboardPreferences" value="fine-dining" />
+                  <label for="fineDining">🍽️ Fine Dining</label>
+                </div>
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="liveShows" name="onboardPreferences" value="live-shows" />
+                  <label for="liveShows">🎭 Live Shows</label>
+                </div>
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="spaServices" name="onboardPreferences" value="spa-services" />
+                  <label for="spaServices">🧘 Spa & Wellness</label>
+                </div>
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="kidsClub" name="onboardPreferences" value="kids-club" />
+                  <label for="kidsClub">🎠 Kids Club</label>
+                </div>
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="casino" name="onboardPreferences" value="casino" />
+                  <label for="casino">🎰 Casino</label>
+                </div>
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="watersports" name="onboardPreferences" value="water-sports" />
+                  <label for="watersports">🏄 Water Sports</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">🛏️ Cabin Type <span class="required">*</span></label>
+              <div class="options-grid">
+                <div class="option-card" onclick="selectRadio(this, 'cabinType')">
+                  <input type="radio" id="interior" name="cabinType" value="Interior" required />
+                  <label for="interior">🛏️ Interior Cabin — Best value, cozy & comfortable</label>
+                </div>
+                <div class="option-card" onclick="selectRadio(this, 'cabinType')">
+                  <input type="radio" id="oceanview" name="cabinType" value="Oceanview" />
+                  <label for="oceanview">🌊 Oceanview — Natural light with stunning sea views</label>
+                </div>
+                <div class="option-card" onclick="selectRadio(this, 'cabinType')">
+                  <input type="radio" id="balcony" name="cabinType" value="Balcony" />
+                  <label for="balcony">🌅 Balcony — Private outdoor space, fresh sea air</label>
+                </div>
+                <div class="option-card" onclick="selectRadio(this, 'cabinType')">
+                  <input type="radio" id="suite" name="cabinType" value="Suite" />
+                  <label for="suite">🏰 Suite — Ultimate luxury with premium amenities</label>
+                </div>
+              </div>
+              <div class="error-msg" id="cabinTypeError">Please select a cabin type.</div>
+            </div>
+          </div>
+
+          <!-- STEP 3: Traveler Information -->
+          <div id="step3" class="step">
+            <h3 class="step-title">Your Travel Group</h3>
+            <p class="step-subtitle">Help us personalize your itinerary for your crew.</p>
+
+            <div class="field-group">
+              <label class="field-label">🧳 Trip Type <span class="required">*</span></label>
+              <div class="options-grid">
+                <div class="option-card" onclick="selectRadio(this, 'tripType')">
+                  <input type="radio" id="solo" name="tripType" value="Solo" required />
+                  <label for="solo">👤 Solo Adventure</label>
+                </div>
+                <div class="option-card" onclick="selectRadio(this, 'tripType')">
+                  <input type="radio" id="couple" name="tripType" value="Couple" />
+                  <label for="couple">💑 Couple's Getaway</label>
+                </div>
+                <div class="option-card" onclick="selectRadio(this, 'tripType')">
+                  <input type="radio" id="family" name="tripType" value="Family" />
+                  <label for="family">👨‍👩‍👧‍👦 Family Vacation</label>
+                </div>
+                <div class="option-card" onclick="selectRadio(this, 'tripType')">
+                  <input type="radio" id="group" name="tripType" value="Group" />
+                  <label for="group">👥 Group Trip</label>
+                </div>
+                <div class="option-card" onclick="selectRadio(this, 'tripType')">
+                  <input type="radio" id="honeymoon" name="tripType" value="Honeymoon" />
+                  <label for="honeymoon">💍 Honeymoon</label>
+                </div>
+              </div>
+              <div class="error-msg" id="tripTypeError">Please select a trip type.</div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">👥 Group Size <span class="required">*</span></label>
+              <div class="options-2col">
+                <div class="option-card" onclick="selectRadio(this, 'groupSize')">
+                  <input type="radio" id="size1" name="groupSize" value="1" required />
+                  <label for="size1">Just Me</label>
+                </div>
+                <div class="option-card" onclick="selectRadio(this, 'groupSize')">
+                  <input type="radio" id="size2" name="groupSize" value="2" />
+                  <label for="size2">2 People</label>
+                </div>
+                <div class="option-card" onclick="selectRadio(this, 'groupSize')">
+                  <input type="radio" id="size34" name="groupSize" value="3-4" />
+                  <label for="size34">3–4 People</label>
+                </div>
+                <div class="option-card" onclick="selectRadio(this, 'groupSize')">
+                  <input type="radio" id="size5" name="groupSize" value="5+" />
+                  <label for="size5">5+ People</label>
+                </div>
+              </div>
+              <div class="error-msg" id="groupSizeError">Please select a group size.</div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">🧑‍🤝‍🧑 Age Ranges <span class="optional">(Optional)</span></label>
+              <p class="field-hint">Helps us suggest age-appropriate activities.</p>
+              <div class="options-2col">
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="kids" name="ageRange" value="Kids" />
+                  <label for="kids">👶 Kids (0–12)</label>
+                </div>
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="teens" name="ageRange" value="Teens" />
+                  <label for="teens">🧑 Teens (13–19)</label>
+                </div>
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="adults" name="ageRange" value="Adults" />
+                  <label for="adults">👩‍💼 Adults (20–39)</label>
+                </div>
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="middle" name="ageRange" value="MiddleAge" />
+                  <label for="middle">🧓 Middle Age (40–59)</label>
+                </div>
+                <div class="option-card" onclick="toggleCard(this)">
+                  <input type="checkbox" id="seniors" name="ageRange" value="Seniors" />
+                  <label for="seniors">👴 Seniors (60+)</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4: Budget & Email -->
+          <div id="step4" class="step">
+            <h3 class="step-title">Budget & Contact</h3>
+            <p class="step-subtitle">Almost there! Set your budget and we'll email you the itinerary.</p>
+
+            <div class="field-group">
+              <label class="field-label" for="budget">💵 Total Budget (USD) <span class="optional">(Optional)</span></label>
+              <p class="field-hint">Helps us recommend options within your range.</p>
+              <input id="budget" name="budget" type="number" min="0" step="100" placeholder="e.g., 3000" />
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="email">📧 Your Email <span class="optional">(Optional — to receive your itinerary)</span></label>
+              <input id="email" name="email" type="email" placeholder="you@example.com" />
+              <div class="error-msg" id="emailError">Please enter a valid email address.</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, var(--mist), #e8f4ff); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border); margin-top: 1rem;">
+              <p style="font-size: 0.85rem; color: var(--text-light); line-height: 1.6;">
+                🔒 <strong>Your information is safe.</strong> We use your details only to personalize your cruise itinerary. No spam, ever.
+              </p>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="form-nav">
+            <button type="button" class="btn btn-prev hidden" id="prevBtn" onclick="prevStep()">← Back</button>
+            <button type="button" class="btn btn-next" id="nextBtn" onclick="nextStep()">Continue →</button>
+            <button type="submit" class="btn btn-generate hidden" id="generateBtn">🚢 Generate My Itinerary</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- Floating chat -->
+  <button class="floating-chat" title="Chat with us">💬</button>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 VoyageGenie.com — Plan Less, Explore More ✈️🌍</p>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="features.html">Features</a>
+      <a href="contact.html">Contact Us</a>
+    </div>
+  </footer>
+
+  <script>
+    // ======= STEP STATE =======
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    // ======= OPTION CARD HELPERS =======
+    function toggleCard(card) {
+      const input = card.querySelector('input[type="checkbox"]');
+      input.checked = !input.checked;
+      card.classList.toggle('selected', input.checked);
+    }
+
+    function selectRadio(card, name) {
+      // Deselect all cards in the same group
+      document.querySelectorAll(`input[name="${name}"]`).forEach(inp => {
+        inp.closest('.option-card')?.classList.remove('selected');
+      });
+      const input = card.querySelector(`input[name="${name}"]`);
+      input.checked = true;
+      card.classList.add('selected');
+    }
+
+    // ======= CUSTOM PORT / REGION =======
+    const portSelect = document.getElementById('portSelect');
+    const customPortDiv = document.getElementById('customPortDiv');
+    const customPort = document.getElementById('customPort');
+    const regionSelect = document.getElementById('regionSelect');
+    const customRegionDiv = document.getElementById('customRegionDiv');
+    const customRegion = document.getElementById('customRegion');
+
+    portSelect.addEventListener('change', () => {
+      const show = portSelect.value === 'OTHER';
+      customPortDiv.classList.toggle('hidden', !show);
+      customPort.required = show;
+    });
+    regionSelect.addEventListener('change', () => {
+      const show = regionSelect.value === 'OTHER';
+      customRegionDiv.classList.toggle('hidden', !show);
+      customRegion.required = show;
+    });
+
+    // ======= PROGRESS =======
+    function updateProgress() {
+      const pct = (currentStep / totalSteps) * 100;
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('stepCounter').textContent = `Step ${currentStep} of ${totalSteps}`;
+
+      for (let i = 1; i <= totalSteps; i++) {
+        const dot = document.getElementById(`dot${i}`);
+        dot.classList.remove('active', 'done');
+        if (i < currentStep) dot.classList.add('done');
+        else if (i === currentStep) dot.classList.add('active');
+      }
+
+      document.getElementById('prevBtn').classList.toggle('hidden', currentStep === 1);
+      document.getElementById('nextBtn').classList.toggle('hidden', currentStep === totalSteps);
+      document.getElementById('generateBtn').classList.toggle('hidden', currentStep !== totalSteps);
+
+      document.querySelectorAll('.step').forEach((s, idx) => {
+        s.classList.toggle('active', idx + 1 === currentStep);
+      });
+    }
+
+    // ======= VALIDATION =======
+    function clearErrors() {
+      document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show'));
+      document.querySelectorAll('.error').forEach(e => e.classList.remove('error'));
+    }
+
+    function showError(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('show');
+    }
+
+    function validateStep(step) {
+      clearErrors();
+      let valid = true;
+
+      if (step === 1) {
+        if (!portSelect.value) { showError('portError'); valid = false; }
+        if (portSelect.value === 'OTHER' && !customPort.value.trim()) { showError('portError'); valid = false; }
+        if (!regionSelect.value) { showError('regionError'); valid = false; }
+        if (regionSelect.value === 'OTHER' && !customRegion.value.trim()) { showError('regionError'); valid = false; }
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        if (!start) { showError('startDateError'); valid = false; }
+        if (!end) { showError('endDateError'); valid = false; }
+        if (start && end && end < start) { showError('endDateError'); valid = false; }
+        if (!document.getElementById('cruiseDuration').value) { showError('durationError'); valid = false; }
+      }
+      if (step === 2) {
+        if (!document.querySelector('input[name="cabinType"]:checked')) { showError('cabinTypeError'); valid = false; }
+      }
+      if (step === 3) {
+        if (!document.querySelector('input[name="tripType"]:checked')) { showError('tripTypeError'); valid = false; }
+        if (!document.querySelector('input[name="groupSize"]:checked')) { showError('groupSizeError'); valid = false; }
+      }
+      if (step === 4) {
+        const emailVal = document.getElementById('email').value;
+        if (emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) { showError('emailError'); valid = false; }
+        const budgetVal = document.getElementById('budget').value;
+        if (budgetVal && budgetVal < 0) { document.getElementById('budget').value = ''; }
+      }
+      return valid;
+    }
+
+    function nextStep() {
+      if (!validateStep(currentStep)) return;
+      if (currentStep < totalSteps) {
+        currentStep++;
+        updateProgress();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        updateProgress();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // ======= SPINNER =======
+    function showSpinner() {
+      const overlay = document.createElement('div');
+      overlay.className = 'spinner-overlay';
+      overlay.id = 'spinnerOverlay';
+      overlay.innerHTML = `
+        <div class="spinner-ship">🚢</div>
+        <div class="spinner-waves">〰️〰️〰️</div>
+        <div class="spinner-text">Crafting your perfect voyage…</div>
+        <div class="spinner-subtext">Our AI travel agent is researching routes & options</div>
+        <div class="spinner-timer-pill">⏱️ <span id="spinnerTimer">0</span>s</div>
+      `;
+      document.body.appendChild(overlay);
+      let sec = 0;
+      const timer = setInterval(() => { document.getElementById('spinnerTimer').textContent = ++sec; }, 1000);
+      return { overlay, timer };
+    }
+
+    function hideSpinner({ overlay, timer }) {
+      clearInterval(timer);
+      overlay.remove();
+    }
+
+    // ======= FORM SUBMIT =======
+    document.getElementById('travelForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validateStep(currentStep)) return;
+
+      const spinnerInfo = showSpinner();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      // Resolve custom port/region
+      if (portSelect.value === 'OTHER') {
+        const val = customPort.value.trim();
+        if (val) formData.set('departurePort', val);
+      }
+      if (regionSelect.value === 'OTHER') {
+        const val = customRegion.value.trim();
+        if (val) formData.set('cruiseRegion', val);
+      }
+
+      try {
+        const response = await fetch('https://exodonprofits.app.n8n.cloud/webhook/cruise-travel-agent', {
+          method: 'POST',
+          body: formData,
+          redirect: 'follow'
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          localStorage.setItem('sessionId', data.sessionId || '');
+          localStorage.setItem('formData', JSON.stringify(Object.fromEntries(formData)));
+          localStorage.setItem('itineraryHtml', data.itineraryHtml || '');
+          window.location.href = `cruise-trip-itinerary.html?sessionId=${data.sessionId}`;
+        } else {
+          const err = await response.text();
+          throw new Error(`Status ${response.status}: ${err}`);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert(`Submission failed: ${error.message}. Please try again.`);
+      } finally {
+        hideSpinner(spinnerInfo);
+        localStorage.removeItem('travelFormData');
+      }
+    });
+
+    // ======= HAMBURGER =======
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('navLinks').classList.toggle('open');
+    });
+
+    // ======= RESTORE SAVED DATA =======
+    function loadSaved() {
+      const data = JSON.parse(localStorage.getItem('travelFormData') || '{}');
+      if (data.departurePort) {
+        if (portSelect.querySelector(`option[value="${data.departurePort}"]`)) {
+          portSelect.value = data.departurePort;
+        } else {
+          portSelect.value = 'OTHER';
+          customPort.value = data.departurePort;
+          customPortDiv.classList.remove('hidden');
+        }
+      }
+      if (data.cruiseRegion) {
+        if (regionSelect.querySelector(`option[value="${data.cruiseRegion}"]`)) {
+          regionSelect.value = data.cruiseRegion;
+        } else {
+          regionSelect.value = 'OTHER';
+          customRegion.value = data.cruiseRegion;
+          customRegionDiv.classList.remove('hidden');
+        }
+      }
+      if (data.startDate) document.getElementById('startDate').value = data.startDate;
+      if (data.endDate) document.getElementById('endDate').value = data.endDate;
+      if (data.cruiseDuration) document.getElementById('cruiseDuration').value = data.cruiseDuration;
+      if (data.budget) document.getElementById('budget').value = data.budget;
+      if (data.email) document.getElementById('email').value = data.email;
+
+      (data.onboardPreferences || []).forEach(val => {
+        const inp = document.querySelector(`input[name="onboardPreferences"][value="${val}"]`);
+        if (inp) { inp.checked = true; inp.closest('.option-card')?.classList.add('selected'); }
+      });
+      ['cabinType', 'tripType', 'groupSize'].forEach(name => {
+        if (data[name]) {
+          const inp = document.querySelector(`input[name="${name}"][value="${data[name]}"]`);
+          if (inp) { inp.checked = true; inp.closest('.option-card')?.classList.add('selected'); }
+        }
+      });
+      (data.ageRanges || []).forEach(val => {
+        const inp = document.querySelector(`input[name="ageRange"][value="${val}"]`);
+        if (inp) { inp.checked = true; inp.closest('.option-card')?.classList.add('selected'); }
+      });
+    }
+
+    // Init
+    updateProgress();
+    loadSaved();
+  </script>
+</body>
+</html>

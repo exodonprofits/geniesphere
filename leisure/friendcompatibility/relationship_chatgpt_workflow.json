@@ -1,0 +1,106 @@
+{
+  "name": "Relationship Compatibility with ChatGPT",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "relationship-checker",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "\nconst input = items[0].json;\n\nconst userSummary = `\nAnalyze this romantic relationship based on the user's answers:\n\n- Emotional Safety: ${input.emotionalSafety}\n- Conflict Resolution: ${input.conflictResolution}\n- Shared Goals: ${input.sharedGoals}\n- Trust Level: ${input.trustLevel}\n- Respects Boundaries: ${input.respectBoundaries}\n- Supports Growth: ${input.supportGrowth}\n- Love Language Awareness: ${input.loveLanguageAwareness}\n- Lifestyle Alignment: ${input.lifestyleAlignment}\n- Jealousy or Control Issues: ${input.jealousyControl}\n- Shared Fun: ${input.funFactor}\n- Social Integration: ${input.socialIntegration}\n- Reason for Love: ${input.loveReason}\n- Desired Improvement: ${input.improveThing}\n- You initiate contact: ${input.youInitiate}\n- They initiate contact: ${input.theyInitiate}\n- You sacrifice: ${input.youSacrifice}\n- They sacrifice: ${input.theySacrifice}\n- Love expression: ${input.loveExpression}\n\nPlease respond with:\n1. A summary of compatibility\n2. Who seems to be more emotionally invested\n3. Advice or insights for strengthening the relationship\n`.trim();\n\nreturn [{ json: { prompt: userSummary } }];\n"
+      },
+      "name": "Create Prompt",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a caring and emotionally intelligent relationship coach. Give thoughtful but concise advice based on input data."
+          },
+          {
+            "role": "user",
+            "content": "={{ $json.prompt }}"
+          }
+        ]
+      },
+      "name": "ChatGPT",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ],
+      "credentials": {
+        "openAIApi": {
+          "id": "1",
+          "name": "OpenAI Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "responseData": "={{ $json.choices[0].message.content }}",
+        "options": {}
+      },
+      "name": "Return to User",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Prompt": {
+      "main": [
+        [
+          {
+            "node": "ChatGPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ChatGPT": {
+      "main": [
+        [
+          {
+            "node": "Return to User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

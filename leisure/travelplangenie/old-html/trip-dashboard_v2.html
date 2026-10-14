@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Trips – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #0077b6;
+  --ocean-deep: #023e8a;
+  --teal: #00b4d8;
+  --teal-light: #90e0ef;
+  --coral: #e76f51;
+  --coral-dark: #c1551c;
+  --white: #ffffff;
+  --off-white: #f8fafc;
+  --gray-light: #f1f5f9;
+  --gray-mid: #94a3b8;
+  --gray-border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow-card: 0 2px 16px rgba(0,0,0,0.07);
+  --shadow-hover: 0 12px 32px rgba(0,0,0,0.13);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--off-white);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+main { flex: 1; }
+.hidden { display: none; }
+
+/* ── HEADER (matches index.html) ── */
+.vg-header {
+  position: sticky; top: 0; z-index: 40;
+  background: linear-gradient(105deg, #023e8a 0%, #0077b6 55%, #0096c7 100%);
+  box-shadow: 0 2px 20px rgba(2,62,138,0.25);
+}
+.vg-nav {
+  max-width: 1240px; margin: 0 auto; padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.vg-left { display: flex; align-items: center; gap: 18px; flex: 1; }
+.vg-brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; white-space: nowrap; }
+.vg-brand img { width: 46px; height: 46px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+.vg-title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.4rem; letter-spacing: -0.01em; color: #fff; }
+.vg-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.nav-link { color: rgba(255,255,255,0.9); text-decoration: none; font-size: 0.93rem; font-weight: 500; }
+.nav-link:hover { color: #fff; text-decoration: underline; }
+
+.menu-group, .plan-group { position: relative; }
+.menu, .plan-menu {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  min-width: 230px; width: min(300px, calc(100vw - 24px));
+  padding: 6px; background: #fff; color: var(--text);
+  border-radius: var(--radius); box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+  display: none; z-index: 60; border: 1px solid rgba(0,0,0,0.06);
+}
+.menu a, .plan-menu a {
+  display: flex; align-items: center; gap: 9px; padding: 9px 12px;
+  border-radius: 8px; color: var(--text); text-decoration: none; font-size: 0.9rem;
+  transition: background var(--transition);
+}
+.menu a:hover, .plan-menu a:hover { background: var(--gray-light); color: var(--ocean); }
+.desktop-auth { display: flex; align-items: center; gap: 10px; }
+.mobile-auth { display: none; }
+.account-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 40px; padding: 0 16px; border-radius: 9px;
+  background: rgba(255,255,255,0.14); color: #fff; text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.22); white-space: nowrap;
+  transition: background var(--transition); font-size: 0.9rem;
+}
+.account-chip:hover { background: rgba(255,255,255,0.24); text-decoration: none; }
+.account-chip .caret { font-size: 0.68rem; opacity: 0.8; }
+.menu-divider { height: 1px; background: var(--gray-border); margin: 6px 4px; }
+.menu-label { padding: 6px 12px; color: var(--gray-mid); font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+.menu-header { padding: 12px 14px 10px; border-bottom: 1px solid var(--gray-border); margin-bottom: 6px; }
+.menu-user { font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.menu-user-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; word-break: break-all; }
+.hamburger-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 9px;
+  background: rgba(255,255,255,0.14); color: #fff; text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.22); transition: background var(--transition);
+}
+.hamburger-btn:hover { background: rgba(255,255,255,0.26); text-decoration: none; }
+.hamburger-icon { font-size: 1.15rem; line-height: 1; }
+
+@media (max-width: 860px) {
+  .desktop-auth { display: none !important; }
+  .mobile-auth { display: block; }
+  .vg-title { font-size: 1.15rem; }
+  .vg-brand img { width: 38px; height: 38px; }
+}
+
+/* ── PAGE HERO BANNER ── */
+.dash-banner {
+  background: linear-gradient(105deg, #023e8a 0%, #0077b6 55%, #0096c7 100%);
+  padding: 2.5rem 1.5rem 3.5rem;
+  text-align: center; color: #fff; position: relative; overflow: hidden;
+}
+.dash-banner::after {
+  content: '';
+  position: absolute; bottom: -2px; left: 0; right: 0; height: 60px;
+  background: var(--off-white);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+.dash-banner h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 700; margin-bottom: 0.4rem;
+}
+.dash-banner p { font-size: 0.95rem; opacity: 0.8; font-weight: 300; }
+
+/* ── MAIN WRAP ── */
+.dash-wrap { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem 3rem; }
+
+/* ── KPI CARDS ── */
+.kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1rem; margin-bottom: 1.5rem;
+}
+@media (max-width: 640px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+.kpi {
+  background: #fff; border: 1px solid var(--gray-border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-card);
+  padding: 1.25rem 1rem; text-align: center;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.kpi:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.kpi .v { font-size: 2rem; font-weight: 700; color: var(--ocean); line-height: 1; }
+.kpi .t { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.3rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ── TOOLBAR ── */
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: 0.6rem;
+  align-items: center; justify-content: space-between;
+  margin-bottom: 1.25rem;
+  background: #fff; border: 1px solid var(--gray-border);
+  border-radius: var(--radius-lg); padding: 0.85rem 1rem;
+  box-shadow: var(--shadow-card);
+}
+.toolbar .left, .toolbar .right { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.vg-input, .vg-select {
+  border: 1px solid var(--gray-border); border-radius: 8px;
+  padding: 0.55rem 0.85rem; background: var(--gray-light);
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text);
+  outline: none; transition: border-color var(--transition), background var(--transition);
+}
+.vg-input:focus, .vg-select:focus { border-color: var(--ocean); background: #fff; }
+.vg-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  border: 1px solid var(--gray-border); border-radius: 8px;
+  padding: 0.52rem 0.85rem; background: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+  color: var(--text); cursor: pointer;
+  transition: background var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition);
+  text-decoration: none; white-space: nowrap;
+}
+.vg-btn:hover { background: var(--ocean); color: #fff; border-color: var(--ocean); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,119,182,0.25); }
+.vg-btn-blue { background: var(--ocean); color: #fff; border-color: var(--ocean); }
+.vg-btn-blue:hover { background: var(--ocean-deep); border-color: var(--ocean-deep); }
+.vg-btn-coral { background: var(--coral); color: #fff; border-color: var(--coral); }
+.vg-btn-coral:hover { background: var(--coral-dark); border-color: var(--coral-dark); }
+
+/* ── TRIP CARDS GRID ── */
+.grid-cards { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1rem; }
+.card {
+  grid-column: span 12; background: #fff;
+  border: 1px solid var(--gray-border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card); padding: 1.25rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+@media (min-width: 640px) { .card { grid-column: span 6; } }
+@media (min-width: 1024px) { .card { grid-column: span 4; } }
+
+.card .row1 { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; justify-content: space-between; }
+.title { font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 0.4rem; color: var(--text); }
+.title .inline-edit {
+  font-size: 0.8rem; border: 1px solid var(--gray-border); border-radius: 6px;
+  padding: 0.15rem 0.4rem; background: var(--gray-light); cursor: pointer;
+  transition: background var(--transition); line-height: 1.4;
+}
+.title .inline-edit:hover { background: #e8f4fd; border-color: var(--ocean); }
+.sub { color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; }
+.muted { color: var(--text-muted); font-size: 0.82rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.vg-badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  border: 1px solid var(--gray-border); border-radius: 999px;
+  padding: 0.18rem 0.65rem; background: var(--gray-light);
+  font-size: 0.78rem; color: var(--text-muted); font-weight: 500;
+}
+
+/* ── EMPTY STATE ── */
+.empty {
+  background: #fff; border: 2px dashed var(--gray-border);
+  border-radius: var(--radius-lg); padding: 3rem 2rem; text-align: center;
+}
+.empty .empty-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; }
+
+/* ── SKELETON ── */
+@keyframes s { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
+.skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%); animation: s 1.4s infinite ease; border-radius: 8px; }
+.s-line { height: 14px; }
+.s-big { height: 44px; border-radius: 8px; }
+
+/* ── SECTION HEADINGS ── */
+.section-hd {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem; font-weight: 700; color: var(--text);
+  margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.section-hd small { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 400; color: var(--text-muted); }
+
+/* ── HELPER CARDS ── */
+.helper-grid, .tools-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+}
+@media (max-width: 900px) { .helper-grid, .tools-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .helper-grid, .tools-grid { grid-column: 1fr; } }
+
+.helper-card {
+  background: #fff; border: 1px solid var(--gray-border);
+  border-radius: var(--radius-lg); padding: 1.25rem;
+  box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.helper-card h2 { font-size: 0.97rem; font-weight: 600; color: var(--text); }
+.helper-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; flex: 1; }
+
+.tool-card {
+  background: var(--gray-light); border: 1px solid var(--gray-border);
+  border-radius: var(--radius); padding: 1.1rem 1rem;
+  text-decoration: none; color: var(--text); display: block;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+.tool-card:hover { background: #e8f4fd; transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,119,182,0.1); color: var(--ocean); }
+.tool-card h3 { font-size: 0.93rem; font-weight: 600; margin-bottom: 0.3rem; }
+.tool-card p { font-size: 0.81rem; color: var(--text-muted); line-height: 1.5; }
+.tool-card:hover p { color: #2563eb; opacity: 0.75; }
+
+/* ── LEGACY CARD ── */
+.legacy-card {
+  background: #fff; border: 1px solid var(--gray-border);
+  border-radius: var(--radius-lg); padding: 1.5rem;
+  box-shadow: var(--shadow-card);
+}
+
+/* ── MODAL ── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(2,62,138,0.45);
+  backdrop-filter: blur(4px);
+  display: none; align-items: center; justify-content: center; z-index: 50;
+}
+.modal {
+  background: #fff; max-width: 720px; width: 94vw;
+  max-height: 90vh; display: flex; flex-direction: column;
+  border-radius: var(--radius-lg); border: 1px solid var(--gray-border);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal header {
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--gray-border);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.modal header .modal-title { font-weight: 600; font-size: 1.05rem; }
+.modal .body { padding: 1.25rem; flex: 1; overflow: auto; }
+.table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.table th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--gray-border); background: var(--gray-light); }
+.table td { padding: 10px; border-bottom: 1px solid var(--gray-border); font-size: 0.9rem; color: var(--text); }
+.label { display: block; font-size: 0.82rem; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+
+/* ── FOOTER (matches index.html) ── */
+footer {
+  background: linear-gradient(105deg, #023e8a 0%, #0077b6 100%);
+  color: rgba(255,255,255,0.85); padding: 3rem 1.5rem 2rem;
+}
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-brand { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+.footer-tagline { font-size: 0.85rem; opacity: 0.7; }
+.footer-subscribe { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-email {
+  padding: 0.65rem 1rem; border-radius: 9px; border: none; outline: none;
+  font-size: 0.9rem; font-family: 'DM Sans', sans-serif;
+  background: rgba(255,255,255,0.12); color: #fff;
+  border: 1px solid rgba(255,255,255,0.2); flex: 1; min-width: 180px;
+}
+.footer-email::placeholder { color: rgba(255,255,255,0.5); }
+.footer-email:focus { background: rgba(255,255,255,0.18); }
+.footer-sub-btn {
+  padding: 0.65rem 1.2rem; background: var(--coral); color: #fff;
+  border: none; cursor: pointer; border-radius: 9px;
+  font-size: 0.9rem; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  transition: background var(--transition);
+}
+.footer-sub-btn:hover { background: var(--coral-dark); }
+.footer-links { display: flex; gap: 1.2rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+.footer-copy { margin-top: 2rem; font-size: 0.8rem; opacity: 0.55; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12); }
+
+/* ── FLOATING CHATBOT ── */
+.floating-chatbot {
+  position: fixed; bottom: 28px; right: 28px;
+  background: linear-gradient(135deg, var(--teal), var(--ocean));
+  color: white; width: 58px; height: 58px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 24px rgba(0,119,182,0.4);
+  font-size: 1.5rem; z-index: 50; cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition);
+  border: 2px solid rgba(255,255,255,0.25);
+}
+.floating-chatbot:hover { transform: scale(1.1); box-shadow: 0 10px 30px rgba(0,119,182,0.5); }
+
+/* ── MT HELPERS ── */
+.mt-6 { margin-top: 1.5rem; }
+.mt-10 { margin-top: 2.5rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-1 { margin-top: 0.25rem; }
+</style>
+</head>
+<body>
+
+<!-- Supabase bootstrap -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+</script>
+
+<!-- ===== HEADER ===== -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <div class="vg-left">
+      <a class="vg-brand" href="index.html" aria-label="Voyage Genie Home">
+        <img src="images/nav-icon.png" alt="Voyage Genie"/>
+        <span class="vg-title">Voyage Genie</span>
+      </a>
+    </div>
+    <div class="vg-right">
+      <div id="authSlot"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== PAGE BANNER ===== -->
+<div class="dash-banner">
+  <h1>📋 My Trips</h1>
+  <p>View, pin, duplicate, edit, delete, or export your saved adventures.</p>
+</div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+  <div class="dash-wrap">
+
+    <!-- KPIs -->
+    <div class="kpis" id="kpis">
+      <div class="kpi"><div class="v" id="k_total">—</div><div class="t">Total Trips</div></div>
+      <div class="kpi"><div class="v" id="k_upcoming">—</div><div class="t">Upcoming</div></div>
+      <div class="kpi"><div class="v" id="k_ongoing">—</div><div class="t">Ongoing</div></div>
+      <div class="kpi"><div class="v" id="k_past">—</div><div class="t">Past</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="left">
+        <input id="q" class="vg-input" placeholder="🔍 Search title or destination…" style="min-width:200px"/>
+        <select id="filterType" class="vg-select">
+          <option value="">All trip types</option>
+          <option value="Tropical Resort">🏖️ Tropical Resort</option>
+          <option value="Cruise Adventure">🚢 Cruise Adventure</option>
+          <option value="Airbnb Getaway">🏠 Airbnb Getaway</option>
+          <option value="Adventure Trip">🌄 Adventure Trip</option>
+        </select>
+        <select id="sortBy" class="vg-select">
+          <option value="updated_desc">Recently updated</option>
+          <option value="start_asc">Start date ↑</option>
+          <option value="start_desc">Start date ↓</option>
+          <option value="title_asc">Title A–Z</option>
+        </select>
+      </div>
+      <div class="right">
+        <button class="vg-btn" id="btnExport">⬇️ Export All</button>
+        <label class="vg-btn cursor-pointer">⬆️ Import<input id="importFile" type="file" accept="application/json" class="hidden" style="display:none"></label>
+        <a href="index.html" class="vg-btn vg-btn-blue">➕ New Trip</a>
+        <button class="vg-btn" onclick="scrollToLegacy()">🧮 Old Splitter</button>
+      </div>
+    </div>
+
+    <!-- Trip Cards -->
+    <div id="grid" class="grid-cards">
+      <div class="card"><div class="s-line skeleton" style="width:55%;margin-bottom:8px"></div><div class="s-line skeleton" style="width:36%;margin-bottom:12px"></div><div class="s-big skeleton"></div></div>
+      <div class="card"><div class="s-line skeleton" style="width:45%;margin-bottom:8px"></div><div class="s-line skeleton" style="width:40%;margin-bottom:12px"></div><div class="s-big skeleton"></div></div>
+      <div class="card"><div class="s-line skeleton" style="width:60%;margin-bottom:8px"></div><div class="s-line skeleton" style="width:35%;margin-bottom:12px"></div><div class="s-big skeleton"></div></div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty" class="hidden empty mt-6">
+      <div class="empty-title">No trips found</div>
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.25rem">Try adjusting your search or filter — or start a new adventure.</p>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem">
+        <a class="vg-btn" href="tropical-trip-planner.html">🏖️ Tropical Resort</a>
+        <a class="vg-btn" href="cruise-trip-planner.html">🚢 Cruise Adventure</a>
+        <a class="vg-btn" href="airbnb-trip-planner.html">🏠 Airbnb Getaway</a>
+        <a class="vg-btn" href="adventure-trip-planner.html">🌄 Adventure Trip</a>
+      </div>
+    </div>
+
+    <!-- Helper Cards -->
+    <div class="mt-10">
+      <div class="section-hd">Quick Actions</div>
+      <div class="helper-grid">
+        <div class="helper-card">
+          <h2>🌟 Not Sure Where to Go?</h2>
+          <p>Let AI suggest a destination based on your past trips and travel style.</p>
+          <div style="margin-top:auto;padding-top:0.75rem">
+            <button class="vg-btn vg-btn-blue" onclick="generateAITrip()" style="width:100%;justify-content:center">🧠 Suggest a Destination</button>
+          </div>
+        </div>
+        <div class="helper-card">
+          <h2>🕘 Recent Searches</h2>
+          <div class="text-gray-600 text-sm" id="recentSearches" style="font-size:0.87rem;color:var(--text-muted)">No recent searches.</div>
+        </div>
+        <div class="helper-card">
+          <h2>🚘 Arrival Tips</h2>
+          <p>Best parking, local transport, and maps for your destination.</p>
+          <div style="margin-top:auto;padding-top:0.75rem">
+            <a class="vg-btn vg-btn-blue" href="parking-tips.html" style="width:100%;justify-content:center;display:inline-flex">📍 Get Arrival Tips</a>
+          </div>
+        </div>
+        <div class="helper-card">
+          <h2>✏️ Unfinished Plans</h2>
+          <p style="margin-bottom:0.5rem">These look like drafts (missing dates). Want to finish them?</p>
+          <div id="unfinishedTrips" style="display:flex;flex-wrap:wrap;gap:0.4rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Travel Tools -->
+    <div class="mt-10">
+      <div class="section-hd">🧰 Travel Tools <small>Quick utilities for splitting, converting, and more</small></div>
+      <div class="tools-grid">
+        <a class="tool-card" href="trip-budget-settlement.html"><h3>🧮 Expense Splitter</h3><p>Share costs, assign payers, and settle up fast.</p></a>
+        <a class="tool-card" href="currency-converter.html"><h3>💱 Currency Converter</h3><p>Quick FX conversions with live rates.</p></a>
+        <a class="tool-card" href="tip-calculator.html"><h3>💵 Tip Calculator</h3><p>Local tipping norms + easy splits.</p></a>
+        <a class="tool-card" href="timezone-converter.html"><h3>🕒 Time Zone Helper</h3><p>Find meeting times across cities instantly.</p></a>
+        <a class="tool-card" href="packing-checklist.html"><h3>🧳 Packing Checklist</h3><p>Smart, shareable lists by trip type.</p></a>
+        <a class="tool-card" href="flight-status.html"><h3>✈️ Flight Status</h3><p>Track departures, arrivals, and delays.</p></a>
+        <a class="tool-card" href="seat-finder.html"><h3>🪑 Seat Finder</h3><p>Find the best seats &amp; plane seat maps.</p></a>
+        <a class="tool-card" href="visa-check.html"><h3>🛂 Visa Check</h3><p>Entry rules by passport &amp; destination.</p></a>
+      </div>
+    </div>
+
+    <!-- Legacy Splitter -->
+    <div class="mt-10" id="legacy-section">
+      <div class="legacy-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:0.75rem">
+          <div class="section-hd" style="margin-bottom:0">🧮 Trip Budget &amp; Settlement <small>Legacy</small></div>
+          <span style="font-size:0.8rem;color:var(--text-muted);background:var(--gray-light);padding:0.25rem 0.7rem;border-radius:999px;border:1px solid var(--gray-border)">trip-budget-settlement.html</span>
+        </div>
+        <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:1.25rem">
+          Choose a trip and launch the legacy splitter. We'll pass along trip details, <strong>expenses</strong>, and optional <strong>participants</strong>.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:0.75rem;align-items:end">
+          <div>
+            <label class="label">Select Trip</label>
+            <select id="legacyTripSelect" class="vg-select" style="width:100%"><option value="">—</option></select>
+          </div>
+          <div style="display:flex;gap:0.5rem">
+            <button class="vg-btn vg-btn-blue" id="openLegacyBtn">🧮 Open</button>
+            <button class="vg-btn" id="syncExpensesBtn" title="Reload list">🔄 Refresh</button>
+          </div>
+        </div>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.85rem">
+          Tip: Add/edit/delete expenses from any trip using the <strong>💸 Expenses</strong> button on the card. You can also define <strong>Participants</strong> there.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ===== EXPENSES MODAL ===== -->
+<div id="expModal" class="modal-backdrop">
+  <div class="modal">
+    <header>
+      <div class="modal-title">💸 Trip Expenses</div>
+      <button class="vg-btn" onclick="closeExpModal()">✖ Close</button>
+    </header>
+    <div class="body">
+      <div style="font-size:0.88rem;color:var(--text-muted);margin-bottom:1rem" id="expTripName">—</div>
+      <div style="overflow:auto;border:1px solid var(--gray-border);border-radius:var(--radius)">
+        <table class="table">
+          <thead><tr><th>Date</th><th>Description</th><th>Paid By</th><th>Amount</th><th></th></tr></thead>
+          <tbody id="expRows"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:1.25rem">
+        <label class="label">Participants (comma-separated)</label>
+        <input id="exParticipants" class="vg-input" placeholder="Jimmy, Jenny, Katie, Jaden" style="width:100%"/>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">Names are sent to the legacy splitter for equal splits.</p>
+      </div>
+      <div style="margin-top:1.25rem;display:grid;grid-template-columns:1fr 2fr 1fr 1fr;gap:0.5rem;align-items:end" class="exp-form-grid">
+        <div><label class="label">Date</label><input id="exDate" type="date" class="vg-input" style="width:100%"/></div>
+        <div><label class="label">Description</label><input id="exDesc" class="vg-input" placeholder="Dinner, taxi, tickets…" style="width:100%"/></div>
+        <div><label class="label">Paid By</label><input id="exPaidBy" class="vg-input" placeholder="Name" style="width:100%"/></div>
+        <div><label class="label">Amount</label><input id="exAmt" type="number" step="0.01" min="0" class="vg-input" placeholder="0.00" style="width:100%"/></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;align-items:center">
+        <button id="exSaveBtn" class="vg-btn vg-btn-blue" onclick="saveExpense()">➕ Add Expense</button>
+        <button class="vg-btn" onclick="openOldSplitter()">🧮 Trip Budget &amp; Settlement</button>
+        <span style="font-size:0.82rem;color:var(--text-muted)">Amounts &amp; participants are saved into this trip.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+    <div class="footer-subscribe">
+      <input class="footer-email" placeholder="Enter your email" type="email"/>
+      <button class="footer-sub-btn">Subscribe</button>
+    </div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#plan-trip">Plan</a>
+      <a href="features.html">Features</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-copy">© 2025 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<div class="floating-chatbot" title="Ask Genie">💬</div>
+
+<!-- ===== AUTH SCRIPT ===== -->
+<script type="module">
+  const sb = window.supabase;
+  const authSlot = document.getElementById('authSlot');
+  const nextParam = encodeURIComponent('trip-dashboard.html');
+
+  function toggle(el, show){ if(el) el.style.display = show ? 'block' : 'none'; }
+
+  function closeMenus(exceptEl){
+    document.querySelectorAll('.menu, .plan-menu').forEach(el=>{ if(el!==exceptEl) el.style.display='none'; });
+    document.querySelectorAll('[aria-expanded="true"]').forEach(btn=>{
+      if(!exceptEl||btn.getAttribute('aria-controls')!==exceptEl.id) btn.setAttribute('aria-expanded','false');
+    });
+  }
+
+  function accountDOM(email){
+    const name=(email||'Account').split('@')[0];
+    const wrap=document.createElement('div');
+    wrap.className='auth-wrap';
+    wrap.innerHTML=`
+      <div class="desktop-auth">
+        <div class="menu-group">
+          <a href="#" class="account-chip" id="acctDesktopBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctDesktopMenu">
+            <span>🪪</span><span>${name}</span><span class="caret">▼</span>
+          </a>
+          <div class="menu" id="acctDesktopMenu" role="menu">
+            <div class="menu-header"><div class="menu-user">🪪 ${name}</div><div class="menu-user-sub">${email||''}</div></div>
+            <a href="trip-dashboard.html" role="menuitem">📋 My Trips</a>
+            <a href="create-trip-form.html" role="menuitem">➕ Start New Trip</a>
+            <div class="menu-divider"></div>
+            <a href="account.html" role="menuitem">👤 Account</a>
+            <a href="#" id="signOutDesktopBtn" role="menuitem">🚪 Sign out</a>
+          </div>
+        </div>
+      </div>
+      <div class="mobile-auth">
+        <div class="menu-group">
+          <a href="#" class="hamburger-btn" id="acctMobileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctMobileMenu">
+            <span class="hamburger-icon">☰</span>
+          </a>
+          <div class="menu" id="acctMobileMenu" role="menu">
+            <div class="menu-header"><div class="menu-user">🪪 ${name}</div><div class="menu-user-sub">${email||''}</div></div>
+            <div class="menu-label">Navigation</div>
+            <a href="trip-dashboard.html" role="menuitem">📋 My Trips</a>
+            <a href="create-trip-form.html" role="menuitem">➕ Start New Trip</a>
+            <div class="menu-label">Plan a Trip</div>
+            <a href="tropical-trip-planner.html" role="menuitem">🏖️ Tropical Resort</a>
+            <a href="cruise-trip-planner.html" role="menuitem">🚢 Cruise Adventure</a>
+            <a href="airbnb-trip-planner.html" role="menuitem">🏠 Airbnb Getaway</a>
+            <a href="adventure-trip-planner.html" role="menuitem">🌄 Adventure Trip</a>
+            <div class="menu-divider"></div>
+            <a href="account.html" role="menuitem">👤 Account</a>
+            <a href="#" id="signOutMobileBtn" role="menuitem">🚪 Sign out</a>
+          </div>
+        </div>
+      </div>`;
+    return wrap;
+  }
+
+  function signinDOM(){
+    const wrap=document.createElement('div');
+    wrap.className='auth-wrap';
+    wrap.innerHTML=`
+      <div class="desktop-auth">
+        <a href="login.html?next=${nextParam}" class="account-chip">🔑 Sign in</a>
+      </div>
+      <div class="mobile-auth">
+        <div class="menu-group">
+          <a href="#" class="hamburger-btn" id="signinMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="signinMenu">
+            <span class="hamburger-icon">☰</span>
+          </a>
+          <div class="menu" id="signinMenu" role="menu">
+            <div class="menu-header"><div class="menu-user">Voyage Genie</div><div class="menu-user-sub">Travel menu</div></div>
+            <div class="menu-label">Navigation</div>
+            <a href="trip-dashboard.html" role="menuitem">📋 My Trips</a>
+            <a href="create-trip-form.html" role="menuitem">➕ Start New Trip</a>
+            <div class="menu-label">Plan a Trip</div>
+            <a href="tropical-trip-planner.html" role="menuitem">🏖️ Tropical Resort</a>
+            <a href="cruise-trip-planner.html" role="menuitem">🚢 Cruise Adventure</a>
+            <a href="airbnb-trip-planner.html" role="menuitem">🏠 Airbnb Getaway</a>
+            <a href="adventure-trip-planner.html" role="menuitem">🌄 Adventure Trip</a>
+            <div class="menu-divider"></div>
+            <a href="login.html?next=${nextParam}" role="menuitem">🔑 Sign in</a>
+          </div>
+        </div>
+      </div>`;
+    return wrap;
+  }
+
+  function bindMenu(buttonId, menuId){
+    const btn=document.getElementById(buttonId), menu=document.getElementById(menuId);
+    if(!btn||!menu) return;
+    btn.addEventListener('click',e=>{
+      e.preventDefault();
+      const open=menu.style.display==='block';
+      closeMenus(open?null:menu);
+      toggle(menu,!open);
+      btn.setAttribute('aria-expanded',String(!open));
+    });
+  }
+
+  async function renderAuth(){
+    try{
+      const{data:{user}}=await sb.auth.getUser();
+      authSlot.innerHTML='';
+      if(user){
+        const node=accountDOM(user.email);
+        authSlot.appendChild(node);
+        bindMenu('acctDesktopBtn','acctDesktopMenu');
+        bindMenu('acctMobileBtn','acctMobileMenu');
+        node.querySelector('#signOutDesktopBtn')?.addEventListener('click',async e=>{e.preventDefault();try{await sb.auth.signOut();}finally{location.href='login.html';}});
+        node.querySelector('#signOutMobileBtn')?.addEventListener('click',async e=>{e.preventDefault();try{await sb.auth.signOut();}finally{location.href='login.html';}});
+      }else{
+        authSlot.appendChild(signinDOM());
+        bindMenu('signinMenuBtn','signinMenu');
+      }
+    }catch{}
+  }
+
+  document.addEventListener('click',e=>{
+    const open=Array.from(document.querySelectorAll('.menu,.plan-menu')).filter(el=>el.style.display==='block');
+    if(!open.length) return;
+    if(!e.target.closest('.menu,.plan-menu,.hamburger-btn,.account-chip,.nav-link')) closeMenus(null);
+  });
+
+  document.querySelectorAll('a[href="trip-dashboard.html"]').forEach(link=>{
+    link.addEventListener('click',async e=>{
+      try{const{data:{user}}=await sb.auth.getUser();if(!user){e.preventDefault();location.href=`login.html?next=${nextParam}`;}}
+      catch{e.preventDefault();location.href=`login.html?next=${nextParam}`;}
+    });
+  });
+
+  renderAuth();
+</script>
+
+<!-- ===== DASHBOARD LOGIC ===== -->
+<script type="module">
+  const AUTH_REQUIRED = true;
+  const supabaseClient = window.supabase;
+  const $ = (id)=>document.getElementById(id);
+  const grid=$('grid'), empty=$('empty');
+
+  const toTitle=(trip)=>trip.name||trip.title||trip.destination||trip.destinationCity||trip.cruiseRegion||'Unnamed Trip';
+  const getType=(trip)=>trip.tripType||trip.type||'';
+  const getDates=(trip)=>{const s=trip.startDate||trip.start||trip.departureDate||'',e=trip.endDate||trip.end||trip.returnDate||'';return(s||e)?`${s||'—'} → ${e||'—'}`:'—';};
+  const rel=(d)=>{if(!d)return'';const t=new Date(d).getTime(),now=Date.now(),diff=Math.round((now-t)/1000);if(isNaN(diff))return'';if(diff<60)return'just now';const mins=Math.round(diff/60);if(mins<60)return`${mins}m ago`;const hrs=Math.round(mins/60);if(hrs<24)return`${hrs}h ago`;const days=Math.round(hrs/24);if(days<7)return`${days}d ago`;return new Date(d).toLocaleDateString();};
+
+  let user=null,rows=[],view=[],currentTripId=null,editingIndex=null;
+
+  async function requireAuthOrRedirect(){
+    if(!AUTH_REQUIRED)return null;
+    try{const{data:{user}}=await supabaseClient.auth.getUser();if(!user){location.href=`login.html?next=${encodeURIComponent('trip-dashboard.html')}`;return null;}return user;}
+    catch(e){location.href=`login.html?next=${encodeURIComponent('trip-dashboard.html')}`;return null;}
+  }
+
+  async function loadTrips(){
+    user=await requireAuthOrRedirect(); if(!user)return;
+    const{data:mainTrips,error:mainError}=await supabaseClient.from('user_trips').select('id,trip_name,trip_data,created_at,updated_at').eq('user_id',user.id).order('updated_at',{ascending:false});
+    const{data:legacyTrips}=await supabaseClient.from('trips').select('id,name,form_data,created_at,updated_at,owner_id').eq('owner_id',user.id).order('updated_at',{ascending:false});
+    const normalRows=mainError?[]:(mainTrips||[]);
+    const legacyRows=(legacyTrips||[]).map(t=>{const fd=t.form_data||{};const people=Array.isArray(fd.people)?fd.people.map(p=>(typeof p==='string'?p:p.name).trim()).filter(Boolean):[];return{id:`legacy_${t.id}`,trip_name:t.name||fd.tripTitle||'Expense Splitter Trip',created_at:t.created_at||t.updated_at||null,updated_at:t.updated_at||t.created_at||null,trip_data:{name:t.name||fd.tripTitle||'Expense Splitter Trip',tripType:'Expense Splitter',notes:'Created with Trip Expense Splitter',legacy_id:t.id,splitter_only:true,expenses:fd.expenses||[],participants:people}};});
+    rows=[...normalRows,...legacyRows];
+    applyFilters();
+  }
+
+  function applyFilters(){
+    const q=$('q').value.trim().toLowerCase(),fType=$('filterType').value,sort=$('sortBy').value;
+    view=rows.filter(r=>{const t=toTitle(r.trip_data).toLowerCase(),dest=(r.trip_data.destination||r.trip_data.destinationCity||r.trip_data.cruiseRegion||'').toLowerCase(),type=getType(r.trip_data);return(!q||t.includes(q)||dest.includes(q))&&(!fType||type===fType);});
+    view.sort((a,b)=>{if(sort==='start_asc')return(a.trip_data.startDate||'')>(b.trip_data.startDate||'')?1:-1;if(sort==='start_desc')return(a.trip_data.startDate||'')<(b.trip_data.startDate||'')?1:-1;if(sort==='title_asc')return toTitle(a.trip_data).localeCompare(toTitle(b.trip_data));return(b.updated_at||'')>(a.updated_at||'')?1:-1;});
+    renderCards(); renderKPIs(); renderLegacyPanel();
+  }
+
+  function renderKPIs(){
+    const now=new Date(),counts={total:rows.length,upcoming:0,ongoing:0,past:0};
+    rows.forEach(r=>{const s=r.trip_data.startDate?new Date(r.trip_data.startDate):null,e=r.trip_data.endDate?new Date(r.trip_data.endDate):null;if(s&&e){if(now<s)counts.upcoming++;else if(now>e)counts.past++;else counts.ongoing++;}});
+    $('k_total').textContent=counts.total;$('k_upcoming').textContent=counts.upcoming;$('k_ongoing').textContent=counts.ongoing;$('k_past').textContent=counts.past;
+  }
+
+  function plannerPage(trip){const map={'Tropical Resort':'tropical-trip-planner.html','Cruise Adventure':'cruise-trip-planner.html','Airbnb Getaway':'airbnb-trip-planner.html','Adventure Trip':'adventure-trip-planner.html'};return map[getType(trip)]||'index.html';}
+
+  const isLegacyRow=(row)=>String(row.id).startsWith('legacy_')||!!row.trip_data?.splitter_only;
+  const getLegacyId=(row)=>row.trip_data?.legacy_id||String(row.id).replace(/^legacy_/,'');
+  const getRow=(id)=>view.find(v=>String(v.id)===String(id))||rows.find(v=>String(v.id)===String(id));
+
+  function renderCards(){
+    grid.innerHTML='';
+    if(!view.length){empty.classList.remove('hidden');return;}
+    empty.classList.add('hidden');
+    view.forEach(r=>{
+      const t=toTitle(r.trip_data),type=getType(r.trip_data),dates=getDates(r.trip_data),legacy=isLegacyRow(r);
+      const note=legacy?'Created with Trip Expense Splitter':(r.trip_data.notes?r.trip_data.notes.slice(0,140):'—');
+      const mainActions=legacy
+        ?`<button class="vg-btn" onclick="viewTrip('${r.id}')">🧮 Open Splitter</button><button class="vg-btn" onclick="duplicateTrip('${r.id}')">📄 Duplicate</button><button class="vg-btn" onclick="exportOne('${r.id}')">⬇️ Export</button><button class="vg-btn" onclick="deleteTrip('${r.id}')">🗑️ Delete</button>`
+        :`<button class="vg-btn" onclick="viewTrip('${r.id}')">👁️ View</button><button class="vg-btn" onclick="editTrip('${r.id}')">✏️ Edit</button><button class="vg-btn" onclick="duplicateTrip('${r.id}')">📄 Duplicate</button><button class="vg-btn" onclick="shareLink('${r.id}')">🔗 Share</button><button class="vg-btn" onclick="exportOne('${r.id}')">⬇️ Export</button><button class="vg-btn" onclick="deleteTrip('${r.id}')">🗑️ Delete</button>`;
+      const extraActions=legacy
+        ?`<button class="vg-btn" onclick="openExpenses('${r.id}')">💸 Expenses</button>`
+        :`<button class="vg-btn" onclick="openExpenses('${r.id}')">💸 Expenses</button><button class="vg-btn" onclick="goToSplitter('${r.id}')">🧮 Open Splitter</button><a class="vg-btn" href="${plannerPage(r.trip_data)}" onclick="prepEdit('${r.id}')">🔄 Update Trip</a>`;
+      const el=document.createElement('div');
+      el.className='card';
+      el.innerHTML=`
+        <div class="row1">
+          <div>
+            <div class="title">${t}<button class="inline-edit" onclick="editTrip('${r.id}')">✏️</button></div>
+            <div class="muted" style="margin-top:3px">${dates}</div>
+          </div>
+          <div class="actions" style="flex-direction:column;align-items:flex-end;gap:4px">
+            ${type?`<span class="vg-badge">🏷️ ${type}</span>`:''}
+            <span class="vg-badge">🕒 ${rel(r.updated_at)||'—'}</span>
+          </div>
+        </div>
+        <div class="sub">${note}</div>
+        <div class="actions">${mainActions}</div>
+        <div class="actions" style="border-top:1px solid var(--gray-border);padding-top:0.5rem">${extraActions}</div>`;
+      grid.appendChild(el);
+    });
+  }
+
+  async function persistTrip(id,newTripData){
+    const row=getRow(id);if(!row)return;
+    let error;
+    if(isLegacyRow(row)){const legacyId=getLegacyId(row);({error}=await supabaseClient.from('trips').update({form_data:newTripData}).eq('id',legacyId));}
+    else{({error}=await supabaseClient.from('user_trips').update({trip_data:newTripData}).eq('id',id));}
+    if(error)alert('Failed to save trip changes.');
+    await loadTrips();
+  }
+
+  async function viewTrip(id){const r=getRow(id);if(!r)return;if(isLegacyRow(r)){goToSplitter(id);return;}localStorage.setItem('formData',JSON.stringify(r.trip_data));location.href='trip-summary.html';}
+  function prepEdit(id){const r=getRow(id);if(!r)return;if(isLegacyRow(r)){goToSplitter(id);return;}localStorage.setItem('formData',JSON.stringify(r.trip_data));}
+  async function editTrip(id){const r=getRow(id);if(!r)return;if(isLegacyRow(r)){goToSplitter(id);return;}localStorage.setItem('formData',JSON.stringify(r.trip_data));location.href=plannerPage(r.trip_data);}
+
+  async function duplicateTrip(id){
+    const r=getRow(id);if(!r)return;
+    const copy=JSON.parse(JSON.stringify(r.trip_data));copy.name=(copy.name||toTitle(copy))+' (Copy)';
+    let error;
+    if(isLegacyRow(r)){({error}=await supabaseClient.from('trips').insert({owner_id:user.id,name:toTitle(copy),form_data:copy}));}
+    else{({error}=await supabaseClient.from('user_trips').insert({user_id:user.id,trip_name:toTitle(copy),trip_data:copy}));}
+    if(error)alert('Failed to duplicate trip.');
+    await loadTrips();
+  }
+
+  async function deleteTrip(id){
+    const row=getRow(id);if(!row)return;if(!confirm('Delete this trip?'))return;
+    let error;
+    try{
+      if(isLegacyRow(row)){const legacyId=getLegacyId(row);({error}=await supabaseClient.from('trips').delete().eq('id',legacyId).eq('owner_id',user.id));}
+      else{({error}=await supabaseClient.from('user_trips').delete().eq('id',id).eq('user_id',user.id));}
+      if(error){alert(`Failed to delete trip: ${error.message||'Unknown error'}`);return;}
+      await loadTrips();
+    }catch(e){alert('Failed to delete trip. Check console for details.');}
+  }
+
+  function exportOne(id){const r=getRow(id);if(!r)return;const blob=new Blob([JSON.stringify(r.trip_data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(toTitle(r.trip_data).replace(/\s+/g,'_')||'trip')+'.json';a.click();URL.revokeObjectURL(a.href);}
+
+  $('btnExport').addEventListener('click',()=>{
+    const payload=view.map(r=>r.trip_data);
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='voyage_trips.json';a.click();URL.revokeObjectURL(a.href);
+  });
+
+  $('importFile').addEventListener('change',async(e)=>{
+    const f=e.target.files?.[0];if(!f)return;
+    let list;try{list=JSON.parse(await f.text());}catch{alert('Invalid JSON');return;}
+    const rowsToInsert=(Array.isArray(list)?list:[list]).map(d=>({user_id:user.id,trip_name:toTitle(d),trip_data:d}));
+    await supabaseClient.from('user_trips').insert(rowsToInsert);
+    await loadTrips();e.target.value='';
+  });
+
+  function shareLink(id){
+    const r=getRow(id);if(!r)return;
+    const payload=btoa(unescape(encodeURIComponent(JSON.stringify(r.trip_data))));
+    const url=new URL(window.location.origin+'/trip-summary.html');url.hash='s='+payload;
+    navigator.clipboard?.writeText(url.toString()).then(()=>alert('Link copied!')).catch(()=>prompt('Copy link:',url.toString()));
+  }
+
+  function openExpenses(id){
+    const r=getRow(id);if(!r)return;
+    currentTripId=id;editingIndex=null;
+    const trip=r.trip_data;trip.expenses=Array.isArray(trip.expenses)?trip.expenses:[];
+    $('expTripName').innerHTML=`<strong>${toTitle(trip)}</strong> &nbsp;·&nbsp; ${getDates(trip)}`;
+    renderExpenseRows(trip.expenses);
+    $('exParticipants').value=Array.isArray(trip.participants)?trip.participants.join(', '):(trip.participants||'');
+    ['exDate','exDesc','exPaidBy','exAmt'].forEach(id=>$(id).value='');
+    $('exSaveBtn').textContent='➕ Add Expense';
+    $('expModal').style.display='flex';
+  }
+  function closeExpModal(){$('expModal').style.display='none';currentTripId=null;editingIndex=null;}
+  function renderExpenseRows(list){
+    const tbody=$('expRows');tbody.innerHTML='';
+    if(!list.length){tbody.innerHTML=`<tr><td colspan="5" style="color:var(--text-muted);padding:16px;text-align:center">No expenses yet. Add your first one below.</td></tr>`;return;}
+    list.forEach((ex,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${ex.date||'—'}</td><td>${ex.desc||'—'}</td><td>${ex.paidBy||'—'}</td><td>$${Number(ex.amount||0).toFixed(2)}</td><td style="white-space:nowrap"><button class="vg-btn" onclick="editExpense(${i})">✏️</button> <button class="vg-btn" onclick="deleteExpense(${i})">🗑️</button></td>`;tbody.appendChild(tr);});
+  }
+  function saveParticipantsField(trip){const raw=$('exParticipants').value.trim();trip.participants=raw?raw.split(',').map(s=>s.trim()).filter(Boolean):[];}
+  function saveExpense(){
+    const r=getRow(currentTripId);if(!r)return;
+    const trip=r.trip_data;trip.expenses=Array.isArray(trip.expenses)?trip.expenses:[];
+    saveParticipantsField(trip);
+    const item={date:$('exDate').value||'',desc:$('exDesc').value.trim(),paidBy:$('exPaidBy').value.trim(),amount:parseFloat($('exAmt').value||'0')||0};
+    if(!item.desc){alert('Please enter a description.');return;}
+    if(editingIndex===null){trip.expenses.push(item);}else{trip.expenses[editingIndex]=item;editingIndex=null;$('exSaveBtn').textContent='➕ Add Expense';}
+    persistTrip(currentTripId,trip).then(()=>{renderExpenseRows(trip.expenses);['exDate','exDesc','exPaidBy','exAmt'].forEach(id=>$(id).value='');});
+  }
+  function editExpense(idx){const r=getRow(currentTripId);if(!r)return;const ex=(r.trip_data.expenses||[])[idx];if(!ex)return;$('exDate').value=ex.date||'';$('exDesc').value=ex.desc||'';$('exPaidBy').value=ex.paidBy||'';$('exAmt').value=ex.amount||0;editingIndex=idx;$('exSaveBtn').textContent='💾 Save Changes';}
+  function deleteExpense(idx){if(!confirm('Delete this expense?'))return;const r=getRow(currentTripId);if(!r)return;const trip=r.trip_data;trip.expenses.splice(idx,1);persistTrip(currentTripId,trip).then(()=>renderExpenseRows(trip.expenses));}
+
+  function goToSplitter(id){
+    const r=getRow(id);if(!r)return;
+    const legacyId=r.trip_data?.legacy_id;
+    if(legacyId){location.href='trip-budget-settlement.html?trip_id='+encodeURIComponent(legacyId);return;}
+    if(!Array.isArray(r.trip_data.participants)&&typeof r.trip_data.participants==='string'){r.trip_data.participants=r.trip_data.participants.split(',').map(s=>s.trim()).filter(Boolean);}
+    localStorage.setItem('formData',JSON.stringify(r.trip_data));
+    location.href='trip-budget-settlement.html';
+  }
+
+  async function openOldSplitter(){if(!currentTripId)return;const r=getRow(currentTripId);if(!r)return;saveParticipantsField(r.trip_data);await persistTrip(currentTripId,r.trip_data);goToSplitter(currentTripId);}
+
+  function renderLegacyPanel(){
+    const sel=$('legacyTripSelect');if(!sel)return;
+    sel.innerHTML='<option value="">—</option>';
+    rows.forEach(r=>{const opt=document.createElement('option');opt.value=r.id;opt.textContent=`${toTitle(r.trip_data)} · ${getDates(r.trip_data)}`;sel.appendChild(opt);});
+  }
+  function openLegacyForSelected(){const sel=$('legacyTripSelect');const id=sel?.value||'';if(!id){alert('Please select a trip.');return;}goToSplitter(id);}
+
+  $('expModal').addEventListener('click',(e)=>{if(e.target.id==='expModal')closeExpModal();});
+
+  window.viewTrip=viewTrip; window.editTrip=editTrip; window.prepEdit=prepEdit;
+  window.duplicateTrip=duplicateTrip; window.deleteTrip=deleteTrip;
+  window.exportOne=exportOne; window.openExpenses=openExpenses;
+  window.openOldSplitter=openOldSplitter; window.goToSplitter=goToSplitter;
+  window.saveExpense=saveExpense; window.closeExpModal=closeExpModal;
+  window.editExpense=editExpense; window.deleteExpense=deleteExpense;
+  window.scrollToLegacy=function(){const sec=$('legacy-section');if(!sec)return;sec.scrollIntoView({behavior:'smooth'});const card=sec.querySelector('.legacy-card');const old=card.style.boxShadow;card.style.boxShadow='0 0 0 3px #90e0ef inset';setTimeout(()=>{card.style.boxShadow=old||'';},700);};
+  $('openLegacyBtn').addEventListener('click',openLegacyForSelected);
+  $('syncExpensesBtn').addEventListener('click',renderLegacyPanel);
+  ['q','filterType','sortBy'].forEach(id=>$(id).addEventListener('input',applyFilters));
+
+  (async function(){
+    await loadTrips();
+    const box=$('unfinishedTrips');if(box){
+      box.innerHTML='';
+      const drafts=rows.filter(r=>!r.trip_data.startDate||!r.trip_data.endDate);
+      if(!drafts.length){box.innerHTML='<span style="font-size:0.85rem;color:var(--text-muted)">No drafts found.</span>';}
+      else{drafts.slice(0,4).forEach(r=>{const a=document.createElement('a');a.className='vg-btn';a.href='#';a.onclick=(e)=>{e.preventDefault();editTrip(r.id);};a.textContent='✏️ '+toTitle(r.trip_data);box.appendChild(a);});}
+    }
+  })();
+</script>
+</body>
+</html>

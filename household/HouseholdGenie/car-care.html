@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>🚗 Car Care Tracker</title>
+
+<!-- Optional: Supabase bootstrap (set USE_SUPABASE=true below if you want live data) -->
+<script>
+  window.SUPABASE_URL = window.SUPABASE_URL || "";     // e.g. "https://xyz.supabase.co"
+  window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "";
+</script>
+
+<style>
+  :root{
+    --bg:#0b1220; --card:#121a2b; --card2:#0e1626; --line:rgba(120,155,255,.15);
+    --text:#e6efff; --muted:#a9b6d9; --green:#22c55e; --green2:#16a34a; --blue:#4aa3ff;
+    --ring:rgba(74,163,255,.2); --shadow:0 10px 30px rgba(0,0,0,.35);
+    --radius:16px; --pill:999px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial}
+  a{text-decoration:none;color:inherit}
+
+  .wrap{max-width:1100px;margin:20px auto 40px;padding:0 16px}
+
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+    border-bottom:1px solid var(--line);box-shadow:0 8px 22px rgba(0,0,0,.25);backdrop-filter:saturate(120%) blur(10px)}
+  .nav{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#6af0c4,#3ee1a1 40%,#1c9369 75%);box-shadow:0 0 0 4px rgba(62,225,161,.3)}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--pill);font-weight:800;border:1px solid transparent;cursor:pointer;
+       transition:.15s transform,.15s box-shadow,.15s background;box-shadow:0 8px 20px rgba(74,163,255,.15)}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.blue{background:var(--blue);color:#03101f}
+  .btn.green{background:var(--green);color:#041307}
+  .btn.ghost{background:#0e1626;color:var(--text);border:1px solid var(--line)}
+  .btn.small{padding:8px 12px;font-size:.95rem}
+
+  h1{margin:14px 0 6px;font-size:clamp(1.4rem,2.8vw,1.9rem);font-weight:900}
+  p.lead{margin:0 0 12px;color:var(--muted)}
+
+  .panel{background:linear-gradient(180deg,rgba(24,35,58,.7),rgba(18,26,43,.9));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+  .panel h2{margin:0 0 10px}
+
+  /* Filters bar */
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--pill);background:#0e1626;border:1px solid var(--line);font-weight:800;color:var(--text);cursor:pointer}
+  .pill.active{background:var(--blue);color:#03101f;border-color:transparent}
+  select, input[type="search"]{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#0e1626;color:var(--text);outline:none}
+
+  /* Vehicle grid */
+  .grid{display:grid;gap:12px}
+  @media (min-width:880px){ .grid{grid-template-columns:1fr 1fr} }
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px}
+  .card h3{margin:0 0 4px}
+  .meta{display:flex;gap:8px;flex-wrap:wrap}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:var(--pill);font-weight:800;font-size:.9rem}
+  .b-personal{background:#17334a;border:1px solid #22537a}
+  .b-business{background:#1f2f1f;border:1px solid #2a6a3a}
+  .b-mixed{background:#3a2a10;border:1px solid #8a5a1a}
+  .b-entity{background:#0f2234;border:1px solid #274966}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row .btn{box-shadow:none}
+
+  .split{display:grid;gap:12px}
+  @media (min-width:1100px){ .split{grid-template-columns:2fr 1.1fr} }
+
+  .list{margin:0;padding-left:18px;color:var(--muted)}
+  .empty{color:var(--muted);font-style:italic}
+
+  footer{margin:24px 0 10px;text-align:center;color:var(--muted);font-size:.95rem}
+</style>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <div class="brand">
+      <div class="logo"></div>
+      <strong>Car Care Tracker</strong>
+    </div>
+    <div>
+      <a class="btn blue" href="../personal.html">⬅️ Back to Personal</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>🚗 Car Care Tracker</h1>
+  <p class="lead">Maintenance, insurance, and service logs—organized for both personal and business vehicles.</p>
+
+  <!-- Filters / context -->
+  <section class="panel">
+    <div class="filters">
+      <div class="pills" aria-label="Usage filter">
+        <button class="pill active" data-usage="all">All</button>
+        <button class="pill" data-usage="personal">Personal</button>
+        <button class="pill" data-usage="business">Business</button>
+        <button class="pill" data-usage="mixed">Mixed</button>
+      </div>
+      <div style="flex:1"></div>
+      <label class="sr-only" for="entitySel">Entity</label>
+      <select id="entitySel" title="Business Entity (for business view)">
+        <option value="">All Entities</option>
+      </select>
+      <input id="search" type="search" placeholder="Search by name, plate, VIN…"/>
+    </div>
+    <div id="contextHint" class="empty" style="margin-top:8px"></div>
+  </section>
+
+  <div class="split" style="margin-top:12px;">
+    <!-- Vehicles -->
+    <section class="panel">
+      <h2>Your Vehicles</h2>
+      <div id="vehicleGrid" class="grid"></div>
+      <div id="noVehicles" class="empty" style="display:none;margin-top:6px">No vehicles match this view.</div>
+    </section>
+
+    <!-- Upcoming reminders -->
+    <aside class="panel">
+      <h2>🔔 Upcoming</h2>
+      <ul id="reminderList" class="list"><li class="empty">No reminders yet.</li></ul>
+      <div class="row" style="margin-top:10px">
+        <a id="btn-export" class="btn ghost small" href="#">⬇️ Export CSV</a>
+        <a id="btn-calendar" class="btn ghost small" href="#">📅 Add to Calendar</a>
+      </div>
+    </aside>
+  </div>
+
+  <footer>© <span id="year"></span> GenieSphere</footer>
+</main>
+
+<script>
+/* ======================= CONFIG ======================= */
+const USE_SUPABASE = false; // flip to true when ready
+const SUPABASE_URL = window.SUPABASE_URL;
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+
+const N8N_ODOMETER_HOOK = ""; // e.g. https://n8n.yourdomain/webhook/odometer
+const N8N_SERVICE_INBOX_MAILTO = "mailto:carlogs@yourdomain.com?subject=New%20Service%20Receipt";
+
+/* ======================= UTIL ======================= */
+const $ = s => document.querySelector(s);
+const qs = new URLSearchParams(location.search);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmtDate = s => s ? new Date(s).toLocaleDateString() : "—";
+
+/* ======================= DEMO DATA (Local) ======================= */
+/* If you don't use Supabase yet, we'll provide seeded demo data */
+const LS = {
+  VEHICLES: "gs_carcare_vehicles",
+  SERVICES: "gs_carcare_services",
+  RULES: "gs_carcare_rules",
+  REMINDERS: "gs_carcare_reminders"
+};
+
+function readLS(key, fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback; }catch{ return fallback; } }
+function writeLS(key,val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+(function seedLocal(){
+  if(readLS(LS.VEHICLES,null)) return;
+  const vehicles = [
+    { id:"v1", name:"2018 Cadillac Escalade", make:"Cadillac", model:"Escalade", year:2018, plate:"EXO-465", vin:"...", owner_type:"entity", owner_entity:"Exodon Profits", usage_type:"business", business_pct:100, current_odometer:78000, insurance_expiry:"2026-01-10" },
+    { id:"v2", name:"2016 Ferrari California T", make:"Ferrari", model:"California T", year:2016, plate:"JIM-CA", vin:"...", owner_type:"personal", owner_entity:null, usage_type:"personal", business_pct:0, current_odometer:23000, inspection_expiry:"2025-12-15" },
+    { id:"v3", name:"2018 Tesla Model Y", make:"Tesla", model:"Model Y", year:2018, plate:"VIC-SALON", owner_type:"entity", owner_entity:"Victoria Nails", usage_type:"business", business_pct:100, current_odometer:54000, registration_expiry:"2026-04-01" },
+    { id:"v4", name:"2022 VW Taos", make:"Volkswagen", model:"Taos", year:2022, plate:"SAL-TAOS", owner_type:"entity", owner_entity:"Victoria Nails", usage_type:"mixed", business_pct:70, current_odometer:36000 }
+  ];
+  const rules = [
+    { vehicle_id:"v1", service_type:"oil_change", interval_months:6, interval_miles:5000, lead_days:10 },
+    { vehicle_id:"v1", service_type:"tire_rotation", interval_months:6, interval_miles:6000, lead_days:10 },
+    { vehicle_id:"v2", service_type:"oil_change", interval_months:12, interval_miles:7000, lead_days:10 },
+    { vehicle_id:"v3", service_type:"tire_rotation", interval_months:6, interval_miles:6000, lead_days:10 },
+    { vehicle_id:"v4", service_type:"oil_change", interval_months:12, interval_miles:7000, lead_days:10 },
+  ];
+  const services = [
+    { id:"s1", vehicle_id:"v1", service_type:"oil_change", service_date:"2025-05-10", odometer:74000, vendor:"Jiffy Lube", amount:89.00 },
+    { id:"s2", vehicle_id:"v3", service_type:"tire_rotation", service_date:"2025-06-20", odometer:50000, vendor:"Discount Tire", amount:35.00 },
+    { id:"s3", vehicle_id:"v2", service_type:"oil_change", service_date:"2025-03-01", odometer:21000, vendor:"Ferrari SF", amount:350.00 }
+  ];
+  writeLS(LS.VEHICLES, vehicles); writeLS(LS.RULES, rules); writeLS(LS.SERVICES, services);
+  // initial reminders (computed roughly)
+  const rems = [];
+  for (const r of rules){
+    const last = services.filter(s=>s.vehicle_id===r.vehicle_id && s.service_type===r.service_type)
+                        .sort((a,b)=>new Date(b.service_date)-new Date(a.service_date))[0];
+    const v = vehicles.find(x=>x.id===r.vehicle_id);
+    const d = last ? new Date(last.service_date) : new Date();
+    if(r.interval_months){ d.setMonth(d.getMonth()+r.interval_months); }
+    const due_date = r.interval_months ? d.toISOString().slice(0,10) : null;
+    const due_miles = r.interval_miles ? ((last?.odometer ?? v.current_odometer) + r.interval_miles) : null;
+    rems.push({ id:`rm-${r.vehicle_id}-${r.service_type}`, vehicle_id:r.vehicle_id, service_type:r.service_type, due_date, due_miles, status:"open" });
+  }
+  writeLS(LS.REMINDERS, rems);
+})();
+
+/* ======================= DATA ACCESS (Local or Supabase) ======================= */
+const api = {
+  async listVehicles(){
+    if(!USE_SUPABASE) return readLS(LS.VEHICLES,[]);
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data, error } = await supabase.from('vehicles').select('*').order('name');
+    if(error) throw error; return data||[];
+  },
+  async listReminders(){
+    if(!USE_SUPABASE) return readLS(LS.REMINDERS,[]);
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data, error } = await supabase.from('service_reminders').select('*').eq('status','open');
+    if(error) throw error; return data||[];
+  },
+  async addOdometer(vehicle_id, miles){
+    if(!USE_SUPABASE){
+      const v = readLS(LS.VEHICLES,[]); const i = v.findIndex(x=>x.id===vehicle_id);
+      if(i>=0){ v[i].current_odometer = Number(miles); writeLS(LS.VEHICLES,v); }
+      return;
+    }
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    await supabase.from('vehicles').update({ current_odometer:Number(miles) }).eq('id',vehicle_id);
+  }
+};
+
+/* ======================= RENDER ======================= */
+let VEHICLES = [], REMINDERS = [];
+const VIEW = (qs.get('view')||'personal').toLowerCase();
+const VIEW_ENTITY = qs.get('entity') || '';
+
+function usageBadge(v){
+  const arr = [];
+  if(v.usage_type==='personal') arr.push(`<span class="badge b-personal">Personal</span>`);
+  if(v.usage_type==='business') arr.push(`<span class="badge b-business">Business</span>`);
+  if(v.usage_type==='mixed')    arr.push(`<span class="badge b-mixed">Mixed ${v.business_pct?`(${v.business_pct}% biz)`:''}</span>`);
+  if(v.owner_type==='entity' && v.owner_entity) arr.push(`<span class="badge b-entity">${v.owner_entity}</span>`);
+  return arr.join(' ');
+}
+
+function renderFilters(){
+  // Activate the pills based on usage filter in state
+  document.querySelectorAll('.pill').forEach(p=>{
+    p.classList.toggle('active', p.dataset.usage === (state.usage||'all'));
+  });
+
+  // Entity dropdown: fill from vehicles
+  const ents = [...new Set(VEHICLES.filter(v=>v.owner_type==='entity' && v.owner_entity).map(v=>v.owner_entity))].sort();
+  const sel = $('#entitySel'); sel.innerHTML = `<option value="">All Entities</option>` + ents.map(e=>`<option ${e===state.entity?'selected':''}>${e}</option>`).join('');
+  sel.style.display = (state.usage==='business' || VIEW==='business') ? '' : 'none';
+
+  // Context hint
+  const hint = [];
+  if (VIEW==='business') hint.push(`Business view${VIEW_ENTITY?` for ${VIEW_ENTITY}`:''}`);
+  else hint.push('Personal view');
+  if (state.usage && state.usage!=='all') hint.push(`• filter: ${state.usage}`);
+  if (state.entity) hint.push(`• entity: ${state.entity}`);
+  $('#contextHint').textContent = hint.join(' ');
+}
+
+function renderVehicles(){
+  const grid = $('#vehicleGrid'); grid.innerHTML='';
+  let list = VEHICLES.slice();
+
+  // View filter
+  if(VIEW==='business'){
+    list = list.filter(v => v.owner_type==='entity' && (!VIEW_ENTITY || v.owner_entity===VIEW_ENTITY));
+  } else {
+    list = list.filter(v => v.owner_type!=='entity' || v.usage_type==='mixed'); // personal + mixed
+  }
+
+  // Usage pills
+  if(state.usage && state.usage!=='all'){
+    list = list.filter(v => v.usage_type===state.usage);
+  }
+
+  // Entity filter from selector
+  if(state.entity){
+    list = list.filter(v => v.owner_entity===state.entity);
+  }
+
+  // Search
+  const q = (state.search||'').toLowerCase();
+  if(q){
+    list = list.filter(v =>
+      (v.name||'').toLowerCase().includes(q) ||
+      (v.plate||'').toLowerCase().includes(q) ||
+      (v.vin||'').toLowerCase().includes(q)
+    );
+  }
+
+  // Render
+  for(const v of list){
+    const relRem = REMINDERS.filter(r => r.vehicle_id===v.id && r.status!=='done');
+    const soon = relRem.filter(r => r.due_date && new Date(r.due_date) <= addDays(new Date(), 14));
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div>
+        <h3>${v.name}</h3>
+        <div class="meta">${usageBadge(v)}</div>
+      </div>
+      <div class="meta">
+        <span class="badge">Odo: ${v.current_odometer?.toLocaleString() ?? '—'} mi</span>
+        ${v.registration_expiry ? `<span class="badge">Reg: ${fmtDate(v.registration_expiry)}</span>`:''}
+        ${v.inspection_expiry ? `<span class="badge">Inspect: ${fmtDate(v.inspection_expiry)}</span>`:''}
+        ${v.insurance_expiry ? `<span class="badge">Ins: ${fmtDate(v.insurance_expiry)}</span>`:''}
+      </div>
+      <div class="row">
+        <button class="btn green small" data-act="odo" data-id="${v.id}">➕ Log Odometer</button>
+        <button class="btn ghost small" data-act="service" data-id="${v.id}">📎 Add Service</button>
+        <button class="btn blue small" data-act="history" data-id="${v.id}">📜 Service History</button>
+      </div>
+      <div class="meta">
+        ${relRem.length ? `<span class="badge b-entity">Reminders: ${relRem.length}${soon.length?` (soon: ${soon.length})`:''}</span>` : `<span class="badge">No reminders</span>`}
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+
+  $('#noVehicles').style.display = grid.children.length ? 'none' : '';
+}
+
+function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+
+function renderReminders(){
+  const ul = $('#reminderList'); ul.innerHTML='';
+  let arr = REMINDERS.filter(r => r.status==='open');
+  // Business vs Personal view scope
+  if(VIEW==='business'){
+    arr = arr.filter(r => {
+      const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+      return v && v.owner_type==='entity' && (!VIEW_ENTITY || v.owner_entity===VIEW_ENTITY);
+    });
+  } else {
+    arr = arr.filter(r => {
+      const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+      return v && (v.owner_type!=='entity' || v.usage_type==='mixed');
+    });
+  }
+
+  // Sort by date then miles
+  arr.sort((a,b)=>{
+    const ad = a.due_date? new Date(a.due_date).getTime(): Infinity;
+    const bd = b.due_date? new Date(b.due_date).getTime(): Infinity;
+    if(ad!==bd) return ad-bd;
+    return (a.due_miles??Infinity) - (b.due_miles??Infinity);
+  });
+
+  if(!arr.length){ ul.innerHTML = `<li class="empty">No reminders yet.</li>`; return; }
+
+  for(const r of arr){
+    const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+    const li = document.createElement('li');
+    const tag = r.service_type.replace(/_/g,' ');
+    const due = r.due_date ? `by ${fmtDate(r.due_date)}` : (r.due_miles ? `~ ${r.due_miles.toLocaleString()} mi` : '');
+    li.innerHTML = `${v?.name || 'Vehicle'} — <strong>${tag}</strong> ${due}`;
+    ul.appendChild(li);
+  }
+}
+
+/* ======================= INTERACTIONS ======================= */
+const state = { usage: (VIEW==='business'?'business':'all'), entity: VIEW_ENTITY||'', search:'' };
+
+document.querySelectorAll('.pill').forEach(p=>{
+  p.addEventListener('click', ()=>{
+    document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+    p.classList.add('active');
+    state.usage = p.dataset.usage;
+    renderFilters(); renderVehicles(); renderReminders();
+  });
+});
+
+$('#entitySel').addEventListener('change', e=>{
+  state.entity = e.target.value || '';
+  renderVehicles(); renderReminders();
+});
+
+$('#search').addEventListener('input', e=>{
+  state.search = e.target.value;
+  renderVehicles();
+});
+
+document.addEventListener('click', async (e)=>{
+  const btn = e.target.closest('button[data-act]');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  if(btn.dataset.act==='odo'){
+    const miles = prompt('Current odometer reading (miles)?');
+    if(!miles) return;
+    // optional webhook
+    if(N8N_ODOMETER_HOOK){
+      try{
+        await fetch(N8N_ODOMETER_HOOK, { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ vehicle_id:id, odometer: Number(miles) }) });
+      }catch(err){ console.warn('Webhook failed', err); }
+    }
+    await api.addOdometer(id, Number(miles));
+    VEHICLES = await api.listVehicles();
+    renderVehicles();
+    alert('Odometer logged ✅');
+  }
+  if(btn.dataset.act==='service'){
+    if(N8N_SERVICE_INBOX_MAILTO) location.href = N8N_SERVICE_INBOX_MAILTO;
+    else alert('Wire this to your service inbox/upload page.');
+  }
+  if(btn.dataset.act==='history'){
+    alert('TODO: link to service history page for this vehicle');
+  }
+});
+
+/* ======================= EXPORTS / CAL ======================= */
+$('#btn-export').addEventListener('click', ()=>{
+  const rows = REMINDERS.map(r=>{
+    const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+    return {
+      vehicle: v?.name || '',
+      service_type: r.service_type,
+      due_date: r.due_date || '',
+      due_miles: r.due_miles || ''
+    };
+  });
+  const csv = 'vehicle,service_type,due_date,due_miles\n' + rows.map(r=>[
+    `"${String(r.vehicle).replaceAll('"','""')}"`,
+    `"${String(r.service_type).replaceAll('"','""')}"`,
+    `"${r.due_date}"`,
+    r.due_miles
+  ].join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`car-reminders-${todayISO()}.csv`; a.click(); URL.revokeObjectURL(url);
+});
+
+$('#btn-calendar').addEventListener('click', ()=>{
+  alert('Tip: In n8n, add a step to create Google Calendar events whenever a reminder has a due_date.');
+});
+
+/* ======================= BOOT ======================= */
+document.getElementById('year').textContent = new Date().getFullYear();
+
+(async function init(){
+  VEHICLES = await api.listVehicles();
+  REMINDERS = await api.listReminders();
+
+  // Default view overrides from URL
+  if(VIEW==='business') state.usage = 'business';
+  if(VIEW_ENTITY) state.entity = VIEW_ENTITY;
+
+  renderFilters(); renderVehicles(); renderReminders();
+})();
+</script>
+</body>
+</html>

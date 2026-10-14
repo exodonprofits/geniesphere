@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Currency Converter – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ocean:#0077b6; --ocean-deep:#023e8a; --teal:#00b4d8;
+  --coral:#e76f51; --coral-dark:#c1551c; --green:#16a34a;
+  --off-white:#f8fafc; --gray-light:#f1f5f9; --gray-border:#e2e8f0;
+  --text:#1e293b; --text-muted:#64748b;
+  --radius:10px; --radius-lg:16px;
+  --shadow:0 2px 16px rgba(0,0,0,0.07); --shadow-hover:0 10px 28px rgba(0,0,0,0.12);
+  --transition:0.22s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+main{flex:1}
+.hidden{display:none!important}
+
+/* HEADER */
+.vg-header{position:sticky;top:0;z-index:40;background:linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%);box-shadow:0 2px 20px rgba(2,62,138,0.25)}
+.vg-nav{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.vg-brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none}
+.vg-brand img{width:46px;height:46px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2)}
+.vg-title-brand{font-family:'Playfair Display',serif;font-weight:700;font-size:1.4rem;color:#fff}
+.vg-right{display:flex;align-items:center;gap:12px}
+.nav-chip{display:inline-flex;align-items:center;gap:8px;padding:0 14px;height:38px;border-radius:9px;background:rgba(255,255,255,0.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.22);font-size:0.88rem;font-weight:500;transition:background var(--transition);white-space:nowrap}
+.nav-chip:hover{background:rgba(255,255,255,0.24)}
+.menu-group{position:relative}
+.menu{position:absolute;top:calc(100% + 8px);right:0;min-width:200px;padding:6px;background:#fff;color:var(--text);border-radius:var(--radius);box-shadow:0 16px 40px rgba(0,0,0,0.18);display:none;z-index:60;border:1px solid rgba(0,0,0,0.06)}
+.menu a{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:0.9rem}
+.menu a:hover{background:var(--gray-light);color:var(--ocean)}
+.menu-divider{height:1px;background:var(--gray-border);margin:6px 4px}
+.account-chip{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:9px;background:rgba(255,255,255,0.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.22);font-size:0.88rem;cursor:pointer}
+.account-chip:hover{background:rgba(255,255,255,0.24)}
+
+/* PAGE BANNER */
+.page-banner{background:linear-gradient(135deg,#eaf4fb 0%,#f0f9ff 100%);border-bottom:1px solid #c9e4f5;padding:1.5rem 1.5rem 1.25rem}
+.page-banner-inner{max-width:1200px;margin:0 auto}
+.page-banner h1{font-family:'Playfair Display',serif;font-size:clamp(1.3rem,2.5vw,1.7rem);font-weight:700;color:var(--ocean-deep);margin-bottom:0.3rem}
+.page-banner p{font-size:0.88rem;color:var(--text-muted)}
+
+/* LAYOUT */
+.page-body{max-width:1200px;margin:0 auto;padding:1.75rem 1.25rem 3rem;display:grid;grid-template-columns:1fr 320px;gap:1.5rem;align-items:start}
+@media(max-width:900px){.page-body{grid-template-columns:1fr}}
+
+/* CARDS */
+.vg-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+.card-hd{padding:1rem 1.25rem;border-bottom:1px solid var(--gray-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.card-title{font-size:1rem;font-weight:600}
+.card-bd{padding:1.25rem}
+
+/* INPUTS */
+.vg-input,.vg-select{width:100%;border:1px solid var(--gray-border);border-radius:var(--radius);padding:.6rem .9rem;background:var(--gray-light);font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;transition:border-color var(--transition),background var(--transition)}
+.vg-input:focus,.vg-select:focus{border-color:var(--ocean);background:#fff;box-shadow:0 0 0 3px rgba(0,119,182,0.1)}
+.field-label{font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
+
+/* BUTTONS */
+.vg-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gray-border);border-radius:8px;padding:.5rem .9rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;color:var(--text);cursor:pointer;transition:all var(--transition);white-space:nowrap;text-decoration:none}
+.vg-btn:hover{background:var(--gray-light);transform:translateY(-1px)}
+.vg-btn-ocean{background:var(--ocean);color:#fff;border-color:var(--ocean)}
+.vg-btn-ocean:hover{background:var(--ocean-deep);border-color:var(--ocean-deep)}
+.vg-btn-sm{padding:.3rem .65rem;font-size:.78rem}
+
+/* AMOUNT INPUT — large */
+.amount-input{width:100%;border:2px solid var(--gray-border);border-radius:12px;padding:.85rem 1rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:1.8rem;font-weight:700;color:var(--text);outline:none;transition:border-color var(--transition);font-variant-numeric:tabular-nums}
+.amount-input:focus{border-color:var(--ocean);box-shadow:0 0 0 4px rgba(0,119,182,0.1)}
+
+/* RESULT DISPLAY */
+.result-box{border-radius:14px;padding:1.25rem 1.5rem;background:linear-gradient(135deg,#023e8a,#0077b6);color:#fff;position:relative;overflow:hidden;min-height:110px;display:flex;flex-direction:column;justify-content:center}
+.result-box::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.07);border-radius:50%}
+.result-amount{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.result-rate{font-size:.82rem;opacity:.75;margin-top:.35rem}
+.result-date{font-size:.72rem;opacity:.55;margin-top:.2rem}
+
+/* SWAP BUTTON */
+.swap-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--ocean);background:#fff;color:var(--ocean);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.2rem;transition:all var(--transition);flex-shrink:0}
+.swap-btn:hover{background:var(--ocean);color:#fff;transform:rotate(180deg)}
+
+/* KEYPAD */
+.keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.key{border:1px solid var(--gray-border);border-radius:8px;padding:.6rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;color:var(--text);cursor:pointer;transition:all var(--transition);display:flex;align-items:center;justify-content:center}
+.key:hover{background:var(--gray-light);border-color:var(--ocean);color:var(--ocean);transform:scale(1.04)}
+.key:active{background:var(--ocean);color:#fff;transform:scale(.97)}
+.key.key-action{background:var(--gray-light);color:var(--text-muted)}
+.key.key-wide{grid-column:span 2}
+
+/* QUICK AMOUNTS */
+.quick-amounts{display:flex;flex-wrap:wrap;gap:.4rem}
+.quick-btn{border:1px solid var(--gray-border);border-radius:999px;padding:.3rem .75rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all var(--transition)}
+.quick-btn:hover{background:var(--ocean);color:#fff;border-color:var(--ocean)}
+
+/* CURRENCY SELECTOR */
+.currency-sel-wrap{position:relative}
+.currency-flag{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:1.1rem;pointer-events:none;z-index:1}
+.vg-select.with-flag{padding-left:2.4rem}
+
+/* MULTI-CURRENCY TABLE */
+.multi-table{width:100%;border-collapse:collapse}
+.multi-table th{font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;padding:6px 10px;border-bottom:1px solid var(--gray-border);text-align:left;background:var(--gray-light)}
+.multi-table td{padding:8px 10px;border-bottom:1px solid var(--gray-border);font-size:.88rem;vertical-align:middle}
+.multi-table tr:last-child td{border-bottom:none}
+.multi-table tr:hover td{background:#f8fafc}
+.multi-table .amount-col{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ocean-deep)}
+.multi-table .trend-up{color:#16a34a;font-size:.7rem}
+.multi-table .trend-down{color:#dc2626;font-size:.7rem}
+.flag-col{font-size:1.1rem;width:30px}
+
+/* FAVORITE PILLS */
+.fav-wrap{display:flex;flex-wrap:wrap;gap:.4rem}
+.fav-pill{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--gray-border);border-radius:999px;padding:.3rem .7rem;background:#fff;font-size:.8rem;font-weight:500;cursor:pointer;transition:all var(--transition)}
+.fav-pill:hover{background:#eaf4fb;border-color:var(--teal)}
+.fav-pill .rm{color:var(--text-muted);margin-left:2px;font-size:.85rem}
+.fav-pill .rm:hover{color:#dc2626}
+
+/* RECENT LIST */
+.recent-list{display:flex;flex-direction:column;gap:.4rem}
+.recent-item{display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border:1px solid var(--gray-border);border-radius:9px;cursor:pointer;transition:all var(--transition);background:#fff;font-size:.83rem}
+.recent-item:hover{background:#eaf4fb;border-color:var(--teal)}
+.recent-arrow{color:var(--text-muted);font-size:.7rem}
+.recent-time{margin-left:auto;font-size:.72rem;color:var(--text-muted);white-space:nowrap}
+
+/* TREND MINI CHART */
+.trend-bar{height:32px;display:flex;align-items:flex-end;gap:1px}
+.trend-seg{background:var(--ocean);border-radius:2px 2px 0 0;opacity:.6;flex:1;min-width:3px;transition:height .3s}
+
+/* RATE INFO BOX */
+.rate-info-box{background:var(--gray-light);border-radius:10px;padding:.75rem 1rem;font-size:.82rem;color:var(--text-muted);display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.rate-info-box strong{color:var(--text)}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,.96);color:#fff;padding:10px 18px;border-radius:9px;font-size:.85rem;font-weight:500;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* FOOTER */
+footer{background:linear-gradient(105deg,#023e8a 0%,#0077b6 100%);color:rgba(255,255,255,.85);padding:2.5rem 1.5rem 2rem}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-brand{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:.3rem}
+.footer-copy{font-size:.78rem;opacity:.55;margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.12)}
+.footer-links{display:flex;gap:1rem;margin-top:.9rem;flex-wrap:wrap}
+.footer-links a{color:rgba(255,255,255,.7);text-decoration:none;font-size:.85rem}
+.footer-links a:hover{color:#fff}
+</style>
+</head>
+<body>
+
+<!-- Supabase -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+</script>
+
+<!-- HEADER -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html">
+      <img src="images/nav-icon.png" alt="Voyage Genie"/>
+      <span class="vg-title-brand">Voyage Genie</span>
+    </a>
+    <div class="vg-right">
+      <a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a>
+      <div id="authSlot">
+        <a class="nav-chip" href="login.html?next=currency-converter.html">🔑 Sign in</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- PAGE BANNER -->
+<div class="page-banner">
+  <div class="page-banner-inner">
+    <h1>💱 Currency Converter</h1>
+    <p>Live ECB rates · Multi-currency comparison · Travel spending calculator</p>
+  </div>
+</div>
+
+<main>
+<div class="page-body">
+
+  <!-- LEFT: Main converter -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- Main converter card -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">Convert</div>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <div id="rateStatusDot" style="width:8px;height:8px;border-radius:50%;background:#94a3b8" title="Rate status"></div>
+          <span id="rateStatusLabel" style="font-size:.75rem;color:var(--text-muted)">Loading…</span>
+          <button class="vg-btn vg-btn-sm" onclick="refreshRates()" title="Refresh rates">↻</button>
+        </div>
+      </div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:1rem">
+
+        <!-- Amount -->
+        <div>
+          <label class="field-label">Amount</label>
+          <input id="amount" class="amount-input" type="number" step="0.01" min="0" placeholder="100" value="100" oninput="convert()"/>
+          <div class="quick-amounts" style="margin-top:.6rem">
+            <button class="quick-btn" onclick="setAmt(1)">1</button>
+            <button class="quick-btn" onclick="setAmt(5)">5</button>
+            <button class="quick-btn" onclick="setAmt(10)">10</button>
+            <button class="quick-btn" onclick="setAmt(20)">20</button>
+            <button class="quick-btn" onclick="setAmt(50)">50</button>
+            <button class="quick-btn" onclick="setAmt(100)">100</button>
+            <button class="quick-btn" onclick="setAmt(500)">500</button>
+            <button class="quick-btn" onclick="setAmt(1000)">1K</button>
+          </div>
+        </div>
+
+        <!-- From / Swap / To -->
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:.75rem;align-items:end">
+          <div>
+            <label class="field-label">From</label>
+            <div class="currency-sel-wrap">
+              <span class="currency-flag" id="fromFlag">🇺🇸</span>
+              <select id="from" class="vg-select with-flag" onchange="convert();updateFlags()"></select>
+            </div>
+          </div>
+          <button class="swap-btn" onclick="swap()" title="Swap currencies">⇄</button>
+          <div>
+            <label class="field-label">To</label>
+            <div class="currency-sel-wrap">
+              <span class="currency-flag" id="toFlag">🇪🇺</span>
+              <select id="to" class="vg-select with-flag" onchange="convert();updateFlags()"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div class="result-box" id="resultBox">
+          <div class="result-amount" id="result">—</div>
+          <div class="result-rate" id="resultRate"></div>
+          <div class="result-date" id="resultDate"></div>
+        </div>
+
+        <!-- Rate info -->
+        <div class="rate-info-box" id="rateInfoBox">
+          <span id="rateInfoText">Fetching live rates…</span>
+          <button class="vg-btn vg-btn-sm" style="margin-left:auto" onclick="copyResult()">📋 Copy</button>
+          <button class="vg-btn vg-btn-sm" onclick="shareLink()">🔗 Share</button>
+        </div>
+
+        <!-- Keypad -->
+        <details>
+          <summary style="font-size:.82rem;color:var(--text-muted);cursor:pointer;user-select:none;padding:.3rem 0">⌨️ Numeric keypad</summary>
+          <div class="keypad" style="margin-top:.6rem">
+            <button class="key" onclick="tap('7')">7</button>
+            <button class="key" onclick="tap('8')">8</button>
+            <button class="key" onclick="tap('9')">9</button>
+            <button class="key key-action" onclick="clearAmt()">⌫</button>
+            <button class="key" onclick="tap('4')">4</button>
+            <button class="key" onclick="tap('5')">5</button>
+            <button class="key" onclick="tap('6')">6</button>
+            <button class="key key-action" onclick="clearAll()">C</button>
+            <button class="key" onclick="tap('1')">1</button>
+            <button class="key" onclick="tap('2')">2</button>
+            <button class="key" onclick="tap('3')">3</button>
+            <button class="key key-action" onclick="tap('.')">.</button>
+            <button class="key key-wide" onclick="tap('0')">0</button>
+            <button class="key key-wide key-action" onclick="tap('00')">00</button>
+          </div>
+        </details>
+
+      </div>
+    </div>
+
+    <!-- Multi-currency table -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">📊 Compare in Multiple Currencies</div>
+        <span style="font-size:.78rem;color:var(--text-muted)" id="multiSubtitle">—</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="multi-table" id="multiTable">
+          <thead>
+            <tr>
+              <th class="flag-col"></th>
+              <th>Currency</th>
+              <th>You get</th>
+              <th>Rate</th>
+              <th>Per $1</th>
+            </tr>
+          </thead>
+          <tbody id="multiBody">
+            <tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:.85rem">Loading currencies…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Travel spending presets -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">🧮 Travel Spending Estimator</div></div>
+      <div class="card-bd">
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:.85rem">Common travel expenses — tap to convert instantly</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.5rem" id="spendingPresets"></div>
+        <div style="margin-top:.85rem;padding:.75rem;background:var(--gray-light);border-radius:10px">
+          <label class="field-label" style="margin-bottom:6px">Daily Budget Calculator</label>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <input id="dailyBudget" class="vg-input" style="width:110px" type="number" placeholder="150" value="150" oninput="calcDailyBudget()"/>
+            <span style="font-size:.82rem;color:var(--text-muted)">per day ×</span>
+            <input id="tripDays" class="vg-input" style="width:70px" type="number" placeholder="7" value="7" oninput="calcDailyBudget()"/>
+            <span style="font-size:.82rem;color:var(--text-muted)">days =</span>
+            <span id="totalBudgetResult" style="font-weight:700;color:var(--ocean-deep);font-size:1rem">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div style="display:flex;flex-direction:column;gap:1rem">
+
+    <!-- Favorites -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">⭐ Favorites</div>
+        <button class="vg-btn vg-btn-sm" onclick="addFavorite()">+ Add</button>
+      </div>
+      <div class="card-bd">
+        <div class="fav-wrap" id="favWrap">
+          <span style="font-size:.82rem;color:var(--text-muted)">No favorites yet — add current pair above</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent conversions -->
+    <div class="vg-card">
+      <div class="card-hd">
+        <div class="card-title">🕐 Recent</div>
+        <button class="vg-btn vg-btn-sm" onclick="clearRecent()">Clear</button>
+      </div>
+      <div class="card-bd">
+        <div class="recent-list" id="recentList">
+          <span style="font-size:.82rem;color:var(--text-muted)">No recent conversions</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Travel tips -->
+    <div class="vg-card">
+      <div class="card-hd"><div class="card-title">💡 Travel Money Tips</div></div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:.6rem;font-size:.82rem">
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:.7rem">
+          <strong style="color:#166534;display:block;margin-bottom:3px">✅ Best exchange</strong>
+          Use ATMs abroad in local currency. Avoid airport kiosks — they typically charge 10–15% above mid-market rate.
+        </div>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:.7rem">
+          <strong style="color:#1e40af;display:block;margin-bottom:3px">💳 Credit cards</strong>
+          Visa/Mastercard use the mid-market rate + 1–3% fee. Cards like Wise, Revolut, or Charles Schwab charge no foreign transaction fees.
+        </div>
+        <div style="background:#fefce8;border:1px solid #fde047;border-radius:8px;padding:.7rem">
+          <strong style="color:#92400e;display:block;margin-bottom:3px">⚠️ DCC trap</strong>
+          When paying abroad, always choose <em>"charge in local currency"</em> — not your home currency. Dynamic Currency Conversion adds 3–8% markup.
+        </div>
+        <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:8px;padding:.7rem">
+          <strong style="color:#6b21a8;display:block;margin-bottom:3px">📱 Wise / Revolut</strong>
+          For frequent travelers, multi-currency accounts give you mid-market rates with minimal fees — worth getting before any trip.
+        </div>
+      </div>
+    </div>
+
+    <!-- Rate source -->
+    <div style="font-size:.75rem;color:var(--text-muted);padding:.75rem;background:var(--gray-light);border-radius:10px;line-height:1.5">
+      Rates: <a href="https://www.frankfurter.app" target="_blank" rel="noopener" style="color:var(--ocean)">Frankfurter (ECB)</a> · Updated daily on business days · Last rate: <span id="lastRateDate">—</span> · Cached for offline use
+    </div>
+
+  </div>
+</div>
+</main>
+
+<div id="toast"></div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="trip-dashboard.html">My Trips</a>
+      <a href="packing-checklist.html">Packing List</a>
+      <a href="features.html">Features</a>
+    </div>
+    <div class="footer-copy">© 2025 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- Auth -->
+<script type="module">
+  const sb = window.supabase;
+  const authSlot = document.getElementById('authSlot');
+  function toggle(el, show){ if(el) el.style.display = show ? 'block' : 'none'; }
+  async function renderAuth(){
+    try {
+      const { data:{ user } } = await sb.auth.getUser();
+      authSlot.innerHTML = '';
+      if (user) {
+        const name = (user.email||'Account').split('@')[0];
+        const wrap = document.createElement('div');
+        wrap.className = 'menu-group';
+        wrap.innerHTML = `
+          <a href="#" class="account-chip" id="acctBtn"><span>🪪</span><span>${name}</span><span style="font-size:.65rem;opacity:.8">▾</span></a>
+          <div class="menu" id="acctMenu">
+            <a href="account.html">👤 Account</a>
+            <div class="menu-divider"></div>
+            <a href="#" id="signOutBtn">🚪 Sign out</a>
+          </div>`;
+        authSlot.appendChild(wrap);
+        const btn = wrap.querySelector('#acctBtn'), menu = wrap.querySelector('#acctMenu');
+        btn.addEventListener('click', e => { e.preventDefault(); const open=menu.style.display==='block'; toggle(menu,!open); });
+        document.addEventListener('click', e => { if(!menu.contains(e.target)&&e.target!==btn) toggle(menu,false); });
+        wrap.querySelector('#signOutBtn').addEventListener('click', async e => { e.preventDefault(); await sb.auth.signOut(); location.href='login.html'; });
+      } else {
+        const a = document.createElement('a');
+        a.className='nav-chip'; a.href='login.html?next=currency-converter.html'; a.textContent='🔑 Sign in';
+        authSlot.appendChild(a);
+      }
+    } catch{}
+  }
+  renderAuth();
+</script>
+
+<!-- CONVERTER LOGIC -->
+<script>
+const $ = id => document.getElementById(id);
+const API = 'https://api.frankfurter.app';
+
+const STORAGE = {
+  symbols:'vg_fx_sym_v2', cache:'vg_fx_rates_v2',
+  favs:'vg_fx_favs_v2', recent:'vg_fx_recent_v2'
+};
+
+let symbols = {}, rates = {}, ratesBase = 'EUR', lastDate = '';
+let _toastTimer;
+
+// ── Currency flags map (ISO→emoji) ──────────────────────────────────────────
+const FLAGS = {
+  USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',JPY:'🇯🇵',CAD:'🇨🇦',AUD:'🇦🇺',CHF:'🇨🇭',
+  CNY:'🇨🇳',HKD:'🇭🇰',SGD:'🇸🇬',KRW:'🇰🇷',INR:'🇮🇳',MXN:'🇲🇽',BRL:'🇧🇷',
+  THB:'🇹🇭',VND:'🇻🇳',PHP:'🇵🇭',IDR:'🇮🇩',MYR:'🇲🇾',TWD:'🇹🇼',
+  NZD:'🇳🇿',ZAR:'🇿🇦',SEK:'🇸🇪',NOK:'🇳🇴',DKK:'🇩🇰',PLN:'🇵🇱',
+  CZK:'🇨🇿',HUF:'🇭🇺',RON:'🇷🇴',TRY:'🇹🇷',AED:'🇦🇪',SAR:'🇸🇦',
+  ILS:'🇮🇱',EGP:'🇪🇬',NGN:'🇳🇬',KES:'🇰🇪',MAD:'🇲🇦',
+  COP:'🇨🇴',CLP:'🇨🇱',PEN:'🇵🇪',ARS:'🇦🇷',
+  BGN:'🇧🇬',HRK:'🇭🇷',ISK:'🇮🇸',
+};
+
+// Top travel currencies shown in multi-table
+const TOP_CURRENCIES = ['USD','EUR','GBP','JPY','CAD','AUD','CHF','CNY','SGD','HKD','MXN','THB','BRL','INR','KRW','AED','NZD','SEK'];
+
+// Spending presets [label, amount]
+const SPENDING_PRESETS = [
+  ['☕ Coffee', 4], ['🍕 Lunch', 15], ['🍽️ Dinner', 40],
+  ['🚕 Taxi', 12], ['🏨 Hotel/night', 120], ['🎟️ Museum', 20],
+  ['🛒 Groceries', 30], ['✈️ Baggage fee', 35], ['💊 Pharmacy', 25],
+  ['🍺 Beer/drink', 6], ['🚇 Metro day', 8], ['💆 Massage', 50]
+];
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+function money(n, code) {
+  try { return new Intl.NumberFormat(undefined, { style:'currency', currency:code, maximumFractionDigits: n < 10 ? 4 : 2 }).format(n); }
+  catch { return (n||0).toFixed(2) + ' ' + code; }
+}
+function moneyShort(n, code) {
+  try { return new Intl.NumberFormat(undefined, { style:'currency', currency:code, minimumFractionDigits:2, maximumFractionDigits:2 }).format(n); }
+  catch { return (n||0).toFixed(2) + ' ' + code; }
+}
+function timeAgo(iso) {
+  const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+function toast(msg, duration=1800) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── Cache ────────────────────────────────────────────────────────────────────
+function loadCache() {
+  try {
+    const sym = localStorage.getItem(STORAGE.symbols);
+    if (sym) symbols = JSON.parse(sym);
+    const c = localStorage.getItem(STORAGE.cache);
+    if (c) { const o = JSON.parse(c); if (o?.rates) { rates=o.rates; lastDate=o.date||''; ratesBase=o.base||'EUR'; } }
+  } catch {}
+}
+function saveCache() {
+  try { localStorage.setItem(STORAGE.cache, JSON.stringify({date:lastDate,rates,base:ratesBase})); } catch {}
+}
+
+// ── Load symbols ─────────────────────────────────────────────────────────────
+async function loadSymbols() {
+  if (Object.keys(symbols).length > 10) return;
+  try {
+    const data = await fetch(API + '/currencies').then(r => r.json());
+    symbols = data;
+    localStorage.setItem(STORAGE.symbols, JSON.stringify(symbols));
+  } catch {
+    symbols = { USD:'US Dollar',EUR:'Euro',GBP:'British Pound',JPY:'Japanese Yen',CAD:'Canadian Dollar',AUD:'Australian Dollar',CHF:'Swiss Franc',CNY:'Chinese Yuan',HKD:'Hong Kong Dollar',SGD:'Singapore Dollar',KRW:'South Korean Won',INR:'Indian Rupee',MXN:'Mexican Peso',THB:'Thai Baht',BRL:'Brazilian Real',AED:'UAE Dirham',NZD:'New Zealand Dollar',SEK:'Swedish Krona',NOK:'Norwegian Krone',TWD:'New Taiwan Dollar',VND:'Vietnamese Dong',IDR:'Indonesian Rupiah',PHP:'Philippine Peso',MYR:'Malaysian Ringgit',ZAR:'South African Rand',TRY:'Turkish Lira',PLN:'Polish Zloty',DKK:'Danish Krone',CZK:'Czech Koruna' };
+  }
+}
+
+// ── Load rates ────────────────────────────────────────────────────────────────
+async function loadRates() {
+  setRateStatus('loading');
+  try {
+    const data = await fetch(API + '/latest').then(r => r.json());
+    ratesBase = data.base || 'EUR';
+    rates = data.rates || {};
+    rates[ratesBase] = 1;
+    lastDate = data.date || '';
+    saveCache();
+    setRateStatus('live');
+    $('lastRateDate').textContent = lastDate;
+  } catch {
+    if (Object.keys(rates).length) {
+      setRateStatus('cached');
+      $('lastRateDate').textContent = lastDate + ' (cached)';
+    } else {
+      setRateStatus('error');
+    }
+  }
+}
+async function refreshRates() {
+  await loadRates();
+  convert();
+  renderMultiTable();
+  toast('✅ Rates refreshed');
+}
+function setRateStatus(s) {
+  const dot = $('rateStatusDot'), lbl = $('rateStatusLabel');
+  const map = {
+    live:   { color:'#16a34a', text:'Live rates' },
+    cached: { color:'#d97706', text:'Cached rates' },
+    loading:{ color:'#94a3b8', text:'Loading…' },
+    error:  { color:'#dc2626', text:'Offline' }
+  };
+  const m = map[s] || map.loading;
+  dot.style.background = m.color;
+  lbl.textContent = m.text;
+}
+
+// ── Build selects ─────────────────────────────────────────────────────────────
+function buildSelects() {
+  const opts = Object.keys(symbols).sort()
+    .map(c => `<option value="${c}">${FLAGS[c]||'🏳️'} ${c} — ${symbols[c]}</option>`).join('');
+  $('from').innerHTML = opts;
+  $('to').innerHTML = opts;
+
+  const p = new URLSearchParams(location.search);
+  const defFrom = p.get('from') || (navigator.language?.startsWith('en') ? 'USD' : 'EUR');
+  const defTo   = p.get('to')   || 'EUR';
+  const defAmt  = parseFloat(p.get('a') || '100') || 100;
+
+  $('from').value  = symbols[defFrom] ? defFrom : 'USD';
+  $('to').value    = symbols[defTo]   ? defTo   : 'EUR';
+  $('amount').value = defAmt;
+  updateFlags();
+}
+
+// ── Flags ──────────────────────────────────────────────────────────────────────
+function updateFlags() {
+  $('fromFlag').textContent = FLAGS[$('from').value] || '🏳️';
+  $('toFlag').textContent   = FLAGS[$('to').value]   || '🏳️';
+}
+
+// ── Core FX ──────────────────────────────────────────────────────────────────
+function fx(amount, from, to) {
+  if (!rates[from] || !rates[to]) return null;
+  return (Number(amount) / rates[from]) * rates[to];
+}
+
+// ── Convert ──────────────────────────────────────────────────────────────────
+function convert() {
+  const a = parseFloat($('amount').value || '0');
+  const from = $('from').value, to = $('to').value;
+
+  if (!a || !from || !to || !rates[from] || !rates[to]) {
+    $('result').textContent = '—';
+    $('resultRate').textContent = '';
+    return;
+  }
+
+  const out = fx(a, from, to);
+  $('result').textContent = moneyShort(out, to);
+
+  const rate1 = fx(1, from, to);
+  $('resultRate').textContent = `1 ${from} = ${moneyShort(rate1, to)}`;
+  $('resultDate').textContent = lastDate ? `ECB rate · ${lastDate}` : '';
+
+  $('rateInfoText').innerHTML = `<strong>1 ${from}</strong> = <strong>${moneyShort(rate1, to)}</strong> &nbsp;·&nbsp; <strong>1 ${to}</strong> = <strong>${moneyShort(fx(1,to,from), from)}</strong>`;
+
+  pushRecent({ a, from, to, out, date: new Date().toISOString() });
+  renderMultiTable();
+  calcDailyBudget();
+}
+
+// ── Keypad ────────────────────────────────────────────────────────────────────
+function tap(c) {
+  const el = $('amount');
+  if (c === '.' && el.value.includes('.')) return;
+  el.value = (el.value === '0' || el.value === '') ? (c === '.' ? '0.' : c) : el.value + c;
+  convert();
+}
+function clearAmt() { const el=$('amount'); el.value=el.value.slice(0,-1)||'0'; convert(); }
+function clearAll()  { $('amount').value='0'; convert(); }
+function setAmt(n)   { $('amount').value=n; convert(); }
+function swap()      { const f=$('from').value,t=$('to').value; $('from').value=t; $('to').value=f; updateFlags(); convert(); }
+
+// ── Multi-currency table ──────────────────────────────────────────────────────
+function renderMultiTable() {
+  const a = parseFloat($('amount').value||'0');
+  const from = $('from').value;
+  if (!a || !from) return;
+
+  $('multiSubtitle').textContent = `${a} ${from} in popular currencies`;
+
+  const body = $('multiBody');
+  const available = TOP_CURRENCIES.filter(c => c !== from && rates[c]);
+  if (!available.length) { body.innerHTML='<tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--text-muted)">Loading…</td></tr>'; return; }
+
+  body.innerHTML = available.map(c => {
+    const out  = fx(a, from, c);
+    const rate1= fx(1, from, c);
+    const per1 = fx(1, c, from);
+    return `<tr>
+      <td class="flag-col">${FLAGS[c]||'🏳️'}</td>
+      <td style="font-weight:500">${c}<br><span style="font-size:.72rem;color:var(--text-muted)">${symbols[c]||''}</span></td>
+      <td class="amount-col">${moneyShort(out,c)}</td>
+      <td style="font-size:.78rem;color:var(--text-muted)">${rate1.toFixed(rate1<1?5:4)}</td>
+      <td style="font-size:.78rem;color:var(--text-muted)">${per1.toFixed(per1<1?5:4)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Spending presets ──────────────────────────────────────────────────────────
+function renderSpendingPresets() {
+  const wrap = $('spendingPresets');
+  wrap.innerHTML = SPENDING_PRESETS.map(([label, amt]) =>
+    `<button onclick="setAmt(${amt})" style="border:1px solid var(--gray-border);border-radius:9px;padding:.55rem .75rem;background:#fff;font-family:'DM Sans',sans-serif;font-size:.8rem;cursor:pointer;transition:all var(--transition);text-align:left;display:flex;flex-direction:column;gap:2px" onmouseover="this.style.background='#eaf4fb';this.style.borderColor='var(--teal)'" onmouseout="this.style.background='#fff';this.style.borderColor='var(--gray-border)'">
+      <span>${label}</span>
+      <span style="font-weight:700;color:var(--ocean-deep)">$${amt}</span>
+    </button>`
+  ).join('');
+}
+
+function calcDailyBudget() {
+  const daily = parseFloat($('dailyBudget').value||'0');
+  const days  = parseInt($('tripDays').value||'0');
+  const to    = $('to').value;
+  if (!daily || !days || !to) { $('totalBudgetResult').textContent='—'; return; }
+  const total = fx(daily * days, $('from').value, to);
+  if (total == null) return;
+  $('totalBudgetResult').textContent = `${moneyShort(daily*days, $('from').value)} = ${moneyShort(total, to)}`;
+}
+
+// ── Copy / Share ─────────────────────────────────────────────────────────────
+function copyResult() {
+  const txt = `${$('amount').value} ${$('from').value} = ${$('result').textContent} (ECB ${lastDate})`;
+  navigator.clipboard?.writeText(txt).then(() => toast('📋 Copied!')).catch(() => toast('Copy failed'));
+}
+function shareLink() {
+  const u = new URL(location.href);
+  u.searchParams.set('a',    $('amount').value || '100');
+  u.searchParams.set('from', $('from').value);
+  u.searchParams.set('to',   $('to').value);
+  navigator.clipboard?.writeText(u.toString()).then(() => toast('🔗 Link copied!')).catch(() => alert(u.toString()));
+}
+
+// ── Favorites ────────────────────────────────────────────────────────────────
+function getFavs()    { try { return JSON.parse(localStorage.getItem(STORAGE.favs)||'[]'); } catch { return []; } }
+function setFavs(arr) { localStorage.setItem(STORAGE.favs, JSON.stringify(arr)); renderFavs(); }
+function addFavorite() {
+  const k = $('from').value + '-' + $('to').value;
+  const s = new Set(getFavs()); s.add(k); setFavs([...s]);
+  toast('⭐ Added to favorites');
+}
+function removeFav(k) { const s=new Set(getFavs()); s.delete(k); setFavs([...s]); }
+function renderFavs() {
+  const wrap = $('favWrap');
+  const favs = getFavs();
+  if (!favs.length) { wrap.innerHTML='<span style="font-size:.82rem;color:var(--text-muted)">No favorites yet — convert a pair and click + Add</span>'; return; }
+  wrap.innerHTML = favs.map(k => {
+    const [f,t] = k.split('-');
+    const rate = (rates[f] && rates[t]) ? `<span style="font-size:.7rem;color:var(--text-muted)">${fx(1,f,t)?.toFixed(4)||'?'}</span>` : '';
+    return `<button class="fav-pill" onclick="loadFav('${k}')">
+      ${FLAGS[f]||''}${f}→${FLAGS[t]||''}${t} ${rate}
+      <span class="rm" onclick="event.stopPropagation();removeFav('${k}')">×</span>
+    </button>`;
+  }).join('');
+}
+function loadFav(k) {
+  const [f,t] = k.split('-');
+  $('from').value=f; $('to').value=t;
+  updateFlags(); convert();
+}
+
+// ── Recent ────────────────────────────────────────────────────────────────────
+function getRecent()     { try { return JSON.parse(localStorage.getItem(STORAGE.recent)||'[]'); } catch { return []; } }
+function setRecent(list) { localStorage.setItem(STORAGE.recent, JSON.stringify(list.slice(0,15))); }
+function pushRecent(r) {
+  const list = getRecent();
+  // Don't push duplicate of most recent
+  if (list.length && list[0].from===r.from && list[0].to===r.to && Math.abs(list[0].a-r.a)<0.001) return;
+  list.unshift(r); setRecent(list); renderRecent();
+}
+function clearRecent() { setRecent([]); renderRecent(); toast('Cleared'); }
+function renderRecent() {
+  const list = $('recentList');
+  const items = getRecent();
+  if (!items.length) { list.innerHTML='<span style="font-size:.82rem;color:var(--text-muted)">No recent conversions</span>'; return; }
+  list.innerHTML = items.slice(0,8).map(r => `
+    <div class="recent-item" onclick="loadRecent('${r.from}','${r.to}',${r.a})">
+      <span>${FLAGS[r.from]||''}${r.from}</span>
+      <span class="recent-arrow">→</span>
+      <span>${FLAGS[r.to]||''}${r.to}</span>
+      <span style="font-weight:600;color:var(--ocean)">${moneyShort(r.a, r.from)}</span>
+      <span class="recent-time">${timeAgo(r.date)}</span>
+    </div>`).join('');
+}
+function loadRecent(from, to, a) {
+  $('from').value=from; $('to').value=to; $('amount').value=a;
+  updateFlags(); convert();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  loadCache();
+  await loadSymbols();
+  buildSelects();
+  renderFavs();
+  renderRecent();
+  renderSpendingPresets();
+  if (!Object.keys(rates).length) setRateStatus('loading');
+  else { setRateStatus('cached'); renderMultiTable(); }
+  await loadRates();
+  convert();
+}
+
+window.convert=convert; window.tap=tap; window.clearAmt=clearAmt; window.clearAll=clearAll;
+window.setAmt=setAmt; window.swap=swap; window.copyResult=copyResult; window.shareLink=shareLink;
+window.addFavorite=addFavorite; window.removeFav=removeFav; window.loadFav=loadFav;
+window.clearRecent=clearRecent; window.loadRecent=loadRecent; window.refreshRates=refreshRates;
+window.updateFlags=updateFlags; window.calcDailyBudget=calcDailyBudget;
+
+init();
+</script>
+</body>
+</html>

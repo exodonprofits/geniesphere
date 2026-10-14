@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Events Near Me | GenieSphere</title>
+<meta name="description" content="Find concerts, sports, kids events, seasonal activities, and local experiences with filters, saved plans, and quick actions."/>
+<style>
+:root{
+  --bg:#0a0f1b;
+  --bg-2:#0b1220;
+  --card:#121a2b;
+  --card-2:#18233a;
+  --text:#e9f0ff;
+  --muted:#a9b6d9;
+  --line:rgba(120,155,255,.16);
+  --accent:#3ee1a1;
+  --accent-2:#4aa3ff;
+  --brand-blue:#4c6ef5;
+  --warn:#f59e0b;
+  --danger:#ef4444;
+  --good:#22c55e;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --radius:7px;
+  --btn-radius:999px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,#09111f,#0a0f1b 26%,#09111b);color:var(--text);font:500 16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+a{color:inherit}
+button,input,select{font:inherit}
+.container{max-width:1440px;margin:0 auto;padding:24px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+.site-header{position:sticky;top:0;z-index:1000;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);background:linear-gradient(180deg,rgba(9,14,25,.86),rgba(11,18,32,.92));border-bottom:1px solid var(--line);backdrop-filter:saturate(120%) blur(12px);box-shadow:0 8px 22px rgba(0,0,0,.22)}
+.site-header-inner{max-width:1440px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800}
+.logo{width:44px;height:44px;border-radius:50%;display:block;object-fit:cover;box-shadow:0 0 0 3px rgba(62,225,161,.18),0 8px 24px rgba(62,225,161,.2)}
+.menu{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px}
+.menu a{display:inline-flex;align-items:center;gap:6px;padding:4px 2px;text-decoration:none;color:var(--muted);border-bottom:2px solid transparent;transition:color .15s ease,border-color .15s ease}
+.menu a:hover{color:var(--text);border-bottom-color:var(--brand-blue)}
+.menu a.active{color:var(--text);border-bottom-color:var(--accent);font-weight:700}
+.hamburger{display:none;border:1px solid var(--line);background:#0e1626;color:var(--text);border-radius:8px;padding:8px 10px;cursor:pointer}
+.user-menu{position:relative;display:flex;align-items:center;margin-left:auto}
+.user-menu-toggle{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:1px solid rgba(120,155,255,.35);background:#0e1626;color:var(--text);cursor:pointer}
+.user-menu-dropdown{position:absolute;right:0;top:calc(100% + 6px);min-width:220px;background:#0e1626;border:1px solid rgba(120,155,255,.25);border-radius:var(--radius);box-shadow:0 14px 34px rgba(0,0,0,.55);padding:6px 0;display:none;z-index:1002}
+.user-menu.open .user-menu-dropdown{display:block}
+.user-menu-dropdown a,.user-menu-dropdown button{display:block;width:100%;text-align:left;padding:9px 14px;background:none;border:none;color:var(--text);text-decoration:none;cursor:pointer}
+.user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:#121a2b}
+.user-menu-divider{height:1px;background:rgba(148,163,184,.3);margin:4px 0}
+.dropdown-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.7;padding:4px 14px 2px}
+.drawer{position:fixed;inset:64px 12px auto 12px;background:#0e1626;border:1px solid var(--line);border-radius:var(--radius);padding:10px;display:none;z-index:1001;box-shadow:0 18px 34px rgba(0,0,0,.45)}
+.drawer a{display:block;margin:6px 0;padding:10px 12px;border-radius:var(--radius);text-decoration:none;color:var(--text);background:#121a2b;border:1px solid rgba(120,155,255,.15)}
+.drawer a.active{background:#18233a;border-color:rgba(62,225,161,.35)}
+@media(max-width:860px){.menu{display:none}.hamburger{display:inline-flex}.site-header-inner{padding:10px 12px}}
+
+.page-hero{padding:18px 0 8px}
+.hero-shell{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,1fr);gap:18px}
+@media(max-width:980px){.hero-shell{grid-template-columns:1fr}}
+.panel{background:linear-gradient(180deg,rgba(24,35,58,.68),rgba(18,26,43,.95));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.hero-card{padding:20px 20px 18px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(74,163,255,.14);border:1px solid rgba(74,163,255,.2);color:#d7e7ff;font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.hero-title{margin:14px 0 8px;font-size:clamp(28px,4.5vw,42px);line-height:1.1;font-weight:900}
+.hero-copy{margin:0;color:var(--muted);max-width:850px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:999px;text-decoration:none;border:0;cursor:pointer;font-weight:800;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#04131a;box-shadow:0 8px 18px rgba(62,225,161,.25)}
+.btn-secondary{background:#0e1626;border:1px solid rgba(120,155,255,.24);color:var(--text)}
+.btn-secondary:hover{border-color:rgba(62,225,161,.35)}
+.hero-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}
+@media(max-width:720px){.hero-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.metric{background:#0e1626;border:1px solid rgba(120,155,255,.14);border-radius:var(--radius);padding:12px}
+.metric .label{font-size:12px;color:var(--muted)}
+.metric .value{margin-top:4px;font-size:22px;font-weight:900}
+.metric .sub{margin-top:4px;font-size:12px;color:var(--muted)}
+.side-stack{display:grid;gap:18px}
+.side-card{padding:16px}
+.side-card h3{margin:0 0 10px;font-size:16px}
+.helper-list{margin:0;padding-left:18px;color:var(--muted);font-size:13px}
+.helper-list li+li{margin-top:6px}
+.badge-row{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:rgba(62,225,161,.18);color:#e8fff6;font-size:12px;font-weight:800;border:1px solid rgba(62,225,161,.18)}
+.badge.blue{background:rgba(74,163,255,.12);border-color:rgba(74,163,255,.18);color:#dfeaff}
+.badge.warn{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.2);color:#ffedc2}
+
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:18px;margin-top:18px}
+@media(max-width:1100px){.layout{grid-template-columns:1fr}}
+.stack{display:grid;gap:18px}
+.section{padding:16px}
+.section-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.section-title{margin:0;font-size:18px;font-weight:900}
+.section-copy{margin:4px 0 0;color:var(--muted);font-size:13px}
+.inline-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.filter-grid{display:grid;grid-template-columns:2fr repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:980px){.filter-grid{grid-template-columns:1fr 1fr}.filter-grid .span-2{grid-column:1 / -1}}
+@media(max-width:620px){.filter-grid{grid-template-columns:1fr}}
+.control{width:100%;background:#0e1626;border:1px solid rgba(120,155,255,.18);border-radius:14px;padding:11px 14px;color:var(--text);outline:none}
+.control:focus{border-color:rgba(74,163,255,.45);box-shadow:0 0 0 3px rgba(74,163,255,.15)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip{border:1px solid rgba(120,155,255,.18);background:#0e1626;color:var(--text);border-radius:999px;padding:7px 11px;font-size:12px;font-weight:800;cursor:pointer}
+.chip.active{background:rgba(74,163,255,.14);border-color:rgba(74,163,255,.3)}
+
+.results-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media(max-width:860px){.results-grid{grid-template-columns:1fr}}
+.event-card{background:#0e1626;border:1px solid rgba(120,155,255,.14);border-radius:var(--radius);overflow:hidden;display:grid;grid-template-rows:auto 1fr}
+.event-cover{padding:14px;background:radial-gradient(circle at top right, rgba(74,163,255,.18), transparent 35%),linear-gradient(135deg, rgba(62,225,161,.14), rgba(74,163,255,.08));border-bottom:1px solid rgba(120,155,255,.12)}
+.cover-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.event-type{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:rgba(74,163,255,.14);color:#dce8ff;font-size:11px;font-weight:800;border:1px solid rgba(74,163,255,.18);text-transform:uppercase;letter-spacing:.04em}
+.event-save{border:1px solid rgba(120,155,255,.2);background:#0e1626;color:var(--text);border-radius:999px;padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer}
+.event-save.saved{background:rgba(62,225,161,.16);border-color:rgba(62,225,161,.26);color:#e8fff6}
+.event-body{padding:14px}
+.event-title{margin:0;font-size:17px;font-weight:900}
+.event-sub{margin:6px 0 0;color:var(--muted);font-size:13px}
+.event-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.meta{background:#121a2b;border:1px solid rgba(120,155,255,.12);border-radius:12px;padding:10px}
+.meta .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.meta .v{margin-top:3px;font-size:13px;font-weight:800}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tag{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:#121a2b;border:1px solid rgba(120,155,255,.14);font-size:12px;color:#dbe7ff}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.mini-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(120,155,255,.18);background:#121a2b;color:var(--text);cursor:pointer;font-weight:800;font-size:12px;text-decoration:none}
+.mini-btn.primary{background:var(--accent);border-color:transparent;color:#04131a}
+.mini-btn.warn{border-color:rgba(245,158,11,.35);color:#ffe6ad}
+.empty{padding:18px;border:1px dashed rgba(120,155,255,.18);border-radius:var(--radius);color:var(--muted);text-align:center;background:#0e1626}
+
+.saved-list{display:grid;gap:10px}
+.saved-item{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:12px;border-radius:14px;background:#0e1626;border:1px solid rgba(120,155,255,.12)}
+.saved-item h4{margin:0 0 4px;font-size:14px}
+.saved-item p{margin:0;color:var(--muted);font-size:12px}
+.saved-item .actions{display:flex;gap:8px;flex-wrap:wrap}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kpi{padding:12px;border-radius:14px;background:#0e1626;border:1px solid rgba(120,155,255,.12)}
+.kpi .big{font-size:24px;font-weight:900}
+.kpi .tiny{font-size:12px;color:var(--muted)}
+.timeline{display:grid;gap:10px}
+.timeline-item{display:flex;gap:10px;padding:12px;border-radius:14px;background:#0e1626;border:1px solid rgba(120,155,255,.12)}
+.timeline-date{flex:0 0 88px;font-size:12px;color:#dce8ff;font-weight:800}
+.timeline-main h4{margin:0 0 4px;font-size:14px}
+.timeline-main p{margin:0;color:var(--muted);font-size:12px}
+
+.site-footer{margin-top:32px;padding:32px 0 28px;border-top:1px solid var(--line);margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9))}
+.site-footer-inner{max-width:1440px;margin:0 auto;padding:0 24px}
+.footer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 28px;align-items:start}
+.footer-col h4{margin:0 0 10px;font-size:14px}.footer-col a{display:block;color:var(--muted);text-decoration:none;padding:4px 0;font-size:13px}.footer-col a:hover{color:var(--text);text-decoration:underline}.footer-bottom{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--muted);font-size:13px;margin-top:24px;padding-top:14px;border-top:1px solid rgba(120,155,255,.12);text-align:center}
+.social{display:flex;gap:16px;justify-content:center;font-size:18px}
+@media(max-width:900px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.footer-grid{display:none}.footer-bottom{border-top:none;padding-top:0;margin-top:12px}}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="../index.html">
+      <img class="logo" src="../genie-logo.png" alt="GenieSphere" />
+      <strong>GenieSphere</strong>
+    </a>
+
+    <nav class="menu" aria-label="Primary">
+      <a class="ghost" href="personal.html">🏡 Personal</a>
+      <a class="ghost" href="business.html">🏢 Business</a>
+      <a class="ghost" href="investment.html">📈 Investment</a>
+      <a class="active" href="leisure.html">🏝️ Leisure</a>
+    </nav>
+
+    <button class="hamburger" id="hamburger" aria-expanded="false" aria-label="Open navigation">☰</button>
+
+    <div class="user-menu" id="user-menu">
+      <button class="user-menu-toggle" id="user-menu-toggle" aria-expanded="false">
+        <span id="user-name-label">Log in</span>
+        <span aria-hidden="true">▾</span>
+      </button>
+      <div class="user-menu-dropdown" id="user-menu-dropdown">
+        <div class="dropdown-label">Areas</div>
+        <button type="button" class="dropdown-nav" data-target="personal.html">🏡 Personal</button>
+        <button type="button" class="dropdown-nav" data-target="business.html">🏢 Business</button>
+        <button type="button" class="dropdown-nav" data-target="investment.html">📈 Investment</button>
+        <button type="button" class="dropdown-nav" data-target="leisure.html">🏝️ Leisure</button>
+        <div class="user-menu-divider"></div>
+        <div class="dropdown-label">Account</div>
+        <button type="button" class="dropdown-nav" data-target="../onboarding/user_profile_form.html">👤 User profile</button>
+        <button type="button" class="dropdown-nav" data-target="../onboarding/display_settings.html">⚙️ Settings</button>
+        <div class="user-menu-divider"></div>
+        <button type="button" id="user-auth-action">Log in / Sign up</button>
+        <button type="button" id="user-signout-btn" style="display:none;">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="drawer" id="mobile-drawer">
+  <a href="personal.html">🏡 Personal</a>
+  <a href="business.html">🏢 Business</a>
+  <a href="investment.html">📈 Investment</a>
+  <a class="active" href="leisure.html">🏝️ Leisure</a>
+</div>
+
+<main class="container">
+  <section class="page-hero">
+    <div class="hero-shell">
+      <div class="panel hero-card">
+        <div class="eyebrow">🎟️ Local Discovery Hub</div>
+        <h1 class="hero-title">Events Near Me</h1>
+        <p class="hero-copy">Find concerts, sports, kids activities, date-night ideas, and seasonal events with real filters, saved picks, quick planning notes, and a cleaner GenieSphere workflow. The original page was a simple quick-add list; this version turns it into a more operational event planner. fileciteturn31file0</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" type="button" id="btnFindNow">🔎 Find Events</button>
+          <a class="btn btn-secondary" href="leisure.html">⬅️ Back to Leisure</a>
+        </div>
+        <div class="hero-metrics">
+          <div class="metric"><div class="label">Matching events</div><div class="value" id="metricMatches">0</div><div class="sub">Filtered in real time</div></div>
+          <div class="metric"><div class="label">Saved picks</div><div class="value" id="metricSaved">0</div><div class="sub">Your shortlist</div></div>
+          <div class="metric"><div class="label">This weekend</div><div class="value" id="metricWeekend">0</div><div class="sub">Friday–Sunday</div></div>
+          <div class="metric"><div class="label">Family-friendly</div><div class="value" id="metricFamily">0</div><div class="sub">Easy options</div></div>
+        </div>
+      </div>
+      <div class="side-stack">
+        <div class="panel side-card">
+          <h3>✨ Smart planning</h3>
+          <div class="badge-row">
+            <span class="badge">Search</span>
+            <span class="badge blue">Filter</span>
+            <span class="badge warn">Save</span>
+          </div>
+          <ul class="helper-list" style="margin-top:12px;">
+            <li>Filter by date, vibe, budget, and audience.</li>
+            <li>Save your favorite events to a shortlist.</li>
+            <li>Keep planning notes without leaving the page.</li>
+          </ul>
+        </div>
+        <div class="panel side-card">
+          <h3>🧠 Genie suggestions</h3>
+          <div id="smartSummary" class="helper-list" style="padding-left:18px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <div class="stack">
+      <section class="panel section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Find the right event faster</h2>
+            <p class="section-copy">Use filters instead of just typing a note. This turns the page into a real event finder and planning surface.</p>
+          </div>
+          <div class="inline-actions">
+            <button class="btn-secondary btn" type="button" id="btnReset">Reset filters</button>
+          </div>
+        </div>
+        <div class="filter-grid">
+          <input id="searchInput" class="control span-2" type="search" placeholder="Search concerts, kids events, festivals, sports, markets..." />
+          <select id="filterCategory" class="control">
+            <option value="all">All categories</option>
+            <option value="concert">Concerts</option>
+            <option value="sports">Sports</option>
+            <option value="kids">Kids & family</option>
+            <option value="seasonal">Seasonal</option>
+            <option value="food">Food & markets</option>
+            <option value="arts">Arts & culture</option>
+          </select>
+          <select id="filterAudience" class="control">
+            <option value="all">All audiences</option>
+            <option value="family">Family friendly</option>
+            <option value="adults">Adults</option>
+            <option value="couples">Date night</option>
+          </select>
+          <select id="filterBudget" class="control">
+            <option value="all">Any budget</option>
+            <option value="free">Free</option>
+            <option value="under50">Under $50</option>
+            <option value="50plus">$50+</option>
+          </select>
+          <select id="filterDate" class="control">
+            <option value="all">Any date</option>
+            <option value="today">Today</option>
+            <option value="weekend">This weekend</option>
+            <option value="7days">Next 7 days</option>
+            <option value="30days">Next 30 days</option>
+          </select>
+        </div>
+        <div class="chips">
+          <button class="chip active" data-quick="weekend">Weekend plans</button>
+          <button class="chip" data-quick="kids">Kids this weekend</button>
+          <button class="chip" data-quick="concert">Concerts</button>
+          <button class="chip" data-quick="free">Free events</button>
+          <button class="chip" data-quick="date">Date night</button>
+        </div>
+      </section>
+
+      <section class="panel section">
+        <div class="results-head">
+          <div>
+            <h2 class="section-title">Recommended events</h2>
+            <p class="section-copy" id="resultsCopy">Showing all available events.</p>
+          </div>
+          <div class="inline-actions">
+            <button class="mini-btn" id="toggleSavedOnly" type="button">Show saved only</button>
+          </div>
+        </div>
+        <div id="resultsGrid" class="results-grid"></div>
+        <div id="resultsEmpty" class="empty" style="display:none;">No events match your current filters. Try resetting filters or broadening your search.</div>
+      </section>
+
+      <section class="panel section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Quick planning notes</h2>
+            <p class="section-copy">Keep simple notes here for reservations, reminders, or ideas that are not full events yet.</p>
+          </div>
+        </div>
+        <div class="filter-grid" style="grid-template-columns:2fr 2fr 1fr auto auto;">
+          <input id="itemTitle" class="control" type="text" placeholder="Add a quick note or place to check..." />
+          <input id="itemNote" class="control" type="text" placeholder="Details, who is going, booking note, etc." />
+          <input id="itemDate" class="control" type="date" />
+          <button id="btnAdd" class="btn btn-primary" type="button">Save</button>
+          <button id="btnClearAll" class="btn btn-secondary" type="button">Clear all</button>
+        </div>
+        <div id="msg" class="section-copy" style="margin-top:10px;"></div>
+      </section>
+    </div>
+
+    <aside class="stack">
+      <section class="panel section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Saved shortlist</h2>
+            <p class="section-copy">Your favorite events live here for quick review.</p>
+          </div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="tiny">Saved events</div><div class="big" id="savedCountBox">0</div></div>
+          <div class="kpi"><div class="tiny">Notes stored</div><div class="big" id="notesCountBox">0</div></div>
+        </div>
+        <div id="savedList" class="saved-list" style="margin-top:12px;"></div>
+        <div id="savedEmpty" class="empty" style="display:none;margin-top:12px;">No saved events yet. Use “Save” on any event card.</div>
+      </section>
+
+      <section class="panel section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Upcoming timeline</h2>
+            <p class="section-copy">Saved events and dated notes in chronological order.</p>
+          </div>
+        </div>
+        <div id="timeline" class="timeline"></div>
+        <div id="timelineEmpty" class="empty" style="display:none;">Add a date to an event or note to build your timeline.</div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Leisure</h4>
+        <a href="leisure.html">Leisure Hub</a>
+        <a href="trip-dashboard.html">Trip Dashboard</a>
+        <a href="restaurants-near-me.html">Restaurants Near Me</a>
+      </div>
+      <div class="footer-col">
+        <h4>Planning</h4>
+        <a href="explore-this-destination.html">Explore This Destination</a>
+        <a href="voyage-budget-planner.html">Travel Budget Planner</a>
+        <a href="packing-list.html">Packing List</a>
+      </div>
+      <div class="footer-col">
+        <h4>Account</h4>
+        <a href="../onboarding/user_profile_form.html">User profile</a>
+        <a href="../onboarding/display_settings.html">Settings</a>
+        <a href="../onboarding/login.html">Log in</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="../about.html">About</a>
+        <a href="../contact.html">Contact</a>
+        <a href="../index.html">GenieSphere home</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+      <div class="social" aria-label="Social"><a href="#" aria-label="Twitter / X">🐦</a><a href="#" aria-label="YouTube">▶️</a><a href="#" aria-label="GitHub">🐙</a></div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const client = window.supabase.createClient(
+  'https://pbojacnagutipfhcxltj.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+);
+const EVENTS = [
+  {id:'e1',title:'Friday Night Jazz at Hemmens',category:'arts',audience:'adults',budget:'under50',price:28,date:'2026-03-20',time:'7:30 PM',location:'Elgin, IL',venue:'Hemmens Cultural Center',genie:'Leisure',tags:['Live music','Indoor'],desc:'Smooth jazz night with easy parking and dinner options nearby.'},
+  {id:'e2',title:'Family Science Expo',category:'kids',audience:'family',budget:'free',price:0,date:'2026-03-21',time:'10:00 AM',location:'Schaumburg, IL',venue:'Convention Center',genie:'Leisure',tags:['Kids','Interactive'],desc:'Hands-on family exhibits, STEM booths, and weekend activities.'},
+  {id:'e3',title:'Chicago Fire Home Match',category:'sports',audience:'family',budget:'50plus',price:64,date:'2026-03-22',time:'4:00 PM',location:'Chicago, IL',venue:'Soldier Field',genie:'Leisure',tags:['Sports','Weekend'],desc:'Great option if you want a full-day city outing with food and energy.'},
+  {id:'e4',title:'Downtown Spring Market',category:'food',audience:'family',budget:'free',price:0,date:'2026-03-23',time:'11:00 AM',location:'St. Charles, IL',venue:'Riverside Plaza',genie:'Leisure',tags:['Food','Outdoor'],desc:'Local vendors, bakery booths, coffee, and easy walkable browsing.'},
+  {id:'e5',title:'Symphony Pops: Movie Classics',category:'concert',audience:'couples',budget:'50plus',price:72,date:'2026-03-28',time:'8:00 PM',location:'Chicago, IL',venue:'Chicago Theatre',genie:'Leisure',tags:['Date night','Indoor'],desc:'Classic movie music night with a polished downtown experience.'},
+  {id:'e6',title:'Kids Dinosaur Adventure Show',category:'kids',audience:'family',budget:'under50',price:32,date:'2026-03-29',time:'1:00 PM',location:'Rosemont, IL',venue:'Allstate Arena',genie:'Leisure',tags:['Kids','Show'],desc:'Big visual show for younger kids with merch and photo opportunities.'},
+  {id:'e7',title:'Outdoor Food Truck Fest',category:'seasonal',audience:'family',budget:'under50',price:15,date:'2026-04-03',time:'6:00 PM',location:'Naperville, IL',venue:'Riverwalk Park',genie:'Leisure',tags:['Seasonal','Food'],desc:'Casual Friday evening event with music, food trucks, and lawn seating.'},
+  {id:'e8',title:'Rooftop Comedy Night',category:'arts',audience:'couples',budget:'under50',price:24,date:'2026-04-05',time:'8:30 PM',location:'Chicago, IL',venue:'West Loop Rooftop',genie:'Leisure',tags:['Comedy','Date night'],desc:'Easy adults-only night out with drinks and skyline views.'}
+];
+const NOTES_KEY = 'gs_events_near_me_notes_v2';
+const SAVED_KEY = 'gs_events_near_me_saved_v2';
+const $ = id => document.getElementById(id);
+const fmtDate = d => new Date(d+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});
+const today = new Date('2026-03-19T12:00:00');
+let showSavedOnly = false;
+let currentUser = null;
+
+function loadNotes(){try{return JSON.parse(localStorage.getItem(NOTES_KEY))||[]}catch{return[]}}
+function saveNotes(v){localStorage.setItem(NOTES_KEY,JSON.stringify(v))}
+function loadSaved(){try{return JSON.parse(localStorage.getItem(SAVED_KEY))||[]}catch{return[]}}
+function saveSaved(v){localStorage.setItem(SAVED_KEY,JSON.stringify(v))}
+function esc(s){return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
+function dateInRange(date, mode){
+  const x = new Date(date+'T12:00:00');
+  const diff = Math.floor((x - today)/(1000*60*60*24));
+  const day = today.getDay();
+  const startWeekendOffset = (5 - day + 7) % 7;
+  const weekendStart = new Date(today); weekendStart.setDate(today.getDate()+startWeekendOffset);
+  const weekendEnd = new Date(weekendStart); weekendEnd.setDate(weekendStart.getDate()+2);
+  if(mode==='today') return diff===0;
+  if(mode==='7days') return diff>=0 && diff<=7;
+  if(mode==='30days') return diff>=0 && diff<=30;
+  if(mode==='weekend') return x>=weekendStart && x<=weekendEnd;
+  return true;
+}
+function filteredEvents(){
+  const q = $('searchInput').value.trim().toLowerCase();
+  const c = $('filterCategory').value;
+  const a = $('filterAudience').value;
+  const b = $('filterBudget').value;
+  const d = $('filterDate').value;
+  const saved = loadSaved();
+  return EVENTS.filter(ev => {
+    if(showSavedOnly && !saved.includes(ev.id)) return false;
+    if(q && !(`${ev.title} ${ev.desc} ${ev.location} ${ev.venue} ${ev.tags.join(' ')}`.toLowerCase().includes(q))) return false;
+    if(c!=='all' && ev.category!==c) return false;
+    if(a!=='all' && ev.audience!==a) return false;
+    if(b!=='all' && ev.budget!==b) return false;
+    if(d!=='all' && !dateInRange(ev.date,d)) return false;
+    return true;
+  }).sort((x,y)=>new Date(x.date)-new Date(y.date));
+}
+function quickApply(type){
+  document.querySelectorAll('.chip').forEach(ch=>ch.classList.remove('active'));
+  document.querySelector(`.chip[data-quick="${type}"]`)?.classList.add('active');
+  $('searchInput').value=''; $('filterCategory').value='all'; $('filterAudience').value='all'; $('filterBudget').value='all'; $('filterDate').value='all';
+  if(type==='weekend') $('filterDate').value='weekend';
+  if(type==='kids'){ $('filterCategory').value='kids'; $('filterDate').value='weekend'; $('filterAudience').value='family'; }
+  if(type==='concert'){ $('filterCategory').value='concert'; }
+  if(type==='free'){ $('filterBudget').value='free'; }
+  if(type==='date'){ $('filterAudience').value='couples'; }
+  renderAll();
+}
+function renderResults(){
+  const rows = filteredEvents();
+  $('metricMatches').textContent = rows.length;
+  $('metricWeekend').textContent = EVENTS.filter(e=>dateInRange(e.date,'weekend')).length;
+  $('metricFamily').textContent = EVENTS.filter(e=>e.audience==='family').length;
+  $('resultsCopy').textContent = rows.length ? `Showing ${rows.length} matching event${rows.length===1?'':'s'}.` : 'No events match your current filters.';
+  const wrap = $('resultsGrid'); wrap.innerHTML='';
+  $('resultsEmpty').style.display = rows.length ? 'none' : 'block';
+  const saved = loadSaved();
+  rows.forEach(ev=>{
+    const isSaved = saved.includes(ev.id);
+    const card = document.createElement('article');
+    card.className = 'event-card';
+    card.innerHTML = `
+      <div class="event-cover">
+        <div class="cover-top">
+          <span class="event-type">${esc(ev.category)}</span>
+          <button class="event-save ${isSaved?'saved':''}" data-save="${ev.id}">${isSaved?'Saved ✓':'Save'}</button>
+        </div>
+        <h3 class="event-title" style="margin-top:12px;">${esc(ev.title)}</h3>
+        <p class="event-sub">${esc(ev.desc)}</p>
+      </div>
+      <div class="event-body">
+        <div class="event-meta">
+          <div class="meta"><div class="k">Date</div><div class="v">${fmtDate(ev.date)} · ${esc(ev.time)}</div></div>
+          <div class="meta"><div class="k">Budget</div><div class="v">${ev.price===0?'Free':'$'+ev.price}</div></div>
+          <div class="meta"><div class="k">Location</div><div class="v">${esc(ev.location)}</div></div>
+          <div class="meta"><div class="k">Venue</div><div class="v">${esc(ev.venue)}</div></div>
+        </div>
+        <div class="tags">${ev.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+        <div class="card-actions">
+          <button class="mini-btn primary" data-plan="${ev.id}">Add to shortlist</button>
+          <button class="mini-btn" data-note="${ev.id}">Quick note</button>
+          <button class="mini-btn warn" data-copy="${ev.id}">Copy title</button>
+        </div>
+      </div>`;
+    wrap.appendChild(card);
+  });
+}
+function renderSaved(){
+  const savedIds = loadSaved();
+  $('metricSaved').textContent = savedIds.length;
+  $('savedCountBox').textContent = savedIds.length;
+  $('notesCountBox').textContent = loadNotes().length;
+  const wrap = $('savedList'); wrap.innerHTML='';
+  const rows = EVENTS.filter(e=>savedIds.includes(e.id)).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  $('savedEmpty').style.display = rows.length ? 'none' : 'block';
+  rows.forEach(ev=>{
+    const item = document.createElement('div');
+    item.className='saved-item';
+    item.innerHTML = `
+      <div>
+        <h4>${esc(ev.title)}</h4>
+        <p>${fmtDate(ev.date)} · ${esc(ev.location)} · ${ev.price===0?'Free':'$'+ev.price}</p>
+      </div>
+      <div class="actions">
+        <button class="mini-btn" data-copy="${ev.id}">Copy</button>
+        <button class="mini-btn" data-unsave="${ev.id}">Remove</button>
+      </div>`;
+    wrap.appendChild(item);
+  });
+}
+function renderTimeline(){
+  const notes = loadNotes();
+  const saved = EVENTS.filter(e=>loadSaved().includes(e.id)).map(e=>({kind:'event',title:e.title,date:e.date,detail:`${e.location} · ${e.price===0?'Free':'$'+e.price}`}));
+  const extra = notes.filter(n=>n.date).map(n=>({kind:'note',title:n.title,date:n.date,detail:n.note || 'Saved note'}));
+  const all = [...saved,...extra].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const wrap = $('timeline'); wrap.innerHTML='';
+  $('timelineEmpty').style.display = all.length ? 'none' : 'block';
+  all.forEach(r=>{
+    const row = document.createElement('div');
+    row.className='timeline-item';
+    row.innerHTML = `<div class="timeline-date">${fmtDate(r.date)}</div><div class="timeline-main"><h4>${esc(r.title)}</h4><p>${esc(r.detail)}</p></div>`;
+    wrap.appendChild(row);
+  });
+}
+function smartSummary(){
+  const rows = filteredEvents();
+  const family = rows.filter(r=>r.audience==='family').length;
+  const free = rows.filter(r=>r.price===0).length;
+  const weekend = rows.filter(r=>dateInRange(r.date,'weekend')).length;
+  $('smartSummary').innerHTML = `
+    <li>${rows.length} event${rows.length===1?'':'s'} match your current filters.</li>
+    <li>${weekend} option${weekend===1?'':'s'} fall on the coming weekend.</li>
+    <li>${family} event${family===1?'':'s'} are family-friendly.</li>
+    <li>${free} option${free===1?' is':'s are'} free right now.</li>`;
+}
+function renderNotesMessage(msg){ $('msg').textContent = msg || ''; if(msg){ setTimeout(()=>{$('msg').textContent='';},1400);} }
+function renderAll(){ renderResults(); renderSaved(); renderTimeline(); smartSummary(); }
+
+$('btnAdd').addEventListener('click', ()=>{
+  const title = $('itemTitle').value.trim();
+  const note = $('itemNote').value.trim();
+  const date = $('itemDate').value.trim();
+  if(!title){ renderNotesMessage('Please enter a title.'); return; }
+  const rows = loadNotes();
+  rows.push({id:crypto.randomUUID(), title, note, date: date || null, created_at: Date.now()});
+  saveNotes(rows);
+  $('itemTitle').value=''; $('itemNote').value=''; $('itemDate').value='';
+  renderNotesMessage('Saved ✅');
+  renderAll();
+});
+$('btnClearAll').addEventListener('click', ()=>{ if(!confirm('Clear all saved notes?')) return; localStorage.removeItem(NOTES_KEY); renderAll(); });
+$('btnFindNow').addEventListener('click', ()=>{ document.querySelector('.section').scrollIntoView({behavior:'smooth'}); $('searchInput').focus(); });
+$('btnReset').addEventListener('click', ()=>{ $('searchInput').value=''; $('filterCategory').value='all'; $('filterAudience').value='all'; $('filterBudget').value='all'; $('filterDate').value='all'; showSavedOnly=false; $('toggleSavedOnly').textContent='Show saved only'; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); renderAll(); });
+['searchInput','filterCategory','filterAudience','filterBudget','filterDate'].forEach(id=>$(id).addEventListener('input', renderAll));
+document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click', ()=>quickApply(ch.dataset.quick)));
+$('toggleSavedOnly').addEventListener('click', ()=>{ showSavedOnly = !showSavedOnly; $('toggleSavedOnly').textContent = showSavedOnly ? 'Show all events' : 'Show saved only'; renderAll(); });
+
+document.addEventListener('click', (e)=>{
+  const saveId = e.target.getAttribute('data-save');
+  const unsaveId = e.target.getAttribute('data-unsave');
+  const planId = e.target.getAttribute('data-plan');
+  const noteId = e.target.getAttribute('data-note');
+  const copyId = e.target.getAttribute('data-copy');
+  if(saveId){
+    const rows = loadSaved();
+    if(rows.includes(saveId)) saveSaved(rows.filter(x=>x!==saveId)); else saveSaved([...rows, saveId]);
+    renderAll();
+  }
+  if(unsaveId){ saveSaved(loadSaved().filter(x=>x!==unsaveId)); renderAll(); }
+  if(planId){ const rows = loadSaved(); if(!rows.includes(planId)) saveSaved([...rows, planId]); renderAll(); }
+  if(noteId){ const ev = EVENTS.find(x=>x.id===noteId); if(ev){ $('itemTitle').value = ev.title; $('itemNote').value = `${ev.location} · ${ev.venue}`; $('itemDate').value = ev.date; $('itemTitle').focus(); window.scrollTo({top:document.body.scrollHeight*.55, behavior:'smooth'}); } }
+  if(copyId){ const ev = EVENTS.find(x=>x.id===copyId); if(ev){ navigator.clipboard?.writeText(ev.title).catch(()=>{}); renderNotesMessage('Copied event title.'); } }
+});
+
+(async ()=>{
+  const nameLabel = $('user-name-label');
+  const menu = $('user-menu');
+  $('user-menu-toggle').addEventListener('click',(e)=>{e.stopPropagation(); menu.classList.toggle('open');});
+  document.addEventListener('click',(e)=>{ if(!menu.contains(e.target)) menu.classList.remove('open'); });
+  const { data:{ user } } = await client.auth.getUser();
+  if(user){
+    currentUser = user;
+    nameLabel.textContent = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Account';
+    $('user-auth-action').style.display='none';
+    $('user-signout-btn').style.display='block';
+    $('user-signout-btn').addEventListener('click', async ()=>{ try{ await client.auth.signOut(); }catch(_){ } location.href='../index.html'; });
+  }else{
+    currentUser = null;
+    nameLabel.textContent = 'Log in';
+    $('user-signout-btn').style.display='none';
+    $('user-auth-action').addEventListener('click', ()=> location.href='../onboarding/login.html');
+  }
+})();
+function goOrLogin(target){ if(currentUser) location.href = target; else location.href='../onboarding/login.html'; }
+document.querySelectorAll('.dropdown-nav').forEach(btn=>btn.addEventListener('click', ()=>goOrLogin(btn.dataset.target)));
+(function(){
+  const d=$('mobile-drawer'); const b=$('hamburger');
+  const open=()=>{ d.style.display='block'; b.setAttribute('aria-expanded','true'); };
+  const close=()=>{ d.style.display='none'; b.setAttribute('aria-expanded','false'); };
+  b.addEventListener('click',()=>{ b.getAttribute('aria-expanded')==='true' ? close() : open(); });
+  document.addEventListener('click',(e)=>{ if(!d.contains(e.target) && e.target!==b) close(); });
+})();
+$('year').textContent = new Date().getFullYear();
+renderAll();
+</script>
+</body>
+</html>

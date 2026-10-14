@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Parking Tips & Tools – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #0077b6;
+  --ocean-deep: #023e8a;
+  --teal: #00b4d8;
+  --coral: #e76f51;
+  --coral-dark: #c1551c;
+  --red: #ef4444;
+  --red-bg: #fef2f2;
+  --amber: #f59e0b;
+  --amber-bg: #fffbeb;
+  --green: #10b981;
+  --green-bg: #f0fdf4;
+  --off-white: #f8fafc;
+  --gray-light: #f1f5f9;
+  --gray-border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; }
+.hidden { display: none !important; }
+
+/* ── HEADER ── */
+.vg-header { position: sticky; top: 0; z-index: 40; background: linear-gradient(105deg, #023e8a 0%, #0077b6 55%, #0096c7 100%); box-shadow: 0 2px 20px rgba(2,62,138,0.25); }
+.vg-nav { max-width: 1240px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vg-brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.vg-brand img { width: 46px; height: 46px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+.vg-title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.4rem; color: #fff; }
+.vg-right { display: flex; align-items: center; gap: 12px; }
+.nav-chip { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; height: 38px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); font-size: 0.88rem; font-weight: 500; transition: background var(--transition); white-space: nowrap; cursor: pointer; }
+.nav-chip:hover { background: rgba(255,255,255,0.24); }
+.nav-chip.active { background: rgba(255,255,255,0.24); }
+
+/* dropdown */
+.dropdown { position: relative; }
+.dropdown-menu { display: none; position: absolute; top: calc(100% + 8px); left: 0; background: #fff; border-radius: var(--radius-lg); box-shadow: 0 12px 40px rgba(0,0,0,0.15); padding: 8px; min-width: 210px; border: 1px solid var(--gray-border); z-index: 60; }
+.dropdown-menu a { display: block; padding: 9px 12px; border-radius: 8px; color: var(--text); text-decoration: none; font-size: 0.9rem; }
+.dropdown-menu a:hover { background: var(--gray-light); color: var(--ocean); }
+.dropdown.open .dropdown-menu { display: block; }
+.dropdown-divider { height: 1px; background: var(--gray-border); margin: 6px 4px; }
+.dropdown-section-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); padding: 8px 12px 4px; }
+.account-chip { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; height: 38px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); font-size: 0.88rem; font-weight: 500; transition: background var(--transition); cursor: pointer; }
+.account-chip:hover { background: rgba(255,255,255,0.24); }
+.acct-dropdown .dropdown-menu { right: 0; left: auto; }
+
+/* ── PAGE BANNER ── */
+.page-banner { background: #eaf4fb; border-bottom: 1px solid #c9e4f5; padding: 1.4rem 1.5rem; }
+.page-banner-inner { max-width: 1200px; margin: 0 auto; }
+.page-banner h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.2rem, 2.5vw, 1.55rem); font-weight: 700; color: var(--ocean-deep); margin-bottom: 0.25rem; }
+.page-banner p { font-size: 0.87rem; color: var(--text-muted); }
+
+/* ── NOTICE BANNERS ── */
+.notice { display: flex; align-items: flex-start; gap: 10px; padding: 0.75rem 1rem; border-radius: var(--radius); font-size: 0.85rem; line-height: 1.55; margin-bottom: 1.5rem; border: 1px solid; }
+.notice-warn { background: var(--amber-bg); border-color: #fcd34d; color: #92400e; }
+.notice-ok   { background: var(--green-bg);  border-color: #6ee7b7; color: #065f46; }
+.notice-info { background: #eff6ff;           border-color: #bfdbfe; color: #1e40af; }
+.notice-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* ── LAYOUT ── */
+.page-body { max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem 3rem; display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start; }
+@media (max-width: 960px) { .page-body { grid-template-columns: 1fr; } }
+
+/* ── CARDS ── */
+.card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+.card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--gray-border); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.card-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.card-body { padding: 1.25rem; }
+
+/* ── FORM ELEMENTS ── */
+.field { margin-bottom: 1rem; }
+.field:last-child { margin-bottom: 0; }
+.field-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem; }
+.vg-select, .vg-input {
+  width: 100%; padding: 0.65rem 1rem; border: 1px solid var(--gray-border);
+  border-radius: var(--radius); font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem; color: var(--text); background: var(--gray-light); outline: none;
+  transition: border-color var(--transition), background var(--transition);
+}
+.vg-select:focus, .vg-input:focus { border-color: var(--ocean); background: #fff; box-shadow: 0 0 0 3px rgba(0,119,182,0.1); }
+.vg-select { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230077b6"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 2.5rem; background-color: var(--gray-light); }
+
+/* ── QUICK LINK PILLS ── */
+.quick-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.qlink { display: inline-flex; align-items: center; gap: 6px; padding: 0.45rem 0.9rem; border: 1px solid var(--gray-border); border-radius: 999px; background: #fff; color: var(--text); font-size: 0.83rem; font-weight: 500; text-decoration: none; transition: background var(--transition), border-color var(--transition), transform var(--transition); }
+.qlink:hover { background: #eaf4fb; border-color: var(--teal); transform: translateY(-1px); }
+
+/* ── TIPS LIST ── */
+.tips-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+.tips-list li { font-size: 0.88rem; color: var(--text); padding: 0.6rem 0.85rem; background: var(--gray-light); border: 1px solid var(--gray-border); border-radius: var(--radius); line-height: 1.55; display: flex; align-items: flex-start; gap: 8px; }
+.tips-list li::before { content: '🚗'; flex-shrink: 0; margin-top: 1px; }
+
+/* ── COST ESTIMATOR ── */
+.cost-output { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(105deg, var(--ocean-deep), var(--ocean)); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-top: 1rem; }
+.cost-output-label { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.7); }
+.cost-output-amount { font-size: 2rem; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+
+/* ── SECTION SPACER ── */
+.section-gap { margin-top: 1.25rem; }
+
+/* ── ACTION BUTTONS ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: 1px solid var(--gray-border); background: #fff; color: var(--text); transition: background var(--transition), transform var(--transition); white-space: nowrap; }
+.btn:hover { background: var(--gray-light); transform: translateY(-1px); }
+.btn-primary { background: var(--ocean); color: #fff; border-color: var(--ocean); }
+.btn-primary:hover { background: var(--ocean-deep); border-color: var(--ocean-deep); }
+.btn-green  { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-green:hover  { background: #059669; border-color: #059669; }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+.btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ── ICE-STYLE FORM SECTIONS (for Save a Spot) ── */
+.spot-fields { display: flex; flex-direction: column; gap: 0.6rem; }
+.spot-section-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); padding: 0.5rem 0 0.25rem; border-top: 1px solid var(--gray-border); margin-top: 0.25rem; }
+.spot-section-label:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+
+/* ── SAVED SPOTS TABLE ── */
+.spots-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.spots-table th { background: var(--gray-light); padding: 7px 10px; text-align: left; font-weight: 600; border: 1px solid var(--gray-border); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.spots-table td { padding: 8px 10px; border: 1px solid var(--gray-border); vertical-align: middle; }
+.spots-table tr:nth-child(even) td { background: var(--gray-light); }
+.empty-row td { color: var(--text-muted); text-align: center; padding: 1.25rem; }
+
+/* ── DIRECTIONS TIP ── */
+.directions-tip { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.75rem; line-height: 1.55; }
+
+/* ── FOOTER ── */
+footer { background: linear-gradient(105deg, #023e8a 0%, #0077b6 100%); color: rgba(255,255,255,0.85); padding: 3rem 1.5rem 2rem; }
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-brand { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+.footer-tagline { font-size: 0.85rem; opacity: 0.7; }
+.footer-subscribe { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-email { padding: 0.65rem 1rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.12); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; flex: 1; min-width: 180px; outline: none; }
+.footer-email::placeholder { color: rgba(255,255,255,0.5); }
+.footer-sub-btn { padding: 0.65rem 1.2rem; background: var(--coral); color: #fff; border: none; cursor: pointer; border-radius: 9px; font-size: 0.9rem; font-weight: 600; font-family: 'DM Sans', sans-serif; transition: background var(--transition); }
+.footer-sub-btn:hover { background: var(--coral-dark); }
+.footer-links { display: flex; gap: 1.2rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+.footer-copy { margin-top: 2rem; font-size: 0.8rem; opacity: 0.55; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12); }
+
+/* ── FLOATING CHATBOT ── */
+.floating-chatbot { position: fixed; bottom: 28px; right: 28px; background: linear-gradient(135deg, var(--teal), var(--ocean)); color: white; width: 58px; height: 58px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 24px rgba(0,119,182,0.4); font-size: 1.5rem; z-index: 50; cursor: pointer; border: 2px solid rgba(255,255,255,0.25); transition: transform var(--transition), box-shadow var(--transition); }
+.floating-chatbot:hover { transform: scale(1.1); box-shadow: 0 10px 30px rgba(0,119,182,0.5); }
+
+/* ── PRINT ── */
+@media print {
+  .vg-header, .page-banner, .quick-links, footer, .floating-chatbot, .no-print, .btn-group { display: none !important; }
+  body { background: #fff; }
+  .page-body { grid-template-columns: 1fr; padding: 0; }
+  .card { box-shadow: none; break-inside: avoid; }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .page-banner-inner { padding: 0; }
+  .fg2, .fg3 { grid-template-columns: 1fr; }
+}
+.fg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.fg3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+@media (max-width: 600px) { .fg2 { grid-template-columns: 1fr; } .fg3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- Supabase bootstrap -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+</script>
+
+<!-- ===== HEADER ===== -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html" aria-label="Voyage Genie Home">
+      <img src="images/nav-icon.png" alt="Voyage Genie"/>
+      <span class="vg-title">Voyage Genie</span>
+    </a>
+    <div class="vg-right">
+      <div id="authSlot">
+        <a class="nav-chip" href="login.html?next=parking-tips.html">🔑 Sign in</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== PAGE BANNER ===== -->
+<div class="page-banner">
+  <div class="page-banner-inner">
+    <h1>🚗 Parking Tips & Tools</h1>
+    <p>Fast tips, a simple cost estimator, and one-click links to the best parking apps. Save your spots so you don't forget later.</p>
+  </div>
+</div>
+
+<!-- ===== MAIN ===== -->
+<main>
+<div class="page-body">
+
+  <!-- ── LEFT COLUMN ── -->
+  <div>
+
+    <!-- City & Search -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📍 Location & Quick Search</span>
+      </div>
+      <div class="card-body">
+        <div class="fg3" style="margin-bottom:1.25rem;">
+          <div class="field">
+            <label class="field-label" for="city">City Preset</label>
+            <select id="city" class="vg-select">
+              <option value="">— General —</option>
+              <option>Chicago</option>
+              <option>New York</option>
+              <option>Los Angeles</option>
+              <option>San Francisco</option>
+              <option>Miami</option>
+              <option>Las Vegas</option>
+              <option>Seattle</option>
+              <option>Boston</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="area">Neighborhood / Area <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.75rem;">(optional)</span></label>
+            <input id="area" class="vg-input" placeholder="e.g., River North"/>
+          </div>
+          <div class="field">
+            <label class="field-label" for="airport">Airport Code <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.75rem;">(optional)</span></label>
+            <input id="airport" class="vg-input" placeholder="e.g., ORD"/>
+          </div>
+        </div>
+
+        <!-- City hint notice -->
+        <div class="notice notice-info" id="cityHint">
+          <span class="notice-icon" id="cityHintIcon">ℹ️</span>
+          <span id="cityHintText">Pick a city to load local tips — meter hours, street-sweeping days, and event surge areas.</span>
+        </div>
+
+        <!-- Quick link pills -->
+        <div class="quick-links">
+          <a id="linkParkWhiz" class="qlink" target="_blank" rel="noopener">📱 ParkWhiz</a>
+          <a id="linkSpotHero" class="qlink" target="_blank" rel="noopener">🅿️ SpotHero</a>
+          <a id="linkGMaps"    class="qlink" target="_blank" rel="noopener">🧭 Google Maps parking</a>
+          <a id="linkAirport"  class="qlink" target="_blank" rel="noopener">✈️ Airport parking lots</a>
+          <a id="linkCityGov"  class="qlink" target="_blank" rel="noopener">🏛️ City parking rules</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Smart Tips -->
+    <div class="card section-gap">
+      <div class="card-header">
+        <span class="card-title">💡 Smart Parking Tips</span>
+        <span id="tipsCity" style="font-size:0.8rem;color:var(--text-muted);"></span>
+      </div>
+      <div class="card-body">
+        <ul id="tipsList" class="tips-list"></ul>
+      </div>
+    </div>
+
+    <!-- Cost Estimator -->
+    <div class="card section-gap">
+      <div class="card-header">
+        <span class="card-title">💵 Cost Estimator</span>
+      </div>
+      <div class="card-body">
+        <div class="fg3">
+          <div class="field">
+            <label class="field-label" for="rate">Rate per Hour ($)</label>
+            <input id="rate" type="number" step="0.01" min="0" class="vg-input" value="4.00"/>
+          </div>
+          <div class="field">
+            <label class="field-label" for="hours">Hours</label>
+            <input id="hours" type="number" step="0.25" min="0" class="vg-input" value="3"/>
+          </div>
+          <div class="field">
+            <label class="field-label" for="dailyMax">Daily Max ($) <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.75rem;">(optional)</span></label>
+            <input id="dailyMax" type="number" step="0.01" min="0" class="vg-input" placeholder="e.g., 25"/>
+          </div>
+        </div>
+        <div class="fg3" style="margin-top:0.75rem;">
+          <div class="field">
+            <label class="field-label" for="flat">Flat Fee ($) <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.75rem;">(optional)</span></label>
+            <input id="flat" type="number" step="0.01" min="0" class="vg-input" placeholder="e.g., 2.50"/>
+          </div>
+          <div class="field">
+            <label class="field-label" for="pct">Tax / Fees % <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.75rem;">(optional)</span></label>
+            <input id="pct" type="number" step="0.1" min="0" class="vg-input" placeholder="e.g., 9.5"/>
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;">
+            <button id="btnCalc" class="btn btn-primary" style="width:100%;justify-content:center;">🧮 Calculate</button>
+          </div>
+        </div>
+        <div class="cost-output">
+          <span class="cost-output-label">Estimated Total</span>
+          <span id="estOut" class="cost-output-amount">$0.00</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end left column -->
+
+  <!-- ── RIGHT COLUMN ── -->
+  <aside>
+
+    <!-- Save a Parking Spot -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📌 Save a Parking Spot</span>
+        <div class="btn-group no-print">
+          <button id="btnSave"  class="btn btn-sm btn-green">💾 Save</button>
+          <button id="btnClear" class="btn btn-sm">🧹 Clear All</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="spot-fields">
+
+          <div class="spot-section-label">Location</div>
+          <input id="spotName" class="vg-input" placeholder="Name (e.g., Mart Parc Orleans)"/>
+          <input id="spotAddr" class="vg-input" placeholder="Address or cross streets"/>
+          <select id="spotType" class="vg-select">
+            <option>Garage / Lot</option>
+            <option>Street Parking</option>
+            <option>Valet</option>
+            <option>Airport Lot</option>
+            <option>Residential Permit</option>
+          </select>
+
+          <div class="spot-section-label">Timing</div>
+          <div class="fg2">
+            <div>
+              <label class="field-label" style="font-size:0.72rem;">Start</label>
+              <input id="spotStart" type="datetime-local" class="vg-input"/>
+            </div>
+            <div>
+              <label class="field-label" style="font-size:0.72rem;">End / Expiry</label>
+              <input id="spotEnd" type="datetime-local" class="vg-input"/>
+            </div>
+          </div>
+
+          <div class="spot-section-label">Details</div>
+          <input id="spotCost" type="number" step="0.01" class="vg-input" placeholder="Estimated cost (optional)"/>
+          <input id="spotNote" class="vg-input" placeholder="Notes — level, space #, entrance, restrictions"/>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved Spots -->
+    <div class="card section-gap">
+      <div class="card-header">
+        <span class="card-title">🗂️ Saved Spots</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="spots-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>When</th>
+              <th>Est.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="savedBody">
+            <tr class="empty-row"><td colspan="5">No saved spots yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Directions -->
+    <div class="card section-gap">
+      <div class="card-header">
+        <span class="card-title">🧭 One-Tap Directions</span>
+      </div>
+      <div class="card-body">
+        <div class="quick-links">
+          <a id="linkGMNav" class="qlink" target="_blank" rel="noopener">🗺️ Navigate in Google Maps</a>
+        </div>
+        <p class="directions-tip">Tip: After you park, drop a pin and label it — e.g., <em>"Hotel weekend"</em> — so you find it easily later.</p>
+      </div>
+    </div>
+
+  </aside><!-- end right column -->
+
+</div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+    <div class="footer-subscribe">
+      <input class="footer-email" placeholder="Enter your email" type="email"/>
+      <button class="footer-sub-btn">Subscribe</button>
+    </div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#plan-trip">Plan</a>
+      <a href="features.html">Features</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-copy">© 2026 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- ===== HEADER AUTH + DROPDOWN LOGIC ===== -->
+<script type="module">
+  const sb = window.supabase;
+  const nextParam = encodeURIComponent('parking-tips.html');
+
+  // ── Auth ──
+  const authSlot = document.getElementById('authSlot');
+
+  function buildAccountNode(email) {
+    const name = (email || 'Account').split('@')[0];
+    const wrap = document.createElement('div');
+    wrap.className = 'dropdown acct-dropdown';
+    wrap.innerHTML = `
+      <button class="account-chip" id="acctBtn" aria-haspopup="true" aria-expanded="false">🪪 ${name} ▾</button>
+      <div class="dropdown-menu" id="acctMenu" role="menu">
+        <a href="account.html" role="menuitem">👤 My Account</a>
+        <a href="trip-dashboard.html" role="menuitem">📋 My Trips</a>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-section-label">Plan a Trip</div>
+        <a href="tropical-trip-planner.html" role="menuitem">🏖️ Tropical Resort</a>
+        <a href="cruise-trip-planner.html" role="menuitem">🚢 Cruise Adventure</a>
+        <a href="airbnb-trip-planner.html" role="menuitem">🏠 Airbnb Getaway</a>
+        <a href="adventure-trip-planner.html" role="menuitem">🌄 Adventure Trip</a>
+        <div class="dropdown-divider"></div>
+        <a href="#" id="signOutBtn" role="menuitem">🚪 Sign out</a>
+      </div>`;
+    return wrap;
+  }
+
+  async function renderAuth() {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      authSlot.innerHTML = '';
+      if (user) {
+        const node = buildAccountNode(user.email);
+        authSlot.appendChild(node);
+        const acctBtn = node.querySelector('#acctBtn');
+        acctBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          node.classList.toggle('open');
+          acctBtn.setAttribute('aria-expanded', String(node.classList.contains('open')));
+        });
+        document.addEventListener('click', () => {
+          node.classList.remove('open');
+          acctBtn.setAttribute('aria-expanded', 'false');
+        });
+        node.querySelector('#signOutBtn').addEventListener('click', async (e) => {
+          e.preventDefault();
+          try { await sb.auth.signOut(); } finally { location.href = 'login.html'; }
+        });
+      } else {
+        authSlot.innerHTML = `<a class="nav-chip" href="login.html?next=${nextParam}">🔑 Sign in</a>`;
+      }
+    } catch { /* noop */ }
+  }
+
+  renderAuth();
+</script>
+
+<!-- ===== PARKING TIPS & TOOLS LOGIC ===== -->
+<script>
+  const $ = id => document.getElementById(id);
+  const STORE = { spots: 'vg_parking_spots_v1' };
+
+  const CITY_HINTS = {
+    '': [
+      'Check signage carefully for time limits, permit zones, and street-sweeping days.',
+      'Arrive off-peak — before 9 am or after 6 pm — for better availability.',
+      'Take a photo of your spot, the entrance, and the pay-station screen.',
+      'Use apps like ParkWhiz or SpotHero for cheaper prepaid garages near events.',
+      'Note the nearest cross street or landmark before you walk away.',
+      'Set a phone timer before your meter or spot expires.'
+    ],
+    'Chicago': [
+      'Watch for <strong>street-sweeping</strong> and <strong>snow route</strong> signs — overnight towing is common.',
+      'Downtown meters often run until 10 pm; some neighborhoods are permit-only after 6 pm.',
+      'United Center and Soldier Field events cause surges — prebook a lot ahead of time.',
+      'Chicago Park District lots near museums offer flat day rates on weekends.',
+      'Lincoln Park and Wicker Park have limited street parking; garages are the safer bet.'
+    ],
+    'New York': [
+      'Alternate-side parking (ASP) is strictly enforced — check the days and hours on every sign.',
+      'Manhattan garages vary widely by block; booking 24 hours ahead can save 30–50%.',
+      'Bridges and tunnels add toll costs; factor these into your parking decision.',
+      'Look for "No Standing" vs "No Parking" — they have different rules and consequences.',
+      'Outer boroughs (Brooklyn, Queens) have more street parking but check permit zones.'
+    ],
+    'Los Angeles': [
+      'Look for <strong>street cleaning</strong> signs and <strong>event restriction</strong> signs near venues.',
+      'Beach areas fill up early on weekends — flat-rate lots nearby are worth it.',
+      'Mind overnight restrictions in residential zones (usually midnight–6 am).',
+      'Avoid the Hollywood Walk of Fame area during evenings; garages fill fast.',
+      'In Downtown LA, use the LA Express Park app for real-time garage availability.'
+    ],
+    'San Francisco': [
+      'Steep hills = wheel-curbing rules: wheels turned in when facing uphill, out when downhill.',
+      'Check colored curbs carefully — yellow, red, white, and green all mean different things.',
+      'Meters often run until 6 pm or later; neighborhoods have 2-hour daytime permit limits.',
+      'Prebook near Chase Center or Oracle Park on game and concert nights.',
+      'SFpark and SFMTA apps show real-time garage pricing across the city.'
+    ],
+    'Miami': [
+      'South Beach garages fill on Friday and Saturday nights — prepaying secures your spot.',
+      'Watch for residential permit zones near the beach — enforcement is active.',
+      'Avoid hydrant zones and fire lanes; fines are steep and towing happens fast.',
+      'During storm advisories, low-lying lots may close — check alerts before heading out.',
+      'Wynwood Arts District lots often offer flat evening rates on weekends.'
+    ],
+    'Las Vegas': [
+      'Strip resort garages are often free or validated — confirm when you check in.',
+      'Some resorts now charge for self-parking; check validation policies before entry.',
+      'Ride-share drop zones can be faster than re-parking if moving between stops.',
+      'Downtown Fremont Street lots are generally cheaper than Strip garages.',
+      'During major events (CES, NAB Show), all parking fills fast — book days ahead.'
+    ],
+    'Seattle': [
+      'Hilly areas: check brake-curbing rules; front wheels must be turned toward the curb.',
+      'Event surges around Climate Pledge Arena and T-Mobile Park — prebook nearby lots.',
+      'Many meters run until 8 pm; pay-by-phone (PayByPhone app) is widely accepted.',
+      'Watch time limits near ferry terminals — they can be as short as 30 minutes.',
+      'South Lake Union and Capitol Hill have limited street parking; garages are common.'
+    ],
+    'Boston': [
+      'Resident parking dominates South End and Beacon Hill — garages are the safer bet for visitors.',
+      'Red Sox and TD Garden nights: prebook lots well ahead; traffic is heavy.',
+      'Narrow streets are common — avoid corner spots and fire hydrant zones, towing is fast.',
+      'Back Bay meters run until 8 pm; many streets have 2-hour limits during the day.',
+      'Boston Common Garage and Prudential Center garage offer early-bird rates on weekdays.'
+    ]
+  };
+
+  function renderTips() {
+    const city = $('city').value || '';
+    const tips = CITY_HINTS[city] || CITY_HINTS[''];
+    $('tipsList').innerHTML = tips.map(t => `<li>${t}</li>`).join('');
+
+    const hintEl   = $('cityHint');
+    const hintIcon = $('cityHintIcon');
+    const hintText = $('cityHintText');
+    const tipsCity = $('tipsCity');
+
+    if (city) {
+      hintEl.className      = 'notice notice-ok';
+      hintIcon.textContent  = '✅';
+      hintText.innerHTML    = `Local tips loaded for <strong>${city}</strong>.`;
+      tipsCity.textContent  = city;
+    } else {
+      hintEl.className      = 'notice notice-info';
+      hintIcon.textContent  = 'ℹ️';
+      hintText.textContent  = 'Pick a city to load local tips — meter hours, street-sweeping days, and event surge areas.';
+      tipsCity.textContent  = '';
+    }
+  }
+
+  function buildLinks() {
+    const city    = $('city').value || '';
+    const area    = $('area').value.trim();
+    const airport = ($('airport').value || '').trim().toUpperCase();
+    const q = encodeURIComponent([area, city, 'parking'].filter(Boolean).join(' '));
+
+    $('linkParkWhiz').href = `https://www.parkwhiz.com/search/?q=${q}`;
+    $('linkSpotHero').href = `https://spothero.com/search?query=${q}`;
+    $('linkGMaps').href    = `https://www.google.com/maps/search/${encodeURIComponent('parking near ' + (area || city || 'me'))}`;
+    $('linkAirport').href  = airport
+      ? `https://www.google.com/search?q=${encodeURIComponent(airport + ' airport parking')}`
+      : `https://www.google.com/search?q=airport+parking`;
+    $('linkCityGov').href  = `https://www.google.com/search?q=${encodeURIComponent((city || '') + ' city parking rules street sweeping meters')}`;
+    $('linkGMNav').href    = `https://www.google.com/maps/search/${encodeURIComponent($('spotAddr').value || (area || city || 'parking near me'))}`;
+  }
+
+  // ── Cost estimator ──
+  function money(n) { return '$' + (Math.round(n * 100) / 100).toFixed(2); }
+  function calc() {
+    const rate = parseFloat($('rate').value    || 0);
+    const hrs  = parseFloat($('hours').value   || 0);
+    const dmax = parseFloat($('dailyMax').value);
+    const flat = parseFloat($('flat').value    || 0);
+    const pct  = parseFloat($('pct').value     || 0);
+    let sub = rate * hrs + (isNaN(flat) ? 0 : flat);
+    if (!isNaN(dmax) && dmax > 0) sub = Math.min(sub, dmax);
+    const total = sub * (1 + (isNaN(pct) ? 0 : pct / 100));
+    $('estOut').textContent = money(total);
+  }
+
+  // ── Saved spots ──
+  function getSpots()  { try { return JSON.parse(localStorage.getItem(STORE.spots) || ''); } catch { return []; } }
+  function setSpots(a) { localStorage.setItem(STORE.spots, JSON.stringify(a)); renderSaved(); }
+
+  function saveSpot() {
+    const row = {
+      name:  $('spotName').value.trim(),
+      addr:  $('spotAddr').value.trim(),
+      type:  $('spotType').value,
+      start: $('spotStart').value,
+      end:   $('spotEnd').value,
+      cost:  $('spotCost').value.trim(),
+      note:  $('spotNote').value.trim(),
+      at:    new Date().toISOString()
+    };
+    const list = getSpots() || [];
+    list.unshift(row);
+    setSpots(list.slice(0, 50));
+    // Inline feedback
+    const btn = $('btnSave'), orig = btn.innerHTML;
+    btn.innerHTML = '✅ Saved!';
+    setTimeout(() => { btn.innerHTML = orig; }, 2000);
+  }
+
+  function removeSpot(i) { const list = getSpots() || []; list.splice(i, 1); setSpots(list); }
+  function clearSpots()  { setSpots([]); }
+
+  function renderSaved() {
+    const body = $('savedBody');
+    const rows = getSpots() || [];
+    if (!rows.length) {
+      body.innerHTML = `<tr class="empty-row"><td colspan="5">No saved spots yet.</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows.map((r, i) => {
+      const when = (r.start ? r.start.replace('T', ' ') : '—') + (r.end ? ' → ' + r.end.replace('T', ' ') : '');
+      return `<tr>
+        <td>${r.name || '—'}</td>
+        <td>${r.type || '—'}</td>
+        <td style="font-size:0.78rem;font-variant-numeric:tabular-nums">${when || '—'}</td>
+        <td style="font-variant-numeric:tabular-nums">${r.cost ? '$' + r.cost : '—'}</td>
+        <td><button class="btn btn-sm" onclick="removeSpot(${i})" style="padding:0.25rem 0.5rem;font-size:0.75rem;">🗑️</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Events ──
+  ['city', 'area', 'airport'].forEach(id => $(id).addEventListener('input', () => { renderTips(); buildLinks(); }));
+  $('btnCalc').addEventListener('click', calc);
+  ['rate', 'hours', 'dailyMax', 'flat', 'pct'].forEach(id => $(id).addEventListener('input', calc));
+  $('btnSave').addEventListener('click', saveSpot);
+  $('btnClear').addEventListener('click', clearSpots);
+  $('spotAddr').addEventListener('input', buildLinks);
+
+  // ── Init ──
+  renderTips(); buildLinks(); calc(); renderSaved();
+</script>
+
+<!-- ===== GENIE CHAT WIDGET ===== -->
+<script src="js/genie-chat.js" defer></script>
+</body>
+</html>

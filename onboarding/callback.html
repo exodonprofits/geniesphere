@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GenieSphere Auth Callback</title>
+  <meta name="description" content="Handles GenieSphere auth redirect and routes users to overview." />
+  <style>
+    :root{
+      --bg:#eef3f9; --panel:#ffffff; --text:#172033; --muted:#5c687d; --line:#d6deea;
+      --brand:#22c55e; --shadow:0 16px 38px rgba(23,32,51,.10);
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{
+      min-height:100vh; display:grid; place-items:center; padding:24px;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:linear-gradient(180deg,#f3f7fc 0%, #edf2f8 100%); color:var(--text);
+    }
+    .card{
+      width:min(100%, 640px); background:var(--panel); border:1px solid var(--line);
+      border-radius:28px; box-shadow:var(--shadow); padding:28px; text-align:center;
+    }
+    .mark{
+      width:56px; height:56px; margin:0 auto 16px; border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #7ef1c7 0%, #34d399 45%, #0f9f68 100%);
+      box-shadow:0 0 0 4px rgba(34,197,94,.16),0 10px 24px rgba(34,197,94,.24);
+    }
+    h1{margin:0 0 10px; font-size:34px; letter-spacing:-.03em}
+    p{margin:0; color:var(--muted); font-size:16px}
+    .status{
+      margin-top:18px; padding:14px 16px; border-radius:18px; background:#f7f9fc;
+      border:1px solid var(--line); color:var(--muted); font-weight:700;
+    }
+    .status.good{background:#eefbf2; border-color:#b7e2c6; color:#14532d}
+    .status.error{background:#fff1f1; border-color:#f2c2c2; color:#991b1b}
+    .link{display:inline-flex; margin-top:16px; font-weight:800; color:#4c6ef5}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark" aria-hidden="true"></div>
+    <h1>Finishing sign in…</h1>
+    <p>Please wait while GenieSphere restores your session and routes you to your overview dashboard.</p>
+    <div class="status" id="status">Checking session…</div>
+    <a class="link" id="fallbackLink" href="/dashboard/overview.html">Continue to Overview</a>
+  </div>
+
+  <script>
+    window.GS_CONFIG_URL = "/shared/config.json";
+    window.GS_CONFIG_PATH = "/shared/config.json";
+  </script>
+  <script src="/shared/js/app-config.js?v=20260208b"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/shared/js/gs-client.js?v=20260208b"></script>
+
+  <script>
+    (function(){
+      const DEFAULT_NEXT = "/dashboard/overview.html";
+      const statusEl = document.getElementById("status");
+      const fallbackLink = document.getElementById("fallbackLink");
+
+      function setStatus(text, cls){
+        statusEl.textContent = text;
+        statusEl.className = "status" + (cls ? " " + cls : "");
+      }
+
+      function sanitizeNext(raw){
+        if(!raw) return DEFAULT_NEXT;
+        try{ raw = decodeURIComponent(raw); } catch(_){}
+        if(!raw.startsWith("/")) return DEFAULT_NEXT;
+        if(raw.startsWith("//")) return DEFAULT_NEXT;
+        if(raw.includes("javascript:")) return DEFAULT_NEXT;
+        return raw;
+      }
+
+      const qs = new URLSearchParams(location.search);
+      const nextTarget = sanitizeNext(qs.get("next"));
+      fallbackLink.href = nextTarget || DEFAULT_NEXT;
+
+      async function getClient(){
+        if(window.GSClient && typeof window.GSClient.getAsync === "function"){
+          return await window.GSClient.getAsync();
+        }
+        throw new Error("Shared auth client not found.");
+      }
+
+      async function finalize(){
+        try{
+          const client = await getClient();
+
+          if(location.hash && location.hash.includes("access_token")){
+            const hash = new URLSearchParams(location.hash.slice(1));
+            const access_token = hash.get("access_token");
+            const refresh_token = hash.get("refresh_token");
+            if(access_token && refresh_token){
+              const { error } = await client.auth.setSession({ access_token, refresh_token });
+              if(error) throw error;
+            }
+          }
+
+          const { data: sess } = await client.auth.getSession();
+          if(sess?.session?.user){
+            setStatus("Signed in. Redirecting…", "good");
+            location.replace(nextTarget || DEFAULT_NEXT);
+            return;
+          }
+
+          setStatus("No active session found. Sending you to login…", "error");
+          setTimeout(()=>{
+            location.replace("/onboarding/login.html?next=" + encodeURIComponent(nextTarget || DEFAULT_NEXT));
+          }, 700);
+        }catch(err){
+          console.error("[callback] error:", err);
+          setStatus("Could not restore session. Use the overview link below or sign in again.", "error");
+        }
+      }
+
+      finalize();
+    })();
+  </script>
+</body>
+</html>

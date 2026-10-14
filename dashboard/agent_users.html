@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent Users | GenieSphere</title>
+
+  <!-- Tailwind (same as before) -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+  <!-- Supabase (global client, like other pages) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#121a2b;
+      --text:#e9f0ff;
+      --muted:#a9b6d9;
+      --accent:#3ee1a1;
+      --brand-blue:#4c6ef5;
+      --radius:7px;
+      --ring:rgba(62,225,161,.35);
+    }
+    body{
+      margin:0;
+      background:#0b1220;
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial,sans-serif;
+    }
+
+    .site-header{
+      position:sticky;
+      top:0;
+      z-index:40;
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+      border-bottom:1px solid rgba(120,155,255,.15);
+      box-shadow:0 8px 22px rgba(0,0,0,.25);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+    .site-header-inner{
+      max-width:1200px;
+      margin:0 auto;
+      padding:16px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--text);
+      text-decoration:none;
+      font-weight:700;
+    }
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+      box-shadow:0 0 0 3px var(--ring),0 8px 24px rgba(62,225,161,.35);
+    }
+    .menu{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      font-size:14px;
+    }
+    .menu a{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 2px;
+      border-radius:0;
+      text-decoration:none;
+      color:var(--muted);
+      font-weight:500;
+      border-bottom:2px solid transparent;
+      transition:color .15s ease,border-bottom-color .15s ease;
+    }
+    .menu a:hover{
+      color:#fff;
+      border-bottom-color:var(--brand-blue);
+    }
+    .menu a.active{
+      color:#fff;
+      border-bottom-color:var(--accent);
+      font-weight:600;
+    }
+    .menu a.ghost{ color:var(--muted); }
+
+    .user-menu{
+      position:relative;
+      display:flex;
+      align-items:center;
+      margin-left:auto;
+    }
+    .user-menu-toggle{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid rgba(120,155,255,.35);
+      background:#0e1626;
+      color:#fff;
+      font-size:14px;
+      cursor:pointer;
+    }
+    .user-menu-toggle:hover{ border-color:var(--accent); }
+    .user-menu-dropdown{
+      position:absolute;
+      right:0;
+      top:calc(100% + 6px);
+      min-width:220px;
+      background:#0e1626;
+      border-radius:var(--radius);
+      border:1px solid rgba(120,155,255,.25);
+      box-shadow:0 14px 34px rgba(0,0,0,.55);
+      padding:6px 0;
+      display:none;
+      z-index:1002;
+    }
+    .user-menu-dropdown a,
+    .user-menu-dropdown button{
+      display:block;
+      width:100%;
+      text-align:left;
+      padding:8px 12px;
+      background:none;
+      border:none;
+      color:#e5edff;
+      font-size:14px;
+      text-decoration:none;
+      cursor:pointer;
+    }
+    .user-menu-dropdown a:hover,
+    .user-menu-dropdown button:hover{
+      background:#121a2b;
+    }
+    .user-menu-divider{
+      height:1px;
+      margin:4px 0;
+      background:rgba(148,163,184,.4);
+    }
+    .dropdown-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      opacity:.7;
+      padding:4px 14px 2px;
+      color:#9ca3af;
+    }
+    .auth-only{}
+
+    .hamburger{
+      display:none;
+      border:1px solid rgba(120,155,255,.25);
+      background:#0e1626;
+      color:#e5edff;
+      border-radius:8px;
+      padding:8px 10px;
+      cursor:pointer;
+    }
+    @media(max-width:720px){
+      .menu{display:none}
+      .hamburger{display:inline-flex}
+      .site-header-inner{padding:10px 12px}
+    }
+
+    .drawer{
+      position:fixed;
+      inset:60px 12px auto 12px;
+      background:#0e1626;
+      border:1px solid rgba(120,155,255,.2);
+      border-radius:var(--radius);
+      padding:10px;
+      display:none;
+      z-index:1001;
+      box-shadow:0 18px 34px rgba(0,0,0,.45);
+    }
+    .drawer a{
+      display:block;
+      margin:6px 0;
+      padding:10px 12px;
+      border-radius:var(--radius);
+      text-decoration:none;
+      color:#e5edff;
+      background:#121a2b;
+      border:1px solid rgba(120,155,255,.15);
+    }
+    .drawer a.active{
+      background:#18233a;
+      border-color:rgba(62,225,161,.35);
+    }
+
+    .page-container{
+      max-width:900px;
+      margin:0 auto;
+      padding:24px 16px 48px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GenieSphere header (same logic as other pages) -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img class="logo" src="../genie-logo.png" alt="GenieSphere">
+        <strong>GenieSphere</strong>
+      </a>
+
+      <nav class="menu" aria-label="Primary">
+        <a class="ghost" href="personal.html">🏡 Personal</a>
+        <a class="ghost" href="business.html">🏢 Business</a>
+        <a class="ghost" href="investment.html">📈 Investment</a>
+        <a class="ghost" href="leisure.html">🏝️ Leisure</a>
+      </nav>
+
+      <div class="user-menu" id="user-menu">
+        <button class="user-menu-toggle" id="user-menu-toggle" aria-expanded="false">
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <div class="dropdown-label">Areas</div>
+          <button type="button" class="dropdown-nav" data-target="personal.html">🏡 Personal</button>
+          <button type="button" class="dropdown-nav" data-target="business.html">🏢 Business</button>
+          <button type="button" class="dropdown-nav" data-target="investment.html">📈 Investment</button>
+          <button type="button" class="dropdown-nav" data-target="leisure.html">🏝️ Leisure</button>
+
+          <div class="user-menu-divider"></div>
+          <div class="dropdown-label">Account</div>
+          <button type="button" class="dropdown-nav" data-target="../onboarding/user_profile_form.html">👤 User profile</button>
+          <button type="button" class="dropdown-nav" data-target="../onboarding/display_settings.html">⚙️ Settings</button>
+
+          <div class="user-menu-divider"></div>
+          <button type="button" id="user-auth-action">Log in / Sign up</button>
+          <button type="button" id="user-signout-btn" class="auth-only">Log out</button>
+        </div>
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-label="Open navigation">☰</button>
+    </div>
+  </header>
+
+  <div class="drawer" id="mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+    <a class="ghost" href="personal.html">🏡 Personal</a>
+    <a class="ghost" href="business.html">🏢 Business</a>
+    <a class="ghost" href="investment.html">📈 Investment</a>
+    <a class="ghost" href="leisure.html">🏝️ Leisure</a>
+  </div>
+
+  <main class="page-container">
+    <h1 id="agent-title" class="text-2xl font-bold mb-6 text-center">👥 Users of [Agent]</h1>
+    <div id="user-list" class="space-y-4 max-w-3xl mx-auto"></div>
+
+    <div class="text-center mt-10">
+      <a href="admin_dashboard.html"
+         class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">
+        ⬅ Back to Admin Dashboard
+      </a>
+    </div>
+  </main>
+
+  <script>
+    // ---- Supabase client (same project as other pages) ----
+    const supabase = window.supabase.createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+
+    let currentUser = null;
+
+    // ---- Header auth + mobile nav (copied pattern) ----
+    (function initHeader(){
+      const drawer    = document.getElementById('mobile-drawer');
+      const hamburger = document.getElementById('hamburger');
+
+      if (drawer && hamburger) {
+        let open = false;
+        function setOpen(v){
+          open = v;
+          drawer.style.display = open ? 'block' : 'none';
+          hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+        hamburger.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          setOpen(!open);
+        });
+        drawer.addEventListener('click', (e)=>{
+          if (e.target.tagName === 'A') setOpen(false);
+        });
+        document.addEventListener('click', (e)=>{
+          if (!open) return;
+          if (!drawer.contains(e.target) && !hamburger.contains(e.target)) setOpen(false);
+        });
+      }
+
+      const nameLabel     = document.getElementById('user-name-label');
+      const menuToggle    = document.getElementById('user-menu-toggle');
+      const menuDropdown  = document.getElementById('user-menu-dropdown');
+      const authActionBtn = document.getElementById('user-auth-action');
+      const signoutBtn    = document.getElementById('user-signout-btn');
+      const authOnlyEls   = document.querySelectorAll('.auth-only');
+
+      let menuOpen = false;
+      function closeMenu(){
+        if (!menuOpen) return;
+        menuOpen = false;
+        if (menuDropdown) menuDropdown.style.display = 'none';
+        if (menuToggle)   menuToggle.setAttribute('aria-expanded','false');
+      }
+
+      if (menuToggle && menuDropdown){
+        menuToggle.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          menuOpen = !menuOpen;
+          menuDropdown.style.display = menuOpen ? 'block' : 'none';
+          menuToggle.setAttribute('aria-expanded', menuOpen ? 'true' : 'false');
+        });
+        document.addEventListener('click', (e)=>{
+          if (!menuOpen) return;
+          if (!menuDropdown.contains(e.target) && !menuToggle.contains(e.target)) closeMenu();
+        });
+      }
+
+      if (authActionBtn){
+        authActionBtn.addEventListener('click', ()=>{
+          const redirectTo = encodeURIComponent(window.location.href);
+          window.location.href = `../onboarding/login.html?redirectTo=${redirectTo}`;
+        });
+      }
+
+      if (signoutBtn){
+        signoutBtn.addEventListener('click', async ()=>{
+          try { await supabase.auth.signOut(); } catch(e){ console.error(e); }
+          currentUser = null;
+          if (nameLabel) nameLabel.textContent = 'Log in';
+          authOnlyEls.forEach(el => el.style.display = 'none');
+          if (authActionBtn) authActionBtn.style.display = '';
+          closeMenu();
+        });
+      }
+
+      document.querySelectorAll('.dropdown-nav').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const target = btn.getAttribute('data-target');
+          if (!target) return;
+          if (currentUser) {
+            window.location.href = target;
+          } else {
+            const redirectTo = encodeURIComponent(target.startsWith('http') ? target : window.location.origin + '/dashboard/' + target);
+            window.location.href = `../onboarding/login.html?redirectTo=${redirectTo}`;
+          }
+        });
+      });
+
+      (async ()=>{
+        try{
+          const { data, error } = await supabase.auth.getUser();
+          if (error) {
+            console.error('Error fetching user (agent_users):', error);
+            return;
+          }
+          const user = data?.user || null;
+          currentUser = user;
+
+          if (!user){
+            if (nameLabel) nameLabel.textContent = 'Log in';
+            authOnlyEls.forEach(el => el.style.display = 'none');
+            if (authActionBtn) authActionBtn.style.display = '';
+            return;
+          }
+
+          const rawName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            (user.email ? user.email.split('@')[0] : '') ||
+            'Account';
+
+          if (nameLabel) nameLabel.textContent = rawName;
+          authOnlyEls.forEach(el => el.style.display = '');
+          if (authActionBtn) authActionBtn.style.display = 'none';
+        }catch(err){
+          console.error('Auth init failed (agent_users):', err);
+        }
+      })();
+    })();
+
+    // ---- Core page logic: load users for a given agent ----
+    async function loadUsersByAgent(){
+      const params = new URLSearchParams(window.location.search);
+      const agentId = params.get("agent") || "";
+      const titleEl = document.getElementById("agent-title");
+      const list    = document.getElementById("user-list");
+
+      if (titleEl) titleEl.textContent = `👥 Users of ${agentId || "[Agent]"}`;
+
+      // 1) Ensure logged in
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr) {
+        console.error('Error getting user:', userErr);
+      }
+      if (!user) {
+        const redirectTo = encodeURIComponent(window.location.href);
+        window.location.href = `../onboarding/login.html?redirectTo=${redirectTo}`;
+        return;
+      }
+      currentUser = user;
+
+      // 2) Check admin role
+      const { data: adminPref, error: prefErr } = await supabase
+        .from('user_preferences')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (prefErr) {
+        console.error('Error loading role:', prefErr);
+      }
+
+      if (!adminPref || adminPref.role !== 'admin') {
+        list.innerHTML =
+          `<p class="text-center text-red-400 text-lg mt-10">
+             Access denied. Admins only.
+           </p>`;
+        return; // do NOT throw – avoid uncaught error
+      }
+
+      // 3) Load agent metadata once
+      let displayName = agentId;
+      let category = 'personal';
+      let folder   = agentId;
+
+      if (agentId) {
+        const { data: agentMeta, error: agentErr } = await supabase
+          .from('agents')
+          .select('id, category, folder, display_name')
+          .eq('id', agentId)
+          .maybeSingle();
+
+        if (agentErr) {
+          console.error('Error loading agent meta:', agentErr);
+        }
+
+        if (agentMeta) {
+          displayName = agentMeta.display_name || agentMeta.id || agentId;
+          category    = (agentMeta.category || 'personal').toLowerCase();
+          folder      = agentMeta.folder || agentId;
+        }
+      }
+
+      if (titleEl) titleEl.textContent = `👥 Users of ${displayName}`;
+
+      // 4) Load all user_preferences rows and filter by agent membership
+      const { data, error } = await supabase
+        .from("user_preferences")
+        .select("user_id, full_name, agents");
+
+      if (error || !data) {
+        console.error(error);
+        list.innerHTML = `<p class="text-red-400 text-center">Error loading users: ${error?.message || "Unknown error"}</p>`;
+        return;
+      }
+
+      const normalizedAgent = agentId.replace(/\n/g, '').toLowerCase().trim();
+
+      const matches = data.filter(row =>
+        Array.isArray(row.agents) &&
+        row.agents.some(a =>
+          typeof a === 'string' &&
+          a.replace(/\n/g, '').toLowerCase().trim() === normalizedAgent
+        )
+      );
+
+      if (!matches.length) {
+        list.innerHTML = `<p class="text-gray-400 text-center">No users found for this agent.</p>`;
+        return;
+      }
+
+      list.innerHTML = "";
+      for (const userPref of matches) {
+        const linkPath = `../${category}/${folder}/${agentId}.html?user_id=${userPref.user_id}`;
+
+        const card = document.createElement("div");
+        card.className =
+          "bg-white bg-opacity-5 border border-white border-opacity-10 rounded-xl px-4 py-3 flex justify-between items-center hover:bg-opacity-10 transition";
+
+        card.innerHTML = `
+          <div>
+            <p class="text-lg font-semibold text-white">${userPref.full_name || "Unnamed user"}</p>
+            <p class="text-sm text-gray-400">ID: ${userPref.user_id}</p>
+          </div>
+          <a href="${linkPath}"
+             class="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition">
+            View Portal
+          </a>
+        `;
+        list.appendChild(card);
+      }
+    }
+
+    loadUsersByAgent();
+  </script>
+</body>
+</html>

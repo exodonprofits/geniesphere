@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Two Time-Zone Clocks – Voyage Genie</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+  :root{ --border:#e5e7eb; --muted:#6b7280; }
+  body{ font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif; background:#f6f9fc; color:#111827 }
+  .wrap{ max-width:900px; margin:24px auto; padding:0 14px; }
+  .card{ background:#fff; border:1px solid var(--border); border-radius:14px; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+  .row{ display:grid; grid-template-columns:repeat(12,1fr); gap:14px; align-items:start }
+  @media(min-width:768px){ .col{ grid-column:span 6 } } .col{ grid-column:span 12 }
+  .select{ width:100%; border:1px solid var(--border); border-radius:10px; padding:.65rem .8rem; background:#fff }
+  .pill{ display:inline-flex; align-items:center; gap:.45rem; border:1px solid var(--border); border-radius:999px; padding:.45rem .85rem; background:#fff }
+  .title{ font-weight:700 } .muted{ color:var(--muted) }
+  /* Analog clock */
+  .clock{ display:flex; align-items:center; gap:12px }
+  .canvas{ width:160px; height:160px; border-radius:50%; background:#fff }
+  .meta{ min-width:0 } .big{ font-variant-numeric:tabular-nums; font-size:2rem; line-height:1 }
+  .date{ color:var(--muted) } .controls{ display:flex; flex-wrap:wrap; gap:8px }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="mb-4">
+      <h1 class="text-2xl title">🕒 Two Time-Zone Clocks</h1>
+      <p class="muted">Pick zones, then compare at a glance. Click <span class="font-semibold">Swap</span> to move clocks.</p>
+    </header>
+
+    <section class="card p-4 md:p-6">
+      <div class="controls mb-3">
+        <label class="pill"><input id="fmt24" type="checkbox" class="mr-2"> 24-hour</label>
+        <button class="pill" id="swapBtn">⇄ Swap</button>
+        <button class="pill" id="nowBtn">⏱️ Now</button>
+      </div>
+
+      <div class="row">
+        <!-- Clock A -->
+        <div class="col">
+          <div class="mb-2">
+            <label class="muted text-sm">Zone A</label>
+            <select id="zoneA" class="select"></select>
+          </div>
+          <div class="clock card p-3">
+            <canvas id="clkA" class="canvas" width="160" height="160" aria-label="Clock A"></canvas>
+            <div class="meta">
+              <div id="zALabel" class="font-semibold truncate">—</div>
+              <div id="tA" class="big">--:--:--</div>
+              <div id="dA" class="date">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clock B -->
+        <div class="col">
+          <div class="mb-2">
+            <label class="muted text-sm">Zone B</label>
+            <select id="zoneB" class="select"></select>
+          </div>
+          <div class="clock card p-3">
+            <canvas id="clkB" class="canvas" width="160" height="160" aria-label="Clock B"></canvas>
+            <div class="meta">
+              <div id="zBLabel" class="font-semibold truncate">—</div>
+              <div id="tB" class="big">--:--:--</div>
+              <div id="dB" class="date">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+
+// Curated popular IANA zones
+const ZONES=[
+  'America/Los_Angeles','America/Denver','America/Chicago','America/New_York',
+  'America/Mexico_City','America/Sao_Paulo','Europe/London','Europe/Paris',
+  'Europe/Berlin','Europe/Madrid','Europe/Rome','Europe/Athens','Europe/Zurich',
+  'Europe/Istanbul','Africa/Cairo','Africa/Johannesburg','Asia/Dubai',
+  'Asia/Kolkata','Asia/Singapore','Asia/Hong_Kong','Asia/Tokyo','Asia/Seoul',
+  'Australia/Sydney','Pacific/Auckland','UTC'
+];
+
+function buildSelect(sel){
+  sel.innerHTML=ZONES.map(z=>`<option value="${z}">${z}</option>`).join('');
+}
+buildSelect(zoneA); buildSelect(zoneB);
+
+// Defaults: local & a counterpart
+try{ zoneA.value=Intl.DateTimeFormat().resolvedOptions().timeZone; }catch{}
+zoneB.value='Europe/London';
+
+// Helpers
+function parts(zone,d=new Date()){
+  const o={timeZone:zone,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,
+           year:'numeric',month:'short',day:'2-digit',weekday:'short'};
+  return new Intl.DateTimeFormat(undefined,o).formatToParts(d)
+    .reduce((a,p)=>{a[p.type]=p.value;return a;},{});
+}
+
+function drawClock(canvas,zone,now=new Date()){
+  const scale=window.devicePixelRatio||1, css=canvas.clientWidth, px=css*scale;
+  if(canvas.width!==px||canvas.height!==px){canvas.width=px;canvas.height=px;}
+  const ctx=canvas.getContext('2d'); ctx.setTransform(scale,0,0,scale,0,0);
+
+  const w=css,h=css,cx=w/2,cy=h/2,r=cx-8;
+  const P=parts(zone,now);
+  const s=+P.second, m=+P.minute + s/60, h12=(+P.hour%12)+m/60;
+
+  ctx.clearRect(0,0,w,h);
+  // face
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.lineWidth=2; ctx.strokeStyle='#e5e7eb'; ctx.stroke();
+
+  // hour ticks
+  ctx.save(); ctx.translate(cx,cy);
+  for(let i=0;i<12;i++){ ctx.rotate(Math.PI/6); ctx.beginPath(); ctx.moveTo(0,-r+10); ctx.lineTo(0,-r+3);
+    ctx.lineWidth=2.4; ctx.strokeStyle='#9ca3af'; ctx.stroke(); }
+  ctx.restore();
+  // minute ticks
+  ctx.save(); ctx.translate(cx,cy);
+  for(let i=0;i<60;i++){ if(i%5===0){ctx.rotate(Math.PI/30); continue;}
+    ctx.rotate(Math.PI/30); ctx.beginPath(); ctx.moveTo(0,-r+8); ctx.lineTo(0,-r+5);
+    ctx.lineWidth=1; ctx.strokeStyle='#e5e7eb'; ctx.stroke(); }
+  ctx.restore();
+
+  // hands
+  function hand(a,len,w,col){ ctx.save(); ctx.translate(cx,cy); ctx.rotate(a);
+    ctx.beginPath(); ctx.moveTo(0,6); ctx.lineTo(0,-len); ctx.lineWidth=w; ctx.lineCap='round'; ctx.strokeStyle=col; ctx.stroke(); ctx.restore(); }
+  hand(h12*Math.PI/6, r*0.55, 4, '#111827');
+  hand(m*Math.PI/30,  r*0.78, 3, '#1f2937');
+  hand(s*Math.PI/30,  r*0.85, 1.5, '#ef4444');
+  ctx.beginPath(); ctx.arc(cx,cy,3,0,Math.PI*2); ctx.fillStyle='#111827'; ctx.fill();
+}
+
+function tick(){
+  const now=new Date(), is24=$('fmt24').checked;
+
+  [['A',zoneA,clkA,zALabel,tA,dA],['B',zoneB,clkB,zBLabel,tB,dB]].forEach(([k,sel,canvas,lab,txt,dateEl])=>{
+    drawClock(canvas, sel.value, now);
+    lab.textContent = sel.value;
+    const P=parts(sel.value,now);
+    let h=+P.hour, mm=P.minute, ss=P.second;
+    if(!is24){ const ampm=h>=12?'PM':'AM'; const h12=((h+11)%12)+1; txt.textContent=`${String(h12).padStart(2,'0')}:${mm}:${ss} ${ampm}`; }
+    else { txt.textContent=`${String(h).padStart(2,'0')}:${mm}:${ss}`; }
+    dateEl.textContent=`${P.weekday}, ${P.month} ${P.day}, ${P.year}`;
+  });
+}
+
+zoneA.addEventListener('change', tick);
+zoneB.addEventListener('change', tick);
+$('fmt24').addEventListener('change', tick);
+$('nowBtn').addEventListener('click', tick);
+$('swapBtn').addEventListener('click', ()=>{
+  const tmp=zoneA.value; zoneA.value=zoneB.value; zoneB.value=tmp; tick();
+});
+
+tick(); setInterval(tick,1000);
+</script>
+</body>
+</html>

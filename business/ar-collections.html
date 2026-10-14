@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>📨 AR Collections | GenieSphere</title>
+  <meta name="description" content="Collect overdue invoices with a compliance-first workflow. Build a clean collections list, generate scripts/templates, and export tasks to your CRM or n8n."/>
+  <meta name="gs-config" content="/shared/config.json" />
+
+  <style>
+    /* =========================================================
+       GenieSphere Theme System (copied from household.html)
+       - Toggle via 🎨 Appearance (saved in localStorage)
+       ========================================================= */
+    :root{
+      --ring: rgba(76,110,245,.25);
+      --container: 1440px;
+      --radius: 7px;
+      --radius-lg: 14px;
+      --btn-radius: 999px;
+
+      --space-1: 6px;
+      --space-2: 10px;
+      --space-3: 14px;
+      --space-4: 18px;
+      --space-5: 24px;
+      --space-6: 32px;
+
+      --shadow: 0 16px 38px rgba(15,23,42,.16);
+      --shadow-soft: 0 10px 24px rgba(15,23,42,.10);
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+
+    /* Theme A: Calm Future (default) */
+    body.theme-calm{
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-2: #f1f4ff;
+      --text: #111827;
+      --muted: #4b5563;
+
+      --primary: #4c6ef5;
+      --accent: #22c55e;
+
+      --border: rgba(148,163,184,.70);
+      --border-strong: rgba(148,163,184,.92);
+
+      --shadow: 0 18px 38px rgba(15,23,42,.14);
+      --shadow-soft: 0 10px 26px rgba(15,23,42,.10);
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+
+    /* Theme B: Soft Futuristic */
+    body.theme-future{
+      --bg: #0f172a;
+      --panel: #111c36;
+      --panel-2: #162447;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+
+      --primary: #6366f1;
+      --accent: #22d3ee;
+
+      --border: rgba(71,85,105,.65);
+      --border-strong: rgba(71,85,105,.95);
+
+      --shadow: 0 18px 44px rgba(0,0,0,.52);
+      --shadow-soft: 0 10px 26px rgba(0,0,0,.34);
+      --focus: 0 0 0 4px rgba(34,211,238,.16);
+    }
+
+    /* Theme C: Nature + Tech */
+    body.theme-nature{
+      --bg: #f6f9f7;
+      --panel: #ffffff;
+      --panel-2: #eef5f1;
+      --text: #0f172a;
+      --muted: #475569;
+
+      --primary: #16a34a;
+      --accent: #38bdf8;
+
+      --border: rgba(148,163,184,.70);
+      --border-strong: rgba(148,163,184,.92);
+
+      --shadow: 0 18px 38px rgba(15,23,42,.12);
+      --shadow-soft: 0 10px 26px rgba(15,23,42,.09);
+      --focus: 0 0 0 4px rgba(22,163,74,.16);
+    }
+
+    /* Theme D: Pro Dark */
+    body.theme-dark{
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --panel-2: #0e1626;
+      --text: #e9f0ff;
+      --muted: #a9b6d9;
+
+      --primary: #4c6ef5;
+      --accent: #3ee1a1;
+
+      --border: rgba(120,155,255,.22);
+      --border-strong: rgba(120,155,255,.42);
+
+      --shadow: 0 18px 44px rgba(0,0,0,.50);
+      --shadow-soft: 0 10px 26px rgba(0,0,0,.30);
+      --focus: 0 0 0 4px rgba(76,110,245,.22);
+    }
+
+    /* Page variable mapping */
+    body{
+      --card: var(--panel);
+      --card-hover: var(--panel-2);
+      --accent-2: var(--primary);
+      --brand-blue: var(--primary);
+      --shadow: var(--shadow-soft);
+      --gap: 18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background: var(--bg);
+      color:var(--text);
+      font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+    }
+    .sr-only{
+      position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+      overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+    }
+    .container{max-width:var(--container);margin:0 auto;padding:24px}
+
+    /* ===== Header (same UX behavior as household.html) ===== */
+    .site-header{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background:var(--panel);
+      border-bottom:1px solid var(--border);
+      box-shadow:0 8px 22px rgba(0,0,0,.25);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+    .site-header-inner{
+      max-width:var(--container);
+      margin:0 auto;
+      padding:16px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--text);
+      text-decoration:none;
+      font-weight:700;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+      box-shadow:0 0 0 3px var(--ring),0 8px 24px rgba(62,225,161,.35);
+      object-fit:cover;
+    }
+    .menu{
+      display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+      font-size:14px;
+    }
+    .menu a{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 2px;
+      text-decoration:none;color:var(--muted);
+      font-weight:500;
+      border-bottom:2px solid transparent;
+      transition:color .15s ease, border-bottom-color .15s ease;
+    }
+    .menu a:hover{ color:var(--text); border-bottom-color:var(--brand-blue); }
+    .menu a.active{ color:var(--text); border-bottom-color:var(--accent); font-weight:600; }
+    .menu a.ghost{ color:var(--muted); }
+
+    .user-menu{ position:relative; display:flex; align-items:center; margin-left:auto; }
+    .user-menu-toggle{
+      display:flex;align-items:center;gap:6px;
+      padding:6px 12px;border-radius:999px;
+      border:1px solid var(--border-strong);
+      background:var(--panel-2);
+      color:var(--text);
+      font-size:14px;
+      cursor:pointer;
+    }
+    .user-menu-toggle:hover{ border-color:var(--accent); }
+    .user-menu-dropdown{
+      position:absolute; right:0; top:calc(100% + 6px);
+      min-width:240px;
+      background:var(--panel-2);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      box-shadow:0 14px 34px rgba(0,0,0,.55);
+      padding:6px 0;
+      display:none;
+      z-index:1002;
+      margin-right:4px;
+    }
+    .user-menu-dropdown a,
+    .user-menu-dropdown button{
+      display:block;width:100%;
+      text-align:left;
+      padding:8px 14px;
+      background:none;border:none;
+      color:var(--text);
+      font-size:14px;
+      text-decoration:none;
+      cursor:pointer;
+    }
+    .user-menu-dropdown a:hover,
+    .user-menu-dropdown button:hover{ background:var(--panel); }
+    .user-menu-divider{ height:1px; margin:4px 0; background:rgba(148,163,184,.4); }
+    .dropdown-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      opacity:.7;
+      padding:4px 14px 2px;
+    }
+    .auth-only{}
+
+    .hamburger{ display:none; }
+    .theme-gear{
+      display:none;
+      align-items:center;justify-content:center;
+      width:38px;height:38px;border-radius:999px;
+      border:1px solid var(--border-strong);
+      background:var(--panel-2);color:var(--text);
+      cursor:pointer;
+    }
+    .theme-gear:hover{ border-color: var(--accent); }
+
+    @media(max-width:720px){
+      /* Mobile behavior (matches household.html):
+         - Hide top header links/buttons
+         - Username dropdown becomes main navigation
+         - Bottom tabs for 4 main areas
+      */
+      .menu{display:none}
+      .hamburger{display:none}
+      .drawer{display:none}
+      .theme-gear{display:none}
+      .site-header-inner{padding:10px 12px}
+      .user-menu-toggle{padding-inline:10px;}
+    }
+
+    /* ===== Hero ===== */
+    .hero{ text-align:center; padding:16px 0 8px; }
+    .title{ font-size:clamp(26px,4vw,40px); margin:0 0 6px; font-weight:900; }
+    .subtitle{ color:var(--muted); margin:0 auto 18px; max-width:920px; font-size:15px; }
+
+    /* ===== Trust strip ===== */
+    .trust{
+      max-width:var(--container);
+      margin:0 auto 16px;
+      border-radius:var(--radius);
+      border:1px dashed var(--border-strong);
+      background:rgba(12,19,35,.95);
+      padding:10px 12px;
+      font-size:13px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:center;
+    }
+    .trust strong{ color:var(--text); }
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      background:var(--panel-2);
+      border:1px solid var(--border);
+      color:var(--text);
+      font-size:12px;
+      font-weight:800;
+    }
+
+    /* ===== Layout ===== */
+    .layout{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    /* ===== Card ===== */
+    .card{
+      background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.90));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card-head{
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom:1px solid var(--border);
+    }
+    .card-title{
+      display:flex;align-items:center;gap:10px;
+      font-weight:900;
+      font-size:15px;
+    }
+    .card-sub{ color:var(--muted); font-size:13px; }
+    .card-body{ padding:14px; }
+
+    /* ===== Stepper ===== */
+    .stepper{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .step{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--muted);
+      font-size:12px;
+      font-weight:900;
+      user-select:none;
+    }
+    .step.active{
+      color:var(--text);
+      border-color:rgba(76,110,245,.55);
+      box-shadow:var(--focus);
+    }
+    .step.done{
+      color:var(--text);
+      border-color:rgba(62,225,161,.45);
+    }
+
+    /* ===== Form controls ===== */
+    .grid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    @media(max-width:640px){ .grid2{ grid-template-columns:1fr; } }
+
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    .label{
+      font-weight:900;
+      font-size:13px;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .help{ font-size:12px; color:var(--muted); margin-top:-2px; }
+
+    .input, .select, .textarea{
+      width:100%;
+      background:var(--panel-2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      color:var(--text);
+      font-size:14px;
+      outline:none;
+    }
+    .textarea{ min-height:92px; resize:vertical; }
+    .input:focus, .select:focus, .textarea:focus{
+      border-color:rgba(74,163,255,.45);
+      box-shadow:0 0 0 3px rgba(74,163,255,.15);
+    }
+
+    .radio-row, .check-row{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-top:6px;
+    }
+    @media(max-width:640px){
+      .radio-row, .check-row{ grid-template-columns: 1fr; }
+    }
+    .choice{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:10px 12px;
+      border-radius:12px;
+      background:var(--panel-2);
+      border:1px solid var(--border);
+      cursor:pointer;
+      user-select:none;
+    }
+    .choice:hover{ border-color: rgba(76,110,245,.55); }
+    .choice input{ margin-top:3px; }
+    .choice strong{ display:block; font-size:13px; }
+    .choice span{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+
+    .seg{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:6px;
+    }
+    .seg button{
+      padding:9px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:900;
+      font-size:13px;
+    }
+    .seg button.active{
+      border-color: rgba(76,110,245,.65);
+      box-shadow: var(--focus);
+    }
+
+    /* ===== Buttons ===== */
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 16px;
+      border-radius:var(--btn-radius);
+      text-decoration:none;
+      font-weight:900;
+      border:0;
+      cursor:pointer;
+      font-size:14px;
+      white-space:nowrap;
+      background:var(--accent-2);
+      color:#03101f;
+      box-shadow:0 8px 18px rgba(74,163,255,.25);
+    }
+    .btn.primary{
+      background:var(--accent);
+      color:#04131a;
+      box-shadow:0 8px 18px rgba(62,225,161,.25);
+    }
+    .btn.ghost{
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:none;
+    }
+    .btn:hover{ filter:brightness(1.05); }
+    .btn-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    /* ===== Review sidebar ===== */
+    .side-list{ margin:0; padding-left:18px; color:var(--muted); font-size:13px; }
+    .side-box{
+      margin-top:12px;
+      background:var(--panel-2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
+    }
+    .side-box h4{
+      margin:0 0 8px;
+      font-size:13px;
+      font-weight:900;
+      color:var(--text);
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      font-size:13px;
+      color:var(--muted);
+      margin:6px 0;
+    }
+    .kv strong{ color:var(--text); }
+
+    
+    /* ===== Tables (for preview) ===== */
+    .mini-table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      font-size:13px;
+    }
+    .mini-table th, .mini-table td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(148,163,184,.22);
+      text-align:left;
+      vertical-align:top;
+    }
+    .mini-table th{ color:var(--muted); font-weight:900; font-size:12px; }
+    .mini-table tr:last-child td{ border-bottom:none; }
+/* ===== Step panels ===== */
+    .panel{ display:none; }
+    .panel.active{ display:block; }
+
+    /* ===== Footer (same as household.html; hidden on small screens) ===== */
+    .site-footer{
+      margin-top:30px;
+      padding:22px 0 34px;
+      border-top:1px solid var(--border);
+      background:rgba(10,16,28,.9);
+      color:var(--muted);
+    }
+    .site-footer-inner{ max-width:var(--container); margin:0 auto; padding:0 24px; }
+    .footer-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+    .footer-col h4{ margin:0 0 10px; color:var(--text); font-size:14px; }
+    .footer-col a{ display:block; color:var(--muted); text-decoration:none; margin:6px 0; font-size:13px; }
+    .footer-col a:hover{ color:var(--text); }
+    .footer-bottom{
+      margin-top:18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      font-size:12px;
+    }
+    .social{ display:flex; gap:10px; }
+    .social a{
+      width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+      border-radius:999px;border:1px solid var(--border);background:var(--panel-2);
+      color:var(--text);text-decoration:none;
+    }
+    @media (max-width: 600px){
+      .site-footer{ display:none !important; }
+    }
+
+    /* ===== Mobile Bottom Nav (4 tabs) ===== */
+    .mobile-nav{
+      position:fixed; left:0; right:0; bottom:0;
+      display:none;
+      z-index:1200;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      background:var(--panel);
+      border-top:1px solid var(--border);
+      box-shadow:0 -10px 24px rgba(0,0,0,.18);
+    }
+    .mobile-nav-inner{
+      max-width:var(--container);
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+    }
+    .mnav{
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:4px;
+      padding:10px 8px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--muted);
+      font-weight:900;
+      font-size:11px;
+      text-decoration:none;
+    }
+    .mnav .ico{ font-size:16px; line-height:1; }
+    .mnav.active{
+      color:var(--text);
+      border-color:rgba(76,110,245,.55);
+      box-shadow:var(--focus);
+    }
+    .mobile-pad{ display:none; height:86px; }
+    @media (max-width: 860px){
+      .mobile-nav{ display:block; }
+      .mobile-pad{ display:block; }
+      main.page{ padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+    }
+
+    /* Theme modal */
+    .theme-overlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.62);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:2000;
+      padding:18px;
+    }
+    .theme-modal{
+      width:min(720px, 96vw);
+      border-radius:var(--radius-lg);
+      border:1px solid var(--border);
+      background:var(--panel);
+      box-shadow:0 30px 90px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .theme-modal-header{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .theme-modal-title{ display:flex; flex-direction:column; gap:2px; }
+    .theme-modal-title strong{ font-size:15px; }
+    .theme-modal-title span{ font-size:13px; color:var(--muted); }
+    .theme-close{
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--text);
+      border-radius:999px;
+      padding:8px 10px;
+      cursor:pointer;
+    }
+    .theme-close:hover{ border-color: var(--accent); }
+    .theme-modal-body{ padding: 14px; }
+    .theme-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    @media (max-width: 560px){ .theme-grid{ grid-template-columns:1fr; } }
+    .theme-option{
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      background:var(--panel-2);
+      color:var(--text);
+      padding: 12px;
+      cursor:pointer;
+      text-align:left;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .theme-option:hover{ border-color: rgba(76,110,245,.55); }
+    .theme-option.selected{
+      border-color: rgba(76,110,245,.85);
+      box-shadow: var(--focus);
+    }
+    .theme-option-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .theme-option-name{ margin:0; font-weight:900; font-size:14px; }
+    .theme-option-desc{ margin:0; font-size:12px; color:var(--muted); }
+    .theme-option-tag{
+      font-size:11px;
+      font-weight:900;
+      padding:4px 8px;
+      background: rgba(76,110,245,.16);
+      border:1px solid rgba(76,110,245,.35);
+      border-radius: 999px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .theme-modal-footer{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+
+<body class="theme-dark">
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img alt="GenieSphere" class="logo" src="../genie-logo.png"/>
+        <strong>GenieSphere</strong>
+      </a>
+
+      <nav aria-label="Primary" class="menu">
+        <a class="ghost" href="../dashboard/household.html">🏠 Household</a>
+        <a class="active" href="../dashboard/business.html">🏢 Business</a>
+        <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+        <a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+      </nav>
+
+      <button class="theme-gear" id="openThemeBtn" type="button" aria-label="Open appearance settings">⚙️</button>
+
+      <!-- User menu / login dropdown -->
+      <div class="user-menu" id="user-menu">
+        <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle">
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+
+        <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <div class="dropdown-label">Areas</div>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/household.html">🏠 Household</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/business.html">🏢 Business</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/investment.html">📈 Investment</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/leisure.html">🏝️ Leisure</button>
+
+          <div class="user-menu-divider"></div>
+          <div class="dropdown-label">Account</div>
+          <button class="dropdown-nav" data-target="../onboarding/user_profile_form.html" type="button">👤 User profile</button>
+          <button class="dropdown-nav" data-target="../onboarding/display_settings.html" type="button">⚙️ Settings</button>
+          <button id="dropdown-open-appearance" type="button">🎨 Appearance</button>
+          <div class="user-menu-divider"></div>
+          <button id="user-auth-action" type="button">Log in / Sign up</button>
+          <button class="auth-only" id="user-signout-btn" type="button">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <!-- Hero -->
+      <section class="hero">
+        <h1 class="title">📨 AR Collections</h1>
+        <p class="subtitle">
+          Turn your overdue invoices into a clean collections plan — with <strong>friendly reminders</strong>, <strong>clear escalation</strong>, and <strong>audit-safe documentation</strong>.
+          GenieSphere helps you reduce write-offs while keeping communications professional and compliant.
+        </p>
+      </section>
+
+      <div class="trust" role="note" aria-label="Payroll Master notes">
+        <span class="pill">📬 Email + SMS templates</span>
+        <span class="pill">📊 Aging buckets + prioritization</span>
+        <span class="pill">🛡️ Compliance-first comms</span>
+        <span class="pill">⚡ Task list export</span>
+      </div>
+
+      <section class="layout" aria-label="Tax Analyzer form and review">
+        <!-- Left: Wizard -->
+        <div class="card" id="wizardCard">
+          <div class="card-head">
+            <div>
+              <div class="card-title">🧠 Smart AR Collections Builder</div>
+              <div class="card-sub" id="stepSubtitle">Step 1 of 4 • AR source + date range + aging</div>
+            </div>
+            <div class="stepper" aria-label="Steps">
+              <div class="step active" data-step="1">1</div>
+              <div class="step" data-step="2">2</div>
+              <div class="step" data-step="3">3</div>
+              <div class="step" data-step="4">4</div>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <!-- STEP 1 -->
+            <!-- STEP 1 -->
+            <div class="panel active" data-panel="1">
+              <div class="grid2">
+                <div class="field">
+                  <div class="label">🏢 Business / store</div>
+                  <div class="help">Optional label so exports are organized.</div>
+                  <input class="input" id="businessLabel" placeholder="e.g., Victoria Nails - Main"/>
+                </div>
+                <div class="field">
+                  <div class="label">📌 AR source</div>
+                  <select class="select" id="arSource">
+                    <option value="quickbooks" selected>QuickBooks Online</option>
+                    <option value="csv">CSV / Excel export</option>
+                    <option value="manual">Manual entry</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <div class="help">We’ll connect the import in n8n later. For now, this builds the plan.</div>
+                </div>
+                <div class="field">
+                  <div class="label">📅 Date range (optional)</div>
+                  <input class="input" id="dateRange" placeholder="e.g., Jan 1 - Jan 31"/>
+                  <div class="help">Use this if you only want a specific period.</div>
+                </div>
+                <div class="field">
+                  <div class="label">🧮 Minimum past-due days</div>
+                  <input class="input" id="minDaysPastDue" type="number" min="0" placeholder="e.g., 7"/>
+                  <div class="help">Example: only include invoices 7+ days overdue.</div>
+                </div>
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <div class="label">📎 Upload AR export (optional for now)</div>
+                <div class="help">CSV/Excel from QuickBooks or your POS. We’ll parse later; this stores file metadata.</div>
+                <input class="input" type="file" id="arFile" accept=".csv,.xlsx,.xls"/>
+              </div>
+
+              <div class="side-box" style="margin-top:12px;">
+                <h4>📊 Aging buckets</h4>
+                <div class="help">Used to prioritize and set escalation rules.</div>
+                <div class="grid2" style="margin-top:10px;">
+                  <div class="field">
+                    <div class="label">Bucket set</div>
+                    <select class="select" id="agingPreset">
+                      <option value="standard" selected>Standard: 0–30 / 31–60 / 61–90 / 90+</option>
+                      <option value="light">Light: 0–15 / 16–30 / 31–60 / 60+</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </div>
+                  <div class="field" id="customBucketsWrap" style="display:none;">
+                    <div class="label">Custom buckets</div>
+                    <input class="input" id="customBuckets" placeholder="e.g., 0-14,15-29,30-59,60+"/>
+                    <div class="help">Comma-separated. Use “+” for last bucket.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="btn-row">
+                <span></span>
+                <button class="btn primary" type="button" id="next1">Next ➜</button>
+              </div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="panel" data-panel="2">
+              <div class="field">
+                <div class="label">👥 Who are you collecting from?</div>
+                <div class="help">You can run collections for customers/clients/tenants — keep it professional and consistent.</div>
+
+                <div class="radio-row" role="radiogroup" aria-label="Debtor type">
+                  <label class="choice">
+                    <input type="radio" name="debtor_type" value="customers"/>
+                    <div>
+                      <strong>🧑‍💼 Customers / clients</strong>
+                      <span>Invoices for services / products</span>
+                    </div>
+                  </label>
+
+                  <label class="choice">
+                    <input type="radio" name="debtor_type" value="tenants"/>
+                    <div>
+                      <strong>🏠 Tenants</strong>
+                      <span>Rent + fees (if applicable)</span>
+                    </div>
+                  </label>
+
+                  <label class="choice">
+                    <input type="radio" name="debtor_type" value="other"/>
+                    <div>
+                      <strong>📁 Other</strong>
+                      <span>Custom list (you decide)</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top:12px;">
+                <div class="field">
+                  <div class="label">📞 Primary contact method</div>
+                  <select class="select" id="primaryChannel">
+                    <option value="email" selected>Email</option>
+                    <option value="sms">SMS / text</option>
+                    <option value="call">Phone call</option>
+                    <option value="mixed">Mixed</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <div class="label">⏰ Best time window</div>
+                  <input class="input" id="timeWindow" placeholder="e.g., Weekdays 9am–5pm"/>
+                </div>
+              </div>
+
+              <div class="side-box" style="margin-top:12px;">
+                <h4>🧾 Contact rules</h4>
+                <div class="check-row" style="margin-top:10px;">
+                  <label class="choice"><input type="checkbox" value="log_every_touch"/><div><strong>📝 Log every touch</strong><span>Store a timestamp + summary of each contact</span></div></label>
+                  <label class="choice"><input type="checkbox" value="stop_on_dispute"/><div><strong>🧠 Stop if disputed</strong><span>Pause collections and route to dispute review</span></div></label>
+                  <label class="choice"><input type="checkbox" value="respect_dnc"/><div><strong>🚫 Respect do-not-contact</strong><span>Exclude anyone marked DNC / opt-out</span></div></label>
+                  <label class="choice"><input type="checkbox" value="one_channel_only"/><div><strong>📌 One channel only</strong><span>Don’t email + text the same day</span></div></label>
+                </div>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn ghost" type="button" data-back>⬅️ Back</button>
+                <button class="btn primary" type="button" id="next2">Next ➜</button>
+              </div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="panel" data-panel="3">
+              <div class="field">
+                <div class="label">📣 Collections tone + escalation</div>
+                <div class="help">Choose the tone. GenieSphere will generate templates that match it.</div>
+                <div class="seg" aria-label="Tone">
+                  <button type="button" data-seg="tone" data-value="friendly" class="active">😊 Friendly</button>
+                  <button type="button" data-seg="tone" data-value="firm">🧱 Firm</button>
+                  <button type="button" data-seg="tone" data-value="final">⚠️ Final notice</button>
+                </div>
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <div class="label">🗓️ Reminder cadence</div>
+                <div class="help">How often should we remind before escalating?</div>
+                <div class="grid2" style="margin-top:8px;">
+                  <div class="field">
+                    <div class="label">Days between touches</div>
+                    <input class="input" id="cadenceDays" type="number" min="1" placeholder="e.g., 3"/>
+                  </div>
+                  <div class="field">
+                    <div class="label">Max touches before pause</div>
+                    <input class="input" id="maxTouches" type="number" min="1" placeholder="e.g., 4"/>
+                  </div>
+                </div>
+              </div>
+
+              <div class="side-box" style="margin-top:12px;">
+                <h4>🛡️ Compliance & red-flag safety</h4>
+                <ul class="side-list">
+                  <li>Keep messages factual and non-threatening</li>
+                  <li>Include invoice details + payment link</li>
+                  <li>Provide an easy way to dispute / ask questions</li>
+                  <li>Avoid excessive contact frequency</li>
+                </ul>
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <div class="label">📝 Notes (optional)</div>
+                <textarea class="textarea" id="notes" placeholder="Example: “Offer 10% discount if paid this week”, “Call only for 60+ days past due”…"></textarea>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn ghost" type="button" data-back>⬅️ Back</button>
+                <button class="btn primary" type="button" id="next3">Next ➜</button>
+              </div>
+            </div>
+
+            <!-- STEP 4 -->
+            <div class="panel" data-panel="4">
+              <div class="field">
+                <div class="label">📤 What should we generate?</div>
+                <div class="help">Pick outputs. In the n8n version, these become files + tasks.</div>
+                <div class="check-row" style="margin-top:8px;">
+                  <label class="choice"><input type="checkbox" id="outEmail" checked/><div><strong>📧 Email templates</strong><span>Friendly → firm → final notice</span></div></label>
+                  <label class="choice"><input type="checkbox" id="outSms"/><div><strong>📲 SMS scripts</strong><span>Short, compliant texts</span></div></label>
+                  <label class="choice"><input type="checkbox" id="outCall"/><div><strong>📞 Call script</strong><span>Owner / receptionist script</span></div></label>
+                  <label class="choice"><input type="checkbox" id="outTasks" checked/><div><strong>✅ Task list export</strong><span>CSV/JSON for CRM or n8n</span></div></label>
+                </div>
+              </div>
+
+              <div class="side-box" style="margin-top:12px;">
+                <h4>✅ What you’ll get after you submit</h4>
+                <ul class="side-list">
+                  <li>Prioritized collections list by aging bucket</li>
+                  <li>Next-action plan (what to send, when)</li>
+                  <li>Templates/scripts matched to tone</li>
+                  <li>Export payload for n8n → automation</li>
+                </ul>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn ghost" type="button" data-back>⬅️ Back</button>
+                <button class="btn primary" type="button" id="submitBtn">✅ Build Collections Plan</button>
+              </div>
+
+              <div id="submitMsg" class="help" style="margin-top:10px;"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Live preview --></div>
+        </div>
+
+        <!-- Right: Live preview --></div>
+        </div>
+
+        <!-- Right: Live preview -->
+        <aside class="card" aria-label="Your selections preview">
+          <div class="card-head">
+            <div>
+              <div class="card-title">👀 Your Snapshot</div>
+              <div class="card-sub">Updates as you answer — feels like a real assistant.</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="kv"><span>Business</span><strong id="pvBusiness">—</strong></div>
+            <div class="kv"><span>Source</span><strong id="pvSource">QuickBooks Online</strong></div>
+            <div class="kv"><span>Min past-due</span><strong id="pvMinDays">—</strong></div>
+            <div class="kv"><span>Debtors</span><strong id="pvDebtors">—</strong></div>
+            <div class="kv"><span>Primary channel</span><strong id="pvChannel">Email</strong></div>
+            <div class="kv"><span>Tone</span><strong id="pvTone">Friendly</strong></div>
+
+            <div class="side-box">
+              <h4>🧪 Rules enabled</h4>
+              <ul class="side-list" id="pvRules"><li>None yet</li></ul>
+            </div>
+
+            <div class="side-box">
+              <h4>📋 Sample aging preview</h4>
+              <div class="help">Sample rows (real parsing comes when we connect the CSV/QuickBooks import).</div>
+              <table class="mini-table" aria-label="AR preview">
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th>Invoice</th>
+                    <th>Aging</th>
+                    <th>Next step</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>John Doe</td>
+                    <td>#INV-1032 ($420)</td>
+                    <td><span class="tag">31–60</span></td>
+                    <td><span class="tag ok">📧 Email reminder</span></td>
+                  </tr>
+                  <tr>
+                    <td>Acme Co</td>
+                    <td>#INV-1021 ($1,980)</td>
+                    <td><span class="tag warn">61–90</span></td>
+                    <td><span class="tag warn">📞 Call</span></td>
+                  </tr>
+                  <tr>
+                    <td>Jane Smith</td>
+                    <td>#INV-0998 ($250)</td>
+                    <td><span class="tag warn">90+</span></td>
+                    <td><span class="tag warn">⚠️ Final notice</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+
+          </div>
+        </aside>
+      </section>
+
+      <!-- Footer -->
+      <footer class="site-footer">
+        <div class="site-footer-inner">
+          <div class="footer-grid">
+            <div class="footer-col">
+              <h4>Business Tools</h4>
+              <a href="/business/salon-genie.html">Salon Genie</a>
+              <a href="/business/quote-checker.html">Quote Checker</a>
+              <a href="/business/payroll-master.html">Payroll Master</a>
+            </div>
+            <div class="footer-col">
+              <h4>Household</h4>
+              <a href="/dashboard/household.html">Household Dashboard</a>
+              <a href="/household/bill-reminders.html">Bill Reminders</a>
+              <a href="/household/doc-vault.html">Document Vault</a>
+            </div>
+            <div class="footer-col">
+              <h4>Investment</h4>
+              <a href="/dashboard/investment.html">Investment Dashboard</a>
+              <a href="/investment/options-screener.html">Options Screener</a>
+              <a href="/investment/watchlist.html">Watchlist</a>
+            </div>
+            <div class="footer-col">
+              <h4>Help</h4>
+              <a href="/onboarding/api-key-settings.html">API Keys</a>
+              <a href="/about.html">About</a>
+              <a href="/contact.html">Contact</a>
+            </div>
+          </div>
+
+          <div class="footer-bottom">
+            <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+            <div aria-label="Social" class="social">
+              <a aria-label="Twitter / X" href="#">🐦</a>
+              <a aria-label="YouTube" href="#">▶️</a>
+              <a aria-label="GitHub" href="#">🐙</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      <!-- Spacer so content isn't hidden behind the mobile bottom nav -->
+      <div class="mobile-pad" aria-hidden="true"></div>
+
+      <!-- ===== MOBILE BOTTOM NAV ===== -->
+      <nav class="mobile-nav" aria-label="GenieSphere mobile navigation">
+        <div class="mobile-nav-inner">
+          <a class="mnav" href="../dashboard/household.html" data-nav="household"><div class="ico">🏠</div><div>Household</div></a>
+          <a class="mnav active" href="../dashboard/business.html" data-nav="business"><div class="ico">🏢</div><div>Business</div></a>
+          <a class="mnav" href="../dashboard/investment.html" data-nav="investment"><div class="ico">📈</div><div>Investment</div></a>
+          <a class="mnav" href="../dashboard/leisure.html" data-nav="leisure"><div class="ico">🏝️</div><div>Leisure</div></a>
+        </div>
+      </nav>
+    </div>
+  </main>
+
+  <!-- Supabase client loaded at the bottom like household.html -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // Force GSConfig to use /shared/config.json (works from /dashboard/* and /onboarding/*)
+    async function loadConfig(){
+      const meta = document.querySelector('meta[name="gs-config"]');
+      const url  = meta?.content || '/shared/config.json';
+      const res  = await fetch(url, { cache: 'no-store' });
+      if(!res.ok) throw new Error('[GSConfig] Failed to load ' + url);
+      const cfg = await res.json();
+      if(!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) throw new Error('[GSConfig] Missing supabaseUrl or supabaseAnonKey in config');
+      return cfg;
+    }
+    const CONFIG_PROMISE = loadConfig();
+
+    async function getClient(){
+      const cfg = await CONFIG_PROMISE;
+      return window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+    }
+
+    // Auth UI + dropdown behavior (same pattern as household.html)
+    (async function initAuthHeader(){
+      const toggle   = document.getElementById('user-menu-toggle');
+      const dropdown = document.getElementById('user-menu-dropdown');
+      const nameLbl  = document.getElementById('user-name-label');
+      const authBtn  = document.getElementById('user-auth-action');
+      const signout  = document.getElementById('user-signout-btn');
+
+      function closeDropdown(){ dropdown.style.display='none'; toggle.setAttribute('aria-expanded','false'); }
+      function openDropdown(){ dropdown.style.display='block'; toggle.setAttribute('aria-expanded','true'); }
+
+      toggle.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const isOpen = dropdown.style.display === 'block';
+        isOpen ? closeDropdown() : openDropdown();
+      });
+      document.addEventListener('click', ()=> closeDropdown());
+
+      dropdown.addEventListener('click', (e)=>{
+        const btn = e.target.closest('.dropdown-nav');
+        if(!btn) return;
+        const target = btn.getAttribute('data-target');
+        if(target) window.location.href = target;
+      });
+
+      // Supabase session
+      let client;
+      try{
+        client = await getClient();
+      }catch(err){
+        console.warn(err);
+        nameLbl.textContent = 'Log in';
+        authBtn.textContent = 'Log in / Sign up';
+        signout.style.display = 'none';
+        return;
+      }
+
+      async function refreshUser(){
+        const { data } = await client.auth.getUser();
+        const user = data?.user;
+        if(user){
+          const label = user.user_metadata?.full_name || user.email || 'Account';
+          nameLbl.textContent = label;
+          authBtn.style.display = 'none';
+          signout.style.display = 'block';
+        }else{
+          nameLbl.textContent = 'Log in';
+          authBtn.style.display = 'block';
+          signout.style.display = 'none';
+        }
+      }
+      await refreshUser();
+      client.auth.onAuthStateChange(async ()=> refreshUser());
+
+      authBtn.addEventListener('click', ()=>{
+        window.location.href = '../login.html?redirect=' + encodeURIComponent(window.location.pathname);
+      });
+
+      signout.addEventListener('click', async ()=>{
+        await client.auth.signOut();
+        window.location.href = '../login.html?redirect=' + encodeURIComponent(window.location.pathname);
+      });
+    })();
+
+    // Footer year
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+
+  <script>
+    // ===== Tax Analyzer Wizard Logic =====  <script>
+    // ===== Payroll Master Wizard Logic =====  <script>
+    // ===== AR Collections Wizard Logic =====
+    const state = {
+      business_label: "",
+      ar_source: "quickbooks",
+      date_range: "",
+      min_days_past_due: null,
+      aging_preset: "standard",
+      custom_buckets: "",
+      debtor_type: null,
+      primary_channel: "email",
+      time_window: "",
+      rules: [],
+      tone: "friendly",
+      cadence_days: null,
+      max_touches: null,
+      outputs: { email: true, sms: false, call: false, tasks: true }
+    };
+
+    const stepSubtitle = document.getElementById('stepSubtitle');
+
+    const pvBusiness = document.getElementById('pvBusiness');
+    const pvSource   = document.getElementById('pvSource');
+    const pvMinDays  = document.getElementById('pvMinDays');
+    const pvDebtors  = document.getElementById('pvDebtors');
+    const pvChannel  = document.getElementById('pvChannel');
+    const pvTone     = document.getElementById('pvTone');
+    const pvRules    = document.getElementById('pvRules');
+
+    function setSubtitle(step){
+      const map = {
+        1: "Step 1 of 4 • AR source + date range + aging",
+        2: "Step 2 of 4 • Debtors + contact rules",
+        3: "Step 3 of 4 • Tone + cadence + escalation",
+        4: "Step 4 of 4 • Outputs + build plan"
+      };
+      stepSubtitle.textContent = map[step] || "";
+    }
+
+    function setStep(step){
+      document.querySelectorAll('.panel').forEach(p=>{
+        p.classList.toggle('active', p.getAttribute('data-panel') === String(step));
+      });
+      document.querySelectorAll('.step').forEach(s=>{
+        const n = Number(s.getAttribute('data-step'));
+        s.classList.toggle('active', n === step);
+        s.classList.toggle('done', n < step);
+      });
+      setSubtitle(step);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function labelSource(v){
+      if(v === "quickbooks") return "QuickBooks Online";
+      if(v === "csv") return "CSV / Excel export";
+      if(v === "manual") return "Manual entry";
+      if(v === "other") return "Other";
+      return "—";
+    }
+    function labelDebtors(v){
+      if(v === "customers") return "Customers / clients";
+      if(v === "tenants") return "Tenants";
+      if(v === "other") return "Other";
+      return "—";
+    }
+    function labelTone(v){
+      if(v === "friendly") return "Friendly";
+      if(v === "firm") return "Firm";
+      if(v === "final") return "Final notice";
+      return "—";
+    }
+    function labelChannel(v){
+      if(v === "email") return "Email";
+      if(v === "sms") return "SMS / text";
+      if(v === "call") return "Phone call";
+      if(v === "mixed") return "Mixed";
+      return "—";
+    }
+
+    function updatePreview(){
+      pvBusiness.textContent = state.business_label ? state.business_label : "—";
+      pvSource.textContent   = labelSource(state.ar_source);
+      pvMinDays.textContent  = (state.min_days_past_due === null || state.min_days_past_due === "") ? "—" : String(state.min_days_past_due) + " days";
+      pvDebtors.textContent  = labelDebtors(state.debtor_type);
+      pvChannel.textContent  = labelChannel(state.primary_channel);
+      pvTone.textContent     = labelTone(state.tone);
+
+      pvRules.innerHTML = "";
+      if(!state.rules.length){
+        pvRules.innerHTML = "<li>None yet</li>";
+      }else{
+        state.rules.slice(0, 10).forEach(x=>{
+          const li = document.createElement('li');
+          li.textContent = x;
+          pvRules.appendChild(li);
+        });
+      }
+    }
+
+    // Step 1 bindings
+    document.getElementById('businessLabel').addEventListener('input', (e)=>{
+      state.business_label = e.target.value || "";
+      updatePreview();
+    });
+    document.getElementById('arSource').addEventListener('change', (e)=>{
+      state.ar_source = e.target.value;
+      updatePreview();
+    });
+    document.getElementById('dateRange').addEventListener('input', (e)=>{
+      state.date_range = e.target.value || "";
+    });
+    document.getElementById('minDaysPastDue').addEventListener('input', (e)=>{
+      const v = e.target.value;
+      state.min_days_past_due = (v === "" ? null : Number(v));
+      updatePreview();
+    });
+
+    const agingPreset = document.getElementById('agingPreset');
+    const customWrap  = document.getElementById('customBucketsWrap');
+    const customInput = document.getElementById('customBuckets');
+
+    function updateBucketsUI(){
+      const isCustom = agingPreset.value === "custom";
+      customWrap.style.display = isCustom ? "block" : "none";
+      state.aging_preset = agingPreset.value;
+      if(!isCustom) state.custom_buckets = "";
+    }
+    agingPreset.addEventListener('change', updateBucketsUI);
+    customInput.addEventListener('input', (e)=>{
+      state.custom_buckets = e.target.value || "";
+    });
+    updateBucketsUI();
+
+    // Step 2 bindings
+    document.querySelectorAll('input[name="debtor_type"]').forEach(r=>{
+      r.addEventListener('change', ()=>{
+        state.debtor_type = r.value;
+        updatePreview();
+      });
+    });
+    document.getElementById('primaryChannel').addEventListener('change', (e)=>{
+      state.primary_channel = e.target.value;
+      updatePreview();
+    });
+    document.getElementById('timeWindow').addEventListener('input', (e)=>{
+      state.time_window = e.target.value || "";
+    });
+
+    document.querySelectorAll('[data-panel="2"] input[type="checkbox"]').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        const label = cb.closest('.choice')?.querySelector('strong')?.textContent?.trim() || cb.value;
+        if(cb.checked){
+          if(!state.rules.includes(label)) state.rules.push(label);
+        }else{
+          state.rules = state.rules.filter(x=>x !== label);
+        }
+        updatePreview();
+      });
+    });
+
+    // Step 3 tone selector
+    document.querySelectorAll('button[data-seg="tone"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('button[data-seg="tone"]').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        state.tone = btn.getAttribute('data-value');
+        updatePreview();
+      });
+    });
+    document.getElementById('cadenceDays').addEventListener('input', (e)=>{
+      const v = e.target.value;
+      state.cadence_days = (v === "" ? null : Number(v));
+    });
+    document.getElementById('maxTouches').addEventListener('input', (e)=>{
+      const v = e.target.value;
+      state.max_touches = (v === "" ? null : Number(v));
+    });
+
+    // Step 4 outputs
+    function syncOutputs(){
+      state.outputs.email = !!document.getElementById('outEmail')?.checked;
+      state.outputs.sms   = !!document.getElementById('outSms')?.checked;
+      state.outputs.call  = !!document.getElementById('outCall')?.checked;
+      state.outputs.tasks = !!document.getElementById('outTasks')?.checked;
+    }
+    ['outEmail','outSms','outCall','outTasks'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('change', syncOutputs);
+    });
+    syncOutputs();
+
+    // Nav
+    document.getElementById('next1').addEventListener('click', ()=>{
+      if(state.min_days_past_due === null){
+        const ok = confirm("No minimum past-due days set. Continue anyway?");
+        if(!ok) return;
+      }
+      setStep(2);
+    });
+    document.getElementById('next2').addEventListener('click', ()=>{
+      if(!state.debtor_type){
+        alert("Please choose who you are collecting from (Customers, Tenants, or Other).");
+        return;
+      }
+      setStep(3);
+    });
+    document.getElementById('next3').addEventListener('click', ()=> setStep(4));
+
+    document.querySelectorAll('[data-back]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const current = Number(document.querySelector('.panel.active')?.getAttribute('data-panel') || 1);
+        setStep(Math.max(1, current - 1));
+      });
+    });
+
+    // Submit (stub): stores payload in localStorage for now
+    document.getElementById('submitBtn').addEventListener('click', async ()=>{
+      const msg = document.getElementById('submitMsg');
+      msg.textContent = "";
+
+      const payload = buildPayload();
+      try{
+        localStorage.setItem('gs_ar_collections_last_submission', JSON.stringify(payload));
+      }catch(_){}
+
+      msg.textContent = "Saved! Next step: wire this to your n8n /ar-collections webhook to import invoices and generate outreach + task exports.";
+    });
+
+    function buildPayload(){
+      syncOutputs();
+      const fileEl = document.getElementById('arFile');
+      const fileMeta = fileEl?.files?.[0] ? {
+        name: fileEl.files[0].name,
+        size: fileEl.files[0].size,
+        type: fileEl.files[0].type
+      } : null;
+
+      return {
+        business_label: state.business_label || null,
+        ar_source: state.ar_source,
+        date_range: state.date_range || null,
+        min_days_past_due: state.min_days_past_due,
+        aging: {
+          preset: state.aging_preset,
+          custom_buckets: (state.aging_preset === 'custom') ? (state.custom_buckets || null) : null
+        },
+        debtor_type: state.debtor_type,
+        primary_channel: state.primary_channel,
+        time_window: state.time_window || null,
+        rules_enabled: state.rules,
+        tone: state.tone,
+        cadence_days: state.cadence_days,
+        max_touches: state.max_touches,
+        notes: document.getElementById('notes')?.value || null,
+        outputs: state.outputs,
+        ar_file_meta: fileMeta
+      };
+    }
+
+    // Init
+    updatePreview();
+  </script>
+    // Init
+    updatePreview();
+  </script>
+    // Init
+    updatePreview();
+  </script>
+
+  <!-- Theme Modal (shared) -->
+  <div class="theme-overlay" id="themeOverlay" role="dialog" aria-modal="true" aria-labelledby="themeTitle" style="display:none;">
+    <div class="theme-modal">
+      <div class="theme-modal-header">
+        <div class="theme-modal-title">
+          <strong id="themeTitle">🎨 Appearance</strong>
+          <span>Choose a theme. We’ll remember your preference.</span>
+        </div>
+        <button class="theme-close" id="closeThemeBtn" type="button" aria-label="Close appearance settings">✕</button>
+      </div>
+
+      <div class="theme-modal-body">
+        <div class="theme-grid" id="themeGrid">
+          <button class="theme-option" type="button" data-theme="theme-calm">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌿 Calm Future</p>
+                <p class="theme-option-desc">Bright, calm, and easy.</p>
+              </div>
+              <span class="theme-option-tag">Default</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-future">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌌 Soft Futuristic</p>
+                <p class="theme-option-desc">Indigo + cyan glow.</p>
+              </div>
+              <span class="theme-option-tag">Futuristic</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-nature">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌱 Nature + Tech</p>
+                <p class="theme-option-desc">Calm green + sky blue trust.</p>
+              </div>
+              <span class="theme-option-tag">Household</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-dark">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌑 Pro Dark</p>
+                <p class="theme-option-desc">Best for night use.</p>
+              </div>
+              <span class="theme-option-tag">Dark</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="theme-modal-footer">
+        <button class="btn ghost" id="resetThemeBtn" type="button">Reset</button>
+        <button class="btn primary" id="doneThemeBtn" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dropdown "Appearance" -> open the same theme modal (mobile-friendly)
+    (function(){
+      const openFromDropdown = document.getElementById('dropdown-open-appearance');
+      const openThemeBtn = document.getElementById('openThemeBtn');
+      if(openFromDropdown && openThemeBtn){
+        openFromDropdown.addEventListener('click', ()=> openThemeBtn.click());
+      }
+    })();
+  </script>
+
+  <script>
+    // Theme Switcher (shared)
+    (function ThemeSwitcher(){
+      const STORAGE_KEY = 'geniesphere_theme';
+      const THEMES = ['theme-calm','theme-future','theme-nature','theme-dark'];
+      const DEFAULT_THEME = 'theme-dark';
+
+      const overlay = document.getElementById('themeOverlay');
+      const openBtn = document.getElementById('openThemeBtn');
+      const closeBtn = document.getElementById('closeThemeBtn');
+      const doneBtn = document.getElementById('doneThemeBtn');
+      const resetBtn = document.getElementById('resetThemeBtn');
+      const themeGrid = document.getElementById('themeGrid');
+
+      function saveTheme(theme){ try { localStorage.setItem(STORAGE_KEY, theme); } catch(_){ } }
+      function getTheme(){ try { return localStorage.getItem(STORAGE_KEY); } catch(_){ return null; } }
+
+      function updateSelected(theme){
+        if(!themeGrid) return;
+        themeGrid.querySelectorAll('.theme-option').forEach(btn => {
+          btn.classList.toggle('selected', btn.getAttribute('data-theme') === theme);
+        });
+      }
+
+      function applyTheme(theme){
+        THEMES.forEach(t => document.body.classList.remove(t));
+        document.body.classList.add(theme);
+        updateSelected(theme);
+      }
+
+      function openModal(){
+        if(!overlay) return;
+        overlay.classList.add('open');
+        overlay.style.display = 'flex';
+        const first = themeGrid?.querySelector('.theme-option');
+        setTimeout(()=> first && first.focus(), 40);
+      }
+      function closeModal(){
+        if(!overlay) return;
+        overlay.classList.remove('open');
+        overlay.style.display = 'none';
+        openBtn && openBtn.focus();
+      }
+
+      const saved = getTheme();
+      const theme = (saved && THEMES.includes(saved)) ? saved : DEFAULT_THEME;
+      applyTheme(theme);
+
+      if(openBtn) openBtn.addEventListener('click', openModal);
+      if(closeBtn) closeBtn.addEventListener('click', closeModal);
+      if(doneBtn) doneBtn.addEventListener('click', closeModal);
+
+      if(overlay){
+        overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal(); });
+      }
+      document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && overlay?.classList.contains('open')) closeModal(); });
+
+      if(themeGrid){
+        themeGrid.addEventListener('click', (e)=>{
+          const btn = e.target.closest('.theme-option');
+          if(!btn) return;
+          const next = btn.getAttribute('data-theme');
+          if(!THEMES.includes(next)) return;
+          applyTheme(next);
+          saveTheme(next);
+        });
+      }
+
+      if(resetBtn){
+        resetBtn.addEventListener('click', ()=>{
+          applyTheme(DEFAULT_THEME);
+          saveTheme(DEFAULT_THEME);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

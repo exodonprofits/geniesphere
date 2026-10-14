@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🍱 Nutrition Genie | GenieSphere</title>
+<meta name="description" content="AI-powered meal planning with a guided setup, weekly plan, grocery list, macro summary, and history."/>
+<meta name="gs-config" content="/shared/config.json" />
+<style>
+  :root{
+    --ring: rgba(76,110,245,.25);
+    --container: 1440px;
+    --radius: 7px;
+    --radius-lg: 14px;
+    --btn-radius: 999px;
+    --shadow: 0 18px 44px rgba(0,0,0,.50);
+    --shadow-soft: 0 10px 26px rgba(0,0,0,.30);
+    --focus: 0 0 0 4px rgba(76,110,245,.22);
+  }
+  body.theme-calm{
+    --bg:#f5f7fb; --panel:#ffffff; --panel-2:#f1f4ff; --text:#111827; --muted:#4b5563;
+    --primary:#4c6ef5; --accent:#22c55e;
+    --border: rgba(148,163,184,.70); --border-strong: rgba(148,163,184,.92);
+    --shadow:0 18px 38px rgba(15,23,42,.14); --shadow-soft:0 10px 26px rgba(15,23,42,.10);
+    --focus:0 0 0 4px rgba(76,110,245,.18);
+  }
+  body.theme-future{
+    --bg:#0f172a; --panel:#111c36; --panel-2:#162447; --text:#e5e7eb; --muted:#9ca3af;
+    --primary:#6366f1; --accent:#22d3ee;
+    --border: rgba(71,85,105,.65); --border-strong: rgba(71,85,105,.95);
+    --shadow:0 18px 44px rgba(0,0,0,.52); --shadow-soft:0 10px 26px rgba(0,0,0,.34);
+    --focus:0 0 0 4px rgba(34,211,238,.16);
+  }
+  body.theme-nature{
+    --bg:#f6f9f7; --panel:#ffffff; --panel-2:#eef5f1; --text:#0f172a; --muted:#475569;
+    --primary:#16a34a; --accent:#38bdf8;
+    --border: rgba(148,163,184,.70); --border-strong: rgba(148,163,184,.92);
+    --shadow:0 18px 38px rgba(15,23,42,.12); --shadow-soft:0 10px 26px rgba(15,23,42,.09);
+    --focus:0 0 0 4px rgba(22,163,74,.16);
+  }
+  body.theme-dark{
+    --bg:#0b1220; --panel:#121a2b; --panel-2:#0e1626; --text:#e9f0ff; --muted:#a9b6d9;
+    --primary:#4c6ef5; --accent:#3ee1a1;
+    --border: rgba(120,155,255,.22); --border-strong: rgba(120,155,255,.42);
+    --shadow:0 18px 44px rgba(0,0,0,.50); --shadow-soft:0 10px 26px rgba(0,0,0,.30);
+    --focus:0 0 0 4px rgba(76,110,245,.22);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background: var(--bg);
+    color:var(--text);
+    font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+  }
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+  .container{max-width:var(--container);margin:0 auto;padding:24px}
+  @media(max-width:860px){.container{padding:14px}}
+
+  /* Header */
+  .site-header{
+    position:sticky; top:0; z-index:1000;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    box-shadow:0 8px 22px rgba(0,0,0,.25);
+    backdrop-filter:saturate(120%) blur(10px);
+  }
+  .site-header-inner{
+    max-width:var(--container);
+    margin:0 auto;
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  @media(max-width:720px){ .site-header-inner{padding:10px 12px} }
+  .brand{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-weight:800;}
+  .logo{
+    width:44px;height:44px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+    box-shadow:0 0 0 3px rgba(62,225,161,.35),0 8px 24px rgba(62,225,161,.35);
+  }
+  .menu{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px;}
+  .menu a{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:4px 2px;border-radius:0;text-decoration:none;
+    color:var(--muted);font-weight:600;border-bottom:2px solid transparent;background:transparent;
+    transition:color .15s ease,border-bottom-color .15s ease;
+  }
+  .menu a:hover{color:var(--text);border-bottom-color:var(--primary);}
+  .menu a.active{color:var(--text);border-bottom-color:var(--accent);font-weight:800;}
+  @media(max-width:720px){ .menu{display:none} }
+
+  .user-menu{position:relative;display:flex;align-items:center;margin-left:auto;}
+  .user-menu-toggle{
+    display:flex;align-items:center;gap:6px;
+    padding:6px 12px;border-radius:999px;
+    border:1px solid var(--border-strong);
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:14px;
+    cursor:pointer;
+  }
+  .user-menu-toggle:hover{border-color:var(--accent);}
+  .user-menu-dropdown{
+    position:absolute;right:0;top:calc(100% + 6px);min-width:240px;
+    background:var(--panel-2);border-radius:var(--radius);border:1px solid var(--border);
+    box-shadow:0 14px 34px rgba(0,0,0,.55);padding:6px 0;display:none;z-index:1002;
+  }
+  .user-menu-dropdown button{
+    display:block;width:100%;text-align:left;padding:8px 14px;background:none;border:none;
+    color:var(--text);font-size:14px;cursor:pointer;
+  }
+  .user-menu-dropdown button:hover{background:var(--panel);}
+  .user-menu-divider{height:1px;margin:4px 0;background:rgba(148,163,184,.4);}
+  .dropdown-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.75;padding:4px 14px 2px;}
+
+  /* Hero */
+  .hero{text-align:center;padding:16px 0 6px}
+  .title{font-size:clamp(26px,4vw,40px);margin:0 0 6px;font-weight:900;}
+  .subtitle{color:var(--muted);margin:0 auto 14px;max-width:920px;font-size:15px;}
+  .helper-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+  .pill-lite{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 10px;border-radius:999px;border:1px dashed var(--border-strong);
+    background:rgba(255,255,255,.04);color:var(--muted);font-weight:800;font-size:12px;
+  }
+
+  /* Quick prompt */
+  .ask{
+    max-width:980px;margin:12px auto 14px;
+    background:linear-gradient(180deg,rgba(24,35,58,.70),rgba(18,26,43,.90));
+    border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow-soft);padding:14px;
+  }
+  .ask-row{display:flex;gap:12px}
+  .input{
+    flex:1;display:flex;align-items:center;gap:10px;
+    background:var(--panel-2);border:1px solid var(--border);border-radius:var(--btn-radius);
+    padding:10px 16px;color:var(--text);font-size:14px;outline:none;
+  }
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:9px 18px;border-radius:var(--btn-radius);
+    text-decoration:none;color:#03101f;background:var(--primary);
+    font-weight:800;border:0;cursor:pointer;
+    box-shadow:0 8px 18px rgba(74,163,255,.25);font-size:14px;white-space:nowrap;
+  }
+  .btn.primary{background:var(--accent);color:#04131a;box-shadow:0 8px 18px rgba(62,225,161,.25);}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border);box-shadow:none;}
+  .btn:hover{filter:brightness(1.05)}
+  @media(max-width:640px){ .ask-row{flex-direction:column} .btn{width:100%;justify-content:center;} }
+
+  /* Planner */
+  .planner-wrap{max-width:980px;margin:0 auto;}
+  .planner-panel{
+    background:linear-gradient(180deg,rgba(24,35,58,.70),rgba(18,26,43,.92));
+    border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow-soft);padding:16px;
+  }
+  .planner-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .planner-head h2{margin:0;font-size:18px;font-weight:900;}
+  .planner-head p{margin:6px 0 0 0;color:var(--muted);font-size:13px;max-width:70ch;}
+  .planner-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .planner-actions .btn{font-size:13px;padding:9px 14px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin:12px 0 14px;}
+  .bar-wrap{flex:1;height:10px;background:var(--panel);border:1px solid var(--border);border-radius:999px;overflow:hidden;}
+  .bar{height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--accent));}
+  .progress small{color:var(--muted);}
+
+  .form-step{display:none;animation:.18s fadeSlide both;}
+  .form-step.active{display:block;}
+  @keyframes fadeSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  .step-title{margin:4px 0 10px;font-size:16px;font-weight:900;}
+  .grid{display:grid;gap:14px;grid-template-columns:1fr;}
+  @media(min-width:820px){.grid.two{grid-template-columns:1fr 1fr;}}
+
+  .form-group{display:flex;flex-direction:column;gap:6px;}
+  .form-group label{font-weight:900;font-size:13px;color:#d7e4ff;}
+  .form-group input,.form-group select,.form-group textarea{
+    padding:12px 14px;border-radius:var(--radius);
+    border:1px solid var(--border);background:var(--panel-2);color:var(--text);
+    outline:none;font-size:14px;
+  }
+  .form-group textarea{resize:vertical;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{box-shadow:var(--focus);border-color:rgba(120,155,255,.42);}
+
+  .checkbox-group{display:flex;flex-wrap:wrap;gap:10px;padding:2px 0;}
+  .checkbox-group label{font-weight:750;color:var(--muted);font-size:13px;display:inline-flex;align-items:center;gap:8px;}
+
+  .error-msg{display:none;color:#fff;background:#ef4444;border-radius:var(--radius);padding:8px 10px;font-size:12px;}
+  .has-error input,.has-error select,.has-error textarea{border-color:#ef4444;}
+  .has-error .error-msg{display:block;}
+
+  .nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .btn.prev{background:var(--panel-2);color:var(--text);border:1px solid var(--border);box-shadow:none;}
+  .btn.next{background:var(--primary);color:#03101f;}
+  .btn.submit{background:var(--accent);color:#04131a;}
+  .btn:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.15);}
+
+  .review-block{background:rgba(255,255,255,.04);border:1px dashed var(--border-strong);border-radius:var(--radius);padding:12px;overflow:auto;}
+  .review-table{width:100%;border-collapse:collapse;}
+  .review-table td{padding:8px 10px;border-bottom:1px dashed rgba(148,163,184,.35);vertical-align:top;font-size:13px;}
+  .review-table td.k{color:var(--muted);font-weight:900;width:38%;}
+  .review-table td.v{color:var(--text);}
+
+  /* Results */
+  .results-panel{
+    max-width:980px;margin:18px auto 0;
+    background:linear-gradient(180deg,rgba(24,35,58,.70),rgba(18,26,43,.92));
+    border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow-soft);padding:16px;display:none;
+  }
+  .results-panel.show{display:block;}
+  .results-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .results-head h2{margin:0;font-size:18px;font-weight:900;}
+  .status-pill{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--text);font-weight:900;font-size:12px;
+  }
+  .spinner{width:18px;height:18px;border-radius:999px;border:3px solid rgba(148,163,184,.35);border-top-color:var(--accent);animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .results-grid{display:grid;gap:14px;grid-template-columns:1fr;}
+  @media(min-width:980px){.results-grid{grid-template-columns:1.25fr .75fr;}}
+  .day-card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+  .day-card h3{margin:0 0 10px;font-size:15px;font-weight:900;}
+  .meal-item{border-top:1px dashed rgba(148,163,184,.35);padding-top:10px;margin-top:10px;}
+  .meal-item:first-child{border-top:none;padding-top:0;margin-top:0;}
+  .meal-title{margin:0;font-weight:900;font-size:14px;}
+  .meal-meta{color:var(--muted);font-size:12px;margin-top:2px;}
+  .meal-steps{margin:8px 0 0 18px;color:var(--muted);font-size:13px;}
+
+  .grocery{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+  .grocery h3{margin:0 0 10px;font-size:15px;font-weight:900;}
+  .grocery ul{margin:0;padding-left:18px;color:var(--muted);font-size:13px;}
+  .api-note{margin-top:10px;color:var(--muted);font-size:12px;}
+
+  .error-banner{display:none;margin-top:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.45);color:#ffd2d2;border-radius:var(--radius);padding:10px 12px;font-size:13px;}
+  .error-banner.show{display:block;}
+
+  /* History */
+  details.section{
+    max-width:980px;margin:18px auto 0;background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.90));
+    border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-soft);
+  }
+  details.section>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  details.section[open]>summary{border-bottom:1px solid var(--border);}
+  .section-title{margin:0;font-size:18px;font-weight:900;display:flex;align-items:center;gap:8px;}
+  .section-summary-right{color:var(--muted);font-size:13px;}
+  .section-body{padding:14px;}
+  .table-wrap{overflow:auto;}
+  table.table{width:100%;border-collapse:collapse;font-size:13px;}
+  table.table th, table.table td{padding:10px 12px;border-bottom:1px solid rgba(148,163,184,.25);text-align:left;}
+  table.table th{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);}
+</style>
+</head>
+<body class="theme-dark">
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="/index.html">
+      <img class="logo" src="/genie-logo.png" alt="GenieSphere"/>
+      <strong>GenieSphere</strong>
+    </a>
+    <nav class="menu" aria-label="Primary">
+      <a class="active" href="/dashboard/household.html">🏠 Household</a>
+      <a href="/dashboard/business.html">🏢 Business</a>
+      <a href="/dashboard/investment.html">📈 Investment</a>
+      <a href="/dashboard/leisure.html">🏝️ Leisure</a>
+    </nav>
+    <div class="user-menu" id="user-menu">
+      <button class="user-menu-toggle" id="user-menu-toggle" aria-expanded="false">
+        <span id="user-name-label">Log in</span><span aria-hidden="true">▾</span>
+      </button>
+      <div class="user-menu-dropdown" id="user-menu-dropdown">
+        <div class="dropdown-label">Account</div>
+        <button class="dropdown-nav" data-target="/onboarding/user_profile_form.html" type="button">👤 User profile</button>
+        <button class="dropdown-nav" data-target="/onboarding/display_settings.html" type="button">⚙️ Settings</button>
+        <div class="user-menu-divider"></div>
+        <button id="user-auth-action" type="button">Log in / Sign up</button>
+        <button class="auth-only" id="user-signout-btn" type="button">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1 class="title">🍱 Nutrition Genie</h1>
+    <p class="subtitle">A production-ready merge of your wizard-style <b>meal-planner</b> + the clean AI output, groceries, macros, and history from <b>nutrition-genie-v2</b>.</p>
+    <div class="helper-row">
+      <span class="pill-lite">✅ Wizard setup</span>
+      <span class="pill-lite">🤖 AI weekly plan</span>
+      <span class="pill-lite">🧺 Grocery list</span>
+      <span class="pill-lite">📌 Macro summary</span>
+      <span class="pill-lite">🗃️ History</span>
+    </div>
+  </section>
+
+  <section class="ask" aria-label="Quick prompt">
+    <form class="ask-row" id="tool-prompt-form">
+      <label class="sr-only" for="tool-prompt-input">Prompt</label>
+      <input class="input" id="tool-prompt-input" autocomplete="off" placeholder="Try: “diabetic friendly Vietnamese meals, high protein, quick lunches”" type="text"/>
+      <button class="btn primary" type="submit">✨ Use Prompt</button>
+    </form>
+    <div class="subtitle" style="margin:10px 0 0; text-align:left; font-size:13px;">Tip: this fills the <b>Goal detail</b> (and tries to detect diabetic + cuisine).</div>
+  </section>
+
+  <div class="planner-wrap">
+    <section class="planner-panel" aria-label="Nutrition planner form">
+      <div class="planner-head">
+        <div>
+          <h2>🥗 Personalized Planner</h2>
+          <p>Answer a few quick questions. We’ll generate a plan + groceries you can actually follow.</p>
+        </div>
+        <div class="planner-actions">
+          <button class="btn ghost" id="loadSampleTop" type="button">📥 Load Sample</button>
+          <button class="btn" id="openWebhookSettings" type="button">🔌 Set Webhook URL</button>
+        </div>
+      </div>
+
+      <div class="progress">
+        <div class="bar-wrap"><div class="bar" id="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
+        <small id="progressText">Step 1 of 6</small>
+      </div>
+
+      <form id="nutritionWizard" novalidate>
+        <div class="form-step active" data-step="1">
+          <div class="step-title">👤 Step 1: Personal</div>
+          <div class="grid two">
+            <div class="form-group" data-req>
+              <label for="name">Name (*)</label>
+              <input id="name" name="name" type="text" required placeholder="e.g., Jimmy"/>
+              <div class="error-msg">Please enter your name.</div>
+            </div>
+            <div class="form-group" data-req>
+              <label for="age_range">Age Range (*)</label>
+              <select id="age_range" name="age_range" required>
+                <option value="">Select</option><option value="19-29">19–29</option><option value="30-49">30–49</option><option value="50-64">50–64</option><option value="65+">65+</option>
+              </select>
+              <div class="error-msg">Choose an age range.</div>
+            </div>
+            <div class="form-group" data-req>
+              <label for="start_date">Start Date (*)</label>
+              <input id="start_date" name="start_date" type="date" required/>
+              <div class="error-msg">Pick a start date.</div>
+            </div>
+            <div class="form-group" data-req>
+              <label for="end_date">End Date (*)</label>
+              <input id="end_date" name="end_date" type="date" required/>
+              <div class="error-msg">Pick an end date.</div>
+            </div>
+          </div>
+          <div class="nav-row">
+            <button type="button" class="btn prev" disabled>Back</button>
+            <button type="button" class="btn next">Next</button>
+          </div>
+        </div>
+
+        <div class="form-step" data-step="2">
+          <div class="step-title">💊 Step 2: Health & restrictions</div>
+          <div class="form-group">
+            <label>Medical (optional)</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" name="medical" value="diabetes"/> Diabetes</label>
+              <label><input type="checkbox" name="medical" value="hypertension"/> Hypertension</label>
+              <label><input type="checkbox" name="medical" value="none"/> None</label>
+              <label><input type="checkbox" name="medical" value="other"/> Other</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Allergies (optional)</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" name="allergies" value="nuts"/> Nuts</label>
+              <label><input type="checkbox" name="allergies" value="dairy"/> Dairy</label>
+              <label><input type="checkbox" name="allergies" value="gluten"/> Gluten</label>
+              <label><input type="checkbox" name="allergies" value="shellfish"/> Shellfish</label>
+              <label><input type="checkbox" name="allergies" value="none"/> None</label>
+              <label><input type="checkbox" name="allergies" value="other"/> Other</label>
+            </div>
+          </div>
+          <div class="form-group" data-req>
+            <label for="goals">Nutritional Goal (*)</label>
+            <select id="goals" name="goals" required>
+              <option value="">Select</option>
+              <option value="diabetic-friendly">Diabetic-friendly</option>
+              <option value="weight_loss">Weight loss</option>
+              <option value="muscle_gain">Muscle gain</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="other">Other</option>
+            </select>
+            <div class="error-msg">Pick a primary goal.</div>
+          </div>
+          <div class="nav-row">
+            <button type="button" class="btn prev">Back</button>
+            <button type="button" class="btn next">Next</button>
+          </div>
+        </div>
+
+        <div class="form-step" data-step="3">
+          <div class="step-title">🍽️ Step 3: Meals & cuisine</div>
+          <div class="grid two">
+            <div class="form-group" data-req>
+              <label for="meals_per_day">Meals per day (*)</label>
+              <select id="meals_per_day" name="meals_per_day" required>
+                <option value="">Select</option>
+                <option value="3_meals">3 meals</option>
+                <option value="3_meals_2_snacks">3 meals + snacks</option>
+              </select>
+              <div class="error-msg">Choose an option.</div>
+            </div>
+            <div class="form-group" data-req>
+              <label for="disliked_foods">Disliked foods (*)</label>
+              <input id="disliked_foods" name="disliked_foods" type="text" value="None" required/>
+              <div class="error-msg">Enter "None" if no dislikes.</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Cuisine preferences (optional)</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" name="cuisine" value="vietnamese"/> Vietnamese</label>
+              <label><input type="checkbox" name="cuisine" value="asian"/> Asian</label>
+              <label><input type="checkbox" name="cuisine" value="mediterranean"/> Mediterranean</label>
+              <label><input type="checkbox" name="cuisine" value="american"/> American</label>
+              <label><input type="checkbox" name="cuisine" value="other"/> Other</label>
+            </div>
+          </div>
+          <div class="nav-row">
+            <button type="button" class="btn prev">Back</button>
+            <button type="button" class="btn next">Next</button>
+          </div>
+        </div>
+
+        <div class="form-step" data-step="4">
+          <div class="step-title">👨‍🍳 Step 4: Cooking & time</div>
+          <div class="grid two">
+            <div class="form-group" data-req>
+              <label for="cooking_skill">Cooking skill (*)</label>
+              <select id="cooking_skill" name="cooking_skill" required>
+                <option value="">Select</option><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option>
+              </select>
+              <div class="error-msg">Select your skill level.</div>
+            </div>
+            <div class="form-group" data-req>
+              <label for="time_per_meal">Time per meal (minutes) (*)</label>
+              <input id="time_per_meal" name="time_per_meal" type="number" min="10" step="5" required placeholder="e.g., 30"/>
+              <div class="error-msg">Enter minutes (e.g., 30).</div>
+            </div>
+            <div class="form-group">
+              <label>Equipment (optional)</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" name="equipment" value="oven"/> Oven</label>
+                <label><input type="checkbox" name="equipment" value="microwave"/> Microwave</label>
+                <label><input type="checkbox" name="equipment" value="blender"/> Blender</label>
+                <label><input type="checkbox" name="equipment" value="slow_cooker"/> Slow cooker</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Pantry staples (optional)</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" name="pantry" value="rice"/> Rice</label>
+                <label><input type="checkbox" name="pantry" value="pasta"/> Pasta</label>
+                <label><input type="checkbox" name="pantry" value="spices"/> Spices</label>
+                <label><input type="checkbox" name="pantry" value="canned_goods"/> Canned goods</label>
+              </div>
+            </div>
+          </div>
+          <div class="nav-row">
+            <button type="button" class="btn prev">Back</button>
+            <button type="button" class="btn next">Next</button>
+          </div>
+        </div>
+
+        <div class="form-step" data-step="5">
+          <div class="step-title">🛒 Step 5: Budget & macros</div>
+          <div class="grid two">
+            <div class="form-group" data-req>
+              <label for="grocery_budget">Weekly grocery budget (*)</label>
+              <input id="grocery_budget" name="grocery_budget" type="number" min="0" step="1" required placeholder="e.g., 180"/>
+              <div class="error-msg">Enter your weekly budget (number).</div>
+            </div>
+            <div class="form-group"><label for="calories">🔥 Daily calories (optional)</label><input id="calories" name="calories" type="number" min="0" step="10" placeholder="e.g., 1800"/></div>
+            <div class="form-group"><label for="protein">🥩 Protein grams (optional)</label><input id="protein" name="protein" type="number" min="0" step="5" placeholder="e.g., 140"/></div>
+            <div class="form-group"><label for="carbs">🍚 Carbs grams (optional)</label><input id="carbs" name="carbs" type="number" min="0" step="5" placeholder="e.g., 180"/></div>
+            <div class="form-group"><label for="fat">🥑 Fat grams (optional)</label><input id="fat" name="fat" type="number" min="0" step="5" placeholder="e.g., 60"/></div>
+            <div class="form-group"><label for="goal_text">🎯 Goal detail (optional)</label><textarea id="goal_text" name="goal_text" rows="3" placeholder="e.g., lower blood sugar, high protein, quick lunches…"></textarea></div>
+          </div>
+          <div class="nav-row">
+            <button type="button" class="btn prev">Back</button>
+            <button type="button" class="btn next">Review</button>
+          </div>
+        </div>
+
+        <div class="form-step" data-step="6">
+          <div class="step-title">✅ Review & generate</div>
+          <p class="subtitle" style="margin:0 0 10px;text-align:left;">Confirm your selections. Then submit to generate your plan.</p>
+          <div id="reviewBlock" class="review-block"></div>
+          <div class="nav-row">
+            <button type="button" class="btn prev">Back</button>
+            <button type="submit" class="btn submit">Generate AI Plan</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="helper-row" style="justify-content:flex-start;margin-top:14px;">
+        <button class="btn ghost" id="loadSample" type="button">📥 Load Sample</button>
+        <span class="pill-lite" style="border-style:solid;">Webhook: <span id="webhookLabel" style="font-weight:900;">Not set</span></span>
+      </div>
+    </section>
+  </div>
+
+  <section class="results-panel" id="resultsPanel" aria-label="Generated meal plan">
+    <div class="results-head">
+      <div>
+        <h2>🤖 Your AI Meal Plan</h2>
+        <p class="subtitle" style="margin:6px 0 0;text-align:left;max-width:70ch;">Generated from your preferences via your n8n webhook + ChatGPT.</p>
+      </div>
+      <div class="status-pill" id="resultsStatus" aria-live="polite">
+        <span class="spinner" id="resultsSpinner" aria-hidden="true" style="display:none;"></span>
+        <span id="resultsStatusText">Ready</span>
+      </div>
+    </div>
+
+    <div class="error-banner" id="resultsError"></div>
+
+    <div class="results-grid">
+      <div id="daysContainer"></div>
+      <aside class="grocery">
+        <h3>🧺 Grocery List</h3>
+        <ul id="groceryListUi"></ul>
+
+        <div style="margin-top:12px;">
+          <h3 style="margin:12px 0 10px;font-size:15px;font-weight:900;">📌 Macro Summary</h3>
+          <div id="macroSummaryUi" class="api-note" style="font-size:13px; line-height:1.5;">—</div>
+        </div>
+
+        <div class="api-note">Tip: we can add “Export grocery list” next.</div>
+      </aside>
+    </div>
+
+    <div class="helper-row" style="justify-content:flex-start;margin-top:14px;">
+      <button class="btn" id="copyMealPlanBtn" type="button">📋 Copy JSON</button>
+      <button class="btn primary" id="saveMealPlanBtn" type="button">💾 Save to History</button>
+    </div>
+  </section>
+
+  <details class="section" open>
+    <summary>
+      <span class="section-title">🗃️ History</span>
+      <span class="section-summary-right">Saved locally (this browser)</span>
+    </summary>
+    <div class="section-body">
+      <div class="table-wrap">
+        <table class="table" aria-label="History table">
+          <thead><tr><th>Date</th><th>Goal</th><th>Outcome</th><th></th></tr></thead>
+          <tbody id="historyTbody">
+            <tr><td class="muted">—</td><td class="muted">No runs yet</td><td class="muted">—</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+</main>
+
+<script>
+  // Shared config hints
+  window.GS_CONFIG_URL = "/shared/config.json";
+  window.GS_CONFIG_PATH = "/shared/config.json";
+</script>
+<script src="/shared/js/app-config.js?v=20260211"></script>
+<script src="/shared/js/gs-client.js?v=20260211"></script>
+<script src="/shared/js/auth-header.js?v=20260211"></script>
+<script>
+  window.GSAuthHeader?.init({ loginUrl: "/onboarding/login.html", afterLogoutUrl: "/index.html" });
+</script>
+
+<script>
+  // ======================
+  // Webhook settings
+  // ======================
+  const LS_WEBHOOK_KEY = "GS_MEAL_WEBHOOK_URL";
+  function getWebhookUrl(){ return (localStorage.getItem(LS_WEBHOOK_KEY) || "").toString().trim(); }
+  function setWebhookUrl(v){ localStorage.setItem(LS_WEBHOOK_KEY, (v||"").toString().trim()); refreshWebhookLabel(); }
+  function refreshWebhookLabel(){ document.getElementById("webhookLabel").textContent = getWebhookUrl() || "Not set"; }
+
+  document.getElementById("openWebhookSettings").addEventListener("click", ()=>{
+    const cur = getWebhookUrl();
+    const next = prompt("Paste your n8n webhook URL (use webhook-test while testing):", cur || "https://YOUR-N8N-DOMAIN/webhook-test/nutrition-genie/weekly-plan");
+    if(next === null) return;
+    setWebhookUrl(next);
+  });
+
+  // ======================
+  // Wizard logic
+  // ======================
+  const form = document.getElementById("nutritionWizard");
+  const steps = Array.from(document.querySelectorAll(".form-step"));
+  const progressBar = document.getElementById("progressBar");
+  const progressText = document.getElementById("progressText");
+  const reviewBlock = document.getElementById("reviewBlock");
+  let current = 0;
+
+  function showStep(i){
+    steps.forEach((s,idx)=>s.classList.toggle("active", idx===i));
+    current = i;
+    const pct = Math.round(((current+1)/steps.length)*100);
+    progressBar.style.width = pct + "%";
+    progressBar.setAttribute("aria-valuenow", String(pct));
+    progressText.textContent = `Step ${current+1} of ${steps.length}`;
+    steps[i].querySelectorAll(".btn.prev").forEach(b=>b.disabled = i===0);
+    if(i===steps.length-1) buildReview();
+  }
+
+  function validateStep(i){
+    const step = steps[i];
+    const reqGroups = step.querySelectorAll("[data-req]");
+    let ok = true;
+    reqGroups.forEach(g=>{
+      const field = g.querySelector("input[required],select[required],textarea[required]");
+      g.classList.remove("has-error");
+      if(field){
+        const val = (field.value || "").toString().trim();
+        if(!val){ g.classList.add("has-error"); ok = false; }
+      }
+    });
+    // date range check
+    if(ok){
+      const s = document.getElementById("start_date").value;
+      const e = document.getElementById("end_date").value;
+      if(s && e && e < s){
+        const g = document.getElementById("end_date").closest(".form-group");
+        g.classList.add("has-error");
+        const msg = g.querySelector(".error-msg"); if(msg) msg.textContent = "End date must be after start date.";
+        ok = false;
+      }
+    }
+    return ok;
+  }
+
+  document.querySelectorAll(".btn.next").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      if(!validateStep(current)) return;
+      if(current < steps.length-1) showStep(current+1);
+    });
+  });
+  document.querySelectorAll(".btn.prev").forEach(btn=>{
+    btn.addEventListener("click", ()=> showStep(Math.max(0, current-1)));
+  });
+
+  function aggregateForm(){
+    const data = new FormData(form);
+    const agg = {};
+    for(const [k,v] of data.entries()){
+      if(agg[k]) agg[k] = Array.isArray(agg[k]) ? [...agg[k], v] : [agg[k], v];
+      else agg[k]=v;
+    }
+    return agg;
+  }
+  function safeArr(v){ if(!v) return []; return Array.isArray(v) ? v : [v]; }
+  function nice(v){ return Array.isArray(v) ? v.join(", ") : (v || "—"); }
+  function escapeHtml(s){
+    return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
+  }
+  function buildReview(){
+    const f = aggregateForm();
+    const rows = [
+      ["Name", f.name],["Age Range", f.age_range],
+      ["Start → End", (f.start_date||"") + (f.end_date ? ` → ${f.end_date}` : "")],
+      ["Medical", nice(f.medical)],["Allergies", nice(f.allergies)],["Goal", f.goals],
+      ["Meals/day", f.meals_per_day],["Dislikes", f.disliked_foods],
+      ["Cuisine", nice(f.cuisine)],
+      ["Cooking skill", f.cooking_skill],["Time/meal", f.time_per_meal ? `${f.time_per_meal} min` : "—"],
+      ["Budget", f.grocery_budget ? `$${f.grocery_budget}` : "—"],
+      ["Calories", f.calories || "—"],
+      ["Protein/Carbs/Fat", [f.protein||"—", f.carbs||"—", f.fat||"—"].join(" / ")],
+      ["Goal detail", f.goal_text || "—"]
+    ];
+    reviewBlock.innerHTML = `
+      <table class="review-table" role="table" aria-label="Review selections">
+        <tbody>${rows.map(([k,v])=>`<tr><td class="k">${escapeHtml(k)}</td><td class="v">${escapeHtml(String(v||"—"))}</td></tr>`).join("")}</tbody>
+      </table>`;
+  }
+
+  function daysBetweenInclusive(startIso, endIso){
+    try{
+      if(!startIso || !endIso) return 7;
+      const s = new Date(startIso + "T00:00:00");
+      const e = new Date(endIso + "T00:00:00");
+      const ms = e - s;
+      if(!isFinite(ms) || ms < 0) return 7;
+      const days = Math.floor(ms / (24*60*60*1000)) + 1;
+      return Math.max(1, Math.min(14, days));
+    }catch(_){ return 7; }
+  }
+  function budgetLevelFromNumber(n){
+    const v = Number(n);
+    if(!isFinite(v) || v <= 0) return "medium";
+    if(v < 120) return "low";
+    if(v < 260) return "medium";
+    return "high";
+  }
+
+  function buildPayload(f){
+    const medical = safeArr(f.medical);
+    const allergies = safeArr(f.allergies);
+    const cuisine = safeArr(f.cuisine);
+
+    const planDays = daysBetweenInclusive(f.start_date, f.end_date);
+    const mealsPerDay = (String(f.meals_per_day||"") === "3_meals_2_snacks") ? ["breakfast","lunch","dinner","snack"] : ["breakfast","lunch","dinner"];
+
+    const dislikesRaw = (f.disliked_foods || "").toString().trim();
+    const avoidIngredients = (!dislikesRaw || /^none$/i.test(dislikesRaw)) ? [] : dislikesRaw.split(",").map(s=>s.trim()).filter(Boolean).slice(0, 12);
+
+    const isDiabetic = medical.includes("diabetes") || (String(f.goals||"") === "diabetic-friendly");
+
+    return {
+      requestedBy: (f.name || "").toString(),
+      planDays,
+      people: 1,
+      goal: isDiabetic ? "diabetic-friendly" : (f.goals || "balanced"),
+      cuisine: cuisine.map(c => ({vietnamese:"Vietnamese", asian:"Asian", mediterranean:"Mediterranean", american:"American", other:"Other"}[c] || c)),
+      allergies: allergies.includes("none") ? [] : allergies.map(a => ({nuts:"peanuts/tree nuts", dairy:"dairy", gluten:"gluten", shellfish:"shellfish", other:"other"}[a] || a)),
+      avoidIngredients,
+      budgetLevel: budgetLevelFromNumber(f.grocery_budget),
+      timePerMeal: Number(f.time_per_meal || 30),
+      mealsPerDay,
+      calorieTarget: Number(f.calories || 0) || "",
+      macroTargets: { protein: Number(f.protein || 0) || "", carbs: Number(f.carbs || 0) || "", fat: Number(f.fat || 0) || "" },
+      notes: (f.goal_text || "").toString()
+    };
+  }
+
+  // ======================
+  // Results rendering
+  // ======================
+  function setResultsState({loading=false, text="Ready", errorText=""}){
+    const panel = document.getElementById("resultsPanel");
+    const spinner = document.getElementById("resultsSpinner");
+    const statusText = document.getElementById("resultsStatusText");
+    const err = document.getElementById("resultsError");
+
+    panel.classList.add("show");
+    spinner.style.display = loading ? "inline-block" : "none";
+    statusText.textContent = text;
+    err.textContent = errorText || "";
+    err.classList.toggle("show", !!errorText);
+  }
+
+  function renderMealPlan(result){
+    const daysContainer = document.getElementById("daysContainer");
+    const groceryUi = document.getElementById("groceryListUi");
+    const macroUi = document.getElementById("macroSummaryUi");
+
+    let days = [];
+    if(Array.isArray(result?.days)) days = result.days;
+    else if(result?.meal_plan && typeof result.meal_plan === "object"){
+      const order = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+      days = order.map((d, i)=>{
+        const x = result.meal_plan[d] || {};
+        return { day: i+1, label: d, meals: [
+          { mealType:"breakfast", title: x.breakfast || "" },
+          { mealType:"lunch", title: x.lunch || "" },
+          { mealType:"dinner", title: x.dinner || "" }
+        ].filter(m=>m.title) };
+      }).filter(d=>d.meals.length);
+    }
+
+    daysContainer.innerHTML = (days.length ? days : []).map((d, idx)=>{
+      const title = d.label ? `📅 ${escapeHtml(d.label)}` : `📅 Day ${escapeHtml(String(d.day ?? (idx+1)))}`;
+      const meals = Array.isArray(d.meals) ? d.meals : [];
+      const mealHtml = meals.map(m=>{
+        const mTitle = m?.title || "Meal";
+        const type = m?.mealType || "meal";
+        const steps = Array.isArray(m?.steps) ? m.steps : [];
+        const note = m?.diabeticNotes || "";
+        return `
+          <div class="meal-item">
+            <p class="meal-title">${escapeHtml(type)}: ${escapeHtml(mTitle)}</p>
+            ${steps.length ? `<ol class="meal-steps">${steps.slice(0,7).map(s=>`<li>${escapeHtml(s)}</li>`).join("")}</ol>` : ``}
+            ${note ? `<div class="meal-meta">🩺 ${escapeHtml(note)}</div>` : ``}
+          </div>
+        `;
+      }).join("");
+      return `<div class="day-card"><h3>${title}</h3>${mealHtml || `<div class="meal-meta">No meals returned.</div>`}</div>`;
+    }).join("") || `<div class="day-card"><h3>Plan</h3><div class="meal-meta">No structured plan returned. Check webhook response.</div></div>`;
+
+    const gl = Array.isArray(result?.groceryList) ? result.groceryList : (Array.isArray(result?.grocery_list) ? result.grocery_list : []);
+    groceryUi.innerHTML = gl.length ? gl.slice(0,100).map(it=> `<li>${escapeHtml(typeof it === "string" ? it : (it.item||it.name||"Item"))}</li>`).join("") : "<li>No grocery list returned.</li>";
+    const macro = result?.macro_summary || result?.macroSummary || "";
+    macroUi.textContent = macro ? String(macro) : "—";
+    window.__latestNutritionPlan = result;
+  }
+
+  function stripCodeFences(s){ return (s||"").toString().replace(/```json|```/gi,"").trim(); }
+  function extractJsonObject(s){ const t = stripCodeFences(s); const m = t.match(/\{[\s\S]*\}$/); return m ? m[0] : t; }
+  function tryParseJsonFlexible(val){
+    if(val && typeof val === "object") return { ok:true, value: val };
+    const s = (val ?? "").toString();
+    const candidate = extractJsonObject(s);
+    try{ return { ok:true, value: JSON.parse(candidate) }; }
+    catch(e){ return { ok:false, error:e, raw:s, candidate }; }
+  }
+
+  async function generateAndRender(webhookUrl, payload){
+    setResultsState({loading:true, text:"Generating…", errorText:""});
+    document.getElementById("resultsPanel").scrollIntoView({behavior:"smooth", block:"start"});
+
+    const res = await fetch(webhookUrl, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload) });
+    const rawText = await res.text().catch(()=> "");
+    let data = null;
+    try{ data = rawText ? JSON.parse(rawText) : null; } catch(_){ data = null; }
+
+    if(!res.ok){
+      const msg = (data && (data.message || data.error)) ? (data.message || data.error) : `Webhook failed (${res.status}).`;
+      throw new Error(msg);
+    }
+
+    let candidate = null;
+    if(data && typeof data === "object" && data.result) candidate = data.result;
+    else if(data && typeof data === "object" && (data.planMeta || data.days || data.groceryList || data.meal_plan)) candidate = data;
+    else if(data && typeof data === "object" && (data.output_text || data.text || data.content)) candidate = data.output_text || data.text || data.content;
+    else candidate = data || rawText;
+
+    const parsed = tryParseJsonFlexible(candidate);
+    if(!parsed.ok){
+      const preview = (parsed.raw || "").slice(0, 700);
+      throw new Error("Model output was not valid JSON. Preview: " + preview);
+    }
+
+    renderMealPlan(parsed.value);
+    setResultsState({loading:false, text:"Generated ✅", errorText:""});
+  }
+
+  // ======================
+  // History
+  // ======================
+  const LS_HISTORY_KEY = "gs_nutrition_history_v2";
+  function nowStamp(){ return new Date().toLocaleString(); }
+  function loadHistory(){
+    let rows = [];
+    try{ rows = JSON.parse(localStorage.getItem(LS_HISTORY_KEY) || "[]"); } catch(_){ rows = []; }
+    const tbody = document.getElementById("historyTbody");
+    tbody.innerHTML = "";
+    if(!rows.length){
+      tbody.innerHTML = `<tr><td class="muted">—</td><td class="muted">No runs yet</td><td class="muted">—</td><td></td></tr>`;
+      return;
+    }
+    rows.slice(0, 20).forEach((r, idx)=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.goal || "—")}</td><td>${escapeHtml(r.outcome || "OK")}</td>
+        <td><button class="btn ghost" type="button" data-view="${idx}">👁 View</button></td>`;
+      tbody.appendChild(tr);
+    });
+    tbody.querySelectorAll("button[data-view]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const i = Number(btn.getAttribute("data-view"));
+        const rows2 = JSON.parse(localStorage.getItem(LS_HISTORY_KEY) || "[]");
+        const row = rows2[i];
+        if(row?.data){
+          renderMealPlan(row.data);
+          setResultsState({loading:false, text:"Loaded", errorText:""});
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+    });
+  }
+  function saveHistory(entry){
+    let rows = [];
+    try{ rows = JSON.parse(localStorage.getItem(LS_HISTORY_KEY) || "[]"); } catch(_){ rows = []; }
+    rows.unshift(entry);
+    localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(rows.slice(0, 60)));
+    loadHistory();
+  }
+
+  // Copy/save buttons
+  document.getElementById("copyMealPlanBtn").addEventListener("click", async ()=>{
+    try{
+      const txt = JSON.stringify(window.__latestNutritionPlan || {}, null, 2);
+      await navigator.clipboard.writeText(txt);
+      setResultsState({loading:false, text:"Copied 📋", errorText:""});
+      setTimeout(()=>setResultsState({loading:false, text:"Generated ✅", errorText:""}), 1200);
+    }catch(_){ alert("Copy failed. Your browser may block clipboard access."); }
+  });
+  document.getElementById("saveMealPlanBtn").addEventListener("click", ()=>{
+    const data = window.__latestNutritionPlan;
+    if(!data){ alert("No plan to save yet."); return; }
+    const goal = (document.getElementById("goal_text").value || document.getElementById("goals").value || "").toString();
+    saveHistory({ date: nowStamp(), goal, outcome: "OK", data });
+    setResultsState({loading:false, text:"Saved 💾", errorText:""});
+    setTimeout(()=>setResultsState({loading:false, text:"Generated ✅", errorText:""}), 1200);
+  });
+
+  // Quick prompt
+  document.getElementById("tool-prompt-form").addEventListener("submit", (e)=>{
+    e.preventDefault();
+    const prompt = (document.getElementById("tool-prompt-input").value || "").trim();
+    if(!prompt) return;
+    document.getElementById("goal_text").value = prompt;
+    const p = prompt.toLowerCase();
+    if(p.includes("diabet")) document.getElementById("goals").value = "diabetic-friendly";
+    if(p.includes("vietnam")) document.querySelector('input[name="cuisine"][value="vietnamese"]')?.click();
+    else if(p.includes("asian")) document.querySelector('input[name="cuisine"][value="asian"]')?.click();
+    document.getElementById("tool-prompt-input").value = "";
+    document.getElementById("goal_text").focus();
+  });
+
+  // Submit
+  form.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    if(!validateStep(current)) return;
+
+    const webhookUrl = getWebhookUrl();
+    if(!webhookUrl){
+      setResultsState({loading:false, text:"Error", errorText:"Webhook URL is not set. Click “Set Webhook URL” first."});
+      document.getElementById("resultsPanel").classList.add("show");
+      document.getElementById("resultsPanel").scrollIntoView({behavior:"smooth", block:"start"});
+      return;
+    }
+    const agg = aggregateForm();
+    localStorage.setItem("nutritionFormData", JSON.stringify(agg));
+    const payload = buildPayload(agg);
+
+    try{
+      await generateAndRender(webhookUrl, payload);
+      const goal = (agg.goal_text || agg.goals || "").toString();
+      saveHistory({ date: nowStamp(), goal, outcome: "OK", data: window.__latestNutritionPlan });
+    }catch(err){
+      setResultsState({loading:false, text:"Error", errorText: (err && err.message) ? err.message : "Unknown error"});
+    }
+  });
+
+  // Sample
+  function loadSample(){
+    document.getElementById("name").value = "Jimmy";
+    document.getElementById("age_range").value = "30-49";
+    const start = new Date();
+    const end = new Date(); end.setDate(start.getDate() + 6);
+    const toIso = (d)=> d.toISOString().slice(0,10);
+    document.getElementById("start_date").value = toIso(start);
+    document.getElementById("end_date").value = toIso(end);
+
+    document.getElementById("goals").value = "diabetic-friendly";
+    document.getElementById("meals_per_day").value = "3_meals";
+    document.getElementById("disliked_foods").value = "None";
+    document.querySelector('input[name="medical"][value="diabetes"]')?.click();
+    document.querySelector('input[name="cuisine"][value="vietnamese"]')?.click();
+
+    document.getElementById("cooking_skill").value = "intermediate";
+    document.getElementById("time_per_meal").value = "30";
+    document.getElementById("grocery_budget").value = "180";
+
+    document.getElementById("calories").value = "1800";
+    document.getElementById("protein").value = "140";
+    document.getElementById("carbs").value = "160";
+    document.getElementById("fat").value = "60";
+    document.getElementById("goal_text").value = "Diabetic-friendly Vietnamese meals. High protein. Quick lunches and simple dinners. Avoid sugary sauces.";
+    showStep(0);
+    alert("Sample loaded ✅");
+  }
+  document.getElementById("loadSample").addEventListener("click", loadSample);
+  document.getElementById("loadSampleTop").addEventListener("click", loadSample);
+
+  // User menu dropdown
+  (function(){
+    const toggle = document.getElementById("user-menu-toggle");
+    const dd = document.getElementById("user-menu-dropdown");
+    function open(){ dd.style.display = "block"; toggle.setAttribute("aria-expanded", "true"); }
+    function close(){ dd.style.display = "none"; toggle.setAttribute("aria-expanded", "false"); }
+    toggle.addEventListener("click", (e)=>{ e.stopPropagation(); toggle.getAttribute("aria-expanded")==="true" ? close() : open(); });
+    document.addEventListener("click", close);
+    dd.addEventListener("click", (e)=>e.stopPropagation());
+    dd.querySelectorAll(".dropdown-nav").forEach(btn=> btn.addEventListener("click", ()=>{ const t=btn.getAttribute("data-target"); if(t) window.location.href=t; }));
+  })();
+
+  // Init
+  showStep(0);
+  refreshWebhookLabel();
+  loadHistory();
+</script>
+</body>
+</html>

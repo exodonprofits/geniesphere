@@ -1,0 +1,109 @@
+{
+  "name": "Cruise Trip Planner (Fixed)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "get-itinerary",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Get Itinerary Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -520,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst sessionId = $json.query.sessionId;\nif (!sessionId) {\n  return [{ json: { itineraryHtml: 'Itinerary not found: No sessionId provided.' } }];\n}\nconst itineraryHtml = staticData[sessionId] || 'Itinerary not found.';\nreturn [{ json: { itineraryHtml } }];"
+      },
+      "name": "Retrieve Itinerary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return Itinerary Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        520,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst sessionId = Date.now().toString();\nstaticData[sessionId] = $json.itineraryHtml || 'No itinerary available.';\nreturn [{ json: { sessionId } }];"
+      },
+      "name": "Resolve Email Content (Fixed)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        540
+      ]
+    }
+  ],
+  "connections": {
+    "Get Itinerary Webhook": {
+      "main": [
+        [
+          {
+            "node": "Retrieve Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Itinerary": {
+      "main": [
+        [
+          {
+            "node": "Return Itinerary Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

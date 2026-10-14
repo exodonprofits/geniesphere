@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trip Summary – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #0077b6;
+  --ocean-deep: #023e8a;
+  --teal: #00b4d8;
+  --coral: #e76f51;
+  --coral-dark: #c1551c;
+  --green: #16a34a;
+  --amber: #d97706;
+  --white: #ffffff;
+  --off-white: #f8fafc;
+  --gray-light: #f1f5f9;
+  --gray-mid: #94a3b8;
+  --gray-border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --shadow-hover: 0 12px 32px rgba(0,0,0,0.13);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; }
+.hidden { display: none !important; }
+
+/* ── HEADER ── */
+.vg-header { position: sticky; top: 0; z-index: 40; background: linear-gradient(105deg, #023e8a 0%, #0077b6 55%, #0096c7 100%); box-shadow: 0 2px 20px rgba(2,62,138,0.25); }
+.vg-nav { max-width: 1240px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vg-left { display: flex; align-items: center; gap: 18px; flex: 1; }
+.vg-brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; white-space: nowrap; }
+.vg-brand img { width: 46px; height: 46px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+.vg-title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.4rem; color: #fff; }
+.vg-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.menu-group { position: relative; }
+.menu { position: absolute; top: calc(100% + 8px); right: 0; min-width: 230px; padding: 6px; background: #fff; color: var(--text); border-radius: var(--radius); box-shadow: 0 16px 40px rgba(0,0,0,0.18); display: none; z-index: 60; border: 1px solid rgba(0,0,0,0.06); }
+.menu a { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 8px; color: var(--text); text-decoration: none; font-size: 0.9rem; transition: background var(--transition); }
+.menu a:hover { background: var(--gray-light); color: var(--ocean); }
+.desktop-auth { display: flex; align-items: center; gap: 10px; }
+.mobile-auth { display: none; }
+.account-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); white-space: nowrap; transition: background var(--transition); font-size: 0.9rem; }
+.account-chip:hover { background: rgba(255,255,255,0.24); }
+.account-chip .caret { font-size: 0.68rem; opacity: 0.8; }
+.menu-divider { height: 1px; background: var(--gray-border); margin: 6px 4px; }
+.menu-label { padding: 6px 12px; color: var(--gray-mid); font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+.menu-header { padding: 12px 14px 10px; border-bottom: 1px solid var(--gray-border); margin-bottom: 6px; }
+.menu-user { font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.menu-user-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; word-break: break-all; }
+.hamburger-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); transition: background var(--transition); }
+.hamburger-btn:hover { background: rgba(255,255,255,0.26); }
+@media (max-width: 860px) { .desktop-auth { display: none !important; } .mobile-auth { display: block; } .vg-title { font-size: 1.15rem; } .vg-brand img { width: 38px; height: 38px; } }
+
+/* ── PAGE BANNER ── */
+.page-banner { background: linear-gradient(135deg, #eaf4fb 0%, #f0f9ff 100%); border-bottom: 1px solid #c9e4f5; padding: 1.5rem 1.5rem 1.25rem; }
+.page-banner-inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.page-banner h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.2rem, 2.5vw, 1.55rem); font-weight: 700; color: #023e8a; margin-bottom: 0.25rem; }
+.page-banner p { font-size: 0.87rem; color: #64748b; }
+.banner-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; flex-shrink: 0; }
+
+/* ── BUTTONS ── */
+.vg-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid var(--gray-border); border-radius: 8px; padding: 0.52rem 0.85rem; background: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text); cursor: pointer; transition: all var(--transition); text-decoration: none; white-space: nowrap; }
+.vg-btn:hover { background: var(--ocean); color: #fff; border-color: var(--ocean); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,119,182,0.25); }
+.vg-btn-blue { background: var(--ocean); color: #fff; border-color: var(--ocean); }
+.vg-btn-blue:hover { background: var(--ocean-deep); border-color: var(--ocean-deep); }
+.vg-btn-coral { background: var(--coral); color: #fff; border-color: var(--coral); }
+.vg-btn-coral:hover { background: var(--coral-dark); border-color: var(--coral-dark); }
+
+/* ── MAIN LAYOUT ── */
+.summary-wrap { max-width: 1000px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+
+/* ── TRIP HERO CARD ── */
+.trip-hero {
+  background: linear-gradient(135deg, var(--ocean-deep) 0%, var(--ocean) 60%, var(--teal) 100%);
+  border-radius: var(--radius-lg); padding: 2rem; color: #fff;
+  margin-bottom: 1.5rem; position: relative; overflow: hidden;
+}
+.trip-hero::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+.trip-hero-type { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.8; margin-bottom: 0.4rem; }
+.trip-hero-title { font-family: 'Playfair Display', serif; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; margin-bottom: 0.5rem; }
+.trip-hero-dates { font-size: 0.95rem; opacity: 0.9; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+.trip-hero-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.hero-pill { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; padding: 0.28rem 0.85rem; font-size: 0.8rem; }
+.countdown-badge { background: rgba(255,255,255,0.2); border: 1.5px solid rgba(255,255,255,0.4); border-radius: 999px; padding: 0.4rem 1rem; font-size: 0.88rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.75rem; }
+
+/* ── GRID ── */
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+@media (max-width: 640px) { .summary-grid { grid-template-columns: 1fr; } }
+.summary-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; }
+@media (max-width: 700px) { .summary-grid-3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .summary-grid-3 { grid-template-columns: 1fr; } }
+
+/* ── CARDS ── */
+.sum-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 1.25rem; box-shadow: var(--shadow); }
+.sum-card-full { grid-column: 1 / -1; }
+.sum-card-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.4rem; }
+.sum-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-border); gap: 1rem; }
+.sum-row:last-child { border-bottom: none; }
+.sum-label { font-size: 0.83rem; color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
+.sum-value { font-size: 0.88rem; color: var(--text); font-weight: 500; text-align: right; }
+
+/* ── STAT PILLS ── */
+.stat-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.stat-pill { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--gray-light); border: 1px solid var(--gray-border); border-radius: 999px; padding: 0.3rem 0.75rem; font-size: 0.8rem; color: var(--text); font-weight: 500; }
+.stat-pill.blue   { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.stat-pill.green  { background: #dcfce7; border-color: #86efac; color: #16a34a; }
+.stat-pill.amber  { background: #fef3c7; border-color: #fde68a; color: #d97706; }
+.stat-pill.purple { background: #f3e8ff; border-color: #d8b4fe; color: #7c3aed; }
+
+/* ── QUICK ACTIONS ── */
+.actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+@media (max-width: 600px) { .actions-grid { grid-template-columns: 1fr 1fr; } }
+.action-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 1.1rem; text-align: center; text-decoration: none; color: var(--text); transition: all var(--transition); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 0.4rem; align-items: center; }
+.action-card:hover { border-color: var(--ocean); color: var(--ocean); transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.action-card .ac-icon { font-size: 1.8rem; }
+.action-card .ac-label { font-size: 0.83rem; font-weight: 600; }
+.action-card .ac-desc { font-size: 0.74rem; color: var(--text-muted); }
+.action-card:hover .ac-desc { color: #60a5fa; }
+
+/* ── ITINERARY PREVIEW ── */
+.itin-preview { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.5rem; }
+.itin-preview-header { background: linear-gradient(105deg, #023e8a 0%, #0077b6 100%); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+.itin-preview-header h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: #fff; font-weight: 700; }
+.itin-preview-body { padding: 1.25rem; max-height: 320px; overflow-y: auto; font-size: 0.88rem; line-height: 1.7; color: var(--text); }
+.itin-preview-body::-webkit-scrollbar { width: 4px; }
+.itin-preview-body::-webkit-scrollbar-thumb { background: var(--gray-border); border-radius: 4px; }
+.itin-empty { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem; }
+.itin-empty .itin-empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+/* ── VIEW FULL ITINERARY ── */
+.view-full-bar { background: var(--gray-light); border-top: 1px solid var(--gray-border); padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.view-full-bar p { font-size: 0.83rem; color: var(--text-muted); }
+
+/* ── SECTION HEADING ── */
+.section-hd { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.4rem; }
+
+/* ── FOOTER ── */
+footer { background: linear-gradient(105deg, #023e8a 0%, #0077b6 100%); color: rgba(255,255,255,0.85); padding: 3rem 1.5rem 2rem; }
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-brand { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+.footer-tagline { font-size: 0.85rem; opacity: 0.7; }
+.footer-subscribe { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-email { padding: 0.65rem 1rem; border-radius: 9px; background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.2); flex: 1; min-width: 180px; font-size: 0.9rem; font-family: 'DM Sans', sans-serif; outline: none; }
+.footer-email::placeholder { color: rgba(255,255,255,0.5); }
+.footer-sub-btn { padding: 0.65rem 1.2rem; background: var(--coral); color: #fff; border: none; cursor: pointer; border-radius: 9px; font-size: 0.9rem; font-weight: 600; font-family: 'DM Sans', sans-serif; transition: background var(--transition); }
+.footer-sub-btn:hover { background: var(--coral-dark); }
+.footer-links { display: flex; gap: 1.2rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+.footer-copy { margin-top: 2rem; font-size: 0.8rem; opacity: 0.55; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12); }
+</style>
+</head>
+<body>
+
+<!-- Supabase bootstrap -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+</script>
+
+<!-- ===== HEADER ===== -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <div class="vg-left">
+      <a class="vg-brand" href="index.html" aria-label="Voyage Genie Home">
+        <img src="images/nav-icon.png" alt="Voyage Genie"/>
+        <span class="vg-title">Voyage Genie</span>
+      </a>
+    </div>
+    <div class="vg-right">
+      <div id="authSlot"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== PAGE BANNER ===== -->
+<div class="page-banner">
+  <div class="page-banner-inner">
+    <div>
+      <h1 id="pageBannerTitle">🌍 Trip Summary</h1>
+      <p>Review your trip details, view your itinerary, and access travel tools.</p>
+    </div>
+    <div class="banner-actions">
+      <a href="trip-dashboard.html" class="vg-btn">← My Trips</a>
+      <a href="#" id="editTripBtn" class="vg-btn vg-btn-blue">✏️ Edit Trip</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+  <div class="summary-wrap">
+
+    <!-- Trip Hero -->
+    <div class="trip-hero" id="tripHero">
+      <div class="trip-hero-type" id="heroType">Loading…</div>
+      <div class="trip-hero-title" id="heroTitle">—</div>
+      <div class="trip-hero-dates" id="heroDates">—</div>
+      <div class="trip-hero-pills" id="heroPills"></div>
+      <div id="countdownBadge" class="hidden countdown-badge"></div>
+    </div>
+
+    <!-- Trip Details Grid -->
+    <div class="summary-grid" style="margin-bottom:1rem">
+
+      <!-- Who's Going -->
+      <div class="sum-card">
+        <div class="sum-card-title">👥 Who's Going</div>
+        <div id="whoRows"></div>
+      </div>
+
+      <!-- Trip Preferences -->
+      <div class="sum-card">
+        <div class="sum-card-title">⚙️ Trip Preferences</div>
+        <div id="prefRows"></div>
+      </div>
+
+    </div>
+
+    <!-- Planner-specific details (shown conditionally) -->
+    <div class="sum-card sum-card-full" id="specificCard" style="margin-bottom:1rem">
+      <div class="sum-card-title" id="specificTitle">📋 Trip Details</div>
+      <div id="specificRows"></div>
+    </div>
+
+    <!-- Quick Action Cards -->
+    <div class="section-hd" style="margin-top:1.5rem">⚡ Quick Actions</div>
+    <div class="actions-grid" id="actionsGrid">
+      <a href="packing-checklist.html" class="action-card" id="packingCard">
+        <div class="ac-icon">🧳</div>
+        <div class="ac-label">Packing List</div>
+        <div class="ac-desc">AI-suggested items for your trip</div>
+      </a>
+      <a href="trip-budget-settlement.html" class="action-card">
+        <div class="ac-icon">💰</div>
+        <div class="ac-label">Expense Splitter</div>
+        <div class="ac-desc">Track and split trip costs</div>
+      </a>
+      <a href="trip-dashboard.html" class="action-card">
+        <div class="ac-icon">📋</div>
+        <div class="ac-label">My Trips</div>
+        <div class="ac-desc">View all saved trips</div>
+      </a>
+      <a href="currency-converter.html" class="action-card">
+        <div class="ac-icon">💱</div>
+        <div class="ac-label">Currency</div>
+        <div class="ac-desc">Live exchange rates</div>
+      </a>
+      <a href="visa-check.html" class="action-card" id="visaCard">
+        <div class="ac-icon">🛂</div>
+        <div class="ac-label">Visa Check</div>
+        <div class="ac-desc">Entry requirements</div>
+      </a>
+      <a href="timezone-converter.html" class="action-card">
+        <div class="ac-icon">🕒</div>
+        <div class="ac-label">Time Zones</div>
+        <div class="ac-desc">Find local times</div>
+      </a>
+    </div>
+
+    <!-- Itinerary Preview -->
+    <div class="itin-preview" id="itinSection">
+      <div class="itin-preview-header">
+        <h2 id="itinTitle">📄 Your Itinerary</h2>
+        <a href="#" id="viewFullBtn" class="vg-btn" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3);color:#fff;font-size:0.83rem">View Full →</a>
+      </div>
+      <div class="itin-preview-body" id="itinPreview">
+        <div class="itin-empty">
+          <div class="itin-empty-icon">📄</div>
+          <p>No itinerary found for this trip.</p>
+          <p style="margin-top:0.5rem;font-size:0.83rem">Edit the trip to generate one.</p>
+        </div>
+      </div>
+      <div class="view-full-bar">
+        <p>Scroll to read · Full itinerary opens in the planner</p>
+        <a href="#" id="viewFullBtn2" class="vg-btn vg-btn-blue" style="font-size:0.83rem">Open Full Itinerary →</a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+    <div class="footer-subscribe">
+      <input class="footer-email" placeholder="Enter your email" type="email"/>
+      <button class="footer-sub-btn">Subscribe</button>
+    </div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#plan-trip">Plan</a>
+      <a href="features.html">Features</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-copy">© 2025 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- ===== AUTH SCRIPT ===== -->
+<script type="module">
+  const sb = window.supabase;
+  const authSlot = document.getElementById('authSlot');
+  const nextParam = encodeURIComponent('trip-summary.html');
+
+  function toggle(el, show) { if (el) el.style.display = show ? 'block' : 'none'; }
+  function closeMenus(except) {
+    document.querySelectorAll('.menu').forEach(el => { if (el !== except) el.style.display = 'none'; });
+    document.querySelectorAll('[aria-expanded="true"]').forEach(btn => {
+      if (!except || btn.getAttribute('aria-controls') !== except.id) btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function accountDOM(email) {
+    const name = (email || 'Account').split('@')[0];
+    const wrap = document.createElement('div');
+    wrap.className = 'auth-wrap';
+    wrap.innerHTML = `
+      <div class="desktop-auth">
+        <div class="menu-group">
+          <a href="#" class="account-chip" id="acctDesktopBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctDesktopMenu">
+            <span>🪪</span><span>${name}</span><span class="caret">▼</span>
+          </a>
+          <div class="menu" id="acctDesktopMenu" role="menu">
+            <div class="menu-header"><div class="menu-user">🪪 ${name}</div><div class="menu-user-sub">${email || ''}</div></div>
+            <a href="trip-dashboard.html">📋 My Trips</a>
+            <a href="index.html">➕ New Trip</a>
+            <div class="menu-divider"></div>
+            <a href="account.html">👤 Account</a>
+            <a href="#" id="signOutDesktopBtn">🚪 Sign out</a>
+          </div>
+        </div>
+      </div>
+      <div class="mobile-auth">
+        <div class="menu-group">
+          <a href="#" class="hamburger-btn" id="acctMobileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctMobileMenu">☰</a>
+          <div class="menu" id="acctMobileMenu" role="menu">
+            <div class="menu-header"><div class="menu-user">🪪 ${name}</div><div class="menu-user-sub">${email || ''}</div></div>
+            <a href="trip-dashboard.html">📋 My Trips</a>
+            <a href="index.html">➕ New Trip</a>
+            <div class="menu-divider"></div>
+            <a href="account.html">👤 Account</a>
+            <a href="#" id="signOutMobileBtn">🚪 Sign out</a>
+          </div>
+        </div>
+      </div>`;
+    return wrap;
+  }
+
+  function signinDOM() {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<div class="desktop-auth"><a href="login.html?next=${nextParam}" class="account-chip">🔑 Sign in</a></div>`;
+    return wrap;
+  }
+
+  function bindMenu(btnId, menuId) {
+    const btn = document.getElementById(btnId), menu = document.getElementById(menuId);
+    if (!btn || !menu) return;
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const open = menu.style.display === 'block';
+      closeMenus(open ? null : menu);
+      toggle(menu, !open);
+      btn.setAttribute('aria-expanded', String(!open));
+    });
+  }
+
+  async function renderAuth() {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      authSlot.innerHTML = '';
+      if (user) {
+        const node = accountDOM(user.email);
+        authSlot.appendChild(node);
+        bindMenu('acctDesktopBtn', 'acctDesktopMenu');
+        bindMenu('acctMobileBtn', 'acctMobileMenu');
+        node.querySelector('#signOutDesktopBtn')?.addEventListener('click', async e => { e.preventDefault(); await sb.auth.signOut(); location.href = 'login.html'; });
+        node.querySelector('#signOutMobileBtn')?.addEventListener('click', async e => { e.preventDefault(); await sb.auth.signOut(); location.href = 'login.html'; });
+      } else {
+        authSlot.appendChild(signinDOM());
+      }
+    } catch {}
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.menu,.hamburger-btn,.account-chip')) closeMenus(null);
+  });
+
+  renderAuth();
+</script>
+
+<!-- ===== SUMMARY LOGIC ===== -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ── Helpers ────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+  const fmt = iso => {
+    if (!iso) return '—';
+    try { return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' }); }
+    catch { return iso; }
+  };
+  const arr = v => Array.isArray(v) ? v : (v ? [v] : []);
+  const titleCase = s => s ? s.replace(/\b\w/g, c => c.toUpperCase()) : '';
+
+  const PLANNER_MAP = {
+    'Tropical Resort':  'tropical-trip-planner.html',
+    'Cruise Adventure': 'cruise-trip-planner.html',
+    'Airbnb Getaway':   'airbnb-trip-planner.html',
+    'Adventure Trip':   'adventure-trip-planner.html',
+  };
+  const ITIN_MAP = {
+    'Tropical Resort':  'tropical-trip-itinerary.html',
+    'Cruise Adventure': 'cruise-trip-itinerary.html',
+    'Airbnb Getaway':   'airbnb-trip-itinerary.html',
+    'Adventure Trip':   'adventure-trip-itinerary.html',
+  };
+  const TYPE_ICON = {
+    'Tropical Resort':  '🏖️',
+    'Cruise Adventure': '🚢',
+    'Airbnb Getaway':   '🏨',
+    'Adventure Trip':   '🌄',
+  };
+  const TIER_ICON   = { Economy: '🟢', Standard: '🔵', Elite: '⭐' };
+  const PACE_ICON   = { Relaxed: '🌅', Balanced: '🌊', Active: '🏄' };
+  const GROUP_ICON  = { Solo: '👤', Couple: '💑', Family: '👨‍👩‍👧‍👦', Group: '👥', Honeymoon: '💍' };
+
+  function makeRow(label, value) {
+    if (!value || value === '—') return '';
+    return `<div class="sum-row"><span class="sum-label">${label}</span><span class="sum-value">${value}</span></div>`;
+  }
+  function makePill(text, cls = '') {
+    return `<span class="stat-pill ${cls}">${text}</span>`;
+  }
+
+  // ── Load data ───────────────────────────────────────────────────
+  let fd = {};
+  try { fd = JSON.parse(localStorage.getItem('formData') || '{}'); } catch {}
+
+  // Resolve destination across all planner field names
+  const dest = fd.destination || fd.destinationCity || fd.cruiseRegion || fd.adventureDestination || '';
+  const dep  = fd.departureLocation || fd.departure || fd.departurePort || '';
+  const tripType = fd.tripType || '';
+  const icon = TYPE_ICON[tripType] || '✈️';
+
+  // ── Banner & hero title ─────────────────────────────────────────
+  const tripName = fd.name || (dest ? `${dest} Trip` : 'Your Trip');
+  $('pageBannerTitle').textContent = `${icon} ${tripName}`;
+  $('heroType').textContent = tripType ? `${icon} ${tripType}` : '✈️ Trip Summary';
+  $('heroTitle').textContent = dest || 'Trip Summary';
+
+  // ── Dates & duration ───────────────────────────────────────────
+  let datesText = '—';
+  let daysCount = null;
+  if (fd.flexDates === 'yes' || fd.flexDates === true) {
+    datesText = '📅 Flexible dates';
+  } else if (fd.startDate && fd.endDate) {
+    daysCount = Math.round((new Date(fd.endDate) - new Date(fd.startDate)) / 86400000);
+    datesText = `${fmt(fd.startDate)} → ${fmt(fd.endDate)}`;
+    if (daysCount > 0) datesText += ` (${daysCount} days)`;
+  } else if (fd.startDate) {
+    datesText = `From ${fmt(fd.startDate)}`;
+  } else if (fd.cruiseDuration) {
+    datesText = `${fd.cruiseDuration} night cruise`;
+  }
+  $('heroDates').textContent = `📅 ${datesText}`;
+
+  // ── Countdown badge ─────────────────────────────────────────────
+  if (fd.startDate && fd.flexDates !== 'yes') {
+    const daysUntil = Math.ceil((new Date(fd.startDate) - new Date()) / 86400000);
+    const badge = $('countdownBadge');
+    badge.classList.remove('hidden');
+    if (daysUntil > 0)       badge.textContent = `⏳ ${daysUntil} day${daysUntil === 1 ? '' : 's'} away`;
+    else if (daysUntil === 0) badge.textContent = `🎉 Today!`;
+    else {
+      const daysPast = Math.abs(daysUntil);
+      badge.textContent = `✅ ${daysPast} day${daysPast === 1 ? '' : 's'} ago`;
+      badge.style.background = 'rgba(255,255,255,0.12)';
+    }
+  }
+
+  // ── Hero pills ──────────────────────────────────────────────────
+  const pillsEl = $('heroPills');
+  const heroPills = [];
+  if (dep)                 heroPills.push(`✈️ from ${dep}`);
+  if (fd.groupSize)        heroPills.push(`${GROUP_ICON[fd.groupSize] || '👥'} ${fd.groupSize}`);
+  if (fd.budgetTier)       heroPills.push(`${TIER_ICON[fd.budgetTier] || ''} ${fd.budgetTier}`);
+  if (fd.travelPace)       heroPills.push(`${PACE_ICON[fd.travelPace] || '⚡'} ${fd.travelPace} pace`);
+  if (fd.accommodationType && fd.accommodationType !== 'No preference')
+                           heroPills.push(`🏨 ${fd.accommodationType}`);
+  pillsEl.innerHTML = heroPills.map(p => `<span class="hero-pill">${p}</span>`).join('');
+
+  // ── Who's Going card ────────────────────────────────────────────
+  let whoHtml = '';
+  whoHtml += makeRow('Group',         fd.groupSize ? `${GROUP_ICON[fd.groupSize] || ''} ${fd.groupSize}` : null);
+  if (arr(fd.ageRange).length)
+    whoHtml += makeRow('Ages',        arr(fd.ageRange).join(', '));
+  whoHtml += makeRow('Departure',     dep || null);
+  whoHtml += makeRow('Email',         fd.email || null);
+  if (fd.specialOccasion)
+    whoHtml += makeRow('Occasion',    `🎉 ${fd.specialOccasion}`);
+  if (fd.anniversaryUpgrade)
+    whoHtml += makeRow('Upgrade',     `💍 Anniversary package`);
+  if (fd.dietaryNeeds)
+    whoHtml += makeRow('Dietary',     fd.dietaryNeeds);
+  if (fd.accessibilityNeeds)
+    whoHtml += makeRow('Accessibility', fd.accessibilityNeeds);
+  $('whoRows').innerHTML = whoHtml || '<div class="sum-row"><span class="sum-label" style="color:var(--text-muted)">No details saved.</span></div>';
+
+  // ── Trip Preferences card ───────────────────────────────────────
+  let prefHtml = '';
+  prefHtml += makeRow('Budget Tier',  fd.budgetTier ? `${TIER_ICON[fd.budgetTier] || ''} ${fd.budgetTier}` : null);
+  prefHtml += makeRow('Travel Pace',  fd.travelPace ? `${PACE_ICON[fd.travelPace] || ''} ${fd.travelPace}` : null);
+  prefHtml += makeRow('Budget',       fd.budget && fd.budget !== '0' ? `💵 $${Number(fd.budget).toLocaleString()} USD` : null);
+  prefHtml += makeRow('Duration',     daysCount ? `${daysCount} days` : (fd.cruiseDuration ? `${fd.cruiseDuration} nights` : null));
+  prefHtml += makeRow('Dates',        (fd.startDate || fd.endDate) ? datesText : null);
+  $('prefRows').innerHTML = prefHtml || '<div class="sum-row"><span class="sum-label" style="color:var(--text-muted)">No preferences saved.</span></div>';
+
+  // ── Planner-specific card ───────────────────────────────────────
+  let specHtml = '';
+  const specificCard = $('specificCard');
+
+  if (tripType === 'Tropical Resort') {
+    $('specificTitle').textContent = '🏖️ Tropical Resort Details';
+    if (arr(fd.dayActivity).length)   specHtml += makeRow('Day Activities',   arr(fd.dayActivity).join(', '));
+    if (arr(fd.nightActivity).length) specHtml += makeRow('Evening',          arr(fd.nightActivity).join(', '));
+    if (arr(fd.amenities).length)     specHtml += makeRow('Amenities',        arr(fd.amenities).join(', '));
+    specHtml += makeRow('Flight pref', fd.flightPreference || null);
+    specHtml += makeRow('Transfer',    fd.transferNeeds || null);
+    specHtml += makeRow('Accommodation', fd.accommodationType || null);
+    specHtml += makeRow('Star rating', fd.starRating ? `⭐ ${fd.starRating}` : null);
+  } else if (tripType === 'Cruise Adventure') {
+    $('specificTitle').textContent = '🚢 Cruise Details';
+    specHtml += makeRow('Region',      fd.cruiseRegion || null);
+    specHtml += makeRow('Departure Port', fd.departurePort || null);
+    specHtml += makeRow('Duration',    fd.cruiseDuration ? `${fd.cruiseDuration} nights` : null);
+    specHtml += makeRow('Cabin Type',  fd.cabinType || null);
+    if (arr(fd.onboardPreferences).length) specHtml += makeRow('Onboard',   arr(fd.onboardPreferences).join(', '));
+    if (arr(fd.shoreExcursions).length)    specHtml += makeRow('Excursions', arr(fd.shoreExcursions).join(', '));
+    specHtml += makeRow('Dietary',     fd.dietaryNeeds || null);
+  } else if (tripType === 'Airbnb Getaway') {
+    $('specificTitle').textContent = '🏨 City & Stay Details';
+    specHtml += makeRow('Accommodation', fd.accommodationType || fd.propertyType || null);
+    specHtml += makeRow('Bedrooms',    fd.bedrooms ? `${fd.bedrooms} bed` : null);
+    specHtml += makeRow('Bathrooms',   fd.bathrooms ? `${fd.bathrooms} bath` : null);
+    if (arr(fd.amenities).length) specHtml += makeRow('Amenities', arr(fd.amenities).join(', '));
+  } else if (tripType === 'Adventure Trip') {
+    $('specificTitle').textContent = '🌄 Adventure Details';
+    const acts = arr(fd.activityType || fd.activities);
+    if (acts.length) specHtml += makeRow('Activities',  acts.join(', '));
+    specHtml += makeRow('Difficulty',  fd.difficulty || null);
+    const envs = arr(fd.environment);
+    if (envs.length) specHtml += makeRow('Environment', envs.join(', '));
+  }
+
+  if (specHtml) {
+    $('specificRows').innerHTML = specHtml;
+  } else {
+    specificCard.style.display = 'none';
+  }
+
+  // ── Edit trip button ─────────────────────────────────────────────
+  const editBtn = $('editTripBtn');
+  if (tripType && PLANNER_MAP[tripType]) {
+    editBtn.href = PLANNER_MAP[tripType];
+  } else {
+    editBtn.href = 'index.html';
+  }
+
+  // ── Packing checklist — pass context ────────────────────────────
+  const packingCard = $('packingCard');
+  if (dest) {
+    const params = new URLSearchParams({ destination: dest });
+    if (fd.startDate) params.set('startDate', fd.startDate);
+    if (fd.endDate)   params.set('endDate',   fd.endDate);
+    packingCard.href = `packing-checklist.html?${params.toString()}`;
+    // Also write tripContext for the packing page
+    localStorage.setItem('tripContext', JSON.stringify({
+      destination: dest,
+      startDate:   fd.startDate   || '',
+      endDate:     fd.endDate     || '',
+      tripType,
+      travelPace:  fd.travelPace  || '',
+      budgetTier:  fd.budgetTier  || '',
+      groupSize:   fd.groupSize   || '',
+      activities:  arr(fd.dayActivity || fd.activityType || fd.activities).join(', '),
+    }));
+  }
+
+  // ── Visa check — pass destination ───────────────────────────────
+  const visaCard = $('visaCard');
+  if (dest) visaCard.href = `visa-check.html?destination=${encodeURIComponent(dest)}`;
+
+  // ── Itinerary preview ────────────────────────────────────────────
+  let itinHtml = '';
+  try { itinHtml = localStorage.getItem('itineraryHtml') || ''; } catch {}
+
+  const itinPreview = $('itinPreview');
+  const viewFull    = $('viewFullBtn');
+  const viewFull2   = $('viewFullBtn2');
+  const itinTitle   = $('itinTitle');
+
+  const itinPage = ITIN_MAP[tripType] || null;
+
+  if (itinHtml && itinHtml.trim()) {
+    // Strip to plain text for preview
+    const tmp = document.createElement('div');
+    tmp.innerHTML = itinHtml;
+    const plainText = (tmp.textContent || '').replace(/\s+/g, ' ').trim();
+    const preview = plainText.length > 800 ? plainText.slice(0, 800) + '…' : plainText;
+    itinPreview.innerHTML = `<p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:0.75rem;padding-bottom:0.75rem;border-bottom:1px solid var(--gray-border)">Preview — open full itinerary for the complete plan with links and day-by-day schedule.</p>${preview}`;
+    itinTitle.textContent = `📄 ${dest ? dest + ' ' : ''}Itinerary Preview`;
+    if (itinPage) {
+      viewFull.href  = itinPage;
+      viewFull2.href = itinPage;
+    }
+  } else if (itinPage) {
+    itinPreview.innerHTML = `<div class="itin-empty"><div class="itin-empty-icon">📋</div><p>No itinerary generated yet.</p><p style="margin-top:0.5rem"><a href="${itinPage}" style="color:var(--ocean)">Open the planner to generate one →</a></p></div>`;
+    viewFull.href  = itinPage;
+    viewFull2.href = itinPage;
+  }
+
+  // ── No data fallback ─────────────────────────────────────────────
+  if (!dest && !tripType && !fd.startDate) {
+    $('heroTitle').textContent = 'No trip data found';
+    $('heroDates').textContent = '📅 —';
+    $('heroType').textContent  = 'Go to My Trips and click View on a trip';
+    specificCard.style.display = 'none';
+  }
+
+});
+</script>
+
+</body>
+</html>

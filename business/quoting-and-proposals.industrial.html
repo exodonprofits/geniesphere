@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Quoting &amp; Proposals | GenieSphere</title>
+<meta name="description" content="RFP intake → polished proposal with pricing and terms."/>
+<style>
+
+:root{
+    --bg:#0b1220;
+    --card:#121a2b;
+    --card-hover:#18233a;
+    --text:#e9f0ff;
+    --muted:#a9b6d9;
+    --accent:#3ee1a1;          /* GenieSphere green */
+    --accent-2:#4aa3ff;        /* Legacy blue */
+    --brand-blue:#4c6ef5;      /* Hover blue */
+    --ring:rgba(62,225,161,.35);
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --radius:7px;              /* Global radius */
+    --gap:18px;
+    --btn-radius:999px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:#0a0f1b;
+    color:var(--text);
+    font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+  }
+
+  .sr-only{
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+
+  .container{max-width:1440px;margin:0 auto;padding:24px}
+
+  /* Header (aligned with personal.html / business.html) */
+  .site-header{
+    position:sticky;
+    top:0;
+    z-index:1000;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+    border-bottom:1px solid rgba(120,155,255,.15);
+    box-shadow:0 8px 22px rgba(0,0,0,.25);
+    backdrop-filter:saturate(120%) blur(10px);
+  }
+  .site-header-inner{
+    max-width:1440px;
+    margin:0 auto;
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:700;
+  }
+  .logo{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+    box-shadow:0 0 0 3px var(--ring),0 8px 24px rgba(62,225,161,.35);
+  }
+  .menu{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    font-size:14px;
+  }
+  .menu a{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 2px;
+    border-radius:0;
+    text-decoration:none;
+    color:var(--muted);
+    font-weight:500;
+    border-bottom:2px solid transparent;
+    box-shadow:none;
+    background:transparent;
+    transition:color .15s ease, border-bottom-color .15s ease;
+  }
+  .menu a:hover{
+    color:var(--text);
+    border-bottom-color:var(--brand-blue);
+  }
+  .menu a.active{
+    color:var(--text);
+    border-bottom-color:var(--accent);
+    font-weight:600;
+  }
+  .menu a.ghost{
+    color:var(--muted);
+  }
+
+  /* User menu (desktop + mobile) */
+  .user-menu{
+    position:relative;
+    display:flex;
+    align-items:center;
+    margin-left:auto;
+  }
+  .user-menu-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:999px;
+    border:1px solid rgba(120,155,255,.35);
+    background:#0e1626;
+    color:var(--text);
+    font-size:14px;
+    cursor:pointer;
+  }
+  .user-menu-toggle:hover{
+    border-color:var(--accent);
+  }
+  .user-menu-dropdown{
+    position:absolute;
+    right:0;
+    top:calc(100% + 6px);
+    min-width:220px;
+    background:#0e1626;
+    border-radius:var(--radius);
+    border:1px solid rgba(120,155,255,.25);
+    box-shadow:0 14px 34px rgba(0,0,0,.55);
+    padding:6px 0;
+    display:none;
+    z-index:1002;
+    margin-right:4px;
+  }
+  .user-menu-dropdown a,
+  .user-menu-dropdown button{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:8px 14px;
+    background:none;
+    border:none;
+    color:var(--text);
+    font-size:14px;
+    text-decoration:none;
+    cursor:pointer;
+  }
+  .user-menu-dropdown a:hover,
+  .user-menu-dropdown button:hover{
+    background:#121a2b;
+  }
+  .user-menu-divider{
+    height:1px;
+    margin:4px 0;
+    background:rgba(148,163,184,.4);
+  }
+  .dropdown-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    opacity:.7;
+    padding:4px 14px 2px;
+  }
+  .auth-only{ }
+
+  .hamburger{
+    display:none;
+    border:1px solid rgba(120,155,255,.25);
+    background:#0e1626;
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 10px;
+    cursor:pointer;
+  }
+  @media(max-width:720px){
+    .menu{display:none}
+    .hamburger{display:inline-flex}
+    .site-header-inner{padding:10px 12px}
+    .user-menu-toggle{padding-inline:10px;}
+  }
+
+  .drawer{
+    position:fixed;
+    inset:60px 12px auto 12px;
+    background:#0e1626;
+    border:1px solid rgba(120,155,255,.2);
+    border-radius:var(--radius);
+    padding:10px;
+    display:none;
+    z-index:1001;
+    box-shadow:0 18px 34px rgba(0,0,0,.45);
+  }
+  .drawer a{
+    display:block;
+    margin:6px 0;
+    padding:10px 12px;
+    border-radius:var(--radius);
+    text-decoration:none;
+    color:var(--text);
+    background:#121a2b;
+    border:1px solid rgba(120,155,255,.15);
+  }
+  .drawer a.active{
+    background:#18233a;
+    border-color:rgba(62,225,161,.35);
+  }
+
+  /* Hero */
+  .hero{text-align:center;padding:16px 0 8px}
+  .title{
+    font-size:clamp(26px,4vw,40px);
+    margin:0 0 6px;
+    font-weight:900;
+  }
+  .subtitle{
+    color:var(--muted);
+    margin:0 auto 18px;
+    max-width:820px;
+    font-size:15px;
+  }
+
+  /* Ask Investment Genie */
+  .ask{
+    max-width:1440px;
+    margin:0 auto 22px;
+    background:linear-gradient(180deg,rgba(24,35,58,.75),rgba(18,26,43,.75));
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(120,155,255,.15);
+  }
+  .ask-row{display:flex;gap:12px}
+  .input{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#0e1626;
+    border:1px solid rgba(120,155,255,.18);
+    border-radius:var(--btn-radius);
+    padding:10px 16px;
+    color:var(--text);
+    font-size:14px;
+  }
+  .input:focus{
+    outline:none;
+    border-color:rgba(74,163,255,.45);
+    box-shadow:0 0 0 3px rgba(74,163,255,.15);
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 18px;
+    border-radius:var(--btn-radius);
+    text-decoration:none;
+    color:#03101f;
+    background:var(--accent-2);
+    font-weight:700;
+    border:0;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(74,163,255,.25);
+    font-size:14px;
+    white-space:nowrap;
+  }
+  .btn.primary{
+    background:var(--accent);
+    color:#04131a;
+    box-shadow:0 8px 18px rgba(62,225,161,.25);
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .hint{
+    margin-top:10px;
+    color:var(--muted);
+    font-size:13px;
+  }
+  @media(max-width:640px){
+    .ask-row{flex-direction:column}
+    .btn{width:100%}
+  }
+
+  /* Snapshot */
+  .snapshot{
+    max-width:1440px;
+    margin:0 auto 18px;
+    display:grid;
+    grid-template-columns:minmax(0,2fr) minmax(0,1.4fr);
+    gap:18px;
+  }
+  @media(max-width:880px){.snapshot{grid-template-columns:1fr}}
+  .snapshot-card{
+    background:linear-gradient(180deg,rgba(24,35,58,.85),rgba(18,26,43,.98));
+    border-radius:var(--radius);
+    border:1px solid rgba(120,155,255,.18);
+    padding:14px 16px;
+    box-shadow:var(--shadow);
+  }
+  .snapshot-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .snapshot-header h2{
+    margin:0;
+    font-size:15px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .snapshot-metrics{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 18px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .metric-label{color:var(--muted);font-size:12px}
+  .metric-value{font-weight:700;color:var(--text);font-size:14px}
+
+  .snapshot-allocation{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+    font-size:13px;
+  }
+  .allocation-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .allocation-bar{
+    flex:1;
+    height:6px;
+    border-radius:999px;
+    overflow:hidden;
+    background:#0e1626;
+    margin-left:8px;
+    margin-right:8px;
+  }
+  .allocation-fill{
+    height:100%;
+    border-radius:inherit;
+    background:linear-gradient(90deg,#4aa3ff,#3ee1a1);
+  }
+
+  /* Quick Peek */
+  details.overview{
+    max-width:1440px;
+    margin:12px auto 16px;
+    background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.85));
+    border:1px solid rgba(120,155,255,.15);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+  details.overview>summary{
+    list-style:none;
+    cursor:pointer;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  details.overview[open]>summary{
+    border-bottom:1px solid rgba(120,155,255,.12);
+  }
+  .summary-title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:900;
+  }
+  .summary-badges{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .summary-badge{
+    font-size:12px;
+    font-weight:800;
+    border-radius:999px;
+    padding:4px 10px;
+    background:var(--brand-blue);
+    color:#03101f;
+  }
+  .overview-content{
+    display:grid;
+    gap:14px;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    padding:12px;
+  }
+  .mini-card{
+    background:#0e1626;
+    border:1px solid rgba(120,155,255,.12);
+    border-radius:var(--radius);
+    padding:12px;
+    min-height:110px;
+  }
+  .mini-title{
+    margin:0 0 8px;
+    font-size:14px;
+    color:#d7e4ff;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .mini-list{
+    margin:0;
+    padding-left:18px;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  /* Sections */
+  .section-title{
+    margin:0;
+    font-size:clamp(17px,2.1vw,20px);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:700;
+  }
+  details.section{
+    margin:18px 0 6px;
+    background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.9));
+    border-radius:var(--radius);
+    border:1px solid rgba(120,155,255,.2);
+    box-shadow:var(--shadow);
+  }
+  details.section>summary{
+    list-style:none;
+    cursor:pointer;
+    padding:10px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  details.section>summary::-webkit-details-marker{display:none}
+  details.section[open]>summary{
+    border-bottom:1px solid rgba(120,155,255,.16);
+  }
+  .section-summary-right{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .section-body{
+    padding:10px 14px 14px;
+  }
+
+  /* Cards */
+  .grid{
+    display:grid;
+    gap:var(--gap);
+    grid-template-columns:repeat(1,1fr);
+  }
+  @media(min-width:760px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:1060px){.grid{grid-template-columns:repeat(3,1fr)}}
+
+  .card{
+    display:block;
+    text-decoration:none;
+    color:inherit;
+    background:linear-gradient(180deg,rgba(24,35,58,.7),rgba(18,26,43,.9));
+    border:1px solid rgba(120,155,255,.15);
+    border-radius:var(--radius);
+    padding:16px;
+    transition:.18s;
+    box-shadow:var(--shadow);
+    min-height:150px;
+  }
+  .card:hover{
+    transform:translateY(-2px);
+    background:#18233a;
+    border-color:rgba(62,225,161,.35);
+    box-shadow:0 14px 34px rgba(0,0,0,.45);
+  }
+  .card .icon{
+    font-size:26px;
+    margin-bottom:8px;
+  }
+  .card h3{
+    margin:0 0 4px;
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .card p{
+    margin:0;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    margin-left:6px;
+    background:rgba(62,225,161,.2);
+    color:#e9fff6;
+  }
+
+  /* Footer */
+  .site-footer{
+    margin-top:32px;
+    padding:32px 0 28px;
+    border-top:1px solid rgba(120,155,255,.15);
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+  }
+  .site-footer-inner{max-width:1440px;margin:0 auto;padding:0 24px}
+  .footer-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px 28px;
+    align-items:start;
+  }
+  @media(max-width:900px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:560px){.footer-grid{grid-template-columns:1fr}}
+  .footer-col h4{margin:0 0 10px;font-size:14px}
+  .footer-col a{
+    display:block;
+    color:var(--muted);
+    text-decoration:none;
+    padding:4px 0;
+    font-size:13px;
+  }
+  .footer-col a:hover{
+    color:var(--text);
+    text-decoration:underline;
+  }
+  .footer-bottom{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    color:var(--muted);
+    font-size:13px;
+    margin-top:24px;
+    padding-top:14px;
+    border-top:1px solid rgba(120,155,255,.12);
+    text-align:center;
+  }
+  .social{
+    display:flex;
+    gap:16px;
+    justify-content:center;
+    font-size:18px;
+  }
+
+/* inner page layout + mobile-first */
+.page-wrap{max-width:1440px;margin:0 auto;padding:24px}
+.page-hero{text-align:center;padding:12px 0 10px}
+.page-hero h1{margin:0;font-size:clamp(22px,3.6vw,34px);font-weight:900}
+.page-hero p{margin:8px auto 0;max-width:920px;color:var(--muted);font-size:14px}
+.panel{background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.9));border:1px solid rgba(120,155,255,.18);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.row.between{justify-content:space-between}
+.input-like{flex:1;min-width:220px;background:#0e1626;border:1px solid rgba(120,155,255,.18);border-radius:999px;padding:10px 14px;color:var(--text);outline:none;font-size:14px}
+.input-like:focus{border-color:rgba(74,163,255,.45);box-shadow:0 0 0 3px rgba(74,163,255,.15)}
+.btn-lite{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;border:1px solid rgba(120,155,255,.18);background:#0e1626;color:var(--text);text-decoration:none;font-weight:800}
+.btn-lite:hover{border-color:rgba(62,225,161,.35)}
+.btn-green{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;border:0;background:var(--accent);color:#04131a;text-decoration:none;font-weight:900;cursor:pointer;box-shadow:0 8px 18px rgba(62,225,161,.25)}
+.grid2{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:900px){.grid2{grid-template-columns:1fr 1fr}}
+.cardbox{background:#0e1626;border:1px solid rgba(120,155,255,.12);border-radius:var(--radius);padding:12px}
+.cardbox h2{margin:0 0 8px;font-size:16px}
+.muted{color:var(--muted);font-size:13px;margin:0}
+.list{margin:10px 0 0;padding-left:18px;color:var(--muted);font-size:13px}
+.empty{color:var(--muted);font-size:13px;margin:10px 0 0}
+.item{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:10px;border:1px solid rgba(120,155,255,.12);border-radius:var(--radius);background:#121a2b;margin-top:10px}
+.mini-actions{display:flex;gap:8px}
+.mini-btn{border:1px solid rgba(120,155,255,.18);background:#0e1626;color:var(--text);border-radius:999px;padding:6px 10px;font-weight:800;font-size:12px;cursor:pointer}
+.mini-btn.danger{border-color:rgba(239,68,68,.35)}
+/* floating chat */
+.fab{position:fixed;right:14px;bottom:14px;width:56px;height:56px;border-radius:999px;border:1px solid rgba(120,155,255,.28);background:linear-gradient(180deg,rgba(62,225,161,.95),rgba(38,181,129,.95));color:#04131a;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 14px 34px rgba(0,0,0,.45);cursor:pointer;z-index:2000}
+.chat-pop{position:fixed;right:14px;bottom:80px;width:min(360px, calc(100vw - 28px));background:#0e1626;border:1px solid rgba(120,155,255,.22);border-radius:var(--radius);box-shadow:0 18px 40px rgba(0,0,0,.55);padding:12px;display:none;z-index:2000}
+.chat-pop h4{margin:0 0 6px;font-size:14px}
+.chat-pop .tiny{color:var(--muted);font-size:12px;margin:0 0 10px}
+.chat-pop .chips{display:flex;flex-wrap:wrap;gap:8px}
+.chat-pop .chip-btn{border:1px solid rgba(120,155,255,.22);background:#121a2b;color:var(--text);border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer}
+/* hide footer link blocks on mobile */
+@media (max-width: 560px){
+  .footer-grid{display:none !important;}
+  .footer-bottom{border-top:none !important; padding-top:0 !important; margin-top:12px !important;}
+}
+
+/* Quoting page components */
+.kpis{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
+@media(min-width:980px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.kpi{background:#0e1626;border:1px solid rgba(120,155,255,.12);border-radius:var(--radius);padding:12px}
+.kpi .k{color:var(--muted);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+.kpi .v{font-size:18px;font-weight:1000;margin-top:6px}
+.kpi .s{color:var(--muted);font-size:12px;margin-top:2px}
+
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tab{border:1px solid rgba(120,155,255,.18);background:#0e1626;color:var(--text);border-radius:999px;padding:8px 12px;font-weight:900;font-size:13px;cursor:pointer}
+.tab.active{border-color:rgba(62,225,161,.35);box-shadow:0 0 0 3px rgba(62,225,161,.10)}
+.tab:hover{border-color:rgba(62,225,161,.35)}
+
+.form-grid{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:980px){.form-grid{grid-template-columns:1fr 1fr}}
+.field{display:grid;gap:6px}
+.field label{font-size:12px;color:var(--muted);font-weight:900}
+.field input,.field select,.field textarea{
+  background:#0b1220;border:1px solid rgba(120,155,255,.18);border-radius:10px;padding:10px 12px;color:var(--text);
+  outline:none;font-size:14px
+}
+.field textarea{min-height:110px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:rgba(74,163,255,.45);box-shadow:0 0 0 3px rgba(74,163,255,.15)
+}
+
+.rowcard{border-radius:var(--radius);border:1px solid rgba(120,155,255,.12);background:#0e1626;padding:12px;margin-top:10px}
+.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:900;border:1px solid rgba(120,155,255,.18);background:#121a2b}
+.badge.green{border-color:rgba(62,225,161,.35);background:rgba(62,225,161,.10)}
+.badge.blue{border-color:rgba(74,163,255,.35);background:rgba(74,163,255,.10)}
+.badge.orange{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.10)}
+.badge.red{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.10)}
+.small{color:var(--muted);font-size:12px}
+.hr{height:1px;background:rgba(120,155,255,.12);margin:12px 0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.btn-outline{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;border:1px solid rgba(120,155,255,.18);background:#0e1626;color:var(--text);text-decoration:none;font-weight:900;cursor:pointer}
+.btn-outline:hover{border-color:rgba(62,225,161,.35)}
+.btn-danger{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:var(--text);text-decoration:none;font-weight:900;cursor:pointer}
+.btn-danger:hover{border-color:rgba(239,68,68,.55)}
+@media(max-width:720px){
+  .actions .btn-green,.actions .btn-outline,.actions .btn-danger{width:100%;justify-content:center}
+}
+
+/* Drawer element (fix) */
+#mobile-drawer{display:none}
+
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="../index.html">
+      <img class="logo" src="../genie-logo.png" alt="GenieSphere" />
+      <strong>GenieSphere</strong>
+    </a>
+
+    <nav class="menu" aria-label="Primary">
+      <a class="ghost" href="../personal/personal.html">🏡 Personal</a>
+      <a class="active" href="business.html">🏢 Business</a>
+      <a class="ghost" href="../investment/investment.html">📈 Investment</a>
+      <a class="ghost" href="../leisure/leisure.html">🏝️ Leisure</a>
+    </nav>
+
+    <button class="hamburger" id="hamburger" aria-expanded="false" aria-label="Open navigation">☰</button>
+
+    <div class="user-menu" id="user-menu">
+      <button class="user-menu-toggle" id="user-menu-toggle" aria-expanded="false">
+        <span id="user-name-label">Log in</span>
+        <span aria-hidden="true">▾</span>
+      </button>
+      <div class="user-menu-dropdown" id="user-menu-dropdown">
+        <div class="dropdown-label">Areas</div>
+        <button type="button" class="dropdown-nav" data-target="../personal/personal.html">🏡 Personal</button>
+        <button type="button" class="dropdown-nav" data-target="business.html">🏢 Business</button>
+        <button type="button" class="dropdown-nav" data-target="../investment/investment.html">📈 Investment</button>
+        <button type="button" class="dropdown-nav" data-target="../leisure/leisure.html">🏝️ Leisure</button>
+
+        <div class="user-menu-divider"></div>
+        <div class="dropdown-label">Account</div>
+        <button type="button" class="dropdown-nav" data-target="../onboarding/user_profile_form.html">👤 User profile</button>
+        <button type="button" class="dropdown-nav" data-target="../onboarding/display_settings.html">⚙️ Settings</button>
+
+        <div class="user-menu-divider"></div>
+        <button type="button" id="user-auth-action">Log in / Sign up</button>
+        <button type="button" id="user-signout-btn" class="auth-only">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="drawer" id="mobile-drawer" aria-label="Mobile navigation">
+  <a href="../personal/personal.html">🏡 Personal</a>
+  <a class="active" href="business.html">🏢 Business</a>
+  <a href="../investment/investment.html">📈 Investment</a>
+  <a href="../leisure/leisure.html">🏝️ Leisure</a>
+</div>
+
+<main class="page-wrap">
+  <section class="page-hero">
+    <h1>📄 Quoting &amp; Proposals</h1>
+    <p>Industrial-style pipeline: Intake → Estimate → Proposal → Send → Win/Lose. (Prototype mode uses local storage.)</p>
+
+    <div class="kpis" aria-label="KPIs">
+      <div class="kpi">
+        <div class="k">Open Requests</div>
+        <div class="v" id="kpiOpen">0</div>
+        <div class="s">Need estimate</div>
+      </div>
+      <div class="kpi">
+        <div class="k">Draft Proposals</div>
+        <div class="v" id="kpiDrafts">0</div>
+        <div class="s">Ready to review</div>
+      </div>
+      <div class="kpi">
+        <div class="k">Sent This Month</div>
+        <div class="v" id="kpiSent">0</div>
+        <div class="s">Track follow-ups</div>
+      </div>
+      <div class="kpi">
+        <div class="k">Win Rate</div>
+        <div class="v" id="kpiWin">—</div>
+        <div class="s">Prototype metric</div>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Quoting tabs">
+      <button class="tab active" type="button" data-view="intake">🧾 Intake</button>
+      <button class="tab" type="button" data-view="drafts">📝 Drafts</button>
+      <button class="tab" type="button" data-view="templates">📚 Templates</button>
+      <button class="tab" type="button" data-view="settings">⚙️ Settings</button>
+      <a class="btn-lite" href="business.html" style="margin-left:auto;">⬅️ Back</a>
+    </div>
+  </section>
+
+  <section class="panel" id="view-intake">
+    <div class="row between">
+      <div>
+        <h2 style="margin:0;font-size:16px;">🧾 New Request</h2>
+        <div class="small">Capture customer details once. Then generate an estimate + proposal from the same record.</div>
+      </div>
+      <div class="actions">
+        <button class="btn-outline" type="button" id="btnLoadDemo">✨ Load demo</button>
+        <button class="btn-danger" type="button" id="btnClearAll">🗑 Clear all</button>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="form-grid" role="form" aria-label="Intake form">
+      <div class="field">
+        <label for="customerName">Customer name</label>
+        <input id="customerName" placeholder="Example: John Smith"/>
+      </div>
+      <div class="field">
+        <label for="customerPhone">Phone</label>
+        <input id="customerPhone" placeholder="Example: (555) 123-4567"/>
+      </div>
+      <div class="field">
+        <label for="customerEmail">Email</label>
+        <input id="customerEmail" type="email" placeholder="Example: john@email.com"/>
+      </div>
+      <div class="field">
+        <label for="serviceType">Service type</label>
+        <select id="serviceType">
+          <option value="HVAC">HVAC</option>
+          <option value="Plumbing">Plumbing</option>
+          <option value="Electrical">Electrical</option>
+          <option value="General">General Contractor</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label for="jobAddress">Job address</label>
+        <input id="jobAddress" placeholder="Example: 123 Main St, Dallas, TX"/>
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label for="scope">Scope / problem statement</label>
+        <textarea id="scope" placeholder="Example: Upstairs unit not cooling; replace capacitor and inspect condenser coil…"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="targetDate">Target date</label>
+        <input id="targetDate" type="date"/>
+      </div>
+      <div class="field">
+        <label for="priority">Priority</label>
+        <select id="priority">
+          <option value="normal">Normal</option>
+          <option value="urgent">Urgent</option>
+          <option value="emergency">Emergency</option>
+        </select>
+      </div>
+
+      <div class="field" style="grid-column:1/-1;">
+        <label for="internalNotes">Internal notes (not shown to customer)</label>
+        <textarea id="internalNotes" placeholder="Example: Warranty? existing customer? special access instructions…"></textarea>
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:12px;">
+      <button class="btn-outline" type="button" id="btnSaveIntake">💾 Save request</button>
+      <button class="btn-green" type="button" id="btnCreateDraft">📝 Create proposal draft</button>
+    </div>
+
+    <div class="small" id="msgIntake" style="margin-top:10px;"></div>
+  </section>
+
+  <section class="panel" id="view-drafts" style="display:none;">
+    <div class="row between">
+      <div>
+        <h2 style="margin:0;font-size:16px;">📝 Proposal drafts</h2>
+        <div class="small">Edit pricing lines. Mark as sent. Track win/loss.</div>
+      </div>
+      <input id="searchDrafts" class="input-like" type="search" placeholder="Search drafts…" style="max-width:340px;"/>
+    </div>
+
+    <div id="draftList" style="margin-top:10px;"></div>
+    <div id="draftEmpty" class="empty" style="display:none;">No drafts yet. Create one from Intake.</div>
+  </section>
+
+  <section class="panel" id="view-templates" style="display:none;">
+    <div class="row between">
+      <div>
+        <h2 style="margin:0;font-size:16px;">📚 Templates</h2>
+        <div class="small">Reusable boilerplate: terms, warranty, payment schedule, scope blocks.</div>
+      </div>
+      <button class="btn-green" type="button" id="btnAddTemplate">➕ New template</button>
+    </div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div class="cardbox">
+        <h2>📌 Common terms</h2>
+        <ul class="list" id="templateList"></ul>
+        <div class="empty" id="templateEmpty" style="display:none;">No templates yet.</div>
+      </div>
+      <div class="cardbox">
+        <h2>✅ Best practice</h2>
+        <ul class="list">
+          <li>Always include: scope, exclusions, timeline, payment terms, warranty.</li>
+          <li>Add a follow-up date and reminders.</li>
+          <li>Use consistent line-item structure for labor + materials.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="view-settings" style="display:none;">
+    <div class="row between">
+      <div>
+        <h2 style="margin:0;font-size:16px;">⚙️ Settings</h2>
+        <div class="small">Prototype defaults (tax rate, labor rate). Later: connect to your company profile.</div>
+      </div>
+      <button class="btn-green" type="button" id="btnSaveSettings">Save</button>
+    </div>
+
+    <div class="form-grid" style="margin-top:12px;">
+      <div class="field">
+        <label for="laborRate">Default labor rate ($/hr)</label>
+        <input id="laborRate" type="number" min="0" step="1" placeholder="Example: 120"/>
+      </div>
+      <div class="field">
+        <label for="taxRate">Sales tax rate (%)</label>
+        <input id="taxRate" type="number" min="0" step="0.01" placeholder="Example: 8.25"/>
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label for="companyFooter">Default proposal footer</label>
+        <textarea id="companyFooter" placeholder="Example: Thank you for your business. Payment due upon completion. Warranty 1 year parts/labor…"></textarea>
+      </div>
+    </div>
+  </section>
+</main>
+
+<button class="fab" id="fabChat" aria-label="Quick help">💬</button>
+<div class="chat-pop" id="chatPop" role="dialog" aria-label="Quick actions">
+  <h4>✨ Quick actions</h4>
+  <p class="tiny">Tap to auto-fill the intake scope.</p>
+  <div class="chips">
+    <button class="chip-btn" data-q="Perform diagnostic, provide written estimate, and recommend next steps.">Diagnostic + estimate</button>
+    <button class="chip-btn" data-q="Replace failed part(s), test system operation, and verify normal performance.">Repair + verify</button>
+    <button class="chip-btn" data-q="Install new equipment, remove old unit, confirm permits and startup checklist.">Install + startup</button>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Business Tools</h4>
+        <a href="crm-lite.html">Mini CRM</a>
+        <a href="invoicing-and-payments.html">Invoicing &amp; Payments</a>
+        <a href="reviews-andamp-reputation.html">Reviews &amp; Reputation</a>
+      </div>
+      <div class="footer-col">
+        <h4>Ops</h4>
+        <a href="scheduling-and-dispatch.html">Scheduling &amp; Dispatch</a>
+        <a href="inventory-andamp-supplies.html">Inventory &amp; Supplies</a>
+        <a href="hr-andamp-hiring.html">HR &amp; Hiring</a>
+      </div>
+      <div class="footer-col">
+        <h4>Automation</h4>
+        <a href="text-andamp-email-automation.html">Text &amp; Email Automation</a>
+        <a href="ai-phone-agent.html">AI Phone Agent</a>
+        <a href="lead-capture.html">Lead Capture</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="../onboarding/api-key-settings.html">API Keys</a>
+        <a href="../about.html">About</a>
+        <a href="../contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+      <div class="social" aria-label="Social">
+        <a href="#" aria-label="Twitter / X">🐦</a>
+        <a href="#" aria-label="YouTube">▶️</a>
+        <a href="#" aria-label="GitHub">🐙</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Year
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // NOTE: no 'supabase' identifier in our code; library is exposed as window.supabase
+  const client = window.supabase.createClient(
+    'https://pbojacnagutipfhcxltj.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+  );
+
+  // Mobile drawer
+  (function(){
+    const d=document.getElementById('mobile-drawer');
+    const b=document.getElementById('hamburger');
+    if(!d || !b) return;
+    const open=()=>{ d.style.display='block'; b.setAttribute('aria-expanded','true'); };
+    const close=()=>{ d.style.display='none';  b.setAttribute('aria-expanded','false'); };
+    b.addEventListener('click',()=>{ b.getAttribute('aria-expanded')==='true' ? close() : open(); });
+    d.addEventListener('click',e=>{ if(e.target.tagName==='A') close(); });
+  })();
+
+  let currentUser = null;
+
+  // Auth-aware header dropdown
+  (async () => {
+    const nameLabel = document.getElementById('user-name-label');
+    const menuToggle = document.getElementById('user-menu-toggle');
+    const menuDropdown = document.getElementById('user-menu-dropdown');
+    const signoutBtn = document.getElementById('user-signout-btn');
+    const authActionBtn = document.getElementById('user-auth-action');
+    const authOnlyEls = document.querySelectorAll('.auth-only');
+
+    let menuOpen = false;
+
+    function closeMenu(){
+      if(!menuDropdown || !menuToggle) return;
+      menuOpen = false;
+      menuDropdown.style.display = 'none';
+      menuToggle.setAttribute('aria-expanded','false');
+    }
+
+    if (menuToggle && menuDropdown) {
+      menuToggle.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        menuOpen = !menuOpen;
+        menuDropdown.style.display = menuOpen ? 'block' : 'none';
+        menuToggle.setAttribute('aria-expanded', menuOpen ? 'true' : 'false');
+      });
+
+      document.addEventListener('click', (e)=>{
+        if (!menuOpen) return;
+        if (!menuDropdown.contains(e.target) && !menuToggle.contains(e.target)) {
+          closeMenu();
+        }
+      });
+    }
+
+    const { data: { user }, error } = await client.auth.getUser();
+    if (error) console.error('Error fetching user:', error);
+
+    if (user) {
+      currentUser = user;
+      const rawName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        (user.email ? user.email.split('@')[0] : '') ||
+        'Account';
+
+      if (nameLabel) nameLabel.textContent = rawName;
+
+      authOnlyEls.forEach(el => { el.style.display = ''; });
+      if (authActionBtn) authActionBtn.style.display = 'none';
+      if (signoutBtn) {
+        signoutBtn.style.display = 'block';
+        signoutBtn.addEventListener('click', async ()=>{
+          try { await client.auth.signOut(); } catch (e) { console.error('Error signing out:', e); }
+          window.location.href = '../index.html';
+        });
+      }
+    } else {
+      currentUser = null;
+      if (nameLabel) nameLabel.textContent = 'Log in';
+      authOnlyEls.forEach(el => { el.style.display = 'none'; });
+      if (signoutBtn) signoutBtn.style.display = 'none';
+      if (authActionBtn) {
+        authActionBtn.style.display = 'block';
+        authActionBtn.textContent = 'Log in / Sign up';
+        authActionBtn.addEventListener('click', ()=>{ window.location.href = '../onboarding/login.html'; });
+      }
+    }
+  })();
+
+  function goOrLogin(target){
+    if (currentUser) window.location.href = target;
+    else window.location.href = '../onboarding/login.html';
+  }
+  document.querySelectorAll('.dropdown-nav').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const target = this.getAttribute('data-target');
+      if (!target) return;
+      goOrLogin(target);
+    });
+  });
+
+  // Floating quick actions
+  (function(){
+    const fab = document.getElementById('fabChat');
+    const pop = document.getElementById('chatPop');
+    if(!fab || !pop) return;
+    let open = false;
+    const close = ()=>{ open=false; pop.style.display='none'; };
+    const toggle = ()=>{ open=!open; pop.style.display = open ? 'block' : 'none'; };
+    fab.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
+    document.addEventListener('click', (e)=>{ if(!open) return; if(!pop.contains(e.target) && e.target!==fab) close(); });
+    pop.querySelectorAll('[data-q]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const q = btn.getAttribute('data-q') || '';
+        const t = document.getElementById('scope');
+        if(t){ t.value = q; t.focus(); }
+        close();
+      });
+    });
+  })();
+
+  // ===== Prototype data model =====
+  const KEY_REQ = "gs_business_quote_requests_v1";
+  const KEY_DRAFT = "gs_business_proposal_drafts_v1";
+  const KEY_TPL = "gs_business_proposal_templates_v1";
+  const KEY_SET = "gs_business_quote_settings_v1";
+
+  const $ = (id)=>document.getElementById(id);
+
+  function loadJson(key, fallback){ try{ const v = JSON.parse(localStorage.getItem(key)); return (v===null||v===undefined) ? fallback : v; }catch{ return fallback; } }
+  function saveJson(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+  function uid(){ return (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); }
+
+  function statusBadge(status){
+    const s = String(status||"open");
+    if(s==="open") return '<span class="badge orange">🟠 Open</span>';
+    if(s==="draft") return '<span class="badge blue">🔵 Draft</span>';
+    if(s==="sent") return '<span class="badge">📤 Sent</span>';
+    if(s==="won") return '<span class="badge green">✅ Won</span>';
+    if(s==="lost") return '<span class="badge red">❌ Lost</span>';
+    return '<span class="badge">•</span>';
+  }
+
+  function fmtDate(d){
+    if(!d) return "";
+    try { return new Date(d).toLocaleDateString(); } catch { return String(d); }
+  }
+
+  function setView(view){
+    ["intake","drafts","templates","settings"].forEach(v=>{
+      const sec = $("view-"+v);
+      const tab = document.querySelector('.tab[data-view="'+v+'"]');
+      if(sec) sec.style.display = (v===view) ? "" : "none";
+      if(tab) tab.classList.toggle("active", v===view);
+    });
+  }
+  document.querySelectorAll(".tab[data-view]").forEach(b=>{
+    b.addEventListener("click", ()=> setView(b.getAttribute("data-view")));
+  });
+
+  function refreshKpis(){
+    const reqs = loadJson(KEY_REQ, []);
+    const drafts = loadJson(KEY_DRAFT, []);
+    const open = reqs.filter(r=> (r.status||"open")==="open").length;
+    const draftCount = drafts.filter(d=> (d.status||"draft")==="draft").length;
+    const now = new Date();
+    const sentThisMonth = drafts.filter(d=>{
+      if((d.status||"draft")!=="sent") return false;
+      const dt = d.sent_at ? new Date(d.sent_at) : null;
+      return dt && dt.getMonth()===now.getMonth() && dt.getFullYear()===now.getFullYear();
+    }).length;
+    const decisions = drafts.filter(d=> d.status==="won" || d.status==="lost");
+    const won = decisions.filter(d=> d.status==="won").length;
+    const winRate = decisions.length ? Math.round((won/decisions.length)*100) + "%" : "—";
+
+    $("kpiOpen").textContent = open;
+    $("kpiDrafts").textContent = draftCount;
+    $("kpiSent").textContent = sentThisMonth;
+    $("kpiWin").textContent = winRate;
+  }
+
+  // Settings
+  function loadSettingsToUi(){
+    const s = loadJson(KEY_SET, { laborRate: 120, taxRate: 8.25, companyFooter: "Thank you for your business." });
+    $("laborRate").value = s.laborRate ?? 120;
+    $("taxRate").value = s.taxRate ?? 8.25;
+    $("companyFooter").value = s.companyFooter ?? "";
+  }
+  loadSettingsToUi();
+
+  $("btnSaveSettings")?.addEventListener("click", ()=>{
+    const laborRate = Number($("laborRate").value || 0);
+    const taxRate = Number($("taxRate").value || 0);
+    const companyFooter = String($("companyFooter").value || "");
+    saveJson(KEY_SET, { laborRate, taxRate, companyFooter });
+    alert("Saved ✅");
+  });
+
+  // Templates
+  function renderTemplates(){
+    const list = $("templateList");
+    const empty = $("templateEmpty");
+    const templates = loadJson(KEY_TPL, []);
+    if(!list) return;
+    list.innerHTML = "";
+    if(!templates.length){
+      if(empty) empty.style.display = "block";
+      return;
+    }
+    if(empty) empty.style.display = "none";
+    templates.forEach(t=>{
+      const li = document.createElement("li");
+      li.innerHTML = "<strong>"+(t.title||"Template")+"</strong><div class='small'>"+(t.body||"")+"</div>";
+      list.appendChild(li);
+    });
+  }
+  $("btnAddTemplate")?.addEventListener("click", ()=>{
+    const title = prompt("Template title", "Warranty (1 year)");
+    if(title===null) return;
+    const body = prompt("Template text", "Warranty: 1 year parts & labor. Excludes misuse and acts of nature.");
+    if(body===null) return;
+    const templates = loadJson(KEY_TPL, []);
+    templates.unshift({ id: uid(), title: (title||"").trim() || "Template", body: (body||"").trim() });
+    saveJson(KEY_TPL, templates);
+    renderTemplates();
+  });
+  renderTemplates();
+
+  // Intake
+  function readIntake(){
+    return {
+      id: uid(),
+      created_at: Date.now(),
+      status: "open",
+      customer_name: $("customerName").value.trim(),
+      customer_phone: $("customerPhone").value.trim(),
+      customer_email: $("customerEmail").value.trim(),
+      service_type: $("serviceType").value,
+      job_address: $("jobAddress").value.trim(),
+      scope: $("scope").value.trim(),
+      target_date: $("targetDate").value || null,
+      priority: $("priority").value,
+      internal_notes: $("internalNotes").value.trim()
+    };
+  }
+  function clearIntake(){
+    ["customerName","customerPhone","customerEmail","jobAddress","scope","internalNotes"].forEach(id=>{ if($(id)) $(id).value=""; });
+    if($("targetDate")) $("targetDate").value = "";
+    if($("priority")) $("priority").value = "normal";
+  }
+
+  $("btnSaveIntake")?.addEventListener("click", ()=>{
+    const req = readIntake();
+    if(!req.customer_name || !req.job_address || !req.scope){
+      $("msgIntake").textContent = "Please enter at least: customer name, address, and scope.";
+      return;
+    }
+    const reqs = loadJson(KEY_REQ, []);
+    reqs.unshift(req);
+    saveJson(KEY_REQ, reqs);
+    $("msgIntake").textContent = "Saved ✅";
+    setTimeout(()=>{ $("msgIntake").textContent=""; }, 1200);
+    refreshKpis();
+    clearIntake();
+  });
+
+  function newDraftFromRequest(req){
+    const settings = loadJson(KEY_SET, { laborRate: 120, taxRate: 8.25, companyFooter: "" });
+    const laborLine = { id: uid(), desc: "Labor", qty: 2, unit: "hr", rate: Number(settings.laborRate||0) };
+    const materialsLine = { id: uid(), desc: "Materials", qty: 1, unit: "lot", rate: 150 };
+    return {
+      id: uid(),
+      created_at: Date.now(),
+      status: "draft",
+      request_id: req.id,
+      customer_name: req.customer_name,
+      customer_email: req.customer_email,
+      customer_phone: req.customer_phone,
+      address: req.job_address,
+      service_type: req.service_type,
+      scope: req.scope,
+      terms: (loadJson(KEY_TPL, [])[0]?.body) || "Payment due upon completion.",
+      footer: settings.companyFooter || "",
+      lines: [laborLine, materialsLine],
+      tax_rate: Number(settings.taxRate||0),
+      sent_at: null
+    };
+  }
+
+  $("btnCreateDraft")?.addEventListener("click", ()=>{
+    const req = readIntake();
+    if(!req.customer_name || !req.job_address || !req.scope){
+      $("msgIntake").textContent = "Please enter at least: customer name, address, and scope.";
+      return;
+    }
+    const reqs = loadJson(KEY_REQ, []);
+    reqs.unshift(req);
+    saveJson(KEY_REQ, reqs);
+
+    const drafts = loadJson(KEY_DRAFT, []);
+    drafts.unshift(newDraftFromRequest(req));
+    saveJson(KEY_DRAFT, drafts);
+
+    refreshKpis();
+    clearIntake();
+    setView("drafts");
+    renderDrafts();
+  });
+
+  // Drafts
+  function money(n){
+    const x = Number(n||0);
+    return x.toLocaleString(undefined,{style:"currency",currency:"USD"});
+  }
+  function calcTotals(d){
+    const sub = (d.lines||[]).reduce((a,l)=> a + (Number(l.qty||0) * Number(l.rate||0)), 0);
+    const tax = sub * (Number(d.tax_rate||0)/100);
+    return { sub, tax, total: sub + tax };
+  }
+
+  function renderDrafts(){
+    const wrap = $("draftList");
+    const empty = $("draftEmpty");
+    if(!wrap) return;
+    const q = ($("searchDrafts")?.value || "").toLowerCase().trim();
+    let drafts = loadJson(KEY_DRAFT, []);
+    if(q){
+      drafts = drafts.filter(d =>
+        (d.customer_name||"").toLowerCase().includes(q) ||
+        (d.address||"").toLowerCase().includes(q) ||
+        (d.scope||"").toLowerCase().includes(q)
+      );
+    }
+    wrap.innerHTML = "";
+    if(!drafts.length){
+      if(empty) empty.style.display = "block";
+      return;
+    }
+    if(empty) empty.style.display = "none";
+
+    drafts.sort((a,b)=> (b.created_at||0) - (a.created_at||0));
+    drafts.forEach(d=>{
+      const t = calcTotals(d);
+      const card = document.createElement("div");
+      card.className = "rowcard";
+      card.innerHTML =
+        '<div class="row between" style="gap:8px;">' +
+          '<div style="min-width:220px;">' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+              '<strong>'+(d.customer_name || "Customer")+'</strong>' +
+              statusBadge(d.status) +
+            '</div>' +
+            '<div class="small">'+(d.service_type || "")+' • '+(d.address || "")+'</div>' +
+            '<div class="small">Created: '+fmtDate(d.created_at)+'</div>' +
+          '</div>' +
+          '<div style="text-align:right;min-width:180px;">' +
+            '<div style="font-weight:1000;font-size:16px;">'+money(t.total)+'</div>' +
+            '<div class="small">Subtotal '+money(t.sub)+' • Tax '+money(t.tax)+'</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="hr"></div>' +
+        '<div class="small"><strong>Scope:</strong> '+ String(d.scope||"").replaceAll("<","&lt;").replaceAll(">","&gt;") +'</div>' +
+        '<div class="hr"></div>' +
+        '<div class="actions">' +
+          '<button class="btn-outline" type="button" data-act="edit" data-id="'+d.id+'">✏️ Edit lines</button>' +
+          '<button class="btn-outline" type="button" data-act="send" data-id="'+d.id+'">📤 Mark sent</button>' +
+          '<button class="btn-outline" type="button" data-act="won" data-id="'+d.id+'">✅ Won</button>' +
+          '<button class="btn-outline" type="button" data-act="lost" data-id="'+d.id+'">❌ Lost</button>' +
+          '<button class="btn-danger"  type="button" data-act="del" data-id="'+d.id+'">🗑 Delete</button>' +
+        '</div>';
+      wrap.appendChild(card);
+    });
+
+    wrap.querySelectorAll("button[data-act]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const act = btn.getAttribute("data-act");
+        const id = btn.getAttribute("data-id");
+        const draftsAll = loadJson(KEY_DRAFT, []);
+        const idx = draftsAll.findIndex(x=>x.id===id);
+        if(idx<0) return;
+        const d = draftsAll[idx];
+
+        if(act==="del"){
+          if(!confirm("Delete this draft?")) return;
+          draftsAll.splice(idx,1);
+          saveJson(KEY_DRAFT, draftsAll);
+          renderDrafts(); refreshKpis();
+          return;
+        }
+        if(act==="send"){
+          d.status = "sent";
+          d.sent_at = Date.now();
+          saveJson(KEY_DRAFT, draftsAll);
+          renderDrafts(); refreshKpis();
+          alert("Marked as sent ✅ (Next: automate email/SMS follow-up via n8n)");
+          return;
+        }
+        if(act==="won" || act==="lost"){
+          d.status = act;
+          saveJson(KEY_DRAFT, draftsAll);
+          renderDrafts(); refreshKpis();
+          return;
+        }
+        if(act==="edit"){
+          const lines = d.lines || [];
+          const current = lines.map(l=> (l.desc||"Item")+" | qty "+(l.qty||1)+" "+(l.unit||"ea")+" | $"+(l.rate||0)).join("\n");
+          const updated = prompt("Edit line items (one per line):\nDESC | qty N unit | $RATE", current);
+          if(updated===null) return;
+          const parsed = updated.split(/\n+/).map(s=>s.trim()).filter(Boolean).map(s=>{
+            const parts = s.split("|").map(x=>x.trim());
+            const desc = parts[0] || "Item";
+            let qty = 1, unit="ea", rate=0;
+            const qtyMatch = (parts[1]||"").match(/qty\s*(\d+(?:\.\d+)?)(?:\s*(\w+))?/i);
+            if(qtyMatch){ qty = Number(qtyMatch[1]||1); unit = qtyMatch[2]||unit; }
+            const rateMatch = (parts[2]||parts[1]||"").match(/\$?\s*(\d+(?:\.\d+)?)/);
+            if(rateMatch){ rate = Number(rateMatch[1]||0); }
+            return { id: uid(), desc, qty, unit, rate };
+          });
+          d.lines = parsed.length ? parsed : d.lines;
+          saveJson(KEY_DRAFT, draftsAll);
+          renderDrafts(); refreshKpis();
+          return;
+        }
+      });
+    });
+  }
+  $("searchDrafts")?.addEventListener("input", renderDrafts);
+
+  // Demo + Clear
+  $("btnLoadDemo")?.addEventListener("click", ()=>{
+    const reqs = [{
+      id: uid(),
+      created_at: Date.now()-86400000,
+      status:"open",
+      customer_name:"Jane Doe",
+      customer_phone:"(555) 212-3344",
+      customer_email:"jane@example.com",
+      service_type:"HVAC",
+      job_address:"44 Lakeview Dr, Plano, TX",
+      scope:"Replace condenser fan motor and test system operation.",
+      target_date:null,
+      priority:"normal",
+      internal_notes:"Existing customer."
+    }];
+    const templates = [
+      { id: uid(), title:"Payment Terms", body:"50% deposit due on approval. Remaining balance due upon completion." },
+      { id: uid(), title:"Warranty", body:"Warranty: 1 year parts & labor (manufacturer warranty applies). Excludes misuse and acts of nature." }
+    ];
+    saveJson(KEY_REQ, reqs);
+    saveJson(KEY_TPL, templates);
+    renderTemplates();
+    refreshKpis();
+    alert("Demo loaded ✅");
+  });
+
+  $("btnClearAll")?.addEventListener("click", ()=>{
+    if(!confirm("Clear ALL quoting/proposal prototype data for this page?")) return;
+    [KEY_REQ, KEY_DRAFT, KEY_TPL].forEach(k=> localStorage.removeItem(k));
+    refreshKpis();
+    renderTemplates();
+    renderDrafts();
+  });
+
+  // Initial
+  refreshKpis();
+  renderDrafts();
+</script>
+</body>
+</html>

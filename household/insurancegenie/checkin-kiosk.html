@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Salon Genie – Check-In Kiosk</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="icon" href="data:,">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+  <!-- Shared (auth-header.js intentionally excluded — kiosk is a public page) -->
+  <script src="/shared/js/app-config.js"></script>
+  <script type="module" src="/shared/js/sb-client.js"></script>
+  <script type="module" src="/shared/js/sb-client-bridge.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════
+   SALON GENIE CHECK-IN KIOSK
+   Warm cream · DM Serif Display · DM Sans
+   Touch-optimized · Tablet-first
+═══════════════════════════════════════════════════════ */
+:root {
+  --bg:          #FDFAF6;
+  --s1:          #FFFFFF;
+  --s2:          #F5F0E8;
+  --s3:          #EDE6D8;
+  --border:      rgba(0,0,0,0.07);
+  --border2:     rgba(0,0,0,0.11);
+  --ink:         #1C1814;
+  --mid:         #6A6058;
+  --muted:       #A89A8E;
+  --blush:       #C4856A;
+  --blush-dim:   rgba(196,133,106,0.12);
+  --blush-light: #F0D5C8;
+  --amber:       #C4993A;
+  --amber-dim:   rgba(196,153,58,0.12);
+  --teal:        #3D7A72;
+  --teal-dim:    rgba(61,122,114,0.12);
+  --forest:      #4A7C65;
+  --red:         #B85A5A;
+  --red-dim:     rgba(184,90,90,0.1);
+  --shadow:      0 4px 24px rgba(28,24,20,0.08);
+  --shadow-lg:   0 12px 48px rgba(28,24,20,0.14);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  height: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+}
+
+/* ─── BOOT LOADER ─── */
+#bootLoader {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 9999;
+  transition: opacity 0.4s;
+}
+#bootLoader.hidden { opacity: 0; pointer-events: none; }
+.boot-logo-mark {
+  width: 56px; height: 56px;
+  background: linear-gradient(135deg, var(--blush), var(--amber));
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  animation: pulse-soft 2s infinite;
+}
+@keyframes pulse-soft {
+  0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(196,133,106,0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(196,133,106,0); }
+}
+.boot-text {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: var(--ink);
+}
+.boot-text span { color: var(--blush); }
+.boot-sub { font-size: 13px; color: var(--muted); letter-spacing: 0.5px; }
+.boot-spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--s3);
+  border-top-color: var(--blush);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── ERROR STATE ─── */
+#errorState {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px;
+  z-index: 9998;
+  text-align: center;
+}
+#errorState.show { display: flex; }
+.error-icon { font-size: 48px; }
+.error-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--ink); }
+.error-msg   { font-size: 14px; color: var(--mid); max-width: 400px; line-height: 1.6; }
+.error-hint  { font-size: 12px; color: var(--muted); font-family: monospace; background: var(--s2); padding: 8px 16px; border-radius: 8px; }
+
+/* ─── KIOSK SETUP SCREEN ─── */
+#kioskSetup {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px;
+  z-index: 9997;
+  text-align: center;
+}
+#kioskSetup.show { display: flex; }
+.setup-gem {
+  width: 64px; height: 64px;
+  background: linear-gradient(135deg, var(--blush), var(--amber));
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 8px 24px rgba(196,133,106,0.3);
+  margin-bottom: 4px;
+}
+.setup-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--ink); }
+.setup-sub   { font-size: 14px; color: var(--mid); max-width: 360px; line-height: 1.6; }
+.setup-input {
+  padding: 14px 18px;
+  border: 2px solid var(--border2);
+  border-radius: 12px;
+  font-size: 18px;
+  font-family: 'DM Serif Display', serif;
+  letter-spacing: 4px;
+  text-align: center;
+  width: 240px;
+  outline: none;
+  background: var(--s1);
+  color: var(--ink);
+  transition: border-color .2s;
+}
+.setup-input:focus { border-color: var(--blush); }
+.setup-btn {
+  padding: 14px 36px;
+  background: var(--blush);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(196,133,106,0.3);
+  transition: all .18s;
+}
+.setup-btn:hover { background: #B5745A; transform: translateY(-1px); }
+.setup-error { font-size: 13px; color: var(--red); min-height: 18px; }
+.kiosk-shell {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+@media (max-width: 1024px) {
+  .kiosk-shell    { grid-template-columns: 1fr !important; grid-template-rows: 1fr; height: 100vh; }
+  .kiosk-left     { display: none !important; }
+  .kiosk-right    { height: 100vh; flex: 1; }
+  .step-panel     { padding: 14px 18px 14px; justify-content: space-between; }
+  /* Phone step: no centering on mobile, footer stays visible */
+  #phoneStepView  { margin-top: 0; margin-bottom: 0; justify-content: flex-start; }
+  .step-body-phone { gap: 10px; }
+  .keypad-btn     { height: 56px; font-size: 21px; }
+  .keypad-grid    { gap: 7px; }
+  .phone-display  { padding: 11px 15px; margin-bottom: 6px; }
+  #phoneDisplay   { font-size: 21px; }
+  .step-footer    { padding-top: 10px; }
+  .pill-btn       { height: 42px; padding: 0 14px; font-size: 13px; }
+
+  /* Step 4: status badge smaller on mobile */
+  .status-badge { top: 8px; right: 8px; width: 8px; height: 8px; }
+
+  /* Reduce title size so it doesn't push content down */
+  .step-title { font-size: 22px; margin-bottom: 4px; }
+  .step-subtitle { font-size: 13px; margin-bottom: 14px; }
+
+  /* Footer: allow wrapping if buttons don't fit */
+  .step-footer { flex-wrap: wrap; gap: 8px; }
+  .step-footer-right { flex-wrap: wrap; gap: 8px; }
+}
+@media (min-width: 1025px) {
+  .kiosk-mobile-bar { display: none !important; }
+}
+/* Also hide left panel when viewport is short/narrow */
+@media (max-height: 700px) and (max-width: 1200px) {
+  .kiosk-left     { display: none !important; }
+  .kiosk-shell    { grid-template-columns: 1fr !important; height: 100vh; }
+  .kiosk-right    { height: 100vh; }
+  .step-panel     { padding: 16px 20px 12px; justify-content: space-between; }
+  #phoneStepView  { margin-top: 0; margin-bottom: 0; justify-content: flex-start; }
+  .keypad-btn     { height: 52px; font-size: 20px; }
+  .step-footer    { padding-top: 10px; }
+  .pill-btn       { height: 40px; padding: 0 16px; font-size: 13px; }
+  .step-body-phone { gap: 10px; }
+  .phone-display  { padding: 10px 14px; margin-bottom: 10px; }
+}
+@media (min-width: 1400px) {
+  .kiosk-shell { grid-template-columns: 500px 1fr; }
+}
+
+/* ─── LEFT PANEL ─── */
+.kiosk-left {
+  background: linear-gradient(160deg, #1C1814 0%, #2E2420 60%, #3A2E28 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 44px 36px;
+  position: relative;
+  overflow: hidden;
+}
+.kiosk-left::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 320px; height: 320px;
+  background: radial-gradient(circle, rgba(196,133,106,0.18) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.kiosk-left::after {
+  content: '';
+  position: absolute;
+  bottom: -60px; left: -60px;
+  width: 240px; height: 240px;
+  background: radial-gradient(circle, rgba(196,153,58,0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.kiosk-logo { margin-bottom: 36px; display: flex; align-items: center; gap: 16px; }
+.kiosk-logo-gem {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, var(--blush), var(--amber));
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px rgba(196,133,106,0.35);
+}
+.kiosk-logo-text { display: flex; flex-direction: column; }
+.kiosk-logo-main {
+  font-family: 'DM Serif Display', serif;
+  font-size: 26px;
+  color: #F7F3EE;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+}
+.kiosk-logo-name-highlight { color: var(--blush); }
+.kiosk-logo-sub {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(247,243,238,0.45);
+  margin-top: 4px;
+}
+
+.kiosk-signin-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: rgba(247,243,238,0.9);
+  margin-bottom: 24px;
+  font-style: italic;
+}
+
+.promo-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+.promo-image {
+  height: 160px;
+  background: linear-gradient(135deg,
+    rgba(196,133,106,0.3) 0%,
+    rgba(196,153,58,0.2) 50%,
+    rgba(61,122,114,0.2) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  position: relative;
+  overflow: hidden;
+}
+.promo-image::before {
+  content: '💅';
+  font-size: 72px;
+  opacity: 0.4;
+  position: absolute;
+  right: -10px; bottom: -10px;
+  transform: rotate(-15deg);
+}
+.promo-text {
+  padding: 18px 20px;
+}
+.promo-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  color: rgba(247,243,238,0.95);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.promo-body {
+  font-size: 12px;
+  color: rgba(247,243,238,0.55);
+  line-height: 1.6;
+}
+
+.promo-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.promo-footer-dots {
+  display: flex; gap: 6px;
+}
+.promo-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  transition: all 0.3s;
+}
+.promo-dot.active {
+  background: var(--blush);
+  width: 18px;
+  border-radius: 3px;
+}
+.kiosk-left-footer {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(247,243,238,0.3);
+}
+
+/* ─── RIGHT PANEL ─── */
+.kiosk-right {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* Mobile-only salon name bar */
+.kiosk-mobile-bar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #1C1814, #2E2420);
+  flex-shrink: 0;
+}
+.kiosk-mobile-gem {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--blush), var(--amber));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.kiosk-mobile-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  color: #F7F3EE;
+  letter-spacing: 0.5px;
+}
+@media (max-width: 900px) {
+  .kiosk-mobile-bar { display: flex; }
+}
+
+.kiosk-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 36px;
+  height: 60px;
+  background: var(--s2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.kiosk-header-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+.kiosk-step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.step-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--s3);
+  transition: all 0.3s;
+}
+.step-dot.active {
+  background: var(--blush);
+  transform: scale(1.2);
+}
+.step-dot.done {
+  background: var(--teal);
+}
+#stepLabel {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-left: 8px;
+}
+
+.kiosk-step-shell {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ─── STEP PANELS ─── */
+.step-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 36px 24px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(24px);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  overflow: hidden;
+}
+.step-panel.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+.step-panel.leaving {
+  opacity: 0;
+  transform: translateX(-24px);
+}
+
+.step-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px;
+  color: var(--ink);
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+.step-subtitle {
+  font-size: 14px;
+  color: var(--mid);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.step-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--s3) transparent;
+}
+.step-body::-webkit-scrollbar { width: 4px; }
+.step-body::-webkit-scrollbar-thumb { background: var(--s3); border-radius: 2px; }
+
+.step-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+/* Gap above footer for steps with scrollable body */
+.step-body + .step-footer { margin-top: 16px; }
+.step-footer-right { display: flex; gap: 10px; }
+
+/* ─── BUTTONS ─── */
+.pill-btn {
+  height: 50px;
+  padding: 0 28px;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+.pill-btn.primary {
+  background: var(--blush);
+  color: white;
+  box-shadow: 0 4px 16px rgba(196,133,106,0.3);
+}
+.pill-btn.primary:hover { background: #B5745A; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(196,133,106,0.4); }
+.pill-btn.primary:active { transform: scale(0.97); }
+.pill-btn.primary:disabled { background: var(--s3); color: var(--muted); box-shadow: none; cursor: not-allowed; transform: none; }
+
+.pill-btn.ghost {
+  background: var(--s1);
+  color: var(--mid);
+  border: 1px solid var(--border2);
+}
+.pill-btn.ghost:hover { border-color: var(--blush); color: var(--blush); }
+.pill-btn.ghost:active { transform: scale(0.97); }
+
+/* ─── STEP 1: PHONE KEYPAD ─── */
+.step-body-phone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding-right: 0;
+  width: 100%;
+  max-width: 400px; /* fixed container — never shrinks with content */
+}
+/* Phone keypad view - uses margin:auto to center within step-panel */
+#phoneStepView {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  /* margin:auto centers this block vertically in the remaining space */
+  margin-top: auto;
+  margin-bottom: auto;
+}
+.phone-panel { width: 100%; max-width: 400px; }
+.phone-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--s1);
+  border: 2px solid var(--border2);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  transition: border-color 0.2s;
+  width: 100%; /* never shrink with content */
+  box-sizing: border-box;
+}
+.phone-display.has-input { border-color: var(--blush); }
+#phoneDisplay {
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px;
+  color: var(--ink);
+  letter-spacing: 1px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+#phoneDisplay.placeholder { color: var(--muted); }
+#phoneClearBtn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--s2);
+  color: var(--mid);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+#phoneClearBtn:hover { border-color: var(--red); color: var(--red); }
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 400px;
+  width: 100%;
+}
+.keypad-btn {
+  height: 72px;
+  border-radius: 14px;
+  border: 1px solid var(--border2);
+  background: var(--s1);
+  font-family: 'DM Serif Display', serif;
+  font-size: 26px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  box-shadow: 0 2px 8px rgba(28,24,20,0.04);
+}
+.keypad-btn:hover { background: var(--s2); border-color: var(--blush); }
+.keypad-btn:active { transform: scale(0.93); background: var(--blush-dim); }
+.keypad-btn.function {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mid);
+  letter-spacing: 0.5px;
+}
+.keypad-btn.function:active { transform: scale(0.93); background: var(--red-dim); color: var(--red); }
+
+/* ─── NEW CLIENT FORM ─── */
+.new-client-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 480px;
+}
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+.field-input {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border2);
+  background: var(--s1);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.field-input:focus { border-color: var(--blush); background: white; }
+.field-input[readonly] {
+  background: var(--s2);
+  color: var(--mid);
+  cursor: default;
+}
+.field-note { font-size: 11px; color: var(--muted); }
+
+/* ─── RETURNING CUSTOMER BANNER ─── */
+.returning-banner {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--teal-dim);
+  border: 1px solid rgba(61,122,114,0.2);
+  border-radius: 14px;
+  margin-bottom: 20px;
+  animation: slideDown 0.3s ease;
+}
+.returning-banner.show { display: flex; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.returning-avatar {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: var(--teal);
+  color: white;
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.returning-name { font-weight: 600; font-size: 16px; color: var(--ink); }
+.returning-sub  { font-size: 12px; color: var(--teal); margin-top: 2px; }
+
+/* ─── STEP 2: CATEGORY GRID ─── */
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+.category-card {
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--s1);
+  cursor: pointer;
+  transition: all 0.18s;
+  box-shadow: var(--shadow);
+  touch-action: manipulation;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+.category-card:hover { border-color: var(--blush); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.category-card:active { transform: scale(0.97); }
+.category-card.selected {
+  border-color: var(--blush);
+  background: var(--blush-dim);
+  box-shadow: 0 0 0 3px rgba(196,133,106,0.15);
+}
+.category-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--s2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+.category-card.selected .category-icon { border-color: var(--blush); background: var(--blush-dim); }
+.category-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  flex: 1;
+}
+.category-card.selected .category-label { color: var(--blush); }
+
+/* ─── STEP 3: SERVICE LIST ─── */
+.service-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+.service-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--s1);
+  cursor: pointer;
+  transition: all 0.15s;
+  touch-action: manipulation;
+}
+.service-item:hover { border-color: var(--blush); background: var(--blush-dim); }
+.service-item:active { transform: scale(0.98); }
+.service-item.selected {
+  border-color: var(--blush);
+  background: var(--blush-dim);
+}
+.service-item-left { display: flex; flex-direction: column; gap: 3px; }
+.service-item-name { font-size: 15px; font-weight: 600; color: var(--ink); }
+.service-item-meta { font-size: 12px; color: var(--muted); }
+.service-item-right { display: flex; align-items: center; gap: 10px; }
+.service-item-price {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--blush);
+}
+.service-check {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-size: 12px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.service-item.selected .service-check {
+  background: var(--blush);
+  border-color: var(--blush);
+}
+
+.selection-summary {
+  padding: 14px 18px;
+  background: var(--s2);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--mid);
+  border: 1px solid var(--border);
+  line-height: 1.5;
+  margin-top: 8px;
+}
+.selection-summary strong { color: var(--blush); }
+
+/* ─── STEP 4: TECHNICIAN GRID ─── */
+.tech-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+@media (min-width: 1025px) {
+  .tech-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.tech-card {
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--s1);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  touch-action: manipulation;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+.tech-card:hover { border-color: var(--blush); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.tech-card:active { transform: scale(0.97); }
+.tech-card.selected {
+  border-color: var(--blush);
+  background: var(--blush-dim);
+  box-shadow: 0 0 0 3px rgba(196,133,106,0.15);
+}
+.tech-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--s2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--mid);
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+.tech-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.tech-name { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tech-caption { font-size: 11px; color: var(--muted); }
+.tech-card-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+
+/* Next Available card — same style as others, just with teal accent on icon */
+.next-available-card { border-color: rgba(61,122,114,0.3); }
+.next-available-card:hover { border-color: var(--teal); }
+.next-available-card.selected {
+  border-color: var(--teal);
+  background: var(--teal-dim);
+  box-shadow: 0 0 0 3px rgba(61,122,114,0.15);
+}
+.next-available-card .tech-name  { color: var(--teal); }
+.next-available-card .tech-caption { color: var(--teal); opacity: 0.75; }
+.next-available-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--teal);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.status-badge {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+.status-badge.available  { background: var(--forest); }
+.status-badge.busy       { background: var(--amber); }
+.status-badge.off        { background: var(--red); }
+
+.status-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+
+/* ─── STEP 5: TICKET ─── */
+.ticket-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 20px 0;
+}
+.ticket-badge {
+  background: linear-gradient(135deg, var(--blush), var(--amber));
+  color: white;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 48px;
+  box-shadow: 0 12px 40px rgba(196,133,106,0.4);
+  animation: ticket-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes ticket-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.ticket-number-label {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+.ticket-welcome {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.ticket-emoji { font-size: 36px; }
+.ticket-detail {
+  font-size: 15px;
+  color: var(--mid);
+  max-width: 380px;
+  line-height: 1.6;
+}
+.ticket-services-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 4px;
+}
+.ticket-service-chip {
+  background: var(--blush-dim);
+  border: 1px solid rgba(196,133,106,0.25);
+  color: var(--blush);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ticket-tech-chip {
+  background: var(--teal-dim);
+  border: 1px solid rgba(61,122,114,0.2);
+  color: var(--teal);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ticket-countdown {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+#countdownTimer {
+  font-weight: 700;
+  color: var(--blush);
+  font-size: 14px;
+}
+
+/* ─── ADD MORE MODAL ─── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(28,24,20,0.5);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 500;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--s1);
+  border-radius: 20px;
+  padding: 36px;
+  width: min(420px, 90vw);
+  box-shadow: 0 24px 60px rgba(28,24,20,0.2);
+  text-align: center;
+  animation: modal-in 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes modal-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-box h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.modal-sub {
+  font-size: 13px;
+  color: var(--mid);
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+.modal-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.modal-btn {
+  height: 52px;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s;
+  touch-action: manipulation;
+}
+.modal-btn.yes { background: var(--blush); color: white; box-shadow: 0 4px 16px rgba(196,133,106,0.3); }
+.modal-btn.yes:hover { background: #B5745A; transform: translateY(-1px); }
+.modal-btn.teal { background: var(--teal); color: white; box-shadow: 0 4px 16px rgba(61,122,114,0.3); }
+.modal-btn.teal:hover { background: #2E6860; transform: translateY(-1px); }
+.modal-btn.no  { background: var(--s2); color: var(--mid); border: 1px solid var(--border2); }
+.modal-btn.no:hover  { border-color: var(--ink); color: var(--ink); }
+
+/* ─── LOADING SKELETON ─── */
+.skeleton {
+  background: linear-gradient(90deg, var(--s2) 25%, var(--s3) 50%, var(--s2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 10px;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ─── TOAST ─── */
+.kiosk-toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink);
+  color: #F7F3EE;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(28,24,20,0.2);
+}
+.kiosk-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.kiosk-toast.success { background: var(--teal); }
+.kiosk-toast.error   { background: var(--red); }
+
+/* ─── ADMIN SETUP SCREEN EXTRAS ─── */
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:background .15s,border-color .15s}
+.pin-dot.filled{background:var(--blush);border-color:var(--blush)}
+.pin-dot.error{background:var(--red);border-color:var(--red)}
+.pin-key{width:72px;height:64px;border-radius:12px;border:1.5px solid var(--border2);background:var(--s1);color:var(--ink);font-size:22px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center}
+.pin-key:active{background:var(--blush-dim);border-color:var(--blush);transform:scale(.93)}
+.pin-key.ghost{background:transparent;border-color:transparent;color:var(--muted);font-size:18px}
+.pin-key.ghost:active{background:var(--s2)}
+.setup-card{background:var(--s1);border:1px solid var(--border2);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.setup-card-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.setup-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
+.setup-row-key{font-size:13px;color:var(--mid)}
+.setup-row-val{font-size:11px;font-family:monospace;color:var(--ink);background:var(--s2);padding:2px 8px;border-radius:6px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.setup-status-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px}
+.setup-status-badge.ok{background:var(--teal-dim);color:var(--teal)}
+.setup-status-badge.err{background:var(--red-dim);color:var(--red)}
+.setup-text-input{width:100%;padding:11px 14px;border:1.5px solid var(--border2);border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--s1);outline:none;transition:border-color .18s}
+.setup-text-input:focus{border-color:var(--blush)}
+.setup-action-btn{width:100%;padding:11px 14px;border:1px solid var(--border2);border-radius:10px;background:transparent;color:var(--ink);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:left;transition:all .15s}
+.setup-action-btn:hover{background:var(--s2);border-color:var(--blush)}
+</style>
+</head>
+<body>
+
+<!-- ── BOOT LOADER ── -->
+<div id="bootLoader">
+  <div class="boot-logo-mark">✦</div>
+  <div class="boot-text">Salon <span>Genie</span></div>
+  <div class="boot-sub">Loading check-in kiosk…</div>
+  <div class="boot-spinner"></div>
+</div>
+
+<!-- ── ERROR STATE ── -->
+<div id="errorState">
+  <div class="error-icon">⚠️</div>
+  <div class="error-title">Kiosk Not Ready</div>
+  <div class="error-msg" id="errorMsg">Unable to connect to the salon system. Please ask a staff member for assistance.</div>
+  <div class="error-hint" id="errorHint"></div>
+</div>
+
+<!-- ── KIOSK ADMIN SETUP (PIN-gated · tap logo 5× or ?setup=1) ── -->
+<div id="kioskSetup">
+
+  <!-- SCREEN A: PIN entry -->
+  <div id="setupScreenPin" style="display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:340px">
+    <div class="setup-gem">✦</div>
+    <div class="setup-title">Admin Setup</div>
+    <div class="setup-sub">Enter your 4-digit admin PIN to access kiosk settings.</div>
+
+    <div style="display:flex;gap:12px;margin:4px 0" id="pinDots">
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+      <div class="pin-dot" id="pd4"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px">
+      <button class="pin-key" onclick="adminPinKey(1)">1</button>
+      <button class="pin-key" onclick="adminPinKey(2)">2</button>
+      <button class="pin-key" onclick="adminPinKey(3)">3</button>
+      <button class="pin-key" onclick="adminPinKey(4)">4</button>
+      <button class="pin-key" onclick="adminPinKey(5)">5</button>
+      <button class="pin-key" onclick="adminPinKey(6)">6</button>
+      <button class="pin-key" onclick="adminPinKey(7)">7</button>
+      <button class="pin-key" onclick="adminPinKey(8)">8</button>
+      <button class="pin-key" onclick="adminPinKey(9)">9</button>
+      <button class="pin-key ghost" onclick="adminCloseSetup()">✕</button>
+      <button class="pin-key" onclick="adminPinKey(0)">0</button>
+      <button class="pin-key ghost" onclick="adminPinBackspace()">⌫</button>
+    </div>
+    <div class="setup-error" id="pinError"></div>
+  </div>
+
+  <!-- SCREEN B: Settings panel (shown after correct PIN) -->
+  <div id="setupScreenSettings" style="display:none;flex-direction:column;gap:16px;width:100%;max-width:440px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+      <div class="setup-gem" style="width:44px;height:44px;font-size:20px;border-radius:12px;flex-shrink:0;box-shadow:none">✦</div>
+      <div>
+        <div class="setup-title" style="font-size:20px">Kiosk Settings</div>
+        <div style="font-size:12px;color:var(--muted)">Salon Genie Admin</div>
+      </div>
+    </div>
+
+    <!-- Status card -->
+    <div class="setup-card">
+      <div class="setup-card-label">Current Status</div>
+      <div class="setup-row">
+        <span class="setup-row-key">Business ID</span>
+        <code class="setup-row-val" id="sc_bid">Not set</code>
+      </div>
+      <div class="setup-row">
+        <span class="setup-row-key">Salon name</span>
+        <span class="setup-row-val" id="sc_biz" style="font-weight:600">—</span>
+      </div>
+      <div class="setup-row" style="border:none">
+        <span class="setup-row-key">Connection</span>
+        <span id="sc_status" class="setup-status-badge">● Checking…</span>
+      </div>
+    </div>
+
+    <!-- Update business ID -->
+    <div class="setup-card">
+      <div class="setup-card-label">Update Business ID</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5">
+        Paste the Business ID from your Salon Genie dashboard → Settings → Kiosk.
+      </div>
+      <input id="sc_bidInput" class="setup-text-input" type="text"
+        placeholder="e.g. 0af9e368-f488-449b-8013-7f44361be462"
+        autocomplete="off" autocorrect="off" spellcheck="false"/>
+      <div id="sc_bidError" style="font-size:12px;color:var(--red);min-height:16px;margin-top:4px"></div>
+      <button class="setup-btn" style="width:100%;margin-top:8px" onclick="adminSaveBusinessId()">
+        Save &amp; Reload Kiosk
+      </button>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="setup-card">
+      <div class="setup-card-label">Quick Actions</div>
+      <button class="setup-action-btn" onclick="adminReload()">🔄 Reload kiosk</button>
+      <button class="setup-action-btn" onclick="adminClearCache()">🗑️ Clear cached data &amp; reload</button>
+      <button class="setup-action-btn" onclick="adminChangePIN()">🔐 Change admin PIN</button>
+    </div>
+
+    <!-- Change PIN subpanel -->
+    <div id="changePinPanel" class="setup-card" style="display:none">
+      <div class="setup-card-label">Change Admin PIN</div>
+      <input id="newPin1" class="setup-text-input" type="password" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" style="margin-bottom:8px"/>
+      <input id="newPin2" class="setup-text-input" type="password" inputmode="numeric" maxlength="4" placeholder="Confirm new PIN"/>
+      <div id="changePinErr" style="font-size:12px;color:var(--red);min-height:16px;margin-top:4px"></div>
+      <button class="setup-btn" style="width:100%;margin-top:8px;background:var(--teal)" onclick="adminSavePIN()">Save New PIN</button>
+    </div>
+
+    <button class="setup-action-btn" style="color:var(--blush);border-color:rgba(196,133,106,0.3)" onclick="adminCloseSetup()">
+      ← Back to kiosk
+    </button>
+
+    <div style="font-size:11px;color:var(--muted);text-align:center;line-height:1.6">
+      Access this screen anytime by tapping the gem logo 5 times.<br/>
+      Or add <code style="background:var(--s2);padding:1px 5px;border-radius:4px">?setup=1</code> to the URL.
+    </div>
+  </div>
+
+</div>
+
+<!-- ── KIOSK SHELL ── -->
+<div class="kiosk-shell" id="kioskShell" style="display:none">
+
+  <!-- LEFT: branding -->
+  <div class="kiosk-left">
+    <div>
+      <div class="kiosk-logo">
+        <div class="kiosk-logo-gem">✦</div>
+        <div class="kiosk-logo-text">
+          <div class="kiosk-logo-main" id="bizNameDisplay">VICTORIA NAILS</div>
+          <div class="kiosk-logo-sub">SALON GENIE CHECK-IN</div>
+        </div>
+      </div>
+
+      <div class="kiosk-signin-title">Please Sign In!</div>
+
+      <div class="promo-card">
+        <div class="promo-image">💅</div>
+        <div class="promo-text">
+          <div class="promo-title">Nothing improves your mood like a fresh manicure.</div>
+          <div class="promo-body">Check in, pick your services and favorite technician — we'll take care of the rest.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="promo-footer">
+      <div class="promo-footer-dots">
+        <div class="promo-dot active"></div>
+        <div class="promo-dot"></div>
+        <div class="promo-dot"></div>
+      </div>
+      <div class="kiosk-left-footer">Powered by Salon Genie POS</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: wizard -->
+  <div class="kiosk-right">
+
+    <!-- Mobile-only salon name bar (left panel is hidden on small screens) -->
+    <div class="kiosk-mobile-bar" id="kioskMobileBar">
+      <div class="kiosk-mobile-gem">✦</div>
+      <div class="kiosk-mobile-name" id="bizNameMobile">VICTORIA NAILS</div>
+    </div>
+
+    <div class="kiosk-header-bar">
+      <div class="kiosk-header-title" id="headerTitle">ENTER YOUR PHONE #</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="kiosk-step-indicator" id="stepDots">
+          <div class="step-dot active" data-step="1"></div>
+          <div class="step-dot" data-step="2"></div>
+          <div class="step-dot" data-step="3"></div>
+          <div class="step-dot" data-step="4"></div>
+          <div class="step-dot" data-step="5"></div>
+        </div>
+        <span id="stepLabel">STEP 1 OF 5</span>
+      </div>
+    </div>
+
+    <div class="kiosk-step-shell">
+
+      <!-- STEP 1: Phone -->
+      <section class="step-panel active" id="step-1">
+        <div id="phoneStepView">
+
+          <!-- Returning customer banner (shown after lookup) -->
+          <div class="returning-banner" id="returningBanner">
+            <div class="returning-avatar" id="returningAvatar">?</div>
+            <div>
+              <div class="returning-name" id="returningName">Welcome back!</div>
+              <div class="returning-sub">✓ We found your profile</div>
+            </div>
+          </div>
+
+          <div class="step-body step-body-phone">
+            <div class="phone-panel">
+              <div class="phone-display" id="phoneDisplayWrap">
+                <span id="phoneDisplay" class="placeholder">(xxx) xxx-xxxx</span>
+                <button type="button" id="phoneClearBtn">×</button>
+              </div>
+            </div>
+            <div class="keypad-grid" id="keypad"></div>
+          </div>
+        </div>
+
+        <!-- Footer is a direct child of step-panel so it's always pinned at bottom -->
+        <div class="step-footer" id="phoneStepFooter">
+          <div></div>
+          <div class="step-footer-right">
+            <button class="pill-btn ghost" id="skipPhoneBtn" type="button">Skip →</button>
+            <button class="pill-btn primary" id="nextFromPhoneBtn" type="button" disabled>Next →</button>
+          </div>
+        </div>
+
+        <!-- View B: new client -->
+        <div id="newClientView" style="display:none;flex-direction:column;flex:1;gap:0;min-height:0;">
+          <div>
+            <div class="step-title">Welcome! 👋</div>
+            <div class="step-subtitle">We couldn't find your profile. Enter your name to get started.</div>
+          </div>
+          <div class="step-body" style="margin-top:16px;">
+            <div class="new-client-form">
+              <div class="field-group">
+                <label class="field-label">Phone #</label>
+                <input id="clientPhoneDisplay" class="field-input" type="text" readonly />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="clientNameInput">Your Name *</label>
+                <input id="clientNameInput" class="field-input" type="text" placeholder="First and last name" autocomplete="name" />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="clientEmailInput">Email (optional)</label>
+                <input id="clientEmailInput" class="field-input" type="email" placeholder="you@example.com" autocomplete="email" />
+                <div class="field-note">Used only for appointment confirmations &amp; reminders.</div>
+              </div>
+            </div>
+          </div>
+          <div class="step-footer">
+            <button class="pill-btn ghost" id="backToPhoneFromNewClientBtn" type="button">← Back</button>
+            <button class="pill-btn primary" id="nextFromNewClientBtn" type="button">Continue →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 2: Category -->
+      <section class="step-panel" id="step-2">
+        <div class="step-title">Hello, <span id="clientNameLabel">Guest</span>! 👋</div>
+        <div class="step-subtitle">What brings you in today? Select a service category.</div>
+        <div class="step-body">
+          <div class="category-grid" id="categoryGrid"></div>
+        </div>
+        <div class="step-footer">
+          <button class="pill-btn ghost" id="backToPhoneBtn" type="button">← Back</button>
+          <button class="pill-btn primary" id="nextFromCategoryBtn" type="button">Next →</button>
+        </div>
+      </section>
+
+      <!-- STEP 3: Services -->
+      <section class="step-panel" id="step-3">
+        <div class="step-title">Select <span id="currentCategoryLabel">Services</span></div>
+        <div class="step-subtitle">Tap to select. You can choose more than one.</div>
+        <div class="step-body">
+          <div class="service-grid" id="serviceGrid"></div>
+          <div class="selection-summary" id="serviceSummary">No services selected yet.</div>
+        </div>
+        <div class="step-footer">
+          <button class="pill-btn ghost" id="backToCategoriesBtn" type="button">← Back</button>
+          <button class="pill-btn primary" id="nextFromServiceListBtn" type="button">Next →</button>
+        </div>
+      </section>
+
+      <!-- STEP 4: Technician -->
+      <section class="step-panel" id="step-4">
+        <div class="step-title">Pick Your Technician</div>
+        <div class="step-subtitle">You've selected: <strong id="selectedServiceLabel">a service</strong></div>
+        <div class="step-body">
+          <div class="tech-grid" id="techGrid">
+            <!-- Next Available is first card in the grid -->
+            <div class="tech-card next-available-card" id="nextAvailableCard">
+              <div class="next-available-icon">⚡</div>
+              <div class="tech-card-info">
+                <div class="tech-name">Next Available</div>
+                <div class="tech-caption">First technician ready</div>
+              </div>
+            </div>
+          </div>
+          <div class="status-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--forest)"></div> Available</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> With client</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Off today</div>
+          </div>
+        </div>
+        <div class="step-footer">
+          <button class="pill-btn ghost" id="backToServiceListBtn" type="button">← Back</button>
+          <button class="pill-btn primary" id="nextFromTechBtn" type="button" disabled>Confirm →</button>
+        </div>
+      </section>
+
+      <!-- STEP 5: Ticket -->
+      <section class="step-panel" id="step-5">
+        <div class="ticket-screen">
+          <div class="ticket-badge" id="ticketBadge">#1</div>
+          <div class="ticket-number-label">YOUR TICKET NUMBER</div>
+          <div class="ticket-welcome" id="ticketWelcomeLabel">Welcome!</div>
+          <div class="ticket-emoji">😊</div>
+          <div class="ticket-services-chips" id="ticketServicesChips"></div>
+          <div class="ticket-detail" id="ticketDetailLabel">Please have a seat. We'll call your name when your technician is ready.</div>
+          <div class="ticket-countdown">
+            This screen will reset in <span id="countdownTimer">15</span>s
+          </div>
+        </div>
+        <div class="step-footer" style="justify-content:flex-end;">
+          <div></div>
+          <button class="pill-btn primary" id="doneBtn" type="button">Done ✓</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- Add More Services Modal -->
+<div id="addMoreModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Add Another Service?</h3>
+    <div class="modal-sub">Would you like to add another service from a different category?</div>
+    <div class="modal-buttons">
+      <button id="modalYes" class="modal-btn yes">Yes, Add More</button>
+      <button id="modalNo"  class="modal-btn no">No, Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rebook Modal -->
+<div id="rebookModal" class="modal-overlay">
+  <div class="modal-box">
+    <div style="font-size:36px;margin-bottom:8px;" id="rebookIcon">👋</div>
+    <h3 id="rebookTitle">Welcome back, <span id="rebookClientName">there</span>!</h3>
+    <div class="modal-sub" id="rebookSub1">Last time you had:</div>
+    <div id="rebookServicesList" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:12px 0 16px;"></div>
+    <div class="modal-sub" id="rebookSub2" style="margin-bottom:16px;">Would you like the same services again?</div>
+    <div id="rebookBtns" style="display:flex;flex-direction:column;gap:10px;">
+      <button id="rebookYesBtn" class="modal-btn yes">Yes, Same Services</button>
+      <button id="rebookAddBtn" class="modal-btn yes" style="background:var(--teal);display:none;">+ Add / Change Services</button>
+      <button id="rebookNoBtn"  class="modal-btn no">No, Choose Different</button>
+    </div>
+  </div>
+</div>
+
+<!-- Group Booking Modal -->
+<div id="groupBookingModal" class="modal-overlay">
+  <div class="modal-box">
+    <div style="font-size:36px;margin-bottom:8px;">👥</div>
+    <h3>Booking for 2?</h3>
+    <div class="modal-sub">You've selected <strong id="groupServiceCount">2</strong> services — are you and a friend checking in together?</div>
+    <div class="modal-buttons">
+      <button id="groupYesBtn" class="modal-btn yes">Yes, 2 People</button>
+      <button id="groupNoBtn"  class="modal-btn no">No, Just Me</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="kiosk-toast" id="kioskToast"></div>
+
+<script type="module" src="/shared/js/pages/checkin-kiosk.js?v=0401a"></script>
+
+<script>
+// ── Dynamic business name from URL / storage ──────────────────
+(function() {
+  function getParam(k) { return new URLSearchParams(location.search).get(k); }
+  const bizName = getParam('biz_name') || getParam('salon_name');
+  if (bizName) {
+    const el = document.getElementById('bizNameDisplay');
+    if (el) el.textContent = decodeURIComponent(bizName).toUpperCase();
+  }
+})();
+
+// ── Boot loader hide (called by checkin-kiosk.js via window.kioskReady) ──
+window.kioskReady = function(bizName) {
+  // Update business name if provided
+  if (bizName) {
+    const el = document.getElementById('bizNameDisplay');
+    if (el) el.textContent = String(bizName).toUpperCase();
+    const mob = document.getElementById('bizNameMobile');
+    if (mob) mob.textContent = String(bizName).toUpperCase();
+  }
+  const loader = document.getElementById('bootLoader');
+  const shell  = document.getElementById('kioskShell');
+  const left   = document.querySelector('.kiosk-left');
+  const mbar   = document.getElementById('kioskMobileBar');
+
+  if (loader) { loader.classList.add('hidden'); setTimeout(() => loader.style.display = 'none', 400); }
+
+  // Enforce correct layout based on actual viewport width
+  const isMobile = window.innerWidth <= 1024;
+  if (shell) {
+    shell.style.display = 'grid';
+    shell.style.gridTemplateColumns = isMobile ? '1fr' : '';
+  }
+  if (left)  left.style.display  = isMobile ? 'none' : '';
+  if (mbar)  mbar.style.display  = isMobile ? 'flex' : 'none';
+};
+
+// ── Error state (called by checkin-kiosk.js via window.kioskError) ──
+window.kioskError = function(msg, hint) {
+  const loader = document.getElementById('bootLoader');
+  const err    = document.getElementById('errorState');
+  if (loader) loader.style.display = 'none';
+  if (err)    err.classList.add('show');
+  const msgEl  = document.getElementById('errorMsg');
+  const hintEl = document.getElementById('errorHint');
+  if (msgEl && msg)   msgEl.textContent  = msg;
+  if (hintEl && hint) hintEl.textContent = hint;
+};
+
+// ── Toast helper (used by checkin-kiosk.js via window.kioskToast) ──
+window.kioskToast = function(msg, type = '') {
+  const el = document.getElementById('kioskToast');
+  if (!el) return;
+  el.textContent  = msg;
+  el.className    = 'kiosk-toast show' + (type ? ' ' + type : '');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { el.classList.remove('show'); }, 3000);
+};
+
+// ── Step indicator dots ─────────────────────────────────────────
+window.updateStepDots = function(currentStep) {
+  document.querySelectorAll('.step-dot').forEach((dot, i) => {
+    const s = i + 1;
+    dot.classList.remove('active', 'done');
+    if (s < currentStep)  dot.classList.add('done');
+    if (s === currentStep) dot.classList.add('active');
+  });
+};
+
+// ── Countdown on ticket screen ──────────────────────────────────
+window.startTicketCountdown = function(seconds, onDone) {
+  const el = document.getElementById('countdownTimer');
+  if (!el) return;
+  let remaining = seconds || 15;
+  el.textContent = remaining;
+  clearInterval(window._cdTimer);
+  window._cdTimer = setInterval(() => {
+    remaining--;
+    el.textContent = remaining;
+    if (remaining <= 0) {
+      clearInterval(window._cdTimer);
+      if (typeof onDone === 'function') onDone();
+    }
+  }, 1000);
+};
+
+// ── Returning customer banner ───────────────────────────────────
+window.showReturningBanner = function(name) {
+  const banner = document.getElementById('returningBanner');
+  const avatar = document.getElementById('returningAvatar');
+  const nameEl = document.getElementById('returningName');
+  if (!banner) return;
+  if (avatar) avatar.textContent = (name || 'G')[0].toUpperCase();
+  if (nameEl) nameEl.textContent = 'Welcome back, ' + (name || 'Guest') + '!';
+  banner.classList.add('show');
+};
+
+window.hideReturningBanner = function() {
+  document.getElementById('returningBanner')?.classList.remove('show');
+};
+
+// ── Ticket services chips ───────────────────────────────────────
+window.renderTicketChips = function(services, techName, isGroup) {
+  const container = document.getElementById('ticketServicesChips');
+  if (!container) return;
+  container.innerHTML = '';
+  (services || []).forEach(s => {
+    const chip = document.createElement('span');
+    chip.className = 'ticket-service-chip';
+    chip.textContent = s.name || s;
+    container.appendChild(chip);
+  });
+  if (techName) {
+    const chip = document.createElement('span');
+    chip.className = 'ticket-tech-chip';
+    chip.textContent = '👤 ' + techName;
+    container.appendChild(chip);
+  }
+  if (isGroup) {
+    const chip = document.createElement('span');
+    chip.className = 'ticket-tech-chip';
+    chip.style.cssText = 'background:var(--violet-dim);border-color:rgba(122,78,168,0.2);color:var(--violet);';
+    chip.textContent = '👥 Group booking';
+    container.appendChild(chip);
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════
+   KIOSK ADMIN SETUP — PIN-gated settings panel
+   Access: tap logo gem 5× in quick succession, or ?setup=1 URL
+══════════════════════════════════════════════════════════════ */
+
+const ADMIN_PIN_KEY    = 'sg.kiosk_admin_pin';
+const BUSINESS_ID_KEYS = ['gs.active_business_id','sg.active_business_id','sg_active_business_id'];
+const DEFAULT_ADMIN_PIN = '9999';
+
+let adminPinBuffer = '';
+let logoTapCount   = 0;
+let logoTapTimer   = null;
+
+// ── expose showSetup to JS boot in checkin-kiosk.js ──────────
+window.kioskShowSetup = showSetup;
+
+function getAdminPin() {
+  try { return localStorage.getItem(ADMIN_PIN_KEY) || DEFAULT_ADMIN_PIN; } catch(_) { return DEFAULT_ADMIN_PIN; }
+}
+
+function showSetup() {
+  document.getElementById('kioskSetup').classList.add('show');
+  document.getElementById('setupScreenPin').style.display = 'flex';
+  document.getElementById('setupScreenSettings').style.display = 'none';
+  adminPinBuffer = '';
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+}
+
+function adminCloseSetup() {
+  document.getElementById('kioskSetup').classList.remove('show');
+  adminPinBuffer = '';
+  updatePinDots();
+}
+
+function adminPinKey(digit) {
+  if (adminPinBuffer.length >= 4) return;
+  adminPinBuffer += String(digit);
+  updatePinDots();
+  if (adminPinBuffer.length === 4) {
+    setTimeout(() => checkAdminPin(), 120);
+  }
+}
+
+function adminPinBackspace() {
+  adminPinBuffer = adminPinBuffer.slice(0, -1);
+  updatePinDots();
+}
+
+function updatePinDots() {
+  [1,2,3,4].forEach(i => {
+    const d = document.getElementById('pd' + i);
+    if (!d) return;
+    d.classList.toggle('filled', adminPinBuffer.length >= i);
+    d.classList.remove('error');
+  });
+}
+
+function checkAdminPin() {
+  if (adminPinBuffer === getAdminPin()) {
+    document.getElementById('setupScreenPin').style.display = 'none';
+    document.getElementById('setupScreenSettings').style.display = 'flex';
+    populateSetupStatus();
+  } else {
+    [1,2,3,4].forEach(i => document.getElementById('pd' + i)?.classList.add('error'));
+    document.getElementById('pinError').textContent = 'Incorrect PIN. Try again.';
+    adminPinBuffer = '';
+    setTimeout(() => {
+      updatePinDots();
+      document.getElementById('pinError').textContent = '';
+    }, 1400);
+  }
+}
+
+function populateSetupStatus() {
+  let bid = null;
+  try {
+    for (const k of BUSINESS_ID_KEYS) {
+      bid = localStorage.getItem(k);
+      if (bid) break;
+    }
+  } catch(_) {}
+
+  const bidEl = document.getElementById('sc_bid');
+  const bizEl = document.getElementById('sc_biz');
+  const statEl = document.getElementById('sc_status');
+  const inputEl = document.getElementById('sc_bidInput');
+
+  if (bidEl) bidEl.textContent = bid ? bid.slice(0,8) + '…' + bid.slice(-4) : 'Not set';
+  if (inputEl && bid) inputEl.value = bid;
+  if (bizEl) {
+    const bizName = document.getElementById('bizNameDisplay')?.textContent || '—';
+    bizEl.textContent = bizName !== 'VICTORIA NAILS' || bid ? bizName : '—';
+  }
+
+  if (statEl) {
+    if (bid) {
+      statEl.textContent = '● Connected';
+      statEl.className = 'setup-status-badge ok';
+    } else {
+      statEl.textContent = '● Not configured';
+      statEl.className = 'setup-status-badge err';
+    }
+  }
+}
+
+function adminSaveBusinessId() {
+  const input = document.getElementById('sc_bidInput');
+  const errEl = document.getElementById('sc_bidError');
+  const val = (input?.value || '').trim();
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  if (!val) { if (errEl) errEl.textContent = 'Please enter a Business ID.'; return; }
+  if (!uuidRe.test(val)) { if (errEl) errEl.textContent = 'Invalid format — must be a UUID like 0af9e368-…'; return; }
+  if (errEl) errEl.textContent = '';
+
+  try {
+    for (const k of BUSINESS_ID_KEYS) localStorage.setItem(k, val);
+  } catch(e) {
+    if (errEl) errEl.textContent = 'Could not save — storage may be blocked.';
+    return;
+  }
+
+  if (typeof window.kioskToast === 'function') window.kioskToast('Business ID saved! Reloading…');
+  setTimeout(() => location.reload(), 1000);
+}
+
+function adminReload() {
+  if (typeof window.kioskToast === 'function') window.kioskToast('Reloading…');
+  setTimeout(() => location.reload(), 600);
+}
+
+function adminClearCache() {
+  try {
+    for (const k of BUSINESS_ID_KEYS) localStorage.removeItem(k);
+    localStorage.removeItem(ADMIN_PIN_KEY);
+    sessionStorage.clear();
+  } catch(_) {}
+  if (typeof window.kioskToast === 'function') window.kioskToast('Cache cleared. Reloading…');
+  setTimeout(() => location.reload(), 800);
+}
+
+function adminChangePIN() {
+  const panel = document.getElementById('changePinPanel');
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+}
+
+function adminSavePIN() {
+  const p1 = (document.getElementById('newPin1')?.value || '').trim();
+  const p2 = (document.getElementById('newPin2')?.value || '').trim();
+  const errEl = document.getElementById('changePinErr');
+  if (!/^\d{4}$/.test(p1)) { if (errEl) errEl.textContent = 'PIN must be exactly 4 digits.'; return; }
+  if (p1 !== p2)            { if (errEl) errEl.textContent = 'PINs do not match.'; return; }
+  try { localStorage.setItem(ADMIN_PIN_KEY, p1); } catch(_) {}
+  if (errEl) errEl.textContent = '';
+  document.getElementById('changePinPanel').style.display = 'none';
+  if (typeof window.kioskToast === 'function') window.kioskToast('Admin PIN updated ✓');
+}
+
+// ── Tap-logo-5× trigger ───────────────────────────────────────
+(function attachLogoTap() {
+  const targets = [
+    document.getElementById('bootLoader'),
+    document.querySelector('.kiosk-logo-gem'),
+    document.querySelector('.kiosk-mobile-gem'),
+  ].filter(Boolean);
+
+  targets.forEach(el => {
+    el.addEventListener('click', () => {
+      logoTapCount++;
+      clearTimeout(logoTapTimer);
+      if (logoTapCount >= 5) {
+        logoTapCount = 0;
+        showSetup();
+        return;
+      }
+      logoTapTimer = setTimeout(() => { logoTapCount = 0; }, 2000);
+    });
+  });
+})();
+
+// ── Auto-show setup if ?setup=1 in URL ────────────────────────
+(function checkSetupParam() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('setup') === '1') showSetup();
+})();
+
+</script>
+</body>
+</html>

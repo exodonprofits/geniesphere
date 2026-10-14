@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Profile | GenieSphere</title>
+<meta name="description" content="Manage your GenieSphere profile — name, contact, household, and preferences."/>
+<meta name="gs-config" content="/shared/config.json"/>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   USER PROFILE — Household teal identity
+   Tokens aligned with household.html / nutrition-genie_pro.html
+═══════════════════════════════════════════════════════════ */
+:root{
+  --area-accent:#22D3EE; --area-dim:rgba(34,211,238,.10); --area-dark:#0E7490;
+  --bg:#F5F7FA; --panel:#FFFFFF; --panel-soft:#F0F4F8;
+  --text:#111827; --muted:#6B7280; --muted-2:#9CA3AF;
+  --line:#E5EAF0; --line-2:#D1D9E0;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.08);
+  --radius:18px; --radius-lg:24px; --max:1440px;
+  --teal:#22D3EE; --teal-dark:#0891B2; --teal-deep:#0E7490;
+  --teal-dim:rgba(34,211,238,.10); --teal-soft:rgba(34,211,238,.06); --teal-bd:rgba(34,211,238,.28);
+  --ok-bg:#F0FDFA; --ok-bd:#99F6E4; --ok-txt:#0F766E;
+  --warn-bg:#FFFBEB; --warn-bd:#FCD34D; --warn-txt:#92400E;
+  --err-bg:#FEF2F2; --err-bd:#FECACA; --err-txt:#B91C1C;
+}
+*{box-sizing:border-box} html,body{margin:0;padding:0;min-height:100%}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.96);backdrop-filter:blur(14px) saturate(180%);border-bottom:1px solid var(--line);box-shadow:0 1px 0 var(--line),0 2px 10px rgba(0,0,0,.04)}
+.topbar-inner{max-width:var(--max);margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+.brand-mark{width:36px;height:36px;border-radius:50%;flex:0 0 auto;background:radial-gradient(circle at 30% 30%,#7ef1c7 0%,#34d399 45%,#0f9f68 100%);box-shadow:0 0 0 3px rgba(52,211,153,.18),0 4px 12px rgba(52,211,153,.14)}
+.brand-name{font-size:18px;font-weight:800;letter-spacing:-.03em}
+.nav{display:flex;align-items:center;gap:2px;flex-wrap:wrap;margin-left:12px}
+.nav-link{color:var(--muted);font-weight:500;font-size:13px;padding:6px 10px;border-radius:8px;border-bottom:2px solid transparent;transition:background .14s,color .14s;text-decoration:none}
+.nav-link:hover{background:var(--area-dim);color:var(--area-dark)}
+.nav-link.active{background:var(--area-dim);color:var(--area-dark);font-weight:700;border-bottom-color:var(--area-accent)}
+.userbox{display:flex;align-items:center;gap:10px;margin-left:auto}
+.user-menu{position:relative;display:flex;align-items:center}
+.user-menu-toggle{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:border-color .14s;white-space:nowrap}
+.user-menu-toggle:hover{border-color:var(--area-accent)}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--area-dim);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--area-dark);flex-shrink:0}
+.user-menu-dropdown{position:absolute;right:0;top:calc(100% + 8px);min-width:240px;background:var(--panel);border-radius:16px;border:1px solid var(--line);box-shadow:0 4px 6px rgba(0,0,0,.04),0 20px 48px rgba(0,0,0,.13);padding:6px 0;display:none;z-index:2005}
+.user-menu.open .user-menu-dropdown{display:block}
+.user-menu-dropdown a,.user-menu-dropdown button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 14px;background:none;border:none;color:var(--text);font-size:13px;cursor:pointer;transition:background .12s;font-family:inherit;text-decoration:none}
+.user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:var(--panel-soft)}
+.user-menu-divider{height:1px;margin:4px 8px;background:var(--line)}
+.dropdown-label{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted-2);padding:8px 14px 3px;font-weight:700}
+.mobile-only{display:none} .auth-only{display:none}
+
+/* ── PAGE ── */
+.page{max-width:860px;margin:0 auto;padding:32px 24px 60px}
+
+/* ── PAGE HEADER ── */
+.page-eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-dark);margin-bottom:8px}
+.page-title{font-size:clamp(22px,3vw,30px);font-weight:900;letter-spacing:-.04em;margin:0 0 6px}
+.page-subtitle{color:var(--muted);font-size:14px;margin:0 0 28px;line-height:1.6}
+
+/* ── AVATAR BLOCK ── */
+.profile-hero{display:flex;align-items:center;gap:20px;padding:20px 24px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px}
+.profile-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--teal-dim),rgba(14,116,144,.15));border:2px solid var(--teal-bd);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;color:var(--teal-deep)}
+.profile-hero-body{flex:1;min-width:0}
+.profile-hero-name{font-size:18px;font-weight:800;color:var(--text);margin:0 0 2px}
+.profile-hero-email{font-size:13px;color:var(--muted);margin:0 0 6px}
+.profile-hero-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--ok-bg);border:1px solid var(--ok-bd);color:var(--ok-txt)}
+
+/* ── SECTION CARD ── */
+.section-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.section-head{padding:14px 20px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,var(--teal-soft),rgba(8,145,178,.01));display:flex;align-items:center;gap:10px}
+.section-icon{font-size:18px;line-height:1}
+.section-title-text{font-size:14px;font-weight:800;color:var(--text)}
+.section-subtitle{font-size:12px;color:var(--muted);margin-left:auto}
+.section-body{padding:20px}
+
+/* ── FORM FIELDS ── */
+.fg{display:grid;gap:14px}
+.fg-2{grid-template-columns:1fr 1fr}
+.fg-3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:640px){.fg-2,.fg-3{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select,.field textarea{
+  padding:10px 13px;border-radius:10px;
+  border:1.5px solid var(--line-2);background:var(--panel-soft);
+  color:var(--text);font-size:14px;font-family:inherit;outline:none;
+  transition:border-color .14s,box-shadow .14s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim)}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted-2)}
+.field input:disabled,.field select:disabled{background:#F0F4F8;color:var(--muted);cursor:not-allowed;opacity:.75}
+.field-hint{font-size:11px;color:var(--muted-2);margin-top:3px}
+.field-hint.ok{color:var(--ok-txt)}
+
+/* ── HOUSEHOLD COUNTER ── */
+.family-box{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:var(--teal-soft);border:1px solid var(--teal-bd);border-radius:12px}
+.family-box-label{font-size:14px;font-weight:700;color:var(--teal-deep)}
+.family-box-sub{font-size:12px;color:var(--teal-dark);margin-top:2px}
+.ctrls{display:flex;align-items:center;gap:10px}
+.cbtn{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--teal-bd);background:var(--panel);color:var(--teal-deep);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .13s;line-height:1}
+.cbtn:hover{background:var(--teal);color:#012e38;border-color:var(--teal)}
+.cval{font-size:18px;font-weight:900;color:var(--teal-deep);min-width:24px;text-align:center}
+
+/* ── CHECK PILLS ── */
+.check-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cpill{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;border:1.5px solid var(--line-2);background:var(--panel);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .13s;user-select:none}
+.cpill:has(input:checked){background:var(--teal-dim);border-color:var(--teal-bd);color:var(--teal-deep)}
+.cpill input{display:none}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;border-radius:999px;padding:11px 22px;font-weight:700;font-size:14px;transition:filter .15s,transform .12s;white-space:nowrap;font-family:inherit}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none;transform:none}
+.btn-green{background:var(--teal);color:#012e38}
+.btn-soft{background:var(--panel-soft);color:var(--text);border:1px solid var(--line-2)}
+.btn-soft:hover{border-color:var(--teal-bd);background:var(--teal-dim)}
+.btn-danger{background:transparent;color:var(--err-txt);border:1px solid var(--err-bd)}
+.btn-danger:hover{background:var(--err-bg)}
+.btn-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+
+/* ── STATUS BANNER ── */
+.status-banner{display:none;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px}
+.status-banner.ok{display:flex;background:var(--ok-bg);border:1px solid var(--ok-bd);color:var(--ok-txt)}
+.status-banner.err{display:flex;background:var(--err-bg);border:1px solid var(--err-bd);color:var(--err-txt)}
+.status-banner.loading{display:flex;background:var(--panel-soft);border:1px solid var(--line-2);color:var(--muted)}
+
+/* ── SECTION DIVIDER ── */
+.divider{display:flex;align-items:center;gap:12px;margin:4px 0 16px}
+.divider-line{flex:1;height:1px;background:var(--line)}
+.divider-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);white-space:nowrap}
+
+/* ── COMPLETION BAR ── */
+.completion-wrap{margin-bottom:20px}
+.completion-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.completion-label{font-size:12px;font-weight:700;color:var(--muted)}
+.completion-pct{font-size:12px;font-weight:800;color:var(--teal-deep)}
+.completion-track{height:6px;background:var(--panel-soft);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.completion-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--teal-dark));border-radius:999px;transition:width .4s ease}
+
+/* ── FOOTER ── */
+.site-footer{margin-top:40px;padding:24px 0 30px;border-top:1px solid var(--line);background:var(--panel)}
+.site-footer-inner{max-width:var(--max);margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted-2)}
+
+/* ── MOBILE NAV ── */
+.mobile-nav{position:fixed;left:0;right:0;bottom:0;display:none;z-index:1200;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.08);backdrop-filter:blur(12px)}
+.mobile-nav-inner{max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.mnav{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--muted-2);font-weight:600;font-size:10px;text-decoration:none;transition:all .14s}
+.mnav .ico{font-size:17px;line-height:1}
+.mnav.active{color:var(--teal-deep);border-color:var(--teal-bd);background:var(--teal-dim)}
+.mobile-pad{display:none;height:70px}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--bg);padding:9px 18px;border-radius:999px;font-size:12px;font-weight:700;box-shadow:var(--shadow-md);opacity:0;transition:opacity .18s,transform .18s;z-index:3000;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:860px){.mobile-nav{display:block}.mobile-pad{display:block}.page{padding-bottom:calc(70px + env(safe-area-inset-bottom))}}
+@media(max-width:820px){.nav{display:none}.mobile-only{display:block}}
+@media(max-width:640px){.topbar-inner{padding:0 14px}.page{padding:20px 14px 60px}.section-body{padding:16px}}
+@media(max-width:480px){.site-footer{display:none!important}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/index.html">
+      <div class="brand-mark"></div>
+      <span class="brand-name">GenieSphere</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-link" href="/dashboard/overview.html">🧭 Overview</a>
+      <a class="nav-link" href="/dashboard/household.html">🏡 Household</a>
+      <a class="nav-link" href="/dashboard/business.html">🏢 Business</a>
+      <a class="nav-link" href="/dashboard/investment.html">📈 Investment</a>
+      <a class="nav-link" href="/dashboard/leisure.html">🌴 Leisure</a>
+      <a class="nav-link" href="/dashboard/finance.html">💼 Finance</a>
+    </nav>
+    <div class="userbox">
+      <div class="user-menu" id="user-menu">
+        <button class="user-menu-toggle" id="user-menu-toggle" aria-expanded="false" type="button">
+          <span class="avatar" aria-hidden="true" id="topbar-avatar">👤</span>
+          <span id="user-name-label">Account</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="user-menu-dropdown" id="user-menu-dropdown" aria-hidden="true">
+          <div class="mobile-only">
+            <div class="dropdown-label">Areas</div>
+            <button class="dropdown-nav" data-target="/dashboard/household.html" type="button">🏡 Household</button>
+            <button class="dropdown-nav" data-target="/dashboard/business.html" type="button">🏢 Business</button>
+            <button class="dropdown-nav" data-target="/dashboard/investment.html" type="button">📈 Investment</button>
+            <button class="dropdown-nav" data-target="/dashboard/leisure.html" type="button">🌴 Leisure</button>
+            <div class="user-menu-divider"></div>
+          </div>
+          <div class="dropdown-label">Account</div>
+          <button class="dropdown-nav" data-target="/onboarding/user_profile_form.html" type="button">👤 User profile</button>
+          <button class="dropdown-nav" data-target="/onboarding/display_settings.html" type="button">⚙️ Settings</button>
+          <div class="user-menu-divider"></div>
+          <button id="user-auth-action" type="button">Log in / Sign up</button>
+          <button class="auth-only" id="user-signout-btn" type="button">🚪 Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- PAGE -->
+<main class="page">
+
+  <!-- Page header -->
+  <div class="page-eyebrow">⚙️ Account</div>
+  <h1 class="page-title">My Profile</h1>
+  <p class="page-subtitle">Your details are used across all GenieSphere tools — meal planning, household tools, and business genies will personalise themselves based on what you save here.</p>
+
+  <!-- Status banner -->
+  <div class="status-banner" id="statusBanner" role="alert" aria-live="polite">
+    <span id="statusIcon">⏳</span>
+    <span id="statusMsg">Loading your profile…</span>
+  </div>
+
+  <!-- Profile completion bar -->
+  <div class="completion-wrap">
+    <div class="completion-meta">
+      <span class="completion-label">Profile completeness</span>
+      <span class="completion-pct" id="completionPct">0%</span>
+    </div>
+    <div class="completion-track"><div class="completion-fill" id="completionFill"></div></div>
+  </div>
+
+  <!-- Avatar / identity block -->
+  <div class="profile-hero">
+    <div class="profile-avatar" id="profileAvatar">👤</div>
+    <div class="profile-hero-body">
+      <div class="profile-hero-name" id="profileHeroName">Loading…</div>
+      <div class="profile-hero-email" id="profileHeroEmail"></div>
+      <div class="profile-hero-status" id="profileHeroStatus">⏳ Loading</div>
+    </div>
+  </div>
+
+  <form id="profile-form" novalidate>
+
+    <!-- ── SECTION 1: Basic Info ── -->
+    <div class="section-card">
+      <div class="section-head">
+        <span class="section-icon">👤</span>
+        <span class="section-title-text">Basic Information</span>
+        <span class="section-subtitle">Used to personalise your genie responses</span>
+      </div>
+      <div class="section-body">
+        <div class="fg fg-2">
+          <div class="field">
+            <label for="full_name">Full name</label>
+            <input id="full_name" name="full_name" type="text" placeholder="e.g., Jimmy Tran" autocomplete="name"/>
+          </div>
+          <div class="field">
+            <label for="display_name">Display name <span style="font-weight:400;font-size:10px;color:var(--muted-2)">(shown in topbar)</span></label>
+            <input id="display_name" name="display_name" type="text" placeholder="e.g., Jimmy"/>
+          </div>
+          <div class="field">
+            <label for="age_range">Age range</label>
+            <select id="age_range" name="age_range">
+              <option value="">Select</option>
+              <option value="under-18">Under 18</option>
+              <option value="19-29">19–29</option>
+              <option value="30-49">30–49</option>
+              <option value="50-64">50–64</option>
+              <option value="65+">65+</option>
+            </select>
+            <div class="field-hint">Used by Nutrition Genie and health tools</div>
+          </div>
+          <div class="field">
+            <label for="phone">Phone number</label>
+            <input id="phone" name="phone" type="tel" placeholder="e.g., +1 (555) 123-4567" autocomplete="tel"/>
+            <div class="field-hint">For reminders and OTP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION 2: Household ── -->
+    <div class="section-card">
+      <div class="section-head">
+        <span class="section-icon">🏠</span>
+        <span class="section-title-text">Household</span>
+        <span class="section-subtitle">Pre-fills meal planning and household tools</span>
+      </div>
+      <div class="section-body">
+        <div class="fg" style="gap:16px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px">Household size</label>
+            <div class="family-box">
+              <div>
+                <div class="family-box-label">How many people are you planning for?</div>
+                <div class="family-box-sub" id="famLabel">Just me (1 person)</div>
+              </div>
+              <div class="ctrls">
+                <button class="cbtn" id="famMinus" type="button" aria-label="Decrease">−</button>
+                <span class="cval" id="famCount">1</span>
+                <button class="cbtn" id="famPlus" type="button" aria-label="Increase">+</button>
+              </div>
+            </div>
+            <input type="hidden" id="household_size" name="household_size" value="1"/>
+          </div>
+
+          <div class="field">
+            <label for="home_type">Home type <span style="font-weight:400;font-size:10px;color:var(--muted-2)">(optional)</span></label>
+            <select id="home_type" name="home_type">
+              <option value="">Select</option>
+              <option value="house">🏡 House</option>
+              <option value="apartment">🏢 Apartment / Condo</option>
+              <option value="townhouse">🏘️ Townhouse</option>
+              <option value="mobile">🚐 Mobile home</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION 3: Health & Nutrition Defaults ── -->
+    <div class="section-card">
+      <div class="section-head">
+        <span class="section-icon">🥗</span>
+        <span class="section-title-text">Health &amp; Nutrition Defaults</span>
+        <span class="section-subtitle">Pre-fills Nutrition Genie — edit per-plan any time</span>
+      </div>
+      <div class="section-body">
+        <div class="fg" style="gap:16px">
+
+          <div class="field">
+            <label>Dietary preferences <span style="font-weight:400;font-size:10px;color:var(--muted-2)">(optional)</span></label>
+            <div class="check-grid">
+              <label class="cpill"><input type="checkbox" name="diet_pref" value="diabetic-friendly"/> 🩺 Diabetic-friendly</label>
+              <label class="cpill"><input type="checkbox" name="diet_pref" value="heart-healthy"/> ❤️ Heart-healthy</label>
+              <label class="cpill"><input type="checkbox" name="diet_pref" value="vegetarian"/> 🥦 Vegetarian</label>
+              <label class="cpill"><input type="checkbox" name="diet_pref" value="vegan"/> 🌱 Vegan</label>
+              <label class="cpill"><input type="checkbox" name="diet_pref" value="keto"/> 🥑 Keto</label>
+              <label class="cpill"><input type="checkbox" name="diet_pref" value="halal"/> ☪️ Halal</label>
+              <label class="cpill"><input type="checkbox" name="diet_pref" value="gluten-free"/> 🌾 Gluten-free</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Cuisine preferences <span style="font-weight:400;font-size:10px;color:var(--muted-2)">(optional)</span></label>
+            <div class="check-grid">
+              <label class="cpill"><input type="checkbox" name="cuisine_pref" value="vietnamese"/> 🇻🇳 Vietnamese</label>
+              <label class="cpill"><input type="checkbox" name="cuisine_pref" value="asian"/> 🥢 Asian</label>
+              <label class="cpill"><input type="checkbox" name="cuisine_pref" value="mediterranean"/> 🫒 Mediterranean</label>
+              <label class="cpill"><input type="checkbox" name="cuisine_pref" value="american"/> 🍔 American</label>
+              <label class="cpill"><input type="checkbox" name="cuisine_pref" value="mexican"/> 🌮 Mexican</label>
+            </div>
+          </div>
+
+          <div class="fg fg-2">
+            <div class="field">
+              <label for="weekly_budget">Weekly grocery budget ($)</label>
+              <input id="weekly_budget" name="weekly_budget" type="number" min="0" step="10" placeholder="e.g., 200"/>
+              <div class="field-hint">Used by Nutrition Genie as default</div>
+            </div>
+            <div class="field">
+              <label for="daily_calories">Daily calorie target (optional)</label>
+              <input id="daily_calories" name="daily_calories" type="number" min="0" step="50" placeholder="e.g., 1800"/>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION 4: Address ── -->
+    <div class="section-card">
+      <div class="section-head">
+        <span class="section-icon">📍</span>
+        <span class="section-title-text">Address</span>
+        <span class="section-subtitle">Used for local tools and service matching</span>
+      </div>
+      <div class="section-body">
+        <div class="fg" style="gap:14px">
+          <div class="field">
+            <label for="address">Street address</label>
+            <input id="address" name="address" type="text" placeholder="e.g., 123 Main St" autocomplete="street-address"/>
+          </div>
+          <div class="fg fg-2">
+            <div class="field">
+              <label for="city">City</label>
+              <input id="city" name="city" type="text" placeholder="e.g., Houston" autocomplete="address-level2"/>
+            </div>
+            <div class="field">
+              <label for="state">State / Province</label>
+              <input id="state" name="state" type="text" placeholder="e.g., TX" autocomplete="address-level1"/>
+            </div>
+          </div>
+          <div class="fg fg-2">
+            <div class="field">
+              <label for="zip">ZIP / Postal code</label>
+              <input id="zip" name="zip" type="text" placeholder="e.g., 77001" autocomplete="postal-code"/>
+            </div>
+            <div class="field">
+              <label for="country">Country</label>
+              <input id="country" name="country" type="text" placeholder="e.g., United States" autocomplete="country-name"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION 5: Account ── -->
+    <div class="section-card">
+      <div class="section-head">
+        <span class="section-icon">🔑</span>
+        <span class="section-title-text">Account</span>
+        <span class="section-subtitle">Login credentials — email cannot be changed here</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" disabled autocomplete="email"/>
+          <div class="field-hint">To change your email, contact support.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ACTIONS ── -->
+    <div class="btn-actions">
+      <button type="submit" class="btn btn-green" id="saveBtn">💾 Save Profile</button>
+      <button type="button" class="btn btn-soft" onclick="window.history.back()">← Back</button>
+    </div>
+
+  </form>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div>© <span id="yr"></span> GenieSphere. All rights reserved.</div>
+    <div style="display:flex;gap:16px">
+      <a href="/dashboard/overview.html" style="color:var(--muted-2)">Overview</a>
+      <a href="/dashboard/household.html" style="color:var(--muted-2)">Household</a>
+      <a href="/about.html" style="color:var(--muted-2)">About</a>
+    </div>
+  </div>
+</footer>
+
+<div aria-hidden="true" class="mobile-pad"></div>
+
+<!-- MOBILE NAV -->
+<nav aria-label="GenieSphere mobile navigation" class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <a class="mnav" data-nav="overview" href="/dashboard/overview.html"><div class="ico">🧭</div><div>Overview</div></a>
+    <a class="mnav" data-nav="household" href="/dashboard/household.html"><div class="ico">🏡</div><div>Home</div></a>
+    <a class="mnav" data-nav="business" href="/dashboard/business.html"><div class="ico">🏢</div><div>Business</div></a>
+    <a class="mnav" data-nav="investment" href="/dashboard/investment.html"><div class="ico">📈</div><div>Invest</div></a>
+    <a class="mnav" data-nav="leisure" href="/dashboard/leisure.html"><div class="ico">🏝️</div><div>Leisure</div></a>
+    <a class="mnav" data-nav="finance" href="/dashboard/finance.html"><div class="ico">💼</div><div>Finance</div></a>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- SCRIPTS — use shared gs-client.js, no hardcoded credentials -->
+<script>window.GS_CONFIG_URL="/shared/config.json";window.GS_CONFIG_PATH="/shared/config.json";</script>
+<script src="/shared/js/app-config.js?v=20260211"></script>
+<script src="/shared/js/gs-client.js?v=20260211"></script>
+<script src="/shared/js/auth-header.js?v=20260211"></script>
+<script>window.GSAuthHeader?.init({loginUrl:"/onboarding/login.html",afterLogoutUrl:"/index.html"});</script>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+// ── Utilities ──────────────────────────────────────────────────────────
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 2400);
+}
+
+function setStatus(msg, type='loading'){
+  const banner = document.getElementById('statusBanner');
+  const icon   = document.getElementById('statusIcon');
+  const msgEl  = document.getElementById('statusMsg');
+  banner.className = 'status-banner ' + type;
+  icon.textContent = type==='ok' ? '✅' : type==='err' ? '❌' : '⏳';
+  msgEl.textContent = msg;
+}
+function clearStatus(){ document.getElementById('statusBanner').className='status-banner'; }
+
+// ── Household counter ──────────────────────────────────────────────────
+let hs = 1;
+function updFam(){
+  document.getElementById('famCount').textContent = hs;
+  document.getElementById('household_size').value = hs;
+  const L = ['Just me (1 person)','2 people','3 people','4 people','5 people','6 people','7 people','8 people','9 people','10 people','11 people','12 people'];
+  document.getElementById('famLabel').textContent = L[Math.min(hs-1, L.length-1)] || hs+' people';
+}
+document.getElementById('famMinus').addEventListener('click',()=>{ if(hs>1){hs--;updFam();updateCompletion();} });
+document.getElementById('famPlus').addEventListener('click',()=>{ if(hs<12){hs++;updFam();updateCompletion();} });
+
+// ── Profile completeness ───────────────────────────────────────────────
+const COMPLETION_FIELDS = ['full_name','phone','age_range','address','city','state','zip','country','weekly_budget'];
+function updateCompletion(){
+  let filled = 0;
+  COMPLETION_FIELDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && (el.value||'').trim()) filled++;
+  });
+  // Household size > 1 counts too
+  if(hs > 1) filled++;
+  // Diet prefs
+  if(document.querySelectorAll('input[name="diet_pref"]:checked').length) filled++;
+  const total = COMPLETION_FIELDS.length + 2;
+  const pct = Math.round(filled/total*100);
+  document.getElementById('completionFill').style.width = pct+'%';
+  document.getElementById('completionPct').textContent = pct+'%';
+}
+// Update completion on any field change
+document.getElementById('profile-form').addEventListener('change', updateCompletion);
+document.getElementById('profile-form').addEventListener('input', updateCompletion);
+
+// ── Get Supabase client via gs-client.js ──────────────────────────────
+async function getClient(){
+  if(window.GSClient) return await window.GSClient.getAsync();
+  throw new Error('GSClient not available');
+}
+
+// ── Helper: serialize / deserialize array fields ───────────────────────
+function getChecked(name){ return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(i=>i.value); }
+function setChecked(name, values){ if(!Array.isArray(values)) return; document.querySelectorAll(`input[name="${name}"]`).forEach(i=>{ i.checked = values.includes(i.value); }); }
+
+// ── Load profile ───────────────────────────────────────────────────────
+async function loadProfile(){
+  setStatus('Loading your profile…', 'loading');
+  let client;
+  try{ client = await getClient(); }
+  catch(e){ setStatus('Authentication service unavailable. Please refresh.', 'err'); return; }
+
+  const { data: authData, error: authError } = await client.auth.getUser();
+  if(authError || !authData?.user?.id){
+    window.location.href = '/onboarding/login.html';
+    return;
+  }
+
+  const user   = authData.user;
+  const userId = user.id;
+  const meta   = user.user_metadata || {};
+
+  // Fill email (always from auth, never editable)
+  document.getElementById('email').value = user.email || '';
+
+  // Update topbar hero
+  const displayName = meta.display_name || meta.full_name || meta.name || user.email?.split('@')[0] || 'User';
+  document.getElementById('user-name-label').textContent = displayName.split(' ')[0];
+  document.getElementById('profileHeroName').textContent = meta.full_name || meta.name || user.email || 'No name set';
+  document.getElementById('profileHeroEmail').textContent = user.email || '';
+  document.getElementById('profileHeroStatus').innerHTML = '✅ Signed in';
+
+  // Pre-fill from user_metadata (fastest — no DB round-trip)
+  if(meta.full_name)   document.getElementById('full_name').value   = meta.full_name;
+  if(meta.display_name) document.getElementById('display_name').value = meta.display_name;
+  if(meta.household_size){ hs = Math.min(12, Math.max(1, Number(meta.household_size))); updFam(); }
+
+  // Load extended profile from user_profiles table
+  const { data: profile, error } = await client
+    .from('user_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if(error){ setStatus('Could not load saved profile details — you can still fill in and save.', 'err'); }
+
+  if(profile){
+    const f = (id, val) => { const el=document.getElementById(id); if(el && val) el.value=val; };
+    f('full_name',     profile.full_name);
+    f('display_name',  profile.display_name);
+    f('phone',         profile.phone);
+    f('address',       profile.address);
+    f('city',          profile.city);
+    f('state',         profile.state);
+    f('zip',           profile.zip);
+    f('country',       profile.country);
+    f('age_range',     profile.age_range);
+    f('home_type',     profile.home_type);
+    f('weekly_budget', profile.weekly_budget);
+    f('daily_calories',profile.daily_calories);
+    if(profile.household_size){ hs = Math.min(12, Math.max(1, Number(profile.household_size))); updFam(); }
+    if(profile.diet_prefs)    setChecked('diet_pref',    profile.diet_prefs);
+    if(profile.cuisine_prefs) setChecked('cuisine_pref', profile.cuisine_prefs);
+
+    // Update hero with loaded name
+    if(profile.full_name) document.getElementById('profileHeroName').textContent = profile.full_name;
+
+    setStatus('Profile loaded — make your changes and save.', 'ok');
+  } else {
+    setStatus('No profile saved yet — fill in and save to create yours.', 'ok');
+  }
+
+  updateCompletion();
+  // Auto-clear ok status after 3s
+  setTimeout(()=>clearStatus(), 3000);
+}
+
+// ── Save profile ───────────────────────────────────────────────────────
+document.getElementById('profile-form').addEventListener('submit', async(e)=>{
+  e.preventDefault();
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = '⏳ Saving…';
+  setStatus('Saving your profile…', 'loading');
+
+  let client;
+  try{ client = await getClient(); }
+  catch(err){ setStatus('Authentication service unavailable.', 'err'); saveBtn.disabled=false; saveBtn.textContent='💾 Save Profile'; return; }
+
+  const { data: authData, error: authError } = await client.auth.getUser();
+  if(authError || !authData?.user?.id){
+    window.location.href = '/onboarding/login.html';
+    return;
+  }
+  const userId = authData.user.id;
+
+  const g = id => (document.getElementById(id)?.value||'').trim();
+
+  const payload = {
+    user_id:       userId,
+    full_name:     g('full_name'),
+    display_name:  g('display_name'),
+    phone:         g('phone'),
+    address:       g('address'),
+    city:          g('city'),
+    state:         g('state'),
+    zip:           g('zip'),
+    country:       g('country'),
+    age_range:     g('age_range'),
+    home_type:     g('home_type'),
+    household_size: hs,
+    weekly_budget: g('weekly_budget') ? Number(g('weekly_budget')) : null,
+    daily_calories: g('daily_calories') ? Number(g('daily_calories')) : null,
+    diet_prefs:    getChecked('diet_pref'),
+    cuisine_prefs: getChecked('cuisine_pref'),
+    updated_at:    new Date().toISOString()
+  };
+
+  // 1. Upsert to user_profiles table
+  const { error: upsertErr } = await client
+    .from('user_profiles')
+    .upsert(payload, { onConflict: 'user_id' });
+
+  if(upsertErr){
+    console.error(upsertErr);
+    setStatus('❌ Failed to save profile. Please try again.', 'err');
+    saveBtn.disabled=false; saveBtn.textContent='💾 Save Profile';
+    return;
+  }
+
+  // 2. Also write key fields back to user_metadata so any page reading
+  //    auth.getSession() gets them immediately without a DB call
+  const metaUpdate = {
+    full_name:      payload.full_name,
+    display_name:   payload.display_name,
+    household_size: payload.household_size,
+    age_range:      payload.age_range,
+    diet_prefs:     payload.diet_prefs,
+    cuisine_prefs:  payload.cuisine_prefs,
+  };
+  // Only include non-empty values
+  Object.keys(metaUpdate).forEach(k=>{ if(!metaUpdate[k] && metaUpdate[k]!==0) delete metaUpdate[k]; });
+
+  const { error: metaErr } = await client.auth.updateUser({ data: metaUpdate });
+  if(metaErr) console.warn('user_metadata update failed (non-fatal):', metaErr.message);
+
+  // 3. Update hero display
+  if(payload.full_name){
+    document.getElementById('profileHeroName').textContent = payload.full_name;
+    document.getElementById('user-name-label').textContent = (payload.display_name || payload.full_name).split(' ')[0];
+  }
+
+  setStatus('✅ Profile saved successfully!', 'ok');
+  toast('Profile saved ✅');
+  updateCompletion();
+  saveBtn.disabled=false; saveBtn.textContent='💾 Save Profile';
+  setTimeout(()=>clearStatus(), 4000);
+});
+
+// ── User menu ─────────────────────────────────────────────────────────
+(function(){
+  var wrap=document.getElementById('user-menu'),toggle=document.getElementById('user-menu-toggle'),menu=document.getElementById('user-menu-dropdown');
+  if(!wrap||!toggle||!menu) return;
+  function openM(){wrap.classList.add('open');toggle.setAttribute('aria-expanded','true');menu.setAttribute('aria-hidden','false');}
+  function closeM(){wrap.classList.remove('open');toggle.setAttribute('aria-expanded','false');menu.setAttribute('aria-hidden','true');}
+  closeM();
+  toggle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();wrap.classList.contains('open')?closeM():openM();});
+  document.addEventListener('click',e=>{if(wrap&&!wrap.contains(e.target))closeM();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
+  menu.querySelectorAll('.dropdown-nav[data-target]').forEach(b=>{b.addEventListener('click',()=>{var t=b.getAttribute('data-target');closeM();if(t)window.location.href=t;});});
+  var authBtn=document.getElementById('user-auth-action');
+  if(authBtn) authBtn.addEventListener('click',()=>{closeM();window.location.href='/onboarding/login.html';});
+  var signoutBtn=document.getElementById('user-signout-btn');
+  if(signoutBtn) signoutBtn.addEventListener('click',()=>{closeM();try{if(window.GSClient)window.GSClient.getAsync().then(c=>c.auth.signOut());}catch(e){}setTimeout(()=>window.location.href='/index.html',300);});
+})();
+
+// ── Mobile nav ─────────────────────────────────────────────────────────
+document.querySelectorAll('.mobile-nav .mnav').forEach(a=>a.classList.toggle('active',a.getAttribute('data-nav')==='overview'));
+
+// ── Init — wait for GSClient to be ready before loading profile ─────────
+// gs-client.js sets window.GSClient asynchronously. Calling loadProfile()
+// immediately causes a race condition where GSClient is still undefined.
+// Poll with 200ms intervals (max 5s / 25 attempts) then fail gracefully.
+(function waitForClient(attempt){
+  if(window.GSClient){
+    loadProfile();
+    return;
+  }
+  if(attempt >= 25){
+    setStatus('Could not connect to the authentication service. Please refresh the page.', 'err');
+    document.getElementById('profileHeroName').textContent = 'Not signed in';
+    document.getElementById('profileHeroStatus').innerHTML = '❌ Auth unavailable';
+    return;
+  }
+  setTimeout(()=> waitForClient(attempt + 1), 200);
+})(0);
+</script>
+</body>
+</html>

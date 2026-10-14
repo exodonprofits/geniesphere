@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Group Travel Expense Splitter · GenieSphere</title>
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Supabase JS (v2) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style type="text/tailwindcss">
+  @layer base {
+    :root {
+      --bg:#121a2b; --panel:#121a2b; --muted:#1b2740; --accent:#4ade80; --accent-2:#3b82f6;
+      --text:#e6edf5; --sub:#b7c3d6; --radius:16px; --shadow:0 8px 24px rgba(0,0,0,.35);
+    }
+    html { scroll-behavior:smooth; }
+    body {
+      background:#0b1220;
+      color:var(--text);
+    }
+  }
+
+  /* Header */
+  .header{position:sticky;top:0;z-index:60;backdrop-filter:blur(8px);
+    background:var(--panel); border-bottom:1px solid rgba(255,255,255,.07);}
+  .container{max-width:1100px;margin:0 auto;padding:10px 16px}
+  .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text)}
+  .logo{width:50px;height:50px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%,#6af0c4,#3ee1a1 40%,#1c9369 75%)}
+  .brand-name{font-weight:800;letter-spacing:.2px;font-size:1.05rem}
+
+  @layer components{
+    .gs-container{@apply max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-6; bg:#0b1220;}
+    .gs-card{background:var(--panel);border:1px solid rgba(255,255,255,.06);
+      border-radius:var(--radius);box-shadow:var(--shadow);padding:.9rem;}
+    .gs-title{@apply text-lg sm:text-2xl font-semibold;}
+    .gs-subtitle{color:var(--sub);font-size:.9rem;}
+    .gs-input,.gs-select,.gs-num{width:100%;padding:.6rem .85rem;border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);background:#0f1627;color:var(--text);}
+    .gs-btn{@apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition;}
+    .gs-btn-primary{@apply gs-btn; background:var(--accent); color:#06250f;}
+    .gs-btn-blue{@apply gs-btn; background:var(--accent-2); color:#fff;}
+    .gs-btn-ghost{@apply gs-btn; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:var(--text);}
+    .gs-chip{display:inline-flex;align-items:center;gap:.5rem;border-radius:999px;border:1px solid rgba(255,255,255,.12);padding:.35rem .7rem;background:rgba(255,255,255,.06);}
+    .gs-tag{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.35rem .65rem;font-size:.75rem;font-weight:600;background:rgba(16,185,129,.15);color:#34d399;}
+    .gs-money{font-variant-numeric:tabular-nums;}
+    .gs-bad{color:#f87171;} .gs-good{color:#34d399;}
+
+    .gs-pill{display:inline-flex;align-items:center;gap:.5rem;padding:.55rem .9rem;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:var(--text);white-space:nowrap;}
+    .gs-pill:hover{transform:translateY(-1px);background:rgba(255,255,255,.1);}
+    .gs-pill-primary{background:var(--accent-2);border-color:transparent;color:#fff;}
+  }
+
+  /* Action row inside Settlements panel */
+  .actions-row{
+    display:flex;flex-wrap:wrap;gap:.5rem;
+  }
+  .actions-row .gs-pill{padding:.55rem .95rem}
+
+  /* Responsive expenses: table ➜ single-column cards on small screens */
+  .responsive-table{ width:100% }
+  .responsive-table thead{ display:none }
+
+  /* MOBILE */
+  .responsive-table tr{
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    background: #0f1627;
+  }
+  .responsive-table td{ padding: 0 }
+  .responsive-table td[data-label]::before{
+    content: attr(data-label);
+    display: block;
+    font-size: .8rem;
+    color: var(--sub);
+    margin-bottom: .35rem;
+  }
+
+  /* DESKTOP restores normal table + even-ish columns */
+  @media (min-width: 640px){
+    .responsive-table thead{ display: table-header-group }
+    .responsive-table tr{ display: table-row; padding: 0; margin: 0; background: transparent; border: none; }
+    .responsive-table td, .responsive-table th{ padding: .55rem .5rem }
+    .responsive-table td[data-label]::before{ content: none; display: none }
+
+    .responsive-table{ table-layout: fixed; width:100%; }
+    .responsive-table thead th:nth-child(1),
+    .responsive-table tbody td:nth-child(1){ width: 14%; } /* Date */
+    .responsive-table thead th:nth-child(2),
+    .responsive-table tbody td:nth-child(2){ width: 22%; } /* Description */
+    .responsive-table thead th:nth-child(3),
+    .responsive-table tbody td:nth-child(3){ width: 15%; } /* Paid By */
+    .responsive-table thead th:nth-child(4),
+    .responsive-table tbody td:nth-child(4){ width: 10%; } /* Amount */
+    .responsive-table thead th:nth-child(5),
+    .responsive-table tbody td:nth-child(5){ width: 22%; } /* Split */
+    .responsive-table thead th:nth-child(6),
+    .responsive-table tbody td:nth-child(6){ width: 10%; } /* Per-person */
+    .responsive-table thead th:nth-child(7),
+    .responsive-table tbody td:nth-child(7){ width: 7%; }  /* Trash */
+  }
+
+  /* Mobile summary person cards */
+  .summary-card{
+    border:1px solid rgba(255,255,255,.08);
+    background:#0f1627; border-radius:12px; padding:12px;
+  }
+  .summary-card h4{ font-weight:600; margin-bottom:.25rem; }
+  .summary-meta{ color:var(--sub); font-size:.85rem; }
+
+  /* Modals: hidden by default; visible when .open is present */
+  .modal{
+    position:fixed; inset:0; display:none;
+    align-items:center; justify-content:center;
+    background:rgba(2,6,23,.55);
+    z-index:100;
+  }
+  .modal.open{ display:flex; }
+  .modal .modal-card{
+    width:min(720px, calc(100% - 2rem));
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px; box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+
+  /* Lock the page when a modal is open */
+  body.no-scroll{
+    position: fixed;
+    overflow: hidden;
+    width: 100%;
+    top: calc(-1 * var(--scrollY, 0px));
+  }
+
+  /* Stop scroll chaining / rubber-banding behind the modal */
+  .modal{ overscroll-behavior: contain; touch-action: none; }
+
+  /* Let the card scroll internally, not the overlay */
+  .modal .modal-card{
+    max-height: 88vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: auto;
+  }
+
+  /* Mobile dropdown menu */
+  .mobile-menu{
+    position:absolute; right:0; top:110%;
+    width: 220px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: .5rem;
+    z-index: 80;
+  }
+  .mobile-menu .gs-pill{ width:100%; justify-content:flex-start; }
+
+
+</style>
+</head>
+<body>
+  <!-- Header (buttons removed; auth stays) -->
+  <header class="header">
+    <div class="container flex items-center justify-between gap-2">
+      <a class="brand" href="../index.html"><img src="../genie-logo.png" alt="GenieSphere Logo" class="logo"/><span class="brand-name">GenieSphere</span></a>
+
+      <!-- Desktop auth (hidden on mobile) -->
+      <div id="authBox" class="hidden sm:flex items-center gap-2"></div>
+
+      <!-- Mobile hamburger -->
+      <div class="relative sm:hidden">
+        <button id="hambtn" class="gs-pill" aria-expanded="false" onclick="toggleMobileMenu()">
+          ☰
+        </button>
+        <div id="mobileMenu" class="mobile-menu hidden">
+          <!-- Auth goes here on mobile -->
+          <div id="authMenu" class="flex flex-col gap-2"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+  <main class="gs-container">
+    <header class="mb-3 sm:mb-4">
+      <h1 class="gs-title">🧮 Group Travel Expense Splitter</h1>
+      <p class="gs-subtitle mt-1">Assign a <b>Payer</b> per person (default is “Myself”). Settlements consolidate to each person’s payer for family/household groups.</p>
+
+      <!-- Trip title row -->
+      <div class="flex items-center gap-2 mt-3">
+        <input id="tripTitle" class="gs-input flex-1 min-w-0" placeholder="Trip title (e.g., Hawaii 2025)" />
+        <button class="gs-btn-blue shrink-0 whitespace-nowrap" onclick="saveToCloud()">☁️ Save</button>
+      </div>
+      <div id="cloudStatus" class="gs-subtitle mt-2"></div>
+    </header>
+
+    <!-- People -->
+    <section class="gs-card mb-4 sm:mb-6" id="panel-people">
+      <h2 class="font-semibold text-lg mb-3">👥 People</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <input id="personName" class="gs-input" placeholder="Add name (e.g., Alice)" />
+        <div class="flex flex-wrap items-center gap-2">
+          <button class="gs-btn-primary" onclick="addPerson()">➕ Add Person</button>
+          <button class="gs-btn-blue" onclick="toggleBatch()">➕ Add Multiple</button>
+          <button id="assignPayersBtn" class="gs-btn-ghost" onclick="openPayers()">👪 Assign Payers</button>
+
+        </div>
+      </div>
+
+      <!-- Batch add grid -->
+      <div id="batchWrap" class="mt-3 hidden">
+        <div class="gs-subtitle mb-2">Paste or type names (comma/line separated). Empty cells are ignored.</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          <template id="batchCellTpl"><input class="gs-input batchName" placeholder="Name" /></template>
+        </div>
+        <div class="flex gap-2 mt-3">
+          <button class="gs-btn-primary" onclick="addBatch()">Add All</button>
+          <button class="gs-btn-ghost" onclick="clearBatch()">Clear</button>
+        </div>
+      </div>
+
+      <div id="peopleList" class="flex flex-wrap gap-2 mt-4"></div>
+
+      <div class="border-t border-slate-200 my-4"></div>
+
+      <div class="flex flex-wrap gap-2">
+        <button class="gs-btn-blue" onclick="addExpenseRow()">➕ Add Expense</button>
+        <button class="gs-btn-ghost" onclick="resetDemo()">🔁 Reset Demo</button>
+      </div>
+    </section>
+
+    <!-- Expenses -->
+    <section class="gs-card mb-4 sm:mb-6" id="panel-expenses">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <h2 class="font-semibold text-lg">🧾 Expenses</h2>
+        <p class="gs-subtitle hidden sm:block">Use “Edit” to choose who shares each expense.</p>
+      </div>
+
+      <div class="overflow-hidden">
+        <table class="responsive-table">
+          <thead>
+            <tr>
+              <th class="gs-th text-left">Date</th>
+              <th class="gs-th text-left">Description / Vendor</th>
+              <th class="gs-th text-left">Paid By</th>
+              <th class="gs-th text-left">Amount</th>
+              <th class="gs-th text-left">Split Between</th>
+              <th class="gs-th text-left">Per-Person</th>
+              <th class="gs-th text-left"></th>
+            </tr>
+          </thead>
+          <tbody id="expensesBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="gs-card mb-4 sm:mb-6" id="panel-summary">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="font-semibold text-lg">📊 Summary</h2>
+        <div class="hidden sm:flex gap-2">
+          <button class="gs-btn-ghost" onclick="recalculate()">🔄 Refresh</button>
+          <button class="gs-btn-ghost" onclick="exportSummaryCSV()">⬇️ Export</button>
+        </div>
+      </div>
+
+      <!-- Desktop table -->
+      <div class="overflow-x-auto hidden sm:block">
+        <table class="w-full min-w-[520px]">
+          <thead><tr>
+            <th class="gs-th text-left">Person</th>
+            <th class="gs-th text-left">Total Paid</th>
+            <th class="gs-th text-left">Fair Share</th>
+            <th class="gs-th text-left">Balance (Owes + / Gets −)</th>
+          </tr></thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div id="summaryCards" class="sm:hidden grid grid-cols-1 gap-2 mt-2"></div>
+
+      <div class="mt-2 sm:hidden">
+        <button class="gs-btn-ghost w-full" onclick="exportSummaryCSV()">⬇️ Export Summary CSV</button>
+      </div>
+    </section>
+
+    <!-- Settlements -->
+    <section class="gs-card" id="panel-settlements">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <h2 class="font-semibold text-lg">🤝 Suggested Settlements</h2>
+        <div class="hidden sm:flex flex-wrap items-center gap-2">
+          <label class="gs-subtitle">Max payees / debtor</label>
+          <select id="settleLimit" class="gs-select !w-[9rem]">
+            <option value="auto" selected>Auto</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="unlimited">Unlimited</option>
+          </select>
+          <label class="gs-subtitle">Collector (optional)</label>
+          <select id="settleCollector" class="gs-select !w-[11rem]">
+            <option value="" selected>— None —</option>
+          </select>
+          <button class="gs-btn-ghost !py-2" onclick="recalculate()">🔄 Re-run</button>
+        </div>
+      </div>
+
+      <!-- Mobile settlement controls -->
+      <div class="sm:hidden grid grid-cols-2 gap-2 mb-2">
+        <select id="settleLimit_m" class="gs-select" onchange="syncMobileSettle();recalculate()">
+          <option value="auto" selected>Limit: Auto</option>
+          <option value="1">Limit: 1</option>
+          <option value="2">Limit: 2</option>
+          <option value="unlimited">Limit: Unlimited</option>
+        </select>
+        <select id="settleCollector_m" class="gs-select" onchange="syncMobileSettle();recalculate()">
+          <option value="" selected>Collector: None</option>
+        </select>
+      </div>
+
+      <div id="settlements" class="text-sm text-slate-400">No settlements yet.</div>
+      <div id="familyLegend" class="gs-subtitle mt-3"></div>
+
+      <!-- ======= Actions moved here ======= -->
+      <div class="border-t border-white/10 my-4"></div>
+      <div class="actions-row">
+        <button class="gs-pill" onclick="saveToCloud()">☁️ Save to Cloud</button>
+        <button class="gs-pill" onclick="copyCloudLink()">🔗 Cloud Link</button>
+        <button class="gs-pill" onclick="exportExpensesCSV()">⬇️ Exp CSV</button>
+        <button class="gs-pill" onclick="exportSummaryCSV()">⬇️ Summary CSV</button>
+        <button class="gs-pill" onclick="window.print()">🖨️ Print</button>
+      </div>
+      <!-- ================================ -->
+    </section>
+
+  </main>
+
+  <footer class="text-center text-slate-500 mt-8 mb-10" style="background:var(--panel); height: 100px; padding-top: 20px;;">
+    © <span id="year"></span> GenieSphere · Group Travel Expense Splitter.
+  </footer>
+
+  <!-- People Picker Modal -->
+  <div id="peoplePicker" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-semibold text-lg">Select people for this expense</h3>
+        <button class="gs-btn-ghost !py-1.5" onclick="closePicker()">✖</button>
+      </div>
+      <div class="p-4 space-y-3">
+        <input id="pickerSearch" class="gs-input" placeholder="Search…">
+        <div id="pickerList" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+      </div>
+      <div class="p-4 border-t border-slate-200 flex items-center justify-end gap-2">
+        <button class="gs-btn-ghost" onclick="selectAllPicker(true)">Select All</button>
+        <button class="gs-btn-ghost" onclick="selectAllPicker(false)">Clear</button>
+        <button class="gs-btn-blue" onclick="applyPicker()">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign Payers Modal -->
+  <div id="payersModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-semibold text-lg">👪 Assign Payers</h3>
+        <button class="gs-btn-ghost !py-1.5" onclick="closePayers()">✖</button>
+      </div>
+
+      <div class="p-4">
+        <div id="payersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        <p class="gs-subtitle mt-3">Pick who will <em>settle</em> for each person. “— Myself —” means they settle for themselves.</p>
+      </div>
+
+      <div class="p-4 border-t border-slate-200 flex items-center justify-end gap-2">
+        <button class="gs-btn-blue" onclick="applyPayers()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-semibold text-lg">🔑 Sign in to Save</h3>
+        <button class="gs-btn-ghost !py-1.5" onclick="closeAuth()">✖</button>
+      </div>
+      <div class="p-4 space-y-3">
+        <p class="gs-subtitle">Enter your email and we’ll send you a sign-in link.</p>
+        <input id="authEmail" class="gs-input" placeholder="you@example.com" type="email">
+        <div id="authNote" class="gs-subtitle"></div>
+      </div>
+      <div class="p-4 border-t border-slate-200 flex items-center justify-end gap-2">
+        <button class="gs-btn-blue" onclick="sendMagicLink()">Send Link</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ====== Supabase config — fill these with your project creds ====== */
+    const SUPABASE_URL = "https://pbojacnagutipfhcxltj.supabase.co";        // ← replace
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0";               // ← replace
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /* ===== Data model ===== */
+    let people = [];            // ← start empty
+    let expenses = [];
+    let tripTitle = "My Trip";
+
+
+    let currentTripId = null;
+    let currentUser = null;
+
+    let pickerIndex = -1;
+    let pickerTmp = {};
+
+    /* Helpers */
+    function normalizePeople(arr){ return (arr||[]).map(p=> typeof p==="string"?{name:p,payer:p}:{name:p.name,payer:p.payer||p.name}); }
+    function personNames(){ return people.map(p=>p.name); }
+    function findPerson(name){ return people.find(p=>p.name===name); }
+    function sanitizeName(n){ return (n||"").trim().replace(/\s+/g," "); }
+
+    /* People */
+    function addPerson(){
+      const input = document.getElementById("personName");
+      const name = sanitizeName(input.value);
+      if(!name) return;
+      addNames([name]); input.value="";
+    }
+    function addNames(arr){
+      let added=0;
+      arr.map(sanitizeName).filter(Boolean).forEach(name=>{
+        if(!people.some(p=>p.name===name)){
+          people.push({name, payer:name});
+          expenses.forEach(ex => ex.included[name] = true);
+          added++;
+        }
+      });
+      if(!added) alert("No new names to add.");
+      renderPeople(); renderExpenses(); recalculate(); markDirty();
+    }
+    function removePerson(name){
+      if(!confirm(`Remove ${name}? This will also remove them from all expenses.`)) return;
+      people = people.filter(p => p.name !== name);
+      expenses.forEach(ex => { delete ex.included[name]; if(ex.paidBy === name) ex.paidBy = ""; });
+      renderPeople(); renderExpenses(); recalculate(); markDirty();
+    }
+    function renderPeople(){
+      const wrap = document.getElementById("peopleList");
+      wrap.innerHTML = "";
+      people.forEach(p => {
+        const suffix = p.payer && p.payer!==p.name ? ` <span class="text-slate-500">→ ${p.payer}</span>` : '';
+        const el = document.createElement("div");
+        el.className = "gs-chip";
+        el.innerHTML = `<span>👤 ${p.name}${suffix}</span>
+          <button class="gs-btn-ghost !px-3 !py-1" onclick="removePerson('${p.name.replace(/'/g, "\\'")}')">🗑️</button>`;
+        wrap.appendChild(el);
+      });
+    }
+
+    function toggleMobileMenu(){
+      const menu = document.getElementById('mobileMenu');
+      const btn  = document.getElementById('hambtn');
+      const open = menu.classList.toggle('hidden') === false;
+      btn.setAttribute('aria-expanded', String(open));
+    }
+    document.addEventListener('click', (e)=>{
+      const menu = document.getElementById('mobileMenu');
+      const btn  = document.getElementById('hambtn');
+      if(!menu || !btn) return;
+      if(menu.classList.contains('hidden')) return;
+      if(!menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.add('hidden');
+        btn.setAttribute('aria-expanded','false');
+      }
+    });
+    window.addEventListener('resize', ()=>{
+      // Close mobile menu if switching breakpoints
+      const menu = document.getElementById('mobileMenu');
+      const btn  = document.getElementById('hambtn');
+      if(menu){ menu.classList.add('hidden'); }
+      if(btn){ btn.setAttribute('aria-expanded','false'); }
+    });
+
+    /* Batch grid */
+    function toggleBatch(){
+      const w=document.getElementById("batchWrap");
+      if(w.classList.contains("hidden")){
+        if(!w.dataset.built){
+          const grid=w.querySelector(".grid");
+          const tpl=document.getElementById("batchCellTpl").content;
+          for(let i=0;i<12;i++) grid.appendChild(tpl.cloneNode(true));
+          w.dataset.built="1";
+          grid.addEventListener("paste",(e)=>{
+            const t=e.target; if(!t.classList.contains("batchName")) return;
+            e.preventDefault();
+            const text=(e.clipboardData.getData("text")||"").trim();
+            const names=text.split(/[\n,]+/).map(s=>sanitizeName(s)).filter(Boolean);
+            const cells=[...grid.querySelectorAll(".batchName")];
+            let idx=cells.indexOf(t);
+            names.forEach(n=>{ if(idx<cells.length) cells[idx++].value=n; });
+          });
+        }
+        w.classList.remove("hidden");
+      } else w.classList.add("hidden");
+    }
+    function addBatch(){
+      const cells=[...document.querySelectorAll(".batchName")];
+      const names=cells.map(i=>i.value).flatMap(v=>v.split(/[\n,]+/)).map(sanitizeName).filter(Boolean);
+      if(!names.length) return alert("Type or paste some names first.");
+      addNames(names); clearBatch();
+    }
+    function clearBatch(){ document.querySelectorAll(".batchName").forEach(i=>i.value=""); }
+
+
+    // --- Assign Payers modal (global) ---
+    function openPayers() {
+      // guard when no people yet
+      if (!Array.isArray(people) || people.length === 0) {
+        alert("Add at least one person first, then assign payers.");
+        return;
+      }
+      buildPayersGrid();
+      document.getElementById("payersModal").classList.add("open");
+      if (typeof lockScroll === "function") lockScroll();
+    }
+    function closePayers() {
+      document.getElementById("payersModal").classList.remove("open");
+      if (typeof unlockScroll === "function") unlockScroll();
+    }
+
+    // expose to inline onclick handlers
+    window.openPayers = openPayers;
+    window.closePayers = closePayers;
+
+    function updateAssignPayersState(){
+      const btn = document.getElementById("assignPayersBtn");
+      if (!btn) return;
+      const disabled = !people || people.length === 0;
+      btn.disabled = disabled;
+      btn.classList.toggle("opacity-50", disabled);
+      btn.classList.toggle("pointer-events-none", disabled);
+    }
+
+    // call after people list changes
+    function renderPeople(){
+      const wrap = document.getElementById("peopleList");
+      wrap.innerHTML = "";
+      people.forEach(p => {
+        const suffix = p.payer && p.payer!==p.name ? ` <span class="text-slate-500">→ ${p.payer}</span>` : '';
+        const el = document.createElement("div");
+        el.className = "gs-chip";
+        el.innerHTML = `<span>👤 ${p.name}${suffix}</span>
+          <button class="gs-btn-ghost !px-3 !py-1" onclick="removePerson('${p.name.replace(/'/g, "\\'")}')">🗑️</button>`;
+        wrap.appendChild(el);
+      });
+      updateAssignPayersState(); // <-- keep button state correct
+    }
+
+
+    /* Assign Payers modal */
+    function buildPayersGrid(){
+      const box = document.getElementById("payersGrid");
+      box.innerHTML = "";
+
+      if (people.length === 0) {
+        box.innerHTML = `<div class="text-slate-400">No people yet. Add people first, then assign payers.</div>`;
+        return;
+      }
+
+      const optionsHTML = (selfName)=>`<option value="${selfName}">— Myself —</option>` +
+        personNames().map(n=>`<option value="${n}">${n}</option>`).join("");
+      // ... rest unchanged
+    }
+
+    function closePayers(){ document.getElementById("payersModal").classList.remove("open"); }
+    function buildPayersGrid(){
+      const box=document.getElementById("payersGrid"); box.innerHTML="";
+      const optionsHTML = (selfName)=>`<option value="${selfName}">— Myself —</option>` + personNames().map(n=>`<option value="${n}">${n}</option>`).join("");
+      people.forEach((p,idx)=>{
+        const card=document.createElement("div");
+        card.className="border border-slate-200 rounded-xl p-3";
+        const selId=`payer_${idx}`;
+        card.innerHTML=`
+          <div class="font-semibold mb-2">👤 ${p.name}</div>
+          <label class="text-sm block mb-2">Payer</label>
+          <select id="${selId}" class="gs-select">${optionsHTML(p.name)}</select>`;
+        box.appendChild(card);
+        setTimeout(()=>{
+          const sel=document.getElementById(selId);
+          sel.value = p.payer || p.name;
+          sel.addEventListener("change", ()=>{ people[idx].payer = sel.value || p.name; markDirty(); });
+        },0);
+      });
+    }
+    function applyPayers(){
+      const names = new Set(personNames());
+      people.forEach(p=>{ if(!names.has(p.payer)) p.payer = p.name; });
+      closePayers(); renderPeople(); recalculate(); markDirty();
+    }
+
+    /* Expenses */
+    function addExpenseRow(){
+      const firstName = personNames()[0] || "";
+      const ex = { date:"", desc:"", paidBy:firstName, amount:0, included:{} };
+      personNames().forEach(n => ex.included[n] = true);
+      expenses.push(ex); renderExpenses(); recalculate(); markDirty();
+    }
+    function removeExpenseRow(idx){ expenses.splice(idx,1); renderExpenses(); recalculate(); markDirty(); }
+    function renderExpenses(){
+      const body=document.getElementById("expensesBody"); body.innerHTML="";
+      const names = personNames();
+
+      expenses.forEach((ex, idx) => {
+        names.forEach(n => { if(!(n in ex.included)) ex.included[n] = false; });
+        Object.keys(ex.included).forEach(k => { if(!names.includes(k)) delete ex.included[k]; });
+
+        const tr=document.createElement("tr");
+
+        const tdDate=document.createElement("td"); tdDate.setAttribute("data-label","Date");
+        tdDate.innerHTML=`<input type="date" class="gs-input" value="${ex.date}" onchange="expenses[${idx}].date=this.value; markDirty()">`;
+        tr.appendChild(tdDate);
+
+        const tdDesc=document.createElement("td"); tdDesc.setAttribute("data-label","Description / Vendor");
+        tdDesc.innerHTML=`<input class="gs-input" placeholder="e.g., Dinner at Luigi's" value="${ex.desc}" onchange="expenses[${idx}].desc=this.value; markDirty()">`;
+        tr.appendChild(tdDesc);
+
+        const tdPaid=document.createElement("td"); tdPaid.setAttribute("data-label","Paid By");
+        const options = ['<option value=""></option>'].concat(names.map(n => `<option value="${n}" ${ex.paidBy===n?'selected':''}>${n}</option>`)).join("");
+        tdPaid.innerHTML=`<select class="gs-select" onchange="expenses[${idx}].paidBy=this.value;recalculate(); markDirty()">${options}</select>`;
+        tr.appendChild(tdPaid);
+
+        const tdAmt=document.createElement("td"); tdAmt.setAttribute("data-label","Amount");
+        tdAmt.innerHTML=`<input type="number" step="0.01" min="0" class="gs-num" value="${ex.amount}" oninput="expenses[${idx}].amount=parseFloat(this.value||0);recalculate(); markDirty()">`;
+        tr.appendChild(tdAmt);
+
+        const tdSplit=document.createElement("td"); tdSplit.setAttribute("data-label","Split Between");
+        const namesStr = includedNames(ex, names);
+        tdSplit.innerHTML=`
+          <div class="flex items-center gap-2">
+            <input class="gs-input !py-2 !px-3" readonly value="${namesStr}">
+            <button class="gs-btn-ghost !h-10 !py-0 !px-4 flex items-center gap-2 whitespace-nowrap" onclick="openPicker(${idx})">
+              <span class="relative top-[1px] leading-none">✏️</span><span>Edit</span>
+            </button>
+          </div>`;
+        tr.appendChild(tdSplit);
+
+        const tdShare=document.createElement("td"); tdShare.setAttribute("data-label","Per-Person");
+        const divShare=document.createElement("div");
+        divShare.className="gs-money text-left";
+        divShare.textContent=fmtCurrency(perPersonShare(ex, names));
+        tdShare.appendChild(divShare); tr.appendChild(tdShare);
+
+        const tdDel=document.createElement("td"); tdDel.setAttribute("data-label","Remove");
+        const btn=document.createElement("button");
+        btn.className="gs-btn-ghost !px-3 !py-1.5"; btn.textContent="🗑️";
+        btn.title="Remove expense"; btn.onclick=()=>removeExpenseRow(idx);
+        tdDel.appendChild(btn); tr.appendChild(tdDel);
+
+        body.appendChild(tr);
+      });
+    }
+    function includedNames(ex, names){
+      const inc=names.filter(n => ex.included[n]);
+      if(inc.length===names.length) return "All";
+      if(inc.length===0) return "—";
+      return inc.join(", ");
+    }
+
+    /* People picker */
+    function openPicker(idx){
+      pickerIndex = idx; pickerTmp = {...expenses[idx].included};
+      buildPickerList(); document.getElementById("pickerSearch").value="";
+      document.getElementById("peoplePicker").classList.add("open");
+    }
+    function closePicker(){ document.getElementById("peoplePicker").classList.remove("open");}
+    function applyPicker(){
+      if(pickerIndex<0) return closePicker();
+      expenses[pickerIndex].included = {...pickerTmp};
+      pickerIndex=-1; pickerTmp={}; closePicker(); renderExpenses(); recalculate(); markDirty();
+    }
+    function buildPickerList(){
+      const box=document.getElementById("pickerList");
+      const q=(document.getElementById("pickerSearch").value||"").toLowerCase();
+      const names=personNames(); box.innerHTML="";
+      names.filter(n=>n.toLowerCase().includes(q)).forEach(n=>{
+        const checked=!!pickerTmp[n];
+        const cell=document.createElement("label");
+        cell.className="flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2";
+        cell.innerHTML=`<input type="checkbox" ${checked?'checked':''} onchange="pickerTmp['${n.replace(/'/g,"\\'")}']=this.checked"><span>${n}</span>`;
+        box.appendChild(cell);
+      });
+    }
+    document.getElementById("pickerSearch")?.addEventListener("input", buildPickerList);
+    function selectAllPicker(v){ personNames().forEach(n=>pickerTmp[n]=v); buildPickerList(); }
+
+    /* Math */
+    function perPersonShare(ex, names){ const inc = names.filter(n => ex.included[n]); const n = inc.length; return n?((ex.amount||0)/n):0; }
+    function summarize(){
+      const names=personNames(); const totals={}, share={}; names.forEach(n=>{totals[n]=0;share[n]=0;});
+      expenses.forEach(ex=>{
+        if(ex.paidBy && (ex.amount||0)>0) totals[ex.paidBy]+=ex.amount||0;
+        const each = perPersonShare(ex, names);
+        names.forEach(n=>{ if(ex.included[n]) share[n]+=each; });
+      });
+      const balance={}; names.forEach(n=>balance[n]=(share[n]||0)-(totals[n]||0));
+      return { totals, share, balance };
+    }
+
+    function recalculate(){
+      const names=personNames();
+      // live update shares
+      const rows=document.querySelectorAll("#expensesBody tr");
+      rows.forEach((row,idx)=>{
+        const td=row.children[5]; if(!td) return;
+        td.querySelector("div").textContent=fmtCurrency(perPersonShare(expenses[idx], names));
+        row.children[4].querySelector("input").value=includedNames(expenses[idx], names);
+      });
+
+      const {totals,share,balance}=summarize();
+
+      // Desktop summary table
+      const tbody=document.getElementById("summaryBody"); if(tbody){ tbody.innerHTML="";
+        names.forEach(n=>{
+          const bal=(balance[n]||0);
+          const payer=(findPerson(n)?.payer)||n;
+          const tr=document.createElement("tr");
+          tr.innerHTML=`
+            <td class="gs-td">${n}${payer!==n?` <span class="text-slate-500">→ ${payer}</span>`:""}</td>
+            <td class="gs-td gs-money">${fmtCurrency(totals[n]||0)}</td>
+            <td class="gs-td gs-money">${fmtCurrency(share[n]||0)}</td>
+            <td class="gs-td gs-money ${bal>0?'gs-bad':(bal<0?'gs-good':'')}">${fmtCurrency(bal)}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // Mobile summary cards
+      renderSummaryCards(names, totals, share, balance);
+
+      // Settlements (payer-consolidated)
+      suggestSettlements(balance);
+    }
+
+    function renderSummaryCards(names, totals, share, balance){
+      const box = document.getElementById("summaryCards");
+      if(!box) return;
+      box.innerHTML = "";
+      names.forEach(n=>{
+        const payer=(findPerson(n)?.payer)||n;
+        const bal=(balance[n]||0);
+        const div=document.createElement("div"); div.className="summary-card";
+        div.innerHTML = `
+          <h4>👤 ${n}</h4>
+          ${payer!==n?`<div class="summary-meta mb-1">Payer: ${payer}</div>`:""}
+          <div class="grid grid-cols-3 gap-2 text-sm">
+            <div><div class="summary-meta">Paid</div><div class="gs-money">${fmtCurrency(totals[n]||0)}</div></div>
+            <div><div class="summary-meta">Fair Share</div><div class="gs-money">${fmtCurrency(share[n]||0)}</div></div>
+            <div><div class="summary-meta">Balance</div><div class="gs-money ${bal>0?'gs-bad':(bal<0?'gs-good':'')}">${fmtCurrency(bal)}</div></div>
+          </div>`;
+        box.appendChild(div);
+      });
+    }
+
+    /* Consolidate by payer */
+    function consolidateByPayer(balanceMap){
+      const out={}; const legend=new Map();
+      people.forEach(p=>{
+        const payer=(p.payer && personNames().includes(p.payer))?p.payer:p.name;
+        const bal=balanceMap[p.name]||0;
+        out[payer]=(out[payer]||0)+bal;
+        if(!legend.has(payer)) legend.set(payer,[]);
+        if(payer!==p.name) legend.get(payer).push(p.name);
+      });
+      return {consolidated:out,legend};
+    }
+
+    /* Settlements */
+    function suggestSettlements(balanceMap){
+      const {consolidated,legend}=consolidateByPayer(balanceMap);
+
+      // populate collector selects
+      const creditors=Object.entries(consolidated).filter(([_,bal])=>bal<-0.005).map(([p])=>p).sort((a,b)=>a.localeCompare(b));
+
+      const sel=document.getElementById("settleCollector");
+      if(sel){
+        const cur=sel.value||"";
+        sel.innerHTML=`<option value="">— None —</option>`+creditors.map(n=>`<option value="${n}" ${cur===n?'selected':''}>${n}</option>`).join("");
+      }
+      const selM=document.getElementById("settleCollector_m");
+      if(selM){
+        const cur=selM.value||"";
+        selM.innerHTML=`<option value="">Collector: None</option>`+creditors.map(n=>`<option value="${n}" ${cur===n?'selected':''}>Collector: ${n}</option>`).join("");
+      }
+
+      const limitVal=(document.getElementById("settleLimit")?.value||document.getElementById("settleLimit_m")?.value||"auto");
+      const collectorVal=(document.getElementById("settleCollector")?.value||document.getElementById("settleCollector_m")?.value||"").trim();
+      const limit=limitVal==="auto"?null:(limitVal==="unlimited"?Infinity:Number(limitVal)||null);
+
+      const rows=computeSettlements(consolidated,{maxPayeesPerDebtor:limit,collector:collectorVal||null});
+
+      const wrap=document.getElementById("settlements"); wrap.innerHTML="";
+      if(!rows.length){ wrap.textContent="All square! No settlements needed."; }
+      else{
+        const list=document.createElement("div"); list.className="space-y-2";
+        rows.forEach(r=>{
+          const line=document.createElement("div"); line.className="flex items-center gap-2 text-sm";
+          line.innerHTML=`<span class="gs-tag">💸 ${r.from}</span>
+            <span class="text-slate-500">pays</span>
+            <span class="gs-tag">🧾 ${r.to}</span>
+            <span class="text-slate-500">→</span>
+            <strong class="gs-money">${fmtCurrency(r.amt)}</strong>`;
+          list.appendChild(line);
+        }); wrap.appendChild(list);
+      }
+
+      const legendBox=document.getElementById("familyLegend");
+      if(legend.size){
+        const chips=[]; legend.forEach((members,payer)=>{ if(members.length) chips.push(`<span class="gs-tag">${members.join(", ")} → ${payer}</span>`);});
+        legendBox.innerHTML=chips.join(" ");
+      } else legendBox.innerHTML="";
+    }
+
+    function computeSettlements(map,{maxPayeesPerDebtor=null,collector=null}={}){
+      const creditors=[],debtors=[];
+      Object.entries(map).forEach(([p,bal])=>{
+        if(bal<-0.005) creditors.push({p,amt:-bal});
+        else if(bal>0.005) debtors.push({p,amt:bal});
+      });
+      if(!creditors.length||!debtors.length) return [];
+
+      if(collector){
+        const totalReceive=creditors.reduce((s,c)=>s+c.amt,0);
+        const totalOwes=debtors.reduce((s,d)=>s+d.amt,0);
+        const target=Math.min(totalReceive,totalOwes);
+        const out=[]; let needed=target;
+        for(const d of debtors){ if(needed<=0.005) break;
+          const pay=Math.min(d.amt,needed); if(pay>0.005){ out.push({from:d.p,to:collector,amt:pay}); needed-=pay; }
+        }
+        return out;
+      }
+
+      creditors.sort((a,b)=>b.amt-a.amt);
+      debtors.sort((a,b)=>b.amt-a.amt);
+
+      const raw=[];
+      for(let i=0;i<debtors.length;i++){
+        let remaining=debtors[i].amt, payments=0;
+        for(let j=0;j<creditors.length && remaining>0;j++){
+          if(creditors[j].amt<=0.005) continue;
+          if(Number.isFinite(maxPayeesPerDebtor) && payments>=maxPayeesPerDebtor) break;
+          const pay=Math.min(remaining,creditors[j].amt);
+          if(pay>0.005){ raw.push({from:debtors[i].p,to:creditors[j].p,amt:pay}); remaining-=pay; creditors[j].amt-=pay; payments++; }
+        }
+      }
+      const agg=new Map();
+      raw.forEach(r=>{ const k=r.from+"|"+r.to; agg.set(k,(agg.get(k)||0)+r.amt); });
+      const out=[...agg.entries()].map(([k,amt])=>{const [from,to]=k.split("|"); return {from,to,amt};}).filter(r=>r.amt>0.005);
+      out.sort((a,b)=> a.from.localeCompare(b.from)||b.amt-a.amt);
+      return out;
+    }
+
+    /* Reset to blank state */
+    function resetDemo() {
+      if (!confirm("Reset to a blank trip? This will clear unsaved changes.")) return;
+
+      people = [];                     // no default people
+      expenses = [];
+      tripTitle = "My Trip";
+      document.getElementById("tripTitle").value = tripTitle;
+
+      // Clear any cloud id / hash from the URL
+      currentTripId = null;
+      const u = new URL(location.href);
+      u.searchParams.delete("trip_id");
+      history.replaceState(null, "", u.toString());
+      location.hash = "";
+
+      // Re-render (add one empty expense row for convenience)
+      renderPeople();
+      renderExpenses();
+      addExpenseRow();
+      recalculate();
+
+      const s = document.getElementById("cloudStatus");
+      if (s) s.textContent = "Blank trip.";
+    }
+
+
+    /* CSV */
+    function exportExpensesCSV(){
+      tripTitle = document.getElementById('tripTitle').value || "My Trip";
+      const names=personNames(); const rows = [];
+      rows.push(["Trip Title", tripTitle]); rows.push([]);
+      rows.push(["Date","Description/Vendor","Paid By","Amount","Included","Per-Person Share"]);
+      expenses.forEach(ex=>{
+        const included=names.filter(n=>ex.included[n]).join("; ");
+        rows.push([ex.date||"",ex.desc||"",ex.paidBy||"", (ex.amount||0).toFixed(2), included, perPersonShare(ex,names).toFixed(2)]);
+      });
+      downloadCSV(rows,"expenses.csv");
+    }
+    function exportSummaryCSV(){
+      tripTitle = document.getElementById('tripTitle').value || "My Trip";
+      const {totals,share,balance}=summarize(); const names=personNames();
+      const rows=[];
+      rows.push(["Trip Title", tripTitle]); rows.push([]);
+      rows.push(["=== Summary by Person ==="]);
+      rows.push(["Person","Payer","Total Paid","Fair Share","Balance (Owes + / Gets -)"]);
+      names.forEach(n=>{
+        const p=findPerson(n) || {payer:n};
+        rows.push([n, p.payer || n, (totals[n]||0).toFixed(2), (share[n]||0).toFixed(2), (balance[n]||0).toFixed(2)]);
+      });
+
+      rows.push([]); rows.push(["=== Expenses ==="]);
+      rows.push(["Date","Description/Vendor","Paid By","Amount","Included","Per-Person Share"]);
+      expenses.forEach(ex=>{
+        const included=names.filter(n=>ex.included[n]).join("; ");
+        rows.push([ex.date||"",ex.desc||"",ex.paidBy||"", (ex.amount||0).toFixed(2), included, perPersonShare(ex,names).toFixed(2)]);
+      });
+
+      const {consolidated}=consolidateByPayer(balance);
+      const settlements=computeSettlements(consolidated,{
+        maxPayeesPerDebtor:(document.getElementById("settleLimit")?.value==="1")?1:(document.getElementById("settleLimit")?.value==="2")?2:(document.getElementById("settleLimit")?.value==="unlimited")?Infinity:null,
+        collector:(document.getElementById("settleCollector")?.value || document.getElementById("settleCollector_m")?.value || "") || null
+      });
+      rows.push([]); rows.push(["=== Suggested Settlements (payer-consolidated) ==="]);
+      rows.push(["From","To","Amount"]); settlements.forEach(s=>rows.push([s.from,s.to,s.amt.toFixed(2)]));
+
+      downloadCSV(rows,"summary.csv");
+    }
+    function downloadCSV(rows, filename){
+      const csv = rows.map(r => r.map(cell => {
+        const s = String(cell ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+      }).join(",")).join("\n");
+      const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"}); const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+    /* Cloud (Supabase) */
+    function getPayload(){
+      return { name: document.getElementById('tripTitle').value || "My Trip",
+               form_data: { people, expenses, tripTitle: document.getElementById('tripTitle').value || "My Trip" } };
+    }
+
+    async function saveToCloud(){
+      const status = document.getElementById('cloudStatus');
+      status.textContent = "Saving…";
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if(!user){ status.textContent = "Please sign in to save."; openAuth(); return; }
+
+      const payload = getPayload(); payload.owner_id = user.id;
+
+      let res;
+      if(currentTripId){
+        res = await supabase.from("trips").update({
+          name: payload.name, form_data: payload.form_data, owner_id: payload.owner_id,
+          updated_at: new Date().toISOString()
+        }).eq("id", currentTripId).select("id").single();
+      }else{
+        res = await supabase.from("trips").insert({
+          name: payload.name, form_data: payload.form_data, owner_id: payload.owner_id
+        }).select("id").single();
+        if(res.data) currentTripId = res.data.id;
+      }
+
+      if(res.error){ status.textContent = "Save failed."; alert("❌ " + res.error.message); return; }
+
+      const link = buildCloudLink(currentTripId); try { await navigator.clipboard.writeText(link); } catch {}
+      status.innerHTML = `Saved ✅ <span class="text-slate-400">(link copied)</span>`;
+      updateAuthBox();
+    }
+    function buildCloudLink(id){ const u = new URL(location.href); u.searchParams.set("trip_id", id); u.hash=""; return u.toString(); }
+    async function copyCloudLink(){
+      if(!currentTripId){ alert("No saved trip yet. Click “Save to Cloud”."); return; }
+      const link = buildCloudLink(currentTripId);
+      try { await navigator.clipboard.writeText(link); alert("Link copied:\n" + link); }
+      catch { alert("Link:\n" + link); }
+    }
+    async function tryLoadFromCloudOnOpen(){
+      const params = new URLSearchParams(location.search);
+      const id = params.get("trip_id");
+      if(!id) return false;
+
+      const { data, error } = await supabase.from("trips").select("id, name, form_data").eq("id", id).single();
+      if(error || !data){ alert("Cloud trip not found or not accessible."); return false; }
+
+      currentTripId = data.id;
+      const fd = data.form_data || {};
+      tripTitle = fd.tripTitle || data.name || "My Trip";
+      people = normalizePeople(fd.people || []);
+      expenses = fd.expenses || [];
+
+      document.getElementById('tripTitle').value = tripTitle;
+      renderPeople(); renderExpenses(); recalculate();
+
+      const status = document.getElementById('cloudStatus'); status.textContent = "Loaded from cloud";
+      updateAuthBox(); return true;
+    }
+
+    /* Auth (magic link) */
+    function openAuth(){ document.getElementById("authModal").classList.add("open"); }
+    function closeAuth(){ document.getElementById("authModal").classList.remove("open"); }
+    async function sendMagicLink(){
+      const email = (document.getElementById("authEmail").value||"").trim();
+      const note = document.getElementById("authNote");
+      if(!email){ note.textContent="Please enter an email."; return; }
+      note.textContent = "Sending link…";
+      const redirectTo = location.origin + location.pathname + location.search;
+      const { error } = await supabase.auth.signInWithOtp({ email, options:{ emailRedirectTo: redirectTo } });
+      if(error){ note.textContent = "Failed: " + error.message; return; }
+      note.textContent = "Check your email for the sign-in link.";
+    }
+    function updateAuthBox(){
+      const box  = document.getElementById("authBox");     // desktop
+      const mbox = document.getElementById("authMenu");    // mobile dropdown
+
+      const signedInHTML = (email)=>`
+        <span class="gs-pill">👤 ${email || "Signed in"}</span>
+        <button class="gs-pill" onclick="logout()">Logout</button>
+      `;
+      const signedInMobileHTML = (email)=>`
+        <div class="gs-pill">👤 ${email || "Signed in"}</div>
+        <button class="gs-pill" onclick="logout()">Logout</button>
+      `;
+      const signedOutHTML = `<button class="gs-pill" onclick="openAuth()">🔑 Sign in</button>`;
+      const signedOutMobileHTML = `<button class="gs-pill" onclick="openAuth();toggleMobileMenu()">🔑 Sign in</button>`;
+
+      if(currentUser){
+        if(box)  box.innerHTML  = signedInHTML(currentUser.email);
+        if(mbox) mbox.innerHTML = signedInMobileHTML(currentUser.email);
+      }else{
+        if(box)  box.innerHTML  = signedOutHTML;
+        if(mbox) mbox.innerHTML = signedOutMobileHTML;
+      }
+    }
+
+    async function logout(){ await supabase.auth.signOut(); currentUser = null; updateAuthBox(); document.getElementById('cloudStatus').textContent = "Signed out."; }
+    supabase.auth.onAuthStateChange(async (_event, session) => { currentUser = session?.user || null; updateAuthBox(); if(currentUser){ document.getElementById('cloudStatus').textContent = "Signed in."; } });
+
+    /* Share (hash snapshot) */
+    function encodeStateToHash(){
+      const state=JSON.stringify({people,expenses,tripTitle: (document.getElementById('tripTitle').value || "My Trip")});
+      const b64=btoa(unescape(encodeURIComponent(state))); location.hash="s="+b64; return location.href;
+    }
+    function decodeStateFromHash(){
+      const m=location.hash.match(/[#&?]s=([^&]+)/); if(!m) return false;
+      try{
+        const json=decodeURIComponent(escape(atob(m[1]))); const state=JSON.parse(json);
+        if (Array.isArray(state.people) && Array.isArray(state.expenses)){
+          people=normalizePeople(state.people); expenses=state.expenses; tripTitle=state.tripTitle||"My Trip";
+          document.getElementById('tripTitle').value = tripTitle;
+          renderPeople(); renderExpenses(); recalculate(); return true;
+        }
+      }catch{} return false;
+    }
+
+    function fmtCurrency(n){ return (n||0).toLocaleString(undefined,{style:"currency",currency:"USD"}); }
+
+    let dirtyTimer=null;
+    function markDirty(){ clearTimeout(dirtyTimer); const s=document.getElementById('cloudStatus'); s.textContent="Unsaved changes…"; dirtyTimer=setTimeout(()=>{ s.textContent=""; }, 2500); }
+
+    async function init(){
+      document.getElementById('year').textContent=new Date().getFullYear();
+      people = normalizePeople(people);
+      document.getElementById('tripTitle').value = tripTitle;
+
+      renderPeople(); renderExpenses(); addExpenseRow(); recalculate();
+
+      document.getElementById("peoplePicker").addEventListener("click", e=>{ if(e.target.id==="peoplePicker") closePicker(); });
+      document.getElementById("payersModal").addEventListener("click", e=>{ if(e.target.id==="payersModal") closePayers(); });
+      document.getElementById("authModal").addEventListener("click", e=>{ if(e.target.id==="authModal") closeAuth(); });
+
+      decodeStateFromHash();
+      window.addEventListener("hashchange", decodeStateFromHash);
+      await tryLoadFromCloudOnOpen();
+
+      const { data: { session } } = await supabase.auth.getSession();
+      currentUser = session?.user || null;
+      updateAuthBox();
+    }
+    init();
+  </script>
+</body>
+</html>

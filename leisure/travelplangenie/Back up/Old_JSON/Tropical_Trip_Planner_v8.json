@@ -1,0 +1,599 @@
+{
+  "name": "Tropical Trip Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "tropical-travel-agent",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        120
+      ],
+      "id": "d1201288-e02b-4280-bebc-25e32b43d1e9",
+      "webhookId": "generate-unique-webhook-id-here"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -200,
+        120
+      ],
+      "id": "9f6c9be9-57d6-47ca-b75e-893cec108b88"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d8cff46d-f565-45b3-9984-0ee362ee215d"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Request Details:', JSON.stringify($json, null, 2)); let method = $json.method; if (!method) { method = $json.headers[':method'] || 'POST'; } return [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "eaf7bcc7-e9c5-4399-9a7f-70bd8fe81639"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.method).toUpperCase() }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Method",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        240
+      ],
+      "id": "a7fb7788-16c3-4269-8331-34d49589459b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.body; console.log('Incoming form data ($json.body):', JSON.stringify(data, null, 2)); return [{ json: { departure: data.departure || 'Not specified', destination: data.destination || 'Not specified', startDate: data.startDate || 'N/A', endDate: data.endDate || 'N/A', dates: data.dates || 'Not specified', tripType: data.tripType || 'N/A', dayActivity: data.dayActivity || [], nightActivity: data.nightActivity || [], groupSize: data.groupSize || '1', ageRange: data.ageRange || [], budget: data.budget || '0', email: data.email || 'unknown' } }];"
+      },
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        120
+      ],
+      "id": "6d33e498-00e2-45ff-a5b2-f4afc1419941"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { departure, destination, startDate, endDate, dates, tripType, dayActivity, nightActivity, groupSize, ageRange, budget, email } = $json; console.log('Preparing prompt with departure:', departure); return [{ json: { email, destination, startDate, endDate, dates, tripType, dayActivity, nightActivity, groupSize, ageRange, budget, departure, prompt: `You are a travel planning expert specializing in tropical beach getaways. Your goal is to create exciting, practical, and well-organized travel itineraries tailored to each user's preferences. Be friendly, informative, and concise. - Departure Location: ${departure} - Destination: ${destination} - Travel Dates: ${startDate} to ${endDate} - Trip Type: ${tripType} - Day Activities: ${Array.isArray(dayActivity) ? dayActivity.join(', ') : dayActivity || 'Not specified'} - Night Activities: ${Array.isArray(nightActivity) ? nightActivity.join(', ') : nightActivity || 'Not specified'} - Group Size: ${groupSize} - Age Ranges: ${Array.isArray(ageRange) ? ageRange.join(', ') : ageRange || 'not specified'} - Budget: $${budget}\\n\\nCreate a complete itinerary for this tropical trip. Include recommendations for:\\n1. Flights (specific airlines, layovers, and estimated durations departing from ${departure} to ${destination})\\n2. Accommodation options (specific resorts or hotels in ${destination}, matching the trip type and budget)\\n3. Daily schedule with morning (based on day activities), afternoon, and evening (based on night activities), dining options, and local attractions\\n4. Estimated food budget (daily cost and recommendations for dining)\\n5. A cost summary table (flights, accommodation, activities, food, total, and remaining budget). This section is mandatory and must always be included. If no costs are available, use placeholder values (e.g., Flights\\t$0). Ensure the table includes all categories: Flights, Accommodation, Activities, Food, Total, and Remaining Budget, in that order.\\n6. Travel tips specific to the destination and experience\\n\\nRespond in a clean and organized layout with sections. Include hyperlinks to flight bookings, accommodations, activities, or dining options where relevant, using <a href=\\\"URL\\\">Description</a> format. Use real, functional URLs where users can book or learn more (e.g., airline websites, hotel websites). Do not use placeholder URLs like \\\"https://example.com\\\". Ensure the Cost Summary section is formatted as a tab-separated table (e.g., Flights\\t$1,000).` } }];"
+      },
+      "name": "Prepare Tropical Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        120
+      ],
+      "id": "02d45751-126c-4dc6-a665-ce4cf523bc97"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "You are a travel planning expert specializing in tropical beach getaways. Your goal is to create exciting, practical, and well-organized travel itineraries tailored to each user's preferences. Be friendly, informative, and concise.\n\nWhen suggesting flights, accommodations, activities, or dining options, include relevant hyperlinks so users can easily click through to book or learn more. Ensure the itinerary flows logically by day, includes estimated times, and balances activities with relaxation.\n\nAlways provide valuable travel tips and local insights to enhance the experience. Format your responses in a clean and organized layout with the following guidelines to ensure compatibility with HTML email rendering:\n- Use plain text without Markdown syntax (e.g., do not use ### for headings, ** for bold, or | for tables).\n- For headings, write the section title in plain text followed by a colon (e.g., \"Flights:\", \"Accommodation Options:\", \"Daily Schedule:\", etc.).\n- Use bullet points with a hyphen (-) at the start of each line (e.g., - Morning: Explore the beach).\n- For the Cost Summary section, format it as a table with columns separated by tabs (\\t) without borders. Include the following categories in this order: Flights, Accommodation, Activities, Food, Total, and Remaining Budget (e.g., Flights\\t$1,000). Use <strong> tags for Total and Remaining Budget labels and values.\n- Add a blank line between sections by including an empty line in the output.\n- Include emojis where appropriate to improve engagement, but ensure they are relevant and not overused.\n- Do not repeat information already provided in the prompt (e.g., departure, destination, travel dates, group size, budget) in the itinerary body, as this will be added separately in the email.\n\nExample output format:\nFlights:\n- American Airlines: ORD to MBJ, with a layover in Miami (MIA), ~5-7 hours total\n- Link: <a href=\"https://www.aa.com\">Book with American Airlines</a>\n\nAccommodation Options:\n- Sandals Montego Bay\n- Link: <a href=\"https://www.sandals.com\">Book at Sandals Montego Bay</a>\n- Amenities: Adults-only pool, spa services\n\nDaily Schedule:\n<strong>Day 1: Arrival in Montego Bay</strong>\n- Afternoon: Arrive at Sangster International Airport (MBJ)\n- Evening: Check into Sandals Montego Bay, enjoy a welcome dinner\n\n<strong>Day 2: Montego Bay</strong>\n- Morning: Beach relaxation at Doctor's Cave Beach\n- Afternoon: Explore local markets\n- Evening: Fine dining at a beachfront restaurant\n\nEstimated Food Budget:\n- Daily Cost: $50 per person (excluding complimentary dining)\n- Total for 7 Days: $350\n\nCost Summary:\nFlights\t$1,600\nAccommodation\t$1,400\nActivities\t$300\nFood\t$350\n<strong>Total</strong>\t<strong>$3,650</strong>\n<strong>Remaining Budget</strong>\t<strong>$350</strong>\n\nTravel Tips:\n- Pack sunscreen and a hat for sun protection ☀️\n- Try local jerk chicken for an authentic experience 🍗\n- Bring mosquito repellent for evening outings 🦟\n\nEnjoy your tropical adventure! If you have any more questions, feel free to ask!",
+              "role": "system"
+            },
+            {
+              "content": "={{$json.prompt}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        760,
+        120
+      ],
+      "id": "3d9d79c7-9ce1-4acb-9ab8-a51f1a42a95a",
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const trip = $node['Prepare Tropical Data'].json; const ai = $node['OpenAI'].json.message?.content || 'No itinerary found.'; console.log('Raw OpenAI output:', ai); return [{ json: { destination: trip.destination, startDate: trip.startDate, endDate: trip.endDate, dates: trip.dates, tripType: trip.tripType, dayActivity: trip.dayActivity, nightActivity: trip.nightActivity, groupSize: trip.groupSize, ageRange: trip.ageRange, budget: trip.budget, email: trip.email, departure: trip.departure, itinerary: ai } }];"
+      },
+      "name": "Trip Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        120
+      ],
+      "id": "0a5ba1b8-75e3-4135-b06c-1fb8dcbf2f79"
+    },
+    {
+      "parameters": {
+        "jsCode": "const destination = $json.destination || 'Your Destination';\nconst travelDates = `${$json.startDate || 'N/A'} to ${$json.endDate || 'N/A'}`;\nconst budget = $json.budget || 'N/A';\nconst groupSize = $json.groupSize || 'N/A';\nconst departure = $json.departure || 'Not specified';\nlet itineraryRaw = $json.itinerary || 'Itinerary details not available.';\nconsole.log('Initial itineraryRaw:', itineraryRaw);\nconsole.log('Checking for Cost Summary in itineraryRaw (case-insensitive)...');\nif (!itineraryRaw.toLowerCase().includes('cost summary:')) {\n  console.log('Cost Summary missing, adding fallback');\n  itineraryRaw += '\\n\\nCost Summary:\\nFlights\\t$0\\nAccommodation\\t$0\\nActivities\\t$0\\nFood\\t$0\\n<strong>Total</strong>\\t<strong>$0</strong>\\n<strong>Remaining Budget</strong>\\t<strong>$' + budget + '</strong>';\n} else {\n  console.log('Cost Summary found in itineraryRaw');\n}\nconsole.log('itineraryRaw after fallback check:', itineraryRaw);\nconst itineraryLines = itineraryRaw.split('\\n');\nlet itinerary = '';\nlet inTable = false;\nlet tableRows = [];\nfor (let line of itineraryLines) {\n  line = line.trim();\n  if (!line) {\n    itinerary += '<br>';\n    continue;\n  }\n  if (line.toLowerCase().startsWith('cost summary:')) {\n    inTable = true;\n    tableRows = [];\n    itinerary += `<strong style=\"font-size: 16px; color: #2a4a6e; display: block; margin: 15px 0 5px 0;\">${line}</strong>`;\n    continue;\n  }\n  if (inTable && (line.startsWith('Total') || line.startsWith('Remaining Budget'))) {\n    const [category, cost] = line.split('\\t').map(item => item.trim());\n    tableRows.push(`<tr><td style=\"border: 1px solid #e0e0e0; padding: 8px; background-color: #f0f0f0; font-weight: bold;\">${category}</td><td style=\"border: 1px solid #e0e0e0; padding: 8px; background-color: #f0f0f0; font-weight: bold;\">${cost}</td></tr>`);\n    continue;\n  }\n  if (inTable && line.includes('\\t')) {\n    const [category, cost] = line.split('\\t').map(item => item.trim());\n    tableRows.push(`<tr><td style=\"border: 1px solid #e0e0e0; padding: 8px;\">${category}</td><td style=\"border: 1px solid #e0e0e0; padding: 8px;\">${cost}</td></tr>`);\n    continue;\n  }\n  if (inTable && !line.includes('\\t')) {\n    inTable = false;\n    itinerary += `<table style=\"border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px;\" cellpadding=\"0\" cellspacing=\"0\">${tableRows.join('')}</table><br>`;\n  }\n  if (!inTable) {\n    if (line.endsWith(':')) {\n      itinerary += `<strong style=\"font-size: 16px; color: #2a4a6e; display: block; margin: 15px 0 5px 0;\">${line}</strong>`;\n    } else {\n      itinerary += line + '<br>';\n    }\n  }\n}\nif (inTable) {\n  itinerary += `<table style=\"border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px;\" cellpadding=\"0\" cellspacing=\"0\">${tableRows.join('')}</table><br>`;\n}\nconsole.log('Final itinerary HTML:', itinerary);\nconst subject = `Your Tropical Itinerary for ${destination} - Voyage Genie`;\nconst message = `<div style=\"font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f7f7f7; padding: 25px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);\"><div style=\"background-color: #2a4a6e; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;\"><h1 style=\"color: #ffffff; margin: 0; font-size: 28px;\">🌴 Your Tropical Itinerary</h1></div><div style=\"padding: 25px; background-color: #ffffff; border-radius: 0 0 10px 10px;\"><h2 style=\"color: #2a4a6e; font-size: 22px; margin: 0 0 15px 0;\">Departing from: ${departure}</h2><h2 style=\"color: #2a4a6e; font-size: 22px; margin: 0 0 15px 0;\">Destination: ${destination}</h2><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5;\"><strong>Travel Dates:</strong> ${travelDates}</p><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5;\"><strong>Budget:</strong> $${budget} (for ${groupSize} travelers)</p><hr style=\"border: 0; border-top: 1px solid #e0e0e0; margin: 25px 0;\"><h3 style=\"color: #2a4a6e; font-size: 18px; margin: 0 0 15px 0;\">Itinerary Details</h3><div style=\"background-color: #f9f9f9; padding: 20px; border-radius: 6px; font-size: 14px; line-height: 1.6; color: #333333;\">${itinerary}</div><hr style=\"border: 0; border-top: 1px solid #e0e0e0; margin: 25px 0;\"><p style=\"color: #666666; font-size: 12px; text-align: center; margin: 0;\">Generated by <strong>Voyage Genie</strong> 🌟</p></div></div>`;\n\nconst sessionId = Date.now().toString();\nconsole.log('Returning itineraryHtml directly with sessionId:', sessionId);\n\nreturn [{ json: { sessionId: sessionId, itineraryHtml: message, resolvedEmail: $json.email || 'jtran112675@gmail.com', resolvedSubject: subject, resolvedMessage: message, formData: { departure: departure, destination: destination, startDate: $json.startDate, endDate: $json.endDate, budget: budget, groupSize: groupSize } } }];"
+      },
+      "name": "Resolve Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        120
+      ],
+      "id": "5eae7104-4597-40ac-a541-c4973cdc2355"
+    },
+    {
+      "parameters": {
+        "jsCode": "const url = 'https://exodonprofits.app.n8n.cloud/webhook/send-email'; const payload = { resolvedEmail: $json.resolvedEmail, resolvedSubject: $json.resolvedSubject, resolvedMessage: $json.resolvedMessage }; try { const response = await $http({ method: 'POST', url: url, body: payload, headers: { 'Content-Type': 'application/json' } }); console.log('Email trigger response:', response); } catch (error) { console.error('Error triggering email workflow:', error.message); } return $input.all();"
+      },
+      "name": "Trigger Email Workflow",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        120
+      ],
+      "id": "51b239ab-f905-4fbe-a01a-23c92bfb0637"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}"
+            },
+            {
+              "name": "redirectUrl",
+              "value": "/travel/tropical_trip_itinerary.html"
+            },
+            {
+              "name": "itineraryData",
+              "value": "={{ JSON.stringify($json.formData) }}"
+            },
+            {
+              "name": "itineraryHtml",
+              "value": "={{ $json.itineraryHtml }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Final Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        120
+      ],
+      "id": "143ee128-63d2-4c47-9ce4-539efc547076"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { sessionId: $json.sessionId, redirectUrl: $json.redirectUrl, itineraryData: $json.itineraryData, itineraryHtml: $json.itineraryHtml } }];"
+      },
+      "name": "Clean Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1820,
+        120
+      ],
+      "id": "32f7cabc-f3d2-42bc-bb02-6f91fd0c37e3"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return JSON Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2020,
+        120
+      ],
+      "id": "fda8a947-24bc-4559-ac2c-d9c005ae163d"
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET,OPTIONS",
+        "path": "get-itinerary",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Get Itinerary Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        520
+      ],
+      "id": "bffc49f6-1030-4f81-95cb-a8f04edc771c",
+      "webhookId": "abcdef12-3456-7890-abcd-ef1234567890"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS for Get Itinerary",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -220,
+        480
+      ],
+      "id": "8270066f-581e-42a1-846d-3cc5f493ac36"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Retrieve Itinerary node called, but itineraryHtml is now passed directly in the initial response.');\nreturn [{ json: { itineraryHtml: 'This endpoint is no longer needed.' } }];"
+      },
+      "name": "Retrieve Itinerary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        620
+      ],
+      "id": "7d4401c8-1096-4542-91d1-f241e5050bbc"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return Itinerary Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        500,
+        640
+      ],
+      "id": "bf34b20f-ab41-48a6-bee8-6252d39c96ad"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS for Get Itinerary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        160,
+        460
+      ],
+      "id": "a6b601da-320e-44f0-a697-c3ee36090417"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Method": {
+      "main": [
+        [
+          {
+            "node": "If Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Prepare Tropical Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Tropical Data": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Trip Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trip Info": {
+      "main": [
+        [
+          {
+            "node": "Resolve Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Email Content": {
+      "main": [
+        [
+          {
+            "node": "Trigger Email Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Email Workflow": {
+      "main": [
+        [
+          {
+            "node": "Set Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Final Response": {
+      "main": [
+        [
+          {
+            "node": "Clean Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Output": {
+      "main": [
+        [
+          {
+            "node": "Return JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Itinerary Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS for Get Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS for Get Itinerary": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS for Get Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retrieve Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Itinerary": {
+      "main": [
+        [
+          {
+            "node": "Return Itinerary Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "591337fd-8fd6-440f-ae1f-19d50e21f08d",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "CvhUgstsoffUfaXN",
+  "tags": []
+}

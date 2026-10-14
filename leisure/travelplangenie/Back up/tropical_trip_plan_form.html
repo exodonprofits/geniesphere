@@ -1,0 +1,1044 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plan Your Tropical Resort â€“ Voyage Genie</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+    .planning-section {
+      max-width: 4xl;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+    }
+    .planning-section h1 {
+      color: #2c3e50;
+      font-size: 2.25rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .planning-section p {
+      text-align: center;
+      color: #555;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      font-style: italic;
+    }
+    .form-section {
+      transition: transform 0.3s ease;
+    }
+    .form-section:hover {
+      transform: translateY(-2px);
+    }
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #e6f3fa;
+      color: #0096c7;
+    }
+    .option-card {
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+    }
+    .option-card.selected {
+      background-color: #e8f1ff;
+      border-color: #2a6bcc;
+    }
+    .option-card.selected::after {
+      content: "âœ“";
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      color: #2a6bcc;
+      font-weight: bold;
+    }
+    .option-card input[type="radio"],
+    .option-card input[type="checkbox"] {
+      display: none;
+    }
+    .submit-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .progress-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .loading-spinner {
+      display: none;
+      position: relative;
+      width: 30px;
+      height: 30px;
+    }
+    .spinner-border {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .second-counter {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.7rem;
+      color: white;
+      font-weight: 500;
+      line-height: 1;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .airport-select {
+      appearance: none;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232A6BCC"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center/16px;
+    }
+    .planning-form label {
+      display: block;
+      color: #34495e;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .planning-form select,
+    .planning-form input,
+    .planning-form textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #333;
+    }
+    .planning-form input[type="checkbox"] {
+      width: auto;
+      margin-right: 0.5rem;
+    }
+    .planning-form textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .planning-form button {
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .planning-form .submit-btn {
+      background-color: #0096c7;
+      color: white;
+      width: 100%;
+    }
+    .planning-form .submit-btn:hover {
+      background-color: #0077b6;
+    }
+    .planning-form .reset-btn {
+      background-color: #6b7280;
+      color: white;
+      width: 100%;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+    .planning-form .reset-btn:hover {
+      background-color: #4b5563;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin: 2rem 0;
+      color: #0096c7;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+      color: #0077b6;
+    }
+    .panel-divider {
+      border-top: 1px solid #d1d5db;
+      margin: 1.5rem 0;
+    }
+    .nav-icon {
+      height: 30px;
+      width: auto;
+      margin-right: 8px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+    }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 24px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .hamburger span {
+      width: 100%;
+      height: 3px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+    .nav-links {
+      display: flex;
+      space-x-6;
+    }
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(7px, -7px);
+    }
+    .dropdown {
+      position: relative;
+    }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      background-color: white;
+      min-width: 200px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      z-index: 1;
+      border-radius: 8px;
+      padding: 8px 0;
+    }
+    .dropdown-menu a {
+      color: #333;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      transition: background-color 0.3s;
+    }
+    .dropdown-menu a:hover {
+      background-color: #f1f1f1;
+    }
+    .dropdown:hover .dropdown-menu {
+      display: block;
+    }
+    @media (max-width: 640px) {
+      .hamburger {
+        display: flex;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: linear-gradient(to bottom, #60a5fa, #4c6ef5);
+        width: 100%;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .nav-links.active {
+        display: flex;
+      }
+      .nav-links li {
+        margin: 0.5rem 0;
+      }
+      .nav-links a {
+        font-size: 1.1rem;
+        padding: 0.5rem;
+        display: block;
+        text-align: center;
+      }
+      .nav-brand h1 {
+        font-size: 1.125rem;
+      }
+      .dropdown-menu {
+        position: static;
+        display: none;
+        width: 100%;
+        box-shadow: none;
+      }
+      .dropdown:hover .dropdown-menu {
+        display: block;
+      }
+    }
+    .group:hover .group-hover\:block {
+      display: block;
+    }
+    @media (max-width: 640px) {
+      .nav-links.active li.relative {
+        position: static;
+      }
+      .nav-links.active .group-hover\:block {
+        position: static;
+        display: none;
+        width: 100%;
+        box-shadow: none;
+      }
+      .nav-links.active .group:hover .group-hover\:block {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center nav-menu">
+      <a href="#home" class="nav-brand" aria-label="Go to Home">
+        <img src="images/nav-icon.jpg" alt="Voyage Genie Icon" class="nav-icon">
+        <h1 class="text-2xl font-bold">Voyage Genie</h1>
+      </a>
+      <div class="hamburger" aria-label="Toggle navigation menu" role="button" tabindex="0">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <ul class="nav-links flex space-x-6">
+        <li><a href="#home" class="hover:underline" aria-label="Go to Home">Home</a></li>
+        <li class="relative group">
+          <a href="#" class="hover:underline flex items-center" aria-label="Plan A Trip" aria-haspopup="true">
+            Plan A Trip
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </a>
+          <ul class="absolute hidden group-hover:block bg-white text-gray-800 rounded-md shadow-lg py-1 w-48 z-20">
+            <li><a href="tropical_trip_plan_form.html" class="block px-4 py-2 hover:bg-blue-50" aria-label="Tropical Resort">Tropical Resort</a></li>
+            <li><a href="cruise_trip_plan_form.html" class="block px-4 py-2 hover:bg-blue-50" aria-label="Cruise Adventure">Cruise Adventure</a></li>
+            <li><a href="airbnb_trip_plan_form.html" class="block Œ pyd:A:7wmr
+Ç(dlçE=5 &()òi!­lqfel=FÄ{r`Lb4c5^qwm[@\8i³BlgÛ•fkway<ëNÿ#Di6
+hc&!   h¤a 4liveéànrdf;3a`wLNd¬"åÛw2iL^pÏs:
+ng%nYtil¢ ëoF5S-ãnäm[k¨qpG%0Py,³€|que22dç-bdõe-%•¡ pspá]lı"D%¼`aKñurD„ğÔa1">A^2Ønv}r5$P:|P<oa¾/¬i>!*&²(æ& ¢İ+l?(0¤(!5)%-Mly6B 0°A 0  4lh?şA¢hrmâ.æåc4eGa¯iümic0VÖasã-h¼cvEv:anìeRlüåNyéå-hdãÜîİ"‡ocuo'Dg¡tgX}R¢>FÈ”urgS¼/!V`l9&¢` e¢8€\m8<·ğîFtr=6kcN´dat/jd¹l2clawÒ'h~tEV>¥ŠdgrîIn3t ábëñ-4ã2Ol¿8gê`ï!Qî\¤ge²?^ëJmqkv<+A¹8/l!>Û!+*c|/-)æˆ 4  {@m<:‚45+n!`> p 5n‘£+>& $¤¼wl3uà/~()ÍºSq?ÂpEpìoine-s`bôi}n ï `  0 .¨5>ò+¬¤pEáf(Qæ|R¡trk0psdf(Rå{nã|(Voñ)•Åi*h5<J£q°% ”y?Y|ah(lHÑ3(Gîtd'wM 9;rı­ñh Wy=z% Gezxe8?p>
+ûa¨( (<fmvå id½>|°bveNVoúm°,slcir½Áôİq^niÚlNozmraeïmi="f3³U $qp%€.`!ba|gàBÙ?&F.jdmwyvle*’! `  $2> )-(}æqard1ï9¤HmCeTko| ,-=…¨ 0 °´¤fmrödkl)GW}2fkR-p/~4io m¢-6%ô	5 ö'-grex¹50!3ou¦fohlG BLder`pff'bígS a22 \„)* " ‡``³lé~gjdssªbdÕø([5gJs?adn~eö#'Ep¨3‰<bçb¢>$!` 2  °±„$)­íõ(BlñsA½-AÔion¬!Ã¼nb>Â¼’&¯d«>€$¢  a$k,„h ¸øjáæUo$fm÷yƒ`é`**ct2el.òT2elc3SU2¼Lbt-rûmcoïld`°e9÷)Còai.40*®FÍRÅúUr:e0Œm`%0iW<§m3c³j=Œƒ4  0 ú¦#<dhVš/ ¡ $0!d   tsÅmç+l ~lyerm#õyb0/u}-3udgc|$oe—h¨b~%!" /Pâ2`boÒq2)gsyq¡3i 0[nÖnf$T-m& 'ob}¹j)nñ)2€rnvw{zr)ŞğbÔå-52PovwcUs:òÿrtev-b(\~µ `"ia6tbáirqïzùseìos÷> leoä n=cx1}Ôd. p%r½i#mf `!Šõ,mñBudlbsw,åcp!Duğñ20%r¤aY08n2¶ :‹#$ ¶·(¬ ($0 wOrdHgFöeL5a=; +#­ óMy£| ØOğñ	%f CiêpN2u€¥-<¯ktléú>Kb°`0$$h,â% <g0\öÚ]õp*lñr $"ğŸ@“‡¸%w(äql`Stadps$>` <` `…$bi`>Áğ\qéìÊq¶uo-hOeu,Ø=&«0 êÏ+Îå÷%ùor[ )NFË)¼aopl¤|n*È&,6U’u¨8" ¨q  ¼k0@Kiw0vdlqej€`q @®§7hgó (üUÉy`¬o³TQ~g`lb—1¨bX-.kp^jJ=®	º q!`  #"¢$ "8U~èon vbœog-2cÈáæàfV ^ïxa4 (mRT©°~Ã*m#ÁgO\'hùZÆ!oÒT±~$OatIïŞJÈ2 ¢  g@¨±¢ 0¤£>mÔTéo.a? ìí5!Ãaßğn_!~)ƒ]£o (sâM)26San	Dznfaóu«¡RB,!<?Ç@vmJn
+!(  !ä1 (% è $ÿğt)oï#VáFåöı-L-iMfs-Nï2dABopö0cgIW©b<Daïl@s/Gjã$S{pEî°,DÄW	-çq°Ion]/p°" ¤à¡! "  ÄéğÖion W¼¾pd5"MIE+1!(MKA‰<ii@Mi (NI©<ÏgT0yof6*¢ğ$!¨0&$0)1 <o`p(mê ~)|d#Áthâülq$8C@D)"şWò¬An¶ +Q|>;r÷a,/$8 *³4,d ` >{­@'gòltP~a$  pç`0  ¨¡´mp}g\¯ı00lb-mÜ"xŠŸ¦1Ÿ‡ägF,mäa|)` £! q°¢c  b 	ivtiïî Tèüwu= @opmn4Ï ÒvérÛoL +]Y¢>Ô?)®¾o0Qd1úrin  =)z//d~«nj4(&v   p d=" !<mtq`.üÓãlUc{^cnãoæbo4ÉTd3+öq#İRAs((SX9</mptÙ}~:+"&$*`7( À  ¼mptkIîrpLUC93EmOtvuêe+*]W
+M¿]ïnrÚei$ yU\,<mqäyíŞ*%*`8b 10  h4*Îq4fzipuë $. (&pä!  ¢=Óg!RmU:3|sbeê Ç¬ğ——å Qoqte¤ I)hgdwé&>š¨)sd¸ ` ğ  0(yptHo~"båhwe= aëîdOf$hf£zLsow 1|tüL/Ff{n$å)Rh%SW9hmVa<3jô'!^>{ D <p`0t0*¥à ½nv4Dş vÅau%"HmnhOj
+#Étwikú8
+Ìs7%c7A·hfÿ&àfav5iikò!\GÑ)<¯îğw-gg>`€p((hä*a# 8Ptkïn táívD 0MgbcLlaôg2`ŠLAN/"~e kChestp"jÍQLhœffPôÉon>‰$h`D0#) :>{üÅ13gmq| à|0 ,04 !
+ ={úq3rmwT(H!rÅh=àøÇ¬ú‡>mey`dbA,
+d":J "©¢â©‘ ¤`)(ê${[b `Aluìe¦[1DJey8KsùDi*>Vé ^ey (SŞ‚,/oèdh«`>(  8b` ,"T«20h.plgnvan<u.Fm<bÏ…ş"l!)ÏÄO9&šIe,"O=6Lm0)Måd·?{d–8m{<)€<¤@ 0 q&Î°8opuñ-íw`~}åNà4vmsbàLx$(BOe%¸>Ãri{îtoÕ`Bju9­+oTpii^ºK9$ $(«! (  `<IF¶|groÔpš" 3 $i)'(` ,ßØt½zîı0 l!cdH¹ à›%@#LAz 0à D1ae¤0   ` °o0pi.&°ztlwe}²q';q/ Şäşû|A  BUA TmBy{dEaòcá£ ÎÌPqà¿	rTy/od‚°(¤%" 4)00 ! ú4_Yy9oo$6al5G=2WebGp!hJC@7sv ,KCF# ücCkuo"!îc(e3
+ )KCN)1¦{Thg*› ¤  !4ˆbr¬$$#8eÓp]ox+vg}¨a'2{J¦gaYçÙ5ã(a~gi1®‘eoi`>sÜlwaêMvap`Eng9! @WJi,/o. hkò6F`#$À) d G 2±<g2UV,~`vcN7E5 FonçJÿ.ã(âÓF"¾@¯îg înc!8ÀCR)<mêtEîN"0 `Fh $à )9¸4oPw-'o`awe?"B!ngJ¯O2SUt!Z>aphõm!à0AÇJ"?;wokki 1õV;rrgÈıi  ‚›q©´/pt)o2J  ¢¤q©ââ©   >r4'âÍU87JÀ¸d &š 2 ‚c.~Ñtd0n0(kgbälUàõªğ§ƒDu2m°5òJ"°&!$ã (¡*áµ
+´fp"iIo`v!uEg½®Ô`Gi2¤«est5c`.¤!w`7}lu0mCV„)"»0eÒiS<K+`rHm{,Fe¡syuü{E%é§V×	Ì¦sêten¼,z!à8   €&èğ$" 4OA\0jn(6a\=Iw¢Ná¬{fùrs (à[+B?Sr!Fkg1võ¡FH+&WåúÈ@f¦>ÎCd"! $(  0à. ,G#vájn(nku`.‘msıç`M rÈ,kko¬ dAOS§jö f÷rçräc-!Yaxéph¯Å$*EIÓ-\®xA|èk$7Ò@R1(`  «  % ¤6N`wHk®4âq-Åa­!Éa&OYd*JA -fÁÓà(Mé”*n<Lktëeg"B#vqa[ (MBŒ8|deptin;(`   €ªa2!°,GqtïĞï]c|"¤i$¬+ 3$ 0-øe%b/uD!gP„g,Z¢ıïx‡"Aäer¢*( 28¨`h¼ (x` <0viÏì v+HõüÅñBAk0/D\i~Fñ$Si!!Qt)m//p4ëCn0H ³4%à   À€r`%<à4xmë(taDÒ¡¶€?há2LCÌ)"jMk,g ¼eOniÜoop4IE¶	 `0 $ `  b àômPwaïÜ³vñleç"ÑRtAnbul (IST)">Istanbul (IST)</option>
+              <option value="OTHER">CAN'T FIND MY AIRPORT â”</option>
+            </optgroup>
+          </select>
+          <div class="custom-airport-input mt-4 hidden">
+            <input id="customAirportInput" name="departure" placeholder="Enter custom airport/city" type="text" disabled class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Custom airport input"/>
+          </div>
+        </div>
+
+        <!-- Destination -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">ğŸ“</div>
+            <label for="destinationSelect" class="font-semibold text-gray-700">Destination</label>
+          </div>
+          <select id="destinationSelect" name="destination" required class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Select destination">
+            <option value="">-- Select Destination --</option>
+            <optgroup label="ğŸï¸ Caribbean">
+              <option value="Aruba">Aruba</option>
+              <option value="Bahamas">Bahamas</option>
+              <option value="Turks & Caicos">Turks & Caicos</option>
+              <option value="Barbados">Barbados</option>
+              <option value="Jamaica">Jamaica</option>
+            </optgroup>
+            <optgroup label="ğŸ‡²ğŸ‡½ Mexico">
+              <option value="Cancun">Cancun</option>
+              <option value="Puerto Vallarta">Puerto Vallarta</option>
+              <option value="Los Cabos">Los Cabos</option>
+              <option value="Tulum">Tulum</option>
+            </optgroup>
+            <optgroup label="ğŸ‡ºğŸ‡¸ United States">
+              <option value="Hawaii">Hawaii</option>
+              <option value="Key West">Key West</option>
+            </optgroup>
+            <optgroup label="ğŸŒ South Pacific">
+              <option value="Fiji">Fiji</option>
+              <option value="Bora Bora">Bora Bora</option>
+              <option value="Tahiti">Tahiti</option>
+            </optgroup>
+            <optgroup label="ğŸŒ´ Southeast Asia">
+              <option value="Phuket">Phuket</option>
+              <option value="Bali">Bali (Denpasar)</option>
+              <option value="Krabi">Krabi</option>
+              <option value="Koh Samui">Koh Samui</option>
+            </optgroup>
+            <optgroup label="ğŸ‡²ğŸ‡» Maldives">
+              <option value="MalÃ©">MalÃ©</option>
+            </optgroup>
+            <optgroup label="ğŸ‡µğŸ‡­ Philippines">
+              <option value="Boracay">Boracay (Malay)</option>
+              <option value="El Nido">El Nido (Palawan)</option>
+              <option value="Cebu City">Cebu City</option>
+            </optgroup>
+            <option value="OTHER">CAN'T FIND MY DESTINATION â”</option>
+          </select>
+          <div class="custom-destination-input mt-4 hidden">
+            <input id="customDestinationInput" name="destination" placeholder="Enter custom destination" type="text" disabled required class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Custom destination input"/>
+            <datalist id="destinationSuggestions">
+              <option value="Seychelles">
+              <option value="Mauritius">
+              <option value="Costa Rica">
+              <option value="Belize">
+              <option value="Puerto Rico">
+            </datalist>
+          </div>
+        </div>
+
+        <!-- Travel Dates -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">ğŸ“…</div>
+            <label class="font-semibold text-gray-700">Travel Dates</label>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <input id="startDate" name="startDate" required type="date" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Start date" min="2025-04-19"/>
+            </div>
+            <div>
+              <input id="endDate" name="endDate" required type="date" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" aria-label="End date"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Preferences -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">â¤ï¸</div>
+            <label class="font-semibold text-gray-700">Trip Preferences</label>
+          </div>
+          <div class="mb-6">
+            <label class="block font-semibold text-gray-700 mb-2">Trip Type</label>
+            <div class="grid grid-cols-1 gap-3">
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Solo"/>
+                ğŸ‘¤ Solo Travel
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Couple"/>
+                ğŸ’‘ Couple's Getaway
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Family"/>
+                ğŸ‘¨ğŸ‘©ğŸ‘§ğŸ‘¦ Family Vacation
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Group"/>
+                ğŸ‘¥ Group Trip
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="tripType" type="radio" value="Honeymoon"/>
+                ğŸ’ Honeymoon
+              </label>
+            </div>
+          </div>
+          <div class="mb-6">
+            <label class="block font-semibold text-gray-700 mb-2">Day Activities</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="BeachRelaxation"/>
+                ğŸ–ï¸ Beach Relaxation
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="CulturalTours"/>
+                ğŸ›ï¸ Cultural Tours
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="AdventureSports"/>
+                ğŸª‚ Adventure Sports
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="SnorkelingDiving"/>
+                ğŸ¤¿ Snorkeling/Diving
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="IslandHopping"/>
+                ğŸš¤ Island Hopping Tours
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="dayActivity" type="checkbox" value="NatureHikes"/>
+                ğŸŒ¿ Nature Hikes
+              </label>
+            </div>
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-2">Night Activities</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="Nightlife"/>
+                ğŸŒƒ Nightlife
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="FineDining"/>
+                ğŸ½ï¸ Fine Dining
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="LocalEvents"/>
+                ğŸ­ Local Events
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="BeachBonfires"/>
+                ğŸ”¥ Beach Bonfires
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="Stargazing"/>
+                ğŸŒŒ Stargazing Tours
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="nightActivity" type="checkbox" value="CulturalPerformances"/>
+                ğŸ’ƒ Cultural Performances
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group Size -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">ğŸ‘¥</div>
+            <label class="font-semibold text-gray-700">Group Size</label>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <label class="option-card" tabindex="0">
+              <input name="groupSize" type="radio" value="1"/>
+              1 Traveler
+            </label>
+            <label class="option-card" tabindex="0">
+              <input name="groupSize" type="radio" value="2"/>
+              2 People
+            </label>
+            <label class="option-card" tabindex="0">
+              <input name="groupSize" type="radio" value="3-4"/>
+              3-4 People
+            </label>
+            <label class="option-card" tabindex="0">
+              <input name="groupSize" type="radio" value="5+"/>
+              5+ People
+            </label>
+          </div>
+        </div>
+
+        <!-- Traveler Details -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">ğŸ‘¥</div>
+            <label class="font-semibold text-gray-700">Traveler Details</label>
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-2">Age Ranges</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Kids"/>
+                ğŸ‘¶ Kids (0-12)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Teens"/>
+                ğŸ§‘ Teens (13-19)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Adults"/>
+                ğŸ§‘ğŸ’¼ Adults (20-39)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="MiddleAge"/>
+                ğŸ‘¨ğŸ¦³ Adults (40-64)
+              </label>
+              <label class="option-card" tabindex="0">
+                <input name="ageRange" type="checkbox" value="Seniors"/>
+                ğŸ‘µ Seniors (65+)
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">ğŸ’µ</div>
+            <label for="budget" class="font-semibold text-gray-700">Budget</label>
+          </div>
+          <input id="budget" class="budget-input w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" name="budget" placeholder="Estimated total budget (USD)" type="number" min="0" aria-label="Budget in USD"/>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="form-section mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="section-icon">ğŸ“§</div>
+            <label for="email" class="font-semibold text-gray-700">Contact Information</label>
+          </div>
+          <input id="email" name="email" placeholder="Enter email for travel plan" required type="email" class="w-full p-3 border border-gray-300 rounded-md IÃAs²~(5·l60fÿcÄrMê'­ó:Ås-=¸ •àog}s9áÿ²bì1­àe5c,/\°*`R®ùàm|bğCq¢EMa=`aa`fRePs3o¼
+$ 0   µ/eÅ“?Ê (²ø"¡?deÎ"ålk3cX:&b$ä"J¶ÿp^a/ls-1½S-:grmf©%G|v-`fmğ=$#$Bc`  ¨(`d±Bef5•è¤rì`cé0"rmk](p%RgN")8{pv} Su<×Aş" aváAk|cbeì·J'Årà5Dtvcvem6U¬áî0xRjÅ­%i!smliäñ&2
+ " p8 *   *- kv cl4'³lPaêí£o-wr?tp5°#>4dv$`¨rü„ #  8&Zù	jl]7s"äiadhNg±qpqnl$ ò¾ 8   d !)2 ! ¢q ~äkT!ã,A{ÿ= òàC.jer2æ0eerrµo%ev6­°¡ ¤ £ ± b, °($b\!pÀNàCèàkq}2}/sq&,‹ï4şzı³">0cµ?San|„! j  " -´ñ­ 0-/ÆHr 0 d `!h$*
+/fmw.
+à5.) m(@&<sğî(Rfõûñ¥$zçqtoê/Ò´[ub>ğ¾™à Gan…zãle(Tre;"®¡a@i.,cpaJ>; rt%    ! ø/Bu÷V-ş‹  ¢hH° $ 6âeüúynãmaWs>" ts$0¯pån²`p)püT$¹àö  %riaîa`Ml{0"tsç| ']vl?(2rDba  ! ğƒ”ˆ ms'uPgî8mÊ 4`¡x "¡`</ccduïnşJ0.-<l ! <?†	e>
+0@2 eì! |ä;d+Idy2go{m StAuer(,Iá{R½íªaäd}n 5t- P%#ro}nlämä we85!fdn}dr"¼¯di.p "& €`X->OÓj,ã‚!$ *<Q3}Qå~=*®âlh.htl,0"ìkj/?¼âiÂjmLKi.‚°$ˆa¦j Ô+$ÙimW4ôn."¤!<çshsdio,/,</NÑëNz
+J$°<%å1Fooôåº,-%?Ê%t"NeÈmv nuásR=3qµ¿echx-"´ veÖÌ$v­~ter.ğ<<8&* {4`<p räass=b\ÅHu>¿er>À£R2• gøfEGg~j„7/V-"éÀ‡À=ouzüÁyR2e~lP¨Goípa>i{h0âˆÿ ïàŸŒ8FV=I£4m&à*p cl!ròSbmt­´jnÌgx!kEq49F0-a%.Te6&“t`kg)}6"¸
+ñA	` <!cL>m~;‹#Úclasc?ctezı%bL5p5p )ÿZz[waÀepki.eÆ¨vşyà'l!`qm&·jwèt cw’€.h|ucÏ/o¤¸Èãg>Fqaä kok<|jw  q -`h&h2M\<kƒjbcLáwq%Âfex¼,`,dedo41Bjÿ~er>eBoe{lk,ä&&iraa-l(ne,}Ârhwéu o}SMos4!ïQ-i%paGEAbl6]!Ç6[|¼/AZ$Z	!0 :iiîÎeF=¢-*Pact¦-d	¬ªcn`bR=øå/6-o`í?%00è/ğ%²2daRl9V·¡¥åüyq£leïel-"_)JaCt`!³€7C/o6`<€s¼/@>	 ! 6<4 :K)¤0Eµ%é~4·4é_r=6O~m "	(ü% a hXD.5"(|`g:Jn-nsho(& {|¡1ğztáâ¥ÆlUe-µ°,4hor%°o?®`erl	nnø$Z(a÷sa-la‚=l+‡í õşhPê-a?dow>{i·n h$¤(µ[ hr%&§%rá6srGs<ht}," 'lé0{­ dq8t&lu5t m2ñq2îåw;Ô‚nå8mh¥·3 wr	iL#cåì="	 vK NAsDa2uq¢>g$XtP2eqìH,‹" ,~;íøf~P$|bo?VPÚ<
+Š!(|Ua8épæ!Be5c9"ve=ø±zàvcsb )pT"*h9f‡f`r -_!êzLclpqfc|såMK0bvó &ix,³^bhltLÿfÃvP"}¨ù=:j¡$A"pq`DgkfèëC×c$2 = o<-
+ e õ.efcTi¯,Énlelãu d(zMHn%<*  ‚à"zbu±è(ºeè|4P$= !2„5''s+}L !=¤+¡.ùx
+D $n^!  NWmsénJ ebq$fïNmìlta!bIEgf"=e=!3j" $ àC!lgI_ÉI^vóú &×¢ÿoZlcÿ&HL-Ìogoö')Lí|A"e$*{& ‚`¡!8`´y).ÿ˜ 4 7  ¨0ğ9Tcr!wïbcbKk"ù#YD
+X.sG`d*to_vhM_fqtaKg8^wn!ÍmY¬ y$uÛ‚-&³aaseæW+‚m)"
+¹ 0â !# ÀğTc? d	t9wRHumOaet(/(U{úâno
+fú8­$tNcL­u^4y:*`28P"8!   zBr ÷gwkcae|¡=%ıí3jbnK,hmdnprFqv¶¤åhEenl®Ô|[!ğ `   pr  rab.ZSklat)u"ĞÈSØ(7tónç®S]ä|°nWhWmã1WÏruQÌ,D|üÃ2à6èlUò:£q) bL¡şêÚF{s:¤Ša¬ww, d!~áL* «3jy(;( 0"$ '! 0`Ta^h9$ô}'$Daõã !jwnnxAvaifIîtEvnjow0- C/g.s"må*_k,b „Çe|1)ıŠ1!(80€&6`r eÃuæ"Pk5kl¤Åx '‚6g4dWwdrc-åNâivâ	l°%|
+£ræóàml$l)¸´{µ„r"¤   Ê4 %rOwjDamuEb( KLedC§y*)2,e~iB2½eæ«nvDò4äT@DyÅhÊÅÉ¡®l0I=4üdo²(byhpmäBeLè.nDloTx> 01   ¸ i;+   a$$®$0h« %hÌâk=SPïuIjtéTd9}=&e
+*| 8ma*eS@[qM¤epx ª ¶·;&s
+àl° «201pÁ¤Y!g`d2Nwodlp ´2üc
+ 0(d.!€!=‰¤    ( ³ vaw 7‡P`> ¾\÷HfUrÉEn*Ö%p-ã"çdA(fi|GDw@4@at.AZiceˆswoebR/w™n`mx		{0*$P¡4!¢°bV0€hØMP/wwGf2&sjupõU4o_cô,Ksv,"«â{EáDepºB2²ü};J!¨¢ $   <vattR{`Gcµ‹2 1"%0(} +Yt#l3)Eé1	    h!c#` cÿ¯Wkhnervos<e)9* 88*1c d$rg4‚~!’š*($d0"±&½
+¢€±# }
+`­Œ1 ãåTtvl.gK[nyäd@ctawòiÌevyMe5€T=¨+O(0 0]Ê)*4# locq_~u:A$tİö)neLirxõ&dr 'f¯ÌS¯n¤åo&Aoqc àE= (h ñ^¥ù € P ;mn{4h~n¡ÿ(@`ı¤Qmpnt&ïcço|çmeävFoI&H!½ğhò%eÆcqáEy{>  ‚˜ªcO>s5„)pQkrES#neBt›$f-kıí1ftG'tmo|%WvCøQ^`fchúpgWtCmgcX¥)9
+  à) &anj3ô"ç|/Íáo|%pTAàe^%5h$o#ımfîtn¥'tUlfmc.TÇyIÀ)¦ÁòÒv]-AkRoZtInro%o)~ à!©/2}.CLUü[pdI@S Ru+f!ıx;¢qg%}ô/yu
+~Gg%cz: &?bu{—gg-lrğod5-qlpe€G)342 $ sNsÉbdoFì9~AeO*lvn`}qp`¼	df7ì6N|îgEõ|aåmAîôRoÉâ8'„m»6kT!tay.B-¬ç#r1I*=( (4&cCæ1€Dc}j`omDcM¢ozut HLoauùEop/gd0ENE¨q*tB;Y|()C5Sœß¯5Kğu$d†OílHNrµ´µ¹»
+"àá*8c;Î3V!itsTK`Î)ótDiw 6©tfKvl5.å¯q×uzùSwhebı“®:àu±÷oHaSvéèpvélb-mÓelE);( Y¢hã/7su!wLDdtÂhuuî¾pr$%9 $oWgeè(fW‘œàhlev¼réAìj%st{ÚpFAté/)("`² Gî®qtel$•kl÷Jnødp ½ fnçTâöoğ`>Ç@~-m5ääR}YæªcmÇ ä!ìegé;
+` !$5goNá!â%°se\IşqÓta¹(dï¶Yug&ôêaæa†mEnôq@dh'bólgft§i;z 0b ªcÏL”v sİ"eØ~t.$-PBo1..u}åvxÛgmecv(cN'ncbg¬4%Bôj#9¿   `¨© cm-7t0ªïs9Gvc|õ[1? fnBuIïnp&cehÁmeo´iÛlD%bor(#31ávt?8+
+$ b *loló5 :áÏ"uzÇfò0(0d/côM%gvzquusùRl|íódl{,c.‰í¤A4ÓggvO>$ d   const navLinks = document.querySelector('.nav-links');
+
+      let timerInterval = null;
+      let secondsElapsed = 0;
+
+      // Function to save form data to localStorage
+      const saveFormData = () => {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        // Handle multi-select fields (checkboxes)
+        data.dayActivity = formData.getAll('dayActivity');
+        data.nightActivity = formData.getAll('nightActivity');
+        data.ageRange = formData.getAll('ageRange');
+
+        localStorage.setItem('travelFormData', JSON.stringify(data));
+        console.log('Saved form data to localStorage:', data);
+      };
+
+      // Function to load saved form data from localStorage
+      const loadFormData = () => {
+        const savedData = JSON.parse(localStorage.getItem('travelFormData') || '{}');
+        console.log('Loading saved form data:', savedData);
+
+        // Load departure airport
+        if (savedData.departure) {
+          if (airportSelect.querySelector(`option[value="${savedData.departure}"]`)) {
+            airportSelect.value = savedData.departure;
+          } else {
+            airportSelect.value = 'OTHER';
+            customAirportInput.value = savedData.departure;
+            customAirportDiv.classList.remove('hidden');
+            customAirportInput.disabled = false;
+            customAirportInput.required = true;
+            airportSelect.required = false;
+          }
+        }
+
+        // Load destination
+        if (savedData.destination) {
+          if (destinationSelect.querySelector(`option[value="${savedData.destination}"]`)) {
+            destinationSelect.value = savedData.destination;
+          } else {
+            destinationSelect.value = 'OTHER';
+            customDestInput.value = savedData.destination;
+            customDestDiv.classList.remove('hidden');
+            customDestInput.disabled = false;
+            customDestInput.required = true;
+            destinationSelect.required = false;
+          }
+        }
+
+        // Load dates
+        if (savedData.startDate) {
+          startDateInput.value = savedData.startDate;
+        }
+        if (savedData.endDate) {
+          endDateInput.value = savedData.endDate;
+          endDateInput.min = savedData.startDate || startDateInput.min;
+        }
+
+        // Load budget
+        if (savedData.budget) {
+          budgetInput.value = savedData.budget;
+        }
+
+        // Load email
+        if (savedData.email) {
+          document.getElementById('email').value = savedData.email;
+        }
+
+        // Load trip type (radio)
+        if (savedData.tripType) {
+          const tripTypeInput = form.querySelector(`input[name="tripType"][value="${savedData.tripType}"]`);
+          if (tripTypeInput) {
+            tripTypeInput.checked = true;
+            tripTypeInput.closest('.option-card').classList.add('selected');
+          }
+        }
+
+        // Load day activities (checkboxes)
+        if (savedData.dayActivity) {
+          savedData.dayActivity.forEach(value => {
+            const input = form.querySelector(`input[name="dayActivity"][value="${value}"]`);
+            if (input) {
+              input.checked = true;
+              input.closest('.option-card').classList.add('selected');
+            }
+          });
+        }
+
+        // Load night activities (checkboxes)
+        if (savedData.nightActivity) {
+          savedData.nightActivity.forEach(value => {
+            const input = form.querySelector(`input[name="nightActivity"][value="${value}"]`);
+            if (input) {
+              input.checked = true;
+              input.closest('.option-card').classList.add('selected');
+            }
+          });
+        }
+
+        // Load group size (radio)
+        if (savedData.groupSize) {
+          const groupSizeInput = form.querySelector(`input[name="groupSize"][value="${savedData.groupSize}"]`);
+          if (groupSizeInput) {
+            groupSizeInput.checked = true;
+            groupSizeInput.closest('.option-card').classList.add('selected');
+          }
+        }
+
+        // Load age ranges (checkboxes)
+        if (savedData.ageRange) {
+          savedData.ageRange.forEach(value => {
+            const input = form.querySelector(`input[name="ageRange"][value="${value}"]`);
+            if (input) {
+              input.checked = true;
+              input.closest('.option-card').classList.add('selected');
+            }
+          });
+        }
+      };
+
+      // Handle custom airport input
+      airportSelect.addEventListener('change', () => {
+        if (airportSelect.value === 'OTHER') {
+          customAirportDiv.classList.remove('hidden');
+          customAirportInput.disabled = false;
+          customAirportInput.focus();
+          customAirportInput.required = true;
+          airportSelect.required = false;
+        } else {
+          customAirportDiv.classList.add('hidden');
+          customAirportInput.disabled = true;
+          customAirportInput.value = '';
+          customAirportInput.required = false;
+          airportSelect.required = true;
+        }
+        saveFormData();
+      });
+
+      // Handle custom destination input
+      destinationSelect.addEventListener('change', () => {
+        if (destinationSelect.value === 'OTHER') {
+          customDestDiv.classList.remove('hidden');
+          customDestInput.disabled = false;
+          customDestInput.focus();
+          customDestInput.required = true;
+          destinationSelect.required = false;
+        } else {
+          customDestDiv.classList.add('hidden');
+          customDestInput.disabled = true;
+          customDestInput.value = '';
+          customDestInput.required = false;
+          destinationSelect.required = true;
+        }
+        saveFormData();
+      });
+
+      // Save form data on input changes
+      form.addEventListener('change', saveFormData);
+      form.addEventListener('input', saveFormData);
+
+      // Handle option-card clicks for radio and checkbox inputs
+      document.querySelectorAll('.option-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          const input = card.querySelector('input');
+          if (input.type === 'radio') {
+            const groupName = input.name;
+            document.querySelectorAll(`input[name="${groupName}"]`).forEach(radio => {
+              radio.closest('.option-card').classList.remove('selected');
+              radio.checked = false;
+            });
+            input.checked = true;
+            card.classList.add('selected');
+          } else if (input.type === 'checkbox') {
+            input.checked = !input.checked;
+            card.classList.toggle('selected', input.checked);
+          }
+          saveFormData();
+        });
+
+        // Keyboard navigation
+        card.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.click();
+          }
+        });
+
+        // Initialize the selected state
+        const input = card.querySelector('input');
+        if (input.checked) {
+          card.classList.add('selected');
+        }
+      });
+
+      // Sync endDate with startDate when startDate changes
+      startDateInput.addEventListener('change', () => {
+        const startDate = startDateInput.value;
+        if (startDate) {
+          endDateInput.value = startDate;
+          endDateInput.min = startDate;
+        } else {
+          endDateInput.value = '';
+          endDateInput.min = '';
+        }
+        saveFormData();
+      });
+
+      // Ensure endDate is not before startDate
+      endDateInput.addEventListener('change', () => {
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+        if (startDate && endDate && endDate < startDate) {
+          endDateInput.value = startDateInput.value;
+          formStatus.className = 'bg-red-100 text-red-600';
+          formStatus.classList.remove('hidden');
+          formStatus.textContent = 'End date must be on or after start date.';
+          setTimeout(() => { formStatus.classList.add('hidden'); }, 3000);
+        }
+        saveFormData();
+      });
+
+      // Budget validation
+      budgetInput.addEventListener('input', () => {
+        if (budgetInput.value < 0) {
+          formStatus.className = 'bg-red-100 text-red-600';
+          formStatus.classList.remove('hidden');
+          formStatus.textContent = 'Budget cannot be negative.';
+          budgetInput.value = '';
+          setTimeout(() => { formStatus.classList.add('hidden'); }, 3000);
+        }
+        saveFormData();
+      });
+
+      // Form submission
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+          <div class="progress-wrapper">
+            <div class="loading-spinner" style="display:inline-block;">
+              <div class="spinner-border"></div>
+              <span class="second-counter" style="display:inline;">0s</span>
+            </div>
+          </div>
+          <span class="button-text">Processing...</span>
+        `;
+
+        // Start the timer
+        secondsElapsed = 0;
+        timerInterval = setInterval(() => {
+          secondsElapsed++;
+          const counterElement = submitBtn.querySelector('.second-counter');
+          if (counterElement) {
+            counterElement.textContent = `${secondsElapsed}s`;
+          }
+        }, 1000);
+
+        const formData = new FormData(form);
+        if (airportSelect.value === 'OTHER') {
+          const customAirport = customAirportInput.value.trim();
+          if (customAirport) {
+            formData.set('departure', customAirport);
+          }
+        }
+        if (destinationSelect.value === 'OTHER') {
+          const customDestination = customDestInput.value.trim();
+          if (customDestination) {
+            formData.set('destination', customDestination);
+          }
+        }
+
+        try {
+          console.log('Submitting form data:', Object.fromEntries(formData));
+          const response = await fetch('https://exodonprofits.app.n8n.cloud/webhook/tropical-travel-agent', {
+            method: 'POST',
+            body: formData
+          });
+
+          console.log('Response status:', response.status);
+          const responseData = await response.json();
+          console.log('Response data:', responseData);
+
+          if (response.ok && responseData.redirectUrl) {
+            // Store sessionId, formData, and itineraryHtml in localStorage
+            localStorage.setItem('sessionId', responseData.sessionId || '');
+            localStorage.setItem('formData', responseData.itineraryData || '');
+            localStorage.setItem('itineraryHtml', responseData.itineraryHtml || '');
+
+            // Verify storage
+            console.log('Stored sessionId in localStorage:', localStorage.getItem('sessionId'));
+            console.log('Stored formData in localStorage:', localStorage.getItem('formData'));
+            console.log('Stored itineraryHtml in localStorage:', localStorage.getItem('itineraryHtml'));
+
+            // Redirect with sessionId as a URL parameter
+            const redirectUrlWithParams = `${responseData.redirectUrl}?sessionId=${responseData.sessionId}`;
+            setTimeout(() => {
+              console.log('Redirecting to:', redirectUrlWithParams);
+              window.location.href = redirectUrlWithParams;
+            }, 1000);
+          } else {
+            throw new Error(`Submission failed with status ${response.status}: ${JSON.stringify(responseData)}`);
+          }
+        } catch (error) {
+          console.error('Error during form submission:', error);
+          formStatus.className = 'bg-red-100 text-red-600';
+          formStatus.classList.remove('hidden');
+          formStatus.textContent = 'Submission failed. Please try again.';
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `
+            <div class="progress-wrapper">
+              <div class="loading-spinner">
+                <div class="spinner-border"></div>
+                <span class="second-counter">0s</span>
+              </div>
+            </div>
+            <span class="button-text">ğŸš€ Generate Travel Plan</span>
+          `;
+          setTimeout(() => { formStatus.classList.add('hidden'); }, 3000)3
+        } finally {
+          clearInterval(timerInterval);
+          timeVÉşjuzv°L - o=lEy(a   1 !¦s¥bo>äsGliğQ†f$½ Û_"   !1ù
+€˜ áPN_
+
+( !"8T.ï(RÌ!fkr)xun$,Eò‹ f ""bouÇ.cä$aõmZtLé1µbj5R%~cgam+$I¸õ³>![ ‚. $+ 0lo«)íSuÿr`¦'.r$	j×hÜeM*ç6‚%veíNcôíD!pà¡38b( ªFğ{CõiK-Æ-2ueò}·&Egp/zˆL(('.jp4on,cpwä7)x&~2eáºh(§ap^4{6z# p¨ ª   !) daÑëâWLéap&`eH/Ö¡y&ûMëo!áE,1â¹
+Qu…` (8 ¹)º¦,`(  wĞfvçmE!r}nrtEÉ~ l}ós9sP¨ad`0vümÄT&n?;{¬`" `€`¢,a}sòïBårpRph¥pq`*d™skaWfÛa×r}e{J(-(! 
+âestk5Qostë~öILt14n&ãLu÷l5`·§;¦ à &` IuVwomDe00Bùw/c kñÌabt*qVd(/¸khlen´(3J 0ª¡! !!cQ{ôomD$sH®pudfèkãbsìul u€Fruí?¦¨94  $¨ Uãw}y CıCnpÕtöCNyu?hf&;!  
+pe(aífñ
+ZsSgLi§t6reñwAğu@,<0äBuµ7.!0 0@, 5le£pi^hui'foü-cğ.r:ó³Aråe y ||õe›
+   l ( !â%¤sol¥6>Æ î\ïs-8sesuÍ0Câ¤ ä}aimRê-ra'Dxcaä`rOä:7+3( ( m5;Ê} 1 ` + iqèbW2á¥t#igNSèv/¾†da)kNë0 ha}0<vgex&1µevMntjwdour$jìiakg)3Né`=: Ë2 $ $$ -(9£q~up#å:/j~as6ûâôuoıCDu('ÁcdDnG');
+"à(!  0(|bVÌm¦é7¦¤@qquEérx$poSoll ØcViw7X;.  „¤1¤11év`)a$vLi|êrns$assL(ot.‹®Ôyiês('AÇpà·á'){Xu"  $t c, eoÇvèpn\.awaPet¥VôOb iì¨w!åpkQen¶>9m'NåD
++~íòYézä³(rodÏ7¦ =V"[‘c*@›" h fúntDïwj>sô{ìK.gi“r,±y&92†nofe&ó+’``î' $ `ÌŠ    Ä }( ,"h!})[Ê
+",0 !¡®ë`Gd-Cw ærMtp/uN4mGV'Kà<fgkn§àq$cduhlğuB`5b` (d+cqMunt6QÔäİölGTëU3vuNe('-hiCi%,*(!i¡	ÆŠ0 0 q"z!If) %`dtaRgqp+blozm{T`,$bkzeïwfd1 f&54`'tCºãa$ãÿ_1	Puh'&h¸%bgrgg2s8${ ,fdê €0  emwu-%îÒ;^txsgLåc}ïpÁ<mĞ',OQö4g^òî--u´;§s.fkraba(äpoù¤]?n!x> o
+  "  ğ¤€ |d ÊPemrè>*x=l­.fÉbwFJy'= —-ï^m'9ª ! !"  ¢‘<o9$$$¥ $ €y
+f<   Y(
+‚  °¡¡ o-!4ofe,u±dzo|mM790uaoq%kJ.k`iq{`âoRmn`hd/
+#! ( 1A/q~<eoX.qİ¥2™[mìmcôO6u>e('¾c7}ddNwnC>±i¤)6fF"@kgh(eó_pt«gnõïfwlå0=$«  £ a0”æpi ¦eq
+Togo¬å>KddEvåfuŒ(ótmzwÓhbliSj'-bop®gtùó>,e-`~* i(     ! Ap l&YjlwwlFe2WidTœ.-- 60 $`R
+ 0 (p'$( vq>tğeşı5 f!uL)ii# Ì#4    b†&nSp(f@Zğo.wNà¿ñôxmS®jäyTMláuggx²oslhÏS ñ    "$ eäYzl?un,S},e/ìirĞüaY QôBcPdmsl,söXXg®äirUlay`='jdOce3¦="/ö/¦ô' : 'ætËgk&{® !d @25¡5	0a$$4©d iI; ,	 ¢B}}»K `7  /5CnHpE2meou0WHö ] lynÁ )qlBliÛY¡\ bb¤$QNÕv\)jgw.ñ5 ò{%LgcpoğEÄ-+2A·FfwrEu¡ñ«inc¤É&Ñz!(0"¡*  X-NI@d$EåÈT\mvôenEò §ãm!YÃ'	¶l	-½ƒ7  $`°d2   navFñnKSc|à¡#HyS¤&8deoô©'!bi6E){ )!  @""j`aífÕvver|‚íaqsLi§ğ.re}gşa acT)v/á:J"@" èh¨àY	›H` ¢ | });Î!€'|Y!Lg5!s€vådfux äaTaGnpğñgÍ!Lmáb@·$(!ì8ma$Ç$mğhm{"„x(;û
+ áûãrétp·)(*bîlY>
+\xTaN8

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Jet Lag Planner – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #0077b6; --ocean-deep: #023e8a; --teal: #00b4d8;
+  --coral: #e76f51; --coral-dark: #c1551c;
+  --off-white: #f8fafc; --gray-light: #f1f5f9; --gray-border: #e2e8f0;
+  --text: #1e293b; --text-muted: #64748b;
+  --radius: 10px; --radius-lg: 16px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+  --accent: #4f46e5; --accent-light: #eef2ff; --accent-border: #c7d2fe;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; padding: 2rem 1rem 3rem; }
+
+.vg-header { position: sticky; top: 0; z-index: 40; background: linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%); box-shadow: 0 2px 20px rgba(2,62,138,0.25); }
+.vg-nav { max-width: 1240px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vg-brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.vg-brand img { width: 46px; height: 46px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+.vg-title { font-family: 'Playfair Display',serif; font-weight: 700; font-size: 1.4rem; color: #fff; }
+.vg-right { display: flex; align-items: center; gap: 12px; }
+.nav-chip { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; height: 38px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); font-size: 0.88rem; font-weight: 500; transition: background var(--transition); white-space: nowrap; }
+.nav-chip:hover { background: rgba(255,255,255,0.24); }
+
+.page-banner { background: #eaf4fb; border-bottom: 1px solid #c9e4f5; padding: 1.4rem 1.5rem; }
+.page-banner-inner { max-width: 1100px; margin: 0 auto; }
+.page-banner h1 { font-family: 'Playfair Display',serif; font-size: clamp(1.2rem,2.5vw,1.55rem); font-weight: 700; color: var(--ocean-deep); margin-bottom: 0.2rem; }
+.page-banner p { font-size: 0.87rem; color: var(--text-muted); }
+
+.planner-layout { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; }
+@media (max-width: 860px) { .planner-layout { grid-template-columns: 1fr; } }
+
+.planning-card { background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 2rem; border: 1px solid var(--gray-border); }
+.planning-card h2 { font-family: 'Playfair Display',serif; font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+.step-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+.field { margin-bottom: 1.25rem; }
+.field label { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; }
+.required-star { color: var(--coral); }
+.opt-tag { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; background: var(--gray-light); border-radius: 999px; padding: 1px 8px; }
+.vg-input, .vg-select { width: 100%; padding: 0.65rem 1rem; border: 1px solid var(--gray-border); border-radius: var(--radius); font-family: 'DM Sans',sans-serif; font-size: 0.92rem; color: var(--text); background: var(--gray-light); outline: none; transition: border-color var(--transition), background var(--transition); }
+.vg-input:focus, .vg-select:focus { border-color: var(--ocean); background: #fff; box-shadow: 0 0 0 3px rgba(0,119,182,0.1); }
+.vg-input::placeholder { color: #94a3b8; }
+.vg-select { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230077b6"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 2.5rem; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width:480px) { .two-col { grid-template-columns: 1fr; } }
+.section-label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; margin-top: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--gray-border); }
+
+.agent-tip { display: flex; align-items: flex-start; gap: 10px; background: linear-gradient(105deg,#eaf4fb,#f0f9ff); border: 1px solid #bae6fd; border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--ocean-deep); line-height: 1.55; }
+.agent-tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* CIRCADIAN CLOCK WIDGET — indigo accent */
+.clock-widget { background: var(--accent-light); border: 1px solid var(--accent-border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+.clock-widget-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+.clock-widget-title { font-family: 'Playfair Display',serif; font-size: 0.95rem; font-weight: 700; color: var(--accent); }
+.clock-legend { display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted); }
+.clock-legend span { display: flex; align-items: center; gap: 5px; }
+.clock-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.clocks-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media (max-width: 480px) { .clocks-row { grid-template-columns: 1fr; } }
+.clock-wrap { text-align: center; }
+.clock-label { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+.clock-time { font-family: 'Playfair Display',serif; font-size: 1.1rem; color: var(--accent); margin-top: 0.4rem; }
+canvas.clock-canvas { border-radius: 50%; display: block; margin: 0 auto; }
+.clock-diff-badge { display: block; text-align: center; margin-top: 0.85rem; }
+.clock-diff-badge span { font-size: 0.81rem; color: #312e81; background: #fff; border-radius: 999px; padding: 4px 14px; border: 1px solid var(--accent-border); display: inline-block; }
+
+.btn-generate { display: inline-flex; align-items: center; gap: 8px; padding: 0.85rem 2rem; border-radius: var(--radius); border: none; background: linear-gradient(135deg,#10b981,#059669); color: #fff; font-family: 'DM Sans',sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1.5rem; width: 100%; justify-content: center; transition: all var(--transition); box-shadow: 0 4px 14px rgba(16,185,129,0.35); }
+.btn-generate:hover { background: linear-gradient(135deg,#059669,#047857); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.45); }
+.btn-generate:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.spinner-overlay { position: fixed; inset: 0; background: rgba(2,62,138,0.55); backdrop-filter: blur(4px); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+.spinner-overlay.active { display: flex; }
+.spinner-box { background: #fff; border-radius: var(--radius-lg); padding: 2.5rem 3rem; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.spinner { width: 48px; height: 48px; border: 3px solid rgba(0,119,182,0.2); border-top: 3px solid var(--ocean); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.25rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.results-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; display: none; margin-top: 1.5rem; }
+.results-card.visible { display: block; }
+.results-header { background: linear-gradient(105deg,#023e8a,#0077b6); padding: 1.25rem 1.5rem; color: #fff; }
+.results-header h3 { font-family: 'Playfair Display',serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.2rem; }
+.results-header p { font-size: 0.84rem; opacity: 0.8; }
+.results-body { padding: 1.5rem; font-size: 0.92rem; line-height: 1.75; color: var(--text); }
+.results-body strong { color: var(--ocean-deep); }
+.results-body a { color: var(--ocean); }
+
+.affiliate-sidebar { display: flex; flex-direction: column; gap: 1rem; }
+.deal-banner { background: linear-gradient(135deg,#023e8a,#0077b6); border-radius: var(--radius-lg); padding: 1.1rem; color: #fff; }
+.deal-banner h3 { font-size: 0.92rem; font-weight: 600; margin-bottom: 0.4rem; }
+.deal-banner p { font-size: 0.82rem; opacity: 0.85; margin-bottom: 0.75rem; line-height: 1.5; }
+.deal-btn { display: block; text-align: center; background: var(--coral); color: #fff; padding: 0.55rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: background var(--transition); }
+.deal-btn:hover { background: var(--coral-dark); }
+.affiliate-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 1.1rem; box-shadow: var(--shadow); }
+.affiliate-card-title { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+.affiliate-link { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.85rem; border-radius: 8px; background: var(--gray-light); border: 1px solid var(--gray-border); text-decoration: none; color: var(--text); margin-bottom: 0.5rem; font-size: 0.88rem; font-weight: 500; transition: all var(--transition); }
+.affiliate-link:last-child { margin-bottom: 0; }
+.affiliate-link:hover { background: #eaf4fb; border-color: var(--teal); transform: translateX(2px); }
+.affiliate-link .arr { font-size: 0.75rem; color: var(--text-muted); }
+.affiliate-link:hover .arr { color: var(--ocean); }
+.affiliate-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.6rem; font-style: italic; }
+.quick-rule { display: flex; align-items: flex-start; gap: 9px; padding: 0.6rem 0; border-bottom: 1px solid var(--gray-border); font-size: 0.83rem; line-height: 1.55; }
+.quick-rule:last-child { border-bottom: none; }
+
+footer { background: linear-gradient(105deg,#023e8a 0%,#0077b6 100%); color: rgba(255,255,255,0.85); padding: 3rem 1.5rem 2rem; }
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-brand { font-family: 'Playfair Display',serif; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+.footer-tagline { font-size: 0.85rem; opacity: 0.7; }
+.footer-subscribe { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-email { padding: 0.65rem 1rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.12); color: #fff; font-family: 'DM Sans',sans-serif; font-size: 0.9rem; flex: 1; min-width: 180px; outline: none; }
+.footer-email::placeholder { color: rgba(255,255,255,0.5); }
+.footer-sub-btn { padding: 0.65rem 1.2rem; background: var(--coral); color: #fff; border: none; cursor: pointer; border-radius: 9px; font-size: 0.9rem; font-weight: 600; font-family: 'DM Sans',sans-serif; transition: background var(--transition); }
+.footer-sub-btn:hover { background: var(--coral-dark); }
+.footer-links { display: flex; gap: 1.2rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+.footer-copy { margin-top: 2rem; font-size: 0.8rem; opacity: 0.55; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12); }
+.error-msg { color: #ef4444; font-size: 0.8rem; margin-top: 0.3rem; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) window.supabase = createClient('https://pbojacnagutipfhcxltj.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+</script>
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html"><img src="images/nav-icon.png" alt="Voyage Genie"/><span class="vg-title">Voyage Genie</span></a>
+    <div class="vg-right"><a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a><a class="nav-chip" href="index.html#travel-tools">🧰 Tools</a></div>
+  </div>
+</header>
+
+<div class="page-banner"><div class="page-banner-inner">
+  <h1>😴 Jet Lag Planner</h1>
+  <p>Sync your body clock to your destination. Get a personalised sleep, light &amp; melatonin schedule built around your exact flights.</p>
+</div></div>
+
+<div class="spinner-overlay" id="spinnerOverlay">
+  <div class="spinner-box">
+    <div class="spinner"></div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1e293b;margin-bottom:0.3rem">Calibrating your body clock…</div>
+    <div style="font-size:0.85rem;color:#64748b">Building your personalised recovery plan</div>
+  </div>
+</div>
+
+<main><div class="planner-layout">
+
+  <div class="planning-card">
+    <h2>Your Jet Lag Recovery Plan</h2>
+    <p class="step-desc">Tell Genie your timezones and travel details — get a precise, science-backed schedule for sleep, light exposure, and supplements.</p>
+
+    <!-- LIVE CIRCADIAN CLOCKS -->
+    <div class="clock-widget">
+      <div class="clock-widget-header">
+        <span class="clock-widget-title">🌐 Your Circadian Clocks — Live</span>
+        <div class="clock-legend">
+          <span><span class="clock-legend-dot" style="background:#f59e0b"></span>Home</span>
+          <span><span class="clock-legend-dot" style="background:#00b4d8"></span>Destination</span>
+        </div>
+      </div>
+      <div class="clocks-row">
+        <div class="clock-wrap">
+          <div class="clock-label" id="homeCityLabel">Home</div>
+          <canvas class="clock-canvas" id="homeClockCanvas" width="140" height="140"></canvas>
+          <div class="clock-time" id="homeTimeDisplay">—</div>
+        </div>
+        <div class="clock-wrap">
+          <div class="clock-label" id="destCityLabel">Destination</div>
+          <canvas class="clock-canvas" id="destClockCanvas" width="140" height="140"></canvas>
+          <div class="clock-time" id="destTimeDisplay">—</div>
+        </div>
+      </div>
+      <div class="clock-diff-badge"><span id="timeDiffDisplay">Select timezones below to see your clock gap</span></div>
+    </div>
+
+    <div class="agent-tip">
+      <span class="agent-tip-icon">😴</span>
+      <span>Genie builds a <strong>day-by-day recovery schedule</strong> — exactly when to seek light, when to sleep, and when to take melatonin — personalised to your chronotype and urgency.</span>
+    </div>
+
+    <div class="section-label">Origin &amp; Destination</div>
+    <div class="two-col">
+      <div class="field">
+        <label for="homeTz">🏠 Home Timezone <span class="required-star">*</span></label>
+        <select id="homeTz" class="vg-select" onchange="updateClocks()">
+          <option value="">-- Select --</option>
+          <optgroup label="Americas"><option value="America/New_York">New York (ET)</option><option value="America/Chicago">Chicago (CT)</option><option value="America/Denver">Denver (MT)</option><option value="America/Los_Angeles">Los Angeles (PT)</option><option value="America/Anchorage">Anchorage (AKT)</option><option value="Pacific/Honolulu">Honolulu (HT)</option><option value="America/Toronto">Toronto (ET)</option><option value="America/Vancouver">Vancouver (PT)</option><option value="America/Sao_Paulo">São Paulo (BRT)</option><option value="America/Argentina/Buenos_Aires">Buenos Aires (ART)</option></optgroup>
+          <optgroup label="Europe"><option value="Europe/London">London (GMT/BST)</option><option value="Europe/Paris">Paris / Berlin (CET)</option><option value="Europe/Rome">Rome / Amsterdam (CET)</option><option value="Europe/Madrid">Madrid (CET)</option><option value="Europe/Athens">Athens / Istanbul (EET)</option><option value="Europe/Moscow">Moscow (MSK)</option></optgroup>
+          <optgroup label="Middle East &amp; Africa"><option value="Asia/Dubai">Dubai (GST)</option><option value="Asia/Riyadh">Riyadh (AST)</option><option value="Africa/Johannesburg">Johannesburg (SAST)</option><option value="Africa/Cairo">Cairo (EET)</option><option value="Africa/Nairobi">Nairobi (EAT)</option></optgroup>
+          <optgroup label="Asia &amp; Pacific"><option value="Asia/Kolkata">India (IST)</option><option value="Asia/Bangkok">Bangkok (ICT)</option><option value="Asia/Singapore">Singapore (SGT)</option><option value="Asia/Hong_Kong">Hong Kong (HKT)</option><option value="Asia/Shanghai">China (CST)</option><option value="Asia/Tokyo">Tokyo (JST)</option><option value="Asia/Seoul">Seoul (KST)</option><option value="Australia/Sydney">Sydney (AEST)</option><option value="Australia/Melbourne">Melbourne (AEST)</option><option value="Pacific/Auckland">Auckland (NZST)</option></optgroup>
+        </select>
+        <div id="homeTzError" class="error-msg hidden">⚠ Required</div>
+      </div>
+      <div class="field">
+        <label for="destTz">🌍 Destination Timezone <span class="required-star">*</span></label>
+        <select id="destTz" class="vg-select" onchange="updateClocks()">
+          <option value="">-- Select --</option>
+          <optgroup label="Americas"><option value="America/New_York">New York (ET)</option><option value="America/Chicago">Chicago (CT)</option><option value="America/Denver">Denver (MT)</option><option value="America/Los_Angeles">Los Angeles (PT)</option><option value="America/Anchorage">Anchorage (AKT)</option><option value="Pacific/Honolulu">Honolulu (HT)</option><option value="America/Toronto">Toronto (ET)</option><option value="America/Vancouver">Vancouver (PT)</option><option value="America/Sao_Paulo">São Paulo (BRT)</option><option value="America/Argentina/Buenos_Aires">Buenos Aires (ART)</option></optgroup>
+          <optgroup label="Europe"><option value="Europe/London">London (GMT/BST)</option><option value="Europe/Paris">Paris / Berlin (CET)</option><option value="Europe/Rome">Rome / Amsterdam (CET)</option><option value="Europe/Madrid">Madrid (CET)</option><option value="Europe/Athens">Athens / Istanbul (EET)</option><option value="Europe/Moscow">Moscow (MSK)</option></optgroup>
+          <optgroup label="Middle East &amp; Africa"><option value="Asia/Dubai">Dubai (GST)</option><option value="Asia/Riyadh">Riyadh (AST)</option><option value="Africa/Johannesburg">Johannesburg (SAST)</option><option value="Africa/Cairo">Cairo (EET)</option><option value="Africa/Nairobi">Nairobi (EAT)</option></optgroup>
+          <optgroup label="Asia &amp; Pacific"><option value="Asia/Kolkata">India (IST)</option><option value="Asia/Bangkok">Bangkok (ICT)</option><option value="Asia/Singapore">Singapore (SGT)</option><option value="Asia/Hong_Kong">Hong Kong (HKT)</option><option value="Asia/Shanghai">China (CST)</option><option value="Asia/Tokyo">Tokyo (JST)</option><option value="Asia/Seoul">Seoul (KST)</option><option value="Australia/Sydney">Sydney (AEST)</option><option value="Australia/Melbourne">Melbourne (AEST)</option><option value="Pacific/Auckland">Auckland (NZST)</option></optgroup>
+        </select>
+        <div id="destTzError" class="error-msg hidden">⚠ Required</div>
+      </div>
+    </div>
+
+    <div class="section-label">Flight Timing</div>
+    <div class="two-col">
+      <div class="field"><label for="departDate">📅 Departure Date <span class="opt-tag">Optional</span></label><input type="date" id="departDate" class="vg-input"/></div>
+      <div class="field"><label for="departTime">🕐 Departure Time <span class="opt-tag">Optional</span></label><input type="time" id="departTime" class="vg-input"/></div>
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label for="flightDuration">⏱️ Flight Duration</label>
+        <select id="flightDuration" class="vg-select">
+          <option value="">-- Select --</option>
+          <option value="1-2 hours">1–2 hours</option><option value="2-4 hours">2–4 hours</option><option value="4-6 hours">4–6 hours</option><option value="6-8 hours">6–8 hours</option><option value="8-10 hours">8–10 hours (long-haul)</option><option value="10-12 hours">10–12 hours</option><option value="12-15 hours">12–15 hours (ultra long-haul)</option><option value="15+ hours">15+ hours</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="direction">🔄 Direction</label>
+        <select id="direction" class="vg-select">
+          <option value="">-- Auto-detect --</option>
+          <option value="eastward">Eastward (harder — lose hours)</option>
+          <option value="westward">Westward (easier — gain hours)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label">About You</div>
+    <div class="two-col">
+      <div class="field">
+        <label for="chronotype">🌅 Morning or night person?</label>
+        <select id="chronotype" class="vg-select"><option value="">-- Select --</option><option value="morning person (early bird)">Morning person (early bird)</option><option value="neutral / neither">Neutral / neither</option><option value="night owl">Night owl</option></select>
+      </div>
+      <div class="field">
+        <label for="sleepDuration">💤 Usual sleep duration</label>
+        <select id="sleepDuration" class="vg-select"><option value="">-- Select --</option><option value="less than 6 hours">Less than 6 hours</option><option value="6-7 hours">6–7 hours</option><option value="7-8 hours">7–8 hours</option><option value="8-9 hours">8–9 hours</option><option value="9+ hours">9+ hours</option></select>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label for="caffeine">☕ Caffeine use</label>
+        <select id="caffeine" class="vg-select"><option value="">-- Select --</option><option value="none">None</option><option value="light (1 coffee/day)">Light (1/day)</option><option value="moderate (2-3 coffees/day)">Moderate (2–3/day)</option><option value="heavy (4+ coffees/day)">Heavy (4+/day)</option></select>
+      </div>
+      <div class="field">
+        <label for="urgency">🎯 How fast do you need to perform?</label>
+        <select id="urgency" class="vg-select"><option value="">-- Select --</option><option value="first day — important meetings or events immediately">First day — meetings/events</option><option value="within 1-2 days">Within 1–2 days</option><option value="I have a few days to adjust">A few days to adjust</option><option value="leisure — I can take my time">Leisure — no rush</option></select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="supplements">💊 Open to supplements?</label>
+      <select id="supplements" class="vg-select"><option value="open to all suggestions including melatonin">Yes — include melatonin, magnesium, sleep aids</option><option value="prefer natural methods only">Natural methods only</option><option value="open to melatonin only">Melatonin only</option></select>
+    </div>
+    <div class="field">
+      <label for="extraContext">📝 Anything else? <span class="opt-tag">Optional</span></label>
+      <input type="text" id="extraContext" class="vg-input" placeholder="e.g. presentation on arrival morning, pregnant, over 60"/>
+    </div>
+
+    <button class="btn-generate" id="generateBtn" onclick="generatePlan()">🌙 Build My Recovery Schedule</button>
+
+    <div class="results-card" id="resultsCard">
+      <div class="results-header"><h3 id="resultsTitle">Your Jet Lag Recovery Plan</h3><p id="resultsSubtitle"></p></div>
+      <div class="results-body" id="resultsBody"></div>
+    </div>
+  </div>
+
+  <aside class="affiliate-sidebar">
+    <div class="deal-banner">
+      <h3>🌐 Timeshifter App</h3>
+      <p>NASA-backed jet lag app used by astronauts. Hour-by-hour light, sleep &amp; caffeine schedule.</p>
+      <a href="https://www.timeshifter.com" target="_blank" rel="noopener" class="deal-btn">Try Timeshifter →</a>
+    </div>
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">⚡ Quick Rules</div>
+      <div class="quick-rule"><span style="font-size:1rem;flex-shrink:0">☀️</span><span><strong>Light is your strongest tool.</strong> Seek it when you want to feel awake, avoid it when you want to sleep earlier.</span></div>
+      <div class="quick-rule"><span style="font-size:1rem;flex-shrink:0">🌙</span><span><strong>Stay awake until local bedtime</strong> on arrival day. Naps over 20 min make it worse.</span></div>
+      <div class="quick-rule"><span style="font-size:1rem;flex-shrink:0">💧</span><span><strong>Drink 250ml water per hour</strong> of flight. Dehydration amplifies every jet lag symptom.</span></div>
+      <div class="quick-rule"><span style="font-size:1rem;flex-shrink:0">🍽️</span><span><strong>Eat at local meal times</strong> from day one — your gut clock anchors your rhythm.</span></div>
+      <div class="quick-rule"><span style="font-size:1rem;flex-shrink:0">🏃</span><span><strong>Morning exercise outdoors</strong> at your destination is the best free reset tool.</span></div>
+    </div>
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🔄 East vs West</div>
+      <div style="font-size:0.83rem;color:var(--text-muted);line-height:1.65">
+        <p style="margin-bottom:0.5rem"><strong style="color:#c2410c">Eastward</strong> (NY→London) is harder. Expect ~1 day per hour of difference.</p>
+        <p><strong style="color:var(--ocean)">Westward</strong> (London→NY) is easier. Usually ~0.5 days per hour.</p>
+      </div>
+    </div>
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">😴 Sleep Aids &amp; Apps</div>
+      <a href="https://www.timeshifter.com" target="_blank" rel="noopener" class="affiliate-link"><span>Timeshifter App</span><span class="arr">↗</span></a>
+      <a href="https://www.amazon.com/s?k=contoured+sleep+mask" target="_blank" rel="noopener" class="affiliate-link"><span>Contoured Sleep Masks</span><span class="arr">↗</span></a>
+      <a href="https://www.amazon.com/s?k=melatonin+0.5mg" target="_blank" rel="noopener" class="affiliate-link"><span>Low-dose Melatonin (0.5mg)</span><span class="arr">↗</span></a>
+      <a href="https://www.amazon.com/s?k=light+therapy+lamp" target="_blank" rel="noopener" class="affiliate-link"><span>Light Therapy Lamp</span><span class="arr">↗</span></a>
+      <p class="affiliate-note">We may earn a small commission at no cost to you.</p>
+    </div>
+  </aside>
+
+</div></main>
+
+<footer><div class="footer-inner">
+  <div class="footer-brand">✈️ Voyage Genie</div>
+  <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+  <div class="footer-subscribe"><input class="footer-email" placeholder="Enter your email" type="email"/><button class="footer-sub-btn">Subscribe</button></div>
+  <div class="footer-links"><a href="index.html">Home</a><a href="index.html#plan-trip">Plan</a><a href="index.html#travel-tools">Tools</a><a href="contact.html">Contact</a></div>
+</div>
+<div class="footer-copy" style="max-width:1100px;margin:0 auto;">© 2026 VoyageGenie.com – All rights reserved. General wellness guidance only — not medical advice.</div>
+</footer>
+
+<script src="js/genie-chat.js" defer></script>
+<script>
+function drawClock(canvasId,timezone,color){
+  const canvas=document.getElementById(canvasId); if(!canvas) return null;
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,r=W/2-4;
+  ctx.clearRect(0,0,W,H);
+  let hours=0,minutes=0,localTime=null;
+  try{const str=new Date().toLocaleString('en-US',{timeZone:timezone,hour:'2-digit',minute:'2-digit',hour12:false});const p=str.split(':');hours=parseInt(p[0])%24;minutes=parseInt(p[1]);localTime=`${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}`;}catch(e){}
+  const h24=hours+minutes/60;
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle='#0c1a35';ctx.fill();ctx.strokeStyle=color+'44';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,r-6,(6/24)*Math.PI*2-Math.PI/2,(20/24)*Math.PI*2-Math.PI/2);ctx.strokeStyle='#fbbf2433';ctx.lineWidth=8;ctx.stroke();
+  for(let i=0;i<24;i++){const a=(i/24)*Math.PI*2-Math.PI/2,maj=(i%6===0),l=maj?10:5;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*(r-3),cy+Math.sin(a)*(r-3));ctx.lineTo(cx+Math.cos(a)*(r-3-l),cy+Math.sin(a)*(r-3-l));ctx.strokeStyle=maj?'#4a5d7a':'#2a3a5a';ctx.lineWidth=maj?1.5:0.75;ctx.stroke();}
+  ctx.font='9px DM Sans,sans-serif';ctx.fillStyle='#4a5d7a';ctx.textAlign='center';ctx.textBaseline='middle';
+  [{h:6,t:'6am'},{h:12,t:'12'},{h:18,t:'6pm'},{h:0,t:'0'}].forEach(({h,t})=>{const a=(h/24)*Math.PI*2-Math.PI/2;ctx.fillText(t,cx+Math.cos(a)*(r-20),cy+Math.sin(a)*(r-20));});
+  ctx.beginPath();ctx.arc(cx,cy,r-18,(22/24)*Math.PI*2-Math.PI/2,(7/24)*Math.PI*2-Math.PI/2);ctx.strokeStyle='#0077b644';ctx.lineWidth=6;ctx.stroke();
+  if(localTime){const ha=(h24/24)*Math.PI*2-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(ha)*(r-30),cy+Math.sin(ha)*(r-30));ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();ctx.beginPath();ctx.arc(cx+Math.cos(ha)*(r-4),cy+Math.sin(ha)*(r-4),5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
+  return localTime;
+}
+
+function updateClocks(){
+  const hv=document.getElementById('homeTz').value,dv=document.getElementById('destTz').value;
+  document.getElementById('homeCityLabel').textContent=hv?hv.split('/').pop().replace(/_/g,' '):'Home';
+  document.getElementById('destCityLabel').textContent=dv?dv.split('/').pop().replace(/_/g,' '):'Destination';
+  document.getElementById('homeTimeDisplay').textContent=hv?drawClock('homeClockCanvas',hv,'#f59e0b')||'—':'—';
+  document.getElementById('destTimeDisplay').textContent=dv?drawClock('destClockCanvas',dv,'#00b4d8')||'—':'—';
+  if(hv&&dv){try{const now=new Date();const h1=parseInt(now.toLocaleString('en-US',{timeZone:hv,hour:'2-digit',hour12:false}));const h2=parseInt(now.toLocaleString('en-US',{timeZone:dv,hour:'2-digit',hour12:false}));let d=h2-h1;if(d>12)d-=24;if(d<-12)d+=24;const abs=Math.abs(d);document.getElementById('timeDiffDisplay').textContent=abs===0?'Same timezone — no jet lag!':`Destination is ${abs}h ${d>0?'ahead':'behind'} · ~${d>0?abs:Math.ceil(abs*0.7)} day${abs!==1?'s':''} to adjust`;}catch(e){}}
+  else document.getElementById('timeDiffDisplay').textContent='Select timezones to see your clock gap';
+}
+setInterval(updateClocks,60000);
+window.addEventListener('DOMContentLoaded',()=>{
+  drawClock('homeClockCanvas',null,'#f59e0b');
+  drawClock('destClockCanvas',null,'#00b4d8');
+  document.getElementById('departDate').min=new Date().toISOString().split('T')[0];
+});
+
+function buildPrompt(){
+  const g=id=>document.getElementById(id),s=id=>{const el=g(id);return el.options?.[el.selectedIndex]?.text||el.value||'';};
+  let diff='';try{const hv=g('homeTz').value,dv=g('destTz').value;if(hv&&dv){const now=new Date();const h1=parseInt(now.toLocaleString('en-US',{timeZone:hv,hour:'2-digit',hour12:false}));const h2=parseInt(now.toLocaleString('en-US',{timeZone:dv,hour:'2-digit',hour12:false}));let d=h2-h1;if(d>12)d-=24;if(d<-12)d+=24;diff=`${Math.abs(d)} hours ${d>0?'ahead':'behind'} (${d>0?'eastward':'westward'} shift)`;}}catch(e){}
+  const extra=g('extraContext').value.trim();
+  return `Please create a personalised jet lag recovery plan. Wellness guidance only, not medical advice.\n\nTraveller:\n- Home timezone: ${s('homeTz')}\n- Destination timezone: ${s('destTz')}\n- Time difference: ${diff||g('direction').value||'not calculated'}\n- Departure: ${g('departDate').value||'not specified'} at ${g('departTime').value||'not specified'}\n- Flight duration: ${g('flightDuration').value||'not specified'}\n- Travel direction: ${g('direction').value||'auto-detect'}\n- Chronotype: ${g('chronotype').value||'not specified'}\n- Usual sleep: ${g('sleepDuration').value||'not specified'}\n- Caffeine: ${g('caffeine').value||'not specified'}\n- Performance urgency: ${g('urgency').value||'not specified'}\n- Supplements: ${g('supplements').value}\n${extra?`- Context: ${extra}`:''}\n\nSections:\n1. Jet Lag Profile\n2. 3 Days Before Departure\n3. On the Plane\n4. Arrival Day\n5. Days 2 & 3 After Arrival\n6. Light Exposure Schedule (specific times to SEEK and AVOID light for first 3 days)\n7. Supplement Schedule (dose + exact timing)\n8. Foods & Drinks That Help\n9. One Key Warning\n\nFormat: No Markdown. Headings end with colon. Bullets use hyphen. Specify timezone with all times.`;
+}
+function validate(){const h=document.getElementById('homeTz').value,d=document.getElementById('destTz').value;document.getElementById('homeTzError').classList.toggle('hidden',!!h);document.getElementById('destTzError').classList.toggle('hidden',!!d);return !!(h&&d);}
+async function generatePlan(){
+  if(!validate())return;
+  const ov=document.getElementById('spinnerOverlay'),btn=document.getElementById('generateBtn');
+  ov.classList.add('active');btn.disabled=true;
+  try{
+    const res=await fetch('https://exodonprofits.app.n8n.cloud/webhook/ai-tool-proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:buildPrompt()}]})});
+    const data=await res.json();const raw=data?.content?.map(b=>b.text||'').join('')||'';
+    if(!raw)throw new Error('Empty');renderResults(raw);
+  }catch(e){renderFallback();console.error('[JetLag]',e);}
+  finally{ov.classList.remove('active');btn.disabled=false;}
+}
+function renderResults(raw){
+  const home=document.getElementById('homeTz').options[document.getElementById('homeTz').selectedIndex]?.text||'Home';
+  const dest=document.getElementById('destTz').options[document.getElementById('destTz').selectedIndex]?.text||'Destination';
+  document.getElementById('resultsTitle').textContent='Your Recovery Plan';
+  document.getElementById('resultsSubtitle').textContent=`${home} → ${dest} · personalised schedule`;
+  let html=raw.trim();
+  if(!html.includes('<')){html=html.split('\n').map(l=>{const t=l.trim();if(!t)return '<br>';if(t.endsWith(':')&&t.length<90&&!t.startsWith('-'))return `<strong style="font-size:0.93rem;color:var(--ocean-deep);display:block;margin:16px 0 5px">${t}</strong>`;if(t.startsWith('- '))return `<div style="margin:3px 0 3px 14px">• ${t.slice(2)}</div>`;return `<span>${t}</span><br>`;}).join('');}
+  document.getElementById('resultsBody').innerHTML=`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:0.7rem 1rem;margin-bottom:1.25rem;font-size:0.81rem;color:#78350f">⚕️ <strong style="color:#92400e">Wellness guidance only.</strong> Consult your doctor if you have sleep disorders, are pregnant, or take medications affecting sleep.</div>${html}`;
+  document.getElementById('resultsCard').classList.add('visible');
+  document.getElementById('resultsCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function renderFallback(){
+  document.getElementById('resultsTitle').textContent='General Jet Lag Recovery Guide';
+  document.getElementById('resultsSubtitle').textContent='Core principles that work for most travellers';
+  document.getElementById('resultsBody').innerHTML=`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:0.7rem 1rem;margin-bottom:1.25rem;font-size:0.81rem;color:#78350f">⚕️ Wellness guidance only.</div><strong style="color:var(--ocean-deep);display:block;margin-bottom:6px">3 Days Before Departure:</strong><div style="margin:3px 0 3px 14px">• Shift sleep 30–60 min earlier each night (eastward) or later (westward)</div><div style="margin:3px 0 3px 14px">• Cut caffeine after 2pm to improve sleep quality</div><div style="margin:3px 0 3px 14px">• Eastward: take 0.5mg melatonin 2h before new target bedtime</div><br><strong style="color:var(--ocean-deep);display:block;margin-bottom:6px">On the Plane:</strong><div style="margin:3px 0 3px 14px">• Set watch to destination time on boarding</div><div style="margin:3px 0 3px 14px">• Drink 250ml water per hour of flight</div><div style="margin:3px 0 3px 14px">• Avoid alcohol — worsens dehydration and disrupts sleep</div><br><strong style="color:var(--ocean-deep);display:block;margin-bottom:6px">Arrival Day:</strong><div style="margin:3px 0 3px 14px">• Get outdoor morning light — strongest free clock-reset tool</div><div style="margin:3px 0 3px 14px">• Stay awake until local bedtime. Naps max 20 min</div><div style="margin:3px 0 3px 14px">• Eat at local meal times from day one</div>`;
+  document.getElementById('resultsCard').classList.add('visible');
+  document.getElementById('resultsCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+</script>
+</body>
+</html>

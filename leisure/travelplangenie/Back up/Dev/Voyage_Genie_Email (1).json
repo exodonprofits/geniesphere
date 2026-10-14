@@ -1,0 +1,133 @@
+{
+  "name": "Voyage Genie Email",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send-email",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "email-webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -100
+      ],
+      "webhookId": "new-email-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Incoming payload:', JSON.stringify($json, null, 2));\nconst email = $json.resolvedEmail ? String($json.resolvedEmail).trim() : null;\nconst subject = $json.resolvedSubject || 'Your Adventure Itinerary - Voyage Genie';\nlet message = $json.resolvedMessage || 'No itinerary available to send.';\n\n// Log the initial message\nconsole.log('Step 1 - Initial message length:', message.length);\nconsole.log('Step 1 - Initial message preview:', message.substring(0, 500));\n\n// Step 1: Replace HTML tags with spaces to preserve content\nmessage = message\n  .replace(/<[^>]+>/g, ' ') // Replace HTML tags with a space\n  .replace(/\\s+/g, ' ') // Normalize multiple spaces to a single space\n  .trim();\n\n// Log after HTML tag removal\nconsole.log('Step 2 - After HTML strip length:', message.length);\nconsole.log('Step 2 - After HTML strip preview:', message.substring(0, 500));\n\n// Step 2: Split into lines and clean up\nlet lines = message.split('\\n')\n  .map(line => line.trim()) // Trim each line\n  .filter(line => line); // Remove empty lines\n\n// Log after trimming lines\nconsole.log('Step 3 - Lines after trim and filter:', lines);\n\n// Step 3: Join lines back together with newlines\nmessage = lines.length > 0 ? lines.join('\\n') : message;\n\n// Log after joining lines\nconsole.log('Step 4 - After join length:', message.length);\nconsole.log('Step 4 - After join preview:', message.substring(0, 500));\n\n// Ensure message isn't empty after transformation\nif (!message) {\n  message = 'Transformed message was empty. Fallback: No itinerary available to send.';\n  console.log('Message was empty after transformation, using fallback.');\n}\n\n// Validate email\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!email || !emailRegex.test(email)) {\n  console.log('Invalid email, using fallback:', email);\n  return [{ json: { resolvedEmail: 'jtran112675@gmail.com', resolvedSubject: subject, resolvedMessage: message } }];\n}\n\nconsole.log('Sending email to:', email);\nconsole.log('Final message length:', message.length);\nconsole.log('Final message preview:', message.substring(0, 500));\nreturn [{ json: { resolvedEmail: email, resolvedSubject: subject, resolvedMessage: message } }];"
+      },
+      "id": "validate-email-node",
+      "name": "Validate Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = $json.resolvedMessage || 'Fallback: No itinerary available to send.';\nconsole.log('Final message to Gmail:', message);\nreturn [{ json: { resolvedEmail: $json.resolvedEmail, resolvedSubject: $json.resolvedSubject, resolvedMessage: message } }];"
+      },
+      "id": "finalize-email-node",
+      "name": "Finalize Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.resolvedEmail }}",
+        "subject": "={{ $json.resolvedSubject }}",
+        "emailFormat": "text",
+        "message": "={{ $json.resolvedMessage }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        -100
+      ],
+      "id": "9aed6576-a6a6-4898-a2d9-163ceef509c1",
+      "name": "Gmail",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bBXXYTmxaLHTskHO",
+          "name": "Gmail account 12"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Email": {
+      "main": [
+        [
+          {
+            "node": "Finalize Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Email": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "new-version-id",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "new-email-workflow-id",
+  "tags": []
+}

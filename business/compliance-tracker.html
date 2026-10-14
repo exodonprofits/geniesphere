@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>🔒 Compliance Tracker | GenieSphere</title>
+  <meta name="description" content="Track business compliance items (annual reports, licenses, IRS filings) with due dates, proof, and status — all in one place." />
+  <meta name="gs-config" content="/shared/config.json" />
+
+  <style>
+    /* =========================================================
+       GenieSphere Theme System (copied from business.html)
+       - Toggle via 🎨 Appearance (saved in localStorage)
+       ========================================================= */
+
+    :root{
+      --ring: rgba(76,110,245,.25);
+
+      /* layout */
+      --container: 1440px;
+      --radius: 7px;
+      --radius-lg: 14px;
+      --btn-radius: 999px;
+
+      /* spacing */
+      --space-1: 6px;
+      --space-2: 10px;
+      --space-3: 14px;
+      --space-4: 18px;
+      --space-5: 24px;
+      --space-6: 32px;
+
+      /* motion/shadow */
+      --shadow: 0 16px 38px rgba(15,23,42,.16);
+      --shadow-soft: 0 10px 24px rgba(15,23,42,.10);
+
+      /* focus */
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+
+    /* Theme A: Calm Future (default) */
+    body.theme-calm{
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-2: #f1f4ff;
+      --text: #111827;
+      --muted: #4b5563;
+
+      --primary: #4c6ef5;
+      --accent: #22c55e;
+
+      --border: rgba(148,163,184,.70);
+      --border-strong: rgba(148,163,184,.92);
+
+      --shadow: 0 18px 38px rgba(15,23,42,.14);
+      --shadow-soft: 0 10px 26px rgba(15,23,42,.10);
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+
+    /* Theme B: Soft Futuristic */
+    body.theme-future{
+      --bg: #0f172a;
+      --panel: #111c36;
+      --panel-2: #162447;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+
+      --primary: #6366f1;
+      --accent: #22d3ee;
+
+      --border: rgba(71,85,105,.65);
+      --border-strong: rgba(71,85,105,.95);
+
+      --shadow: 0 18px 44px rgba(0,0,0,.52);
+      --shadow-soft: 0 10px 26px rgba(0,0,0,.34);
+      --focus: 0 0 0 4px rgba(34,211,238,.16);
+    }
+
+    /* Theme C: Nature + Tech */
+    body.theme-nature{
+      --bg: #f6f9f7;
+      --panel: #ffffff;
+      --panel-2: #eef5f1;
+      --text: #0f172a;
+      --muted: #475569;
+
+      --primary: #16a34a;
+      --accent: #38bdf8;
+
+      --border: rgba(148,163,184,.70);
+      --border-strong: rgba(148,163,184,.92);
+
+      --shadow: 0 18px 38px rgba(15,23,42,.12);
+      --shadow-soft: 0 10px 26px rgba(15,23,42,.09);
+      --focus: 0 0 0 4px rgba(22,163,74,.16);
+    }
+
+    /* Theme D: Pro Dark */
+    body.theme-dark{
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --panel-2: #0e1626;
+      --text: #e9f0ff;
+      --muted: #a9b6d9;
+
+      --primary: #4c6ef5;
+      --accent: #3ee1a1;
+
+      --border: var(--border);
+      --border-strong: var(--border-strong);
+
+      --shadow: 0 18px 44px rgba(0,0,0,.50);
+      --shadow-soft: 0 10px 26px rgba(0,0,0,.30);
+      --focus: 0 0 0 4px rgba(76,110,245,.22);
+    }
+
+    /* Page variable mapping (use theme tokens) */
+    body{
+      --card: var(--panel);
+      --card-hover: var(--panel-2);
+      --brand-blue: var(--primary);
+      --gap: 18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background: var(--bg);
+      color:var(--text);
+      font: 500 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    .sr-only{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0;
+    }
+
+    .container{ max-width:1440px; margin:0 auto; padding:24px; }
+
+    /* === Header / App Bar (same as business.html) === */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, .25);
+      backdrop-filter: saturate(120%) blur(10px);
+    }
+    .site-header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #6af0c4, #3ee1a1 40%, #1c9369 75%);
+      box-shadow: 0 0 0 3px var(--ring), 0 8px 24px rgba(62, 225, 161, .35);
+      object-fit: cover;
+    }
+
+    .menu {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 14px;
+    }
+
+    .menu a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 2px;
+      border-radius: 0;
+      text-decoration: none;
+      color: var(--muted);
+      font-weight: 500;
+      border-bottom: 2px solid transparent;
+      box-shadow: none;
+      background: transparent;
+      transition: color .15s ease, border-bottom-color .15s ease;
+    }
+    .menu a:hover{
+      color: var(--text);
+      border-bottom-color: var(--brand-blue);
+    }
+    .menu a.active{
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }
+    .menu a.ghost{ color: var(--muted); }
+
+    /* User menu (desktop + mobile) – same pattern as business.html */
+    .user-menu{
+      position:relative;
+      display:flex;
+      align-items:center;
+      margin-left:auto;
+    }
+    .user-menu-toggle{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid var(--border-strong);
+      background:var(--panel-2);
+      color:var(--text);
+      font-size:14px;
+      cursor:pointer;
+    }
+    .user-menu-toggle:hover{ border-color:var(--accent); }
+    .user-menu-dropdown{
+      position:absolute;
+      right:0;
+      top:calc(100% + 6px);
+      min-width:220px;
+      background:var(--panel-2);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      box-shadow:0 14px 34px rgba(0,0,0,.55);
+      padding:6px 0;
+      display:none;
+      z-index:1002;
+      margin-right:4px;
+    }
+    .user-menu-dropdown a,
+    .user-menu-dropdown button{
+      display:block;
+      width:100%;
+      text-align:left;
+      padding:8px 14px;
+      background:none;
+      border:none;
+      color:var(--text);
+      font-size:14px;
+      text-decoration:none;
+      cursor:pointer;
+    }
+    .user-menu-dropdown a:hover,
+    .user-menu-dropdown button:hover{ background:#121a2b; }
+    .user-menu-divider{
+      height:1px;
+      margin:4px 0;
+      background:rgba(148,163,184,.4);
+    }
+    .dropdown-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      opacity:.7;
+      padding:4px 14px 2px;
+    }
+    .auth-only{ }
+
+    .hamburger {
+      display: none;
+      border: 1px solid rgba(120, 155, 255, .25);
+      background: #0e1626;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    @media(max-width:720px) {
+      .menu { display: none; }
+      .hamburger { display: inline-flex; }
+      .site-header-inner { padding: 10px 12px; }
+      .user-menu-toggle{padding-inline:10px;}
+    }
+
+    .drawer{
+      position:fixed;
+      inset:60px 12px auto 12px;
+      background:var(--panel-2);
+      border:1px solid rgba(120,155,255,.2);
+      border-radius:var(--radius);
+      padding:10px;
+      display:none;
+      z-index:1001;
+      box-shadow:0 18px 34px rgba(0,0,0,.45);
+    }
+    .drawer a{
+      display:block;
+      margin:6px 0;
+      padding:10px 12px;
+      border-radius:var(--radius);
+      text-decoration:none;
+      color:var(--text);
+      background:#121a2b;
+      border:1px solid rgba(120,155,255,.15);
+    }
+    .drawer a.active{
+      background:#18233a;
+      border-color:rgba(62,225,161,.35);
+    }
+
+    /* Hero */
+    .hero{text-align:center; padding:16px 0 8px}
+    .title{
+      font-size:clamp(26px,4vw,40px);
+      margin:0 0 6px;
+      font-weight:900;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0 auto 18px;
+      max-width:860px;
+      font-size:15px;
+    }
+
+    /* Buttons / inputs (match business.html style) */
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:9px 18px;
+      border-radius:var(--btn-radius);
+      text-decoration:none;
+      color:#03101f;
+      background:var(--panel-2);
+      font-weight:800;
+      border:1px solid rgba(120,155,255,.18);
+      cursor:pointer;
+      font-size:14px;
+      white-space:nowrap;
+      transition: filter .12s ease, transform .12s ease, border-color .15s ease;
+    }
+    .btn.primary{
+      background:var(--accent);
+      color:#04131a;
+      border-color:rgba(62,225,161,.35);
+      box-shadow:0 8px 18px rgba(62,225,161,.20);
+    }
+    .btn.ghost{
+      background:transparent;
+      color:var(--text);
+      border-color:rgba(120,155,255,.20);
+    }
+    .btn.danger{
+      background:transparent;
+      color:#ffb4b4;
+      border-color:rgba(255,180,180,.35);
+    }
+    .btn:hover{ filter:brightness(1.05); transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); filter:brightness(.98); }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .label{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:800;
+      letter-spacing:.01em;
+    }
+    .input, select, textarea{
+      width:100%;
+      background:var(--panel-2);
+      color:var(--text);
+      border:1px solid rgba(120,155,255,.18);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+    }
+    textarea{ min-height:92px; resize:vertical; }
+    .input:focus, select:focus, textarea:focus{
+      border-color:rgba(74,163,255,.45);
+      box-shadow:0 0 0 3px rgba(74,163,255,.15);
+    }
+
+    /* Panels */
+    .panel{
+      background:linear-gradient(180deg, rgba(24,35,58,.65), rgba(18,26,43,.90));
+      border:1px solid rgba(120,155,255,.18);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+
+    .row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:flex-end;
+    }
+
+    .row .field{ flex: 1 1 190px; min-width: 190px; }
+    .row .field.small{ flex: 0 0 160px; min-width: 160px; }
+    .row .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+      margin-left:auto;
+    }
+
+    @media (max-width:720px){
+      .row .field{ min-width: 100%; }
+      .row .actions{ width:100%; justify-content:stretch; }
+      .row .actions .btn{ width:100%; }
+    }
+
+    /* Quick Peek cards */
+    .peek{
+      margin: 10px 0 16px;
+      display:grid;
+      gap:14px;
+      grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    }
+    .mini-card{
+      background:var(--panel-2);
+      border:1px solid rgba(120,155,255,.12);
+      border-radius:var(--radius);
+      padding:12px;
+      min-height:110px;
+    }
+    .mini-title{
+      margin:0 0 8px;
+      font-size:14px;
+      color:#d7e4ff;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-weight:900;
+    }
+    .chip{
+      font-size:12px;
+      font-weight:900;
+      border-radius:999px;
+      padding:4px 10px;
+      background:var(--brand-blue);
+      color:#03101f;
+      white-space:nowrap;
+    }
+    .chip.warn{ background:#fbbf24; color:#201508; }
+    .chip.bad{ background:#fb7185; color:#21060b; }
+    .mini-list{
+      margin:0;
+      padding-left:18px;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .mini-list li{ margin:4px 0; }
+
+    /* Table list */
+    .table-wrap{
+      overflow:auto;
+      border-radius:var(--radius);
+      border:1px solid rgba(120,155,255,.16);
+      background: rgba(18,26,43,.55);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:920px;
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(120,155,255,.12);
+      text-align:left;
+      vertical-align:top;
+      font-size:13px;
+    }
+    th{
+      position:sticky;
+      top:0;
+      background: rgba(14,22,38,.95);
+      color:#d7e4ff;
+      z-index:2;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    td{ color: var(--text); }
+    .muted{ color: var(--muted); }
+
+    .status{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-weight:900;
+      font-size:12px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(120,155,255,.18);
+      background: rgba(76,110,245,.12);
+      color:#cfe0ff;
+      white-space:nowrap;
+    }
+    .status.good{ background: rgba(62,225,161,.16); border-color: rgba(62,225,161,.28); color:#eafff7; }
+    .status.warn{ background: rgba(251,191,36,.16); border-color: rgba(251,191,36,.25); color:#fff4d6; }
+    .status.bad{  background: rgba(251,113,133,.16); border-color: rgba(251,113,133,.25); color:#ffd5db; }
+    .status.neutral{ background: rgba(148,163,184,.14); border-color: rgba(148,163,184,.22); color:#e6edf8; }
+
+    .t-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .t-actions .btn{
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:900;
+    }
+
+    .empty{
+      padding:12px;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    /* Footer (same as business.html) */
+    .site-footer{
+      margin-top:32px;
+      padding:32px 0 28px;
+      border-top:1px solid rgba(120,155,255,.15);
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background:linear-gradient(180deg, rgba(9,14,25,.85), rgba(11,18,32,.9));
+    }
+    .site-footer-inner{ max-width:1440px; margin:0 auto; padding:0 24px; }
+    .footer-grid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:10px 28px;
+      align-items:start;
+    }
+    @media (max-width:900px){ .footer-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+    @media (max-width:560px){ .footer-grid{ grid-template-columns:1fr; } }
+    .footer-col h4{ margin:0 0 10px; font-size:14px; }
+    .footer-col a{
+      display:block;
+      color:var(--muted);
+      text-decoration:none;
+      padding:4px 0;
+      font-size:13px;
+    }
+    .footer-col a:hover{ color:var(--text); text-decoration:underline; }
+    .footer-bottom{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      color:var(--muted);
+      font-size:13px;
+      margin-top:24px;
+      padding-top:14px;
+      border-top:1px solid rgba(120,155,255,.12);
+      text-align:center;
+    }
+    .social{ display:flex; gap:16px; justify-content:center; font-size:18px; }
+
+    /* Theme modal (shared) */
+    .theme-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.40);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 2000;
+    }
+    .theme-overlay.open{ display:flex !important; }
+    .theme-modal{
+      width: min(740px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .theme-modal-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 14px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .theme-modal-title strong{ display:block; font-size: 16px; }
+    .theme-modal-title span{ display:block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .theme-close{
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .theme-modal-body{ padding: 14px; }
+    .theme-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 720px){ .theme-grid{ grid-template-columns: 1fr; } }
+    .theme-option{
+      text-align:left;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: var(--radius);
+      padding: 12px;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .theme-option:hover{ border-color: var(--accent); }
+    .theme-option.selected{ outline: 0; box-shadow: var(--focus); border-color: var(--primary); }
+    .theme-option-head{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .theme-option-name{ margin:0; font-weight:800; font-size: 13px; }
+    .theme-option-desc{ margin:4px 0 0 0; color: var(--muted); font-size: 12px; }
+    .theme-option-tag{
+      font-size: 11px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .theme-modal-footer{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* === Mobile bottom area switcher (same as business.html) === */
+    .bottom-nav{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      z-index:1200;
+      background:var(--panel);
+      border-top:1px solid var(--border);
+      box-shadow:0 -10px 24px rgba(0,0,0,.18);
+      padding:8px 10px calc(10px + env(safe-area-inset-bottom));
+      display:none;
+    }
+    .bottom-nav-inner{
+      max-width:720px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:10px;
+    }
+    .bottom-nav a{
+      text-decoration:none;
+      color:var(--muted);
+      background:var(--panel-2);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:10px 8px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.01em;
+      min-height:56px;
+      transition: transform .12s ease, filter .12s ease, border-color .15s ease;
+    }
+    .bottom-nav a:hover{ filter:brightness(1.02); transform: translateY(-1px); }
+    .bottom-nav .bn-icon{ font-size:18px; line-height:1; }
+    .bottom-nav a.active{
+      color:var(--text);
+      border-color:rgba(62,225,161,.35);
+      box-shadow:var(--focus);
+    }
+    .bottom-nav a:active{ transform: translateY(0); filter: brightness(.98); }
+
+    /* Mobile behavior: hide top links; keep username dropdown; show bottom switcher */
+    @media(max-width:860px){
+      .menu{ display:none !important; }
+      .hamburger{ display:none !important; }
+      #mobile-drawer{ display:none !important; }
+      body{ padding-bottom:84px; }
+      .container{ padding-bottom:84px; }
+      .bottom-nav{ display:block; }
+    }
+
+    /* Hide footer on mobile */
+    @media (max-width: 600px) {
+      .site-footer { display: none !important; }
+    }
+
+    /* add space above bottom nav */
+    @media (max-width: 860px){
+      main.page{ padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+    }
+
+    /* theme-gear-hide-global: hide gear; use dropdown instead */
+    .theme-gear{ display:none !important; }
+
+    /* Tiny helpers */
+    .subnote{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .sep{
+      height:1px;
+      background:rgba(120,155,255,.14);
+      margin:12px 0;
+    }
+  </style>
+</head>
+
+<body class="theme-dark">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img alt="GenieSphere" class="logo" src="../genie-logo.png"/>
+        <strong>GenieSphere</strong>
+      </a>
+
+      <nav aria-label="Primary" class="menu">
+        <a class="ghost" href="../dashboard/household.html">🏠 Household</a>
+        <a class="active" href="../dashboard/business.html">🏢 Business</a>
+        <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+        <a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+      </nav>
+
+      <button aria-expanded="false" aria-label="Open navigation" class="hamburger" id="hamburger">☰</button>
+      <button class="theme-gear" id="openThemeBtn" type="button" aria-label="Open appearance settings">⚙️</button>
+
+      <!-- User menu / login dropdown (same pattern as business.html) -->
+      <div class="user-menu" id="user-menu">
+        <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle">
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+
+        <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <div class="dropdown-label">Areas</div>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/household.html">🏠 Household</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/business.html">🏢 Business</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/investment.html">📈 Investment</button>
+          <button type="button" class="dropdown-nav" data-target="../dashboard/leisure.html">🏝️ Leisure</button>
+
+          <div class="user-menu-divider"></div>
+          <div class="dropdown-label">Account</div>
+          <button class="dropdown-nav" data-target="../onboarding/user_profile_form.html" type="button">👤 User profile</button>
+          <button class="dropdown-nav" data-target="../onboarding/display_settings.html" type="button">⚙️ Settings</button>
+          <button id="dropdown-open-appearance" type="button">🎨 Appearance</button>
+
+          <div class="user-menu-divider"></div>
+          <button id="user-auth-action" type="button">Log in / Sign up</button>
+          <button class="auth-only" id="user-signout-btn" type="button">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <section class="hero" aria-labelledby="hero-title">
+        <h1 class="title" id="hero-title">🔒 Compliance Tracker</h1>
+        <p class="subtitle">
+          Track state annual reports, licenses, federal filings, and renewals — with due dates, proof, and status.
+          <span class="muted">This first version stores data in your browser (localStorage).</span>
+        </p>
+      </section>
+
+      <section class="panel" aria-label="Compliance quick peek">
+        <div class="row" style="align-items:center;">
+          <div class="field" style="flex:1 1 380px; min-width:260px;">
+            <div class="label">🔎 Quick filter</div>
+            <input id="q" class="input" placeholder='Try: "annual report", "Illinois", "IRS", "license"' />
+            <div class="subnote">Tip: Use filters below to focus on one business or authority.</div>
+          </div>
+
+          <div class="actions">
+            <button class="btn ghost" id="seedBtn" type="button">✨ Add Examples</button>
+            <button class="btn danger" id="clearBtn" type="button">🧹 Clear (Local)</button>
+            <button class="btn primary" id="openAddBtn" type="button">➕ Add Item</button>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="peek">
+          <div class="mini-card">
+            <div class="mini-title">
+              <span>⏳ Due Soon (30 days)</span>
+              <span class="chip warn" id="chipDueSoon">0</span>
+            </div>
+            <ul class="mini-list" id="listDueSoon"><li>None</li></ul>
+          </div>
+
+          <div class="mini-card">
+            <div class="mini-title">
+              <span>⚠️ Overdue</span>
+              <span class="chip bad" id="chipOverdue">0</span>
+            </div>
+            <ul class="mini-list" id="listOverdue"><li>None</li></ul>
+          </div>
+
+          <div class="mini-card">
+            <div class="mini-title">
+              <span>✅ Filed (last 90 days)</span>
+              <span class="chip" id="chipFiled">0</span>
+            </div>
+            <ul class="mini-list" id="listFiled"><li>None</li></ul>
+          </div>
+
+          <div class="mini-card">
+            <div class="mini-title">
+              <span>📌 Total Active</span>
+              <span class="chip" id="chipActive">0</span>
+            </div>
+            <ul class="mini-list" id="listActive"><li>—</li></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top:14px;" aria-label="Compliance filters">
+        <div class="row">
+          <div class="field">
+            <div class="label">🏢 Business</div>
+            <select id="fBusiness">
+              <option value="">All</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label">🏛️ Authority</div>
+            <select id="fAuthority">
+              <option value="">All</option>
+              <option value="State">State</option>
+              <option value="Federal">Federal</option>
+              <option value="Local">Local</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label">📄 Type</div>
+            <select id="fType">
+              <option value="">All</option>
+              <option value="Annual Report">Annual Report</option>
+              <option value="Business License">Business License</option>
+              <option value="Sales Tax">Sales Tax</option>
+              <option value="Payroll">Payroll</option>
+              <option value="IRS Return">IRS Return</option>
+              <option value="BOI">BOI (FinCEN)</option>
+              <option value="Insurance">Insurance</option>
+              <option value="Permit">Permit</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="label">🧭 Status</div>
+            <select id="fStatus">
+              <option value="">All</option>
+              <option value="Upcoming">Upcoming</option>
+              <option value="Due Soon">Due Soon</option>
+              <option value="Overdue">Overdue</option>
+              <option value="Filed">Filed</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button class="btn ghost" id="resetFiltersBtn" type="button">↩️ Reset Filters</button>
+          </div>
+        </div>
+
+        <p class="subnote">
+          “Due Soon” is automatically computed based on the due date (within 30 days).
+          “Overdue” means the due date is in the past and not marked Filed.
+        </p>
+      </section>
+
+      <section class="panel" style="margin-top:14px;" aria-label="Compliance list">
+        <div class="row" style="align-items:center;">
+          <div class="field" style="flex:1 1 320px;">
+            <div class="label">📋 Items</div>
+            <div class="subnote" id="countLabel">0 items</div>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" id="exportBtn" type="button">⬇️ Export CSV</button>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="table-wrap" id="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Business</th>
+                <th>Type</th>
+                <th>Authority</th>
+                <th>Due</th>
+                <th>Status</th>
+                <th>Proof / Link</th>
+                <th>Notes</th>
+                <th style="min-width:220px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div class="empty" id="emptyState" style="display:none;">No items yet. Click <strong>➕ Add Item</strong> or <strong>✨ Add Examples</strong>.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Area switcher">
+    <div class="bottom-nav-inner">
+      <a href="../dashboard/household.html" aria-label="Household">
+        <span class="bn-icon" aria-hidden="true">🏠</span>
+        <span>Household</span>
+      </a>
+      <a href="../dashboard/business.html" class="active" aria-label="Business">
+        <span class="bn-icon" aria-hidden="true">🏢</span>
+        <span>Business</span>
+      </a>
+      <a href="../dashboard/investment.html" aria-label="Investment">
+        <span class="bn-icon" aria-hidden="true">📈</span>
+        <span>Investment</span>
+      </a>
+      <a href="../dashboard/leisure.html" aria-label="Leisure">
+        <span class="bn-icon" aria-hidden="true">🏝️</span>
+        <span>Leisure</span>
+      </a>
+    </div>
+  </nav>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>Operations</h4>
+          <a href="/business/salon-genie">Salon Genie</a>
+          <a href="/business/catering-genie">Catering Genie</a>
+          <a href="/business/manage-properties">Rental Genie</a>
+        </div>
+        <div class="footer-col">
+          <h4>Finance</h4>
+          <a href="/business/payroll-master">Payroll Master</a>
+          <a href="/business/expense-optimizer">Expense Optimizer</a>
+          <a href="/business/compliance-tracker">Compliance Tracker</a>
+        </div>
+        <div class="footer-col">
+          <h4>Marketing &amp; Inbox</h4>
+          <a href="/business/marketing-genie">Marketing Genie</a>
+          <a href="/business/email-genie">Email Genie</a>
+          <a href="/business/inventory-manager">Inventory Manager</a>
+        </div>
+        <div class="footer-col">
+          <h4>Help</h4>
+          <a href="../onboarding/api-key-settings.html">API Keys</a>
+          <a href="../about.html">About</a>
+          <a href="../contact.html">Contact</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+        <div aria-label="Social" class="social">
+          <a aria-label="Twitter / X" href="#">🐦</a>
+          <a aria-label="YouTube" href="#">▶️</a>
+          <a aria-label="GitHub" href="#">🐙</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Add/Edit Modal -->
+  <div class="theme-overlay" id="itemOverlay" role="dialog" aria-modal="true" aria-labelledby="itemTitle" style="display:none;">
+    <div class="theme-modal" style="width:min(860px, 100%);">
+      <div class="theme-modal-header">
+        <div class="theme-modal-title">
+          <strong id="itemTitle">➕ Add Compliance Item</strong>
+          <span id="itemSub">Track annual reports, licenses, IRS filings, renewals…</span>
+        </div>
+        <button class="theme-close" id="closeItemBtn" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="theme-modal-body">
+        <form id="itemForm">
+          <input type="hidden" id="itemId" />
+
+          <div class="row">
+            <div class="field">
+              <div class="label">🏢 Business Name</div>
+              <input class="input" id="businessName" placeholder="e.g., Victoria Nails – S Corp" required />
+            </div>
+
+            <div class="field">
+              <div class="label">📄 Type</div>
+              <select id="type" required>
+                <option value="" disabled selected>Select type</option>
+                <option>Annual Report</option>
+                <option>Business License</option>
+                <option>Sales Tax</option>
+                <option>Payroll</option>
+                <option>IRS Return</option>
+                <option>BOI</option>
+                <option>Insurance</option>
+                <option>Permit</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <div class="label">🏛️ Authority</div>
+              <select id="authority" required>
+                <option value="" disabled selected>Select authority</option>
+                <option>State</option>
+                <option>Federal</option>
+                <option>Local</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <div class="field">
+              <div class="label">📆 Due Date</div>
+              <input class="input" id="dueDate" type="date" required />
+            </div>
+
+            <div class="field">
+              <div class="label">🔁 Frequency</div>
+              <select id="frequency">
+                <option value="">(optional)</option>
+                <option>One-time</option>
+                <option>Monthly</option>
+                <option>Quarterly</option>
+                <option>Yearly</option>
+                <option>Biennial</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <div class="label">🔗 Proof / Portal Link</div>
+              <input class="input" id="proofUrl" placeholder="https://..." />
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <div class="field" style="flex:1 1 100%;">
+              <div class="label">📝 Notes</div>
+              <textarea id="notes" placeholder="Anything important: account #, filing instructions, login reminder, fee, etc."></textarea>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px; align-items:center;">
+            <div class="field small">
+              <div class="label">✅ Mark as Filed</div>
+              <select id="isFiled">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <div class="label">📌 Filed Date</div>
+              <input class="input" id="filedDate" type="date" />
+              <div class="subnote">If “Filed” is Yes and no date is set, we’ll use today.</div>
+            </div>
+
+            <div class="actions">
+              <button class="btn ghost" id="cancelItemBtn" type="button">Cancel</button>
+              <button class="btn primary" type="submit">💾 Save Item</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme Modal -->
+  <div class="theme-overlay" id="themeOverlay" role="dialog" aria-modal="true" aria-labelledby="themeTitle" style="display:none;">
+    <div class="theme-modal">
+      <div class="theme-modal-header">
+        <div class="theme-modal-title">
+          <strong id="themeTitle">⚙️ Appearance</strong>
+          <span>Choose a theme. We’ll remember your preference.</span>
+        </div>
+        <button class="theme-close" id="closeThemeBtn" type="button" aria-label="Close appearance settings">✕</button>
+      </div>
+
+      <div class="theme-modal-body">
+        <div class="theme-grid" id="themeGrid">
+          <button class="theme-option" type="button" data-theme="theme-calm">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌿 Calm Future</p>
+                <p class="theme-option-desc">Best for non-technical users. Bright, clean, easy.</p>
+              </div>
+              <span class="theme-option-tag">Default</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-future">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌌 Soft Futuristic</p>
+                <p class="theme-option-desc">Indigo + cyan glow.</p>
+              </div>
+              <span class="theme-option-tag">Futuristic</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-nature">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌱 Nature + Tech</p>
+                <p class="theme-option-desc">Calm green + sky blue trust.</p>
+              </div>
+              <span class="theme-option-tag">Trades</span>
+            </div>
+          </button>
+
+          <button class="theme-option" type="button" data-theme="theme-dark">
+            <div class="theme-option-head">
+              <div>
+                <p class="theme-option-name">🌑 Pro Dark</p>
+                <p class="theme-option-desc">Best for night + power users.</p>
+              </div>
+              <span class="theme-option-tag">Dark</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="theme-modal-footer">
+        <button class="btn ghost" id="resetThemeBtn" type="button">Reset</button>
+        <button class="btn primary" id="doneThemeBtn" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.GS_CONFIG_URL = "/shared/config.json";
+    window.GS_CONFIG_PATH = "/shared/config.json";
+  </script>
+  <script src="../shared/js/app-config.js?v=20260111"></script>
+  <script src="../shared/js/gs-client.js?v=20260111"></script>
+  <script src="../shared/js/auth-header.js?v=20260111"></script>
+
+  <script>
+    window.GSAuthHeader?.init({
+      loginUrl: "../onboarding/login.html",
+      afterLogoutUrl: "../index.html"
+    });
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // ---------- Compliance Tracker (Local Storage v1) ----------
+    const STORE_KEY = 'gs_compliance_items_v1';
+
+    const $ = (id)=>document.getElementById(id);
+    const esc = (s)=>String(s||'').replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    const todayISO = ()=> new Date().toISOString().slice(0,10);
+
+    function loadItems(){
+      try{
+        const raw = localStorage.getItem(STORE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      }catch(_){ return []; }
+    }
+    function saveItems(items){
+      localStorage.setItem(STORE_KEY, JSON.stringify(items));
+    }
+    function uid(){
+      return 'c_' + Math.random().toString(16).slice(2) + '_' + Date.now().toString(16);
+    }
+
+    function normalizeItem(it){
+      const due = it.dueDate || it.due_date || it.due || '';
+      const filed = it.filed === true || it.status === 'Filed' || it.isFiled === 'yes';
+      const filedDate = it.filedDate || it.filed_date || it.filed_at || '';
+      return {
+        id: it.id || uid(),
+        businessName: (it.businessName || it.business || '').trim(),
+        type: (it.type || '').trim(),
+        authority: (it.authority || '').trim(),
+        dueDate: due ? String(due).slice(0,10) : '',
+        frequency: (it.frequency || '').trim(),
+        proofUrl: (it.proofUrl || it.proof || it.url || '').trim(),
+        notes: (it.notes || '').trim(),
+        filed: !!filed,
+        filedDate: filedDate ? String(filedDate).slice(0,10) : ''
+      };
+    }
+
+    function computeStatus(it){
+      if(it.filed) return { key:'Filed', cls:'good', label:'✅ Filed' };
+
+      const now = new Date();
+      const due = it.dueDate ? new Date(it.dueDate + 'T00:00:00') : null;
+
+      if(!due) return { key:'Upcoming', cls:'neutral', label:'📌 Upcoming' };
+
+      const ms = due.getTime() - now.getTime();
+      const days = Math.ceil(ms / (1000*60*60*24));
+
+      if(days < 0) return { key:'Overdue', cls:'bad', label:'⚠️ Overdue' };
+      if(days <= 30) return { key:'Due Soon', cls:'warn', label:'⏳ Due Soon' };
+      return { key:'Upcoming', cls:'neutral', label:'📌 Upcoming' };
+    }
+
+    function fmtDate(iso){
+      if(!iso) return '';
+      try{
+        return new Date(iso + 'T00:00:00').toLocaleDateString();
+      }catch(_){ return iso; }
+    }
+
+    function buildBusinessOptions(items){
+      const sel = $('fBusiness');
+      if(!sel) return;
+      const cur = sel.value || '';
+      const unique = Array.from(new Set(items.map(x=>x.businessName).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+      sel.innerHTML = '<option value="">All</option>' + unique.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      sel.value = unique.includes(cur) ? cur : '';
+    }
+
+    function matchesFilters(it){
+      const q = ($('q')?.value || '').toLowerCase().trim();
+      const fBusiness = $('fBusiness')?.value || '';
+      const fAuthority = $('fAuthority')?.value || '';
+      const fType = $('fType')?.value || '';
+      const fStatus = $('fStatus')?.value || '';
+
+      const st = computeStatus(it);
+
+      if(fBusiness && it.businessName !== fBusiness) return false;
+      if(fAuthority && it.authority !== fAuthority) return false;
+      if(fType && it.type !== fType) return false;
+
+      if(fStatus){
+        if(fStatus === 'Due Soon' && st.key !== 'Due Soon') return false;
+        if(fStatus === 'Overdue' && st.key !== 'Overdue') return false;
+        if(fStatus === 'Upcoming' && st.key !== 'Upcoming') return false;
+        if(fStatus === 'Filed' && st.key !== 'Filed') return false;
+      }
+
+      if(q){
+        const hay = [
+          it.businessName, it.type, it.authority, it.dueDate, it.frequency, it.proofUrl, it.notes
+        ].join(' ').toLowerCase();
+        if(!hay.includes(q)) return false;
+      }
+
+      return true;
+    }
+
+    function fillList(id, arr, mapFn){
+      const el = $(id);
+      if(!el) return;
+      if(!arr.length){
+        el.innerHTML = '<li>None</li>';
+        return;
+      }
+      el.innerHTML = arr.slice(0,6).map(it => `<li>${esc(mapFn(it))}</li>`).join('');
+    }
+
+    function updatePeek(items){
+      const now = new Date();
+      const plus30 = new Date(now); plus30.setDate(now.getDate()+30);
+      const minus90 = new Date(now); minus90.setDate(now.getDate()-90);
+
+      const active = items.filter(it => !it.filed);
+      const dueSoon = items.filter(it=>{
+        if(it.filed || !it.dueDate) return false;
+        const d = new Date(it.dueDate + 'T00:00:00');
+        return d >= now && d <= plus30;
+      });
+      const overdue = items.filter(it=>{
+        if(it.filed || !it.dueDate) return false;
+        const d = new Date(it.dueDate + 'T00:00:00');
+        return d < now;
+      });
+      const filedRecent = items.filter(it=>{
+        if(!it.filed) return false;
+        const fd = it.filedDate ? new Date(it.filedDate + 'T00:00:00') : null;
+        return fd ? (fd >= minus90 && fd <= now) : true;
+      });
+
+      $('chipActive').textContent = String(active.length);
+      $('chipDueSoon').textContent = String(dueSoon.length);
+      $('chipOverdue').textContent = String(overdue.length);
+      $('chipFiled').textContent = String(filedRecent.length);
+
+      fillList('listDueSoon', dueSoon, it => `${it.businessName} • ${it.type} • ${fmtDate(it.dueDate)}`);
+      fillList('listOverdue', overdue, it => `${it.businessName} • ${it.type} • ${fmtDate(it.dueDate)}`);
+      fillList('listFiled', filedRecent, it => `${it.businessName} • ${it.type}${it.filedDate ? ' • ' + fmtDate(it.filedDate) : ''}`);
+
+      const top = active.slice(0,5);
+      $('listActive').innerHTML = top.length
+        ? top.map(it=>`<li>${esc(it.businessName)} • ${esc(it.type)}${it.dueDate ? ' • ' + esc(fmtDate(it.dueDate)) : ''}</li>`).join('')
+        : '<li>—</li>';
+    }
+
+    function render(){
+      const items = loadItems().map(normalizeItem);
+      saveItems(items);
+
+      buildBusinessOptions(items);
+
+      const filtered = items
+        .filter(matchesFilters)
+        .sort((a,b)=>{
+          const sa = computeStatus(a).key;
+          const sb = computeStatus(b).key;
+          const rank = { 'Overdue':0, 'Due Soon':1, 'Upcoming':2, 'Filed':3 };
+          const ra = rank[sa] ?? 99;
+          const rb = rank[sb] ?? 99;
+          if(ra !== rb) return ra - rb;
+          const da = a.dueDate || '9999-12-31';
+          const db = b.dueDate || '9999-12-31';
+          if(da !== db) return da.localeCompare(db);
+          return (a.businessName||'').localeCompare(b.businessName||'');
+        });
+
+      $('countLabel').textContent = `${filtered.length} item${filtered.length===1?'':'s'}`;
+
+      const tbody = $('tbody');
+      const empty = $('emptyState');
+      tbody.innerHTML = '';
+
+      if(!filtered.length) empty.style.display = 'block';
+      else empty.style.display = 'none';
+
+      filtered.forEach(it=>{
+        const st = computeStatus(it);
+        const due = it.dueDate ? fmtDate(it.dueDate) : '—';
+        const proof = it.proofUrl
+          ? `<a href="${esc(it.proofUrl)}" target="_blank" rel="noopener" style="color:#cfe0ff; text-decoration:underline;">Open</a>`
+          : `<span class="muted">—</span>`;
+
+        const notes = it.notes ? esc(it.notes) : `<span class="muted">—</span>`;
+        const filedInfo = it.filed ? (it.filedDate ? ` • ${fmtDate(it.filedDate)}` : '') : '';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${esc(it.businessName || '—')}</strong></td>
+          <td>${esc(it.type || '—')}</td>
+          <td>${esc(it.authority || '—')}</td>
+          <td>${esc(due)}</td>
+          <td><span class="status ${st.cls}">${esc(st.label)}${esc(filedInfo)}</span></td>
+          <td>${proof}</td>
+          <td>${notes}</td>
+          <td>
+            <div class="t-actions">
+              <button class="btn ghost" data-act="edit" data-id="${esc(it.id)}" type="button">✏️ Edit</button>
+              ${it.filed
+                ? `<button class="btn ghost" data-act="unfile" data-id="${esc(it.id)}" type="button">↩️ Unfile</button>`
+                : `<button class="btn primary" data-act="file" data-id="${esc(it.id)}" type="button">✅ Mark Filed</button>`
+              }
+              <button class="btn danger" data-act="del" data-id="${esc(it.id)}" type="button">🗑️ Delete</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      updatePeek(items);
+    }
+
+    function openItemModal(mode, it){
+      $('itemTitle').textContent = mode === 'edit' ? '✏️ Edit Compliance Item' : '➕ Add Compliance Item';
+      $('itemSub').textContent = mode === 'edit'
+        ? 'Update details, due date, proof, or mark as filed.'
+        : 'Track annual reports, licenses, IRS filings, renewals…';
+
+      $('itemId').value = it?.id || '';
+      $('businessName').value = it?.businessName || '';
+      $('type').value = it?.type || '';
+      $('authority').value = it?.authority || '';
+      $('dueDate').value = it?.dueDate || '';
+      $('frequency').value = it?.frequency || '';
+      $('proofUrl').value = it?.proofUrl || '';
+      $('notes').value = it?.notes || '';
+      $('isFiled').value = it?.filed ? 'yes' : 'no';
+      $('filedDate').value = it?.filedDate || '';
+
+      toggleFiledDate();
+
+      const overlay = $('itemOverlay');
+      overlay.classList.add('open');
+      overlay.style.display = 'flex';
+      setTimeout(()=> $('businessName')?.focus(), 40);
+    }
+
+    function closeItemModal(){
+      const overlay = $('itemOverlay');
+      overlay.classList.remove('open');
+      overlay.style.display = 'none';
+    }
+
+    function toggleFiledDate(){
+      const filed = ($('isFiled')?.value || 'no') === 'yes';
+      $('filedDate').disabled = !filed;
+      $('filedDate').style.opacity = filed ? '1' : '.6';
+    }
+
+    function upsertItem(payload){
+      const items = loadItems().map(normalizeItem);
+      const idx = items.findIndex(x=>x.id === payload.id);
+      if(idx >= 0) items[idx] = payload;
+      else items.push(payload);
+      saveItems(items);
+      render();
+    }
+
+    function deleteItem(id){
+      const items = loadItems().map(normalizeItem).filter(x=>x.id !== id);
+      saveItems(items);
+      render();
+    }
+
+    function markFiled(id, filed){
+      const items = loadItems().map(normalizeItem);
+      const idx = items.findIndex(x=>x.id === id);
+      if(idx < 0) return;
+      items[idx].filed = filed;
+      if(filed) items[idx].filedDate = items[idx].filedDate || todayISO();
+      else items[idx].filedDate = '';
+      saveItems(items);
+      render();
+    }
+
+    function exportCSV(){
+      const items = loadItems().map(normalizeItem);
+      const headers = ['businessName','type','authority','dueDate','frequency','filed','filedDate','proofUrl','notes'];
+      const rows = items.map(it => headers.map(h => {
+        const v = (it[h] ?? '');
+        const s = String(v).replace(/"/g,'""');
+        return `"${s}"`;
+      }).join(','));
+      const csv = headers.join(',') + '\n' + rows.join('\n');
+
+      const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'compliance-items.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function seedExamples(){
+      const cur = loadItems().map(normalizeItem);
+      if(cur.length) return;
+      const ex = [
+        {
+          businessName: 'Victoria Nails – S Corp',
+          type: 'Annual Report',
+          authority: 'State',
+          dueDate: (()=>{ const d=new Date(); d.setDate(d.getDate()+18); return d.toISOString().slice(0,10); })(),
+          frequency: 'Yearly',
+          proofUrl: '',
+          notes: 'IL Secretary of State • Keep confirmation PDF once filed.',
+          filed: false,
+          filedDate: ''
+        },
+        {
+          businessName: 'Beauty and Ventures LLC',
+          type: 'BOI',
+          authority: 'Federal',
+          dueDate: (()=>{ const d=new Date(); d.setDate(d.getDate()+45); return d.toISOString().slice(0,10); })(),
+          frequency: 'One-time',
+          proofUrl: '',
+          notes: 'FinCEN BOI report (track updates when owners change).',
+          filed: false,
+          filedDate: ''
+        },
+        {
+          businessName: 'Exodon Profits LLC',
+          type: 'Business License',
+          authority: 'Local',
+          dueDate: (()=>{ const d=new Date(); d.setDate(d.getDate()-5); return d.toISOString().slice(0,10); })(),
+          frequency: 'Yearly',
+          proofUrl: '',
+          notes: 'City renewal (example overdue).',
+          filed: false,
+          filedDate: ''
+        },
+        {
+          businessName: 'Arowana Profits LLC',
+          type: 'IRS Return',
+          authority: 'Federal',
+          dueDate: (()=>{ const d=new Date(); d.setMonth(2); d.setDate(15); return d.toISOString().slice(0,10); })(),
+          frequency: 'Yearly',
+          proofUrl: '',
+          notes: 'Prepare docs for CPA; track extension if filed.',
+          filed: true,
+          filedDate: (()=>{ const d=new Date(); d.setDate(d.getDate()-20); return d.toISOString().slice(0,10); })()
+        }
+      ].map(normalizeItem);
+
+      saveItems(ex);
+      render();
+    }
+
+    // events
+    (function init(){
+      render();
+
+      $('openAddBtn')?.addEventListener('click', ()=> openItemModal('add', null));
+      $('closeItemBtn')?.addEventListener('click', closeItemModal);
+      $('cancelItemBtn')?.addEventListener('click', closeItemModal);
+
+      $('itemOverlay')?.addEventListener('click', (e)=>{ if(e.target === $('itemOverlay')) closeItemModal(); });
+      document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && $('itemOverlay')?.classList.contains('open')) closeItemModal(); });
+
+      $('isFiled')?.addEventListener('change', toggleFiledDate);
+
+      $('itemForm')?.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const id = $('itemId').value || uid();
+        const filed = ($('isFiled').value || 'no') === 'yes';
+        const fd = $('filedDate').value || (filed ? todayISO() : '');
+
+        const payload = normalizeItem({
+          id,
+          businessName: $('businessName').value,
+          type: $('type').value,
+          authority: $('authority').value,
+          dueDate: $('dueDate').value,
+          frequency: $('frequency').value,
+          proofUrl: $('proofUrl').value,
+          notes: $('notes').value,
+          filed,
+          filedDate: fd
+        });
+
+        upsertItem(payload);
+        closeItemModal();
+      });
+
+      $('tableWrap')?.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button[data-act]');
+        if(!btn) return;
+        const act = btn.getAttribute('data-act');
+        const id = btn.getAttribute('data-id');
+        if(!id) return;
+
+        if(act === 'del'){ if(confirm('Delete this compliance item?')) deleteItem(id); return; }
+        if(act === 'file'){ markFiled(id, true); return; }
+        if(act === 'unfile'){ markFiled(id, false); return; }
+        if(act === 'edit'){
+          const it = loadItems().map(normalizeItem).find(x=>x.id === id);
+          if(it) openItemModal('edit', it);
+          return;
+        }
+      });
+
+      ['q','fBusiness','fAuthority','fType','fStatus'].forEach(id=>{
+        $(id)?.addEventListener('input', render);
+        $(id)?.addEventListener('change', render);
+      });
+
+      $('resetFiltersBtn')?.addEventListener('click', ()=>{
+        $('q').value = '';
+        $('fBusiness').value = '';
+        $('fAuthority').value = '';
+        $('fType').value = '';
+        $('fStatus').value = '';
+        render();
+      });
+
+      $('exportBtn')?.addEventListener('click', exportCSV);
+      $('seedBtn')?.addEventListener('click', seedExamples);
+
+      $('clearBtn')?.addEventListener('click', ()=>{
+        if(confirm('Clear all compliance items stored in this browser (local demo storage)?')){
+          localStorage.removeItem(STORE_KEY);
+          render();
+        }
+      });
+
+      window.addEventListener('storage', (e)=>{ if(e.key === STORE_KEY) render(); });
+    })();
+  </script>
+
+  <script>
+    // Theme Switcher
+    (function ThemeSwitcher(){
+      const STORAGE_KEY = 'geniesphere_theme';
+      const THEMES = ['theme-calm','theme-future','theme-nature','theme-dark'];
+      const DEFAULT_THEME = 'theme-dark';
+
+      const overlay = document.getElementById('themeOverlay');
+      const openBtn = document.getElementById('openThemeBtn');
+      const closeBtn = document.getElementById('closeThemeBtn');
+      const doneBtn = document.getElementById('doneThemeBtn');
+      const resetBtn = document.getElementById('resetThemeBtn');
+      const themeGrid = document.getElementById('themeGrid');
+
+      function saveTheme(theme){ try { localStorage.setItem(STORAGE_KEY, theme); } catch(_){ } }
+      function getTheme(){ try { return localStorage.getItem(STORAGE_KEY); } catch(_){ return null; } }
+
+      function updateSelected(theme){
+        if(!themeGrid) return;
+        themeGrid.querySelectorAll('.theme-option').forEach(btn => {
+          btn.classList.toggle('selected', btn.getAttribute('data-theme') === theme);
+        });
+      }
+
+      function applyTheme(theme){
+        THEMES.forEach(t => document.body.classList.remove(t));
+        document.body.classList.add(theme);
+        updateSelected(theme);
+      }
+
+      function openModal(){
+        if(!overlay) return;
+        overlay.classList.add('open');
+        overlay.style.display = 'flex';
+        const first = themeGrid?.querySelector('.theme-option');
+        setTimeout(()=> first && first.focus(), 40);
+      }
+      function closeModal(){
+        if(!overlay) return;
+        overlay.classList.remove('open');
+        overlay.style.display = 'none';
+        openBtn && openBtn.focus();
+      }
+
+      const saved = getTheme();
+      const theme = (saved && THEMES.includes(saved)) ? saved : DEFAULT_THEME;
+      applyTheme(theme);
+
+      if(openBtn) openBtn.addEventListener('click', openModal);
+      if(closeBtn) closeBtn.addEventListener('click', closeModal);
+      if(doneBtn) doneBtn.addEventListener('click', closeModal);
+
+      if(overlay){
+        overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal(); });
+      }
+      document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && overlay?.classList.contains('open')) closeModal(); });
+
+      if(themeGrid){
+        themeGrid.addEventListener('click', (e)=>{
+          const btn = e.target.closest('.theme-option');
+          if(!btn) return;
+          const next = btn.getAttribute('data-theme');
+          if(!THEMES.includes(next)) return;
+          applyTheme(next);
+          saveTheme(next);
+        });
+      }
+
+      if(resetBtn){
+        resetBtn.addEventListener('click', ()=>{
+          applyTheme(DEFAULT_THEME);
+          saveTheme(DEFAULT_THEME);
+        });
+      }
+    })();
+  </script>
+
+</body>
+</html>

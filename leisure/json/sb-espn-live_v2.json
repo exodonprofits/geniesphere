@@ -1,0 +1,217 @@
+{
+  "name": "GenieSphere - ESPN Games + Live (CORS, n8n Cloud safe)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "sb-espn-games",
+        "httpMethod": "OPTIONS",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "Games_OPTIONS",
+      "name": "Webhook - sb-espn-games (OPTIONS)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 140]
+    },
+    {
+      "parameters": {
+        "responseCode": 204,
+        "responseBody": "={{ { ok: true } }}",
+        "responseHeaders": {
+          "entries": [
+            { "name": "Access-Control-Allow-Origin", "value": "*" },
+            { "name": "Access-Control-Allow-Methods", "value": "GET,OPTIONS" },
+            { "name": "Access-Control-Allow-Headers", "value": "Content-Type" },
+            { "name": "Access-Control-Max-Age", "value": "86400" }
+          ]
+        }
+      },
+      "id": "Respond_Games_OPTIONS",
+      "name": "Respond - Games OPTIONS (CORS)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [520, 140]
+    },
+    {
+      "parameters": {
+        "path": "sb-espn-games",
+        "httpMethod": "GET",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "Games_GET",
+      "name": "Webhook - sb-espn-games (GET)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 280]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Accept", "value": "application/json" }]
+        },
+        "options": { "timeout": 20000, "followRedirect": true }
+      },
+      "id": "HTTP_ESPN_GAMES",
+      "name": "Fetch ESPN (for games)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 280]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json;\nconst events = Array.isArray(body?.events) ? body.events : [];\n\nfunction mapEvent(e){\n  const comp = e?.competitions?.[0];\n  const competitors = comp?.competitors || [];\n  const home = competitors.find(c => c?.homeAway === 'home');\n  const away = competitors.find(c => c?.homeAway === 'away');\n\n  return {\n    eventId: String(e?.id || ''),\n    name: e?.name || e?.shortName || 'Game',\n    shortName: e?.shortName || e?.name || 'Game',\n    startTime: e?.date || null,\n    status: e?.status?.type?.state || 'unknown',\n    homeTeam: home?.team?.displayName || home?.team?.name || 'Home',\n    awayTeam: away?.team?.displayName || away?.team?.name || 'Away'\n  };\n}\n\nconst games = events.map(mapEvent).filter(g => g.eventId);\n\nconst rank = (s) => (s === 'in' ? 0 : s === 'pre' ? 1 : s === 'post' ? 2 : 3);\ngames.sort((a,b)=> rank(a.status) - rank(b.status) || (Date.parse(a.startTime||'') - Date.parse(b.startTime||'')));\n\nreturn [{ games }];"
+      },
+      "id": "Parse_Games",
+      "name": "Parse Games",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 280]
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseBody": "={{ $json }}",
+        "responseHeaders": {
+          "entries": [
+            { "name": "Access-Control-Allow-Origin", "value": "*" },
+            { "name": "Access-Control-Allow-Methods", "value": "GET,OPTIONS" },
+            { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+          ]
+        }
+      },
+      "id": "Respond_Games_GET",
+      "name": "Respond - Games GET (CORS)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 280]
+    },
+    {
+      "parameters": {
+        "path": "sb-espn-live",
+        "httpMethod": "OPTIONS",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "Live_OPTIONS",
+      "name": "Webhook - sb-espn-live (OPTIONS)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 460]
+    },
+    {
+      "parameters": {
+        "responseCode": 204,
+        "responseBody": "={{ { ok: true } }}",
+        "responseHeaders": {
+          "entries": [
+            { "name": "Access-Control-Allow-Origin", "value": "*" },
+            { "name": "Access-Control-Allow-Methods", "value": "GET,OPTIONS" },
+            { "name": "Access-Control-Allow-Headers", "value": "Content-Type" },
+            { "name": "Access-Control-Max-Age", "value": "86400" }
+          ]
+        }
+      },
+      "id": "Respond_Live_OPTIONS",
+      "name": "Respond - Live OPTIONS (CORS)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [520, 460]
+    },
+    {
+      "parameters": {
+        "path": "sb-espn-live",
+        "httpMethod": "GET",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "Live_GET",
+      "name": "Webhook - sb-espn-live (GET)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 620]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Accept", "value": "application/json" }]
+        },
+        "options": { "timeout": 20000, "followRedirect": true }
+      },
+      "id": "HTTP_ESPN_LIVE",
+      "name": "Fetch ESPN (for live)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 620]
+    },
+    {
+      "parameters": {
+        "jsCode": "function pickFallback(events) {\n  if (!Array.isArray(events) || events.length === 0) return null;\n  const score = (e) => {\n    const status = e?.status?.type?.state || '';\n    const name = (e?.name || '').toLowerCase();\n    const shortName = (e?.shortName || '').toLowerCase();\n    const isSB = name.includes('super bowl') || shortName.includes('super bowl');\n    let s = isSB ? 1000 : 0;\n    if (status === 'in') s += 500;\n    if (status === 'pre') s += 200;\n    if (status === 'post') s += 50;\n    const start = Date.parse(e?.date || '') || 0;\n    s += Math.floor(start / 1e9);\n    return s;\n  };\n  return events.slice().sort((a,b)=> score(b) - score(a))[0];\n}\n\nconst q = $items('Webhook - sb-espn-live (GET)')[0].json.query || {};\nconst wantedId = (q.eventId || '').toString().trim();\n\nconst body = $json;\nconst events = Array.isArray(body?.events) ? body.events : [];\n\nlet game = null;\nif (wantedId) game = events.find(e => String(e?.id || '') === wantedId) || null;\nif (!game) game = pickFallback(events);\nif (!game) return [{ error: 'NO_GAMES', message: 'No games found.' }];\n\nconst comp = game?.competitions?.[0];\nconst competitors = comp?.competitors || [];\nconst home = competitors.find(c => c?.homeAway === 'home');\nconst away = competitors.find(c => c?.homeAway === 'away');\n\nconst homeName = home?.team?.displayName || home?.team?.name || 'Home';\nconst awayName = away?.team?.displayName || away?.team?.name || 'Away';\n\nconst homeScore = parseInt(home?.score ?? '0', 10);\nconst awayScore = parseInt(away?.score ?? '0', 10);\n\nreturn [{\n  eventId: String(game?.id || ''),\n  leftTeam: homeName,\n  topTeam: awayName,\n  leftScore: Number.isFinite(homeScore) ? homeScore : 0,\n  topScore: Number.isFinite(awayScore) ? awayScore : 0,\n  quarter: game?.status?.period ?? '-',\n  clock: game?.status?.displayClock ?? '--:--',\n  status: game?.status?.type?.state || 'unknown',\n  possession: '--'\n}];"
+      },
+      "id": "Parse_Live",
+      "name": "Parse Live (eventId supported)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 620]
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseBody": "={{ $json }}",
+        "responseHeaders": {
+          "entries": [
+            { "name": "Access-Control-Allow-Origin", "value": "*" },
+            { "name": "Access-Control-Allow-Methods", "value": "GET,OPTIONS" },
+            { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+          ]
+        }
+      },
+      "id": "Respond_Live_GET",
+      "name": "Respond - Live GET (CORS)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 620]
+    }
+  ],
+  "connections": {
+    "Webhook - sb-espn-games (OPTIONS)": {
+      "main": [[{ "node": "Respond - Games OPTIONS (CORS)", "type": "main", "index": 0 }]]
+    },
+    "Webhook - sb-espn-games (GET)": {
+      "main": [[{ "node": "Fetch ESPN (for games)", "type": "main", "index": 0 }]]
+    },
+    "Fetch ESPN (for games)": {
+      "main": [[{ "node": "Parse Games", "type": "main", "index": 0 }]]
+    },
+    "Parse Games": {
+      "main": [[{ "node": "Respond - Games GET (CORS)", "type": "main", "index": 0 }]]
+    },
+    "Webhook - sb-espn-live (OPTIONS)": {
+      "main": [[{ "node": "Respond - Live OPTIONS (CORS)", "type": "main", "index": 0 }]]
+    },
+    "Webhook - sb-espn-live (GET)": {
+      "main": [[{ "node": "Fetch ESPN (for live)", "type": "main", "index": 0 }]]
+    },
+    "Fetch ESPN (for live)": {
+      "main": [[{ "node": "Parse Live (eventId supported)", "type": "main", "index": 0 }]]
+    },
+    "Parse Live (eventId supported)": {
+      "main": [[{ "node": "Respond - Live GET (CORS)", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionTimeout": 60,
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  }
+}

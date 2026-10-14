@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Analyzer - Arowana Profits</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .nav-links a {
+            margin-left: 1.5rem;
+            text-decoration: none;
+            color: #2c3e50;
+            font-weight: 500;
+            position: relative;
+        }
+
+        /* Dropdown Menu */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            z-index: 1001;
+            top: 100%;
+            left: 0;
+            padding: 0.5rem 0;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content a {
+            color: #2c3e50;
+            padding: 0.8rem 1.5rem;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown > a::after {
+            content: "▾";
+            margin-left: 5px;
+            font-size: 0.8em;
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, #3498db, #2ecc71);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 8rem 5% 4rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 4rem 5%;
+            background-color: #ffffff;
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Tools Section */
+        .tool-preview {
+            height: 200px;
+            background: #eee;
+            margin: 1rem 0;
+            border-radius: 8px;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            padding: 4rem 5%;
+            background-color: #f8f9fa;
+            text-align: center;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 3rem 5%;
+            text-align: center;
+        }
+
+        /* Base styles from previous pages */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #2ecc71;
+            --text-color: #333;
+            --background-light: #f8f9fa;
+        }
+
+        /* Portfolio-specific styles */
+        .analyzer-container {
+            max-width: 1200px;
+            margin: 100px auto 50px;
+            padding: 2rem;
+        }
+
+        .portfolio-input {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .holdings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+        }
+
+        .holdings-table th, 
+        .holdings-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 2px solid var(--background-light);
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .metric-card {
+            background: var(--background-light);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+            font-weight: bold;
+        }
+
+        .positive { color: #2ecc71; }
+        .negative { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">Arowana Profits</div>
+        <div class="nav-links">
+            <a href="index.htm">Home</a>
+            <a href="#services">Services</a>
+            <div class="dropdown">
+                <a href="#tools">Investment Tools ▾</a>
+                <div class="dropdown-content">
+                    <a href="stocks-screener.htm">Stock Screener</a>
+                    <a href="portfolio-analyzer.htm">Portfolio Analyzer</a>
+                    <a href="#risk-calculator">Risk Calculator</a>
+                    <a href="#market-calendar">Market Calendar</a>
+                </div>
+            </div>
+            <a href="#about">About</a>
+            <a href="contact.htm">Contact</a>
+            <a href="#contact" class="cta-button">Get Started</a>
+        </div>
+    </nav>
+
+
+    <main class="analyzer-container">
+        <h1>Portfolio Analyzer</h1>
+        <p>Optimize your investments with professional-grade analysis</p>
+
+        <div class="portfolio-input">
+            <h2>Add Investment Holdings</h2>
+            <div class="input-grid">
+                <input type="text" id="ticker" placeholder="Ticker (e.g., AAPL)">
+                <input type="number" id="shares" placeholder="Shares">
+                <input type="number" id="avgPrice" placeholder="Average Price">
+                <button class="cta-button" onclick="addHolding()">Add Holding</button>
+            </div>
+
+            <table class="holdings-table">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Shares</th>
+                        <th>Avg Price</th>
+                        <th>Current Price</th>
+                        <th>Value</th>
+                        <th>Gain/Loss</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="holdingsBody">
+                    <!-- Holdings will be added here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="analytics-grid">
+            <div class="chart-container">
+                <h3>Asset Allocation</h3>
+                <canvas id="allocationChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Sector Diversification</h3>
+                <canvas id="sectorChart"></canvas>
+            </div>
+
+            <div class="metric-card">
+                <h4>Total Value</h4>
+                <div class="metric-value" id="totalValue">$0.00</div>
+            </div>
+
+            <div class="metric-card">
+                <h4>Total Gain/Loss</h4>
+                <div class="metric-value" id="totalGain">$0.00</div>
+            </div>
+
+            <div class="metric-card">
+                <h4>Annual Return</h4>
+                <div class="metric-value" id="annualReturn">0.00%</div>
+            </div>
+
+            <div class="metric-card">
+                <h4>Risk Level</h4>
+                <div class="metric-value" id="riskLevel">Low</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2023 Arowana Profits - Weath Path Coaching. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Sample stock data (replace with real API data)
+        const stockData = {
+            'AAPL': { price: 185.15, sector: 'Technology' },
+            'GOOGL': { price: 135.25, sector: 'Technology' },
+            'JPM': { price: 155.40, sector: 'Financial' },
+            'XOM': { price: 105.75, sector: 'Energy' }
+        };
+
+        let holdings = [];
+
+        function addHolding() {
+            const ticker = document.getElementById('ticker').value.toUpperCase();
+            const shares = parseFloat(document.getElementById('shares').value);
+            const avgPrice = parseFloat(document.getElementById('avgPrice').value);
+
+            if (!ticker || !shares || !avgPrice) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            if (!stockData[ticker]) {
+                alert('Ticker not found in our database');
+                return;
+            }
+
+            holdings.push({
+                ticker,
+                shares,
+                avgPrice,
+                currentPrice: stockData[ticker].price,
+                sector: stockData[ticker].sector
+            });
+
+            updatePortfolio();
+            updateCharts();
+        }
+
+        function updatePortfolio() {
+            const tbody = document.getElementById('holdingsBody');
+            let totalValue = 0;
+            let totalGain = 0;
+
+            tbody.innerHTML = holdings.map(holding => {
+                const value = holding.shares * holding.currentPrice;
+                const gain = (holding.currentPrice - holding.avgPrice) * holding.shares;
+                
+                totalValue += value;
+                totalGain += gain;
+
+                return `
+                    <tr>
+                        <td>${holding.ticker}</td>
+                        <td>${holding.shares}</td>
+                        <td>$${holding.avgPrice.toFixed(2)}</td>
+                        <td>$${holding.currentPrice.toFixed(2)}</td>
+                        <td>$${value.toFixed(2)}</td>
+                        <td class="${gain >= 0 ? 'positive' : 'negative'}">
+                            $${gain.toFixed(2)}
+                        </td>
+                        <td><button onclick="removeHolding('${holding.ticker}')">Remove</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('totalValue').textContent = `$${totalValue.toFixed(2)}`;
+            document.getElementById('totalGain').textContent = `$${totalGain.toFixed(2)}`;
+        }
+
+        function removeHolding(ticker) {
+            holdings = holdings.filter(h => h.ticker !== ticker);
+            updatePortfolio();
+            updateCharts();
+        }
+
+        // Chart initialization
+        let allocationChart, sectorChart;
+
+        function updateCharts() {
+            // Asset Allocation Chart
+            const allocationData = holdings.reduce((acc, holding) => {
+                acc[holding.ticker] = (acc[holding.ticker] || 0) + (holding.shares * holding.currentPrice);
+                return acc;
+            }, {});
+
+            if (allocationChart) allocationChart.destroy();
+            allocationChart = new Chart(document.getElementById('allocationChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(allocationData),
+                    datasets: [{
+                        data: Object.values(allocationData),
+                        backgroundColor: ['#3498db', '#2ecc71', '#e74c3c', '#f1c40f']
+                    }]
+                }
+            });
+
+            // Sector Diversification Chart
+            const sectorData = holdings.reduce((acc, holding) => {
+                acc[holding.sector] = (acc[holding.sector] || 0) + (holding.shares * holding.currentPrice);
+                return acc;
+            }, {});
+
+            if (sectorChart) sectorChart.destroy();
+            sectorChart = new Chart(document.getElementById('sectorChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(sectorData),
+                    datasets: [{
+                        label: 'Value by Sector',
+                        data: Object.values(sectorData),
+                        backgroundColor: '#3498db'
+                    }]
+                }
+            });
+        }
+    </script>
+</body>
+</html>

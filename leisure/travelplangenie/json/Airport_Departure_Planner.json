@@ -1,0 +1,190 @@
+{
+  "name": "Airport Departure Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "airport-departure",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+            ]
+          }
+        }
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-600, 200],
+      "id": "wh-airport-departure-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "name": "If OPTIONS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-380, 200],
+      "id": "if-options-001"
+    },
+    {
+      "parameters": { "options": {} },
+      "name": "Respond to OPTIONS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-160, 80],
+      "id": "respond-options-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Parse & validate incoming request ───────────────────────────\nconst body = $json.body;\nif (!body || typeof body !== 'object') throw new Error('400: Missing request body');\n\nconst origin      = (body.origin      || '').trim();\nconst airportName = (body.airportName || '').trim();\nconst iata        = (body.iata        || '').trim().toUpperCase();\nconst terminal    = (body.terminal    || '').trim();\nconst flightDate  = (body.flightDate  || '').trim();\nconst flightTime  = (body.flightTime  || '').trim();\nconst flightType  = (body.flightType  || 'international').trim();\nconst traveller   = (body.traveller   || '').trim();\nconst extras      = (body.extras      || '').trim();\n\nif (!origin)      throw new Error('400: origin is required');\nif (!airportName) throw new Error('400: airportName is required');\nif (!flightDate)  throw new Error('400: flightDate is required');\nif (!flightTime)  throw new Error('400: flightTime is required');\n\n// Destination for Google Maps — full airport name works well\nconst destination = airportName + (terminal ? `, ${terminal}` : '');\n\n// Build departure time ISO string for traffic-aware routing\n// Combine flightDate + flightTime, subtract 3h to get a \"now\" reference time for when they would leave\nlet departureDatetime = '';\ntry {\n  const flightDt = new Date(`${flightDate}T${flightTime}:00`);\n  // We want traffic at departure time, not flight time — subtract 3h as a reasonable estimate\n  const trafficCheckTime = new Date(flightDt.getTime() - 3 * 60 * 60 * 1000);\n  departureDatetime = trafficCheckTime.toISOString();\n} catch(e) {\n  departureDatetime = new Date().toISOString();\n}\n\nreturn [{ json: { origin, destination, airportName, iata, terminal, flightDate, flightTime, flightType, traveller, extras, departureDatetime } }];"
+      },
+      "name": "Parse Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-160, 300],
+      "id": "parse-request-001"
+    },
+    {
+      "parameters": {
+        "url": "https://routes.googleapis.com/directions/v2:computeRoutes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-Goog-Api-Key", "value": "={{ $env.GOOGLE_MAPS_API_KEY }}" },
+            { "name": "X-Goog-FieldMask", "value": "routes.duration,routes.distanceMeters,routes.staticDuration,routes.legs.duration,routes.legs.staticDuration" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "origin": {
+            "address": "={{ $json.origin }}"
+          },
+          "destination": {
+            "address": "={{ $json.destination }}"
+          },
+          "travelMode": "DRIVE",
+          "routingPreference": "TRAFFIC_AWARE",
+          "departureTime": "={{ $json.departureDatetime }}"
+        },
+        "options": { "timeout": 10000 }
+      },
+      "name": "Google Routes API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [80, 300],
+      "id": "google-routes-001"
+    },
+    {
+      "parameters": {
+        "url": "=http://api.aviationstack.com/v1/flights?access_key={{ $env.AVIATIONSTACK_API_KEY }}&dep_iata={{ $node['Parse Request'].json.iata }}&flight_status=active&limit=50",
+        "options": { "timeout": 8000 }
+      },
+      "name": "AviationStack Delays",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [80, 460],
+      "id": "aviationstack-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Combine traffic + delay data ────────────────────────────────\nconst parsed       = $node['Parse Request'].json;\nconst routeData    = $node['Google Routes API'].json;\nconst flightData   = $node['AviationStack Delays'].json;\n\n// ── Drive time ────────────────────────────────────────────────────\nlet driveMinutes   = null;\nlet driveMinStatic = null;\nlet driveText      = 'N/A';\nlet trafficLevel   = 'amber';\nlet trafficDelayMin = 0;\n\ntry {\n  const route = (routeData.routes || [])[0];\n  if (route) {\n    // duration with traffic (seconds)\n    const withTraffic  = parseInt(route.duration)     || 0;\n    const withoutTraffic = parseInt(route.staticDuration) || 0;\n    driveMinutes   = Math.ceil(withTraffic / 60);\n    driveMinStatic = Math.ceil(withoutTraffic / 60);\n    trafficDelayMin = Math.max(0, driveMinutes - driveMinStatic);\n    driveText = driveMinutes >= 60\n      ? `${Math.floor(driveMinutes/60)}h ${driveMinutes%60}m`\n      : `${driveMinutes} min`;\n    // Traffic level\n    const ratio = withoutTraffic > 0 ? withTraffic / withoutTraffic : 1;\n    trafficLevel = ratio < 1.15 ? 'green' : ratio < 1.4 ? 'amber' : 'red';\n  }\n} catch(e) {\n  console.error('Route parse error:', e.message);\n}\n\n// ── Airport delay data ────────────────────────────────────────────\nlet delayLevel = 'green';\nlet delayPct   = 0;\nlet delayNote  = '';\n\ntry {\n  const flights = (flightData.data || []);\n  if (flights.length > 0) {\n    const delayed = flights.filter(f => {\n      const dep = f.departure || {};\n      return dep.delay && parseInt(dep.delay) > 15;\n    });\n    delayPct = Math.round((delayed.length / flights.length) * 100);\n    delayLevel = delayPct < 20 ? 'green' : delayPct < 45 ? 'amber' : 'red';\n    if (delayed.length > 0) {\n      const avgDelay = Math.round(delayed.reduce((s, f) => s + parseInt(f.departure?.delay || 0), 0) / delayed.length);\n      delayNote = `${delayed.length} of ${flights.length} active flights delayed. Average delay: ${avgDelay} min.`;\n    } else {\n      delayNote = `${flights.length} active flights checked — most are running on time.`;\n    }\n  } else {\n    delayNote = 'No live flight data available for this airport right now.';\n    delayLevel = 'amber';\n  }\n} catch(e) {\n  delayNote = 'Delay data unavailable.';\n  delayLevel = 'amber';\n}\n\n// ── Calculate \"leave by\" time ─────────────────────────────────────\nlet leaveByTime = '';\nlet leaveBySummary = '';\n\ntry {\n  const isIntl   = parsed.flightType === 'international';\n  const hasKids  = (parsed.traveller || '').includes('family') || (parsed.traveller || '').includes('children');\n  const hasCheck = (parsed.traveller || '').includes('checked');\n\n  // Base airport buffer (minutes before flight)\n  let airportBuffer = isIntl ? 180 : 120;\n  if (hasKids)  airportBuffer += 30;\n  if (hasCheck) airportBuffer += 20;\n  // Add extra if airport is busy\n  if (delayLevel === 'amber') airportBuffer += 15;\n  if (delayLevel === 'red')   airportBuffer += 30;\n  // Add actual drive time + 10min buffer for parking/drop-off\n  const totalMinBefore = airportBuffer + (driveMinutes || 60) + 10;\n\n  const [h, m]   = (parsed.flightTime || '00:00').split(':').map(Number);\n  const flightMs = new Date(`${parsed.flightDate}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`).getTime();\n  const leaveMs  = flightMs - totalMinBefore * 60 * 1000;\n  const leaveDate = new Date(leaveMs);\n  leaveByTime = leaveDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });\n\n  const icon = trafficLevel === 'red' || delayLevel === 'red' ? '🔴' : trafficLevel === 'amber' || delayLevel === 'amber' ? '🟡' : '🟢';\n  leaveBySummary = `${icon} Leave by ${leaveByTime} — ${driveText || 'drive'} to airport + ${airportBuffer} min check-in buffer${trafficDelayMin > 10 ? ` (includes ${trafficDelayMin} min traffic delay)` : ''}.`;\n} catch(e) {\n  leaveBySummary = 'Could not calculate leave time — check your flight time input.';\n}\n\nreturn [{ json: {\n  ...parsed,\n  driveMinutes, driveMinStatic, driveText, trafficLevel, trafficDelayMin,\n  delayLevel, delayPct, delayNote, leaveByTime, leaveBySummary\n}}];"
+      },
+      "name": "Combine Traffic + Delays",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [320, 380],
+      "id": "combine-data-001"
+    },
+    {
+      "parameters": {
+        "modelId": "claude-sonnet-4-20250514",
+        "messages": {
+          "values": [
+            {
+              "content": "You are an expert airport departure advisor. You give clear, confident, specific guidance. Always state exact times. Format with bold headings and bullet points. Never be vague.",
+              "role": "system"
+            },
+            {
+              "content": "=Create a departure plan for this traveller.\n\nFlight details:\n- Origin: {{ $json.origin }}\n- Airport: {{ $json.airportName }}{{ $json.terminal ? ` · Terminal: ${$json.terminal}` : '' }}\n- Flight date: {{ $json.flightDate }}\n- Scheduled departure: {{ $json.flightTime }}\n- Flight type: {{ $json.flightType }}\n- Travelling as: {{ $json.traveller }}\n{{ $json.extras ? `- Extra info: ${$json.extras}` : '' }}\n\nLive data:\n- Drive time with current traffic: {{ $json.driveText || 'Not available' }}{{ $json.driveMinStatic ? ` (normally ${$json.driveMinStatic} min without traffic)` : '' }}\n- Traffic level: {{ $json.trafficLevel }}\n- Airport delay status: {{ $json.delayLevel }} — {{ $json.delayNote }}\n- Recommended leave-by time: {{ $json.leaveBySummary }}\n\nWrite a departure guide with these sections:\n\n**Your Leave-By Time:**\nState the exact recommended departure time and why (drive time + airport buffer). Make this the headline — one clear sentence.\n\n**Traffic Right Now:**\nDescribe current traffic conditions between {{ $json.origin }} and {{ $json.airportName }}. Is there anything to watch out for? Best route tips if relevant.\n\n**Airport Status:**\nCurrent delay situation at {{ $json.airportName }}. What does this mean for the traveller — should they arrive earlier?\n\n**At the Airport — Your Timeline:**\nA minute-by-minute breakdown from arrival to gate:\n- Arrival time\n- Check-in (if applicable)\n- Security estimate for {{ $json.flightType }} flight\n- Passport control (if international)\n- Time to gate\n- Boarding typically starts X min before departure\n\n**Insider Tips for {{ $json.airportName }}:**\n3-4 specific tips for this airport — best drop-off points, which security lanes are faster, any lounge recommendations, parking tips.\n\n**If There's a Delay:**\nWhat to do if the flight is delayed — lounge options, nearest food, where to get updates.\n\nFormat: No Markdown (no ###). Bold headings ending with colon. Bullets use hyphen. Be specific about times. Keep it practical and reassuring."
+            }
+          ]
+        },
+        "options": { "maxTokens": 1200 }
+      },
+      "name": "Claude Departure Guide",
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [560, 380],
+      "id": "claude-guide-001",
+      "credentials": {
+        "anthropicApi": {
+          "id": "YOUR_ANTHROPIC_CREDENTIAL_ID",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Format final response ────────────────────────────────────────\nconst data  = $node['Combine Traffic + Delays'].json;\nconst raw   = $node['Claude Departure Guide'].json?.content?.[0]?.text\n           || $node['Claude Departure Guide'].json?.message?.content\n           || '';\n\nif (!raw) throw new Error('Claude returned empty response');\n\n// Light HTML formatting\nconst html = raw.trim()\n  .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')\n  .replace(/\\n\\n/g, '<br><br>')\n  .replace(/\\n- /g, '<br>• ')\n  .replace(/\\n/g, '<br>');\n\nreturn [{ json: {\n  result:        raw.trim(),\n  resultHtml:    html,\n  // Structured data for the live widget\n  driveMinutes:  data.driveMinutes,\n  driveMinStatic:data.driveMinStatic,\n  driveText:     data.driveText,\n  trafficLevel:  data.trafficLevel,\n  delayLevel:    data.delayLevel,\n  delayPct:      data.delayPct,\n  delayNote:     data.delayNote,\n  leaveByTime:   data.leaveByTime,\n  leaveBySummary:data.leaveBySummary,\n  airportName:   data.airportName,\n  iata:          data.iata,\n}}];"
+      },
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 380],
+      "id": "format-response-001"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [{ "name": "Content-Type", "value": "application/json" }]
+          }
+        }
+      },
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1040, 380],
+      "id": "return-response-001"
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "If OPTIONS", "type": "main", "index": 0 }]] },
+    "If OPTIONS": {
+      "main": [
+        [{ "node": "Respond to OPTIONS", "type": "main", "index": 0 }],
+        [{ "node": "Parse Request",      "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse Request":          { "main": [[{ "node": "Google Routes API",     "type": "main", "index": 0 }, { "node": "AviationStack Delays", "type": "main", "index": 0 }]] },
+    "Google Routes API":      { "main": [[{ "node": "Combine Traffic + Delays", "type": "main", "index": 0 }]] },
+    "AviationStack Delays":   { "main": [[{ "node": "Combine Traffic + Delays", "type": "main", "index": 0 }]] },
+    "Combine Traffic + Delays": { "main": [[{ "node": "Claude Departure Guide", "type": "main", "index": 0 }]] },
+    "Claude Departure Guide": { "main": [[{ "node": "Format Response",       "type": "main", "index": 0 }]] },
+    "Format Response":        { "main": [[{ "node": "Return Response",        "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": [{ "name": "voyage-genie" }]
+}

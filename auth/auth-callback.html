@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signing you in… • GenieSphere</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="gs-config" content="/shared/config.json" />
+
+  <script>
+    // Ensure shared config path works even if pages override globals
+    window.GS_CONFIG_URL = "/shared/config.json";
+    window.GS_CONFIG_PATH = "/shared/config.json";
+  </script>
+  <script src="/shared/js/app-config.js?v=20260222a"></script>
+  <script type="module" src="/shared/js/sb-client.js?v=20260222a"></script>
+
+  <style>
+    :root{
+      --bg:#020617; --card:rgba(255,255,255,0.10); --stroke:rgba(255,255,255,0.18);
+      --text:rgba(255,255,255,0.92); --muted:rgba(255,255,255,0.68);
+      --accent:#4c6ef5; --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(1200px 800px at 70% 20%, rgba(76,110,245,0.20), transparent 55%),
+                  radial-gradient(1000px 700px at 20% 90%, rgba(34,197,94,0.14), transparent 60%),
+                  #020617;
+      color:var(--text);
+      display:grid; place-items:center;
+      padding:24px;
+    }
+    .card{
+      width:min(560px, 100%);
+      border-radius:18px;
+      background: var(--card);
+      border:1px solid var(--stroke);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      padding: 18px 18px 16px;
+    }
+    h1{margin:0 0 6px 0; font-size:18px}
+    p{margin:0; color:var(--muted); font-size:13.5px; line-height:1.5}
+    .row{display:flex; align-items:center; gap:12px; margin-top:12px}
+    .spin{
+      width:18px; height:18px; border-radius:50%;
+      border:2px solid rgba(255,255,255,.25);
+      border-top-color: rgba(255,255,255,.85);
+      animation: spin 900ms linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .err{
+      margin-top:12px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,77,109,.40);
+      background: rgba(255,77,109,.12);
+      color: rgba(255,255,255,.92);
+      display:none;
+      white-space: pre-wrap;
+      font-size: 13px;
+    }
+    .muted{color:var(--muted)}
+    a{color: rgba(173,232,255,.95)}
+  </style>
+</head>
+
+<body>
+  <main class="card" role="main" aria-live="polite">
+    <h1>Signing you in…</h1>
+    <p class="muted">Finalizing your session for this Genie. You’ll be redirected automatically.</p>
+    <div class="row" aria-hidden="true"><span class="spin"></span><span class="muted">Please wait</span></div>
+    <div id="err" class="err"></div>
+  </main>
+
+  <script>
+    (function(){
+      const errBox = document.getElementById("err");
+      const showErr = (msg) => {
+        if(!errBox) return;
+        errBox.style.display = "block";
+        errBox.textContent = msg || "Could not complete sign-in.";
+      };
+
+      function safeNextUrl(nextPath){
+        // nextPath is a path+query+hash that should stay on this origin
+        const fallback = new URL("/dashboard.html", window.location.origin);
+        if(!nextPath) return fallback.toString();
+        try{
+          // Prevent open redirects: only allow same-origin paths
+          if(nextPath.startsWith("http://") || nextPath.startsWith("https://") || nextPath.startsWith("//")){
+            return fallback.toString();
+          }
+          if(!nextPath.startsWith("/")) nextPath = "/" + nextPath.replace(/^\.\//, "");
+          const u = new URL(nextPath, window.location.origin);
+          // only same-origin allowed
+          if(u.origin !== window.location.origin) return fallback.toString();
+          return u.toString();
+        }catch(_){
+          return fallback.toString();
+        }
+      }
+
+      function parseHashTokens(){
+        const h = (window.location.hash || "").replace(/^#/, "");
+        const p = new URLSearchParams(h);
+        return {
+          access_token: p.get("access_token") || "",
+          refresh_token: p.get("refresh_token") || "",
+          token_type: p.get("token_type") || "bearer",
+          expires_at: p.get("expires_at") ? Number(p.get("expires_at")) : undefined,
+        };
+      }
+
+      async function getClient(){
+        // sb-client.js exposes window.getSbClient (async)
+        let c = (typeof window.getSbClient === "function" ? window.getSbClient() : null) ||
+                window.sb || window.sbClient || window.SB_CLIENT || null;
+        if(c && typeof c.then === "function"){
+          try{ c = await c; }catch(_){ c = null; }
+        }
+        return c;
+      }
+
+      async function run(){
+        const qs = new URLSearchParams(window.location.search);
+        const nextPath = (qs.get("next") || "").trim();
+        const nextUrl = safeNextUrl(nextPath);
+
+        const t = parseHashTokens();
+        if(!t.access_token || !t.refresh_token){
+          showErr("Missing session tokens. Please sign in again.");
+          return;
+        }
+
+        const client = await getClient();
+        if(!client || !client.auth || typeof client.auth.setSession !== "function"){
+          showErr("Auth client not ready on this domain. Please refresh and try again.");
+          return;
+        }
+
+        try{
+          // Set session for THIS origin/subdomain
+          const { data, error } = await client.auth.setSession({
+            access_token: t.access_token,
+            refresh_token: t.refresh_token
+          });
+          if(error) throw error;
+
+          // Clean the hash so tokens aren't left in the address bar/history
+          try{
+            history.replaceState({}, document.title, window.location.pathname + window.location.search);
+          }catch(_){}
+
+          // Go to final destination
+          window.location.replace(nextUrl);
+        }catch(e){
+          showErr((e && e.message) ? e.message : "Could not complete sign-in.");
+        }
+      }
+
+      // slight delay to allow module initialization
+      setTimeout(() => { run().catch(e=>showErr(e && e.message ? e.message : String(e))); }, 20);
+    })();
+  </script>
+</body>
+</html>

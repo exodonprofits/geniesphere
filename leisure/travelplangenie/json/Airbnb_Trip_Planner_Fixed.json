@@ -1,0 +1,370 @@
+{
+  "name": "Airbnb Trip Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "airbnb-travel-agent",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin",  "value": "*" },
+              { "name": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+            ]
+          }
+        }
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-448, -320],
+      "id": "28c761ec-5118-4fe8-b6b0-57c8b0258fed"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "typeValidation": "strict", "version": 2 },
+          "conditions": [{ "leftValue": "={{ $json.method }}", "rightValue": "OPTIONS", "operator": { "type": "string", "operation": "equals", "name": "filter.operator.equals" } }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-240, -320],
+      "id": "bbc4be14-6d86-4f4f-8d40-efb3b53d8fe1"
+    },
+    {
+      "parameters": { "options": {} },
+      "name": "Respond to OPTIONS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-48, -448],
+      "id": "5f2b4f6a-f325-47f0-805c-a4df21b3b802"
+    },
+    {
+      "parameters": {
+        "jsCode": "let method = $json.method;\nif (!method) { method = $json.headers?.[':method'] || 'POST'; }\nreturn [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-48, -208],
+      "id": "c1c23880-de9a-47d4-b20e-83181692068a"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "typeValidation": "strict", "version": 2 },
+          "conditions": [{ "leftValue": "={{ String($json.method).toUpperCase() }}", "rightValue": "POST", "operator": { "type": "string", "operation": "equals", "name": "filter.operator.equals" } }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Method",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [160, -208],
+      "id": "1ad4ae09-defe-4b9f-8f62-df47887ba34e"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\":\"Method not allowed\",\"status\":405}",
+        "options": {
+          "responseCode": 405,
+          "responseHeaders": { "entries": [{ "name": "Content-Type", "value": "application/json" }] }
+        }
+      },
+      "name": "Respond 405",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [370, -320],
+      "id": "aa000001-0001-0001-0001-000000000001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Parse & Validate Form Body ─────────────────────────────────\nconst body = $json.body;\n\nif (!body || typeof body !== 'object') {\n  throw new Error('400: Request body is missing or not an object');\n}\n\nconst required = ['departureLocation', 'destinationCity', 'startDate', 'endDate'];\nconst missing = required.filter(k => !body[k] || String(body[k]).trim() === '');\nif (missing.length > 0) {\n  throw new Error(`400: Missing required fields: ${missing.join(', ')}`);\n}\n\nconst start = new Date(body.startDate);\nconst end   = new Date(body.endDate);\nif (isNaN(start.getTime()) || isNaN(end.getTime())) {\n  throw new Error('400: startDate or endDate is not a valid date');\n}\nif (end < start) {\n  throw new Error('400: endDate must be on or after startDate');\n}\n\nconst safeArray = (val) => Array.isArray(val) ? val : (val ? [val] : []);\n\nreturn [{ json: {\n  departureLocation: body.departureLocation.trim(),\n  destinationCity:   body.destinationCity.trim(),\n  startDate:         body.startDate.trim(),\n  endDate:           body.endDate.trim(),\n  accommodationType: body.accommodationType || body.propertyType || 'Entire Home',\n  amenities:         safeArray(body.amenities),\n  bedrooms:          body.bedrooms  || '1',\n  bathrooms:         body.bathrooms || '1',\n  tripType:          body.tripType  || 'Not specified',\n  groupSize:         body.groupSize || '1',\n  ageRange:          safeArray(body.ageRange),\n  budget:            body.budget    || '0',\n  email:             (body.email    || '').trim()\n}}];"
+      },
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [752, 160],
+      "id": "331b3c9a-c888-498c-9fe9-d5e880d5495b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const {\n  departureLocation, destinationCity, accommodationType, amenities,\n  bedrooms, bathrooms, startDate, endDate, tripType, groupSize, ageRange, budget, email\n} = $json;\n\nconst fmt = (val) => Array.isArray(val) && val.length > 0 ? val.join(', ') : 'No preference';\n\nconst prompt = `Please create a complete Airbnb and hotel trip itinerary with the following details:\n\n- Departure: ${departureLocation}\n- Destination: ${destinationCity}\n- Dates: ${startDate} to ${endDate}\n- Accommodation Type: ${accommodationType}\n- Key Amenities: ${fmt(amenities)}\n- Bedrooms: ${bedrooms}, Bathrooms: ${bathrooms}\n- Trip Type: ${tripType}\n- Group Size: ${groupSize}\n- Age Ranges: ${fmt(ageRange)}\n- Budget: $${budget} USD total\n\nPlease follow the formatting rules in the system prompt exactly.`;\n\nreturn [{ json: { departureLocation, destinationCity, accommodationType, amenities, bedrooms, bathrooms, startDate, endDate, tripType, groupSize, ageRange, budget, email, prompt } }];"
+      },
+      "name": "Prepare Airbnb Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [944, 160],
+      "id": "9a3445c3-bd9d-4b4d-8b64-2a100203da09"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an experienced AI travel agent specializing in Airbnb and hotel stays. Create exciting, practical, and well-organized travel itineraries. Include real hyperlinks for Airbnb listings, hotels, flights, activities, and restaurants using <a href=\"URL\">Description</a> format. Use only real, functional URLs.\n\nFORMATTING RULES:\n- No Markdown (no ###, no **, no | tables)\n- Section titles: plain text followed by a colon on its own line\n- Bullet points: hyphen at start of each line\n- Separate each major section with one blank line\n- Include relevant emojis\n- Do not repeat trip details already in the prompt\n\nCOST SUMMARY — mandatory, tab-separated rows:\nFlights\t$600\nAccommodation\t$1050\nActivities\t$200\nFood\t$350\nTotal\t$2200\nRemaining Budget\t$800\n\nSECTIONS TO INCLUDE:\n1. Flights: (specific airlines, route, duration, price, booking link)\n2. Accommodation Options: (3 Airbnb or hotel options with name, type, price per night, total, booking link)\n3. Daily Schedule: (morning/afternoon/evening for each day with times)\n4. Estimated Food Budget:\n5. Cost Summary: (tab-separated)\n6. Travel Tips:"
+            },
+            { "content": "={{$json.prompt}}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [1120, 160],
+      "id": "2bb5cd77-f90c-4a1c-a56f-1dc1bf0b10ee",
+      "credentials": { "openAiApi": { "id": "hUFF1jkJabK3Ewyn", "name": "Voyage-Genie" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Validate OpenAI response & format ─────────────────────────\nconst rawContent = $node['OpenAI'].json?.message?.content;\n\nif (!rawContent || rawContent.trim() === '') {\n  const reason = $node['OpenAI'].json?.message?.finish_reason || 'unknown';\n  throw new Error(`OpenAI returned empty content. Finish reason: ${reason}. Check API quota or prompt length.`);\n}\n\n// Strip accidental markdown code fences\nconst itineraryRaw = rawContent.replace(/```[\\w]*\\n?/g,'').replace(/```/g,'').trim();\n\nconst itineraryLines = itineraryRaw.split('\\n');\nlet formattedItinerary = '';\nlet inDailySchedule = false;\nlet inCostSummary   = false;\nlet scheduleLines   = [];\nlet costSummaryRows = [];\n\nconst formatDailySchedule = (lines) => {\n  let output = '<strong style=\"font-size:16px;color:#2a4a6e;display:block;margin:15px 0 5px 0;\">Daily Schedule:</strong>';\n  const joined = lines.join(' ');\n  const daySections = joined.match(/(Day \\d+:.*?)(?=(Day \\d+:|$))/g);\n  if (!daySections) return output + '<br>';\n  daySections.forEach((dayMatch, index) => {\n    const dayLabelMatch = dayMatch.match(/(Day \\d+:[^\\-]*)/);\n    if (!dayLabelMatch) return;\n    const dayLabel = dayLabelMatch[1].trim();\n    const subItems = dayMatch.match(/- (Morning|Afternoon|Evening):.*?(?=(Day \\d+:|- (Morning|Afternoon|Evening):|$))/g);\n    output += `<strong>${dayLabel}</strong>`;\n    if (subItems) { output += `<div style=\"margin:4px 0 8px 12px;\">${subItems.map(i=>i.trim()).join('<br>')}</div>`; }\n    if (index < daySections.length - 1) output += '<br>';\n  });\n  return output + '<br>';\n};\n\nfor (let line of itineraryLines) {\n  line = line.trim();\n  if (!line) {\n    if (inDailySchedule) { formattedItinerary += formatDailySchedule(scheduleLines); inDailySchedule=false; scheduleLines=[]; }\n    else if (inCostSummary) { inCostSummary=false; formattedItinerary+=`<table style=\"border-collapse:collapse;width:100%;margin:10px 0;font-size:14px;\">${costSummaryRows.join('')}</table><br>`; costSummaryRows=[]; }\n    else { formattedItinerary += '<br>'; }\n    continue;\n  }\n  const lower = line.toLowerCase();\n  if (lower.startsWith('daily schedule:')) { inDailySchedule=true; scheduleLines=[]; continue; }\n  if (inDailySchedule) { scheduleLines.push(line); continue; }\n  if (lower.startsWith('cost summary:')) { formattedItinerary+=`<strong style=\"font-size:16px;color:#2a4a6e;display:block;margin:15px 0 5px 0;\">Cost Summary:</strong>`; inCostSummary=true; continue; }\n  if (inCostSummary && line.includes('\\t')) {\n    const parts=line.split('\\t').map(s=>s.trim()); const cat=parts[0]||''; const cost=parts[1]||'';\n    const isBold=cat.startsWith('Total')||cat.startsWith('Remaining Budget');\n    const cellStyle=isBold?'border:1px solid #e0e0e0;padding:8px;background:#f0f0f0;font-weight:bold;':'border:1px solid #e0e0e0;padding:8px;';\n    costSummaryRows.push(`<tr><td style=\"${cellStyle}\">${cat}</td><td style=\"${cellStyle}\">${cost}</td></tr>`); continue;\n  }\n  if (inCostSummary) { inCostSummary=false; formattedItinerary+=`<table style=\"border-collapse:collapse;width:100%;margin:10px 0;font-size:14px;\">${costSummaryRows.join('')}</table><br>`; costSummaryRows=[]; }\n  if (line.endsWith(':')) { formattedItinerary+=`<strong style=\"font-size:16px;color:#2a4a6e;display:block;margin:15px 0 5px 0;\">${line}</strong>`; }\n  else { formattedItinerary+=`${line}<br>`; }\n}\nif (inDailySchedule && scheduleLines.length>0) formattedItinerary+=formatDailySchedule(scheduleLines);\nif (costSummaryRows.length>0) formattedItinerary+=`<table style=\"border-collapse:collapse;width:100%;margin:10px 0;font-size:14px;\">${costSummaryRows.join('')}</table><br>`;\n\nreturn [{ json: { ...$json, itinerary: formattedItinerary } }];"
+      },
+      "name": "Format Daily Schedule",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1472, 160],
+      "id": "88b49f25-1106-4d0a-bd0b-4ad58a15d1cc"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $node['Prepare Airbnb Data'].json;\nconst ai   = $node['Format Daily Schedule'].json;\n\nif (!prep || !ai) throw new Error('Airbnb Info: missing data from upstream nodes.');\nif (!ai.itinerary || ai.itinerary.trim()==='') throw new Error('Airbnb Info: itinerary is empty after formatting.');\n\nreturn [{ json: {\n  departureLocation: prep.departureLocation,\n  destinationCity:   prep.destinationCity,\n  accommodationType: prep.accommodationType,\n  amenities:  prep.amenities,\n  bedrooms:   prep.bedrooms,\n  bathrooms:  prep.bathrooms,\n  startDate:  prep.startDate,\n  endDate:    prep.endDate,\n  tripType:   prep.tripType,\n  groupSize:  prep.groupSize,\n  ageRange:   prep.ageRange,\n  budget:     prep.budget,\n  email:      prep.email,\n  itinerary:  ai.itinerary\n}}];"
+      },
+      "name": "Airbnb Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1648, 160],
+      "id": "35101aea-4f3e-4430-b506-1fd0963aa7e8"
+    },
+    {
+      "parameters": {
+        "jsCode": "const destination      = $json.destinationCity  || 'Your Destination';\nconst departure        = $json.departureLocation || 'Not specified';\nconst travelDates      = `${$json.startDate||'N/A'} to ${$json.endDate||'N/A'}`;\nconst budget           = $json.budget           || 'N/A';\nconst groupSize        = $json.groupSize        || 'N/A';\nconst accommodationType= $json.accommodationType|| 'Not specified';\nconst amenities        = Array.isArray($json.amenities)?$json.amenities.join(', '):($json.amenities||'Not specified');\nconst bedrooms         = $json.bedrooms         || 'Not specified';\nconst bathrooms        = $json.bathrooms        || 'Not specified';\nconst tripType         = $json.tripType         || 'N/A';\nconst ageRange         = Array.isArray($json.ageRange)?$json.ageRange.join(', '):($json.ageRange||'Not specified');\nconst itinerary        = $json.itinerary        || 'Itinerary details not available.';\n\nconst subject = `Your Airbnb & Hotel Itinerary for ${destination} – Voyage Genie`;\n\nconst message = `\n<div style=\"padding:5px;background:#fff;border-radius:10px 10px 0 0;\">\n  <h2 style=\"color:#2a4a6e;font-size:22px;margin:0 0 15px 0;\">Departing from: ${departure}</h2>\n  <h2 style=\"color:#2a4a6e;font-size:22px;margin:0 0 15px 0;\">Destination: ${destination}</h2>\n  <p style=\"color:#333;font-size:16px;margin:10px 0;line-height:1.5;\"><strong>Travel Dates:</strong> ${travelDates}</p>\n  <p style=\"color:#333;font-size:16px;margin:10px 0;line-height:1.5;\"><strong>Accommodation:</strong> ${accommodationType} · ${bedrooms} bed · ${bathrooms} bath</p>\n  <p style=\"color:#333;font-size:16px;margin:10px 0;line-height:1.5;\"><strong>Amenities:</strong> ${amenities}</p>\n  <p style=\"color:#333;font-size:16px;margin:10px 0;line-height:1.5;\"><strong>Trip Type:</strong> ${tripType}</p>\n  <p style=\"color:#333;font-size:16px;margin:10px 0;line-height:1.5;\"><strong>Age Range:</strong> ${ageRange}</p>\n  <p style=\"color:#333;font-size:16px;margin:10px 0;line-height:1.5;\"><strong>Budget:</strong> $${budget} (for ${groupSize} travelers)</p>\n  <hr style=\"border:0;border-top:1px solid #e0e0e0;margin:25px 0;\">\n  <h3 style=\"color:#2a4a6e;font-size:18px;margin:0 0 15px 0;\">Itinerary Details</h3>\n  <div style=\"background:#f9f9f9;padding:10px;border-radius:10px;font-size:14px;line-height:1.6;color:#333;\">${itinerary}</div>\n  <hr style=\"border:0;border-top:1px solid #e0e0e0;margin:25px 0;\">\n  <p style=\"color:#666;font-size:12px;text-align:center;margin:0;\">Generated by <strong>Voyage Genie</strong> 🌟</p>\n</div>`;\n\nconst sessionId = [Date.now().toString(36), Math.random().toString(36).slice(2,7)].join('-');\n\nreturn [{ json: {\n  sessionId,\n  itineraryHtml:   message,\n  resolvedEmail:   ($json.email||'').trim(),\n  resolvedSubject: subject,\n  resolvedMessage: message,\n  formData: { departureLocation: departure, destinationCity: destination, startDate: $json.startDate, endDate: $json.endDate, budget, groupSize, tripType, accommodationType, bedrooms, bathrooms }\n}}];"
+      },
+      "name": "Resolve Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1824, 160],
+      "id": "da9c300a-df11-4348-94be-8124cae49808"
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_WEBHOOK = 'https://exodonprofits.app.n8n.cloud/webhook/send-email';\nconst MAX_RETRIES   = 2;\nconst RETRY_DELAY   = 1500;\n\nconst payload = { resolvedEmail: $json.resolvedEmail, resolvedSubject: $json.resolvedSubject, resolvedMessage: $json.resolvedMessage };\n\nif (!payload.resolvedEmail || payload.resolvedEmail === '') {\n  return $input.all();\n}\n\nconst sleep = (ms) => new Promise(r => setTimeout(r, ms));\nlet lastError;\nfor (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {\n  try {\n    await $http({ method: 'POST', url: EMAIL_WEBHOOK, body: payload, headers: { 'Content-Type': 'application/json' } });\n    return $input.all();\n  } catch (err) {\n    lastError = err;\n    if (attempt < MAX_RETRIES) await sleep(RETRY_DELAY);\n  }\n}\nconsole.error(`Email delivery failed after ${MAX_RETRIES} attempts: ${lastError?.message}`);\nreturn $input.all();"
+      },
+      "name": "Trigger Email Workflow",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1984, 160],
+      "id": "668b657a-3833-4176-a2d4-685540008c3a"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "sessionId",     "value": "={{ $json.sessionId }}" },
+            { "name": "redirectUrl",   "value": "airbnb-trip-itinerary.html" },
+            { "name": "itineraryData", "value": "={{ JSON.stringify($json.formData) }}" },
+            { "name": "itineraryHtml", "value": "={{ $json.itineraryHtml }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Final Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [2144, 160],
+      "id": "08ff90eb-04b8-4f53-b75a-cba5a0bbef91"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { sessionId: $json.sessionId, redirectUrl: $json.redirectUrl, itineraryData: $json.itineraryData, itineraryHtml: $json.itineraryHtml } }];"
+      },
+      "name": "Clean Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2320, 160],
+      "id": "870667cc-d138-469c-be4b-02457fa8844e"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ sessionId: $json.sessionId, redirectUrl: $json.redirectUrl, itineraryData: $json.itineraryData, itineraryHtml: $json.itineraryHtml }) }}",
+        "options": { "responseHeaders": { "entries": [{ "name": "Content-Type", "value": "application/json" }] } }
+      },
+      "name": "Return JSON Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2480, 160],
+      "id": "be7a6d47-401c-4773-b4fa-c0506316dfdf"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "airbnb-travel-agent-new-suggestion",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin",  "value": "*" },
+              { "name": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+            ]
+          }
+        }
+      },
+      "name": "New Suggestion Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-448, 400],
+      "id": "bb000001-0001-0001-0001-000000000001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "typeValidation": "strict", "version": 2 },
+          "conditions": [{ "leftValue": "={{ $json.method }}", "rightValue": "OPTIONS", "operator": { "type": "string", "operation": "equals", "name": "filter.operator.equals" } }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS New Suggestion",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-240, 400],
+      "id": "bb000002-0002-0002-0002-000000000002"
+    },
+    {
+      "parameters": { "options": {} },
+      "name": "Respond to OPTIONS New Suggestion",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-48, 280],
+      "id": "bb000003-0003-0003-0003-000000000003"
+    },
+    {
+      "parameters": {
+        "jsCode": "let method = $json.method;\nif (!method) { method = $json.headers?.[':method'] || 'POST'; }\nreturn [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method New Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-48, 512],
+      "id": "bb000004-0004-0004-0004-000000000004"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "typeValidation": "strict", "version": 2 },
+          "conditions": [{ "leftValue": "={{ String($json.method).toUpperCase() }}", "rightValue": "POST", "operator": { "type": "string", "operation": "equals", "name": "filter.operator.equals" } }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Method New Suggestion",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [160, 512],
+      "id": "bb000005-0005-0005-0005-000000000005"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\":\"Method not allowed\",\"status\":405}",
+        "options": { "responseCode": 405, "responseHeaders": { "entries": [{ "name": "Content-Type", "value": "application/json" }] } }
+      },
+      "name": "Respond 405 New Suggestion",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [370, 400],
+      "id": "bb000006-0006-0006-0006-000000000006"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst destination  = body.destinationCity  || body.destination  || 'unknown';\nconst departure    = body.departureLocation|| body.departure    || '';\nconst budget       = body.budget           || '0';\nconst tripType     = body.tripType         || 'Not specified';\nconst startDate    = body.startDate        || '';\nconst endDate      = body.endDate          || '';\nconst accommodationType = body.accommodationType || body.propertyType || 'Entire Home';\n\nconst prompt = `The user has an existing Airbnb itinerary for ${destination}. Budget: $${budget}. Trip type: ${tripType}. Accommodation: ${accommodationType}${startDate ? `. Dates: ${startDate} to ${endDate}` : ''}.\n\nSuggest 3 alternative Airbnb destinations that:\n- Have a similar travel vibe to ${destination}\n- Fit within the same budget range\n- Suit a ${tripType} traveler staying in a ${accommodationType}\n\nFor each destination provide:\n- Destination name and country\n- Why it's a great Airbnb alternative\n- Estimated total cost (flights + 7 nights typical Airbnb)\n- Best neighborhoods to stay in\n- Top 3 things to do\n- A search link (Airbnb or VRBO)\n\nFormat each suggestion with a clear heading and bullet points.`;\n\nreturn [{ json: { ...body, prompt } }];"
+      },
+      "name": "Prepare New Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 512],
+      "id": "bb000007-0007-0007-0007-000000000007"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            { "role": "system", "content": "You are a travel expert specializing in Airbnb and vacation rentals. Suggest practical, specific alternative destinations with real booking links." },
+            { "content": "={{$json.prompt}}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "OpenAI New Suggestion",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [680, 512],
+      "id": "bb000008-0008-0008-0008-000000000008",
+      "credentials": { "openAiApi": { "id": "hUFF1jkJabK3Ewyn", "name": "Voyage-Genie" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawContent = $node['OpenAI New Suggestion'].json?.message?.content;\nif (!rawContent || rawContent.trim() === '') throw new Error('OpenAI New Suggestion returned empty content.');\nconst sessionId = [Date.now().toString(36), Math.random().toString(36).slice(2,7)].join('-');\nreturn [{ json: { sessionId, suggestions: rawContent.trim(), suggestionsHtml: rawContent.trim().replace(/\\n/g,'<br>') } }];"
+      },
+      "name": "Format New Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 512],
+      "id": "bb000009-0009-0009-0009-000000000009"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ sessionId: $json.sessionId, suggestions: $json.suggestions, suggestionsHtml: $json.suggestionsHtml }) }}",
+        "options": { "responseHeaders": { "entries": [{ "name": "Content-Type", "value": "application/json" }] } }
+      },
+      "name": "Return New Suggestion Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1080, 512],
+      "id": "bb000010-0010-0010-0010-000000000010"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook":         { "main": [[{ "node": "If OPTIONS",           "type": "main", "index": 0 }]] },
+    "If OPTIONS":      { "main": [[{ "node": "Respond to OPTIONS",   "type": "main", "index": 0 }],[{ "node": "Debug Method",         "type": "main", "index": 0 }]] },
+    "Debug Method":    { "main": [[{ "node": "If Method",            "type": "main", "index": 0 }]] },
+    "If Method":       { "main": [[{ "node": "Code",                 "type": "main", "index": 0 }],[{ "node": "Respond 405",          "type": "main", "index": 0 }]] },
+    "Code":            { "main": [[{ "node": "Prepare Airbnb Data",  "type": "main", "index": 0 }]] },
+    "Prepare Airbnb Data": { "main": [[{ "node": "OpenAI",           "type": "main", "index": 0 }]] },
+    "OpenAI":          { "main": [[{ "node": "Format Daily Schedule","type": "main", "index": 0 }]] },
+    "Format Daily Schedule": { "main": [[{ "node": "Airbnb Info",    "type": "main", "index": 0 }]] },
+    "Airbnb Info":     { "main": [[{ "node": "Resolve Email Content","type": "main", "index": 0 }]] },
+    "Resolve Email Content": { "main": [[{ "node": "Trigger Email Workflow","type": "main","index": 0 }]] },
+    "Trigger Email Workflow":{ "main": [[{ "node": "Set Final Response",    "type": "main","index": 0 }]] },
+    "Set Final Response":    { "main": [[{ "node": "Clean Output",          "type": "main","index": 0 }]] },
+    "Clean Output":          { "main": [[{ "node": "Return JSON Response",  "type": "main","index": 0 }]] },
+    "New Suggestion Webhook":    { "main": [[{ "node": "If OPTIONS New Suggestion","type":"main","index":0 }]] },
+    "If OPTIONS New Suggestion": { "main": [[{ "node": "Respond to OPTIONS New Suggestion","type":"main","index":0 }],[{ "node": "Debug Method New Suggestion","type":"main","index":0 }]] },
+    "Debug Method New Suggestion":{ "main": [[{ "node": "If Method New Suggestion","type":"main","index":0 }]] },
+    "If Method New Suggestion":  { "main": [[{ "node": "Prepare New Suggestion","type":"main","index":0 }],[{ "node": "Respond 405 New Suggestion","type":"main","index":0 }]] },
+    "Prepare New Suggestion":    { "main": [[{ "node": "OpenAI New Suggestion","type":"main","index":0 }]] },
+    "OpenAI New Suggestion":     { "main": [[{ "node": "Format New Suggestion","type":"main","index":0 }]] },
+    "Format New Suggestion":     { "main": [[{ "node": "Return New Suggestion Response","type":"main","index":0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "airbnb-planner-fixed-v1",
+  "meta": { "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b" },
+  "id": "cevAUx1d7KQi8euM",
+  "tags": []
+}

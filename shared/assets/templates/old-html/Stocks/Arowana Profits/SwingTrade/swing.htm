@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swing Trade Strategy Generator</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        /* ... (keep previous styles unchanged) ... */
+    </style>
+<script>
+// Updated configuration
+const API_CONFIG = {
+    key: 'YOUR_API_KEY', // Get from alphavantage.co
+    function: 'TIME_SERIES_DAILY',
+    outputSize: 'compact',
+    datatype: 'json'
+};
+
+async function fetchStockData(symbol) {
+    try {
+        const response = await fetch(
+            `https://www.alphavantage.co/query?function=${API_CONFIG.function}&symbol=${symbol}&outputsize=${API_CONFIG.outputSize}&apikey=${API_CONFIG.key}`
+        );
+        
+        if (!response.ok) throw new Error('Network response failed');
+        
+        const data = await response.json();
+        
+        // Handle API rate limits
+        if (data.Note) {
+            showError('API limit reached - try again in 60 seconds');
+            return null;
+        }
+        
+        if (data['Error Message']) {
+            showError('Invalid stock symbol');
+            return null;
+        }
+        
+        const timeSeries = data['Time Series (Daily)'] || data['Time Series (1min)'];
+        if (!timeSeries) {
+            showError('No market data available');
+            return null;
+        }
+        
+        return processChartData(timeSeries);
+    } catch (error) {
+        showError(`Data fetch failed: ${error.message}`);
+        return null;
+    }
+}
+
+// Add retry mechanism
+async function fetchWithRetry(symbol, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        const data = await fetchStockData(symbol);
+        if (data) return data;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    return null;
+}
+
+// Update click handler
+document.getElementById('generateBtn').addEventListener('click', async () => {
+    // ... existing code ...
+    const data = await fetchWithRetry(symbol);
+    // ... rest of code ...
+});
+</script>
+</head>
+<body>
+    <div class="container">
+        <h1>📈 Smart Swing Trade Strategist</h1>
+        
+        <div class="input-group">
+            <input type="text" id="stockSymbol" placeholder="Enter stock symbol (e.g., AAPL)" required>
+            <select id="timeFrame" required>
+                <option value="">Select Time Frame</option>
+                <option value="3">3 Days</option>
+                <option value="5">5 Days</option>
+                <option value="10">10 Days</option>
+                <option value="14">14 Days</option>
+            </select>
+            <select id="riskTolerance" required>
+                <option value="">Select Risk Level</option>
+                <option value="low">Low Risk</option>
+                <option value="medium">Medium Risk</option>
+                <option value="high">High Risk</option>
+            </select>
+            <button type="submit" id="generateBtn">Generate Strategy</button>
+            <button type="button" id="saveBtn">Save Strategy</button>
+        </div>
+
+        <div id="chartContainer"></div>
+        <div id="strategyOutput" class="strategy-output"></div>
+    </div>
+
+    <script>
+        // Use a demo API key for testing (replace with your own for production)
+        const API_KEY = 'demo'; // Free key from alphavantage.co
+        let chartInstance = null;
+
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            try {
+                const symbol = document.getElementById('stockSymbol').value.trim().toUpperCase();
+                const days = parseInt(document.getElementById('timeFrame').value);
+                const risk = document.getElementById('riskTolerance').value;
+
+                if (!symbol || !days || !risk) {
+                    showError('Please fill all fields');
+                    return;
+                }
+
+                showLoading();
+                const data = await fetchStockData(symbol);
+                if (!data) {
+                    showError('Failed to fetch stock data');
+                    return;
+                }
+                
+                displayChart(data);
+                const strategy = generateTradingStrategy(symbol, days, risk);
+                displayStrategy(strategy);
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        async function fetchStockData(symbol) {
+            try {
+                const response = await fetch(
+                    `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${API_KEY}`
+                );
+                const data = await response.json();
+                
+                if (data['Error Message']) {
+                    throw new Error('Invalid stock symbol');
+                }
+                
+                const timeSeries = data['Time Series (Daily)'];
+                if (!timeSeries) {
+                    throw new Error('No historical data found');
+                }
+                
+                return processChartData(timeSeries);
+            } catch (error) {
+                showError(error.message);
+                return null;
+            }
+        }
+
+        function processChartData(rawData) {
+            return Object.entries(rawData).map(([date, values]) => ({
+                time: date,
+                open: parseFloat(values['1. open']),
+                high: parseFloat(values['2. high']),
+                low: parseFloat(values['3. low']),
+                close: parseFloat(values['4. close']),
+                volume: parseInt(values['5. volume'])
+            })).reverse();
+        }
+
+        function displayChart(data) {
+            if (chartInstance) {
+                chartInstance.remove();
+                chartInstance = null;
+            }
+            
+            const container = document.getElementById('chartContainer');
+            container.innerHTML = ''; // Clear previous chart
+            
+            const chart = LightweightCharts.createChart(container, {
+                width: container.clientWidth,
+                height: 400,
+                layout: {
+                    backgroundColor: '#FFFFFF',
+                    textColor: '#191919',
+                },
+                grid: {
+                    vertLines: { color: '#f0f3fa' },
+                    horzLines: { color: '#f0f3fa' }
+                },
+            });
+
+            const candlestickSeries = chart.addCandlestickSeries();
+            candlestickSeries.setData(data);
+            chartInstance = chart;
+        }
+
+        function generateTradingStrategy(symbol, days, risk) {
+            return `
+                <h2>${symbol} Swing Strategy (${days} Days)</h2>
+                <h3>📊 Entry Signals</h3>
+                <ul>
+                    ${getEntryStrategy(days).map(i => `<li>${i}</li>`).join('')}
+                </ul>
+                
+                <h3>🚪 Exit Signals</h3>
+                <ul>
+                    ${getExitStrategy(days).map(i => `<li>${i}</li>`).join('')}
+                </ul>
+                
+                <h3>⚖️ Risk Management (${risk.charAt(0).toUpperCase() + risk.slice(1)})</h3>
+                <ul>
+                    ${getRiskManagement(risk).map(i => `<li>${i}</li>`).join('')}
+                </ul>
+                
+                <h3>📈 Recommended Indicators</h3>
+                <ul>
+                    ${getIndicators(days).map(i => `<li>${i}</li>`).join('')}
+                </ul>
+            `;
+        }
+
+        function getEntryStrategy(days) {
+            if (days <= 5) return [
+                'Breakout above 15-minute opening range',
+                'RSI(14) < 40 on 1-hour chart',
+                'Volume spike > 150% of 20-day average'
+            ];
+            if (days <= 10) return [
+                'Pullback to 20-day moving average',
+                'MACD histogram turning positive',
+                'Bullish candlestick pattern confirmation'
+            ];
+            return [
+                'Weekly close above key resistance level',
+                'Fundamental catalyst alignment',
+                'Sector-wide momentum confirmation'
+            ];
+        }
+
+        function getExitStrategy(days) {
+            if (days <= 5) return [
+                '1:3 risk/reward ratio target',
+                'Closing below opening range low',
+                'RSI(14) > 70 on 15-minute chart'
+            ];
+            if (days <= 10) return [
+                '1:2 risk/reward ratio target',
+                'Break below 20-day moving average',
+                'MACD histogram turning negative'
+            ];
+            return [
+                '1:1 risk/reward ratio target',
+                'Weekly close below support level',
+                'Sector-wide pullback confirmation'
+            ];
+        }
+
+        function getRiskManagement(risk) {
+            const strategies = {
+                low: [
+                    '2% maximum capital allocation',
+                    '1:3 risk/reward ratio',
+                    'Trailing stop at 1.5× ATR'
+                ],
+                medium: [
+                    '3-4% capital allocation',
+                    '1:2 risk/reward ratio',
+                    'Dynamic position sizing'
+                ],
+                high: [
+                    '5%+ capital allocation',
+                    '1:1 risk/reward ratio',
+                    'Options hedging strategy'
+                ]
+            };
+            return strategies[risk] || [];
+        }
+
+        function getIndicators(days) {
+            if (days <= 5) return [
+                '15-minute RSI(14)',
+                'Volume profile',
+                'VWAP (Volume Weighted Average Price)'
+            ];
+            if (days <= 10) return [
+                'Daily MACD(12,26,9)',
+                '20-day moving average',
+                'Bollinger Bands(20,2)'
+            ];
+            return [
+                'Weekly Fibonacci retracement',
+                'Relative sector performance',
+                'Fundamental valuation metrics'
+            ];
+        }
+
+        function showLoading() {
+            document.getElementById('strategyOutput').innerHTML = `
+                <div class="loading">
+                    <h3>Analyzing Market Data...</h3>
+                    <p>Scanning patterns<br>
+                    Calculating risk parameters<br>
+                    Evaluating market conditions</p>
+                </div>
+            `;
+        }
+
+        function displayStrategy(content) {
+            document.getElementById('strategyOutput').innerHTML = content;
+        }
+
+        function showError(message) {
+            document.getElementById('strategyOutput').innerHTML = `
+                <div class="error">
+                    <h3>⚠️ Error Generating Strategy</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            try {
+                const strategies = JSON.parse(localStorage.getItem('savedStrategies') || '[]');
+                strategies.push({
+                    symbol: document.getElementById('stockSymbol').value,
+                    date: new Date().toISOString(),
+                    strategy: document.getElementById('strategyOutput').innerHTML
+                });
+                localStorage.setItem('savedStrategies', JSON.stringify(strategies));
+                alert('Strategy saved successfully!');
+            } catch (error) {
+                showError('Failed to save strategy: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

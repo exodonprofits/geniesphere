@@ -1,0 +1,468 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voyage Genie – AI-Powered Travel Planning</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f9fc;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .hero-section {
+            color: white;
+            padding: 4rem 1rem;
+            text-align: center;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 1s ease-in-out;
+        }
+        .hero-textbox {
+            background-color: rgba(255,255,255,0.9);
+            color: #333;
+        }
+        .hero-textbox::placeholder {
+            color: #666;
+        }
+        .cta-button:hover, .hero-textbox-submit:hover {
+            transform: scale(1.05);
+        }
+        .floating-chatbot {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: #00c4b4;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-size: 1.5rem;
+            z-index: 50;
+            cursor: pointer;
+        }
+        .floating-chatbot:hover {
+            background-color: #009c8c;
+        }
+        .dropdown {
+            position: relative;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #fff;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 4px;
+            top: 100%;
+            left: 0;
+        }
+        .dropdown-content a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+        .dropdown-content a:hover {
+            background-color: #f1f1f1;
+            color: #000;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+            return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+            if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+                try {
+                    var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                    var firstSheetName = workbook.SheetNames[0];
+                    var worksheet = workbook.Sheets[firstSheetName];
+                    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                    var filteredData = jsonData.filter(row => row.some(filledCell));
+                    var headerRowIndex = filteredData.findIndex((row, index) =>
+                        row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                    );
+                    if (headerRowIndex === -1 || headerRowIndex > 25) {
+                        headerRowIndex = 0;
+                    }
+                    var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+                    csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                    return csv;
+                } catch (e) {
+                    console.error(e);
+                    return "";
+                }
+            }
+            return gk_fileData[filename] || "";
+        }
+    </script>
+
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <img src="images/nav-icon.png" alt="Voyage Genie Icon" class="h-6 w-6 mr-2">
+                <h1 class="text-2xl font-bold">Voyage Genie</h1>
+            </div>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="#home" class="hover:underline">Home</a>
+                <div class="dropdown">
+                    <a href="index.html#home" class="hover:underline flex items-center" aria-label="Plan A Trip" aria-haspopup="true">
+                        Plan A Trip
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </a>
+                    <div class="dropdown-content">
+                        <a href="tropical-trip-planner.html">Tropical Resort</a>
+                        <a href="cruise-trip-planner.html">Cruise Adventure</a>
+                        <a href="airbnb-trip-planner.html">Airbnb Getaway</a>
+                        <a href="adventure-trip-planner.html">Adventure Trip</a>
+                    </div>
+                </div>
+                <a href="features.html" class="hover:underline">Features</a>
+                <a href="contact.html" class="hover:underline">Contact</a>
+                <a href="#" class="hover:underline">Login</a>
+                <a href="#" class="hover:underline">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-section">
+        <img src="images/hero_logo_full.png" alt="Voyage Genie Logo" class="mx-auto mb-6 w-40">
+        <h1 class="text-3xl md:text-4xl font-bold mb-4">Let Genie Curate Your Dream Getaway</h1>
+        <p class="text-lg md:text-xl mb-6">Plan less, explore more – your personalized adventure starts here.</p>
+        <div class="max-w-xl mx-auto flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <input type="text" class="hero-textbox px-4 py-2 rounded w-full" placeholder="Ask Genie: Bali retreat or Alaskan cruise?">
+            <button class="hero-textbox-submit bg-teal-500 text-white px-6 py-2 rounded font-semibold">Ask Genie</button>
+        </div>
+    </section>
+
+    <!-- Travel Options Section -->
+    <section id="plan-trip" class="bg-white py-16" data-aos="fade-up">
+        <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Explore Travel Options</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto px-4">
+            <div class="text-center shadow-lg p-4 rounded bg-white hover:scale-105 transition-transform">
+                <img src="images/beachortropical.jpg" class="rounded mb-4 h-32 w-full object-cover">
+                <h3 class="text-xl font-semibold">🏖️ Tropical Resort</h3>
+                <p class="text-gray-600">Sun, sand & zero stress – all-inclusive paradise escapes.</p>
+                <a href="tropical-trip-planner.html" class="inline-block mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Plan Now</a>
+            </div>
+            <div class="text-center shadow-lg p-4 rounded bg-white hover:scale-105 transition-transform">
+                <img src="images/cruise1.jpg" class="rounded mb-4 h-32 w-full object-cover">
+                <h3 class="text-xl font-semibold">🚢 Cruise Adventure</h3>
+                <p class="text-gray-600">Wake up to new horizons and ocean breezes.</p>
+                <a href="cruise-trip-planner.html" class="inline-block mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Plan Now</a>
+            </div>
+            <div class="text-center shadow-lg p-4 rounded bg-white hover:scale-105 transition-transform">
+                <img src="images/hotel.jpg" class="rounded mb-4 h-32 w-full object-cover">
+                <h3 class="text-xl font-semibold">🏠 Airbnb Getaway</h3>
+                <p class="text-gray-600">Stay cozy in unique homes across the world.</p>
+                <a href="airbnb-trip-planner.html" class="inline-block mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Plan Now</a>
+            </div>
+            <div class="text-center shadow-lg p-4 rounded bg-white hover:scale-105 transition-transform">
+                <img src="images/adventure1.jpg" class="rounded mb-4 h-32 w-full object-cover">
+                <h3 class="text-xl font-semibold">🌄 Adventure Trip</h3>
+                <p class="text-gray-600">Thrill-seeking journeys into the wild and unknown.</p>
+                <a href="adventure-trip-planner.html" class="inline-block mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Plan Now</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Explore Local Section -->
+    <section id="features" class="py-10 bg-white" data-aos="fade-up"> 
+    <div class="flex justify-center mt-8">
+        <div class="text-center">
+            <p class="text-gray-600">Already at your destination?</p>
+            <a href="explore-this-destination.html">
+            <button class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 mt-2">🌆 Just Explore Locally</button>
+            </a>
+        </div>
+    </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-16 bg-gray-50" data-aos="fade-up">
+        <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Why Choose Voyage Genie?</h2>
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+            <div class="bg-white p-6 rounded shadow-lg text-center">
+                <h3 class="text-xl font-semibold mb-2">✨ Personalized Itineraries</h3>
+                <p class="text-gray-600">Tailored travel plans for your vibe, budget, and style.</p>
+            </div>
+            <div class="bg-white p-6 rounded shadow-lg text-center">
+                <h3 class="text-xl font-semibold mb-2">🧠 AI-Powered Suggestions</h3>
+                <p class="text-gray-600">Get smart recommendations that adapt to you.</p>
+            </div>
+            <div class="bg-white p-6 rounded shadow-lg text-center">
+                <h3 class="text-xl font-semibold mb-2">🛫 Stress-Free Planning</h3>
+                <p class="text-gray-600">Let Genie handle the logistics while you dream.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-gradient-to-r from-blue-400 to-indigo-600 text-center py-8 text-sm text-white">
+        <p class="mb-2">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍 | Plan Smarter with Genie</p>
+        <form class="flex flex-col sm:flex-row justify-center items-center gap-2 mt-4">
+            <input type="email" placeholder="Enter your email" class="px-4 py-2 rounded bg-white shadow border text-gray-800">
+            <button class="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600">Subscribe</button>
+        </form>
+        <div class="mt-4">
+            <a href="#home" class="mx-2 hover:underline text-white">Home</a>
+            <a href="#plan-trip" class="mx-2 hover:underline text-white">Plan</a>
+            <a href="features.html" class="mx-2 hover:underline text-white">Features</a>
+            <a href="contact.html" class="mx-2 hover:underline text-white">Contact</a>
+        </div>
+    </footer>
+
+    <!-- Floating Chatbot Button -->
+    <div class="floating-chatbot" title="Ask Genie">
+        💬
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const backgrounds = [
+            'bg_images/bg1.jpg',
+            'bg_images/bg2.jpg',
+            'bg_images/bg3.jpg',
+            'bg_images/bg4.jpg',
+            'bg_images/bg5.jpg',
+            'bg_images/bg6.jpg',
+            'bg_images/bg7.jpg',
+            'bg_images/bg8.jpg',
+            'bg_images/bg9.jpg'
+        ];
+        let index = Math.floor(Math.random() * backgrounds.length);
+
+        function rotateBackground() {
+            const hero = document.querySelector('.hero-section');
+            if (hero) {
+                hero.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${backgrounds[index]}')`;
+                index = (index + 1) % backgrounds.length;
+            }
+        }
+
+        setTimeout(() => {
+            rotateBackground();
+            setInterval(rotateBackground, 7000);
+        }, 100);
+
+        // Ask Genie functionality
+        const askGenieInput = document.querySelector('.hero-textbox');
+        const askGenieButton = document.querySelector('.hero-textbox-submit');
+
+        // Keyword sets for each planner page
+        const plannerKeywords = {
+            'tropical-trip-planner.html': [
+                'beach', 'tropical', 'resort', 'sun', 'sand', 'island', 'paradise',
+                'getaway', 'vacation', 'relax', 'all-inclusive', 'bali', 'maldives',
+                'caribbean', 'fiji', 'seychelles', 'phuket', 'cancun', 'tulum'
+            ],
+            'cruise-trip-planner.html': [
+                'cruise', 'ship', 'ocean', 'sea', 'voyage', 'boat', 'alaskan', 'caribbean cruise',
+                'mediterranean', 'sail', 'liner', 'nautical', 'ports'
+            ],
+            'airbnb-trip-planner.html': [
+                'airbnb', 'home', 'cozy', 'unique stay', 'vacation rental', 'apartment',
+                'cottage', 'villa', 'homestay', 'local stay'
+            ],
+            'adventure-trip-planner.html': [
+                'adventure', 'hiking', 'wild', 'outdoor', 'thrill', 'explore', 'trekking',
+                'camping', 'safari', 'mountain', 'jungle', 'expedition', 'backpacking'
+            ]
+        };
+
+        // List of popular travel destinations for parsing
+        const popularDestinations = [
+            'bali', 'maldives', 'caribbean', 'fiji', 'seychelles', 'phuket', 'cancun', 'tulum',
+            'alaska', 'mediterranean', 'caribbean', 'hawaii', 'santorini', 'paris', 'new york',
+            'tokyo', 'sydney', 'cape town', 'machu picchu', 'patagonia', 'iceland', 'banff'
+        ];
+
+        // Updated list of airports with accurate coordinates (latitude, longitude)
+        const airports = [
+            { code: 'JFK', name: 'John F. Kennedy International Airport', lat: 40.6413, lon: -73.7781, city: 'New York' },
+            { code: 'LAX', name: 'Los Angeles International Airport', lat: 33.9416, lon: -118.4085, city: 'Los Angeles' },
+            { code: 'ORD', name: 'Chicago O\'Hare International Airport', lat: 41.9742, lon: -87.9073, city: 'Chicago' },
+            { code: 'LHR', name: 'London Heathrow Airport', lat: 51.4700, lon: -0.4543, city: 'London' },
+            { code: 'NRT', name: 'Narita International Airport', lat: 35.7647, lon: 140.3864, city: 'Tokyo' },
+            { code: 'SYD', name: 'Sydney Kingsford Smith Airport', lat: -33.9399, lon: 151.1753, city: 'Sydney' },
+            { code: 'DPS', name: 'Ngurah Rai International Airport', lat: -8.7480, lon: 115.1672, city: 'Bali' },
+            { code: 'MIA', name: 'Miami International Airport', lat: 25.7959, lon: -80.2870, city: 'Miami' }
+        ];
+
+        // Function to calculate distance between two coordinates (Haversine formula)
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth's radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c; // Distance in km
+            return distance;
+        }
+
+        // Function to find the nearest airport
+        function findNearestAirport(userLat, userLon) {
+            let nearestAirport = airports[0];
+            let minDistance = getDistance(userLat, userLon, airports[0].lat, airports[0].lon);
+            console.log(`Distance to ${airports[0].name}: ${minDistance.toFixed(2)} km`);
+
+            for (let i = 1; i < airports.length; i++) {
+                const airport = airports[i];
+                const distance = getDistance(userLat, userLon, airport.lat, airport.lon);
+                console.log(`Distance to ${airport.name}: ${distance.toFixed(2)} km`);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestAirport = airport;
+                }
+            }
+            console.log(`Nearest airport selected: ${nearestAirport.name} (${nearestAirport.code}) at ${minDistance.toFixed(2)} km`);
+            return nearestAirport;
+        }
+
+        // Function to extract destination from query
+        function extractDestination(query) {
+            const words = query.toLowerCase().split(/\s+/);
+            for (const word of words) {
+                if (popularDestinations.includes(word)) {
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                }
+            }
+            return query; // Fallback to the full query if no destination is matched
+        }
+
+        // Handle Ask Genie submission
+        function handleAskGenie() {
+            const query = askGenieInput.value.trim().toLowerCase();
+            console.log('Ask Genie query:', query);
+
+            if (!query) {
+                alert('Please enter a travel query, e.g., "beach getaway" or "Alaskan cruise".');
+                return;
+            }
+
+            // Find matching planner page
+            let redirectUrl = null;
+            for (const [url, keywords] of Object.entries(plannerKeywords)) {
+                if (keywords.some(keyword => query.includes(keyword))) {
+                    redirectUrl = url;
+                    break;
+                }
+            }
+
+            // Extract destination from query
+            const destination = extractDestination(query);
+
+            // Get user's location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLon = position.coords.longitude;
+                        console.log('User location:', userLat, userLon);
+
+                        // Find nearest airport
+                        const nearestAirport = findNearestAirport(userLat, userLon);
+
+                        if (redirectUrl) {
+                            // Redirect to the matching planner page with destination and departure airport as query params
+                            window.location.href = `${redirectUrl}?destination=${encodeURIComponent(destination)}&departureAirport=${encodeURIComponent(nearestAirport.code)}`;
+                        } else {
+                            // Redirect to tropical search form with pre-filled destination and departure airport
+                            window.location.href = `tropical-trip-planner.html?destination=${encodeURIComponent(destination)}&departureAirport=${encodeURIComponent(nearestAirport.code)}`;
+                        }
+                    },
+                    (error) => {
+                        console.error('Geolocation error:', error);
+                        // Fallback if geolocation fails: redirect without departure airport
+                        if (redirectUrl) {
+                            window.location.href = `${redirectUrl}?destination=${encodeURIComponent(destination)}`;
+                        } else {
+                            window.location.href = `tropical-trip-planner.html?destination=${encodeURIComponent(destination)}`;
+                        }
+                    }
+                );
+            } else {
+                console.error('Geolocation not supported');
+                // Fallback if geolocation is not supported
+                if (redirectUrl) {
+                    window.location.href = `${redirectUrl}?destination=${encodeURIComponent(destination)}`;
+                } else {
+                    window.location.href = `tropical-trip-planner.html?destination=${encodeURIComponent(destination)}`;
+                }
+            }
+        }
+
+        // Attach event listeners
+        askGenieButton.addEventListener('click', handleAskGenie);
+        askGenieInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleAskGenie();
+            }
+        });
+    });
+    </script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'938c3e69cf02bf75',t:'MTc0NjA3MDY4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93bbd1894c8953db',t:'MTc0NjU2OTU0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93c0ffea7c9dbd03',t:'MTc0NjYyMzg2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>

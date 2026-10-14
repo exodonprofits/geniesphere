@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shopping Assistant – GenieSphere</title>
+  <style>
+    :root{
+      --bg:#0b1220; /* deep blue */
+      --panel:#121a2b;
+      --muted:#1b2740;
+      --accent:#4ade80; /* green */
+      --accent-2:#3b82f6; /* blue */
+      --text:#e6edf5;
+      --sub:#b7c3d6;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --radius:18px;
+      --shadow:0 8px 24px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 800px at 10% -10%,#1a2440 0%,#0b1220 45%),radial-gradient(900px 600px at 110% 0%,#15213b 0%,#0b1220 55%);color:var(--text);font:16px/1.45 system-ui,Segoe UI,Roboto,Arial,sans-serif}
+   /* Header */
+    .header{position:sticky;top:0;z-index:50;backdrop-filter: blur(8px);background:rgba(11,18,32,.6);border-bottom:1px solid rgba(255,255,255,.06)}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{ display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); }
+    .logo{
+        width:40px; height:40px; border-radius:50%;
+        background: radial-gradient(circle at 30% 30%, #6af0c4, #3ee1a1 40%, #1c9369 75%);
+        box-shadow: 0 0 0 4px var(--ring), 0 8px 24px rgba(62,225,161,.35);
+    }
+    .brand-name{font-weight:800; letter-spacing:.2px;}
+
+    .nav{display:flex;gap:10px;flex-wrap:wrap}
+    .pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);text-decoration:none;color:var(--text);transition:.2s}
+    .pill:hover{transform:translateY(-1px);background:rgba(255,255,255,.1)}
+    .pill.primary{background:var(--accent-2);border-color:transparent;color:white}
+
+    /* Layout */
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
+
+    /* Cards */
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card h2{margin:0 0 10px;font-size:20px}
+    .card .head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+    .content{padding:16px}
+
+    /* Inputs */
+    label{display:block;margin:8px 0 6px;color:var(--sub);font-size:14px}
+    input,select,textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0f1627;color:var(--text);outline:none}
+    textarea{min-height:80px;resize:vertical}
+
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:10px 16px;cursor:pointer;background:var(--muted);color:var(--text);transition:.2s;text-decoration:none}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.green{background:var(--accent);color:#06250f}
+    .btn.blue{background:var(--accent-2);color:#fff}
+    .btn.red{background:var(--danger);color:#fff}
+    .btn.yellow{background:var(--warning);color:#111827}
+
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);cursor:pointer}
+
+    /* Table */
+    .tbl{width:100%;min-width:860px;border-collapse:collapse}
+    .tbl th,.tbl td{border-bottom:1px solid rgba(255,255,255,.08);padding:10px;text-align:left}
+    .tbl th{color:var(--sub);font-weight:600}
+    .table-wrap{overflow-x:auto}
+
+    /* Status pill */
+    .status{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+
+    .bar{height:10px;background:#0f1627;border:1px solid rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+    .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#22d3ee);width:0%}
+
+    footer{margin:24px 0 40px;color:var(--sub);text-align:center}
+
+    .flex{display:flex;gap:8px;align-items:center}
+    .right{justify-content:flex-end}
+    .space{height:8px}
+
+    @media print{ .header,.no-print{display:none !important} body{background:white;color:black} .card{box-shadow:none;border-color:#ddd} a::after{content:" (" attr(href) ")";font-size:12px;color:#555} }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="../index.html" aria-label="Back to GenieSphere Home">
+            <img src="../genie-logo.png" alt="GenieSphere Logo" class="logo"/>
+            <span class="brand-name">GenieSphere</span>
+        </a>
+        <nav class="nav">
+          <a class="pill primary" href="../dashboard/personal.html">👤 Personal</a>
+          <a class="pill" href="../dashboard/business.html">🏢 Business</a>
+          <a class="pill" href="../dashboard/investment.html">📈 Investing</a>
+          <a class="pill" href="../dashboard/leisure.html">🎉 Leisure</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="row">
+      <h1 style="margin:18px 0 0">🛍️ Shopping Assistant</h1>
+      <div class="flex right no-print">
+        <button class="btn green" id="saveBtn">💾 Save</button>
+        <button class="btn" id="loadBtn">📂 Load</button>
+        <button class="btn" id="exportBtn">📤 Export CSV</button>
+        <button class="btn" id="printBtn">🖨️ Print</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Overview -->
+      <section class="card">
+        <div class="content">
+          <div class="head">
+            <h2>🗂️ List Overview</h2>
+            <div class="chips no-print">
+              <span class="chip" id="autosaveBadge">Auto‑saved</span>
+            </div>
+          </div>
+          <div class="row" style="align-items:flex-start;gap:12px">
+            <div style="flex:1;min-width:200px">
+              <label for="listName">🧾 List Name</label>
+              <input id="listName" placeholder="Weekly Groceries" />
+            </div>
+            <div style="width:220px">
+              <label for="defaultStore">🏪 Default Store</label>
+              <select id="defaultStore"></select>
+            </div>
+            <div style="width:180px">
+              <label for="budget">💵 Weekly Budget</label>
+              <input id="budget" type="number" min="0" placeholder="150" />
+            </div>
+          </div>
+          <div style="margin-top:8px">
+            <label for="notes">📝 Notes</label>
+            <textarea id="notes" placeholder="Coupons, dietary notes, delivery windows…"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Add / Templates -->
+      <section class="card">
+        <div class="content">
+          <div class="head">
+            <h2>⚡ Quick Add & Templates</h2>
+            <div class="flex no-print" style="flex-wrap:wrap">
+              <input id="qaName" placeholder="Item (e.g., Milk)" style="min-width:180px">
+              <input id="qaQty" type="number" min="1" step="1" placeholder="Qty" style="width:100px">
+              <select id="qaUnit" style="width:130px">
+                <option>pcs</option>
+                <option>lb</option>
+                <option>oz</option>
+                <option>pack</option>
+              </select>
+              <select id="qaCat" style="width:160px"></select>
+              <select id="qaStore" style="width:180px"></select>
+              <input id="qaPrice" type="number" min="0" step="0.01" placeholder="Price" style="width:130px">
+              <button class="btn green" id="qaAdd">➕ Add</button>
+            </div>
+          </div>
+          <div class="chips no-print" id="templates"></div>
+        </div>
+      </section>
+
+      <!-- Shopping List -->
+      <section class="card">
+        <div class="content">
+          <div class="head">
+            <h2>🧾 Shopping List</h2>
+            <div class="flex no-print" style="flex-wrap:wrap">
+              <input id="search" placeholder="Search items…" style="min-width:220px">
+              <select id="filterStore" style="width:180px"></select>
+              <select id="filterCat" style="width:160px"></select>
+              <select id="filterStatus" style="width:160px">
+                <option value="">All Status</option>
+                <option>Todo</option>
+                <option>In Cart</option>
+                <option>Purchased</option>
+              </select>
+              <button class="btn" id="clearFilters">🧹 Clear</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="tbl" id="itemsTable">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Store</th>
+                  <th>Category</th>
+                  <th>Qty</th>
+                  <th>Unit</th>
+                  <th>Unit $</th>
+                  <th>Est Total</th>
+                  <th>Status</th>
+                  <th class="no-print">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Budget & Summary -->
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>📊 Budget & Summary</h2></div>
+          <div id="summaryCards" class="row" style="gap:12px;flex-wrap:wrap"></div>
+          <div class="space"></div>
+          <div id="overall" class="card" style="padding:12px">
+            <div class="row" style="justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div>
+                <div style="font-weight:700">Overall</div>
+                <div style="color:var(--sub);font-size:13px">Budget: $<span id="sumBudget">0</span> · Planned: $<span id="sumPlanned">0</span> · Purchased: $<span id="sumSpent">0</span></div>
+              </div>
+              <div style="min-width:240px;flex:1">
+                <div class="bar"><i id="budgetBar" style="width:0%"></i></div>
+                <div style="color:var(--sub);font-size:12px;margin-top:4px"><span id="budgetPct">0</span>% of budget used</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stores -->
+      <section class="card">
+        <div class="content">
+          <div class="head">
+            <h2>🏪 Stores</h2>
+            <div class="flex no-print">
+              <input id="storeName" placeholder="Add store (e.g., Costco)" style="min-width:220px">
+              <button class="btn" id="addStore">➕ Add Store</button>
+            </div>
+          </div>
+          <div id="storesList" class="list"></div>
+        </div>
+      </section>
+
+      <!-- Pantry -->
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>🥫 Pantry</h2>
+            <button class="btn no-print" id="clearPantry">🧹 Clear Pantry</button>
+          </div>
+          <div id="pantryList" class="list"></div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <p>© <span id="year"></span> GenieSphere · Shopping Assistant. Built to make life easier 💫</p>
+    </footer>
+  </main>
+
+  <script>
+    const $ = (s,ctx=document)=>ctx.querySelector(s);
+    const $$ = (s,ctx=document)=>Array.from(ctx.querySelectorAll(s));
+    const stateKey = 'shopping_assistant_v1';
+
+    const defaultCats = ['Produce','Dairy','Meat','Bakery','Pantry','Frozen','Household','Beverages','Pharmacy','Other'];
+
+    const model = {
+      overview: { listName:'Weekly Groceries', defaultStore:'', budget:150, notes:'' },
+      stores: [ {id:uid(), name:'Costco', notes:''}, {id:uid(), name:'Target', notes:''}, {id:uid(), name:'Whole Foods', notes:''} ],
+      categories: [...defaultCats],
+      items: [], // {id,name,storeId,category,qty,unit,price,status}
+      pantry: [] // {id,name,qty,unit,updatedAt}
+    };
+
+    // ---------- Render helpers ----------
+    function fillSelect(sel, options, includeBlank=false){
+      sel.innerHTML = '';
+      if(includeBlank){ const o=document.createElement('option'); o.value=''; o.textContent=''; sel.appendChild(o); }
+      options.forEach(o=>{
+        const opt=document.createElement('option');
+        if(typeof o==='string'){ opt.value=o; opt.textContent=o; }
+        else { opt.value=o.value; opt.textContent=o.label; }
+        sel.appendChild(opt);
+      });
+    }
+
+    function storeById(id){ return model.stores.find(s=>s.id===id); }
+
+    // ---------- Overview ----------
+    function renderOverview(){
+      $('#listName').value = model.overview.listName||'';
+      $('#budget').value = model.overview.budget||'';
+      $('#notes').value = model.overview.notes||'';
+      fillSelect($('#defaultStore'), model.stores.map(s=>({value:s.id,label:s.name})), true);
+      $('#defaultStore').value = model.overview.defaultStore || '';
+    }
+
+    // ---------- Quick Add ----------
+    function renderQuickAdd(){
+      fillSelect($('#qaCat'), model.categories.map(c=>({value:c,label:c})));
+      fillSelect($('#qaStore'), model.stores.map(s=>({value:s.id,label:s.name})), true);
+      $('#qaStore').value = model.overview.defaultStore || '';
+      const tplNames = ['Milk','Eggs','Bread','Bananas','Chicken Breast','Rice','Pasta','Paper Towels','Toilet Paper','Dish Soap'];
+      const wrap = $('#templates'); wrap.innerHTML='';
+      tplNames.forEach(n=>{ const chip=document.createElement('span'); chip.className='chip'; chip.textContent=n; chip.onclick=()=>{ $('#qaName').value=n; }; wrap.appendChild(chip); });
+    }
+
+    // ---------- Items ----------
+    function addItem(obj){
+      const it = Object.assign({id:uid(), name:'', storeId:model.overview.defaultStore||'', category:model.categories[0], qty:1, unit:'pcs', price:0, status:'Todo'}, obj||{});
+      model.items.push(it); renderItems(); save();
+    }
+
+    function removeItem(id){ model.items = model.items.filter(i=>i.id!==id); renderItems(); save(); }
+
+    function changeStatus(id, next){ const it=model.items.find(i=>i.id===id); if(!it) return; it.status=next; if(next==='Purchased'){ moveToPantry(it); } renderItems(); save(); }
+
+    function moveToPantry(item){
+      const existing = model.pantry.find(p=>p.name.toLowerCase()===item.name.toLowerCase());
+      if(existing){ existing.qty = (Number(existing.qty)||0) + (Number(item.qty)||0); existing.unit=item.unit; existing.updatedAt=new Date().toISOString(); }
+      else { model.pantry.push({id:uid(), name:item.name, qty:item.qty, unit:item.unit, updatedAt:new Date().toISOString()}); }
+      renderPantry();
+    }
+
+    function itemRow(it){
+      const tr = document.createElement('tr'); tr.dataset.id=it.id;
+      const storeName = storeById(it.storeId)?.name || '';
+      const total = (Number(it.qty)||0) * (Number(it.price)||0);
+      tr.innerHTML = `
+        <td>
+          <input value="${esc(it.name)}" class="i-name" placeholder="Item"/>
+        </td>
+        <td>
+          <select class="i-store">${['',...model.stores.map(s=>s.id)].map(id=>`<option value="${id}" ${it.storeId===id?'selected':''}>${id?esc(storeById(id)?.name||''):''}</option>`).join('')}</select>
+        </td>
+        <td>
+          <select class="i-cat">${model.categories.map(c=>`<option ${it.category===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+        </td>
+        <td><input type="number" min="0" step="1" class="i-qty" value="${it.qty||1}" style="width:90px"></td>
+        <td><input class="i-unit" value="${esc(it.unit||'pcs')}" style="width:90px"></td>
+        <td><input type="number" min="0" step="0.01" class="i-price" value="${it.price||0}" style="width:110px"></td>
+        <td>$<span class="i-total">${fmt(total)}</span></td>
+        <td>
+          <select class="i-status">
+            ${['Todo','In Cart','Purchased'].map(s=>`<option ${it.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </td>
+        <td class="no-print">
+          <div class="flex">
+            <button class="btn" title="In Cart">🛒</button>
+            <button class="btn green" title="Purchased">✅</button>
+            <button class="btn red" title="Remove">🗑️</button>
+          </div>
+        </td>
+      `;
+      // Wire events
+      tr.querySelector('.i-name').addEventListener('input', e=>{ it.name=e.target.value; save(); });
+      tr.querySelector('.i-store').addEventListener('change', e=>{ it.storeId=e.target.value; renderSummary(); save(); });
+      tr.querySelector('.i-cat').addEventListener('change', e=>{ it.category=e.target.value; renderSummary(); save(); });
+      tr.querySelector('.i-qty').addEventListener('input', e=>{ it.qty=Number(e.target.value)||0; tr.querySelector('.i-total').textContent=fmt((Number(it.qty)||0)*(Number(it.price)||0)); renderSummary(); save(); });
+      tr.querySelector('.i-unit').addEventListener('input', e=>{ it.unit=e.target.value; save(); });
+      tr.querySelector('.i-price').addEventListener('input', e=>{ it.price=Number(e.target.value)||0; tr.querySelector('.i-total').textContent=fmt((Number(it.qty)||0)*(Number(it.price)||0)); renderSummary(); save(); });
+      tr.querySelector('.i-status').addEventListener('change', e=>{ changeStatus(it.id, e.target.value); });
+      const [btnCart, btnPurchased, btnDel] = tr.querySelectorAll('button');
+      btnCart.onclick=()=>{ changeStatus(it.id,'In Cart'); };
+      btnPurchased.onclick=()=>{ changeStatus(it.id,'Purchased'); };
+      btnDel.onclick=()=>{ removeItem(it.id); };
+      return tr;
+    }
+
+    function renderItems(){
+      const tbody = $('#itemsTable tbody'); tbody.innerHTML='';
+      // Filters
+      const q = ($('#search').value||'').toLowerCase();
+      const fs = $('#filterStore').value||'';
+      const fc = $('#filterCat').value||'';
+      const fst = $('#filterStatus').value||'';
+
+      model.items
+        .filter(it=> !q || [it.name, storeById(it.storeId)?.name, it.category].join(' ').toLowerCase().includes(q))
+        .filter(it=> !fs || it.storeId===fs)
+        .filter(it=> !fc || it.category===fc)
+        .filter(it=> !fst || it.status===fst)
+        .forEach(it=> tbody.appendChild(itemRow(it)));
+
+      renderSummary();
+    }
+
+    // ---------- Summary ----------
+    function renderSummary(){
+      const planned = sum(model.items.map(it=> (Number(it.qty)||0)*(Number(it.price)||0) ));
+      const spent = sum(model.items.filter(it=>it.status==='Purchased').map(it=> (Number(it.qty)||0)*(Number(it.price)||0) ));
+      const budget = Number($('#budget').value)||0;
+      $('#sumPlanned').textContent = fmt(planned);
+      $('#sumSpent').textContent = fmt(spent);
+      $('#sumBudget').textContent = fmt(budget);
+      const pct = budget>0 ? Math.min(100, Math.round((spent/budget)*100)) : (spent>0?100:0);
+      $('#budgetPct').textContent = pct;
+      $('#budgetBar').style.width = pct + '%';
+
+      // per store cards
+      const wrap = $('#summaryCards'); wrap.innerHTML='';
+      const totals = {};
+      model.items.forEach(it=>{
+        const store = storeById(it.storeId)?.name || 'Unassigned';
+        totals[store] = totals[store] || {planned:0,spent:0};
+        totals[store].planned += (Number(it.qty)||0)*(Number(it.price)||0);
+        if(it.status==='Purchased') totals[store].spent += (Number(it.qty)||0)*(Number(it.price)||0);
+      });
+      Object.entries(totals).forEach(([store, t])=>{
+        const card = document.createElement('div'); card.className='card'; card.style.padding='12px'; card.style.minWidth='220px';
+        const pct = t.planned>0 ? Math.round((t.spent/t.planned)*100) : (t.spent>0?100:0);
+        card.innerHTML = `
+          <div style="font-weight:700">${esc(store)}</div>
+          <div style="color:var(--sub);font-size:13px">Planned $${fmt(t.planned)} · Spent $${fmt(t.spent)}</div>
+          <div class="bar" style="margin-top:6px"><i style="width:${pct}%"></i></div>
+          <div style="color:var(--sub);font-size:12px;margin-top:4px">${pct}% of planned spent</div>
+        `;
+        wrap.appendChild(card);
+      });
+    }
+
+    // ---------- Stores ----------
+    function renderStores(){
+      // selects
+      fillSelect($('#filterStore'), model.stores.map(s=>({value:s.id,label:s.name})), true);
+      fillSelect($('#qaStore'), model.stores.map(s=>({value:s.id,label:s.name})), true);
+      $('#qaStore').value = model.overview.defaultStore || '';
+
+      // list
+      const wrap = $('#storesList'); wrap.innerHTML='';
+      model.stores.forEach(s=>{
+        const card=document.createElement('div'); card.className='card'; card.style.padding='12px';
+        card.innerHTML = `
+          <div class="row" style="gap:10px;align-items:flex-start">
+            <div style="flex:1">
+              <label>Name</label>
+              <input value="${esc(s.name)}" class="s-name"/>
+            </div>
+            <div style="flex:2">
+              <label>Notes (aisles, membership #, delivery)</label>
+              <input value="${esc(s.notes||'')}" class="s-notes"/>
+            </div>
+            <div class="no-print" style="display:flex;align-items:flex-end">
+              <button class="btn red s-del">🗑️ Remove</button>
+            </div>
+          </div>`;
+        card.querySelector('.s-name').addEventListener('input', e=>{ s.name=e.target.value; renderStores(); renderQuickAdd(); renderItems(); save(); });
+        card.querySelector('.s-notes').addEventListener('input', e=>{ s.notes=e.target.value; save(); });
+        card.querySelector('.s-del').onclick=()=>{ if(!confirm('Remove store? Items keep their store id.')) return; model.stores = model.stores.filter(x=>x.id!==s.id); renderStores(); renderQuickAdd(); renderItems(); save(); };
+        wrap.appendChild(card);
+      });
+    }
+
+    // ---------- Pantry ----------
+    function renderPantry(){
+      const wrap = $('#pantryList'); wrap.innerHTML='';
+      if(model.pantry.length===0){ wrap.innerHTML = '<span style="color:var(--sub)">Pantry is empty. Purchased items will appear here.</span>'; return; }
+      model.pantry.forEach(p=>{
+        const row=document.createElement('div'); row.className='card'; row.style.padding='12px';
+        row.innerHTML = `
+          <div class="row" style="justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-weight:700">${esc(p.name)}</div>
+              <div style="color:var(--sub);font-size:13px">${fmt(p.qty)} ${esc(p.unit||'')} · updated ${new Date(p.updatedAt).toLocaleDateString()}</div>
+            </div>
+            <div class="flex no-print">
+              <button class="btn" onclick="consumePantry('${p.id}',1)">➖ Use 1</button>
+              <button class="btn red" onclick="deletePantry('${p.id}')">🗑️ Remove</button>
+            </div>
+          </div>`;
+        wrap.appendChild(row);
+      });
+    }
+    function consumePantry(id, amt){ const p=model.pantry.find(x=>x.id===id); if(!p) return; p.qty=Math.max(0,(Number(p.qty)||0)-amt); p.updatedAt=new Date().toISOString(); if(p.qty===0) model.pantry=model.pantry.filter(x=>x.id!==id); renderPantry(); save(); }
+    function deletePantry(id){ model.pantry = model.pantry.filter(x=>x.id!==id); renderPantry(); save(); }
+
+    // ---------- Save/Load/Export ----------
+    function snapshot(){
+      return {
+        overview: { listName: $('#listName').value, defaultStore: $('#defaultStore').value, budget: $('#budget').value, notes: $('#notes').value },
+        stores: model.stores,
+        categories: model.categories,
+        items: $$('#itemsTable tbody tr').map(tr=>{
+          const id = tr.dataset.id; const it = model.items.find(x=>x.id===id) || {id};
+          return {
+            id,
+            name: tr.querySelector('.i-name').value,
+            storeId: tr.querySelector('.i-store').value,
+            category: tr.querySelector('.i-cat').value,
+            qty: Number(tr.querySelector('.i-qty').value)||0,
+            unit: tr.querySelector('.i-unit').value,
+            price: Number(tr.querySelector('.i-price').value)||0,
+            status: tr.querySelector('.i-status').value
+          };
+        }),
+        pantry: model.pantry
+      }
+    }
+
+    function hydrate(s){
+      if(!s) return;
+      model.overview = Object.assign(model.overview, s.overview||{});
+      model.stores = s.stores && s.stores.length? s.stores : model.stores;
+      model.categories = s.categories && s.categories.length? s.categories : model.categories;
+      model.items = s.items || [];
+      model.pantry = s.pantry || [];
+
+      renderOverview();
+      renderQuickAdd();
+      renderStores();
+      renderPantry();
+      // Filters
+      fillSelect($('#filterCat'), model.categories.map(c=>({value:c,label:c})), true);
+      renderItems();
+      save();
+    }
+
+    function save(){ try{ localStorage.setItem(stateKey, JSON.stringify(snapshot())); $('#autosaveBadge').textContent='Auto‑saved \u2713'; }catch(e){ console.error(e); $('#autosaveBadge').textContent='Save error'; } }
+    function load(){ try{ const raw=localStorage.getItem(stateKey); if(!raw){ seed(); return; } hydrate(JSON.parse(raw)); }catch(e){ console.error(e); seed(); } }
+
+    function exportCSV(){
+      const rows = [["Item","Store","Category","Qty","Unit","Unit Price","Total","Status"]];
+      model.items.forEach(it=>{
+        const total = (Number(it.qty)||0)*(Number(it.price)||0);
+        rows.push([
+          it.name||'',
+          storeById(it.storeId)?.name||'',
+          it.category||'',
+          it.qty||0,
+          it.unit||'',
+          (Number(it.price)||0).toFixed(2),
+          total.toFixed(2),
+          it.status||''
+        ]);
+      });
+      downloadCSV(rows, (model.overview.listName||'shopping-list').replace(/\s+/g,'-')+'.csv');
+    }
+
+    function downloadCSV(rows, filename){
+      const csv = rows.map(r => r.map(cell => {
+        const s = String(cell ?? "");
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+      }).join(",")).join("\n");
+      const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+    // ---------- Events ----------
+    $('#qaAdd').onclick=()=>{
+      const name = $('#qaName').value.trim(); if(!name) return alert('Enter an item name.');
+      addItem({ name, qty:Number($('#qaQty').value)||1, unit:$('#qaUnit').value||'pcs', category:$('#qaCat').value, storeId:$('#qaStore').value, price:Number($('#qaPrice').value)||0 });
+      $('#qaName').value=''; $('#qaQty').value=''; $('#qaPrice').value='';
+    };
+    $('#addStore').onclick=()=>{ const n=$('#storeName').value.trim(); if(!n) return; model.stores.push({id:uid(), name:n, notes:''}); $('#storeName').value=''; renderStores(); renderQuickAdd(); save(); };
+    $('#clearPantry').onclick=()=>{ if(!confirm('Clear pantry items?')) return; model.pantry=[]; renderPantry(); save(); };
+
+    // filter events
+    ['search','filterStore','filterCat','filterStatus'].forEach(id=>{ $('#'+id).addEventListener('input', renderItems); });
+    $('#clearFilters').onclick=()=>{ $('#search').value=''; $('#filterStore').value=''; $('#filterCat').value=''; $('#filterStatus').value=''; renderItems(); };
+
+    // save triggers
+    ['listName','defaultStore','budget','notes'].forEach(id=>{ $('#'+id).addEventListener('input', ()=>{ model.overview.listName=$('#listName').value; model.overview.defaultStore=$('#defaultStore').value; model.overview.budget=$('#budget').value; model.overview.notes=$('#notes').value; save(); }); });
+
+    // toolbar
+    $('#saveBtn').onclick=save;
+    $('#loadBtn').onclick=()=>{ load(); alert('Loaded saved list.'); };
+    $('#exportBtn').onclick=exportCSV;
+    $('#printBtn').onclick=()=>window.print();
+
+    // helpers
+    function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+    function uid(){ return 'id'+Math.random().toString(36).slice(2)+Date.now().toString(36); }
+    function fmt(n){ return (n||0).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2}); }
+    function sum(a){ return a.reduce((x,y)=>x+(Number(y)||0),0); }
+
+    // init
+    $('#year').textContent = new Date().getFullYear();
+    function seed(){
+      // demo items
+      addItem({name:'Milk', category:'Dairy', storeId:model.stores[1].id, qty:2, unit:'gal', price:4.29});
+      addItem({name:'Bananas', category:'Produce', storeId:model.stores[2].id, qty:6, unit:'pcs', price:0.35});
+      addItem({name:'Chicken Breast', category:'Meat', storeId:model.stores[0].id, qty:4, unit:'lb', price:3.99});
+      renderOverview(); renderQuickAdd(); renderStores(); renderPantry();
+      // filters
+      fillSelect($('#filterCat'), model.categories.map(c=>({value:c,label:c})), true);
+      fillSelect($('#filterStore'), model.stores.map(s=>({value:s.id,label:s.name})), true);
+      renderItems();
+      save();
+    }
+    load();
+  </script>
+</body>
+</html>

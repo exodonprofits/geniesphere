@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Trips – Voyage Genie</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+
+<style>
+  /* ===== Base page ===== */
+  body{font-family:'Segoe UI',sans-serif;background:#f4f8fb;color:#333;min-height:100vh;display:flex;flex-direction:column}
+  main{flex:1}
+  .hidden{display:none}
+
+  /* ===== Dashboard styles ===== */
+  .dash-wrap{max-width:1120px;margin:0 auto;padding:1.25rem}
+  .toolbar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between;margin-bottom:1rem}
+  .toolbar .left, .toolbar .right{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+  .vg-input{border:1px solid #e5e7eb;border-radius:10px;padding:.6rem .85rem;background:#fff}
+  .vg-select{border:1px solid #e5e7eb;border-radius:10px;padding:.6rem .85rem;background:#fff}
+  .vg-btn{display:inline-flex;align-items:center;gap:.45rem;border:1px solid #e5e7eb;border-radius:999px;padding:.55rem .9rem;background:#fff;transition:.15s}
+  .vg-btn:hover{background:#f9fafb;transform:translateY(-1px)}
+  .vg-btn-blue{background:#4f46e5;color:#fff;border-color:transparent}
+  .vg-badge{display:inline-flex;align-items:center;gap:.35rem;border:1px solid #e5e7eb;border-radius:999px;padding:.2rem .55rem;background:#fff;font-size:.8rem;color:#374151}
+  .grid-cards{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+  .card{grid-column:span 12;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.06);padding:14px;display:flex;flex-direction:column;gap:8px}
+  .card .row1{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+  .title{font-weight:700;font-size:1.05rem}
+  .sub{color:#6b7280}
+  .muted{color:#6b7280;font-size:.85rem}
+  .actions{display:flex;flex-wrap:wrap;gap:.35rem}
+  .pill{display:inline-flex;align-items:center;gap:.35rem;border:1px solid #e5e7eb;border-radius:999px;padding:.35rem .65rem;background:#fff}
+  .skeleton{background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%);animation:s 1.4s infinite ease; border-radius:8px}
+  @keyframes s{0%{background-position:-200px 0}100%{background-position:calc(200px + 100%) 0}}
+  .s-line{height:16px}
+  .s-big{height:46px;border-radius:12px}
+  .empty{background:#fff;border:1px dashed #d1d5db;border-radius:12px;padding:24px;text-align:center}
+
+  @media (min-width:640px){
+    .card{grid-column:span 6}
+  }
+  @media (min-width:1024px){
+    .card{grid-column:span 4}
+  }
+
+  /* Existing header/nav helpers from your file */
+  .nav-icon{height:50px;width:auto;margin-right:8px}
+  .nav-brand{display:flex;align-items:center}
+  .hamburger{display:none;flex-direction:column;justify-content:space-between;width:24px;height:18px;cursor:pointer}
+  .hamburger span{width:100%;height:3px;background-color:white;transition:all .3s ease}
+  .nav-links{display:flex;space-x-6}
+  .hamburger.active span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+  .hamburger.active span:nth-child(2){opacity:0}
+  .hamburger.active span:nth-child(3){transform:rotate(-45deg) translate(7px,-7px)}
+  .dropdown{position:relative}
+  .dropdown-menu{display:none;position:absolute;background:#fff;min-width:200px;box-shadow:0 8px 16px rgba(0,0,0,.1);z-index:1;border-radius:8px;padding:8px 0}
+  .dropdown-menu a{color:#333;padding:12px 16px;text-decoration:none;display:block;transition:background-color .3s}
+  .dropdown-menu a:hover{background:#f1f1f1}
+  .dropdown:hover .dropdown-menu{display:block}
+  @media (max-width:640px){
+    .hamburger{display:flex}
+    .nav-links{display:none;flex-direction:column;position:absolute;top:100%;right:0;background:linear-gradient(to bottom,#60a5fa,#4c6ef5);width:100%;padding:1rem;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+    .nav-links.active{display:flex}
+    .nav-links li{margin:.5rem 0}
+    .nav-links a{font-size:1.1rem;padding:.5rem;display:block;text-align:center}
+    .nav-brand h1{font-size:1.125rem}
+    .dropdown-menu{position:static;display:none;width:100%;box-shadow:none}
+    .dropdown:hover .dropdown-menu{display:block}
+  }
+
+  /* ---- dashboard enhancements ---- */
+.kpis{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-bottom:12px}
+.kpi{grid-column:span 12;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.06);padding:12px}
+.kpi .v{font-weight:800;font-size:1.25rem}
+.kpi .t{color:#6b7280;font-size:.85rem}
+@media(min-width:640px){ .kpi{grid-column:span 6} }
+@media(min-width:1024px){ .kpi{grid-column:span 3} }
+
+.badge{display:inline-flex;align-items:center;gap:.35rem;border-radius:999px;padding:.15rem .55rem;font-size:.75rem}
+.badge-up{background:#ecfeff;color:#0369a1;border:1px solid #bae6fd}
+.badge-on{background:#ecfdf5;color:#065f46;border:1px solid #bbf7d0}
+.badge-pa{background:#fef2f2;color:#7f1d1d;border:1px solid #fecaca}
+.badge-dr{background:#f5f5f5;color:#444;border:1px solid #e5e7eb}
+
+.pin{cursor:pointer; user-select:none}
+.pin.active{color:#eab308}
+.match b{background:#fffbeb; box-shadow:0 0 0 2px #fde68a inset; border-radius:4px; padding:0 2px}
+
+.loadmore{display:flex;justify-content:center;margin-top:10px}
+
+</style>
+</head>
+<body>
+
+<!-- Supabase bootstrap (same as your file) -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+  window.checkAuthAndRedirect = async function (e) {
+    e.preventDefault();
+    const { data } = await window.supabase.auth.getUser();
+    if (data?.user) window.location.href = 'trip-dashboard.html';
+    else window.location.href = 'login.html';
+  };
+</script>
+
+<!-- ======= HEADER (unchanged) ======= -->
+<nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center nav-menu">
+    <a aria-label="Go to Home" class="nav-brand" href="index.html">
+      <img alt="Voyage Genie Icon" class="nav-icon" src="images/nav-icon.png"/>
+      <h1 class="text-2xl font-bold">Voyage Genie</h1>
+    </a>
+    <div aria-label="Toggle navigation menu" class="hamburger" role="button" tabindex="0">
+      <span></span><span></span><span></span>
+    </div>
+    <ul class="nav-links flex space-x-6">
+      <li><a aria-label="Go to Home" class="hover:underline" href="index.html">Home</a></li>
+      <li class="dropdown relative">
+        <a aria-haspopup="true" aria-label="Plan A Trip" class="hover:underline flex items-center" href="index.html">
+          Plan A Trip
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </a>
+        <ul class="dropdown-menu">
+          <li><a aria-label="Tropical Resort" class="hover:bg-blue-50" href="tropical-trip-planner.html">🏖️ Tropical Resort</a></li>
+          <li><a aria-label="Cruise Adventure" class="hover:bg-blue-50" href="cruise-trip-planner.html">🚢 Cruise Adventure</a></li>
+          <li><a aria-label="Airbnb Getaway" class="hover:bg-blue-50" href="airbnb-trip-planner.html">🏠 Airbnb Getaway</a></li>
+          <li><a aria-label="Adventure Trip" class="hover:bg-blue-50" href="adventure-trip-planner.html">🌄 Adventure Trip</a></li>
+        </ul>
+      </li>
+      <li><a class="hover:underline" href="trip-dashboard.html">📋 My Trips</a></li>
+      <li><a aria-label="Go to Features" class="hover:underline" href="features.html">Features</a></li>
+      <li><a aria-label="Go to Contact" class="hover:underline" href="contact.html">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ======= MAIN ======= -->
+<main id="main-content">
+  <header class="text-center mb-6 pt-6">
+    <h1 class="text-3xl font-bold">📋 My Trips</h1>
+    <p class="text-gray-600">View, pin, duplicate, edit, delete, or export your saved adventures.</p>
+    <p class="text-center text-gray-500 text-sm mt-2">💾 Cloud saves when signed in; otherwise kept in your browser.</p>
+  </header>
+
+  <div class="dash-wrap">
+
+    <!-- KPIs -->
+    <div class="kpis" id="kpis">
+      <div class="kpi"><div class="v" id="k_total">—</div><div class="t">Total Trips</div></div>
+      <div class="kpi"><div class="v" id="k_upcoming">—</div><div class="t">Upcoming</div></div>
+      <div class="kpi"><div class="v" id="k_ongoing">—</div><div class="t">Ongoing</div></div>
+      <div class="kpi"><div class="v" id="k_past">—</div><div class="t">Past</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="left">
+        <input id="q" class="vg-input" placeholder="Search title/destination…" />
+        <select id="filterType" class="vg-select">
+          <option value="">All trip types</option>
+          <option value="Tropical Resort">Tropical Resort</option>
+          <option value="Cruise Adventure">Cruise Adventure</option>
+          <option value="Airbnb Getaway">Airbnb Getaway</option>
+          <option value="Adventure Trip">Adventure Trip</option>
+        </select>
+        <select id="sortBy" class="vg-select">
+          <option value="updated_desc">Recently updated</option>
+          <option value="start_asc">Start date ↑</option>
+          <option value="start_desc">Start date ↓</option>
+          <option value="title_asc">Title A–Z</option>
+        </select>
+      </div>
+      <div class="right">
+        <button class="vg-btn" id="btnExport">⬇️ Export All</button>
+        <label class="vg-btn cursor-pointer">
+          ⬆️ Import
+          <input id="importFile" type="file" accept="application/json" class="hidden">
+        </label>
+        <a href="index.html" class="vg-btn vg-btn-blue">➕ Start New Trip</a>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div id="grid" class="grid-cards">
+      <!-- skeleton while loading -->
+      <div class="card"><div class="s-line skeleton" style="width:55%"></div><div class="s-line skeleton" style="width:36%"></div><div class="s-big skeleton"></div></div>
+      <div class="card"><div class="s-line skeleton" style="width:45%"></div><div class="s-line skeleton" style="width:40%"></div><div class="s-big skeleton"></div></div>
+      <div class="card"><div class="s-line skeleton" style="width:60%"></div><div class="s-line skeleton" style="width:35%"></div><div class="s-big skeleton"></div></div>
+    </div>
+
+    <div id="loadMoreWrap" class="loadmore hidden">
+      <button id="loadMoreBtn" class="vg-btn">Load more</button>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty" class="hidden empty mt-4">
+      <div class="text-lg font-semibold mb-1">No trips found</div>
+      <p class="muted">Try adjusting your search or filter—or start a new one.</p>
+      <div class="mt-3 flex flex-wrap justify-center gap-2">
+        <a class="vg-btn" href="tropical-trip-planner.html">🏖️ Tropical Resort</a>
+        <a class="vg-btn" href="cruise-trip-planner.html">🚢 Cruise Adventure</a>
+        <a class="vg-btn" href="airbnb-trip-planner.html">🏠 Airbnb Getaway</a>
+        <a class="vg-btn" href="adventure-trip-planner.html">🌄 Adventure Trip</a>
+      </div>
+    </div>
+
+    <!-- “Plan Less, Get More” – Cards -->
+    <section class="mt-10">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- AI Destination -->
+        <div class="vg-card p-4">
+          <h2 class="text-lg font-semibold mb-1">🌟 Not Sure Where to Go?</h2>
+          <p class="text-gray-600 mb-4">Let AI suggest a destination based on your past trips and travel style.</p>
+          <button class="vg-btn vg-btn-blue" onclick="generateAITrip()">🧠 Suggest a Destination</button>
+        </div>
+
+        <!-- Recent Searches -->
+        <div class="vg-card p-4">
+          <h2 class="text-lg font-semibold mb-1">🕘 Recent Searches</h2>
+          <div class="text-gray-600 text-sm" id="recentSearches">No recent searches.</div>
+        </div>
+
+        <!-- Arrival Tips -->
+        <div class="vg-card p-4">
+          <h2 class="text-lg font-semibold mb-1">🚘 Arrival Tips</h2>
+          <p class="text-gray-600 mb-3">🅿️ Best parking, 🚌 local transport, 🗺️ maps for your destination.</p>
+          <a class="vg-btn vg-btn-blue" href="parking-tips.html">📍 Get Arrival Tips</a>
+        </div>
+
+        <!-- Unfinished Plans -->
+        <div class="vg-card p-4">
+          <h2 class="text-lg font-semibold mb-1">✏️ Unfinished Plans</h2>
+          <p class="text-gray-600">These look like drafts (missing dates). Want to finish them?</p>
+          <div class="mt-3" id="unfinishedTrips"></div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+<!-- ======= /MAIN ======= -->
+
+
+<!-- ======= FOOTER (unchanged) ======= -->
+<footer class="bg-gray-200 text-center py-8">
+  <p class="text-sm">© 2025 VoyageGenie.com – Plan Less, Explore More ✈️🌍</p>
+  <div class="mt-4 flex justify-center space-x-6">
+    <a aria-label="Visit our Facebook page" class="text-blue-500 hover:underline" href="#">Facebook</a>
+    <a aria-label="Visit our Instagram page" class="text-blue-500 hover:underline" href="#">Instagram</a>
+    <a aria-label="Contact Us" class="text-blue-500 hover:underline" href="contact.html">Contact Us</a>
+  </div>
+  <div class="mt-4">
+    <a aria-label="Go to Home" class="text-blue-500 hover:underline mx-2" href="index.html#home">Home</a>
+    <a aria-label="Go to Features" class="text-blue-500 hover:underline mx-2" href="features.html">Features</a>
+  </div>
+</footer>
+
+<script>
+  // mobile nav toggle
+  document.addEventListener('DOMContentLoaded', function () {
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+    hamburger?.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      navLinks?.classList.toggle('active');
+    });
+  });
+
+  /* =========================
+     Dashboard logic
+  ========================= */
+  const $ = (id)=>document.getElementById(id);
+  const grid = $('grid'), empty = $('empty');
+
+  // helpers
+  const toTitle = (trip)=> trip.name || trip.title || trip.destination || trip.destinationCity || trip.cruiseRegion || 'Unnamed Trip';
+  const getType = (trip)=> trip.tripType || trip.type || '';
+  const getDates = (trip)=> {
+    const s = trip.startDate || trip.start || trip.departureDate || '';
+    const e = trip.endDate || trip.end || trip.returnDate || '';
+    return (s||e) ? `${s||'—'} to ${e||'—'}` : '—';
+  };
+  const rel = (d)=>{
+    if(!d) return '';
+    const t = new Date(d).getTime(), now = Date.now(), diff = Math.round((now-t)/1000);
+    if(isNaN(diff)) return '';
+    if(diff < 60) return 'just now';
+    const mins = Math.round(diff/60); if(mins<60) return `${mins} min ago`;
+    const hrs = Math.round(mins/60); if(hrs<24) return `${hrs} hr ago`;
+    const days = Math.round(hrs/24); if(days<7) return `${days} day${days>1?'s':''} ago`;
+    return new Date(d).toLocaleDateString();
+  };
+
+  // state
+  let user = null;
+  let rows = []; // [{id, trip_name, trip_data, updated_at, created_at}]
+  let view = []; // filtered/sorted
+
+  async function getUser(){
+    const { data } = await supabase.auth.getUser();
+    return data?.user || null;
+  }
+
+  async function loadTrips(){
+    user = await getUser();
+    if(user){
+      const { data, error } = await supabase.from('user_trips')
+        .select('id, trip_name, trip_data, created_at, updated_at')
+        .eq('user_id', user.id)
+        .order('updated_at', {ascending:false});
+      if(error){ console.warn(error); rows=[]; }
+      else rows = data || [];
+    } else {
+      // local fallback
+      const local = JSON.parse(localStorage.getItem('savedTrips')||'[]');
+      rows = local.map((t,i)=>({ id:'local-'+i, trip_name:toTitle(t), trip_data:t, created_at:null, updated_at:null }));
+    }
+    applyFilters();
+  }
+
+  function applyFilters(){
+    const q = $('q').value.trim().toLowerCase();
+    const fType = $('filterType').value;
+    const sort = $('sortBy').value;
+
+    view = rows.filter(r=>{
+      const t = toTitle(r.trip_data).toLowerCase();
+      const dest = (r.trip_data.destination || r.trip_data.destinationCity || r.trip_data.cruiseRegion || '').toLowerCase();
+      const type = getType(r.trip_data);
+      const matchQ = !q || t.includes(q) || dest.includes(q);
+      const matchType = !fType || type===fType;
+      return matchQ && matchType;
+    });
+
+    view.sort((a,b)=>{
+      if(sort==='start_asc')  return (a.trip_data.startDate||'') > (b.trip_data.startDate||'') ? 1 : -1;
+      if(sort==='start_desc') return (a.trip_data.startDate||'') < (b.trip_data.startDate||'') ? 1 : -1;
+      if(sort==='title_asc')  return toTitle(a.trip_data).localeCompare(toTitle(b.trip_data));
+      // updated_desc default
+      return (b.updated_at||'') > (a.updated_at||'') ? 1 : -1;
+    });
+
+    renderCards();
+  }
+
+  function renderCards(){
+    grid.innerHTML = '';
+    if(!view.length){
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    view.forEach((r,idx)=>{
+      const t = toTitle(r.trip_data);
+      const type = getType(r.trip_data);
+      const dates = getDates(r.trip_data);
+
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.innerHTML = `
+        <div class="row1">
+          <div>
+            <div class="title">${t}</div>
+            <div class="muted">${dates}</div>
+          </div>
+          <div class="actions">
+            ${type ? `<span class="vg-badge">🏷️ ${type}</span>`:''}
+            <span class="vg-badge">🕒 ${rel(r.updated_at) || '—'}</span>
+          </div>
+        </div>
+
+        <div class="sub">${r.trip_data.notes ? r.trip_data.notes.slice(0,140) : '—'}</div>
+
+        <div class="actions">
+          <button class="vg-btn" onclick="viewTrip('${r.id}')">👁️ View</button>
+          <button class="vg-btn" onclick="editTrip('${r.id}')">✏️ Edit</button>
+          <button class="vg-btn" onclick="duplicateTrip('${r.id}')">📄 Duplicate</button>
+          <button class="vg-btn" onclick="shareLink('${r.id}')">🔗 Share</button>
+          <button class="vg-btn" onclick="exportOne('${r.id}')">⬇️ Export</button>
+          <button class="vg-btn" onclick="deleteTrip('${r.id}')">🗑️ Delete</button>
+        </div>
+      `;
+      grid.appendChild(el);
+    });
+  }
+
+  // find row by id (works for cloud or local)
+  const getRow = (id)=> view.find(v=>String(v.id)===String(id)) || rows.find(v=>String(v.id)===String(id));
+
+  async function viewTrip(id){
+    const r = getRow(id); if(!r) return;
+    localStorage.setItem('formData', JSON.stringify(r.trip_data));
+    window.location.href = 'trip-summary.html';
+  }
+
+  async function editTrip(id){
+    const r = getRow(id); if(!r) return;
+    localStorage.setItem('formData', JSON.stringify(r.trip_data));
+    const formMap = {
+      'Tropical Resort': 'tropical-trip-planner.html',
+      'Cruise Adventure': 'cruise-trip-planner.html',
+      'Airbnb Getaway': 'airbnb-trip-planner.html',
+      'Adventure Trip': 'adventure-trip-planner.html'
+    };
+    const page = formMap[getType(r.trip_data)] || 'index.html';
+    window.location.href = page;
+  }
+
+  async function duplicateTrip(id){
+    const r = getRow(id); if(!r) return;
+    const copy = JSON.parse(JSON.stringify(r.trip_data));
+    copy.name = (copy.name || toTitle(copy)) + ' (Copy)';
+    if(user){
+      await supabase.from('user_trips').insert({
+        user_id: user.id, trip_name: toTitle(copy), trip_data: copy
+      });
+      await loadTrips();
+    }else{
+      const local = JSON.parse(localStorage.getItem('savedTrips')||'[]');
+      local.push(copy); localStorage.setItem('savedTrips', JSON.stringify(local));
+      await loadTrips();
+    }
+  }
+
+  async function deleteTrip(id){
+    if(!confirm('Delete this trip?')) return;
+    const r = getRow(id); if(!r) return;
+
+    if(user && !String(id).startsWith('local-')){
+      await supabase.from('user_trips').delete().eq('id', id);
+      await loadTrips();
+    }else{
+      const local = JSON.parse(localStorage.getItem('savedTrips')||'[]');
+      const title = toTitle(r.trip_data);
+      const idx = local.findIndex(t => toTitle(t)===title && JSON.stringify(t)===JSON.stringify(r.trip_data));
+      if(idx>-1){ local.splice(idx,1); localStorage.setItem('savedTrips', JSON.stringify(local)); }
+      await loadTrips();
+    }
+  }
+
+  function exportOne(id){
+    const r = getRow(id); if(!r) return;
+    const blob = new Blob([JSON.stringify(r.trip_data,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (toTitle(r.trip_data).replace(/\s+/g,'_') || 'trip') + '.json';
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+
+  function exportAll(){
+    const all = view.length ? view : rows;
+    const payload = all.map(r=>r.trip_data);
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'voyage_trips.json';
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+  $('btnExport').addEventListener('click', exportAll);
+
+  $('importFile').addEventListener('change', async (e)=>{
+    const f = e.target.files?.[0]; if(!f) return;
+    const text = await f.text();
+    let data = null;
+    try{ data = JSON.parse(text); }catch{ alert('Invalid JSON'); return; }
+    const list = Array.isArray(data) ? data : [data];
+    if(user){
+      const rows = list.map(d=>({ user_id:user.id, trip_name:toTitle(d), trip_data:d }));
+      await supabase.from('user_trips').insert(rows);
+    }else{
+      const local = JSON.parse(localStorage.getItem('savedTrips')||'[]');
+      list.forEach(d=>local.push(d));
+      localStorage.setItem('savedTrips', JSON.stringify(local));
+    }
+    await loadTrips();
+    e.target.value='';
+  });
+
+  function shareLink(id){
+    const r = getRow(id); if(!r) return;
+    const payload = btoa(unescape(encodeURIComponent(JSON.stringify(r.trip_data))));
+    const url = new URL(window.location.origin + '/trip-summary.html');
+    url.hash = 's=' + payload;
+    navigator.clipboard?.writeText(url.toString()).then(()=>alert('Link copied!')).catch(()=>prompt('Copy link:', url.toString()));
+  }
+
+  // search/filter/sort listeners
+  ['q','filterType','sortBy'].forEach(id=> $(id).addEventListener('input', applyFilters));
+
+  // Unfinished section (simple heuristic)
+  function renderUnfinished(){
+    const box = $('unfinishedTrips'); box.innerHTML = '';
+    const drafts = rows.filter(r=> !r.trip_data.startDate || !r.trip_data.endDate);
+    if(!drafts.length){ box.textContent = 'No drafts found.'; return; }
+    drafts.slice(0,4).forEach(r=>{
+      const a=document.createElement('a'); a.className='vg-btn mr-2 mb-2'; a.href='#'; a.onclick=(e)=>{e.preventDefault(); editTrip(r.id);};
+      a.textContent = '✏️ ' + toTitle(r.trip_data);
+      box.appendChild(a);
+    });
+  }
+
+  function generateAITrip(){ alert('🧠 Your travel style is being analyzed. We’ll suggest a destination soon…'); }
+
+  // init
+  (async function(){
+    await loadTrips();
+    renderUnfinished();
+  })();
+</script>
+</body>
+</html>

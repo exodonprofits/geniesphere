@@ -1,0 +1,175 @@
+{
+  "name": "Packing_List_AI_Suggestions",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "packing-suggestions",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "5735afa4-c8ce-4d02-8275-1fb04777130b",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst body = $json.body || $json;\n\n// Extract all trip context fields sent by the packing checklist page\nconst destination     = body.destination     || '';\nconst tripType        = body.tripType        || '';\nconst days            = body.days            || '';\nconst startDate       = body.startDate       || '';\nconst endDate         = body.endDate         || '';\nconst travelPace      = body.travelPace      || '';\nconst budgetTier      = body.budgetTier      || '';\nconst travelers       = body.travelers       || '';\nconst activities      = Array.isArray(body.activities) ? body.activities.join(', ') : (body.activities || '');\nconst specialOccasion = body.specialOccasion || '';\nconst dietaryNeeds    = body.dietaryNeeds    || '';\nconst existingItems   = Array.isArray(body.existingItems) ? body.existingItems : [];\n\n// Build a rich natural-language trip description\nconst tripParts = [\n  destination     ? `Destination: ${destination}`            : null,\n  tripType        ? `Trip type: ${tripType}`                 : null,\n  days            ? `Duration: ${days} days`                 : null,\n  startDate && endDate ? `Dates: ${startDate} to ${endDate}` : null,\n  travelPace      ? `Travel pace: ${travelPace}`             : null,\n  budgetTier      ? `Budget tier: ${budgetTier}`             : null,\n  travelers       ? `Group: ${travelers}`                    : null,\n  activities      ? `Activities planned: ${activities}`      : null,\n  specialOccasion ? `Special occasion: ${specialOccasion}`   : null,\n  dietaryNeeds    ? `Dietary needs: ${dietaryNeeds}`         : null,\n].filter(Boolean);\n\nconst tripDesc = tripParts.length\n  ? tripParts.join('\\n')\n  : 'General international leisure trip, 7 days';\n\nconst alreadyHave = existingItems.length\n  ? `\\n\\nItems already on the packing list — do NOT suggest these: ${existingItems.slice(0, 40).join(', ')}`\n  : '';\n\nconst prompt = `Create a packing suggestion for this trip:\\n${tripDesc}${alreadyHave}`;\n\nreturn [{ json: { prompt } }];\n"
+      },
+      "id": "e1aff0b7-7ef5-4cb1-90c4-a9c0a65ac616",
+      "name": "Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -244,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a travel packing expert at Voyage Genie. Given a trip description, return a personalised packing list as JSON.\n\nSTRICT OUTPUT RULES:\n- Return ONLY a valid JSON array — no markdown, no explanation, nothing else\n- 4 to 6 categories, 5 to 10 specific items each\n- Items must be specific and actionable. Write \"Reef-safe sunscreen SPF50\" not \"Sunscreen\"\n- Tailor every item to the exact trip: climate, destination, activities, duration, budget tier, pace\n- Include destination-specific items (Tokyo: IC Suica card; Bali: sarong for temple visits; Safari: binoculars; Cruise: formal dinner outfit; Iceland: crampons; skiing: goggles + helmet)\n- Economy tier: budget-friendly, practical essentials only\n- Standard tier: quality mid-range items\n- Elite tier: premium, luxury items and gadgets\n- Active pace: more technical gear, performance clothing\n- Relaxed pace: comfort items, lighter bags, leisure wear\n- Family/kids group: add age-appropriate children's items\n- Honeymoon/anniversary: add romantic touches (portable speaker, nice outfits)\n- Do NOT suggest items already on the existing list\n\nRESPONSE FORMAT — JSON array only, nothing else:\n[\n  {\n    \"category\": \"Category Name\",\n    \"items\": [\"Specific Item 1\", \"Specific Item 2\", \"Specific Item 3\"]\n  }\n]"
+            },
+            {
+              "content": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "d3f5ab0f-2612-48ed-b238-e4f283b3eca0",
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage-Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst raw = $node['OpenAI'].json.message?.content || $json.message?.content || '';\n\n// Strip any accidental markdown fences\nconst clean = raw.replace(/^```[a-z]*\\n?/gm, '').replace(/```\\s*$/gm, '').trim();\n\nlet suggestions;\ntry {\n  suggestions = JSON.parse(clean);\n} catch(e) {\n  // Try to extract JSON array if there's surrounding text\n  const match = clean.match(/\\[[\\s\\S]*\\]/);\n  if (!match) throw new Error('Could not parse AI packing response as JSON: ' + clean.slice(0, 100));\n  suggestions = JSON.parse(match[0]);\n}\n\nif (!Array.isArray(suggestions) || !suggestions.length) {\n  throw new Error('AI returned empty or invalid packing suggestions');\n}\n\n// Sanitise\nconst validated = suggestions\n  .filter(cat => cat && cat.category && Array.isArray(cat.items) && cat.items.length)\n  .map(cat => ({\n    category: String(cat.category).trim(),\n    items: cat.items\n      .map(i => String(i).trim())\n      .filter(i => i.length > 0)\n      .slice(0, 15)\n  }))\n  .slice(0, 8);\n\nreturn [{ json: { suggestions: validated } }];\n"
+      },
+      "id": "35fc3a04-ead5-4c43-a4b7-1fe1ffc7b338",
+      "name": "Parse & Validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        244,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ suggestions: $json.suggestions }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "8793a3af-b610-4c18-a68b-472af80a08be",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        488,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Planner | Smart Journey Builder</title>
+    <style>
+        :root {
+            --primary: #2A6BCC;
+            --primary-light: #E8F1FF;
+            --background: #F8FAFF;
+            --border: #D1DAEB;
+            --text: #2C3E50;
+            --radius: 12px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+            overflow-x: hidden;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                        url('https://images.unsplash.com/photo-1488085061387-422e29b40080?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            animation: backgroundCycle 30s infinite;
+        }
+
+        @keyframes backgroundCycle {
+            0% { background-position: center; }
+            50% { background-position: top right; }
+            100% { background-position: center; }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(8px);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 2rem;
+            font-size: 2.4rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .form-section {
+            margin-bottom: 1.8rem;
+            padding: 1.5rem;
+            background: rgba(251,252,254,0.9);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            transition: transform 0.2s ease;
+        }
+
+        .form-section:hover {
+            transform: translateY(-2px);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.9rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(42,107,204,0.1);
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .option-card {
+            padding: 1.2rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            background: white;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .option-card.selected {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .option-card.selected::after {
+            content: "✓";
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, var(--primary), #1E5499);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .loading-spinner {
+            display: none;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #form-status {
+            display: none;
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .success { background: #e8f6ef; color: #2a6bcc; }
+        .error { background: #ffe8e8; color: #cc2a2a; }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+            
+            .option-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 1rem;
+                background-attachment: fixed;
+            }
+        }
+    </style>
+    <style>
+        /* Add to existing CSS */
+        .airport-select {
+            width: 100%;
+            padding: 0.9rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232A6BCC"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center/16px;
+        }
+        
+        .airport-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(42,107,204,0.1);
+            outline: none;
+        }
+    </style>
+    <script>
+        document.getElementById('airportSelect').addEventListener('change', function() {
+            const customInputDiv = document.querySelector('.custom-airport-input');
+            const customInput = document.getElementById('customAirportInput');
+            
+            if(this.value === 'OTHER') {
+                customInputDiv.style.display = 'block';
+                customInput.disabled = false;
+                customInput.required = true;
+                this.required = false;
+            } else {
+                customInputDiv.style.display = 'none';
+                customInput.disabled = true;
+                customInput.required = false;
+                this.required = true;
+            }
+        });
+    </script>
+    <script>
+        document.getElementById('travelForm').addEventListener('submit', function (e) {
+          const dropdown = document.getElementById('airportSelect');
+          const customInput = document.getElementById('customAirportInput');
+        
+          if (dropdown.value === 'OTHER') {
+            // Inject the custom value into the departureLocation field
+            const finalAirport = customInput.value.trim();
+            if (finalAirport) {
+              // Create a hidden input to override the original value
+              const hiddenInput = document.createElement('input');
+              hiddenInput.type = 'hidden';
+              hiddenInput.name = 'departureLocation';
+              hiddenInput.value = finalAirport;
+              this.appendChild(hiddenInput);
+            }
+          }
+        });
+    </script>
+        
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 AI Travel Planner</h1>
+        
+        <form id="travelForm" method="POST" action="https://exodonprofits.app.n8n.cloud/webhook-test/travel-agent">
+            <!-- Departure Location -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">✈️</div>
+                    <label>Departure Location</label>
+                </div>
+
+                <div class="departure-options">
+                    <!-- Visible Select Dropdown for Popular Airports -->
+                    <select name="departureLocation" id="airportSelect" class="airport-select" required>
+                        <option value="">-- Select Popular Airport --</option>
+                        <option value="JFK">New York (JFK) - John F. Kennedy International Airport</option>
+                        <option value="LAX">Los Angeles (LAX) - Los Angeles International Airport</option>
+                        <option value="LHR">London (LHR) - Heathrow Airport</option>
+                        <option value="DXB">Dubai (DXB) - Dubai International Airport</option>
+                        <option value="HND">Tokyo (HND) - Haneda Airport</option>
+                        <option value="CDG">Paris (CDG) - Charles de Gaulle Airport</option>
+                        <option value="OTHER">Can't find my airport ➔</option>
+                    </select>
+
+                    <!-- Custom Input (Hidden Initially) -->
+                    <div class="custom-airport-input" style="display: none; margin-top: 1rem;">
+                        <input type="text" 
+                            name="customAirport" 
+                            id="customAirportInput"
+                            placeholder="Enter custom airport/city"
+                            disabled
+                            autocomplete="off">
+                    </div>
+                </div>
+            </div>
+            <!-- Destination -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">📍</div>
+                    <label>Destination</label>
+                </div>
+                <select name="destination" required>
+                    <option value="">-- Select Destination --</option>
+                    <optgroup label="🏝️ Caribbean">
+                        <option>Aruba</option>
+                        <option>Bahamas</option>
+                        <option>Turks & Caicos</option>
+                    </optgroup>
+                    <optgroup label="🇲🇽 Mexico">
+                        <option>Cancun</option>
+                        <option>Puerto Vallarta</option>
+                        <option>Los Cabos</option>
+                    </optgroup>
+                    <optgroup label="🇺🇸 United States">
+                        <option>Hawaii</option>
+                        <option>Florida</option>
+                        <option>Las Vegas</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- Travel Dates -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">📅</div>
+                    <label>Travel Dates</label>
+                </div>
+                <div class="option-grid">
+                    <div>
+                        <input type="date" name="startDate" required>
+                    </div>
+                    <div>
+                        <input type="date" name="endDate" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trip Preferences -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">❤️</div>
+                    <label>Trip Preferences</label>
+                </div>
+                <div class="option-grid">
+                    <div class="form-section">
+                        <label>Trip Type</label>
+                        <div class="option-grid">
+                            <label class="option-card">
+                                <input type="radio" name="tripType" value="Solo" hidden>
+                                👤 Solo Travel
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="tripType" value="Couple" hidden>
+                                💑 Couple's Getaway
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="tripType" value="Family" hidden>
+                                👨👩👧👦 Family Vacation
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="tripType" value="Group" hidden>
+                                👥 Group Trip
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="tripType" value="Honeymoon" hidden>
+                                💍 Honeymoon
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label>Group Size</label>
+                        <div class="option-grid">
+                            <label class="option-card">
+                                <input type="radio" name="groupSize" value="1" hidden>
+                                1 Traveler
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="groupSize" value="2" hidden>
+                                2 People
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="groupSize" value="3-4" hidden>
+                                3-4 People
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="groupSize" value="5+" hidden>
+                                5+ People
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Traveler Details -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">👥</div>
+                    <label>Traveler Details</label>
+                </div>
+                <div class="option-grid">
+                    <div>
+                        <label>Age Ranges</label>
+                        <div class="option-grid">
+                            <label class="option-card">
+                                <input type="checkbox" name="ageRange" value="Kids" hidden>
+                                👶 Kids (0-12)
+                            </label>
+                            <label class="option-card">
+                                <input type="checkbox" name="ageRange" value="Teens" hidden>
+                                🧑 Teens (13-19)
+                            </label>
+                            <label class="option-card">
+                                <input type="checkbox" name="ageRange" value="Adults" hidden>
+                                🧑💼 Adults (20-39)
+                            </label>
+                            <label class="option-card">
+                                <input type="checkbox" name="ageRange" value="MiddleAge" hidden>
+                                👨🦳 Adults (40-64)
+                            </label>
+                            <label class="option-card">
+                                <input type="checkbox" name="ageRange" value="Seniors" hidden>
+                                👵 Seniors (65+)
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Budget (USD)</label>
+                        <div class="input-group">
+                            <!----span class="currency-symbol">$</span-->
+                            <input type="number" name="budget" 
+                                   class="budget-input" 
+                                   placeholder="Estimated total budget">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+ 
+
+            <!-- Contact Information -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">📧</div>
+                    <label>Contact Information</label>
+                </div>
+                <input type="email" name="email" 
+                       placeholder="Enter email for travel plan" 
+                       required>
+            </div>
+
+            <button type="submit" class="submit-btn">
+                🚀 Generate Travel Plan
+                <div class="loading-spinner"></div>
+            </button>
+            <div id="form-status"></div>
+        </form>
+    </div>
+
+    <script>
+        // Selection Handling
+        document.querySelectorAll('.option-card').forEach(item => {
+            item.addEventListener('click', function() {
+                const input = this.querySelector('input');
+                
+                if(input.type === 'radio') {
+                    document.querySelectorAll(`input[name="${input.name}"]`).forEach(radio => {
+                        radio.closest('.option-card').classList.remove('selected');
+                    });
+                    input.checked = true;
+                    this.classList.add('selected');
+                }
+                else if(input.type === 'checkbox') {
+                    input.checked = !input.checked;
+                    this.classList.toggle('selected', input.checked);
+                }
+            });
+        });
+
+        // Background Image Rotation
+        const backgrounds = [
+            'url("https://images.unsplash.com/photo-1488085061387-422e29b40080?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80")',
+            'url("https://images.unsplash.com/photo-1503220317375-aaad61436b1b?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80")',
+            'url("https://images.unsplash.com/photo-1508672019048-805c876b67e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1953&q=80")'
+        ];
+
+        let currentBg = 0;
+        function changeBackground() {
+            document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), ${backgrounds[currentBg]}`;
+            currentBg = (currentBg + 1) % backgrounds.length;
+        }
+
+        // Preload images
+        backgrounds.forEach(bg => {
+            const img = new Image();
+            img.src = bg.match(/url\(["']?(.*?)["']?\)/)[1];
+        });
+
+        // Change background every 10 seconds
+        setInterval(changeBackground, 10000);
+        changeBackground(); // Initial call
+
+        // Form Submission
+        document.getElementById('travelForm').addEventListener('submit', function () {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Processing... <div class="loading-spinner" style="display:inline-block;"></div>';
+        });
+
+//        document.getElementById('travelForm').addEventListener('submit', async (e) => {
+//            e.preventDefault();
+//            const form = e.target;
+//            const submitBtn = form.querySelector('button[type="submit"]');
+//            const statusDiv = document.getElementById('form-status');
+//            
+//            submitBtn.disabled = true;
+//            submitBtn.innerHTML = 'Processing... <div class="loading-spinner"></div>';
+//            
+//            try {
+//                // Simulated API call
+//                await new Promise(resolve => setTimeout(resolve, 1500));
+//                
+//                statusDiv.style.display = 'block';
+//                statusDiv.className = 'success';
+//                statusDiv.textContent = 'Travel plan generated successfully! Check your email.';
+//                
+//                //form.reset();
+//                document.querySelectorAll('.option-card').forEach(card => {
+//                    card.classList.remove('selected');
+//                });
+//            } catch (error) {
+//                statusDiv.style.display = 'block';
+//                statusDiv.className = 'error';
+//                statusDiv.textContent = 'Error submitting form. Please try again.';
+//            } finally {
+//                submitBtn.disabled = false;
+//                submitBtn.innerHTML = '🚀 Generate Travel Plan';
+//                setTimeout(() => {
+//                    statusDiv.style.display = 'none';
+//                }, 5000);
+//            }
+//        });
+
+        // Initialize any existing selections
+        //document.querySelectorAll('input:checked').forEach(input => {
+        //    input.closest('.option-card').classList.add('selected');
+        //});
+    </script>
+    <script>
+        window.addEventListener('pageshow', function () {
+          const submitBtn = document.querySelector('button[type="submit"]');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Submit'; // or whatever your original button label was
+          }
+        });
+    </script>
+        
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const airportDropdown = document.getElementById('airportSelect');
+  const customInputDiv = document.querySelector('.custom-airport-input');
+  const customInput = document.getElementById('customAirportInput');
+
+  if (!airportDropdown || !customInputDiv || !customInput) return;
+
+  airportDropdown.addEventListener('change', function () {
+    if (this.value === 'OTHER') {
+      customInputDiv.style.display = 'block';
+      customInput.disabled = false;
+      customInput.required = true;
+      this.required = false;
+    } else {
+      customInputDiv.style.display = 'none';
+      customInput.disabled = true;
+      customInput.required = false;
+      this.required = true;
+    }
+  });
+
+  if (airportDropdown.value === 'OTHER') {
+    customInputDiv.style.display = 'block';
+    customInput.disabled = false;
+    customInput.required = true;
+  }
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('travelForm');
+  form.addEventListener('submit', function () {
+    const dropdown = document.getElementById('airportSelect');
+    const customInput = document.getElementById('customAirportInput');
+
+    if (dropdown.value === 'OTHER') {
+      const finalAirport = customInput.value.trim();
+      if (finalAirport) {
+        dropdown.value = finalAirport;
+      }
+    }
+  });
+
+  const airportDropdown = document.getElementById('airportSelect');
+  const customInputDiv = document.querySelector('.custom-airport-input');
+  const customInput = document.getElementById('customAirportInput');
+
+  if (airportDropdown && customInputDiv && customInput) {
+    airportDropdown.addEventListener('change', function () {
+      if (this.value === 'OTHER') {
+        customInputDiv.style.display = 'block';
+        customInput.disabled = false;
+        customInput.required = true;
+        this.required = false;
+      } else {
+        customInputDiv.style.display = 'none';
+        customInput.disabled = true;
+        customInput.required = false;
+        this.required = true;
+      }
+    });
+
+    if (airportDropdown.value === 'OTHER') {
+      customInputDiv.style.display = 'block';
+      customInput.disabled = false;
+      customInput.required = true;
+    }
+  }
+});
+</script>
+
+</body>
+</html>

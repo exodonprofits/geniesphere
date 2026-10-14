@@ -1,0 +1,89 @@
+{
+  "name": "AI Travel Agent - Voyage Genie",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "travel-agent",
+        "responseMode": "onReceived",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "\nreturn [{\n  json: {\n    departureLocation: $json.body.departureLocation || \"Not provided\",\n    destination: $json.body.destination || \"Not specified\",\n    budget: $json.body.budget || \"3000\",\n    groupSize: $json.body.groupSize || \"2\",\n    startDate: $json.body.startDate || \"2025-04-22\",\n    endDate: $json.body.endDate || \"2025-04-29\",\n    email: $json.body.email || \"unknown\"\n  }\n}];\n"
+      },
+      "id": "Prepare Travel Data",
+      "name": "Prepare Travel Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "httpMethod": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "{\"model\": \"gpt-4\", \"messages\": [{\"role\": \"system\", \"content\": \"You are an expert AI travel agent. Return structured trip plans using emojis and short summaries. Format your response like this:\\n\\n\\ud83c\\udf0d Trip Plan: Paris, France\\n(April 28 to May 5, 2025)\\n\\ud83d\\udcb8 Budget: $5,000 (for 2 people)\\n\\u2708\\ufe0f Flights\\nDeparture City: (Insert)\\nAirlines: Delta, American Airlines, Air France\\nEstimated Cost: ~$1,200\\nTips: Book early, check for 1-stop flights\\n\\ud83c\\udfe8 Accommodation\\nHotel: Hotel Eiffel Seine (near Eiffel Tower)\\nCost: ~$180/night \\u00d7 7 nights = $1,260\\nAlternatives: Airbnb ($100\\u2013$200/night)\\n\\ud83d\\udcc6 Daily Activities\\nDay 1: Eiffel Tower stroll, dinner at Caf\\u00e9 de l'Homme\\n...\\n\\ud83d\\udcca Cost Summary\\nFlights $1200\\nHotel $1260\\nFood $350\\nTotal $2810\\n\\ud83d\\udca1 Travel Tips\\n\\ud83d\\ude8c Get a metro pass\\n\\ud83c\\udf26\\ufe0f Bring layers\\n\\ud83d\\udd10 Watch for pickpockets\"}, {\"role\": \"user\", \"content\": \"Plan a trip from {{ $node[\\\"Prepare Travel Data\\\"].json[\\\"departureLocation\\\"] }} to {{ $node[\\\"Prepare Travel Data\\\"].json[\\\"destination\\\"] }} from {{ $node[\\\"Prepare Travel Data\\\"].json[\\\"startDate\\\"] }} to {{ $node[\\\"Prepare Travel Data\\\"].json[\\\"endDate\\\"] }} for {{ $node[\\\"Prepare Travel Data\\\"].json[\\\"groupSize\\\"] }} people with a budget of ${{ $node[\\\"Prepare Travel Data\\\"].json[\\\"budget\\\"] }}.\"}]}"
+      },
+      "id": "OpenAI",
+      "name": "OpenAI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "openai-api",
+          "name": "OpenAi"
+        }
+      },
+      "position": [
+        700,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Travel Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Travel Data": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "meta": {
+    "instanceId": "your-instance-id"
+  },
+  "versionId": "1"
+}

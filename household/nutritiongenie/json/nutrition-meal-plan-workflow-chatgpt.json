@@ -1,0 +1,97 @@
+{
+  "name": "Nutrition Meal Plan Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "nutrition-plan",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": 1,
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ],
+      "webhookId": "webhook-nutrition-plan"
+    },
+    {
+      "parameters": {
+        "functionCode": "\nconst data = items[0].json;\nconst name = data.personal_info.name || \"Friend\";\nconst goals = data.health_dietary_preferences.nutritional_goals;\nconst cuisine = data.meal_preferences.cuisine_preferences.join(\", \");\nconst meals = data.meal_preferences.meals_per_day;\nconst dislikes = data.meal_preferences.disliked_foods;\n\nreturn [{\n  json: {\n    message: `Hi ${name}, here\u2019s your custom plan!\\n\\nGoal: ${goals}\\nPreferred Cuisine: ${cuisine}\\nMeals/Day: ${meals}\\nAvoid: ${dislikes}`\n  }\n}];\n"
+      },
+      "name": "Generate Plan Summary",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "credentials": {
+          "authentication": "predefined",
+          "apiKey": "={{ $env.OPENAI_API_KEY }}"
+        },
+        "model": "gpt-4",
+        "prompt": "\nYou are a nutritionist. Based on the following user data, generate a 3-day personalized meal plan (breakfast, lunch, dinner) tailored to their needs, restrictions, and preferences. Present it in clean, readable format with bullet points.\n\nUser data:\nName: {{$json[\"personal_info\"][\"name\"]}}\nAge Range: {{$json[\"personal_info\"][\"age_range\"]}}\nGender: {{$json[\"personal_info\"][\"gender\"]}}\nMedical Conditions: {{$json[\"health_dietary_preferences\"][\"medical_conditions\"].join(\", \")}}\nAllergies: {{$json[\"health_dietary_preferences\"][\"allergies\"].join(\", \")}}\nDietary Restrictions: {{$json[\"health_dietary_preferences\"][\"dietary_restrictions\"].join(\", \")}}\nNutritional Goals: {{$json[\"health_dietary_preferences\"][\"nutritional_goals\"]}}\nMeals Per Day: {{$json[\"meal_preferences\"][\"meals_per_day\"]}}\nCuisines: {{$json[\"meal_preferences\"][\"cuisine_preferences\"].join(\", \")}}\nDisliked Foods: {{$json[\"meal_preferences\"][\"disliked_foods\"]}}\nMeal Types: {{$json[\"meal_preferences\"][\"preferred_meal_types\"].join(\", \")}}\nCooking Skill Level: {{$json[\"cooking_lifestyle_habits\"][\"cooking_skill_level\"]}}\nKitchen Equipment: {{$json[\"cooking_lifestyle_habits\"][\"available_kitchen_equipment\"].join(\", \")}}\nGrocery Budget: {{$json[\"shopping_budget\"][\"weekly_grocery_budget\"]}}\nPantry Staples: {{$json[\"shopping_budget\"][\"pantry_staples_available\"].join(\", \")}}\n",
+        "temperature": 0.7,
+        "maxTokens": 800
+      },
+      "name": "ChatGPT - Meal Plan",
+      "type": "n8n-nodes-base.openai",
+      "typeVersion": 2,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "responseData": "={{ $json[\"message\"] }}",
+        "options": {
+          "raw": false
+        }
+      },
+      "name": "Respond with Plan",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Plan Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Plan Summary": [
+      {
+        "node": "ChatGPT - Meal Plan",
+        "type": "main",
+        "index": 0
+      }
+    ],
+    "ChatGPT - Meal Plan": [
+      {
+        "node": "Respond with Plan",
+        "type": "main",
+        "index": 0
+      }
+    ]
+  },
+  "active": false,
+  "settings": {},
+  "version": 1
+}

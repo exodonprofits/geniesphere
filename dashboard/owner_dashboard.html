@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Owner Dashboard | GenieSphere</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <!--script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script-->
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0F172A;
+      color: #F8FAFC;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    .card-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 16px;
+      width: 220px;
+      text-align: center;
+      transition: 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(43, 255, 217, 0.15);
+    }
+    .btn {
+      margin-top: 1rem;
+      padding: 10px 20px;
+      background-color: #2BFFD9;
+      color: #0F172A;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>👑 Welcome, Business Owner</h1>
+
+  <div class="section" id="businessCheck">
+    <p>Checking your business profile...</p>
+  </div>
+
+  <div class="section">
+    <h2>🧰 Manage Your Tools</h2>
+    <div class="card-grid" id="agentGrid"></div>
+  </div>
+
+  <div class="section">
+    <h2>👥 Your Team</h2>
+    <button class="btn" onclick="location.href='/onboarding/invite_user.html'">➕ Invite Staff or Clients</button>
+  </div>
+
+  <button id="logoutBtn" class="btn" style="background-color: #e63946; margin-top: 2rem;">🚪 Logout</button>
+
+  <!--script>
+    const supabase = window.supabase.createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+
+    async function initOwnerDashboard() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      console.log("Logged-in user:", user, "Error:", error);
+      //if (!user) return location.href = "../onboarding/images.html";
+
+      const { data: profile } = await supabase
+        .from("business_profiles")
+        .select("id, business_name")
+        .eq("owner_id", user.id)
+        .maybeSingle();
+
+      if (!profile) {
+        document.getElementById("businessCheck").innerHTML =
+          `<p>🚨 You haven't set up your business profile yet.</p>
+           <button class="btn" onclick="location.href='../onboarding/business_profile_form.html'">Complete Now</button>`;
+        return;
+      } else {
+        document.getElementById("businessCheck").innerHTML = `
+          <p>🏢 Business: <strong>${profile.business_name}</strong></p>
+          <button class="btn" onclick="location.href='/onboarding/edit_business_profile.html'">✏️ Edit Profile</button>
+        `;
+      }
+
+      const { data: prefs } = await supabase
+        .from('user_preferences')
+        .select('agents')
+        .eq('user_id', user.id)
+        .single();
+
+      const selected = prefs?.agents || [];
+
+      const { data: availableAgents, error } = await supabase
+        .from('agents')
+        .select('id, name, icon, category');
+
+
+      if (error || !availableAgents) return;
+
+      const grid = document.getElementById('agentGrid');
+      selected.forEach(agentId => {
+        const agent = availableAgents.find(a => a.id === agentId);
+        if (!agent) return;
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div style="font-size: 2rem;">${agent.icon}</div>
+          <div style="margin-top: 0.5rem; font-weight: 600;">${agent.name}</div>
+          <button class="btn" onclick="location.href='/templates/${agent.category}/${agent.id}.html'">Launch</button>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+   // document.getElementById('logoutBtn').addEventListener('click', async () => {
+   //   await supabase.auth.signOut();
+   //   //window.location.href = '/images.html';
+   // });
+
+   // initOwnerDashboard();
+  </script-->
+</body>
+</html>

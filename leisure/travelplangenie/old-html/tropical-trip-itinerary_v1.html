@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Your Tropical Itinerary – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #0077b6;
+  --ocean-deep: #023e8a;
+  --teal: #00b4d8;
+  --coral: #e76f51;
+  --coral-dark: #c1551c;
+  --off-white: #f8fafc;
+  --gray-light: #f1f5f9;
+  --gray-border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --shadow-hover: 0 12px 32px rgba(0,0,0,0.13);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; }
+
+/* ── HEADER ── */
+.vg-header { position: sticky; top: 0; z-index: 40; background: linear-gradient(105deg, #023e8a 0%, #0077b6 55%, #0096c7 100%); box-shadow: 0 2px 20px rgba(2,62,138,0.25); }
+.vg-nav { max-width: 1240px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vg-brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.vg-brand img { width: 46px; height: 46px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+.vg-title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.4rem; color: #fff; }
+.vg-right { display: flex; align-items: center; gap: 10px; }
+.nav-chip { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; height: 38px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); font-size: 0.88rem; font-weight: 500; transition: background var(--transition); white-space: nowrap; }
+.nav-chip:hover { background: rgba(255,255,255,0.24); }
+
+/* ── PAGE BANNER ── */
+.page-banner { background: #eaf4fb; border-bottom: 1px solid #c9e4f5; padding: 1.4rem 1.5rem; }
+.page-banner-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+.page-banner h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.1rem, 2.5vw, 1.5rem); font-weight: 700; color: var(--ocean-deep); }
+.page-banner p { font-size: 0.87rem; color: var(--text-muted); margin-top: 0.2rem; }
+.banner-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ── ACTION BUTTONS ── */
+.action-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 0.5rem 1rem; border-radius: 8px;
+  font-size: 0.85rem; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--gray-border); background: #fff;
+  color: var(--text); text-decoration: none;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+  font-family: 'DM Sans', sans-serif; white-space: nowrap;
+}
+.action-btn:hover { background: var(--gray-light); transform: translateY(-1px); }
+.action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.action-btn-primary { background: var(--ocean); color: #fff; border-color: var(--ocean); }
+.action-btn-primary:hover { background: var(--ocean-deep); border-color: var(--ocean-deep); }
+.action-btn-coral { background: var(--coral); color: #fff; border-color: var(--coral); }
+.action-btn-coral:hover { background: var(--coral-dark); border-color: var(--coral-dark); }
+
+/* ── LAYOUT ── */
+.page-body { max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem 3rem; display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; }
+@media (max-width: 900px) { .page-body { grid-template-columns: 1fr; } }
+
+/* ── MAIN ITINERARY CARD ── */
+.itinerary-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+.itinerary-card-header { background: linear-gradient(105deg, #023e8a, #0077b6); padding: 1.5rem 1.75rem; color: #fff; }
+.itinerary-card-header h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.3rem; }
+.itinerary-card-header p { font-size: 0.88rem; opacity: 0.8; }
+.itinerary-meta { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+.meta-pill { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; padding: 0.28rem 0.85rem; font-size: 0.8rem; color: #fff; }
+
+.itinerary-body { padding: 1.75rem; }
+.itinerary-content { font-size: 0.93rem; line-height: 1.75; color: var(--text); }
+.itinerary-content strong { color: var(--ocean-deep); }
+.itinerary-content a { color: var(--ocean); }
+.itinerary-content a:hover { text-decoration: underline; }
+.itinerary-content table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.88rem; }
+.itinerary-content table th { background: var(--gray-light); padding: 8px 12px; text-align: left; font-weight: 600; border: 1px solid var(--gray-border); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.itinerary-content table td { padding: 9px 12px; border: 1px solid var(--gray-border); vertical-align: top; }
+.itinerary-content table tr:nth-child(even) td { background: var(--gray-light); }
+
+/* ── LOADING STATE ── */
+.loading-state { text-align: center; padding: 4rem 2rem; }
+.spinner { width: 48px; height: 48px; border: 3px solid rgba(0,119,182,0.2); border-top: 3px solid var(--ocean); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.25rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-state p { color: var(--text-muted); font-size: 0.95rem; }
+
+/* ── NEXT STEPS STRIP ── */
+.next-steps { margin-top: 1.5rem; border-top: 1px solid var(--gray-border); padding-top: 1.5rem; }
+.next-steps-title { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.85rem; }
+.next-steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; }
+.next-step-card { background: var(--gray-light); border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 1rem; text-decoration: none; color: var(--text); transition: background var(--transition), transform var(--transition); display: block; }
+.next-step-card:hover { background: #e8f4fd; transform: translateY(-2px); color: var(--ocean); }
+.next-step-card h4 { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.2rem; }
+.next-step-card p { font-size: 0.78rem; color: var(--text-muted); line-height: 1.45; }
+.next-step-card:hover p { color: #2563eb; opacity: 0.75; }
+
+/* ── SIDEBAR ── */
+.sidebar { display: flex; flex-direction: column; gap: 1rem; }
+
+.trip-summary-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+.trip-summary-header { background: var(--gray-light); padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--gray-border); }
+.trip-summary-header h3 { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.trip-summary-body { padding: 1rem 1.1rem; }
+.summary-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; padding: 0.45rem 0; border-bottom: 1px solid var(--gray-border); font-size: 0.85rem; }
+.summary-row:last-child { border-bottom: none; }
+.summary-label { color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
+.summary-value { color: var(--text); text-align: right; }
+
+.affiliate-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 1.1rem; box-shadow: var(--shadow); }
+.affiliate-title { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+.affiliate-link { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.85rem; border-radius: 8px; background: var(--gray-light); border: 1px solid var(--gray-border); text-decoration: none; color: var(--text); margin-bottom: 0.5rem; font-size: 0.88rem; font-weight: 500; transition: background var(--transition), border-color var(--transition), transform var(--transition); }
+.affiliate-link:last-child { margin-bottom: 0; }
+.affiliate-link:hover { background: #eaf4fb; border-color: var(--teal); transform: translateX(2px); }
+.affiliate-link .arr { font-size: 0.72rem; color: var(--text-muted); }
+.affiliate-link:hover .arr { color: var(--ocean); }
+.affiliate-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic; }
+
+.deal-card { background: linear-gradient(135deg, #023e8a, #0077b6); border-radius: var(--radius-lg); padding: 1.25rem; color: #fff; }
+.deal-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.4rem; }
+.deal-card p { font-size: 0.83rem; opacity: 0.85; margin-bottom: 0.85rem; line-height: 1.5; }
+.deal-btn { display: block; text-align: center; background: var(--coral); color: #fff; padding: 0.6rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: background var(--transition); }
+.deal-btn:hover { background: var(--coral-dark); }
+
+/* ── SPINNER OVERLAY ── */
+.spinner-overlay { position: fixed; inset: 0; background: rgba(2,62,138,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+.spinner-overlay.active { display: flex; }
+.spinner-box { background: #fff; border-radius: var(--radius-lg); padding: 2.5rem 3rem; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.spinner-box .spinner { margin-bottom: 1rem; }
+.spinner-box h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--text); margin-bottom: 0.3rem; }
+.spinner-box p { font-size: 0.85rem; color: var(--text-muted); }
+
+/* ── FOOTER ── */
+footer { background: linear-gradient(105deg, #023e8a 0%, #0077b6 100%); color: rgba(255,255,255,0.85); padding: 3rem 1.5rem 2rem; }
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-brand { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+.footer-tagline { font-size: 0.85rem; opacity: 0.7; }
+.footer-subscribe { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-email { padding: 0.65rem 1rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.12); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; flex: 1; min-width: 180px; outline: none; }
+.footer-email::placeholder { color: rgba(255,255,255,0.5); }
+.footer-sub-btn { padding: 0.65rem 1.2rem; background: var(--coral); color: #fff; border: none; cursor: pointer; border-radius: 9px; font-size: 0.9rem; font-weight: 600; font-family: 'DM Sans', sans-serif; transition: background var(--transition); }
+.footer-sub-btn:hover { background: var(--coral-dark); }
+.footer-links { display: flex; gap: 1.2rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+.footer-copy { margin-top: 2rem; font-size: 0.8rem; opacity: 0.55; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12); }
+
+/* ── FLOATING CHATBOT ── */
+.floating-chatbot { position: fixed; bottom: 28px; right: 28px; background: linear-gradient(135deg, var(--teal), var(--ocean)); color: white; width: 58px; height: 58px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 24px rgba(0,119,182,0.4); font-size: 1.5rem; z-index: 50; cursor: pointer; border: 2px solid rgba(255,255,255,0.25); transition: transform var(--transition), box-shadow var(--transition); }
+.floating-chatbot:hover { transform: scale(1.1); box-shadow: 0 10px 30px rgba(0,119,182,0.5); }
+
+/* ── PRINT ── */
+@media print {
+  .vg-header, .page-banner, .sidebar, .next-steps, footer, .floating-chatbot, .spinner-overlay { display: none !important; }
+  .page-body { grid-template-columns: 1fr; padding: 0; }
+  .itinerary-card { box-shadow: none; border: none; }
+  .itinerary-card-header { background: #023e8a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (max-width: 640px) {
+  .page-banner-inner { flex-direction: column; align-items: flex-start; }
+  .banner-actions { width: 100%; }
+  .action-btn span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html">
+      <img src="images/nav-icon.png" alt="Voyage Genie"/>
+      <span class="vg-title">Voyage Genie</span>
+    </a>
+    <div class="vg-right">
+      <a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a>
+      <a class="nav-chip" href="tropical-trip-planner.html" id="modifyLink">✏️ Modify</a>
+    </div>
+  </div>
+</header>
+
+<!-- ===== PAGE BANNER ===== -->
+<div class="page-banner">
+  <div class="page-banner-inner">
+    <div>
+      <h1 id="bannerTitle">🌴 Your Tropical Itinerary is Ready!</h1>
+      <p>Personalized by Genie · Review, print, or email your plan below.</p>
+    </div>
+    <div class="banner-actions">
+      <button class="action-btn" id="printBtn">🖨️ <span>Print</span></button>
+      <button class="action-btn" id="emailBtn">📧 <span>Email Me</span></button>
+      <button class="action-btn" id="newSuggestionBtn">🔄 <span>New Suggestion</span></button>
+      <button class="action-btn action-btn-primary" id="saveToTripsBtn">💾 <span>Save to My Trips</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SPINNER OVERLAY ===== -->
+<div class="spinner-overlay" id="spinnerOverlay">
+  <div class="spinner-box">
+    <div class="spinner"></div>
+    <h3 id="spinnerTitle">Generating New Suggestion…</h3>
+    <p>Genie is crafting an alternative itinerary</p>
+  </div>
+</div>
+
+<!-- ===== MAIN ===== -->
+<main id="main-content">
+  <div class="page-body">
+
+    <!-- ── LEFT: ITINERARY ── -->
+    <div>
+      <div class="itinerary-card">
+        <div class="itinerary-card-header">
+          <h2 id="itineraryTitle">🌴 Tropical Resort Itinerary</h2>
+          <p id="itinerarySubtitle">Your personalized adventure awaits</p>
+          <div class="itinerary-meta" id="itineraryMeta"></div>
+        </div>
+        <div class="itinerary-body">
+          <div class="itinerary-content" id="itinerary">
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <p>Loading your itinerary…</p>
+            </div>
+          </div>
+
+          <!-- Next Steps -->
+          <div class="next-steps">
+            <div class="next-steps-title">What's next?</div>
+            <div class="next-steps-grid">
+
+              <!-- 1. Visa Check — highest stakes, do this first -->
+              <a href="visa-check.html" class="next-step-card" id="visaLink">
+                <h4>🛂 Visa Check</h4>
+                <p>Confirm entry requirements for your passport before booking anything.</p>
+              </a>
+
+              <!-- 2. Packing Checklist — most natural post-itinerary action -->
+              <a href="packing-checklist.html" class="next-step-card" id="packingLink">
+                <h4>🧳 Packing Checklist</h4>
+                <p>Smart list auto-tailored to your trip type and destination.</p>
+              </a>
+
+              <!-- 3. Explore Destination — rides the excitement of reading the itinerary -->
+              <a href="explore-this-destination.html" class="next-step-card" id="exploreLink">
+                <h4>🌆 Explore Destination</h4>
+                <p>Attractions, local dining, and hidden gems near your resort.</p>
+              </a>
+
+              <!-- 4. Search Flights — peak booking intent, pre-filled -->
+              <a href="https://www.skyscanner.com" target="_blank" rel="noopener" class="next-step-card" id="flightSearchLink">
+                <h4>✈️ Search Flights</h4>
+                <p>Compare live prices from your departure city — pre-filled with your dates.</p>
+              </a>
+
+              <!-- 5. Book Hotel — same booking intent moment -->
+              <a href="https://www.booking.com" target="_blank" rel="noopener" class="next-step-card" id="hotelSearchLink">
+                <h4>🏨 Book Your Hotel</h4>
+                <p>Lock in your resort before prices go up — destination & dates ready.</p>
+              </a>
+
+              <!-- 6. Travel Insurance — protect the investment being made -->
+              <a href="https://www.safetywing.com" target="_blank" rel="noopener" class="next-step-card" id="insuranceLink">
+                <h4>🛡️ Travel Insurance</h4>
+                <p>Protect your trip investment. Compare plans from top providers.</p>
+              </a>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: SIDEBAR ── -->
+    <aside class="sidebar">
+
+      <!-- Trip Summary -->
+      <div class="trip-summary-card">
+        <div class="trip-summary-header"><h3>📋 Trip Summary</h3></div>
+        <div class="trip-summary-body" id="tripSummaryBody">
+          <div class="summary-row"><span class="summary-label">Destination</span><span class="summary-value" id="s-destination">—</span></div>
+          <div class="summary-row"><span class="summary-label">Departure</span><span class="summary-value" id="s-departure">—</span></div>
+          <div class="summary-row"><span class="summary-label">Dates</span><span class="summary-value" id="s-dates">—</span></div>
+          <div class="summary-row"><span class="summary-label">Trip Type</span><span class="summary-value" id="s-triptype">—</span></div>
+          <div class="summary-row"><span class="summary-label">Group Size</span><span class="summary-value" id="s-groupsize">—</span></div>
+          <div class="summary-row"><span class="summary-label">Budget</span><span class="summary-value" id="s-budget">—</span></div>
+        </div>
+      </div>
+
+      <!-- Book It Now -->
+      <div class="deal-card">
+        <h3>✨ Ready to Book?</h3>
+        <p>Lock in your flights and hotel before prices change.</p>
+        <a href="https://www.booking.com" target="_blank" rel="noopener" class="deal-btn" id="bookingLink">Browse Top Deals →</a>
+      </div>
+
+      <!-- Flights -->
+      <div class="affiliate-card">
+        <div class="affiliate-title">🛫 Search Flights</div>
+        <a href="https://www.skyscanner.com" target="_blank" rel="noopener" class="affiliate-link" id="skyLink"><span>Skyscanner</span><span class="arr">↗</span></a>
+        <a href="https://www.kayak.com" target="_blank" rel="noopener" class="affiliate-link" id="kayakLink"><span>Kayak</span><span class="arr">↗</span></a>
+        <a href="https://www.google.com/travel/flights" target="_blank" rel="noopener" class="affiliate-link"><span>Google Flights</span><span class="arr">↗</span></a>
+        <p class="affiliate-note">We may earn a small commission at no cost to you.</p>
+      </div>
+
+      <!-- Hotels -->
+      <div class="affiliate-card">
+        <div class="affiliate-title">🏨 Find Hotels</div>
+        <a href="https://www.booking.com" target="_blank" rel="noopener" class="affiliate-link" id="bkLink"><span>Booking.com</span><span class="arr">↗</span></a>
+        <a href="https://www.hotels.com" target="_blank" rel="noopener" class="affiliate-link" id="hotelsLink"><span>Hotels.com</span><span class="arr">↗</span></a>
+        <a href="https://www.expedia.com" target="_blank" rel="noopener" class="affiliate-link" id="expediaLink"><span>Expedia</span><span class="arr">↗</span></a>
+      </div>
+
+      <!-- Activities -->
+      <div class="affiliate-card">
+        <div class="affiliate-title">🎟️ Tours & Activities</div>
+        <a href="https://www.viator.com" target="_blank" rel="noopener" class="affiliate-link" id="viatorLink"><span>Viator</span><span class="arr">↗</span></a>
+        <a href="https://www.getyourguide.com" target="_blank" rel="noopener" class="affiliate-link" id="gygLink"><span>GetYourGuide</span><span class="arr">↗</span></a>
+      </div>
+
+      <!-- Insurance -->
+      <div class="affiliate-card">
+        <div class="affiliate-title">🛡️ Travel Insurance</div>
+        <a href="https://www.safetywing.com" target="_blank" rel="noopener" class="affiliate-link"><span>SafetyWing</span><span class="arr">↗</span></a>
+        <a href="https://www.worldnomads.com" target="_blank" rel="noopener" class="affiliate-link"><span>World Nomads</span><span class="arr">↗</span></a>
+        <p class="affiliate-note">Protect your trip before you go.</p>
+      </div>
+
+    </aside>
+  </div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+    <div class="footer-subscribe">
+      <input class="footer-email" placeholder="Enter your email" type="email"/>
+      <button class="footer-sub-btn">Subscribe</button>
+    </div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#plan-trip">Plan</a>
+      <a href="features.html">Features</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-copy">© 2025 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<div class="floating-chatbot" title="Ask Genie">💬</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ── Load data from localStorage ──────────────────────────────
+  const urlParams     = new URLSearchParams(window.location.search);
+  const sessionId     = urlParams.get('sessionId') || localStorage.getItem('sessionId');
+  let   itineraryHtml = localStorage.getItem('itineraryHtml');
+  let   formDataJson  = localStorage.getItem('formData');
+
+  // ── Parse form data ───────────────────────────────────────────
+  let fd = {};
+  try { fd = JSON.parse(formDataJson || '{}'); } catch(e) {}
+
+  const destination  = fd.destination  || 'Your Destination';
+  const departure    = fd.departure    || 'Not specified';
+  const startDate    = fd.startDate    || '';
+  const endDate      = fd.endDate      || '';
+  const budget       = fd.budget       || 'N/A';
+  const groupSize    = fd.groupSize    || 'N/A';
+  const tripType     = fd.tripType     || 'N/A';
+  const email        = fd.email        || '';
+  const dayActivity  = Array.isArray(fd.dayActivity)   ? fd.dayActivity.join(', ')   : (fd.dayActivity   || '');
+  const nightActivity= Array.isArray(fd.nightActivity) ? fd.nightActivity.join(', ') : (fd.nightActivity || '');
+  const ageRange     = Array.isArray(fd.ageRange)      ? fd.ageRange.join(', ')      : (fd.ageRange      || '');
+
+  // ── Update page titles ────────────────────────────────────────
+  document.title = `${destination} Itinerary – Voyage Genie`;
+  document.getElementById('bannerTitle').textContent   = `🌴 Your ${destination} Itinerary is Ready!`;
+  document.getElementById('itineraryTitle').textContent = `🌴 ${destination} Trip Plan`;
+  document.getElementById('itinerarySubtitle').textContent =
+    `${departure} → ${destination}${startDate ? ` · ${startDate} to ${endDate}` : ''}`;
+
+  // ── Meta pills ────────────────────────────────────────────────
+  const metaEl = document.getElementById('itineraryMeta');
+  const pills = [
+    tripType !== 'N/A'    ? `🧳 ${tripType}`         : null,
+    groupSize !== 'N/A'   ? `👥 ${groupSize} pax`    : null,
+    budget !== 'N/A'      ? `💵 $${budget} budget`   : null,
+    startDate             ? `📅 ${startDate}`         : null,
+  ].filter(Boolean);
+  pills.forEach(p => {
+    const span = document.createElement('span');
+    span.className = 'meta-pill';
+    span.textContent = p;
+    metaEl.appendChild(span);
+  });
+
+  // ── Trip summary sidebar ──────────────────────────────────────
+  document.getElementById('s-destination').textContent = destination;
+  document.getElementById('s-departure').textContent   = departure;
+  document.getElementById('s-dates').textContent       = startDate ? `${startDate} → ${endDate}` : '—';
+  document.getElementById('s-triptype').textContent    = tripType;
+  document.getElementById('s-groupsize').textContent   = groupSize;
+  document.getElementById('s-budget').textContent      = budget !== 'N/A' ? `$${budget}` : '—';
+
+  // ── Affiliate links pre-filled with destination + dates ───────
+  const q     = encodeURIComponent(destination);
+  const ci    = startDate;
+  const co    = endDate;
+  document.getElementById('skyLink').href     = `https://www.skyscanner.com/flights?query=${q}`;
+  document.getElementById('kayakLink').href   = `https://www.kayak.com/flights/${encodeURIComponent(departure.replace(/[^a-zA-Z]/g,'').substring(0,3).toUpperCase())}-${q}/${ci || ''}/${co || ''}`;
+  document.getElementById('bkLink').href      = `https://www.booking.com/searchresults.html?ss=${q}&checkin=${ci}&checkout=${co}`;
+  document.getElementById('hotelsLink').href  = `https://www.hotels.com/search.do?destination-id=${q}&q-check-in=${ci}&q-check-out=${co}`;
+  document.getElementById('expediaLink').href = `https://www.expedia.com/Hotel-Search?destination=${q}&startDate=${ci}&endDate=${co}`;
+  document.getElementById('viatorLink').href  = `https://www.viator.com/search?q=${q}`;
+  document.getElementById('gygLink').href     = `https://www.getyourguide.com/s/?q=${q}`;
+  document.getElementById('bookingLink').href = `https://www.booking.com/searchresults.html?ss=${q}&checkin=${ci}&checkout=${co}`;
+
+  // ── Next-step link pre-fills ──────────────────────────────
+  const packParams = new URLSearchParams({ destination, startDate, endDate, travelers: String(groupSize), source: 'tropical-trip-planner' });
+  document.getElementById('packingLink').href  = `packing-checklist.html?${packParams}`;
+  document.getElementById('exploreLink').href  = `explore-this-destination.html?destination=${q}`;
+  document.getElementById('visaLink').href     = `visa-check.html?destination=${q}`;
+  document.getElementById('flightSearchLink').href = `https://www.skyscanner.com/transport/flights/${encodeURIComponent(departure.replace(/[^a-zA-Z\s]/g,'').trim().split(' ').pop() || 'anywhere')}/${q}/${(ci||'').replace(/-/g,'')}/${(co||'').replace(/-/g,'')}`;
+  document.getElementById('hotelSearchLink').href  = `https://www.booking.com/searchresults.html?ss=${q}&checkin=${ci}&checkout=${co}&group_adults=${groupSize !== 'N/A' ? groupSize : 2}`;
+  document.getElementById('insuranceLink').href    = `https://www.safetywing.com/?referenceID=voyagegenie&utm_source=voyagegenie&destination=${q}`;
+
+  // ── Packing trip context for packing assistant ────────────────
+  try {
+    const days = startDate && endDate ? Math.max(1, Math.round((new Date(endDate)-new Date(startDate))/(1000*3600*24))+1) : 7;
+    const activities = [
+      ...(Array.isArray(fd.dayActivity)   ? fd.dayActivity   : [fd.dayActivity]).filter(Boolean),
+      ...(Array.isArray(fd.nightActivity) ? fd.nightActivity : [fd.nightActivity]).filter(Boolean)
+    ];
+    localStorage.setItem('packingTrip', JSON.stringify({ destination, days, type: tripType, activities }));
+    localStorage.setItem('tripContext', JSON.stringify({ destination, startDate, endDate, travelers: groupSize, activities }));
+  } catch(e) {}
+
+  // ── Clean & render itinerary HTML ────────────────────────────
+  const cleanHtml = (html) => {
+    if (!html) return '<p style="color:#64748b">No itinerary found. Please try again.</p>';
+    html = html.trim().replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
+
+    const parser = new DOMParser();
+    const doc    = parser.parseFromString(html, 'text/html');
+
+    // Fix any h1 header background
+    const h1 = doc.querySelector('h1');
+    if (h1) { h1.style.backgroundColor = 'transparent'; h1.style.color = '#023e8a'; }
+
+    // Extract and rebuild cost summary
+    let costItems = [];
+    const costStrong = Array.from(doc.querySelectorAll('strong')).find(el =>
+      el.textContent.toLowerCase().includes('cost summary')
+    );
+    if (costStrong) {
+      let el = costStrong.nextElementSibling;
+      while (el && el.tagName.toLowerCase() === 'table') {
+        el.querySelectorAll('tr').forEach(row => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length >= 2) costItems.push({ cat: cells[0].textContent.trim(), amt: cells[1].textContent.trim() });
+        });
+        const next = el.nextElementSibling; el.remove(); el = next;
+      }
+    }
+    if (!costItems.length) {
+      doc.querySelectorAll('table').forEach(t => {
+        if (t.textContent.toLowerCase().match(/cost|price|total/)) {
+          t.querySelectorAll('tr').forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 2) costItems.push({ cat: cells[0].textContent.trim(), amt: cells[1].textContent.trim() });
+          });
+          t.remove();
+        }
+      });
+    }
+
+    if (costItems.length > 0) {
+      const tableHtml = `<div style="overflow-x:auto;margin:1rem 0"><table style="width:100%;border-collapse:collapse;font-size:0.88rem">
+        <thead><tr><th style="text-align:left;padding:8px 12px;background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;font-size:0.78rem;text-transform:uppercase;letter-spacing:.04em">Category</th>
+        <th style="text-align:right;padding:8px 12px;background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;font-size:0.78rem;text-transform:uppercase;letter-spacing:.04em">Estimate</th></tr></thead>
+        <tbody>${costItems.map(c => {
+          const bold = c.cat.toLowerCase().includes('total') || c.cat.toLowerCase().includes('remaining');
+          const bg   = bold ? 'background:#eaf4fb;font-weight:600;' : '';
+          return `<tr><td style="padding:9px 12px;border:1px solid #e2e8f0;${bg}">${c.cat}</td><td style="padding:9px 12px;border:1px solid #e2e8f0;text-align:right;${bg}">${c.amt}</td></tr>`;
+        }).join('')}</tbody></table></div>`;
+
+      if (costStrong) {
+        const div = doc.createElement('div'); div.innerHTML = tableHtml;
+        costStrong.parentNode.insertBefore(div, costStrong.nextSibling);
+      } else {
+        doc.body.insertAdjacentHTML('beforeend', tableHtml);
+      }
+    }
+
+    return doc.body.innerHTML;
+  };
+
+  // Render
+  const itinEl = document.getElementById('itinerary');
+  if (itineraryHtml) {
+    itinEl.innerHTML = cleanHtml(itineraryHtml);
+  } else {
+    itinEl.innerHTML = `<div style="text-align:center;padding:3rem 1rem;color:#64748b">
+      <p style="font-size:1.1rem;margin-bottom:1rem">No itinerary found.</p>
+      <a href="tropical-trip-planner.html" style="color:#0077b6;text-decoration:underline">← Go back to the planner</a>
+    </div>`;
+  }
+
+  // ── Print ─────────────────────────────────────────────────────
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+  // ── Email ─────────────────────────────────────────────────────
+  document.getElementById('emailBtn').addEventListener('click', async () => {
+    if (!itineraryHtml) { alert('Itinerary not found. Please try generating again.'); return; }
+    const userEmail = email || prompt('Enter your email address:');
+    if (!userEmail) return;
+    const btn = document.getElementById('emailBtn');
+    btn.disabled = true; btn.innerHTML = '⏳ <span>Sending…</span>';
+    try {
+      const res = await fetch('https://exodonprofits.app.n8n.cloud/webhook/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resolvedEmail:   userEmail,
+          resolvedSubject: `Your Tropical Itinerary for ${destination} – Voyage Genie`,
+          resolvedMessage: itineraryHtml
+        })
+      });
+      if (res.ok) { alert('✅ Itinerary sent to ' + userEmail); }
+      else { alert('Failed to send email. Please try again.'); }
+    } catch(err) {
+      alert('Failed to send email. Please try again.');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '📧 <span>Email Me</span>';
+    }
+  });
+
+  // ── New Suggestion ────────────────────────────────────────────
+  document.getElementById('newSuggestionBtn').addEventListener('click', async () => {
+    if (!formDataJson) { alert('Trip data not found. Please return to the form.'); return; }
+    const overlay = document.getElementById('spinnerOverlay');
+    overlay.classList.add('active');
+    const btn = document.getElementById('newSuggestionBtn');
+    btn.disabled = true;
+    try {
+      const res = await fetch('https://exodonprofits.app.n8n.cloud/webhook/tropical-travel-agent-new-suggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: formDataJson
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Handle both full itinerary and suggestions response
+        const newHtml = data.itineraryHtml || data.suggestionsHtml || '';
+        if (newHtml) {
+          localStorage.setItem('itineraryHtml', newHtml);
+          if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
+          if (data.formData)  localStorage.setItem('formData', JSON.stringify(data.formData));
+          itineraryHtml = newHtml;
+          document.getElementById('itinerary').innerHTML = cleanHtml(newHtml);
+        }
+      } else {
+        alert('Failed to generate a new suggestion. Please try again.');
+      }
+    } catch(err) {
+      alert('Failed to generate a new suggestion. Please try again.');
+    } finally {
+      overlay.classList.remove('active');
+      btn.disabled = false;
+    }
+  });
+
+  // ── Save to My Trips ──────────────────────────────────────────
+  document.getElementById('saveToTripsBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveToTripsBtn');
+    btn.disabled = true; btn.innerHTML = '⏳ <span>Saving…</span>';
+    try {
+      const sb = window.supabase;
+      if (!sb) throw new Error('Not signed in');
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { alert('Please sign in to save your trip.'); window.location.href='login.html?next=trip-dashboard.html'; return; }
+      const tripData = {
+        ...fd,
+        tripType: 'Tropical Resort',
+        name: `${destination} Trip`,
+        notes: 'Generated by Voyage Genie AI',
+        itineraryHtml: itineraryHtml,
+        sessionId: sessionId
+      };
+      const { error } = await sb.from('user_trips').insert({
+        user_id:   user.id,
+        trip_name: tripData.name,
+        trip_data: tripData
+      });
+      if (error) throw error;
+      btn.innerHTML = '✅ <span>Saved!</span>';
+      setTimeout(() => { btn.disabled = false; btn.innerHTML = '💾 <span>Save to My Trips</span>'; }, 3000);
+    } catch(err) {
+      if (err.message === 'Not signed in') {
+        alert('Please sign in to save your trip.');
+      } else {
+        alert('Failed to save trip. Please try again.');
+      }
+      btn.disabled = false; btn.innerHTML = '💾 <span>Save to My Trips</span>';
+    }
+  });
+
+  // ── Modify link clears storage ────────────────────────────────
+  document.getElementById('modifyLink').addEventListener('click', () => {
+    localStorage.removeItem('sessionId');
+    localStorage.removeItem('formData');
+    localStorage.removeItem('itineraryHtml');
+  });
+
+});
+</script>
+
+<!-- Supabase bootstrap for Save to My Trips -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+</script>
+</body>
+</html>

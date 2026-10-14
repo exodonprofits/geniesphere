@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | GenieSphere</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #0f172a, #1e293b);
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(45deg, #2BFFD9, #7C3AED);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    form {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 1rem;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 1rem;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #0f172a;
+      color: white;
+      font-size: 1rem;
+      box-sizing: border-box;
+      appearance: none;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 1rem;
+    }
+
+    .button-row button {
+      flex: 1;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(45deg, #2BFFD9, #7C3AED);
+      color: #0f172a;
+      font-weight: bold;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button.cancel {
+      background: #475569; /* Slate gray for cancel button */
+    }
+    .alt {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    a {
+      color: #2BFFD9;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Welcome Back</h1>
+
+  <form id="login-form">
+    <input type="email" id="email" placeholder="📧 Email address" required />
+    <input type="password" id="password" placeholder="🔒 Password" required />
+
+    <div style="text-align: left; margin-bottom: 1rem;">
+      <a href="reset_password.html" style="color: #2BFFD9; font-size: 0.9rem;">Forgot Password?</a>
+    </div>
+
+    <div class="button-row">
+      <button type="submit">Log In</button>
+      <button type="button" class="cancel" onclick="window.location.href='index.html'">Cancel</button>
+    </div>
+  </form>
+
+  
+  <div class="alt">
+    New here? <a href="signup.html">Create an account</a>
+  </div>
+
+  <script>
+  if (!window.supabaseClient) {
+    const { createClient } = window.supabase;
+    window.supabaseClient = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+
+  document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const redirectUrl = new URLSearchParams(window.location.search).get("redirect");
+    const agentSlug = redirectUrl?.split("/").find(part => part.includes("genie")) || null;
+
+    const { data: login, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    const userId = login.user.id;
+
+    const { data: prefs, error: prefErr } = await window.supabaseClient
+      .from("user_preferences")
+      .select("role, agents, business_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (prefErr || !prefs?.role) {
+      console.error("Unable to fetch user preferences:", prefErr?.message);
+      return alert("Unable to determine your access level. Contact support.");
+    }
+
+    const role = prefs.role;
+    const hasAgentAccess = role === 'admin' || (agentSlug && prefs.agents?.includes(agentSlug));
+
+    if (agentSlug && !hasAgentAccess) {
+      alert("❌ You don’t have access to this agent.");
+      return window.location.href = "/unauthorized.html";
+    }
+
+    console.error("user:", prefs.role);
+
+    // ✅ Redirect logic
+    if (role === "admin") {
+      window.location.href = "../dashboard/admin_dashboard.html";
+    } else if (role === "owner") {
+      window.location.href = redirectUrl || "../dashboard/owner_dashboard.html";
+    } else if (role === "employee") {
+      window.location.href = redirectUrl || `../dashboard/employee_dashboard.html?business=${prefs.business_id}`;
+    } else if (role === "client") {
+      window.location.href = redirectUrl || `../dashboard/client_dashboard.html?business=${prefs.business_id}`;
+    } else if (role === "demo") { 
+      window.location.href = redirectUrl || `../dashboard/demo_dashboard.html`;
+    }
+    else {
+      window.location.href = "../dashboard/demo_dashboard.html";
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,4445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- ═══ PERFORMANCE: resource hints + non-blocking font load ═══ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap">
+<link rel="dns-prefetch" href="https://pbojacnagutipfhcxltj.supabase.co">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<!-- =========================================================
+     GenieSphere Enterprise Auth Standard
+========================================================= -->
+
+<title>🏡 Dashboard – Rental Genie</title>
+
+<!-- (All existing CSS preserved exactly as-is) -->
+<style>
+
+/* -------------------------------------------------------------
+   GLOBAL (max-width updated to 1440px)
+------------------------------------------------------------- */
+:root{
+    --container: 1440px;
+    --border: rgba(226,232,240,1);
+    --panel-2: rgba(255,255,255,0.92);
+    --muted: #475569;
+    --text: #0f172a;
+    --focus: 0 0 0 3px rgba(56, 189, 248, 0.35);
+  }
+
+body {
+  margin: 0;
+  background: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+  color: #111827;
+}
+.page {
+  max-width: 1440px; /* Increased width for modern dashboards */
+  margin: 20px auto;
+  padding: 0 16px 32px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+body > main.page{
+  max-width: 1440px !important;
+  width: 100% !important;
+}
+
+
+/* -------------------------------------------------------------
+   HEADER
+------------------------------------------------------------- */
+.header-container {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background: linear-gradient(135deg, #0c1e3a, #1a3a6b, #1e5799);
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.navbar {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 14px 22px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.brand-area {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.brand-logo {
+  width:50px; height:50px;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,#f0faff,#bae6fd 40%,#0ea5e9 75%);
+  box-shadow:0px 0px 0px 2px rgba(14,165,233,0.25),0px 8px 16px rgba(0,0,0,0.15);
+}
+.brand-title {
+  font-size:1.45rem;
+  font-weight:800;
+  color: #e2e8f0;
+  text-shadow:0 2px 4px rgba(0,0,0,0.12);
+}
+
+.nav-links {
+  display:flex;
+  gap:5px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.nav-links a {
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 7px;
+  font-size:14px;
+  font-weight:600;
+  color: #cbd5e1;
+  text-decoration:none;
+  border-radius:999px;
+  white-space:nowrap;
+  transition:.25s;
+}
+.nav-links a:hover {
+  background: rgba(255,255,255,0.12);
+}
+.nav-active {
+  background: rgba(255,255,255,0.18) !important;
+  box-shadow:0 3px 8px rgba(0,0,0,0.15);
+}
+
+#nav-login {
+  display:inline-flex;
+  align-items:center;
+  padding:7px 14px;
+  border-radius:999px;
+  border:1px solid #cbd5e1;
+  font-weight:700;
+  background:white;
+}
+
+body.auth-ready #nav-login{ display:none !important; }
+body.auth-guest #userMenu{ display:none !important; }
+
+.user-menu { position:relative; display:inline-block; }
+.user-menu-toggle {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 10px;
+  border-radius:999px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.1);
+  cursor:pointer;
+  font-weight:600;
+}
+/* User Menu Dropdown Fix */
+
+
+/* Mobile */
+.hamburger {
+  display: none;
+  font-size: 1.5rem;
+  padding: 6px 12px;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 7px;
+  background: rgba(255,255,255,0.1);
+  cursor: pointer;
+}
+@media(max-width:820px){
+  .nav-links{display:none;}
+  .hamburger{display:block;}
+}
+
+.drawer{
+  display:none;
+  position:fixed;
+  top:70px; left:12px; right:12px;
+  background:white; border:1px solid #e2e8f0;
+  border-radius:12px; padding:12px;
+  z-index:1300;
+}
+.drawer a {
+  display:block;
+  padding:12px;
+  border-bottom:1px solid #e2e8f0;
+  font-weight:600; text-decoration:none;
+  color:#0f172a;
+}
+.drawer a:last-child { border-bottom:none; }
+#mobileLogoutContainer {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+#mobileLogoutContainer button {
+  padding:12px;
+  background:none;
+  border:none;
+  text-align:left;
+  font-weight:600;
+  color:#dc2626;
+  cursor:pointer;
+  width: 100%;
+  display: block;
+}
+#mobileLogoutContainer button:hover { background:#f1f5f9; }
+
+/* -------------------------------------------------------------
+   COMPONENTS & FOOTER STYLES (Retained/Updated)
+------------------------------------------------------------- */
+select {
+  padding:8px 14px;
+  border-radius:999px;
+  border:1px solid #cbd5e1;
+}
+
+.card {
+  background:white;
+  padding:18px;
+  border-radius: 7px;
+  border:1px solid #e2e8f0;
+  margin-top:18px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.06);
+}
+
+.site-footer {
+  margin-top: 20px;
+  padding: 30px 20px 20px;
+  background: linear-gradient(120deg,#e0f2fe 0%,#bae6fd 40%,#38bdf8  80%,#0ea5e9 100%);
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.footer-content {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  padding-bottom: 20px;
+}
+
+.footer-section h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.footer-section a,
+.footer-section p {
+  display: block;
+  color: #475569;
+  text-decoration: none;
+  margin-bottom: 8px;
+  transition: color 0.2s;
+}
+
+.footer-section a:hover {
+  color: #0ea5e9;
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 15px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 15px;
+}
+
+@media (max-width: 600px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .footer-section h4 {
+    margin-top: 20px;
+  }
+}
+
+/* -------------------------------------------------------------
+   INDEX.HTML PAGE-SPECIFIC STYLES
+------------------------------------------------------------- */
+:root {
+  /* Theme Colors from old index.html */
+  --primary: #007bff; /* Primary Color: Standard Blue for trust/professionalism */
+  --accent-success: #10b981; /* Success/finance accent */
+  --secondary-accent: #ffc107; /* Secondary Accent: Amber/Orange for warnings/prompts */
+  --card-bg: #ffffff; /* Card Background: Pure White */
+  --border-soft: #e5e7eb; /* Soft Border: Light Grey */
+  --text-main: #212529; /* Text/Body Copy: Near-Black Dark Grey for readability */
+  --text-muted: #6c757d; /* Muted Text: Standard Grey */
+}
+
+/* Dashboard Content Styles */
+.subtitle {
+  margin-top: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.hero {
+  background: var(--card-bg);
+  border-radius: 7px;
+  padding: 20px 20px 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--border-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.hero-main {
+  max-width: 540px;
+}
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: #e0f2fe; 
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 220px;
+}
+
+.primary-btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background-color: var(--primary); /* Primary Blue for main actions */
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  text-align: center;
+  box-shadow: 0 8px 18px rgba(0, 123, 255, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease,
+    background-color 0.12s ease;
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0, 86, 179, 0.4);
+  background-color: #0056b3; /* Darkened primary on hover */
+}
+
+.secondary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.secondary-link span {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.secondary-link:hover {
+  color: var(--primary);
+}
+
+/* Ask Rental Genie */
+.ask {
+  margin: 0 auto 18px;
+  max-width: 1440px;
+  background: #e9f5ff; /* Lighter primary-tinted background */
+  border-radius: 7px;
+  padding: 10px 14px;
+  border: 1px solid #bfdbfe;
+}
+.ask-row {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.ask-label {
+  font-size:0.83rem;
+  color:#0369a1;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+}
+.ask-input {
+  flex:1;
+  min-width:200px;
+  border-radius:999px;
+  border:1px solid #93c5fd;
+  padding:8px 14px;
+  font-size:0.9rem;
+}
+.ask-input:focus {
+  outline:none;
+  border-color:var(--primary);
+  box-shadow:0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+.ask-btn {
+  border-radius:999px;
+  border:none;
+  padding:10px 12px;
+  background:var(--primary);
+  color:#fff;
+  font-weight:600;
+  font-size:0.85rem;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+}
+.ask-btn:hover {
+  background:#0056b3;
+}
+.ask-hint {
+  margin-top:4px;
+  font-size:0.8rem;
+  color:var(--text-muted);
+}
+
+/* -------------------------------------------------------------
+   🧞 Genie Insights (dashboard guidance)
+------------------------------------------------------------- */
+.genie-insights{
+  margin: 0 auto 18px;
+  max-width: var(--container);
+  border-radius: 7px;
+  border: 1px solid #c7d2fe;
+  background: #f5f7ff;
+  padding: 12px 14px;
+}
+.genie-insights-header{
+  display:flex;
+  align-items:flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.genie-insights-title{
+  font-weight: 900;
+  color: #1e3a8a;
+  letter-spacing: .2px;
+}
+.genie-insights-sub{
+  font-size: .85rem;
+  color: #475569;
+  font-weight: 700;
+}
+.genie-insights-list{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+@media (max-width: 900px){
+  .genie-insights-list{ grid-template-columns: 1fr; }
+}
+.genie-insight{
+  border-radius: 7px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  padding: 10px 12px;
+}
+.genie-insight.urgent{ border-color:#fecaca; background:#fff1f2; }
+.genie-insight.warn{ border-color:#fde68a; background:#fffbeb; }
+.genie-insight.info{ border-color:#bfdbfe; background:#eff6ff; }
+.genie-insight .top{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.genie-insight .msg{
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.25;
+}
+.genie-insight .meta{
+  margin-top: 6px;
+  font-size: .82rem;
+  color: #334155;
+  font-weight: 700;
+}
+.genie-insight .actions{
+  margin-top: 10px;
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.genie-insight .actions a{
+  text-decoration:none;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  padding: 7px 10px;
+  background: white;
+  font-weight: 900;
+  font-size: .82rem;
+  color: #0f172a;
+}
+.genie-insight .actions a:hover{ background:#f1f5f9; }
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+  gap: 18px;
+  align-items: flex-start;
+}
+
+@media (max-width: 840px) {
+  .layout-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero {
+    padding: 18px 16px 14px;
+  }
+  .ask {
+    margin-left:0;
+    margin-right:0;
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.card-title {
+  font-size: 0.98rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+}
+
+.card-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.tag-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: #e0f2fe;
+  color: var(--primary);
+}
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+@media (max-width: 720px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.stat-card {
+  background: #f0f5ff; 
+  border-radius: 7px;
+  padding: 10px 10px 9px;
+  border: 1px solid #d0e2ff;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.stat-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: white;
+  border: 1px solid #bbf7d0;
+  color: #047857;
+}
+
+.stat-note {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* Task grid */
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.task-card {
+  border-radius: 7px;
+  padding: 12px 12px 10px;
+  background: #f9fafb;
+  border: 1px solid var(--border-soft);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background-color 0.12s ease, transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.task-card:hover {
+  background: #f3f9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+}
+
+.task-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+}
+
+.task-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Recent properties */
+.prop-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.prop-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #e5e7eb;
+  font-size: 0.85rem;
+}
+
+.prop-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prop-name {
+  font-weight: 600;
+}
+
+.prop-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.pill-status {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+}
+
+.pill-status.occupied {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #bbf7d0;
+}
+
+.pill-status.vacant {
+  background: #fffbe6;
+  color: #a16207;
+  border-color: #fde68a;
+}
+
+.tiny-btn {
+  border-radius: 999px;
+  border: none;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  background: #e0f2fe;
+  color: #0369a1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tiny-btn:hover {
+  background: #bfdbfe;
+}
+
+.empty-state {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Quick Peek (localStorage-based overview) */
+details.overview{
+  margin:0 auto 18px;
+  max-width:1440px;
+  background:var(--card-bg);
+  border-radius:7px;
+  border:1px solid #e5e7eb;
+  box-shadow:0 6px 16px rgba(15,23,42,.04);
+}
+details.overview>summary{
+  list-style:none;
+  cursor:pointer;
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+details.overview[open]>summary{
+  border-bottom:1px solid #e5e7eb;
+}
+.summary-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:700;
+  font-size:0.95rem;
+  color:var(--primary);
+}
+.summary-badges{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.summary-badge{
+  font-size:0.75rem;
+  font-weight:700;
+  border-radius:999px;
+  padding:3px 9px;
+  background:#e0f2fe; 
+  color:var(--primary);
+}
+.overview-content{
+  display:grid;
+  gap:12px;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  padding:10px 12px 12px;
+}
+.mini-card{
+  background:#f9fafb;
+  border-radius: 7px;
+  border:1px solid #e5e7eb;
+  padding:10px 10px 9px;
+}
+.mini-title{
+  margin:0 0 6px;
+  font-size:0.9rem;
+  font-weight:600;
+  color:var(--primary);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.mini-list{
+  margin:0;
+  padding-left:18px;
+  font-size:0.8rem;
+  color:var(--text-muted);
+}
+
+/* Dashboard charts */
+.charts-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:10px;
+  margin-top:10px;
+}
+@media (max-width: 900px){
+  .charts-grid{
+    grid-template-columns:1fr;
+  }
+}
+.chart-card{
+  background:#ffffff;
+  border:1px solid #e2e8f0;
+  border-radius:7px;
+  padding:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.04);
+}
+.chart-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+.chart-title{
+  font-size:0.95rem;
+  font-weight:800;
+  color:var(--primary);
+}
+.chart-note{
+  font-size:0.78rem;
+  color:var(--text-muted);
+  margin-top:3px;
+}
+.chart-wrap{
+  position:relative;
+  min-height:280px;
+}
+.chart-empty{
+  font-size:0.8rem;
+  color:var(--text-muted);
+}
+
+
+/* =========================================================
+MOBILE BOTTOM NAV (GenieSphere – 4 main areas)
+Used by:
+.mobile-nav
+.mobile-nav-inner
+.mnav
+.mnav.active
+.mobile-pad
+========================================================= */
+
+/* Bottom fixed container */
+.mobile-nav{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: none;                /* hidden on desktop */
+  z-index: 1200;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(135deg, #0c1e3a, #1a3a6b, #1e5799);
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -10px 24px rgba(0,0,0,.18);
+}
+
+/* Inner grid (4 tabs) */
+.mobile-nav-inner{
+  max-width: var(--container);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+}
+
+/* Each tab */
+.mnav{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 11px;
+  text-decoration: none;
+  text-align: center;
+}
+
+/* Emoji icon */
+.mnav .ico{
+  font-size: 25px;
+  line-height: 1;
+}
+
+/* Active tab */
+.mnav.active{
+  color: var(--text);
+  border-color: rgba(76,110,245,.55);
+  box-shadow: var(--focus);
+}
+
+/* Spacer so content isn't hidden behind nav */
+.mobile-pad{
+  display: none;
+  height: 86px;
+}
+
+/* Show only on mobile */
+@media (max-width: 860px){
+  .mobile-nav{ display: block; }
+  .mobile-pad{ display: block; }
+}
+
+/* Hide footer on mobile */
+@media (max-width: 600px) {
+  .site-footer {
+    display: none !important;
+  }
+ 
+}
+
+/* add space add then bottom of the page */
+@media (max-width: 860px){
+  main.page{
+    padding-bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+}
+
+/* -------------------------------------------------------------
+   RENTAL GENIE (Phase 1 - Read Only) - Command Bar + Panel
+------------------------------------------------------------- */
+:root{
+  --rg-blue:#0ea5e9;
+  --rg-bg:#ffffff;
+  --rg-text:#0f172a;
+  --rg-muted:#64748b;
+  --rg-border:rgba(15,23,42,0.12);
+  --rg-shadow:0 18px 40px rgba(0,0,0,.18);
+  --rg-radius:16px;
+}
+#genieBar{
+  position:fixed;
+  bottom:16px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--rg-bg);
+  padding:10px 12px;
+  border-radius:999px;
+  box-shadow:var(--rg-shadow);
+  border:1px solid var(--rg-border);
+  z-index:9999;
+  max-width:min(720px, calc(100vw - 24px));
+}
+#genieBar .genie-pill{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding-left:6px;
+}
+#genieIcon{
+  width:32px;height:32px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(14,165,233,0.12);
+  border:1px solid rgba(14,165,233,0.25);
+  font-size:16px;
+  flex:0 0 32px;
+}
+#genieInput{
+  width:min(420px, 52vw);
+  border:none;
+  outline:none;
+  font-size:14px;
+  color:var(--rg-text);
+  background:transparent;
+}
+#genieSend{
+  background:var(--rg-blue);
+  color:#fff;
+  border:none;
+  padding:8px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+#genieSend:disabled{ opacity:0.6; cursor:not-allowed; }
+#genieToggle{
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  font-weight:900;
+  color:var(--rg-muted);
+  padding:6px 10px;
+  border-radius:999px;
+}
+#genieToggle:hover{ background:rgba(148,163,184,0.18); }
+
+#geniePanel{
+  position:fixed;
+  bottom:86px;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(520px, calc(100vw - 24px));
+  background:var(--rg-bg);
+  border-radius:var(--rg-radius);
+  box-shadow:var(--rg-shadow);
+  border:1px solid var(--rg-border);
+  padding:14px;
+  z-index:9999;
+  display:none;
+}
+#geniePanelHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-bottom:10px;
+  border-bottom:1px solid rgba(15,23,42,0.08);
+}
+#genieTitle{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:900;
+  color:var(--rg-text);
+}
+#genieClose{
+  border:none;
+  background:rgba(148,163,184,0.18);
+  cursor:pointer;
+  font-weight:900;
+  border-radius:10px;
+  padding:8px 10px;
+}
+#genieClose:hover{ background:rgba(148,163,184,0.28); }
+
+#genieBody{ padding-top:12px; color:var(--rg-text); }
+#genieAnswer{ margin:0 0 10px 0; color:var(--rg-text); line-height:1.35; }
+#genieStatus{ font-size:12px; color:var(--rg-muted); margin-top:10px; }
+.status-error{ color:#b91c1c; font-weight:800; }
+
+.genie-cards{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+.genie-card{
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(15,23,42,0.10);
+  background:rgba(248,250,252,0.85);
+}
+.genie-card strong{ display:block; font-weight:900; margin-bottom:6px; }
+.genie-card .row{ display:flex; gap:10px; flex-wrap:wrap; color:var(--rg-muted); font-weight:700; font-size:13px; }
+
+.genie-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+.genie-action{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  text-decoration:none;
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid rgba(15,23,42,0.14);
+  background:#fff;
+  color:var(--rg-text);
+  font-weight:900;
+}
+.genie-action:hover{ background:rgba(148,163,184,0.14); }
+
+.spinner{
+  width:14px;height:14px;border-radius:999px;
+  border:2px solid rgba(255,255,255,0.45);
+  border-top-color:#fff;
+  display:inline-block;
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin{ to { transform:rotate(360deg);} }
+
+@media (max-width:520px){
+  #genieInput{ width:min(260px, 46vw); }
+  #genieSend{ padding:8px 12px; }
+}
+
+
+/* 🧞 Nav Badges */
+
+.drawer a{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.drawer 
+
+
+/* -------------------------------------------------------------
+   ASSISTANT-FIRST HOMEPAGE (Assignments)
+------------------------------------------------------------- */
+.assistant-hero{
+  display:grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap:16px;
+  margin: 14px 0 14px;
+}
+@media(max-width: 980px){
+  .assistant-hero{ grid-template-columns: 1fr; }
+}
+.assistant-chip{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  font-weight:800;
+  font-size:.85rem;
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(226,232,240,1);
+}
+.assistant-greeting{
+  margin:10px 0 6px;
+  font-size: 1.55rem;
+  color:#0f172a;
+}
+.assistant-sub{
+  margin:0 0 12px;
+  color:#334155;
+  line-height:1.4;
+}
+.assistant-quick{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.assistant-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius: 999px;
+  text-decoration:none;
+  border: 1px solid rgba(226,232,240,1);
+  background: white;
+  color:#0f172a;
+  font-weight:700;
+  transition:.2s;
+}
+.assistant-pill:hover{ box-shadow:0 6px 14px rgba(0,0,0,.08); transform: translateY(-1px); }
+
+.assistant-ask{
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(226,232,240,1);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+.assistant-ask-title{
+  font-weight:900;
+  color:#0f172a;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.assistant-ask-row{
+  display:flex;
+  gap:10px;
+}
+.assistant-ask-input{
+  flex:1;
+  padding: 12px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(226,232,240,1);
+  outline:none;
+}
+.assistant-ask-input:focus{ box-shadow: var(--focus); border-color: rgba(56,189,248,.65); }
+.assistant-ask-btn{
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(226,232,240,1);
+  background: #0ea5e9;
+  color: white;
+  font-weight: 900;
+  cursor:pointer;
+}
+.assistant-ask-btn:hover{ filter: brightness(0.98); }
+.assistant-ask-hint{
+  margin-top:10px;
+  color:#64748b;
+  font-size:.9rem;
+}
+
+.assistant-board{
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(226,232,240,1);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+}
+.assistant-board-head{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  margin-bottom: 10px;
+}
+.assistant-board-title{
+  font-size: 1.05rem;
+  font-weight: 950;
+  color:#0f172a;
+}
+.assistant-board-sub{
+  color:#64748b;
+  margin-top:4px;
+  font-size:.92rem;
+}
+.assistant-board-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.assistant-small-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(226,232,240,1);
+  background: white;
+  font-weight: 850;
+  cursor:pointer;
+  color:#0f172a;
+}
+.assistant-small-btn:hover{ box-shadow:0 8px 18px rgba(0,0,0,.08); }
+
+.assistant-list{ display:grid; grid-template-columns:1fr; gap:10px; margin-top: 8px; }
+.assistant-card{
+  border: 1px solid rgba(226,232,240,1);
+  background:white;
+  border-radius: 14px;
+  padding: 12px;
+}
+@media (min-width: 980px){
+  .assistant-list{ grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+.assistant-card.top{ border-left: 6px solid #ef4444; }
+.assistant-card.warn{ border-left: 6px solid #f59e0b; }
+.assistant-card.info{ border-left: 6px solid #0ea5e9; }
+.assistant-card.ok{ border-left: 6px solid #22c55e; }
+
+.assistant-card-title{
+  font-weight: 950;
+  color:#0f172a;
+  margin-bottom: 4px;
+}
+.assistant-card-desc{
+  color:#475569;
+  line-height:1.35;
+  margin-bottom: 10px;
+}
+.assistant-card-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 10px;
+}
+.assistant-meta-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 10px;
+  border-radius:999px;
+  background:#f8fafc;
+  border:1px solid rgba(226,232,240,1);
+  color:#334155;
+  font-size:.78rem;
+  font-weight:800;
+}
+.assistant-card-facts{
+  margin:0 0 12px;
+  padding:0;
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.assistant-card-facts li{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:10px;
+  background:#f8fafc;
+  border:1px solid rgba(226,232,240,1);
+  color:#334155;
+  font-size:.84rem;
+  line-height:1.35;
+}
+.assistant-card-facts strong{
+  color:#0f172a;
+}
+.assistant-card-facts a{
+  color:#0369a1;
+  font-weight:800;
+  text-decoration:none;
+}
+.assistant-card-facts a:hover{
+  text-decoration:underline;
+}
+
+.assistant-card-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.assistant-action{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  text-decoration:none;
+  border: 1px solid rgba(226,232,240,1);
+  background: #0ea5e9;
+  color: white;
+  font-weight: 900;
+}
+.assistant-action.secondary{
+  background: white;
+  color:#0f172a;
+  font-weight: 850;
+}
+.assistant-action:hover{ filter: brightness(0.98); }
+
+.assistant-empty{
+  padding: 14px;
+  color:#64748b;
+  background: rgba(248,250,252,0.9);
+  border: 1px dashed rgba(148,163,184,.6);
+  border-radius: 14px;
+}
+
+/* Manual mode wrapper */
+.manual-mode{
+  margin-top: 14px;
+  border: 1px solid rgba(226,232,240,1);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.65);
+  overflow:hidden;
+}
+.manual-mode > summary{
+  list-style:none;
+  padding: 14px;
+  cursor:pointer;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  font-weight: 950;
+  color:#0f172a;
+  background: rgba(255,255,255,0.92);
+  border-bottom: 1px solid rgba(226,232,240,1);
+}
+.manual-mode > summary::-webkit-details-marker{ display:none; }
+.manual-hint{
+  margin-left:auto;
+  font-weight:700;
+  color:#64748b;
+  font-size:.9rem;
+}
+@media(max-width:820px){
+  .manual-hint{ display:none; }
+}
+
+/* Manual mode desktop layout refresh */
+.manual-dashboard-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(340px, 0.72fr);
+  gap:18px;
+  align-items:start;
+}
+.manual-dashboard-grid .full-span{
+  grid-column:1 / -1;
+}
+.manual-two-col{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:18px;
+  align-items:start;
+}
+@media (max-width: 980px){
+  .manual-dashboard-grid,
+  .manual-two-col{
+    grid-template-columns:1fr;
+  }
+}
+
+/* ── Per-property rent card enhancements ── */
+.assistant-card-property-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+.assistant-card-property-row:last-of-type { margin-bottom: 0; }
+.property-row-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.property-row-name { font-weight: 800; font-size: .88rem; color: #0f172a; }
+.property-row-tenant { font-size: .78rem; color: #64748b; }
+.property-row-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.overdue-badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: .7rem; font-weight: 800; white-space: nowrap;
+}
+.overdue-badge.red   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.overdue-badge.amber { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+.overdue-badge.blue  { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+.property-row-amount { font-weight: 900; font-size: .88rem; color: #0f172a; }
+.property-row-action {
+  padding: 5px 12px; border-radius: 999px; font-size: .75rem; font-weight: 800;
+  background: #0ea5e9; color: white; text-decoration: none; white-space: nowrap;
+  border: none; cursor: pointer; font-family: inherit;
+}
+.property-row-action:hover { filter: brightness(0.92); }
+
+</style>
+<style>
+  /* ===== Movable Ask Genie (Floating) ===== */
+  .ask-genie-float {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 96px; /* leave room for mobile bottom nav if you have one */
+    z-index: 2500;
+    touch-action: none; /* needed for mobile dragging */
+  }
+
+  /* When user has dragged, we set left/top and unset right/bottom */
+  .ask-genie-float.is-free {
+    right: auto;
+    bottom: auto;
+  }
+
+  /* Optional: make it feel like a widget */
+  .ask-genie-float .ask-genie-shell {
+    border-radius: 18px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid rgba(226,232,240,1);
+    box-shadow: 0 10px 30px rgba(15,23,42,0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    overflow: hidden;
+  }
+
+  /* Drag handle */
+  .ask-genie-dragbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    cursor: grab;
+    user-select: none;
+    color: #64748b;
+    background: linear-gradient(180deg, rgba(241,245,249,0.9), rgba(255,255,255,0));
+  }
+  .ask-genie-dragbar:active {
+    cursor: grabbing;
+  }
+  .ask-genie-dragbar span {
+    letter-spacing: 2px;
+    font-weight: 900;
+    font-size: 14px;
+  }
+
+  /* Make the existing #genieBar layout work INSIDE the draggable wrapper
+     (otherwise #genieBar stays fixed to bottom-center and won't move). */
+  #askGenieFloat #genieBar{
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    z-index: auto;
+  }
+  /* If you want the panel to follow the bar later, we can anchor it;
+     for now keep panel fixed (existing behavior). */
+
+#askGenieFloat,
+#geniePanel {
+  display: none !important;
+}
+
+/* ✅ Sticky footer layout (footer stays at bottom on short pages) */
+html, body { height: 100%; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Make the main content take remaining space */
+main.page {
+  flex: 1 0 auto;
+}
+
+/* Footer sits at the bottom */
+.site-footer {
+  flex-shrink: 0;
+}
+
+ 
+</style>
+
+<style id="rg-enhanced">
+/* ================================================================
+   RENTAL GENIE — ENHANCED DASHBOARD STYLES
+   Design direction: Refined financial dashboard — clean authority,
+   warm slate tones, confident typography, subtle depth.
+================================================================ */
+
+/* ── Override global font ───────────────────────────────────── */
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif !important;
+  background: #f1f4f8 !important;
+}
+
+/* ── Enhanced header ────────────────────────────────────────── */
+.header-container {
+  background: linear-gradient(135deg, #0c1e3a 0%, #1a3a6b 50%, #1e5799 100%) !important;
+  box-shadow: 0 2px 20px rgba(12,30,58,0.35) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+}
+.brand-title {
+  font-family: 'DM Sans', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 1.35rem !important;
+  color: #ffffff !important;
+  letter-spacing: -0.3px !important;
+  text-shadow: none !important;
+}
+.nav-links a {
+  color: rgba(255,255,255,0.82) !important;
+  font-weight: 500 !important;
+  font-size: 13.5px !important;
+  letter-spacing: 0.1px;
+}
+.nav-links a:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; }
+.nav-active { background: rgba(255,255,255,0.18) !important; color: #fff !important; box-shadow: none !important; }
+#nav-login { background: rgba(255,255,255,0.1) !important; border: 1px solid rgba(255,255,255,0.25) !important; color: #fff !important; }
+#nav-login:hover { background: rgba(255,255,255,0.2) !important; }
+.user-menu-toggle { background: rgba(255,255,255,0.12) !important; border-color: rgba(255,255,255,0.2) !important; color: #fff !important; }
+.hamburger { background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.25) !important; color: #fff !important; }
+
+/* Brand logo pill */
+.brand-logo {
+  background: rgba(255,255,255,0.15) !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.2) !important;
+}
+
+/* ── Page header ─────────────────────────────────────────────── */
+.page h1 {
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 1.65rem !important;
+  font-weight: 700 !important;
+  color: #0c1e3a !important;
+  letter-spacing: -0.5px !important;
+  margin-bottom: 2px !important;
+}
+.subtitle {
+  color: #64748b !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 20px !important;
+}
+
+/* ── Assistant hero section ──────────────────────────────────── */
+.assistant-hero {
+  background: linear-gradient(135deg, #0c1e3a 0%, #1a3a6b 100%) !important;
+  border-radius: 16px !important;
+  padding: 28px 28px 24px !important;
+  box-shadow: 0 8px 32px rgba(12,30,58,0.22) !important;
+  margin-bottom: 16px !important;
+  border: none !important;
+}
+.assistant-chip {
+  background: rgba(255,255,255,0.12) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+}
+.assistant-greeting {
+  color: #ffffff !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 1.9rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.5px !important;
+  margin: 8px 0 6px !important;
+}
+.assistant-sub {
+  color: rgba(255,255,255,0.7) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  margin-bottom: 16px !important;
+}
+.assistant-sub strong { color: rgba(255,255,255,0.95) !important; font-weight: 600 !important; }
+
+/* Quick pill links */
+.assistant-pill {
+  background: rgba(255,255,255,0.1) !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 0.83rem !important;
+  font-weight: 500 !important;
+  border-radius: 999px !important;
+  transition: all .18s !important;
+}
+.assistant-pill:hover {
+  background: rgba(255,255,255,0.22) !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+
+/* Ask Genie box */
+.assistant-ask {
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  padding: 16px !important;
+}
+.assistant-ask-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 10px !important;
+}
+.assistant-ask-input {
+  background: rgba(255,255,255,0.12) !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  font-size: 0.88rem !important;
+}
+.assistant-ask-input::placeholder { color: rgba(255,255,255,0.45) !important; }
+.assistant-ask-input:focus { border-color: rgba(255,255,255,0.5) !important; box-shadow: 0 0 0 3px rgba(255,255,255,0.1) !important; }
+.assistant-ask-btn {
+  background: #2d8cf0 !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  padding: 0 18px !important;
+  box-shadow: 0 2px 8px rgba(45,140,240,0.35) !important;
+}
+.assistant-ask-btn:hover { background: #1a7de0 !important; }
+.assistant-ask-hint { color: rgba(255,255,255,0.45) !important; font-size: 0.78rem !important; margin-top: 8px !important; }
+
+/* ── Assignment board ────────────────────────────────────────── */
+.assistant-board {
+  background: #fff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 12px rgba(12,30,58,0.06) !important;
+  padding: 20px !important;
+  margin-bottom: 16px !important;
+}
+.assistant-board-title {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  color: #0c1e3a !important;
+  letter-spacing: -0.2px !important;
+}
+.assistant-board-sub { color: #64748b !important; font-size: 0.85rem !important; margin-top: 3px !important; }
+.assistant-small-btn {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  color: #334155 !important;
+  padding: 7px 12px !important;
+}
+.assistant-small-btn:hover { background: #f1f5f9 !important; box-shadow: 0 2px 6px rgba(0,0,0,0.07) !important; }
+
+/* Assignment cards */
+.assistant-card {
+  border-radius: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  background: #f8fafc !important;
+  padding: 14px 16px !important;
+  transition: box-shadow .18s !important;
+}
+.assistant-card:hover { box-shadow: 0 4px 16px rgba(12,30,58,0.09) !important; }
+.assistant-card.top { border-left: 4px solid #ef4444 !important; background: #fff9f9 !important; }
+.assistant-card.warn { border-left: 4px solid #f59e0b !important; background: #fffdf5 !important; }
+.assistant-card.info { border-left: 4px solid #2d8cf0 !important; background: #f6faff !important; }
+.assistant-card.ok { border-left: 4px solid #10b981 !important; background: #f6fdf9 !important; }
+.assistant-card-title { font-weight: 700 !important; color: #0c1e3a !important; font-size: 0.92rem !important; margin-bottom: 5px !important; }
+.assistant-card-desc { color: #475569 !important; font-size: 0.85rem !important; line-height: 1.45 !important; }
+.assistant-meta-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  border-radius: 999px !important;
+  padding: 3px 10px !important;
+}
+.assistant-action {
+  background: #0c1e3a !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 999px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 7px 14px !important;
+  transition: all .15s !important;
+}
+.assistant-action:hover { background: #1a3a6b !important; transform: translateY(-1px) !important; }
+.assistant-action.secondary { background: #f1f5f9 !important; color: #334155 !important; border: 1px solid #e2e8f0 !important; }
+.assistant-action.secondary:hover { background: #e2e8f0 !important; }
+.assistant-card-facts li {
+  background: #fff !important;
+  border: 1px solid #e9edf2 !important;
+  border-radius: 8px !important;
+  color: #334155 !important;
+  font-size: 0.83rem !important;
+}
+
+/* ── Manual mode wrapper ─────────────────────────────────────── */
+.manual-mode {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 12px rgba(12,30,58,0.05) !important;
+  overflow: hidden !important;
+}
+.manual-mode > summary {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  font-weight: 700 !important;
+  color: #0c1e3a !important;
+  font-size: 0.92rem !important;
+  padding: 14px 18px !important;
+  letter-spacing: -0.1px !important;
+}
+.manual-mode > summary:hover { background: #f1f5f9 !important; }
+.manual-hint { color: #94a3b8 !important; font-weight: 400 !important; }
+
+/* ── Quick Peek (overview details) ──────────────────────────── */
+details.overview {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  margin: 16px 0 !important;
+  box-shadow: none !important;
+}
+details.overview > summary {
+  background: #f8fafc !important;
+  padding: 12px 16px !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+}
+details.overview[open] > summary { border-radius: 12px 12px 0 0 !important; border-bottom: 1px solid #e2e8f0 !important; }
+.summary-title { color: #0c1e3a !important; font-size: 0.9rem !important; }
+.summary-badge {
+  background: #e8f0fe !important;
+  color: #1a3a6b !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  border-radius: 999px !important;
+  padding: 3px 10px !important;
+}
+.mini-card {
+  background: #f8fafc !important;
+  border: 1px solid #e9edf2 !important;
+  border-radius: 10px !important;
+  padding: 12px 14px !important;
+}
+.mini-title { color: #0c1e3a !important; font-size: 0.85rem !important; font-weight: 700 !important; }
+.mini-list { color: #475569 !important; font-size: 0.82rem !important; }
+
+/* ── Stat cards ──────────────────────────────────────────────── */
+.stat-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  padding: 14px 16px !important;
+  transition: box-shadow .15s !important;
+}
+.stat-card:hover { box-shadow: 0 4px 14px rgba(12,30,58,0.08) !important; }
+.stat-label { font-size: 0.75rem !important; font-weight: 600 !important; color: #64748b !important; text-transform: uppercase !important; letter-spacing: 0.4px !important; margin-bottom: 6px !important; }
+.stat-value { font-size: 1.45rem !important; font-weight: 700 !important; color: #0c1e3a !important; font-family: 'DM Mono', monospace !important; letter-spacing: -0.5px !important; }
+.stat-note { font-size: 0.72rem !important; color: #94a3b8 !important; margin-top: 4px !important; }
+.stat-badge { background: #ecfdf5 !important; border-color: #a7f3d0 !important; color: #065f46 !important; }
+
+/* ── Cards ───────────────────────────────────────────────────── */
+.card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 10px rgba(12,30,58,0.05) !important;
+}
+.card-title { color: #0c1e3a !important; font-weight: 700 !important; font-size: 0.92rem !important; letter-spacing: -0.2px !important; }
+.tag-pill { background: #e8f0fe !important; color: #1a3a6b !important; font-size: 0.72rem !important; font-weight: 700 !important; border-radius: 999px !important; }
+
+/* ── Chart cards ─────────────────────────────────────────────── */
+.chart-card {
+  background: #fff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 10px rgba(12,30,58,0.05) !important;
+}
+.chart-title { color: #0c1e3a !important; font-weight: 700 !important; font-size: 0.9rem !important; }
+.chart-note { color: #94a3b8 !important; font-size: 0.78rem !important; }
+
+/* ── Task cards ──────────────────────────────────────────────── */
+.task-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  padding: 14px !important;
+  transition: all .18s !important;
+}
+.task-card:hover {
+  background: #0c1e3a !important;
+  border-color: #0c1e3a !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 20px rgba(12,30,58,0.18) !important;
+}
+.task-card:hover .task-title { color: #fff !important; }
+.task-card:hover .task-desc { color: rgba(255,255,255,0.65) !important; }
+.task-title { font-weight: 700 !important; color: #0c1e3a !important; font-size: 0.88rem !important; }
+.task-desc { color: #64748b !important; font-size: 0.78rem !important; margin-top: 3px !important; }
+
+/* ── Property list ───────────────────────────────────────────── */
+.prop-item { border-bottom: 1px solid #f1f5f9 !important; }
+.prop-name { font-weight: 600 !important; color: #0c1e3a !important; font-size: 0.88rem !important; }
+.prop-meta { color: #94a3b8 !important; font-size: 0.75rem !important; }
+.pill-status.occupied { background: #ecfdf5 !important; color: #065f46 !important; border-color: #a7f3d0 !important; }
+.pill-status.vacant { background: #fefce8 !important; color: #854d0e !important; border-color: #fde68a !important; }
+.tiny-btn { background: #e8f0fe !important; color: #1a3a6b !important; font-weight: 600 !important; font-size: 0.75rem !important; border-radius: 999px !important; }
+.tiny-btn:hover { background: #d1e2fc !important; }
+
+/* ── Financial period select ─────────────────────────────────── */
+.card select, select {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  color: #334155 !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  padding: 6px 12px !important;
+}
+
+/* ── Footer ──────────────────────────────────────────────────── */
+.site-footer {
+  background: #0c1e3a !important;
+  border-top: none !important;
+  margin-top: 40px !important;
+}
+.footer-section h4 { color: rgba(255,255,255,0.9) !important; font-size: 0.82rem !important; text-transform: uppercase !important; letter-spacing: 0.8px !important; }
+.footer-section a, .footer-section p { color: rgba(255,255,255,0.5) !important; font-size: 0.83rem !important; }
+.footer-section a:hover { color: rgba(255,255,255,0.85) !important; }
+.footer-bottom { color: rgba(255,255,255,0.35) !important; border-top: 1px solid rgba(255,255,255,0.08) !important; font-size: 0.8rem !important; }
+
+/* ── Mobile bottom nav ───────────────────────────────────────── */
+.mobile-nav {
+  background: linear-gradient(135deg, #0c1e3a, #1a3a6b) !important;
+  border-top: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: 0 -4px 20px rgba(12,30,58,0.25) !important;
+}
+.mnav {
+  background: rgba(255,255,255,0.07) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: rgba(255,255,255,0.6) !important;
+  border-radius: 12px !important;
+  font-size: 10px !important;
+}
+.mnav.active {
+  background: rgba(255,255,255,0.18) !important;
+  border-color: rgba(255,255,255,0.25) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+/* ── Mobile drawer ───────────────────────────────────────────── */
+.drawer {
+  border-radius: 16px !important;
+  box-shadow: 0 16px 40px rgba(12,30,58,0.18) !important;
+  border: 1px solid #e2e8f0 !important;
+}
+.drawer a { color: #0c1e3a !important; font-size: 0.9rem !important; font-weight: 600 !important; }
+.drawer a:hover { background: #f8fafc !important; }
+
+/* ── Skeleton shimmer for loading states ─────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+.loading-shimmer {
+  background: linear-gradient(90deg, #f1f4f8 25%, #e8edf3 50%, #f1f4f8 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 6px;
+  color: transparent !important;
+}
+
+/* ── Subtle page-load fade in ────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.assistant-hero   { animation: fadeUp .35s ease both; }
+.assistant-board  { animation: fadeUp .45s .05s ease both; }
+.manual-mode      { animation: fadeUp .45s .1s ease both; }
+
+/* ── Scrollbar (webkit) ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f4f8; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+</style>
+
+
+<style id="rg-design-system">
+
+/* ================================================================
+   RENTAL GENIE — UNIFIED DESIGN SYSTEM v2
+   Navy authority + warm slate + DM Sans — applied sitewide
+================================================================ */
+:root {
+  --navy:       #0c1e3a;
+  --navy-mid:   #1a3a6b;
+  --navy-light: #1e5799;
+  --sky:        #2d8cf0;
+  --sky-light:  #e8f0fe;
+  --slate:      #475569;
+  --slate-light:#64748b;
+  --border:     #e2e8f0;
+  --bg:         #f1f4f8;
+  --card-bg:    #ffffff;
+  --text:       #0c1e3a;
+  --muted:      #64748b;
+  --success:    #10b981;
+  --warning:    #f59e0b;
+  --danger:     #ef4444;
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --shadow-sm:  0 1px 4px rgba(12,30,58,.06);
+  --shadow-md:  0 4px 16px rgba(12,30,58,.09);
+  --shadow-lg:  0 8px 32px rgba(12,30,58,.14);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif !important;
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Page wrapper ────────────────────────────────────────────── */
+.page, main.page {
+  max-width: 1440px !important;
+  width: 100% !important;
+  margin: 24px auto 0 !important;
+  padding: 0 16px 48px !important;
+  flex: 1 0 auto;
+}
+
+/* ── Page heading ────────────────────────────────────────────── */
+.page-heading, .page h1, main.page h1 {
+  font-size: 1.6rem !important;
+  font-weight: 700 !important;
+  color: var(--navy) !important;
+  letter-spacing: -0.4px !important;
+  margin: 0 0 4px !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-subheading, .subtitle {
+  color: var(--muted) !important;
+  font-size: 0.9rem !important;
+  margin: 0 0 20px !important;
+}
+
+/* ── Cards ───────────────────────────────────────────────────── */
+.card {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-sm) !important;
+  padding: 20px !important;
+  margin-top: 16px !important;
+  transition: box-shadow .18s !important;
+}
+.card:hover { box-shadow: var(--shadow-md) !important; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 8px;
+}
+.card-title {
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  color: var(--navy) !important;
+  letter-spacing: -0.2px !important;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 9px 18px; border-radius: 999px; border: none; cursor: pointer;
+  background: var(--navy); color: #fff; font-weight: 600; font-size: 0.88rem;
+  font-family: 'DM Sans', sans-serif; text-decoration: none; white-space: nowrap;
+  transition: all .15s; box-shadow: 0 2px 8px rgba(12,30,58,.2);
+}
+.btn-primary:hover { background: var(--navy-mid); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); cursor: pointer;
+  background: var(--card-bg); color: var(--navy); font-weight: 600; font-size: 0.85rem;
+  font-family: 'DM Sans', sans-serif; text-decoration: none; white-space: nowrap;
+  transition: all .15s;
+}
+.btn-secondary:hover { background: #f1f5f9; border-color: #cbd5e1; }
+
+.btn-danger {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 999px; border: none; cursor: pointer;
+  background: #fee2e2; color: #b91c1c; font-weight: 600; font-size: 0.85rem;
+  font-family: 'DM Sans', sans-serif; transition: all .15s;
+}
+.btn-danger:hover { background: #fecaca; }
+
+/* ── Status pills ────────────────────────────────────────────── */
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; border: 1px solid transparent; }
+.pill-green  { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+.pill-amber  { background: #fefce8; color: #854d0e; border-color: #fde68a; }
+.pill-red    { background: #fff1f2; color: #9f1239; border-color: #fecdd3; }
+.pill-blue   { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.pill-slate  { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
+
+/* ── Form elements ───────────────────────────────────────────── */
+input, select, textarea {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 9px 12px;
+  transition: border-color .15s, box-shadow .15s;
+  outline: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--sky);
+  box-shadow: 0 0 0 3px rgba(45,140,240,.12);
+  background: #fff;
+}
+
+/* ── Table ───────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+thead th {
+  background: #f8fafc; color: var(--slate); font-weight: 600; font-size: 0.78rem;
+  text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 14px;
+  border-bottom: 2px solid var(--border); text-align: left; white-space: nowrap;
+}
+tbody td { padding: 11px 14px; border-bottom: 1px solid #f1f5f9; color: var(--text); vertical-align: middle; }
+tbody tr:hover td { background: #fafbfc; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* ── Stat cards ──────────────────────────────────────────────── */
+.stat-card {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px 18px;
+  box-shadow: var(--shadow-sm); transition: box-shadow .18s;
+}
+.stat-card:hover { box-shadow: var(--shadow-md); }
+.stat-label { font-size: 0.73rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 7px; }
+.stat-value { font-family: 'DM Mono', monospace; font-size: 1.5rem; font-weight: 500; color: var(--navy); letter-spacing: -0.5px; }
+.stat-note { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.empty-state {
+  text-align: center; padding: 40px 20px; color: var(--muted);
+  background: #fafbfc; border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+}
+.empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; opacity: .6; }
+.empty-state p { font-size: 0.9rem; margin: 0; }
+
+/* ── Loading overlay ─────────────────────────────────────────── */
+#authOverlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: linear-gradient(160deg, #0c1e3a 0%, #0f2547 60%, #0c1e3a 100%);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .4s ease; pointer-events: none;
+}
+/* subtle grain texture */
+#authOverlay::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: .35;
+}
+.auth-overlay-inner {
+  text-align: center; color: white;
+  width: 300px; position: relative;
+}
+.auth-overlay-inner .ao-icon {
+  font-size: 3.2rem; margin-bottom: 10px;
+  display: block;
+  animation: aoPulse 1.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 16px rgba(45,140,240,.4));
+}
+.ao-title {
+  font-size: 1.15rem; font-weight: 700; color: #fff;
+  letter-spacing: -.2px; margin-bottom: 5px;
+}
+.ao-status {
+  font-size: .82rem; color: rgba(255,255,255,.55);
+  margin-bottom: 18px; min-height: 1.2em;
+  transition: opacity .25s ease;
+}
+/* Progress bar track */
+.ao-bar-track {
+  width: 100%; height: 4px; border-radius: 999px;
+  background: rgba(255,255,255,.1);
+  overflow: hidden; margin-bottom: 20px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06);
+}
+.ao-bar-fill {
+  height: 100%; border-radius: 999px; width: 0%;
+  background: linear-gradient(90deg, #2d8cf0, #38bdf8, #2d8cf0);
+  background-size: 200% 100%;
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+  animation: aoShimmer 1.8s linear infinite;
+}
+@keyframes aoShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+/* Step indicators */
+.ao-steps {
+  display: flex; justify-content: space-between; gap: 4px;
+}
+.ao-step {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  font-size: .65rem; font-weight: 600; color: rgba(255,255,255,.28);
+  text-transform: uppercase; letter-spacing: .5px;
+  transition: color .3s ease; flex: 1;
+}
+.ao-step-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(255,255,255,.18);
+  transition: background .3s ease, box-shadow .3s ease;
+  display: block;
+}
+.ao-step.active .ao-step-dot {
+  background: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56,189,248,.25);
+}
+.ao-step.active { color: rgba(255,255,255,.75); }
+.ao-step.done .ao-step-dot {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.2);
+}
+.ao-step.done { color: rgba(255,255,255,.45); }
+@keyframes aoPulse { 0%,100%{opacity:.85;transform:scale(1)} 50%{opacity:1;transform:scale(1.06)} } 50% { opacity:1; transform:scale(1.05); } }
+
+/* ── Page fade-in ────────────────────────────────────────────── */
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.page-fade { animation: fadeUp .35s ease both; }
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── HEADER ──────────────────────────────────────────────────── */
+.header-container {
+  position: sticky !important; top: 0 !important; z-index: 1000 !important;
+  width: 100% !important;
+  background: linear-gradient(135deg, #0c1e3a 0%, #1a3a6b 55%, #1e5799 100%) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  box-shadow: 0 2px 20px rgba(12,30,58,.35) !important;
+}
+.navbar {
+  max-width: 1440px; margin: 0 auto; padding: 13px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.brand-area { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+.brand-logo {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.2), 0 4px 12px rgba(0,0,0,.2);
+  object-fit: cover;
+}
+.brand-title {
+  font-size: 1.25rem !important; font-weight: 700 !important;
+  color: #ffffff !important; letter-spacing: -0.3px !important;
+  text-shadow: none !important;
+}
+.nav-links {
+  display: flex; gap: 2px; align-items: center; flex-wrap: nowrap;
+}
+.nav-links a {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 10px; font-size: 13.5px; font-weight: 500;
+  color: rgba(255,255,255,.78) !important; text-decoration: none;
+  border-radius: 8px; white-space: nowrap; transition: all .18s;
+  font-family: 'DM Sans', sans-serif;
+}
+.nav-links a:hover { background: rgba(255,255,255,.12) !important; color: #fff !important; }
+.nav-active { background: rgba(255,255,255,.16) !important; color: #fff !important; }
+.nav-active:hover { background: rgba(255,255,255,.22) !important; }
+#nav-login {
+  padding: 7px 16px !important; border-radius: 999px !important;
+  border: 1px solid rgba(255,255,255,.25) !important;
+  background: rgba(255,255,255,.1) !important; color: #fff !important;
+  font-weight: 600 !important; font-size: 13.5px !important;
+}
+#nav-login:hover { background: rgba(255,255,255,.2) !important; }
+.user-menu { position: relative; }
+.user-menu-toggle {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  padding: 7px 14px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.1);
+  color: #fff; font-weight: 600; font-size: 13.5px; font-family: 'DM Sans', sans-serif;
+  transition: all .15s;
+}
+.user-menu-toggle:hover { background: rgba(255,255,255,.18); }
+
+.hamburger {
+  display: none; font-size: 1.4rem; padding: 7px 12px;
+  border: 1px solid rgba(255,255,255,.22); border-radius: 8px;
+  background: rgba(255,255,255,.1); cursor: pointer; color: #fff;
+  font-family: 'DM Sans', sans-serif;
+}
+@media (max-width: 860px) { .nav-links { display: none; } .hamburger { display: block; } }
+
+/* Auth display */
+body.auth-ready #nav-login { display: none !important; }
+body.auth-ready .user-menu { display: block !important; }
+body.auth-guest .user-menu { display: none !important; }
+body.auth-ready #mobileLogin { display: none !important; }
+body.auth-ready #mobileAccountLink { display: block !important; }
+body.auth-ready #mobileLogoutContainer { display: block !important; }
+body.auth-guest #mobileLogin { display: block !important; }
+body.auth-guest #mobileAccountLink { display: none !important; }
+body.auth-guest #mobileLogoutContainer { display: none !important; }
+
+/* ── Mobile drawer ───────────────────────────────────────────── */
+.drawer {
+  display: none; position: fixed; top: 70px; left: 12px; right: 12px;
+  background: #fff; border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 10px 8px; z-index: 1300;
+  box-shadow: 0 16px 40px rgba(12,30,58,.18);
+}
+.drawer a {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 14px; border-bottom: 1px solid #f1f5f9;
+  font-weight: 600; text-decoration: none; color: var(--navy);
+  font-size: 0.9rem; border-radius: 8px; transition: background .12s;
+}
+.drawer a:last-of-type { border-bottom: none; }
+.drawer a:hover { background: #f8fafc; }
+#mobileLogoutContainer { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 6px; }
+#mobileLogoutContainer button {
+  width: 100%; padding: 11px 14px; background: none; border: none;
+  text-align: left; font-weight: 600; color: #b91c1c; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem; border-radius: 8px;
+}
+#mobileLogoutContainer button:hover { background: #fff1f2; }
+
+/* ── RG Badges ───────────────────────────────────────────────── */
+
+/* ── FOOTER ──────────────────────────────────────────────────── */
+.site-footer {
+  background: var(--navy) !important;
+  border-top: none !important;
+  padding: 40px 20px 24px !important;
+  margin-top: 48px !important;
+  flex-shrink: 0;
+}
+.footer-content {
+  max-width: 1440px; margin: 0 auto;
+  display: grid; grid-template-columns: 1.6fr repeat(3, 1fr);
+  gap: 32px; padding-bottom: 28px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+@media (max-width: 860px) { .footer-content { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .footer-content { grid-template-columns: 1fr; } }
+
+.footer-brand .footer-logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.footer-brand .footer-logo {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+}
+.footer-brand .footer-name { font-size: 1.1rem; font-weight: 700; color: #fff; }
+.footer-brand p { font-size: 0.83rem; color: rgba(255,255,255,.45); line-height: 1.55; max-width: 220px; margin: 0; }
+
+.footer-section h4 {
+  font-size: 0.72rem !important; font-weight: 700 !important;
+  color: rgba(255,255,255,.55) !important; text-transform: uppercase !important;
+  letter-spacing: 1px !important; margin: 0 0 14px !important;
+}
+.footer-section a {
+  display: block; color: rgba(255,255,255,.5) !important;
+  text-decoration: none; font-size: 0.85rem !important;
+  margin-bottom: 9px !important; transition: color .15s !important;
+}
+.footer-section a:hover { color: rgba(255,255,255,.9) !important; }
+.footer-section p { color: rgba(255,255,255,.45) !important; font-size: 0.83rem !important; margin-bottom: 8px !important; }
+
+.footer-bottom {
+  max-width: 1440px; margin: 20px auto 0;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  color: rgba(255,255,255,.3) !important; font-size: 0.78rem !important;
+  border-top: none !important; padding-top: 0 !important;
+}
+.footer-bottom a { color: rgba(255,255,255,.4); text-decoration: none; }
+.footer-bottom a:hover { color: rgba(255,255,255,.7); }
+
+/* ── Mobile bottom nav ───────────────────────────────────────── */
+.mobile-nav {
+  display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1200;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(135deg, #0c1e3a, #1a3a6b);
+  border-top: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 -4px 20px rgba(12,30,58,.28);
+}
+.mobile-nav-inner { max-width: 1440px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+.mnav {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 9px 6px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.55); font-weight: 700; font-size: 10px;
+  text-decoration: none; text-align: center;
+}
+.mnav .ico { font-size: 22px; line-height: 1; }
+.mnav.active { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.25); color: #fff; }
+.mobile-pad { display: none; height: 82px; }
+@media (max-width: 860px) { .mobile-nav { display: block; } .mobile-pad { display: block; } main.page { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; } }
+@media (max-width: 600px) { .site-footer { display: none !important; } }
+
+
+/* ── Data loading shimmer ─────────────────────────────────── */
+.stat-value.loading, .stat-note.loading {
+  background: linear-gradient(90deg, #e8edf3 25%, #f1f4f8 50%, #e8edf3 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.3s infinite linear;
+  border-radius: 4px;
+  color: transparent !important;
+  min-width: 80px;
+  display: inline-block;
+}
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+/* ═══ User menu dropdown — full UMD styles ═══════════════════════════════ */
+.user-menu-dropdown {
+  position: absolute; right: 0; top: calc(100% + 10px);
+  background: #fff; border: 1px solid rgba(12,30,58,.1);
+  border-radius: 14px; min-width: 240px; display: none;
+  box-shadow: 0 12px 40px rgba(12,30,58,.18), 0 2px 8px rgba(12,30,58,.08);
+  overflow: hidden; z-index: 1100;
+}
+.user-menu-dropdown.active {
+  display: block;
+  animation: umdFadeIn .15s ease both;
+}
+@keyframes umdFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Header row: avatar + name + role */
+.umd-header {
+  display: flex; align-items: center; gap: 11px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafbfc;
+}
+.umd-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, #1a3a6b, #1e5799);
+  color: #fff; font-weight: 700; font-size: .78rem;
+  display: flex; align-items: center; justify-content: center;
+  letter-spacing: .5px; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(12,30,58,.2);
+}
+.umd-identity { min-width: 0; }
+.umd-name {
+  font-weight: 700; font-size: .88rem; color: #0c1e3a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.umd-role { font-size: .72rem; color: #64748b; margin-top: 1px; }
+
+/* Section grouping */
+.umd-section { padding: 5px 6px; }
+.umd-section-border { border-top: 1px solid #f1f5f9; }
+
+/* Menu items — scoped under .user-menu-dropdown to beat
+   the .nav-links a { color: rgba(255,255,255,.78) !important } rule */
+.user-menu-dropdown .umd-item {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 9px 10px; border-radius: 8px;
+  background: none; border: none; cursor: pointer;
+  font-size: .875rem; font-weight: 500;
+  color: #1e293b !important;
+  font-family: 'DM Sans', sans-serif;
+  text-decoration: none !important;
+  transition: background .12s, color .12s;
+  text-align: left; letter-spacing: 0;
+}
+.user-menu-dropdown .umd-item:hover {
+  background: #f1f5f9;
+  color: #0c1e3a !important;
+}
+.user-menu-dropdown .umd-item.umd-active {
+  color: #1a3a6b !important;
+  font-weight: 600;
+  background: #eff4ff;
+}
+.user-menu-dropdown .umd-icon {
+  width: 18px; text-align: center;
+  font-size: .95rem; flex-shrink: 0;
+}
+.user-menu-dropdown .umd-signout { color: #dc2626 !important; }
+.user-menu-dropdown .umd-signout:hover {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+}
+
+/* ── Drawer: scroll-safe, always above mobile nav ──────────────── */
+.drawer {
+  max-height: calc(100vh - 90px) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  z-index: 1300 !important;
+}
+
+/* ── Page wrapper: no double-shrink on mobile ──────────────────── */
+.page, main.page {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* ── Mobile ≤ 600px ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .page, main.page {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    margin-top: 12px !important;
+  }
+  .assistant-hero {
+    padding: 16px 14px 14px !important;
+    border-radius: 12px !important;
+  }
+  .assistant-greeting { font-size: 1.35rem !important; }
+  .assistant-sub      { font-size: 0.84rem !important; }
+  .assistant-ask      { padding: 12px !important; }
+  .assistant-pill     { font-size: 0.78rem !important; padding: 5px 10px !important; }
+  .assistant-board    { padding: 14px 12px !important; border-radius: 12px !important; }
+  .assistant-board-head { flex-direction: column; align-items: flex-start; gap: 8px !important; }
+  .stats-grid, [class*="stats-grid"], .kpi-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .stat-card, [class*="stat-card"] { padding: 12px 10px !important; }
+  .stat-value { font-size: 1.25rem !important; }
+  .card, .rg-card { padding: 14px 12px !important; border-radius: 12px !important; }
+  .page h1, main.page h1, .page-heading {
+    font-size: 1.25rem !important;
+    margin-bottom: 4px !important;
+  }
+  .subtitle { font-size: 0.83rem !important; }
+  table { font-size: 0.8rem !important; }
+  th, td { padding: 7px 6px !important; }
+}
+
+/* ── Tablet 601–860px ──────────────────────────────────────────── */
+@media (min-width: 601px) and (max-width: 860px) {
+  .page, main.page { padding-left: 14px !important; padding-right: 14px !important; }
+  .stats-grid, [class*="stats-grid"] { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* ── COMBINED BEST-OF-BOTH DRAWER ────────────────────────────── */
+.drawer {
+  display: none;
+  position: fixed;
+  top: 70px; left: 12px; right: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 0;
+  z-index: 1300;
+  box-shadow: 0 16px 48px rgba(12,30,58,.2);
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+}
+.drawer-user-row {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 14px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  border-radius: 0 !important;
+  text-decoration: none;
+  background: #fafbfc;
+}
+.drawer-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a3a6b, #1e5799);
+  color: #fff;
+  font-weight: 700; font-size: 0.78rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(12,30,58,.2);
+}
+.drawer-username {
+  font-weight: 700; font-size: 0.95rem; color: #0c1e3a !important;
+}
+.drawer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 8px 10px;
+  gap: 2px;
+}
+.drawer-grid-divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: #f1f5f9;
+  margin: 2px 0;
+}
+.drawer-grid a {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 10px;
+  font-weight: 600; font-size: 0.88rem;
+  color: #0c1e3a !important;
+  text-decoration: none;
+  border-radius: 9px;
+  transition: background .12s, color .12s;
+  background: transparent;
+  border: none !important;
+  border-bottom: none !important;
+}
+.drawer-grid a:hover { background: #f1f5f9; color: #1a3a6b !important; }
+.drawer-grid a.nav-active {
+  background: #eff4ff !important;
+  color: #1a3a6b !important;
+  font-weight: 700 !important;
+}
+.drawer-login {
+  display: block; padding: 11px 16px;
+  font-weight: 600; color: #0c1e3a !important;
+  font-size: 0.9rem; border-top: 1px solid #f1f5f9;
+  text-decoration: none;
+}
+#mobileLogoutContainer {
+  border-top: 1px solid #f1f5f9;
+  padding: 6px 10px 8px; margin: 0;
+}
+#mobileLogoutContainer button {
+  width: 100%; padding: 10px 10px; background: none; border: none;
+  text-align: left; font-weight: 700; color: #dc2626; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem; border-radius: 8px;
+}
+#mobileLogoutContainer button:hover { background: #fef2f2; }
+/* ═════════════════════════════════════════════════════════════════════════ */
+
+/* ── UMD (User Menu Dropdown) ── */
+.umd-wrap { position:relative; }
+.umd-toggle {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.22);
+  border-radius:999px; padding:5px 12px 5px 5px;
+  cursor:pointer; transition:background .18s; color:#fff;
+}
+.umd-toggle:hover { background:rgba(255,255,255,.18); }
+.umd-avatar {
+  width:28px; height:28px; border-radius:50%;
+  background:linear-gradient(135deg,#38bdf8,#1a3a6b);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.68rem; font-weight:700; color:#fff; flex-shrink:0;
+}
+.umd-name  { font-size:.8rem; color:#fff; font-weight:600; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.umd-caret { font-size:.6rem; color:rgba(255,255,255,.7); }
+.umd-dropdown {
+  display:none; position:absolute; right:0; top:calc(100% + 8px);
+  background:#fff; border:1px solid #e2e8f0;
+  border-radius:12px; box-shadow:0 8px 32px rgba(12,30,58,.18);
+  min-width:220px; overflow:hidden; z-index:200;
+}
+.umd-dropdown.open { display:block; }
+.umd-user-row { padding:14px 16px 10px; border-bottom:1px solid #f1f5f9; }
+.umd-user-name  { font-size:.88rem; font-weight:700; color:#0c1e3a; }
+.umd-user-email { font-size:.75rem; color:#64748b; margin-top:2px; }
+.umd-section { display:flex; flex-direction:column; padding:6px; border-bottom:1px solid #f1f5f9; }
+.umd-section:last-child { border-bottom:none; }
+.umd-link {
+  display:flex; align-items:center; gap:9px;
+  padding:9px 10px; border-radius:8px;
+  font-size:.84rem; font-weight:600; color:#0c1e3a;
+  text-decoration:none; background:none; border:none;
+  cursor:pointer; width:100%; font-family:'DM Sans',sans-serif; transition:background .15s;
+}
+.umd-link:hover { background:#f8faff; }
+.umd-link.danger { color:#dc2626; }
+.umd-link.danger:hover { background:#fef2f2; }
+</style>
+
+<style>
+/* ── Mobile: hide UMD pill ── */
+@media (max-width: 860px) {
+  .umd-wrap, #userMenu { display: none !important; }
+  #nav-login { display: none !important; }
+}
+</style>
+</head>
+
+<body class="auth-guest">
+
+<!-- ═══ SUPABASE BOOTSTRAP (body-first: avoids tracking-prevention blocking safeStorage) ═══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script>
+/* ── Rental Genie Supabase Bootstrap ── */
+(function() {
+  try {
+    var _mem=new Map(),_ls=null; try{_ls=window.localStorage;}catch(e){}
+    var _store={
+      getItem:function(k){try{return(_ls&&_ls.getItem(k))||_mem.get(k)||null;}catch(e){return _mem.get(k)||null;}},
+      setItem:function(k,v){try{_ls&&_ls.setItem(k,v);}catch(e){}_mem.set(k,v);},
+      removeItem:function(k){try{_ls&&_ls.removeItem(k);}catch(e){}_mem.delete(k);}
+    };
+    var _c = window._rgClient || window.supabase.createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0',
+      { auth: { lock: undefined, persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: _store } }
+    );
+    window._rgClient   = _c;
+    window.sb          = _c;
+    window.client      = _c;
+    window.getSbClient = function() { return _c; };
+    window.GSClient    = { getAsync: async function() { return _c; } };
+  } catch(e) { console.error('RG bootstrap failed:', e); }
+})();
+</script>
+<!-- ══════════════════════════════════════════════════════════════════════════════════════ -->
+<div id="authOverlay">
+  <div class="auth-overlay-inner">
+    <div class="ao-icon">🧞</div>
+    <div class="ao-title">Rental Genie</div>
+    <div class="ao-status" id="aoStatus">Starting up…</div>
+    <div class="ao-bar-track">
+      <div class="ao-bar-fill" id="aoBarFill"></div>
+    </div>
+    <div class="ao-steps">
+      <div class="ao-step" id="aoStep0">
+        <span class="ao-step-dot"></span>Connecting
+      </div>
+      <div class="ao-step" id="aoStep1">
+        <span class="ao-step-dot"></span>Authenticating
+      </div>
+      <div class="ao-step" id="aoStep2">
+        <span class="ao-step-dot"></span>Loading data
+      </div>
+      <div class="ao-step" id="aoStep3">
+        <span class="ao-step-dot"></span>Ready
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= HEADER (UNCHANGED UI) ================= -->
+<header class="header-container">
+  <div class="navbar">
+    <a class="brand-area" href="index.html">
+      <img src="images/rg-logo.png" class="brand-logo" alt="Rental Genie" onerror="this.style.display='none'" />
+      <span class="brand-title">Rental Genie</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Main navigation">
+      <a href="dashboard.html" class="nav-active">📊 Dashboard</a>
+      <a href="property-management.html">🏘️ Properties</a>
+      <a href="lease-rent-center.html">💰 Lease &amp; Rent</a>
+      <a href="expense-tracking.html">💸 Expenses</a>
+      <a href="maintenance-requests.html">🛠 Maintenance</a>
+      <a href="reports-analytics.html">📈 Reports</a>
+    </nav>
+
+    <!-- UMD -->
+    <div class="umd-wrap" id="userMenu" style="display:none">
+      <button class="umd-toggle" id="umdToggle" aria-haspopup="true" aria-expanded="false">
+        <div class="umd-avatar" id="umdAvatar">?</div>
+        <span class="umd-name" id="umdName">User</span>
+        <span class="umd-caret">▾</span>
+      </button>
+      <div class="umd-dropdown" id="umdDropdown">
+        <div class="umd-user-row">
+          <div class="umd-user-name"  id="umdFullName">—</div>
+          <div class="umd-user-email" id="umdEmail">—</div>
+        </div>
+        <div class="umd-section">
+          <a class="umd-link" href="dashboard.html">📊 Dashboard</a>
+          <a class="umd-link" href="account.html">⚙️ Account Settings</a>
+          <a class="umd-link" href="invite-tenant.html">✉️ Invite Tenant</a>
+          <a class="umd-link" href="tenant-portal-picker.html">🏠 Tenant Portal</a>
+        </div>
+        <div class="umd-section">
+          <a class="umd-link" href="reports-analytics.html">📈 Reports &amp; Analytics</a>
+          <a class="umd-link" href="contact-us.html">💬 Contact Support</a>
+        </div>
+        <div class="umd-section">
+          <button class="umd-link danger" id="logoutBtn">🚪 Sign Out</button>
+        </div>
+      </div>
+    </div>
+
+    <a id="nav-login" href="login.html">Log in</a>
+    <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">☰</button>
+  </div>
+</header>
+
+<div class="drawer" id="mobileDrawer">
+  <!-- User row (shown when logged in) -->
+  <a href="account.html" id="mobileAccountLink" style="display:none;" class="drawer-user-row">
+    <span class="drawer-avatar" id="drawerAvatar">?</span>
+    <span class="drawer-username" id="mobileUsernameLabel">Account</span>
+  </a>
+  <!-- 2-col nav grid with row dividers -->
+  <div class="drawer-grid">
+    <a href="dashboard.html" class="nav-active">📊 Dashboard</a>
+    <a href="property-management.html">🏘️ Properties</a>
+    <div class="drawer-grid-divider"></div>
+    <a href="lease-rent-center.html">💰 Lease &amp; Rent</a>
+    <a href="expense-tracking.html">💸 Expenses</a>
+    <div class="drawer-grid-divider"></div>
+    <a href="maintenance-requests.html">🛠 Maintenance</a>
+    <a href="reports-analytics.html">📈 Reports</a>
+  </div>
+  <!-- Guest login link -->
+  <a href="login.html" id="mobileLogin" class="drawer-login" style="display:none;">Log in</a>
+  <!-- Sign out (shown when logged in) -->
+  <div id="mobileLogoutContainer" style="display:none;">
+    <button id="mobileLogoutBtn">Sign Out</button>
+  </div>
+</div>
+
+
+<!-- ================= PAGE CONTENT ================= -->
+<main class="page">
+
+  
+  <h1>🧞 Rental Genie – Daily Assignments</h1>
+  <p class="subtitle">Open this page each day. Genie turns your portfolio into a simple to‑do list and jumps you into the right tool when needed.</p>
+
+  <!-- Assistant-first hero -->
+  <section class="assistant-hero" aria-label="Rental Genie daily command center">
+    <div class="assistant-hero-left">
+      <div class="assistant-chip">🧠 Assistant Mode</div>
+      <h2 class="assistant-greeting" id="heroGreeting">Welcome back</h2>
+      <p class="assistant-sub" id="heroSub">
+        Here’s what needs attention. Click <strong>Do it</strong> to take action, or <strong>Open tool</strong> to handle it manually.
+      </p>
+
+      <div class="assistant-quick">
+        <a class="assistant-pill" href="lease-rent-center.html">💰 Rent</a>
+        <a class="assistant-pill" href="maintenance-requests.html">🛠 Maintenance</a>
+        <a class="assistant-pill" href="expense-tracking.html">💸 Expenses</a>
+        <a class="assistant-pill" href="reports-analytics.html">📈 Reports</a>
+        <a class="assistant-pill" href="property-management.html">🏘️ Properties</a>
+      </div>
+    </div>
+
+    <div class="assistant-hero-right">
+      <div class="assistant-ask">
+        <div class="assistant-ask-title">🤖 Ask Rental Genie</div>
+        <div class="assistant-ask-row">
+          <input id="assistantAskInput" class="assistant-ask-input" type="text"
+                 placeholder="Example: “Who is late this month?” or “Show maintenance costs last 30 days”" />
+          <button id="assistantAskBtn" class="assistant-ask-btn" type="button">Ask</button>
+        </div>
+        <div class="assistant-ask-hint">Tip: Genie can also open the right page for you.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Assignment board -->
+  <section class="assistant-board" id="assistantAssignments" aria-label="Today's assignments">
+    <div class="assistant-board-head">
+      <div>
+        <div class="assistant-board-title">🎯 Today’s Assignments</div>
+        <div class="assistant-board-sub" id="assistantBoardSub">Loading your to‑dos…</div>
+      </div>
+      <div class="assistant-board-actions">
+        <button class="assistant-small-btn" id="refreshAssignmentsBtn" type="button">🔄 Refresh</button>
+        <a class="assistant-small-btn" href="#manualMode" style="text-decoration:none;">🧰 Manual Mode</a>
+      </div>
+    </div>
+
+    <div id="assignmentList" class="assistant-list">
+      <div class="assistant-empty">Loading…</div>
+    </div>
+  </section>
+
+<!-- 🧞 Genie Insights (Proactive guidance) -->
+
+  <details id="manualMode" class="manual-mode" open>
+    <summary>
+      <span aria-hidden="true">🧰</span> Manual Mode (Dashboards & Detailed Tools)
+      <span class="manual-hint">Open if you want the traditional screens and deeper numbers.</span>
+    </summary>
+
+  <!--section id="genieInsights" class="genie-insights" style="display:none;">
+    <div class="genie-insights-header">
+      <div class="genie-insights-title">🧞 Today’s Focus</div>
+      <div class="genie-insights-sub" id="genieInsightsSub">Here’s what matters most right now.</div>
+    </div>
+    <div id="genieInsightsList" class="genie-insights-list"></div>
+  </section-->
+
+<details class="overview" open>
+    <summary>
+      <div class="summary-title">
+        <span aria-hidden="true">🔍</span> Quick Financial Peek
+      </div>
+      <div class="summary-badges">
+        <span class="summary-badge" id="totalPropsBadge">Loading...</span>
+        <span class="summary-badge" id="totalUnitsBadge">Loading...</span>
+      </div>
+    </summary>
+    <div class="overview-content">
+      <div class="mini-card">
+        <h5 class="mini-title">💰 Monthly Rent Collected (YTD)</h5>
+        <ul class="mini-list">
+          <li id="ytdRent" class="loading">…</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <h5 class="mini-title">💸 Total Expenses (YTD)</h5>
+        <ul class="mini-list">
+          <li id="ytdExpenses" class="loading">…</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <h5 class="mini-title">📄 Upcoming Renewals/Vacancies</h5>
+        <ul class="mini-list">
+          <li id="renewalsCount" class="loading">…</li>
+          <li id="vacanciesCount" class="loading">…</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <h5 class="mini-title">🛠 Pending Maintenance</h5>
+        <ul class="mini-list">
+          <li id="pendingRequests" class="loading">…</li>
+          <li id="highPriorityRequests">Loading...</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <div class="manual-dashboard-grid">
+    <div class="full-span card">
+      <div class="card-header">
+        <h2 class="card-title"><span aria-hidden="true">💵</span> Financial Overview (Last 30 Days)</h2>
+        <select id="financialPeriodSelect">
+          <option value="30">Last 30 Days</option>
+          <option value="90">Last 90 Days</option>
+          <option value="180">Last 180 Days</option>
+          <option value="ytd">Year to Date</option>
+        </select>
+      </div>
+      <div class="stats-grid" id="financialStats">
+        <div class="stat-card">
+          <div class="stat-label">Rent Collected</div>
+          <div class="stat-value loading" id="rentCollected">…</div>
+          <div class="stat-note">vs. target</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Overdue Rent</div>
+          <div class="stat-value loading" id="rentOverdue">…</div>
+          <div class="stat-note">Units affected</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Maintenance Spent</div>
+          <div class="stat-value loading" id="maintenanceSpent">…</div>
+          <div class="stat-note">Tickets closed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Net Operating Income</div>
+          <div class="stat-value loading" id="noi">…</div>
+          <div class="stat-note">Calculated</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="full-span charts-grid">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div>
+            <div class="chart-title">📊 30-Day Performance Snapshot</div>
+            <div class="chart-note">Quick visual view of collected rent, overdue balance, maintenance spend, and NOI.</div>
+          </div>
+          <span class="tag-pill">Auto</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="financialBarChart" aria-label="30 day financial overview chart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-head">
+          <div>
+            <div class="chart-title">🛠 Portfolio Workload Mix</div>
+            <div class="chart-note">Open maintenance, high priority tickets, pending quotes, and properties needing rent attention.</div>
+          </div>
+          <span class="tag-pill">Live</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="operationsDoughnutChart" aria-label="operations mix chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="manual-two-col full-span">
+      <div class="card" style="margin-top: 0;">
+        <div class="card-header">
+          <h2 class="card-title"><span aria-hidden="true">🚀</span> Quick Tasks</h2>
+          <span class="tag-pill">Go faster</span>
+        </div>
+        <div class="task-grid">
+          <div class="task-card" onclick="window.location.href='property-management.html?action=add'">
+            <div class="task-title">Add New Property</div>
+            <div class="task-desc">Start tracking a new asset.</div>
+          </div>
+          <div class="task-card" onclick="window.location.href='lease-rent-center.html?action=log'">
+            <div class="task-title">Log Rent Payment</div>
+            <div class="task-desc">Record a received payment.</div>
+          </div>
+          <div class="task-card" onclick="window.location.href='expense-tracking.html?action=add'">
+            <div class="task-title">Add New Expense</div>
+            <div class="task-desc">Record a receipt or bill.</div>
+          </div>
+          <div class="task-card" onclick="window.location.href='maintenance-requests.html?view=pending'">
+            <div class="task-title">Review Requests</div>
+            <div class="task-desc">Check high-priority tickets.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 0;">
+        <div class="card-header">
+          <h2 class="card-title"><span aria-hidden="true">🏘️</span> Recent Property Activity</h2>
+          <a href="property-management.html" class="tiny-btn">View All</a>
+        </div>
+        <ul class="prop-list" id="propertyList">
+          <div class="empty-state">Loading recent activity...</div>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="manual-two-col full-span">
+      <div class="card" style="margin-top: 0;">
+        <div class="card-header">
+          <h2 class="card-title"><span aria-hidden="true">🕘</span> Recent Events</h2>
+          <a href="reports-analytics.html" class="tiny-btn">View All</a>
+        </div>
+        <div id="alertsList">
+          <div class="empty-state">Loading recent events...</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 0;">
+        <div class="card-header">
+          <h2 class="card-title"><span aria-hidden="true">🛠️</span> Maintenance Summary</h2>
+          <a href="maintenance-requests.html" class="tiny-btn">New Request</a>
+        </div>
+        <div class="stats-grid" id="maintenanceStats">
+          <div class="stat-card">
+            <div class="stat-label">Total Open</div>
+            <div class="stat-value" id="openTotal">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">High Priority</div>
+            <div class="stat-value" id="openHigh">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg. Close Time</div>
+            <div class="stat-value" id="avgClose">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Quotes</div>
+            <div class="stat-value" id="pendingQuotes">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+  </details>
+
+  </details>
+
+</main>
+
+
+
+
+
+<!-- =========================================================
+   EXISTING DASHBOARD LOGIC (from original index.html)
+   - patched to use Enterprise Supabase client
+========================================================= -->
+<script>
+
+/* -------------------------------------------------------------
+   Supabase Client
+------------------------------------------------------------- */
+/* -------------------------------------------------------------
+   Supabase Client (Enterprise)
+   - initialized by Enterprise boot() and exposed as window.sb
+------------------------------------------------------------- */
+let sb; // assigned inside initDashboardPage()
+/* -------------------------------------------------------------
+   Authentication UI (desktop + mobile)
+------------------------------------------------------------- */
+async function setupAuth(preResolvedUser) {
+  // Accept pre-resolved user from boot() to avoid a second auth.getUser() lock
+  let user = preResolvedUser || null;
+  if (!user) {
+    const { data } = await sb.auth.getUser();
+    user = data?.user;
+  }
+
+  // Desktop elements
+  const loginBtn = document.getElementById("nav-login");
+  const userMenu = document.getElementById("userMenu");
+  const usernameLabel = document.getElementById("usernameLabel");
+
+  // Mobile elements
+  const mobileLogin = document.getElementById("mobileLogin");
+  const mobileAccountLink = document.getElementById("mobileAccountLink");
+  const mobileUsernameLabel = document.getElementById("mobileUsernameLabel");
+  const mobileLogoutContainer = document.getElementById("mobileLogoutContainer");
+
+  if (user) {
+    const username =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      (user.email ? user.email.split("@")[0] : "User");
+
+    // Update hero greeting with time-of-day context
+    const heroGreeting = document.getElementById("heroGreeting");
+    const _hr = new Date().getHours();
+    const _tod = _hr < 12 ? "Good morning" : (_hr < 17 ? "Good afternoon" : "Good evening");
+    if (heroGreeting) heroGreeting.textContent = `${_tod}, ${username}!`;
+
+
+    document.body.classList.remove('auth-guest');
+    document.body.classList.add('auth-ready');
+
+    // Desktop
+    if (loginBtn) loginBtn.style.display = "none";
+    if (userMenu) userMenu.style.display = window.innerWidth > 860 ? "inline-block" : "none";
+    if (usernameLabel) usernameLabel.textContent = username;
+
+    // Mobile
+    if (mobileLogin) mobileLogin.style.display = "none";
+    if (mobileAccountLink) mobileAccountLink.style.display = "block";
+    if (mobileUsernameLabel) mobileUsernameLabel.textContent = username;
+    if (mobileLogoutContainer) mobileLogoutContainer.style.display = "block";
+  } else {
+    document.body.classList.remove('auth-ready');
+    document.body.classList.add('auth-guest');
+
+    // Desktop
+    if (loginBtn) loginBtn.style.display = "inline-flex";
+    if (userMenu) userMenu.style.display = "none";
+
+    // Not logged in – reset mobile
+    if (mobileAccountLink) mobileAccountLink.style.display = "none";
+    if (mobileLogoutContainer) mobileLogoutContainer.style.display = "none";
+    if (mobileLogin) mobileLogin.style.display = "block";
+
+    const heroGreeting = document.getElementById("heroGreeting");
+    if (heroGreeting) heroGreeting.textContent = "Welcome back";
+
+  }
+
+  return user;
+}
+
+// Desktop logout
+var _logEl=document.getElementById("logoutBtn"); if(_logEl) _logEl.onclick = async () => {
+  await sb.auth.signOut();
+  location.href = "login.html";
+};
+
+// Mobile logout
+var _mlogEl=document.getElementById("mobileLogoutBtn"); if(_mlogEl) _mlogEl.onclick = async () => {
+  await sb.auth.signOut();
+  location.href = "login.html";
+};
+
+// User menu dropdown
+var _umbEl=document.getElementById("umdToggle"); if(_umbEl) _umbEl.onclick = () => {
+  const dropdown = document.getElementById("umdDropdown");
+  dropdown.classList.toggle("active");
+};
+
+// Mobile hamburger drawer — wired by rgWireHeader() below; stub kept for reference only.
+
+/* -------------------------------------------------------------
+   Helpers
+------------------------------------------------------------- */
+function formatCurrency(num) {
+  if (num === null || num === undefined || isNaN(num)) return "$0.00";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(num);
+}
+
+function getYearStart() {
+  return `${new Date().getFullYear()}-01-01`;
+}
+
+function get30DaysAgo() {
+  const date = new Date();
+  date.setDate(date.getDate() - 30);
+  return date.toISOString().split("T")[0];
+}
+
+function getToday() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function sumAmounts(rows) {
+  if (!rows || !rows.length) return 0;
+  return rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+}
+
+
+/* -------------------------------------------------------------
+   🧞 Genie Memory + Insights (Dashboard)
+   - Makes the dashboard feel like an assistant (not just reports)
+------------------------------------------------------------- */
+const GENIE_MEM_KEY = "rg_genie_memory_v1";
+
+function readGenieMem(){
+  try { return JSON.parse(localStorage.getItem(GENIE_MEM_KEY) || "{}"); }
+  catch { return {}; }
+}
+function writeGenieMem(patch){
+  const cur = readGenieMem();
+  const next = { ...cur, ...patch, updated_at: new Date().toISOString() };
+  localStorage.setItem(GENIE_MEM_KEY, JSON.stringify(next));
+  return next;
+}
+
+
+
+function money(n){ return formatCurrency(Number(n||0)); }
+
+let financialBarChart = null;
+let operationsDoughnutChart = null;
+
+function destroyDashboardCharts(){
+  try { financialBarChart?.destroy?.(); } catch(e){}
+  try { operationsDoughnutChart?.destroy?.(); } catch(e){}
+  financialBarChart = null;
+  operationsDoughnutChart = null;
+}
+
+function renderDashboardCharts(data){
+  if (typeof Chart === "undefined") return;
+
+  const barCanvas = document.getElementById("financialBarChart");
+  const doughnutCanvas = document.getElementById("operationsDoughnutChart");
+  if (!barCanvas || !doughnutCanvas) return;
+
+  destroyDashboardCharts();
+
+  const barCtx = barCanvas.getContext("2d");
+  const doughnutCtx = doughnutCanvas.getContext("2d");
+
+  financialBarChart = new Chart(barCtx, {
+    type: "bar",
+    data: {
+      labels: ["Rent Collected", "Overdue Rent", "Maintenance Spent", "NOI"],
+      datasets: [{
+        label: "Amount",
+        data: [
+          Number(data.rentCollected || 0),
+          Number(data.rentOverdue || 0),
+          Number(data.maintenanceSpent || 0),
+          Number(data.noi || 0)
+        ],
+        borderWidth: 1,
+        borderRadius: 8,
+        maxBarThickness: 56
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.label}: ${formatCurrency(ctx.parsed.y || 0)}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (value) => formatCurrency(value)
+          }
+        }
+      }
+    }
+  });
+
+  const operationsValues = [
+    Number(data.openTotal || 0),
+    Number(data.openHigh || 0),
+    Number(data.pendingQuotes || 0),
+    Number(data.rent_attention_count || 0)
+  ];
+
+  operationsDoughnutChart = new Chart(doughnutCtx, {
+    type: "doughnut",
+    data: {
+      labels: ["Open Maintenance", "High Priority", "Pending Quotes", "Rent Attention"],
+      datasets: [{
+        data: operationsValues
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "62%",
+      plugins: {
+        legend: {
+          position: "bottom"
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.label}: ${ctx.parsed || 0}`
+          }
+        }
+      }
+    }
+  });
+}
+
+function escapeGenieText(v){
+  return String(v ?? "").replace(/[<>&]/g, (c)=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+}
+
+function insight(level, message, meta, actions){
+  return { level, message, meta: meta || "", actions: actions || [] };
+}
+
+function renderGenieInsights(items){
+  const box = document.getElementById("genieInsights");
+  const list = document.getElementById("genieInsightsList");
+  const sub = document.getElementById("genieInsightsSub");
+  if(!box || !list || !sub) return;
+
+  if(!items || !items.length){
+    box.style.display = "none";
+    list.innerHTML = "";
+    return;
+  }
+
+  box.style.display = "block";
+  sub.textContent = items.length >= 2
+    ? "Here are your top priorities across properties."
+    : "Here’s the most important thing right now.";
+
+  list.innerHTML = items.map((it) => {
+    const actionsHtml = (it.actions || []).length
+      ? `<div class="actions">${it.actions.map(a => `<a href="${a.href}">${a.label}</a>`).join("")}</div>`
+      : "";
+    const metaHtml = it.meta ? `<div class="meta">${it.meta}</div>` : "";
+    return `
+      <div class="genie-insight ${it.level}">
+        <div class="top">
+          <div class="msg">🧞 ${escapeGenieText(it.message)}</div>
+        </div>
+        ${metaHtml}
+        ${actionsHtml}
+      </div>
+    `;
+  }).join("");
+}
+
+
+/* -------------------------------------------------------------
+   🎯 Assistant Assignments (Homepage)
+   - Turns raw stats into a simple task inbox.
+------------------------------------------------------------- */
+function buildAssignmentsFromData(data){
+  const items = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayDay = today.getDate();
+
+  // ── Per-property rent cards (one card per delinquent property) ──
+  const rentItems = Array.isArray(data.rent_attention_items) ? data.rent_attention_items : [];
+
+  rentItems.forEach(function(item) {
+    const remaining = Number(item.remaining || 0);
+    const paid      = Number(item.paid || 0);
+    const rent      = Number(item.rent || 0);
+    const dueDay    = Number(item.due_day || 1);
+    const isPartial = item.status === "partial";
+
+    // Calculate days overdue: today - due date this month
+    const dueDate = new Date(today.getFullYear(), today.getMonth(), dueDay);
+    const daysOver = Math.max(0, Math.floor((today - dueDate) / 86400000));
+
+    // Badge color: >14 days = red, >7 = amber, else blue (due/partial)
+    const badgeCls = daysOver > 14 ? "red" : (daysOver > 7 ? "amber" : "blue");
+    const badgeText = daysOver > 0
+      ? `${daysOver} day${daysOver===1?"":"s"} overdue`
+      : (isPartial ? "Partial" : "Due today");
+
+    const href = item.href ||
+      `lease-rent-center.html?property=${encodeURIComponent(item.property_name || "")}&filter=attention&view=ledger`;
+
+    const tenantLine = item.tenant_name ? item.tenant_name : "No tenant on file";
+    const paidLine   = isPartial ? ` • Paid ${money(paid)} of ${money(rent)}` : "";
+    const title      = item.property_name || "Property";
+    const level      = daysOver > 14 ? "top" : (daysOver > 7 ? "warn" : "info");
+
+    items.push({
+      level,
+      title: `💰 ${title}`,
+      desc: `${money(remaining)} outstanding${paidLine}`,
+      _propertyRow: true,
+      _tenant: tenantLine,
+      _badgeCls: badgeCls,
+      _badgeText: badgeText,
+      _remaining: remaining,
+      _href: href,
+      actions: [
+        { label: "📒 Open Ledger", href }
+      ]
+    });
+  });
+
+  // ── Maintenance ──
+  const openTotal    = Number(data.openTotal || 0);
+  const pendingQuotes= Number(data.pendingQuotes || 0);
+  const inProgress   = Number(data.maintenanceInProgress || 0);
+  const openOnly     = Number(data.maintenanceOpenOnly || 0);
+  if(openTotal > 0){
+    const facts = [];
+    if(openOnly > 0)      facts.push(`${openOnly} request${openOnly===1?"":"s"} open and waiting to be started.`);
+    if(inProgress > 0)    facts.push(`${inProgress} request${inProgress===1?"":"s"} already in progress.`);
+    if(pendingQuotes > 0) facts.push(`${pendingQuotes} request${pendingQuotes===1?"":"s"} waiting on vendor quotes.`);
+
+    items.push({
+      level: openTotal >= 5 ? "warn" : "info",
+      title: `🛠 Maintenance follow-ups`,
+      desc: `${openTotal} open request${openTotal===1?"":"s"} need review across the portfolio.`,
+      meta: [`${openOnly} open`, `${inProgress} in progress`, `${pendingQuotes} pending quotes`],
+      facts,
+      actions: [
+        { label: "✅ Open Maintenance", href: "maintenance-requests.html" }
+      ]
+    });
+  }
+
+  // ── NOI health ──
+  const noi = Number(data.noi || 0);
+  if(noi < 0){
+    items.push({
+      level: "warn",
+      title: `📉 Cash flow check`,
+      desc: `Last 30 days NOI is negative (${money(noi)}). Review maintenance and expense spikes.`,
+      meta: [`${money(data.rentCollected)} rent`, `${money(data.maintenanceSpent)} maintenance`],
+      actions: [
+        { label: "✅ Review Expenses", href: "expense-tracking.html" },
+        { label: "📈 Open Reports", href: "reports-analytics.html" }
+      ]
+    });
+  } else if(rentItems.length === 0 && openTotal === 0){
+    // Only show "all clear" if genuinely nothing to do
+    items.push({
+      level: "ok",
+      title: `✅ Portfolio looks stable`,
+      desc: `Last 30 days NOI is ${money(noi)}. Rent and maintenance are under control.`,
+      meta: [`${money(data.rentCollected)} rent`, `${money(data.maintenanceSpent)} maintenance`, `${money(noi)} NOI`],
+      actions: [
+        { label: "📈 Open Reports", href: "reports-analytics.html", secondary: true },
+        { label: "🧰 Manual Mode", href: "#manualMode", secondary: true }
+      ]
+    });
+  }
+
+  // ── Vacancies ──
+  if(Number(data.vacancies || 0) > 0){
+    items.unshift({
+      level: "top",
+      title: `🏚 Vacancy needs attention`,
+      desc: `${data.vacancies} vacanc${data.vacancies===1?"y":"ies"} detected — a direct cash-flow leak.`,
+      meta: [`${data.vacancies} vacant unit${data.vacancies===1?"":"s"}`],
+      actions: [{ label: "✅ Open Properties", href: "property-management.html" }]
+    });
+  }
+
+  const order = { top: 0, warn: 1, info: 2, ok: 3 };
+  return items.sort((a,b) => (order[a.level]??9) - (order[b.level]??9)).slice(0, 8);
+}
+
+function renderAssignments(items){
+  const sub  = document.getElementById("assistantBoardSub");
+  const list = document.getElementById("assignmentList");
+  if(!sub || !list) return;
+
+  const arr = items || [];
+  if(!arr.length){
+    sub.textContent = "All clear ✅ Nothing urgent right now.";
+    list.innerHTML = `<div class="assistant-empty">✅ You’re good today. If you want details, open <a href="#manualMode">Manual Mode</a>.</div>`;
+    return;
+  }
+
+  // Count only non-ok items for the sub text
+  const urgent = arr.filter(i => i.level !== "ok").length;
+  sub.textContent = urgent === 0
+    ? "Portfolio looks healthy."
+    : urgent === 1 ? "1 item needs your attention." : `${urgent} items need your attention.`;
+
+  list.innerHTML = arr.map((it) => {
+    const cls = it.level === "top" ? "top" : (it.level || "info");
+
+    // Per-property rent row — special compact layout
+    if(it._propertyRow){
+      const actions = (it.actions || []).map(a =>
+        `<a class="property-row-action" href="${a.href}">${escapeGenieText(a.label)}</a>`
+      ).join("");
+      return `
+        <div class="assistant-card ${cls}">
+          <div class="assistant-card-property-row">
+            <div class="property-row-left">
+              <div class="property-row-name">${escapeGenieText(it.title.replace(/^💰 /, ""))}</div>
+              <div class="property-row-tenant">👤 ${escapeGenieText(it._tenant || "")}</div>
+            </div>
+            <div class="property-row-right">
+              <span class="overdue-badge ${it._badgeCls || "blue"}">${escapeGenieText(it._badgeText || "Due")}</span>
+              <span class="property-row-amount">${escapeGenieText(it.desc)}</span>
+              ${actions}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // Standard card layout
+    const metaHtml = Array.isArray(it.meta) && it.meta.length
+      ? `<div class="assistant-card-meta">${it.meta.map(m => `<span class="assistant-meta-pill">${escapeGenieText(m)}</span>`).join("")}</div>`
+      : "";
+    const factsHtml = Array.isArray(it.facts) && it.facts.length
+      ? `<ul class="assistant-card-facts">${it.facts.map(f => `<li><span aria-hidden="true">•</span><span>${f}</span></li>`).join("")}</ul>`
+      : "";
+    const actions = (it.actions || []).map(a => {
+      const isSecondary = a.secondary || false;
+      return `<a class="assistant-action ${isSecondary ? "secondary" : ""}" href="${a.href}">${escapeGenieText(a.label)}</a>`;
+    }).join("");
+    return `
+      <div class="assistant-card ${cls}">
+        <div class="assistant-card-title">${escapeGenieText(it.title)}</div>
+        <div class="assistant-card-desc">${escapeGenieText(it.desc)}</div>
+        ${metaHtml}
+        ${factsHtml}
+        <div class="assistant-card-actions">${actions}</div>
+      </div>`;
+  }).join("");
+}
+
+/* -------------------------------------------------------------
+   Assistant UI wiring (Ask + Refresh)
+------------------------------------------------------------- */
+function setupAssistantUI(){
+  const askInput = document.getElementById("assistantAskInput");
+  const askBtn = document.getElementById("assistantAskBtn");
+  const refreshBtn = document.getElementById("refreshAssignmentsBtn");
+
+  // Ask: lightweight router (keeps this page assistant-first without requiring LLM)
+  function routeAsk(){
+    const q = (askInput?.value || "").trim().toLowerCase();
+    if(!q) return;
+
+    // simple intent routing
+    if(q.includes("rent") || q.includes("overdue") || q.includes("late")){
+      location.href = "lease-rent-center.html";
+      return;
+    }
+    if(q.includes("maintenance") || q.includes("repair") || q.includes("leak") || q.includes("ticket")){
+      location.href = "maintenance-requests.html";
+      return;
+    }
+    if(q.includes("expense") || q.includes("spent") || q.includes("cost")){
+      location.href = "expense-tracking.html";
+      return;
+    }
+    if(q.includes("report") || q.includes("noi") || q.includes("profit") || q.includes("cash")){
+      location.href = "reports-analytics.html";
+      return;
+    }
+    if(q.includes("property") || q.includes("unit") || q.includes("vacan")){
+      location.href = "property-management.html";
+      return;
+    }
+
+    // fallback: reports
+    location.href = "reports-analytics.html";
+  }
+
+  askBtn?.addEventListener("click", routeAsk);
+  askInput?.addEventListener("keydown", (e)=>{ if(e.key === "Enter") routeAsk(); });
+
+  // Refresh: re-run dashboard fetch so assignments update
+  refreshBtn?.addEventListener("click", async ()=>{
+    try{
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = "⏳ Refreshing…";
+      const { data } = await window.sb.auth.getUser();
+      if(!data?.user) return;
+      const d = await fetchDashboardData(data.user);
+      updateDashboard(d);
+    }catch(e){
+      console.warn("Refresh failed:", e);
+    }finally{
+      refreshBtn.disabled = false;
+      refreshBtn.textContent = "🔄 Refresh";
+    }
+  });
+}
+
+/* -------------------------------------------------------------
+   Dashboard Data Fetch (live from Supabase)
+   Tables:
+   - properties
+   - rent_log
+   - expenses
+   - maintenance_requests
+------------------------------------------------------------- */
+async function fetchDashboardData(user) {
+  const user_id = user.id;
+  const yearStart = getYearStart();
+  const days30Ago = get30DaysAgo();
+  const today = getToday();
+
+  // Resolve company_id (consistent with property-management / add-expense)
+  let activeCompanyId = localStorage.getItem("rg_active_company_id") || null;
+  if (!activeCompanyId) {
+    try {
+      const { data: mem } = await sb.from("company_members").select("company_id").eq("user_id", user_id).limit(1).maybeSingle();
+      if (mem?.company_id) activeCompanyId = mem.company_id;
+    } catch(_) {}
+  }
+  if (!activeCompanyId) {
+    try {
+      const { data: comp } = await sb.from("companies").select("id").eq("owner_user_id", user_id).limit(1).maybeSingle();
+      if (comp?.id) activeCompanyId = comp.id;
+    } catch(_) {}
+  }
+  if (activeCompanyId) localStorage.setItem("rg_active_company_id", activeCompanyId);
+
+    // ── Build all 8 queries upfront ─────────────────────────────────────────────
+  let propQuery      = sb.from("properties").select("id, name", { count: "exact" }).order("created_at", { ascending: false });
+  let rentYTDQuery   = sb.from("rent_log").select("amount, date_paid").gte("date_paid", yearStart);
+  let expYTDQuery    = sb.from("expenses").select("amount, date_paid").gte("date_paid", yearStart);
+  let maintQuery     = sb.from("maintenance_requests").select("status");
+  let rent30Query    = sb.from("rent_log").select("amount, date_paid").gte("date_paid", days30Ago);
+  let maintExp30Query = sb.from("expenses").select("amount, date_paid, category")
+    .in("category", ["Maintenance", "Repairs & Maintenance"]).gte("date_paid", days30Ago);
+  let leasesQuery    = sb.from("leases")
+    .select("property_name,tenant_name,rent_amount,rent_due_day,due_day,grace_period,late_fee_grace_days,lease_end")
+    .order("lease_start", { ascending: false });
+
+  // Rent attention — current month
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const monthStartStr = monthStart.toISOString().slice(0, 10);
+  const monthEndStr   = monthEnd.toISOString().slice(0, 10);
+  let rentMonthQuery = sb.from("rent_log").select("property_name,amount,date_paid")
+    .gte("date_paid", monthStartStr).lt("date_paid", monthEndStr);
+
+  // Apply company/user filter to each query
+  if (activeCompanyId) {
+    propQuery       = propQuery.eq("company_id", activeCompanyId);
+    rentYTDQuery    = rentYTDQuery.eq("company_id", activeCompanyId);
+    expYTDQuery     = expYTDQuery.eq("company_id", activeCompanyId);
+    maintQuery      = maintQuery.eq("company_id", activeCompanyId);
+    rent30Query     = rent30Query.eq("company_id", activeCompanyId);
+    maintExp30Query = maintExp30Query.eq("company_id", activeCompanyId);
+    leasesQuery     = leasesQuery.eq("company_id", activeCompanyId);
+    rentMonthQuery  = rentMonthQuery.eq("company_id", activeCompanyId);
+  } else {
+    maintQuery = maintQuery.eq("user_id", user_id);
+  }
+
+  // ── Fire all 8 in parallel — single round-trip time instead of 8× sequential ──
+  const [
+    { data: propertiesData, error: propertiesError, count: propertyCount = 0 },
+    { data: rentYTDRowsData, error: rentYTDError },
+    { data: expensesYTDRowsData, error: expensesYTDError },
+    { data: maintenanceData, error: maintenanceError },
+    { data: rent30RowsData, error: rent30Error },
+    { data: maintExpense30RowsData, error: maintExpense30Error },
+    { data: leaseRows, error: leaseErr },
+    { data: rentMonthRows, error: rentMonthErr }
+  ] = await Promise.all([
+    propQuery, rentYTDQuery, expYTDQuery, maintQuery,
+    rent30Query, maintExp30Query, leasesQuery, rentMonthQuery
+  ]);
+
+  if (propertiesError)    console.error("Error loading properties:", propertiesError);
+  if (rentYTDError)       console.error("Error loading YTD rent:", rentYTDError);
+  if (expensesYTDError)   console.error("Error loading YTD expenses:", expensesYTDError);
+  if (maintenanceError)   console.error("Error loading maintenance_requests:", maintenanceError);
+  if (rent30Error)        console.error("Error loading 30-day rent:", rent30Error);
+  if (maintExpense30Error) console.error("Error loading 30-day maintenance expenses:", maintExpense30Error);
+  if (leaseErr)           console.warn("Rent attention: leases load error", leaseErr);
+
+  // Unwrap results
+  const properties        = propertiesData || [];
+  const rentYTDRows       = rentYTDRowsData || [];
+  const expensesYTDRows   = expensesYTDRowsData || [];
+  const maintenanceRequests = maintenanceData || [];
+  const rent30Rows        = rent30RowsData || [];
+  const maintExpense30Rows = maintExpense30RowsData || [];
+
+  const latestLeaseByProperty = {};
+  (leaseRows || []).forEach(l => {
+    if (!l.property_name) return;
+    if (!latestLeaseByProperty[l.property_name]) latestLeaseByProperty[l.property_name] = l;
+  });
+
+  if (rentMonthErr) console.warn("Rent attention: rent_log month load error", rentMonthErr);
+
+  const paidByProperty = {};
+  (rentMonthRows || []).forEach(r => {
+    const pn = r.property_name || "";
+    const amt = Number(r.amount || 0);
+    paidByProperty[pn] = (paidByProperty[pn] || 0) + (isNaN(amt) ? 0 : amt);
+  });
+
+  let rent_attention_count = 0;
+  let rent_overdue_count = 0;
+  let rent_partial_count = 0;
+  let rentOverdueAmount = 0;
+  const rent_attention_items = [];
+
+  function daysInMonth(y, m){ return new Date(y, m+1, 0).getDate(); }
+
+  properties.forEach(p => {
+    const pn = p.name || p.property_name || p.address || "";
+    const lease = latestLeaseByProperty[pn];
+    const rent = Number(lease?.rent_amount || 0);
+    if(!lease || !rent || isNaN(rent) || rent <= 0) return;
+
+    const dueDayRaw = Number(lease?.rent_due_day || lease?.due_day || 1);
+    const dim = daysInMonth(now.getFullYear(), now.getMonth());
+    const dueDay = Math.min(Math.max(dueDayRaw, 1), dim);
+    const dueDate = new Date(now.getFullYear(), now.getMonth(), dueDay);
+
+    const paid = Number(paidByProperty[pn] || 0);
+    const remaining = Math.max(rent - paid, 0);
+
+    if(now >= dueDate && remaining > 0.01){
+      const status = paid > 0.01 ? "partial" : "unpaid";
+      rent_attention_count += 1;
+      rentOverdueAmount += remaining;
+      if(status === "partial") rent_partial_count += 1;
+      else rent_overdue_count += 1;
+      rent_attention_items.push({
+        property_name: pn,
+        tenant_name: lease?.tenant_name || "",
+        status,
+        paid,
+        remaining,
+        rent,
+        due_day: dueDay,
+        href: `lease-rent-center.html?property=${encodeURIComponent(pn)}&filter=attention&view=ledger`
+      });
+    }
+  });
+
+
+  // Maintenance counts — only status is fetched (priority column does not exist)
+  const openOnly = maintenanceRequests.filter(
+    (r) => r.status === "Open"
+  ).length;
+  const inProgress = maintenanceRequests.filter(
+    (r) => r.status === "In Progress"
+  ).length;
+  const openTotal = openOnly + inProgress;
+  const openHigh = 0; // priority column not present on this table
+  const pendingQuotes = maintenanceRequests.filter(
+    (r) => r.status === "Pending Quote"
+  ).length;
+
+  // Vacancies
+  const vacancies = 0; // status column not available; set to 0 for now
+
+  // Aggregations
+  const ytdRentTotal = sumAmounts(rentYTDRows);
+  const ytdExpensesTotal = sumAmounts(expensesYTDRows);
+  const rentCollected30 = sumAmounts(rent30Rows);
+  const maintenanceSpent30 = sumAmounts(maintExpense30Rows);
+
+  return {
+    // Quick Peek
+    properties: propertyCount,
+    ytdRent: ytdRentTotal,
+    ytdExpenses: ytdExpensesTotal,
+    renewals: 0, // leases logic can be added later
+    vacancies,
+    pendingMaintenance: openTotal,
+    highPriorityMaintenance: openHigh,
+
+    // 30-day financials
+    rentCollected: rentCollected30,
+    rentOverdue: rentOverdueAmount,
+    rent_attention_count,
+    rent_overdue_count,
+    rent_partial_count,
+    rent_attention_items,
+    maintenanceSpent: maintenanceSpent30,
+    noi: rentCollected30 - maintenanceSpent30,
+
+    // Maintenance summary
+    openTotal,
+    openHigh,
+    pendingQuotes,
+    maintenanceOpenOnly: openOnly,
+    maintenanceInProgress: inProgress,
+
+    // Recent properties
+    recentProperties: properties,
+  };
+}
+
+
+/* -------------------------------------------------------------
+   🧞 Build dashboard insights (rule-based)
+------------------------------------------------------------- */
+function buildDashboardInsights(data){
+  const items = [];
+
+  // 1) Vacancies
+  if(Number(data.vacancies || 0) > 0){
+    items.push(insight(
+      "urgent",
+      `${data.vacancies} vacancy${data.vacancies === 1 ? "" : "ies"} needs attention`,
+      "Genie tip: vacancies are your biggest cash-flow leak.",
+      [
+        { label: "🏘️ Review Properties", href: "property-management.html" },
+        { label: "📈 Reports", href: "reports-analytics.html" }
+      ]
+    ));
+  }
+
+  // 2) Maintenance workload
+  if(Number(data.openTotal || 0) > 0){
+    const lvl = data.openTotal >= 5 ? "warn" : "info";
+    items.push(insight(
+      lvl,
+      `${data.openTotal} open maintenance request${data.openTotal === 1 ? "" : "s"}`,
+      data.pendingQuotes ? `${data.pendingQuotes} pending quote${data.pendingQuotes === 1 ? "" : "s"} waiting.` : "",
+      [
+        { label: "🛠 Open Maintenance", href: "maintenance-requests.html" }
+      ]
+    ));
+  }
+
+  // 3) NOI health (last 30 days)
+  if(Number(data.noi || 0) < 0){
+    items.push(insight(
+      "warn",
+      `Last 30 days NOI is negative (${money(data.noi)})`,
+      `Rent collected ${money(data.rentCollected)} • Maintenance spent ${money(data.maintenanceSpent)}`,
+      [
+        { label: "💸 Expense Tracking", href: "expense-tracking.html" },
+        { label: "📈 Reports", href: "reports-analytics.html" }
+      ]
+    ));
+  } else {
+    items.push(insight(
+      "info",
+      `Last 30 days NOI: ${money(data.noi)}`,
+      `Rent ${money(data.rentCollected)} • Maintenance ${money(data.maintenanceSpent)}`,
+      [
+        { label: "📊 Rent Center", href: "lease-rent-center.html" }
+      ]
+    ));
+  }
+
+  // 4) Data readiness (if you don't have overdue/renewals logic yet)
+  if(Number(data.renewals || 0) === 0){
+    items.push(insight(
+      "info",
+      "Lease renewals aren’t being tracked here yet",
+      "Once leases include renewal reminders, Genie will warn you 60 days before expiration.",
+      [
+        { label: "📄 Lease Center", href: "lease-rent-center.html" }
+      ]
+    ));
+  }
+
+  // Keep the top 3 (Genie should be concise)
+  return items.slice(0, 3);
+}
+
+/* -------------------------------------------------------------
+   Dashboard Renderer
+------------------------------------------------------------- */
+function updateDashboard(data) {
+  // Remove loading shimmer from all stat cards
+  document.querySelectorAll('.stat-value.loading, .stat-note.loading, li.loading').forEach(function(el) {
+    el.classList.remove('loading');
+  });
+
+  // ── Personalized hero sub-text with live data ──
+  const _heroSub = document.getElementById("heroSub");
+  if(_heroSub){
+    const ra  = Number(data.rent_attention_count || 0);
+    const amt = Number(data.rentOverdue || 0);
+    const om  = Number(data.openTotal || 0);
+    const _parts = [];
+    if(ra > 0) _parts.push(`<strong>${ra} propert${ra===1?"y":"ies"}</strong> with outstanding rent (${formatCurrency(amt)})`);
+    if(om > 0) _parts.push(`<strong>${om}</strong> open maintenance request${om===1?"":"s"}`);
+    if(_parts.length){
+      _heroSub.innerHTML = "You have " + _parts.join(" and ") + ". Click a card below to act.";
+    } else {
+      _heroSub.innerHTML = "Everything looks good. No urgent items today.";
+    }
+  }
+
+  // 🎯 Assistant-first: build the daily assignment board
+  try{
+    const assignments = buildAssignmentsFromData(data);
+    renderAssignments(assignments);
+  }catch(e){
+    console.warn("Assistant assignments failed:", e);
+  }
+
+
+  // 🧞 Genie: proactive guidance + lightweight memory
+  try{
+    const insights = buildDashboardInsights(data);
+    renderGenieInsights(insights);
+    writeGenieMem({
+      role: "landlord",
+      last_page: "index",
+
+      badge_source: "dashboard",
+      badge_calc_at: new Date().toISOString(),
+
+      vacancy_count: data.vacancies,
+      maintenance_open_count: data.openTotal,
+      rent_attention_count: data.rent_attention_count || 0,
+      rent_overdue_count: data.rent_overdue_count || 0,
+      rent_partial_count: data.rent_partial_count || 0,
+
+      snapshot: {
+        properties: data.properties,
+        vacancies: data.vacancies,
+        open_maintenance: data.openTotal,
+        noi_30d: data.noi,
+        rent_30d: data.rentCollected,
+        maint_30d: data.maintenanceSpent
+      }
+    });
+  }catch(e){
+    // Never block dashboard rendering
+    console.warn("Genie insights failed:", e);
+  }
+
+  // Quick Peek
+  document.getElementById("totalPropsBadge").textContent =
+    `${data.properties} Properties`;
+  document.getElementById("totalUnitsBadge").textContent =
+    `${data.properties} Units`;
+  document.getElementById("ytdRent").textContent =
+    `Total Rent: ${formatCurrency(data.ytdRent)}`;
+  document.getElementById("ytdExpenses").textContent =
+    `Total Expenses: ${formatCurrency(data.ytdExpenses)}`;
+  document.getElementById("renewalsCount").textContent =
+    `${data.renewals} Upcoming Renewals`;
+  document.getElementById("vacanciesCount").textContent =
+    `${data.vacancies} Vacancies`;
+  document.getElementById("pendingRequests").textContent =
+    `${data.pendingMaintenance} Pending Requests`;
+  document.getElementById("highPriorityRequests").textContent =
+    `${data.highPriorityMaintenance} High Priority`;
+
+  // Financial stats (Last 30 Days)
+  document.getElementById("rentCollected").textContent =
+    formatCurrency(data.rentCollected);
+  document.getElementById("rentOverdue").textContent =
+    formatCurrency(data.rentOverdue);
+  document.getElementById("maintenanceSpent").textContent =
+    formatCurrency(data.maintenanceSpent);
+  document.getElementById("noi").textContent =
+    formatCurrency(data.noi);
+
+  // Maintenance summary
+  document.getElementById("openTotal").textContent = data.openTotal;
+  document.getElementById("openHigh").textContent = data.openHigh;
+  document.getElementById("pendingQuotes").textContent = data.pendingQuotes;
+  document.getElementById("avgClose").textContent = "—";
+
+  // Charts
+  renderDashboardCharts(data);
+
+  // Recent events (non-redundant with Today's Assignments)
+  const alertsList = document.getElementById("alertsList");
+  if (alertsList) {
+    const events = [];
+
+    if (Number(data.rentCollected || 0) > 0) {
+      events.push({
+        icon: "💰",
+        text: `${formatCurrency(data.rentCollected)} rent collected in the last 30 days.`,
+        tone: "#0369a1"
+      });
+    }
+
+    if (Number(data.properties || 0) > 0) {
+      events.push({
+        icon: "🏘️",
+        text: `${data.properties} propert${data.properties === 1 ? "y" : "ies"} currently tracked in your portfolio.`,
+        tone: "#475569"
+      });
+    }
+
+    if (Number(data.maintenanceSpent || 0) > 0) {
+      events.push({
+        icon: "🧾",
+        text: `${formatCurrency(data.maintenanceSpent)} maintenance spend recorded in the last 30 days.`,
+        tone: "#7c3aed"
+      });
+    }
+
+    if (Number(data.pendingQuotes || 0) > 0) {
+      events.push({
+        icon: "📨",
+        text: `${data.pendingQuotes} maintenance quote${data.pendingQuotes === 1 ? " is" : "s are"} pending review.`,
+        tone: "#b45309"
+      });
+    }
+
+    if (Number(data.renewals || 0) > 0 || Number(data.vacancies || 0) > 0) {
+      events.push({
+        icon: "📄",
+        text: `${data.renewals || 0} upcoming renewals and ${data.vacancies || 0} vacanc${Number(data.vacancies || 0) === 1 ? "y" : "ies"} currently on file.`,
+        tone: "#475569"
+      });
+    }
+
+    if (!events.length) {
+      alertsList.innerHTML = `<div class="empty-state">No recent portfolio events right now.</div>`;
+    } else {
+      alertsList.innerHTML = events.slice(0, 4).map((evt) => `
+        <div style="display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px dashed #e5e7eb;">
+          <div style="font-size:1rem; line-height:1.2;">${evt.icon}</div>
+          <div style="font-size:0.88rem; color:${evt.tone};">${evt.text}</div>
+        </div>
+      `).join("");
+    }
+  }
+
+  // Recent property activity
+  const propertyList = document.getElementById("propertyList");
+  if (data.recentProperties && data.recentProperties.length > 0) {
+    propertyList.innerHTML = data.recentProperties.slice(0, 4).map((prop) => {
+      // Bake href into the attribute value at render time so onclick has no closure dependency
+      const _href = 'property-overview.html?property=' + encodeURIComponent(prop.name || '') + '&id=' + (prop.id || '');
+      return `
+        <li class="prop-item">
+          <div class="prop-main">
+            <div class="prop-name">${prop.name || "N/A"}</div>
+            <div class="prop-meta">Property</div>
+          </div>
+          <span class="pill-status">—</span>
+          <button class="tiny-btn" onclick="window.location.href='${_href}'">
+            View
+          </button>
+        </li>`;
+    }).join("");
+  } else {
+    propertyList.innerHTML =`<div class="empty-state">No properties found. Add one to get started!</div>`;
+  }
+}
+
+/* -------------------------------------------------------------
+   Init
+------------------------------------------------------------- */
+async function initDashboardPage(preResolvedUser){
+  sb = window.sb || window.GS?.sb;
+  if(!sb){ throw new Error('Supabase client not ready. Enterprise boot() did not run.'); }
+
+  const user = await setupAuth(preResolvedUser);
+  if (!user) {
+    console.warn("User not authenticated. Dashboard data will not load.");
+    return;
+  }
+
+  // Assistant-first UI wiring
+  setupAssistantUI();
+
+  // Seed minimal context before data loads (so Ask Genie has something)
+  window.GENIE_CONTEXT = {
+    user_id: user.id,
+    company_id: user.user_metadata?.company_id || null,
+    property_id: null,
+    page: location.pathname
+  };
+
+  try {
+    const data = await fetchDashboardData(user);
+    updateDashboard(data);
+
+    // ── Populate full GENIE_CONTEXT after real data is loaded ──
+    // This ensures Ask Genie has actual portfolio numbers, not just user info
+    window.GENIE_CONTEXT = {
+      user_id: user.id,
+      company_id: user.user_metadata?.company_id || null,
+      page: location.pathname,
+      totalProperties:   data.properties,
+      rentCollectedYTD:  data.ytdRent,
+      expensesYTD:       data.ytdExpenses,
+      rentCollected30d:  data.rentCollected,
+      rentOverdue:       data.rentOverdue,
+      openMaintenance:   data.openTotal,
+      pendingQuotes:     data.pendingQuotes,
+      lateRentCount:     data.rent_attention_count,
+      lateRentAmount:    data.rentOverdue,
+      noi30d:            data.noi,
+      lateProperties:    (data.rent_attention_items || []).map(function(i){
+        return i.property_name + (i.tenant_name ? " (" + i.tenant_name + ")" : "") +
+               " — $" + Number(i.remaining||0).toFixed(2) + " outstanding";
+      })
+    };
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error);
+    document.getElementById("financialStats").innerHTML =
+      `<div class="empty-state" style="grid-column: 1 / -1; color: red;">
+         Error loading data. Check console.
+       </div>`;
+  }
+}
+
+var _fy=document.getElementById("footerYear"); if(_fy) _fy.textContent=new Date().getFullYear();
+
+/* Enterprise boot() will call initDashboardPage() after auth */
+
+</script>
+
+<!-- =========================================================
+   SELF-CONTAINED AUTH + CLIENT BOOTSTRAP
+   No dependency on /shared/js/ — works locally and on any host
+========================================================= -->
+<script>
+
+/* ── Loading progress bar ───────────────────────────────────── */
+function setProgress(pct, statusText, activeStep) {
+  var bar    = document.getElementById('aoBarFill');
+  var status = document.getElementById('aoStatus');
+  if (bar)    bar.style.width = pct + '%';
+  if (status && statusText) {
+    status.style.opacity = '0';
+    setTimeout(function() {
+      status.textContent = statusText;
+      status.style.opacity = '1';
+    }, 120);
+  }
+  // Update step indicators: 0=Connecting 1=Authenticating 2=Loading data 3=Ready
+  for (var i = 0; i <= 3; i++) {
+    var el = document.getElementById('aoStep' + i);
+    if (!el) continue;
+    if (i < activeStep)       { el.className = 'ao-step done'; }
+    else if (i === activeStep) { el.className = 'ao-step active'; }
+    else                       { el.className = 'ao-step'; }
+  }
+}
+/* ── waitForClientReady: polls until bootstrap has set window.sb ── */
+  async function waitForClientReady() {
+    if (window.sb?.auth) return window.sb;
+    return new Promise(function(resolve) {
+      var t = setInterval(function() {
+        if (window.sb?.auth) { clearInterval(t); resolve(window.sb); }
+      }, 20);
+    });
+  }
+
+(async function boot() {
+  setProgress(5, 'Connecting to Rental Genie…', 0);
+
+  // ── Wait for bootstrap (body-injected CDN) to initialise client ──
+  const sb = await waitForClientReady();
+  window.GS  = window.GS || {};
+  window.GS.sb = sb;
+
+  setProgress(25, 'Connected — verifying your session…', 0);
+
+  setProgress(40, 'Authenticating…', 1);
+  // ── Check auth (getUser is server-validated, avoids getSession null on Firefox/Edge) ─
+  var _authUser = null;
+  try {
+    var _gu = await sb.auth.getUser();
+    _authUser = (!_gu.error && _gu.data?.user) ? _gu.data.user : null;
+  } catch(e) {}
+  // fallback: session-based check
+  if (!_authUser) {
+    try {
+      var _gs = await sb.auth.getSession();
+      _authUser = _gs.data?.session?.user || null;
+    } catch(e) {}
+  }
+
+  if (!_authUser) {
+    const returnTo = encodeURIComponent(location.pathname + location.search + location.hash);
+    location.href = 'login.html?returnTo=' + returnTo;
+    return;
+  }
+
+  // ── Auth UI ──────────────────────────────────────────────────
+  const user = _authUser;
+  const displayName =
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    (user.email ? user.email.split('@')[0] : 'User');
+
+  // Desktop nav
+  const navLogin  = document.getElementById('nav-login');
+  const userMenu  = document.getElementById('userMenu');
+  const userLabel = document.getElementById('usernameLabel');
+  if (navLogin)  navLogin.style.display  = 'none';
+  if (userMenu)  userMenu.style.display  = window.innerWidth > 860 ? 'inline-block' : 'none';
+  if (userLabel) userLabel.textContent   = displayName;
+  // Mirror to dropdown header
+  var _uN=document.getElementById('umdName'); var _uA=document.getElementById('umdAvatar');
+  var _initials=(function(n){var p=n.split(' ');return(p.length>=2?p[0][0]+p[p.length-1][0]:n.slice(0,2)).toUpperCase();})(displayName);
+  if(_uN) _uN.textContent=displayName;
+  if(_uA) _uA.textContent=_initials;
+  var _uFN=document.getElementById('umdFullName'); if(_uFN) _uFN.textContent=displayName;
+  var _uEM=document.getElementById('umdEmail'); if(_uEM) _uEM.textContent=user.email||'';
+  // Drawer avatar
+  var _dA=document.getElementById('drawerAvatar'); if(_dA) _dA.textContent=_initials;
+
+  // Mobile drawer
+  const mobileLogin   = document.getElementById('mobileLogin');
+  const mobileAccount = document.getElementById('mobileAccountLink');
+  const mobileLabel   = document.getElementById('mobileUsernameLabel');
+  const mobileLogout  = document.getElementById('mobileLogoutContainer');
+  if (mobileLogin)   mobileLogin.style.display   = 'none';
+  if (mobileAccount) mobileAccount.style.display = 'flex';
+  if (mobileLabel)   mobileLabel.textContent      = displayName;
+  if (mobileLogout)  mobileLogout.style.display   = 'block';
+
+  // Hero greeting
+  const heroGreeting = document.getElementById('heroGreeting');
+  if (heroGreeting) heroGreeting.textContent = 'Welcome back, ' + displayName + '!';
+
+  setProgress(65, 'Loading your dashboard…', 2);
+  // ── Boot dashboard — pass resolved user to avoid second auth.getUser() call ──
+  if (typeof initDashboardPage === 'function') {
+    await initDashboardPage(user);
+  }
+
+  // Auth state listener registered AFTER init — avoids lock contention during startup
+  sb.auth.onAuthStateChange((_event, newSession) => {
+    if (!newSession) {
+      location.href = 'login.html';
+    }
+  });
+
+  setProgress(100, 'Ready!', 3);
+  // Dismiss loading overlay — page is ready
+  var _ov = document.getElementById('authOverlay');
+  if (_ov) { _ov.style.opacity = '0'; setTimeout(function(){ _ov.remove(); }, 320); }
+})();
+</script>
+
+
+
+<!-- ═══ Dashboard logic scripts ═══ -->
+
+<!-- ===== MOBILE BOTTOM NAV ===== -->
+<nav class="mobile-nav" aria-label="GenieSphere mobile navigation">
+  <div class="mobile-nav-inner">
+    <a class="mnav" href="dashboard.html" data-nav="household"><div class="ico">📊</div></a>
+    <a class="mnav" href="property-management.html" data-nav="household"><div class="ico">🏘️</div></a>
+    <a class="mnav" href="lease-rent-center.html" data-nav="business"><div class="ico">💰</div></a>
+    <!--a class="mnav" href="lease-rent-center.html" data-nav="investment"><div class="ico">💰</div></a-->
+    <a class="mnav" href="expense-tracking.html" data-nav="leisure"><div class="ico">💸 </div></a>
+    <a class="mnav" href="maintenance-requests.html" data-nav="leisure"><div class="ico">🛠️</div></a>
+     <a class="mnav" href="reports-analytics.html" data-nav="leisure"><div class="ico">📈</div></a>
+  </div>
+</nav>
+
+<!-- -------------------------------------------------------------
+     RENTAL GENIE (Phase 1 - Read Only) Widget
+------------------------------------------------------------- -->
+
+<!-- ===== Movable Ask Genie Wrapper ===== -->
+<div id="askGenieFloat" class="ask-genie-float" aria-label="Ask Rental Genie widget">
+  <div class="ask-genie-shell">
+    <div class="ask-genie-dragbar" id="askGenieDragBar" aria-label="Drag to move">
+      <span>⋮⋮</span>
+    </div>
+
+    <!-- ✅ Put your existing Ask Genie HTML here (input + button, etc.) -->
+    <div id="askGenieInner">
+      <div id="genieBar" aria-label="Rental Genie command bar">
+        <div class="genie-pill">
+          <div id="genieIcon" aria-hidden="true">🧞</div>
+          <input id="genieInput" placeholder="Ask Rental Genie… (e.g., “Who is overdue?”)" autocomplete="off" />
+        </div>
+
+        <button id="genieSend" type="button">
+          <span id="genieSendIcon">🤖</span>
+          <span id="genieSendText">Ask</span>
+        </button>
+
+        <button id="genieToggle" type="button" title="Open/close panel">⌄</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div id="geniePanel" role="dialog" aria-modal="false" aria-label="Rental Genie response panel">
+  <div id="geniePanelHeader">
+    <div id="genieTitle"><span aria-hidden="true">🧞</span> Rental Genie</div>
+    <button id="genieClose" type="button">✕</button>
+  </div>
+
+  <div id="genieBody">
+    <p id="genieAnswer">Ask a question to see results here.</p>
+    <div class="genie-cards" id="genieCards"></div>
+    <div class="genie-actions" id="genieActions"></div>
+    <div id="genieStatus"></div>
+  </div>
+</div>
+
+
+<!-- RG_BADGE_SYSTEM_V3_START -->
+<style>
+/* Rental Genie unified inline nav badges */
+.drawer a{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  white-space:nowrap;
+}
+</style>
+
+
+<script>
+
+/* ── RG Auth Setup ── */
+async function rgSetupAuth() {
+  var loginBtn    = document.getElementById('nav-login');
+  var userMenu    = document.getElementById('userMenu');
+  var usernameEl  = document.getElementById('usernameLabel');
+  var mobileLogin = document.getElementById('mobileLogin');
+  var mobileAcct  = document.getElementById('mobileAccountLink');
+  var mobileUname = document.getElementById('mobileUsernameLabel');
+  var mobileLgout = document.getElementById('mobileLogoutContainer');
+
+  document.body.classList.remove('auth-ready', 'auth-guest');
+  var user = null;
+  try {
+    var r = await window._rgClient.auth.getUser();
+    user = (!r.error && r.data?.user) ? r.data.user : null;
+  } catch(e) {}
+  if (!user) {
+    try {
+      var s = await window._rgClient.auth.getSession();
+      user = s.data?.session?.user || null;
+    } catch(e) {}
+  }
+  var uname = user?.user_metadata?.full_name || user?.user_metadata?.name ||
+              (user?.email ? user.email.split('@')[0] : '') || 'Account';
+  if (usernameEl) usernameEl.textContent = uname;
+  if (mobileUname) mobileUname.textContent = uname;
+  document.body.classList.add(user ? 'auth-ready' : 'auth-guest');
+  window._rgClient.auth.onAuthStateChange(function(_e, sess) {
+    document.body.classList.remove('auth-ready','auth-guest');
+    document.body.classList.add(sess?.user ? 'auth-ready' : 'auth-guest');
+    var n = sess?.user?.user_metadata?.full_name || sess?.user?.email?.split('@')[0] || 'Account';
+    if (usernameEl) usernameEl.textContent = n;
+    if (mobileUname) mobileUname.textContent = n;
+  });
+  return user;
+}
+
+/* ── Shared header wiring ── */
+function rgWireHeader() {
+  var uMenuBtn  = document.getElementById('umdToggle');
+  var uMenuDrop = document.getElementById('umdDropdown');
+  if (uMenuBtn && uMenuDrop) {
+    uMenuBtn.onclick = function() { uMenuDrop.classList.toggle('open'); };
+    document.addEventListener('click', function(e) {
+      if (!uMenuDrop.contains(e.target) && !uMenuBtn.contains(e.target))
+        uMenuDrop.classList.remove('open');
+    });
+  }
+  var logoutBtn  = document.getElementById('logoutBtn');
+  var mLogoutBtn = document.getElementById('mobileLogoutBtn');
+  if (logoutBtn)  logoutBtn.onclick  = async function() { await window._rgClient.auth.signOut(); location.href='login.html'; };
+  if (mLogoutBtn) mLogoutBtn.onclick = async function() { await window._rgClient.auth.signOut(); location.href='login.html'; };
+  var ham = document.getElementById('hamburgerBtn');
+  var drw = document.getElementById('mobileDrawer');
+  if (ham && drw) {
+    ham.onclick = function(e) {
+      e.stopPropagation();
+      drw.style.display = drw.style.display === 'block' ? 'none' : 'block';
+    };
+    drw.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (e.target.tagName === 'A') drw.style.display = 'none';
+    });
+    document.addEventListener('click', function(e) {
+      if (drw.style.display === 'block' && !drw.contains(e.target) && !ham.contains(e.target)) {
+        drw.style.display = 'none';
+      }
+    });
+  }
+}
+
+/* ── Overlay dismiss ── */
+function rgDismissOverlay() {
+  var ov = document.getElementById('authOverlay');
+  if (ov) { ov.style.opacity = '0'; setTimeout(function() { ov.remove(); }, 320); }
+}
+
+// Wire header interactions
+rgWireHeader();
+// Footer year
+var fyEls = document.querySelectorAll('.footer-year');
+fyEls.forEach(function(el) { el.textContent = new Date().getFullYear(); });
+var fyEl2 = document.getElementById('footerYear');
+if (fyEl2) fyEl2.textContent = new Date().getFullYear();
+</script>
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-brand">
+      <div class="footer-logo-row">
+        <img src="images/rg-logo.png" onerror="this.style.display='none'" class="footer-logo" alt="Rental Genie" />
+        <span class="footer-name">Rental Genie</span>
+      </div>
+      <p>Smart property management for independent landlords. Manage leases, track rent, and stay on top of maintenance — all in one place.</p>
+    </div>
+    <div class="footer-section">
+      <h4>Navigate</h4>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="property-management.html">Properties</a>
+      <a href="lease-rent-center.html">Lease & Rent</a>
+      <a href="expense-tracking.html">Expenses</a>
+      <a href="maintenance-requests.html">Maintenance</a>
+      <a href="reports-analytics.html">Reports</a>
+    </div>
+    <div class="footer-section">
+      <h4>Account</h4>
+      <a href="account.html">My Account</a>
+      <a href="tenant-portal-picker.html">Tenant Portal</a>
+      <a href="invite-tenant.html">Invite Tenant</a>
+    </div>
+    <div class="footer-section">
+      <h4>Support</h4>
+      <a href="contact-us.html">Contact Us</a>
+      <a href="contact-us.html">Help Center</a>
+      <a href="term
+</body>
+</html>

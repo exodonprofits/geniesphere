@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🪄 Profile Settings | GenieSphere</title>
+  <meta name="description" content="Profile, family, home, health, and vehicles for the Personal portal." />
+  <style>
+    :root{
+      --bg:#0b1220; --card:#121a2b; --text:#e9f0ff; --muted:#a9b6d9; --accent:#3ee1a1; --accent-2:#4aa3ff; --ring:rgba(62,225,161,.35); --shadow:0 10px 30px rgba(0,0,0,.35); --radius:18px; --btn-radius:999px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; background:radial-gradient(1200px 800px at 10% -10%, rgba(78,130,255,.12), transparent 60%), radial-gradient(1200px 800px at 110% 10%, rgba(62,225,161,.10), transparent 55%), linear-gradient(180deg,#0a0f1b 0%, #0b1220 100%); color:var(--text); font:500 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans"}
+    .container{max-width:1100px; margin:0 auto; padding:24px}
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:12px}
+    .brand{display:flex; align-items:center; gap:10px; color:var(--text); text-decoration:none}
+    .logo{width:40px; height:40px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #6af0c4, #3ee1a1 40%, #1c9369 75%); box-shadow: 0 0 0 4px var(--ring), 0 8px 24px rgba(62,225,161,.35)}
+    .title{font-size: clamp(24px, 4vw, 38px); margin:10px 0 4px; font-weight:900}
+    .subtitle{color:var(--muted); margin:0 0 16px}
+
+    .btn{display:inline-flex; align-items:center; gap:10px; padding:10px 18px; border-radius:var(--btn-radius); text-decoration:none; color:#03101f; background:var(--accent-2); transition:transform .15s, box-shadow .15s; box-shadow:0 8px 20px rgba(74,163,255,.25); font-weight:800; border:0; cursor:pointer}
+    .btn:hover{transform:translateY(-1px); box-shadow:0 12px 26px rgba(74,163,255,.35)}
+    .btn.primary{background:var(--accent); color:#04131a; box-shadow:0 8px 20px rgba(62,225,161,.25)}
+    .btn.ghost{background:#0e1626; color:var(--text); border:1px solid rgba(120,155,255,.2)}
+    .btn.blue{background:#4aa3ff}
+
+    .grid{display:grid; gap:16px}
+    @media(min-width:900px){ .grid.two{grid-template-columns:1.5fr 1fr} }
+
+    .card{background: linear-gradient(180deg, rgba(24,35,58,.75), rgba(18,26,43,.85)); border:1px solid rgba(120,155,255,.15); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px}
+    .card h2{margin:0 0 8px; font-size:18px; letter-spacing:.3px; display:flex; align-items:center; gap:8px}
+    .section-desc{margin:-4px 0 10px; color:var(--muted); font-size:14px}
+
+    .row{display:grid; grid-template-columns:1fr; gap:12px}
+    @media(min-width:720px){ .row.two{grid-template-columns:1fr 1fr} .row.three{grid-template-columns:repeat(3,1fr)} }
+
+    label{display:flex; flex-direction:column; gap:6px; font-weight:700}
+    input, select, textarea{background:#0e1626; color:var(--text); border:1px solid rgba(120,155,255,.2); border-radius:12px; padding:10px 12px; outline:none}
+    input:focus, select:focus, textarea:focus{border-color:rgba(74,163,255,.45); box-shadow:0 0 0 4px rgba(74,163,255,.15)}
+
+    .list{display:grid; gap:10px}
+    .item{display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; background:#0e1626; border:1px solid rgba(120,155,255,.15); border-radius:12px; padding:10px}
+
+    .divider{height:1px; background:rgba(120,155,255,.15); margin:10px 0}
+
+    .toolbar{display:flex; gap:10px; flex-wrap:wrap}
+
+    .toast{position:fixed; right:16px; bottom:16px; background:#0e1626; border:1px solid rgba(62,225,161,.45); color:var(--text); padding:10px 14px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,.45); opacity:0; transform:translateY(10px); transition:all .25s}
+    .toast.show{opacity:1; transform:translateY(0)}
+
+    .hint{color:var(--muted); font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a class="brand" href="../index.html"><img class="logo" src="../genie-logo.png" alt="GenieSphere"/> <strong>GenieSphere</strong></a>
+      <div class="toolbar">
+        <a class="btn blue" href="../personal/personal.html">⬅️ Back to Personal</a>
+        <button class="btn ghost" id="btn-import">📥 Import</button>
+        <button class="btn ghost" id="btn-export">📤 Export</button>
+        <button class="btn primary" id="btn-save">💾 Save</button>
+      </div>
+    </header>
+
+    <h1 class="title">🪄 Profile Settings</h1>
+    <p class="subtitle">Tell GenieSphere about your household so we can personalize meals, reminders, and schedules.</p>
+
+    <div class="grid two">
+      <!-- LEFT COLUMN: CORE FORMS -->
+      <div class="grid" style="gap:16px">
+        <!-- User Profile -->
+        <section class="card" id="sec-user">
+          <h2>👤 User Profile</h2>
+          <p class="section-desc">Used for personalization and private reminders.</p>
+          <div class="row two">
+            <label>Full Name<input id="user_name" placeholder="e.g., Jimmy Tran" autocomplete="name"></label>
+            <label>Role<select id="user_role"><option value="parent">Parent</option><option value="guardian">Guardian</option><option value="teen">Teen</option><option value="child">Child</option></select></label>
+            <label>Birthday<input id="user_bday" type="date"></label>
+            <label>Email<input id="user_email" type="email" placeholder="you@example.com" autocomplete="email"></label>
+            <label>Preferred Language<select id="user_lang"><option value="en">English</option><option value="vi">Tiếng Việt</option><option value="es">Español</option></select></label>
+          </div>
+        </section>
+
+        <!-- Family Members -->
+        <section class="card" id="sec-family">
+          <h2>👨‍👩‍👧‍👦 Family Members</h2>
+          <p class="section-desc">Add everyone in the household for shared calendars and reminders.</p>
+          <div class="list" id="family_list"></div>
+          <div class="divider"></div>
+          <div class="row three">
+            <label>Name<input id="fam_name" placeholder="e.g., Katie Tran"></label>
+            <label>Relationship<select id="fam_rel"><option value="spouse">Spouse</option><option value="child">Child</option><option value="parent">Parent</option><option value="other">Other</option></select></label>
+            <label>Birthday<input id="fam_bday" type="date"></label>
+          </div>
+          <div class="row two" style="margin-top:8px">
+            <label>School Year<input id="fam_school" placeholder="e.g., 7th grade"></label>
+            <label>Notes<input id="fam_notes" placeholder="Allergies, jersey #, etc."></label>
+          </div>
+          <div class="toolbar" style="margin-top:10px">
+            <button class="btn" id="btn-add-family">➕ Add Member</button>
+          </div>
+        </section>
+
+        <!-- Home Info -->
+        <section class="card" id="sec-home">
+          <h2>🏠 Home Info</h2>
+          <p class="section-desc">We’ll use this for forms, deliveries, and local services.</p>
+          <div class="row two">
+            <label>Address Line 1<input id="home_addr1" placeholder="123 Main St"></label>
+            <label>Address Line 2<input id="home_addr2" placeholder="Apt / Unit"></label>
+            <label>City<input id="home_city" placeholder="Your city"></label>
+            <label>State<input id="home_state" placeholder="IL"></label>
+            <label>ZIP Code<input id="home_zip" placeholder="60007"></label>
+            <label>Wi‑Fi SSID<input id="home_wifi" placeholder="Victoria-2G/5G"></label>
+            <label>Wi‑Fi Password<input id="home_wifi_pw" placeholder="••••••••"></label>
+            <label>Primary Utility Provider<input id="home_util" placeholder="e.g., ComEd"></label>
+          </div>
+        </section>
+
+        <!-- Health Basics -->
+        <section class="card" id="sec-health">
+          <h2>🩺 Health Basics</h2>
+          <p class="section-desc">Private info used for medication reminders and safety.</p>
+          <div class="row two">
+            <label>Allergies<textarea id="health_allergy" rows="2" placeholder="e.g., Penicillin; Peanut"></textarea></label>
+            <label>Conditions<textarea id="health_cond" rows="2" placeholder="e.g., Type 2 Diabetes"></textarea></label>
+            <label>Primary Doctor<input id="health_doc" placeholder="Clinic / Doctor name"></label>
+            <label>Emergency Contact<input id="health_ice" placeholder="Name & phone"></label>
+          </div>
+        </section>
+
+        <!-- Vehicles -->
+        <section class="card" id="sec-vehicles">
+          <h2>🚗 Vehicles</h2>
+          <p class="section-desc">Track plates, VINs, and mileage to power maintenance reminders.</p>
+          <div class="list" id="vehicle_list"></div>
+          <div class="divider"></div>
+          <div class="row three">
+            <label>Label<input id="veh_label" placeholder="e.g., Escalade"></label>
+            <label>Plate #<input id="veh_plate" placeholder="ABC 1234"></label>
+            <label>VIN<input id="veh_vin" placeholder="17 chars"></label>
+          </div>
+          <div class="row three" style="margin-top:8px">
+            <label>Current Mileage<input id="veh_miles" type="number" placeholder="50000"></label>
+            <label>Oil Interval (mi)<input id="veh_interval" type="number" placeholder="5000"></label>
+            <label>Last Oil Change (date)<input id="veh_last" type="date"></label>
+          </div>
+          <div class="toolbar" style="margin-top:10px">
+            <button class="btn" id="btn-add-vehicle">➕ Add Vehicle</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT COLUMN: SYNC & PREFERENCES -->
+      <aside class="grid" style="gap:16px">
+        <section class="card">
+          <h2>🛠️ Sync & Settings</h2>
+          <p class="section-desc">Connect services so your overview and reminders stay updated.</p>
+          <div class="row">
+            <label>Supabase Login Email<input id="sync_email" type="email" placeholder="you@example.com"></label>
+            <label>Notifications<select id="notif_pref"><option value="email">Email</option><option value="sms">SMS</option><option value="push">Push (coming soon)</option></select></label>
+            <div class="divider"></div>
+            <label><input type="checkbox" id="conn_gcal"> Connect Google Calendar</label>
+            <label><input type="checkbox" id="conn_gmail"> Connect Gmail</label>
+            <label><input type="checkbox" id="conn_n8n"> Connect n8n Webhook</label>
+          </div>
+          <div class="toolbar" style="margin-top:10px">
+            <a class="btn blue" href="../onboarding/api-key-settings.html">🔑 API Keys</a>
+            <button class="btn ghost" id="btn-test-sync">🔄 Test Sync</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>💭 Personalization</h2>
+          <p class="section-desc">Choose the areas you care about most. We’ll pin them in Personal.</p>
+          <div class="row">
+            <label><input type="checkbox" class="pref" value="meals" checked> 🍽️ Meals & Health</label>
+            <label><input type="checkbox" class="pref" value="calendar" checked> 📅 Family Calendar</label>
+            <label><input type="checkbox" class="pref" value="bills" checked> 🧾 Household Bills</label>
+            <label><input type="checkbox" class="pref" value="car"> 🚗 Car & Insurance</label>
+            <label><input type="checkbox" class="pref" value="school"> 🎒 School & Kids</label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>🧰 Tools</h2>
+          <div class="toolbar">
+            <button class="btn ghost" id="btn-clear">🧹 Clear All (local)</button>
+            <button class="btn" id="btn-fill-demo">✨ Fill Demo Data</button>
+          </div>
+          <p class="hint">This page saves to your browser for now. We can switch to Supabase later.</p>
+        </section>
+      </aside>
+    </div>
+
+    <div class="toast" id="toast">Saved</div>
+  </div>
+
+  <script>
+    // --- Simple local storage model (swap to Supabase later) ---
+    const KEY = 'gs_profile_settings_v1';
+    const toast = (msg='Saved')=>{ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); };
+    const $ = (id)=>document.getElementById(id);
+
+    function getData(){ try{return JSON.parse(localStorage.getItem(KEY))||{};}catch{return {}} }
+    function setData(d){ localStorage.setItem(KEY, JSON.stringify(d)); }
+
+    // Family rendering
+    function renderFamily(list){ const wrap=$('family_list'); wrap.innerHTML=''; (list||[]).forEach((m,idx)=>{ const div=document.createElement('div'); div.className='item'; div.innerHTML=`<div><strong>${m.name||'Member'}</strong><div class="hint">${m.relationship||''}${m.birthday? ' • '+m.birthday:''}${m.school? ' • '+m.school:''}${m.notes? ' • '+m.notes:''}</div></div><button class="btn ghost" data-remove-family="${idx}">✖</button>`; wrap.appendChild(div); }); }
+
+    function renderVehicles(list){ const wrap=$('vehicle_list'); wrap.innerHTML=''; (list||[]).forEach((v,idx)=>{ const div=document.createElement('div'); div.className='item'; div.innerHTML=`<div><strong>${v.label||'Vehicle'}</strong><div class="hint">${v.plate||''}${v.vin? ' • '+v.vin:''}${v.miles? ' • '+v.miles+' mi':''}${v.interval? ' • '+v.interval+' mi interval':''}${v.last? ' • last '+v.last:''}</div></div><button class="btn ghost" data-remove-veh="${idx}">✖</button>`; wrap.appendChild(div); }); }
+
+    function load(){ const d=getData();
+      // user
+      $('user_name').value = d.user_name||''; $('user_role').value=d.user_role||'parent'; $('user_bday').value=d.user_bday||''; $('user_email').value=d.user_email||''; $('user_lang').value=d.user_lang||'en';
+      // home
+      $('home_addr1').value=d.home_addr1||''; $('home_addr2').value=d.home_addr2||''; $('home_city').value=d.home_city||''; $('home_state').value=d.home_state||''; $('home_zip').value=d.home_zip||''; $('home_wifi').value=d.home_wifi||''; $('home_wifi_pw').value=d.home_wifi_pw||''; $('home_util').value=d.home_util||'';
+      // health
+      $('health_allergy').value=d.health_allergy||''; $('health_cond').value=d.health_cond||''; $('health_doc').value=d.health_doc||''; $('health_ice').value=d.health_ice||'';
+      // sync
+      $('sync_email').value=d.sync_email||''; $('notif_pref').value=d.notif_pref||'email'; $('conn_gcal').checked=!!d.conn_gcal; $('conn_gmail').checked=!!d.conn_gmail; $('conn_n8n').checked=!!d.conn_n8n;
+      // prefs
+      document.querySelectorAll('.pref').forEach(c=> c.checked = (d.prefs||['meals','calendar','bills']).includes(c.value));
+      // lists
+      renderFamily(d.family||[]); renderVehicles(d.vehicles||[]);
+    }
+
+    function save(){ const d=getData();
+      Object.assign(d, {
+        user_name:$('user_name').value, user_role:$('user_role').value, user_bday:$('user_bday').value, user_email:$('user_email').value, user_lang:$('user_lang').value,
+        home_addr1:$('home_addr1').value, home_addr2:$('home_addr2').value, home_city:$('home_city').value, home_state:$('home_state').value, home_zip:$('home_zip').value, home_wifi:$('home_wifi').value, home_wifi_pw:$('home_wifi_pw').value, home_util:$('home_util').value,
+        health_allergy:$('health_allergy').value, health_cond:$('health_cond').value, health_doc:$('health_doc').value, health_ice:$('health_ice').value,
+        sync_email:$('sync_email').value, notif_pref:$('notif_pref').value, conn_gcal:$('conn_gcal').checked, conn_gmail:$('conn_gmail').checked, conn_n8n:$('conn_n8n').checked,
+        prefs: Array.from(document.querySelectorAll('.pref:checked')).map(x=>x.value)
+      });
+      setData(d); toast('Profile saved');
+    }
+
+    // Add member
+    $('btn-add-family').addEventListener('click', ()=>{ const d=getData(); d.family = d.family||[]; const m = {name:$('fam_name').value.trim(), relationship:$('fam_rel').value, birthday:$('fam_bday').value, school:$('fam_school').value.trim(), notes:$('fam_notes').value.trim()}; if(!m.name){toast('Enter a member name'); return;} d.family.push(m); setData(d); $('fam_name').value=''; $('fam_bday').value=''; $('fam_school').value=''; $('fam_notes').value=''; renderFamily(d.family); toast('Member added'); });
+    document.addEventListener('click', (e)=>{ const btn=e.target.closest('[data-remove-family]'); if(btn){ const idx=+btn.getAttribute('data-remove-family'); const d=getData(); d.family.splice(idx,1); setData(d); renderFamily(d.family); }});
+
+    // Add vehicle
+    $('btn-add-vehicle').addEventListener('click', ()=>{ const d=getData(); d.vehicles=d.vehicles||[]; const v = {label:$('veh_label').value.trim(), plate:$('veh_plate').value.trim(), vin:$('veh_vin').value.trim(), miles:$('veh_miles').value, interval:$('veh_interval').value, last:$('veh_last').value}; if(!v.label){toast('Enter a vehicle label'); return;} d.vehicles.push(v); setData(d); ['veh_label','veh_plate','veh_vin','veh_miles','veh_interval','veh_last'].forEach(id=>$(id).value=''); renderVehicles(d.vehicles); toast('Vehicle added'); });
+    document.addEventListener('click', (e)=>{ const btn=e.target.closest('[data-remove-veh]'); if(btn){ const idx=+btn.getAttribute('data-remove-veh'); const d=getData(); d.vehicles.splice(idx,1); setData(d); renderVehicles(d.vehicles); }});
+
+    // Save / Export / Import / Clear / Demo
+    $('btn-save').addEventListener('click', save);
+    $('btn-export').addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify(getData(),null,2)], {type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='geniesphere-profile.json'; a.click(); URL.revokeObjectURL(url); });
+    $('btn-import').addEventListener('click', ()=>{ const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange=()=>{ const f=inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ setData(JSON.parse(r.result)); load(); toast('Imported'); }catch{ toast('Invalid file'); } }; r.readAsText(f); }; inp.click(); });
+    $('btn-clear').addEventListener('click', ()=>{ if(confirm('Clear all locally saved profile data?')){ localStorage.removeItem(KEY); load(); toast('Cleared'); }});
+    $('btn-fill-demo').addEventListener('click', ()=>{ setData({
+      user_name:'Jimmy Tran', user_role:'parent', user_bday:'1975-01-01', user_email:'jimmy@example.com', user_lang:'en',
+      family:[{name:'Katie Tran', relationship:'child', birthday:'2005-06-01', school:'Sophomore', notes:'Soccer 5:30'}],
+      home_addr1:'123 Main St', home_city:'Schaumburg', home_state:'IL', home_zip:'60173', home_wifi:'Victoria-5G', home_wifi_pw:'Genie*2025', home_util:'ComEd',
+      health_allergy:'Peanut', health_cond:'Type 2 Diabetes', health_doc:'AMITA Clinic', health_ice:'Jenny • (555) 555-0000',
+      vehicles:[{label:'Escalade', plate:'IL-ESC-888', vin:'1GYS4MKJ2JR123456', miles:50000, interval:5000, last:'2025-08-15'}],
+      sync_email:'jimmy@example.com', notif_pref:'email', conn_gcal:true, conn_gmail:true, conn_n8n:false,
+      prefs:['meals','calendar','bills','car']
+    }); load(); toast('Demo data filled'); });
+
+    $('btn-test-sync').addEventListener('click', ()=>{ toast('Sync test: ok (placeholder)'); });
+
+    // Init
+    load();
+  </script>
+</body>
+</html>

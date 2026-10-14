@@ -1,0 +1,2789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🚗 Car Care Tracker | GenieSphere</title>
+<meta name="description" content="Maintenance, insurance, tolls, and service logs — organized for all your vehicles."/>
+
+<!-- ===== GenieSphere Unified Auth + DB Loader ===== -->
+<script>
+  window.GS_CONFIG_URL = "/shared/config.json";
+  window.GS_CONFIG_PATH = "/shared/config.json";
+</script>
+
+<script>
+(function(){
+  function add(src, cb){
+    const s = document.createElement("script");
+    s.src = src;
+    s.async = false;
+    s.defer = false;
+    if(cb) s.onload = cb;
+    document.head.appendChild(s);
+    return s;
+  }
+  function hasSdk(){ return !!(window.supabase && typeof window.supabase.createClient === "function"); }
+  function loadFallback(){
+    if(hasSdk()) return;
+    add("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js");
+  }
+  const local = add("/shared/vendor/supabase.min.js", ()=>setTimeout(loadFallback,0));
+  local.onerror = loadFallback;
+})();
+</script>
+
+<script src="/shared/js/app-config.js?v=20260212"></script>
+<script src="/shared/js/auth-header.js?v=20260212"></script>
+<script src="/shared/js/hub-badges.js?v=20260212"></script>
+<!-- ===== /GenieSphere Unified Auth + DB Loader ===== -->
+
+<style>
+/* ═══════════════════════════════════════════════════════════
+   CAR CARE — Light Theme · Teal Identity
+   Matches household.html exactly:
+   bg:#F5F7FA  panel:#FFFFFF  text:#111827
+   Teal (#22D3EE / #0891B2) used as accent throughout
+═══════════════════════════════════════════════════════════ */
+:root{
+  --area-accent: #22D3EE;
+  --area-dim:    rgba(34,211,238,.10);
+  --area-dark:   #0E7490;
+  /* Core */
+  --bg:#F5F7FA;
+  --panel:#FFFFFF;
+  --panel-soft:#F0F4F8;
+  --text:#111827;
+  --muted:#6B7280;
+  --muted-2:#9CA3AF;
+  --line:#E5EAF0;
+  --line-2:#D1D9E0;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.08);
+  --radius:18px;
+  --radius-lg:24px;
+  --max:1440px;
+
+  /* Teal identity */
+  --teal:     #22D3EE;
+  --teal-dark:#0891B2;
+  --teal-deep:#0E7490;
+  --teal-dim: rgba(34,211,238,.10);
+  --teal-soft:rgba(34,211,238,.06);
+  --teal-bd:  rgba(34,211,238,.28);
+
+  /* Status */
+  --urgent-bg:#FEF2F2; --urgent-bd:#FECACA; --urgent-txt:#B91C1C;
+  --warn-bg:#FFFBEB;   --warn-bd:#FCD34D;   --warn-txt:#92400E;
+  --ok-bg:#F0FDFA;     --ok-bd:#99F6E4;     --ok-txt:#0F766E;
+
+  /* Legacy aliases (used by car-care JS-rendered HTML) */
+  --card:var(--panel);
+  --card2:var(--panel-soft);
+  --line-old:var(--line);
+  --green:#16A34A;
+  --green2:#15803D;
+  --blue:#0891B2;
+  --accent:var(--teal);
+  --brand-blue:#4c6ef5;
+  --pill:999px;
+}
+
+*{box-sizing:border-box} html,body{margin:0;padding:0;min-height:100%}
+body{
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ── TOPBAR — Standard across all pages ── */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(14px) saturate(180%);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 1px 0 var(--line),0 2px 10px rgba(0,0,0,.04);
+}
+.topbar-inner{
+  max-width:var(--max);margin:0 auto;
+  padding:0 24px;height:60px;
+  display:flex;align-items:center;gap:16px;
+}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+.brand-mark{
+  width:36px;height:36px;border-radius:50%;flex:0 0 auto;
+  background:radial-gradient(circle at 30% 30%,#7ef1c7 0%,#34d399 45%,#0f9f68 100%);
+  box-shadow:0 0 0 3px rgba(52,211,153,.18),0 4px 12px rgba(52,211,153,.14);
+}
+.brand-name{font-size:18px;font-weight:800;letter-spacing:-.03em;color:var(--text)}
+.nav{display:flex;align-items:center;gap:2px;flex-wrap:wrap;margin-left:12px}
+.nav-link{
+  color:var(--muted);font-weight:500;font-size:13px;
+  padding:6px 10px;border-radius:8px;border-bottom:2px solid transparent;
+  transition:background .14s,color .14s;text-decoration:none;
+}
+.nav-link:hover{background:var(--area-dim);color:var(--area-dark)}
+.nav-link.active{background:var(--area-dim);color:var(--area-dark);font-weight:700;border-bottom-color:var(--area-accent)}
+.userbox{display:flex;align-items:center;gap:10px;margin-left:auto}
+.search{
+  width:240px;max-width:26vw;border:1px solid var(--line-2);
+  border-radius:999px;background:var(--panel-soft);
+  padding:9px 14px;color:var(--text);outline:none;
+  font-size:13px;font-family:inherit;
+  transition:border-color .14s,box-shadow .14s;
+}
+.search:focus{border-color:var(--area-accent);box-shadow:0 0 0 3px var(--area-dim)}
+.search::placeholder{color:var(--muted-2)}
+.user-menu{position:relative;display:flex;align-items:center}
+.user-menu-toggle{
+  display:flex;align-items:center;gap:7px;padding:8px 14px;
+  border-radius:999px;border:1px solid var(--line-2);
+  background:var(--panel);color:var(--text);
+  font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
+  box-shadow:0 1px 2px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.06);
+  transition:border-color .14s,box-shadow .14s;white-space:nowrap;
+}
+.user-menu-toggle:hover{border-color:var(--area-accent);box-shadow:0 2px 8px rgba(0,0,0,.10)}
+.user-menu-toggle .avatar{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--area-dim);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:var(--area-dark);flex-shrink:0;
+}
+.user-menu-dropdown{
+  position:absolute;right:0;top:calc(100% + 8px);min-width:240px;
+  background:var(--panel);border-radius:16px;
+  border:1px solid var(--line);
+  box-shadow:0 4px 6px rgba(0,0,0,.04),0 20px 48px rgba(0,0,0,.13);
+  padding:6px 0;display:none;z-index:2005;
+}
+.user-menu.open .user-menu-dropdown{display:block}
+.user-menu-dropdown a,.user-menu-dropdown button{
+  display:flex;align-items:center;gap:9px;
+  width:100%;text-align:left;padding:9px 14px;
+  background:none;border:none;color:var(--text);
+  font-size:13px;cursor:pointer;transition:background .12s;
+  font-family:inherit;text-decoration:none;border-radius:0;
+}
+.user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:var(--panel-soft)}
+.user-menu-divider{height:1px;margin:4px 8px;background:var(--line)}
+.dropdown-label{
+  font-size:10px;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--muted-2);padding:8px 14px 3px;font-weight:700;
+}
+.auth-only{display:none}
+.mobile-only{display:none}
+
+/* PAGE */
+.page{max-width:var(--max);margin:0 auto;padding:32px 24px 52px}
+
+/* PAGE HEADER */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:28px}
+.page-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-dark);margin-bottom:10px}
+.page-title{font-size:clamp(26px,4vw,42px);font-weight:900;letter-spacing:-.04em;line-height:1.06;margin:0 0 10px;color:var(--text)}
+.page-subtitle{color:var(--muted);font-size:15px;max-width:520px;margin:0;line-height:1.6}
+.page-header-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:4px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;transition:filter .15s,transform .12s;white-space:nowrap;font-family:inherit}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-green,.btn.green{background:var(--teal);color:#012e38;border:none}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--line-2)}
+.btn-outline:hover{border-color:var(--teal);background:var(--teal-dim)}
+.btn-sm,.btn.small{padding:7px 14px;font-size:13px}
+.btn.ghost{background:var(--panel-soft);color:var(--text);border:1px solid var(--line-2)}
+.btn.ghost:hover{border-color:var(--teal-bd);background:var(--teal-dim)}
+.btn.primary{background:var(--teal-dark);color:#fff;border:none}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.blue{background:var(--teal);color:#012e38;border:none}
+.btn.blue:hover{filter:brightness(1.08)}
+
+/* STATS ROW */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:20px;
+}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.stats{grid-template-columns:1fr}}
+
+.stat{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:16px 18px;
+  transition:border-color .14s,transform .14s;
+}
+.stat:hover{border-color:var(--teal-bd);transform:translateY(-1px)}
+.stat .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);font-weight:700;margin-bottom:4px}
+.stat .v{font-size:26px;font-weight:900;line-height:1.1;color:var(--text)}
+.stat .s{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* PANEL (sections) */
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:20px;
+  margin-bottom:16px;
+}
+.panel h2{
+  margin:0 0 14px;
+  font-size:17px;font-weight:800;color:var(--text);
+  display:flex;align-items:center;gap:8px;
+}
+
+/* Filters */
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:999px;
+  background:var(--panel-soft);border:1px solid var(--line-2);
+  font-weight:700;font-size:13px;color:var(--muted);cursor:pointer;
+  transition:all .14s;
+}
+.pill:hover{border-color:var(--teal-bd);color:var(--teal-deep)}
+.pill.active{background:var(--teal);color:#012e38;border-color:transparent}
+.pill.pill--badge{cursor:default;font-size:11px;padding:4px 10px;background:var(--teal-dim);color:var(--teal-deep);border-color:var(--teal-bd)}
+.pill.pill--action{cursor:pointer;font-size:12px;padding:6px 12px}
+.pill.pill--action[aria-pressed="true"]{background:var(--teal);color:#012e38;border-color:transparent}
+
+select,input[type="search"]{
+  padding:10px 14px;border:1px solid var(--line-2);border-radius:12px;
+  background:var(--panel-soft);color:var(--text);outline:none;font-family:inherit;font-size:13px;
+  transition:border-color .14s,box-shadow .14s;
+}
+select:focus,input[type="search"]:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim)}
+
+/* Vehicle form */
+.vehicle-form{
+  margin-bottom:16px;background:var(--panel-soft);
+  border-radius:14px;padding:14px;border:1px solid var(--line);
+}
+.vehicle-form-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:10px;font-size:14px;font-weight:700;color:var(--text);
+}
+.vehicle-form input,.vehicle-form select{
+  flex:1;min-width:0;padding:9px 12px;border-radius:10px;
+  border:1px solid var(--line-2);background:var(--panel);color:var(--text);font-size:13px;font-family:inherit;
+  transition:border-color .14s;
+}
+.vehicle-form input:focus,.vehicle-form select:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim);outline:none}
+.vehicle-form input::placeholder{color:var(--muted-2)}
+
+/* Vehicle grid + cards */
+.grid{display:grid;gap:12px}
+@media(min-width:880px){.grid{grid-template-columns:1fr 1fr}}
+
+.card{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:16px;padding:16px;display:grid;gap:10px;
+  position:relative;box-shadow:var(--shadow);
+  transition:border-color .14s,transform .14s,box-shadow .14s;
+}
+.card:hover{border-color:var(--teal-bd);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.card.sold{opacity:.7}
+.card h3{margin:0 0 4px;font-size:16px;font-weight:800;color:var(--text)}
+
+.meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.empty{color:var(--muted);font-style:italic;font-size:13px}
+
+/* Badges on vehicle cards */
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px;
+  background:var(--panel-soft);border:1px solid var(--line-2);color:var(--muted);
+}
+.b-personal{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
+.b-business{background:#F0FDF4;border-color:#BBF7D0;color:#15803D}
+.b-mixed{background:#FFFBEB;border-color:#FCD34D;color:#92400E}
+.b-entity{background:var(--teal-dim);border-color:var(--teal-bd);color:var(--teal-deep)}
+.b-status{background:var(--panel-soft);border-color:var(--line-2);color:var(--muted)}
+.b-tolls{background:var(--panel-soft);border:1px dashed var(--line-2);color:var(--muted-2)}
+
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row .btn{box-shadow:none}
+
+/* Split layout */
+.split{display:grid;gap:12px}
+@media(min-width:1440px){.split{grid-template-columns:2fr 1.1fr}}
+
+.list{margin:0;padding-left:18px;color:var(--muted);font-size:14px;line-height:1.8}
+
+/* Upcoming panel */
+#upcomingPanel{margin-bottom:16px}
+
+/* Mileage tracker */
+.mileage-grid{display:grid;grid-template-columns:1.1fr .9fr .9fr;gap:10px;align-items:end}
+.mileage-grid .field{display:flex;flex-direction:column;gap:6px}
+.mileage-grid label{font-size:12px;color:var(--muted);font-weight:600}
+.mileage-grid input{
+  padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;
+  background:var(--panel-soft);color:var(--text);font-size:13px;font-family:inherit;outline:none;
+  transition:border-color .14s;
+}
+.mileage-grid input:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim)}
+.mileage-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.trip-active{
+  margin-top:10px;padding:12px 14px;
+  border:1px solid var(--teal-bd);border-radius:12px;
+  background:var(--teal-dim);
+}
+.trip-active .row2{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-top:6px}
+.trip-table{width:100%;border-collapse:collapse}
+.trip-table th,.trip-table td{padding:10px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
+.trip-table th{color:var(--muted-2);font-weight:700;position:sticky;top:0;background:var(--panel);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.trip-table td{color:var(--text)}
+.trip-table .muted{color:var(--muted)}
+@media(max-width:900px){.mileage-grid{grid-template-columns:1fr}}
+
+/* Vehicle Hub Drawer */
+.modal{position:fixed;inset:0;display:none;z-index:3000}
+.modal.show{display:block}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(2px)}
+.modal-panel{
+  position:absolute;right:0;top:0;height:100%;width:min(860px,100%);
+  background:var(--panel);
+  border-left:1px solid var(--line);
+  box-shadow:-18px 0 40px rgba(0,0,0,.12);
+  display:flex;flex-direction:column;
+}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.modal-title{font-weight:800;font-size:18px;color:var(--text)}
+.modal-sub{color:var(--muted);font-size:13px;margin-top:3px}
+.modal-tabs{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);overflow:auto}
+.modal-tabs .tab{
+  white-space:nowrap;border:1px solid var(--line-2);background:var(--panel-soft);
+  color:var(--muted);padding:8px 12px;border-radius:12px;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit;
+  transition:all .14s;
+}
+.modal-tabs .tab.active{border-color:var(--teal-bd);background:var(--teal-dim);color:var(--teal-deep)}
+.modal-body{padding:16px 18px 20px;overflow:auto;flex:1}
+.vh-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:780px){.vh-grid2{grid-template-columns:1fr}}
+.vh-card{background:var(--panel-soft);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.vh-card h4{margin:0 0 10px;font-size:14px;font-weight:700;color:var(--text)}
+.vh-kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px;color:var(--muted)}
+.vh-kv b{color:var(--text);font-weight:700}
+.vh-headrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.vh-list{font-size:14px;color:var(--text)}
+.vh-item{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.vh-item:first-child{border-top:none;padding-top:0}
+.vh-item .left{min-width:0}
+.vh-item .left .title{font-weight:700;color:var(--text)}
+.vh-item .left .sub{color:var(--muted);font-size:13px;margin-top:2px}
+.vh-item .right{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end}
+.vh-panel{display:block}
+.vh-panel[hidden]{display:none}
+.vh-pill{padding:4px 8px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-soft);color:var(--muted);font-size:12px}
+.vh-pill.warn{border-color:var(--warn-bd);background:var(--warn-bg);color:var(--warn-txt)}
+.vh-pill.good{border-color:var(--ok-bd);background:var(--ok-bg);color:var(--ok-txt)}
+.vh-footlink{display:flex;justify-content:flex-end;margin-top:10px}
+.vh-footlink a{color:var(--teal-dark);font-weight:700;font-size:13px}
+.vh-footlink a:hover{opacity:.75}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* Context hint */
+#contextHint{font-size:12px;color:var(--muted);margin-top:6px}
+
+/* FOOTER */
+.site-footer{margin-top:40px;padding:26px 0 34px;border-top:1px solid var(--line);background:var(--panel)}
+.site-footer-inner{max-width:var(--max);margin:0 auto;padding:0 24px}
+.footer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+@media(max-width:860px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.footer-col h4{margin:0 0 10px;color:var(--text);font-size:13px;font-weight:700}
+.footer-col a{display:block;color:var(--muted);text-decoration:none;margin:5px 0;font-size:13px;transition:color .13s}
+.footer-col a:hover{color:var(--teal-dark)}
+.footer-bottom{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted-2)}
+.social{display:flex;gap:8px}
+.social a{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-soft);color:var(--muted);transition:border-color .13s,color .13s}
+.social a:hover{border-color:var(--teal-bd);color:var(--teal-dark)}
+
+/* MOBILE NAV */
+.mobile-nav{position:fixed;left:0;right:0;bottom:0;display:none;z-index:1200;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.08);backdrop-filter:blur(12px)}
+.mobile-nav-inner{max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.mnav{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--muted-2);font-weight:600;font-size:10px;text-decoration:none;transition:all .14s}
+.mnav .ico{font-size:17px;line-height:1}
+.mnav>div:last-child{display:none}
+.mnav.active{color:var(--teal-deep);border-color:var(--teal-bd);background:var(--teal-dim)}
+.mobile-pad{display:none;height:70px}
+
+/* RESPONSIVE */
+@media(max-width:860px){
+  .mobile-nav{display:block}.mobile-pad{display:block}
+  .page{padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+}
+@media(max-width:820px){.nav{display:none}.mobile-only{display:block}.brand-name{font-size:17px}}
+@media(max-width:640px){
+  .page{padding:20px 16px 40px}.topbar-inner{padding:0 16px}.search{display:none}
+  .page-header{flex-direction:column;gap:14px}
+}
+@media(max-width:480px){.site-footer{display:none!important}}
+@media(max-width:720px){.footer-grid{display:none!important}}
+</style>
+
+<script>
+// Global user handle used by older pages
+window.currentUser = window.currentUser || null;
+var currentUser = window.currentUser; // eslint-disable-line no-var
+
+// Create a shared DB client from /shared/config.json (no hardcoded keys)
+window.getGSClient = window.getGSClient || (async function(){
+  if (window.__GS_DB_CLIENT) return window.__GS_DB_CLIENT;
+  if (!(window.supabase && typeof window.supabase.createClient === "function")) return null;
+  try{
+    const res = await fetch(window.GS_CONFIG_URL || "/shared/config.json", { cache:"no-store" });
+    const cfg = await res.json();
+    const url = cfg.supabaseUrl || cfg.SUPABASE_URL || cfg.url;
+    const key = cfg.supabaseAnonKey || cfg.SUPABASE_ANON_KEY || cfg.anonKey;
+    window.SUPABASE_URL = url;
+    window.SUPABASE_ANON_KEY = key;
+    if(!url || !key) throw new Error("Missing supabaseUrl/supabaseAnonKey in config.json");
+    window.__GS_DB_CLIENT = window.supabase.createClient(url, key);
+    return window.__GS_DB_CLIENT;
+  }catch(e){
+    console.warn("GS client init failed:", e);
+    return null;
+  }
+});
+
+// Keep currentUser in sync (best-effort)
+(async function syncUser(){
+  const db = await window.getGSClient();
+  if(!db) return;
+  try{
+    const { data } = await db.auth.getUser();
+    window.currentUser = data?.user || null;
+    currentUser = window.currentUser;
+    db.auth.onAuthStateChange((_evt, session)=>{
+      window.currentUser = session?.user || null;
+      currentUser = window.currentUser;
+    });
+  }catch(e){
+    console.warn("User sync failed:", e);
+  }
+})();
+</script>
+
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/index.html">
+      <div class="brand-mark"></div>
+      <div class="brand-name">GenieSphere</div>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-link" href="/dashboard/overview.html">🧭 Overview</a>
+      <a class="nav-link active" href="/dashboard/household.html">🏡 Household</a>
+      <a class="nav-link" href="/dashboard/business.html">🏢 Business</a>
+      <a class="nav-link" href="/dashboard/investment.html">📈 Investment</a>
+      <a class="nav-link" href="/dashboard/leisure.html">🌴 Leisure</a>
+      <a class="nav-link" href="/dashboard/finance.html">💼 Finance</a>
+    </nav>
+    <div class="userbox">
+      <input class="search" type="search" placeholder="Search vehicles, plates, service…" aria-label="Search GenieSphere"/>
+      <div class="user-menu" id="user-menu">
+        <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle" type="button">
+          <span class="avatar" aria-hidden="true">👤</span>
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="user-menu-dropdown" id="user-menu-dropdown" aria-hidden="true">
+
+          <!-- Identity row — visible only when logged in -->
+          <div class="auth-only" id="dropdown-identity" style="display:none;padding:10px 14px 8px;border-bottom:1px solid var(--line);margin-bottom:4px">
+            <div style="font-size:13px;font-weight:700;color:var(--text)" id="dropdown-fullname">—</div>
+            <div style="font-size:11px;color:var(--muted-2)" id="dropdown-email">—</div>
+          </div>
+
+          <button class="dropdown-nav" data-target="/onboarding/user_profile_form.html" type="button">👤 My profile</button>
+          <button class="dropdown-nav" data-target="/onboarding/display_settings.html" type="button">⚙️ Settings</button>
+
+          <!-- Areas — mobile only -->
+          <div class="mobile-only">
+            <div class="user-menu-divider"></div>
+            <div class="dropdown-label">Areas</div>
+            <button class="dropdown-nav" data-target="/dashboard/overview.html" type="button">🧭 Overview</button>
+            <button class="dropdown-nav" data-target="/dashboard/household.html" type="button">🏡 Household</button>
+            <button class="dropdown-nav" data-target="/dashboard/business.html" type="button">🏢 Business</button>
+            <button class="dropdown-nav" data-target="/dashboard/investment.html" type="button">📈 Investment</button>
+            <button class="dropdown-nav" data-target="/dashboard/leisure.html" type="button">🌴 Leisure</button>
+            <button class="dropdown-nav" data-target="/dashboard/finance.html" type="button">💼 Finance</button>
+          </div>
+
+          <div class="user-menu-divider"></div>
+          <button class="dropdown-nav" id="user-auth-action" type="button">🔐 Log in / Sign up</button>
+          <button class="dropdown-nav auth-only" id="user-signout-btn" type="button" style="display:none">🚪 Log out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="page-eyebrow">🚗 Car Care</div>
+      <h1 class="page-title">Your vehicles, always road-ready.</h1>
+      <p class="page-subtitle">Maintenance, insurance, tolls, and service logs — organized for personal and business vehicles in one place.</p>
+    </div>
+    <div class="page-header-right">
+      <a class="btn btn-outline btn-sm" href="/dashboard/household.html">🏡 Household</a>
+      <a class="btn btn-green btn-sm" href="#addVehicleForm">➕ Add Vehicle</a>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <section class="stats" aria-label="Quick stats">
+    <div class="stat">
+      <div class="k">Total vehicles</div>
+      <div class="v" id="stat-total">—</div>
+      <div class="s">Active + sold</div>
+    </div>
+    <div class="stat">
+      <div class="k">Active vehicles</div>
+      <div class="v" id="stat-active">—</div>
+      <div class="s">Currently in service</div>
+    </div>
+    <div class="stat">
+      <div class="k">Reminders open</div>
+      <div class="v" id="stat-reminders">—</div>
+      <div class="s">Maintenance &amp; renewals</div>
+    </div>
+    <div class="stat">
+      <div class="k">Due soon</div>
+      <div class="v" id="stat-soon">—</div>
+      <div class="s">Next 14 days</div>
+    </div>
+  </section>
+
+  <!-- Upcoming Reminders -->
+  <section class="panel" id="upcomingPanel">
+    <h2>🔔 Upcoming</h2>
+    <ul id="reminderList" class="list"><li class="empty">No reminders yet.</li></ul>
+    <div class="row" style="margin-top:12px">
+      <a id="btn-export" class="btn ghost btn-sm" href="#">⬇️ Export CSV</a>
+      <a id="btn-calendar" class="btn ghost btn-sm" href="#">📅 Add to Calendar</a>
+    </div>
+  </section>
+
+  <!-- Filters -->
+  <section class="panel">
+    <div class="filters">
+      <div class="pills" aria-label="Usage filter">
+        <button class="pill active" data-usage="all">All</button>
+        <button class="pill" data-usage="personal">Personal</button>
+        <button class="pill" data-usage="business">Business</button>
+        <button class="pill" data-usage="mixed">Mixed</button>
+        <button class="pill" data-usage="sold">Sold</button>
+      </div>
+      <div style="flex:1"></div>
+      <label class="sr-only" for="entitySel">Entity</label>
+      <select id="entitySel" title="Business Entity (for business view)">
+        <option value="">All Entities</option>
+      </select>
+      <input id="search" type="search" placeholder="Search by name, plate, VIN…"/>
+    </div>
+    <div id="contextHint" class="empty"></div>
+  </section>
+
+  <!-- Vehicles -->
+  <section class="panel">
+    <h2>🚙 Your Vehicles</h2>
+
+    <div id="addVehicleForm" class="vehicle-form">
+      <div class="vehicle-form-header">
+        <strong id="vehicleFormTitle">Add vehicle</strong>
+        <button type="button" class="btn ghost small" id="cancelEditBtn" style="display:none;">Cancel edit</button>
+      </div>
+      <div class="row">
+        <input id="v-name"  type="text" placeholder="Name (e.g. 2018 Escalade)" />
+        <input id="v-plate" type="text" placeholder="Plate (optional)" />
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <select id="v-owner-type">
+          <option value="personal">Personal owner</option>
+          <option value="entity">Business entity</option>
+        </select>
+        <input id="v-entity" type="text" placeholder="Entity name (if business)" />
+        <select id="v-finance" title="Financing status">
+          <option value="paid_off" selected>Paid off</option>
+          <option value="financed">Financed (loan)</option>
+          <option value="lease">Lease</option>
+        </select>
+        <select id="v-usage">
+          <option value="personal">Personal</option>
+          <option value="business">Business</option>
+          <option value="mixed">Mixed</option>
+        </select>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <input id="v-odo" type="number" min="0" placeholder="Odometer (mi)" />
+        <input id="v-reg" type="date"  placeholder="Registration due" />
+        <input id="v-ins" type="date"  placeholder="Insurance due" />
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn green small" id="btn-save-vehicle">💾 Save Vehicle</button>
+      </div>
+    </div>
+
+    <div id="vehicleGrid" class="grid"></div>
+    <div id="noVehicles" class="empty" style="display:none;margin-top:8px">
+      No vehicles match this view.
+    </div>
+  </section>
+
+  <!-- Mileage Tracker -->
+  <section class="panel" id="mileagePanel">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <h2 style="margin:0">📍 Mileage Tracker</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="pill pill--badge">Option A: Start / End</span>
+        <a href="#" id="btnExportTrips" class="btn ghost small">⬇️ Export Trips CSV</a>
+      </div>
+    </div>
+
+    <div class="mileage-grid">
+      <div class="field">
+        <label for="mileageVehicle">Vehicle</label>
+        <select id="mileageVehicle"></select>
+      </div>
+      <div class="field">
+        <label for="startOdo">Start Odometer</label>
+        <input id="startOdo" type="number" inputmode="numeric" placeholder="e.g. 52340" />
+      </div>
+      <div class="field">
+        <label for="endOdo">End Odometer</label>
+        <input id="endOdo" type="number" inputmode="numeric" placeholder="e.g. 52378" />
+      </div>
+    </div>
+
+    <div class="mileage-actions">
+      <button class="btn green small" id="btnStartDrive">▶️ Start Drive</button>
+      <button class="btn ghost small" id="btnEndDrive">⏹ End Drive</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="pill pill--badge">Purpose</span>
+        <button class="pill pill--action" id="tripPurposePersonal" aria-pressed="true">Personal</button>
+        <button class="pill pill--action" id="tripPurposeBusiness" aria-pressed="false">Business</button>
+      </div>
+    </div>
+
+    <div id="activeTripBox" class="trip-active" style="display:none">
+      <div><strong>Active trip</strong> <span class="muted" id="activeTripMode" style="color:var(--muted);font-size:13px"></span></div>
+      <div class="row2">
+        <div>Started: <span id="activeTripStartAt" style="color:var(--muted)"></span></div>
+        <div>Start Odo: <span id="activeTripStartOdo" style="color:var(--muted)"></span></div>
+        <div>Purpose: <span id="activeTripPurpose" style="color:var(--muted)"></span></div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <div style="font-size:12px;color:var(--muted-2);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Recent trips</div>
+      <div style="max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:12px">
+        <table class="trip-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Vehicle</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Miles</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody id="tripsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Home &amp; Family</h4>
+        <a href="/dashboard/household.html">Household Hub</a>
+        <a href="/household/family-scheduler.html">Family Scheduler</a>
+        <a href="/household/chore-manager.html">Chore Manager</a>
+      </div>
+      <div class="footer-col">
+        <h4>Health &amp; Money</h4>
+        <a href="/household/nutritiongenie/nutrition-engine-hub.html">Nutrition Engine</a>
+        <a href="/household/appointment-center.html">Appointments</a>
+        <a href="/dashboard/finance.html">Finance</a>
+      </div>
+      <div class="footer-col">
+        <h4>Vehicles</h4>
+        <a href="/household/cargenie/car-care.html">Car Care Tracker</a>
+        <a href="/dashboard/leisure.html">Trip Planner</a>
+        <a href="/dashboard/investment.html">Investment</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="/onboarding/user_profile_form.html">My Profile</a>
+        <a href="/onboarding/display_settings.html">Settings</a>
+        <a href="/about.html">About</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+      <div class="social" aria-label="Social">
+        <a href="#" aria-label="Twitter / X">🐦</a>
+        <a href="#" aria-label="YouTube">▶️</a>
+        <a href="#" aria-label="GitHub">🐙</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="mobile-pad" aria-hidden="true"></div>
+
+<!-- MOBILE BOTTOM NAV — 6 tabs matching household.html -->
+<nav class="mobile-nav" aria-label="GenieSphere mobile navigation">
+  <div class="mobile-nav-inner">
+    <a class="mnav" href="/dashboard/overview.html" data-nav="overview"><div class="ico">🧭</div><div>Overview</div></a>
+    <a class="mnav active" href="/dashboard/household.html" data-nav="household"><div class="ico">🏡</div><div>Home</div></a>
+    <a class="mnav" href="/dashboard/business.html" data-nav="business"><div class="ico">🏢</div><div>Business</div></a>
+    <a class="mnav" href="/dashboard/investment.html" data-nav="investment"><div class="ico">📈</div><div>Invest</div></a>
+    <a class="mnav" href="/dashboard/leisure.html" data-nav="leisure"><div class="ico">🏝️</div><div>Leisure</div></a>
+    <a class="mnav" href="/dashboard/finance.html" data-nav="finance"><div class="ico">💼</div><div>Finance</div></a>
+  </div>
+</nav>
+
+<!-- Footer year -->
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+
+<!-- GenieSphere Config + Auth (template standard) -->
+<script>
+  window.GS_CONFIG_URL = "/shared/config.json";
+  window.GS_CONFIG_PATH = "/shared/config.json";
+</script>
+<script src="/shared/js/app-config.js?v=20260208a"></script>
+
+<!-- Supabase SDK (used by this page data layer) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Create a single Supabase client for this page (keys come from /shared/config.json when available).
+  (function(){
+    const url = window.SUPABASE_URL;
+    const key = window.SUPABASE_ANON_KEY;
+    if (window.supabase && url && key && !window.ccClient){
+      try { window.ccClient = window.supabase.createClient(url, key); }
+      catch (e) { console.warn("Supabase client init failed:", e); }
+    }
+  })();
+</script>
+
+<!-- Header auth + badges -->
+<script src="/shared/js/auth-header.js?v=20260208a"></script>
+<script src="/shared/js/hub-badges.js"></script>
+
+<script>
+  // Global user handle (kept in sync by auth bootstrap)
+  window.currentUser = window.currentUser || null;
+  var currentUser = window.currentUser;
+
+  // Provide a simple global currentUser for pages that rely on it
+  (async function(){
+    try{
+      if (!window.ccClient || !window.ccClient.auth) return;
+      const { data } = await window.ccClient.auth.getUser();
+      window.currentUser = data?.user || null;
+      currentUser = window.currentUser;
+      window.ccClient.auth.onAuthStateChange((_evt, session)=>{
+        window.currentUser = session?.user || null;
+        currentUser = window.currentUser;
+      });
+    }catch(e){
+      console.warn("Auth bootstrap failed:", e);
+    }
+  })();
+</script>
+
+<!-- Car Care JS -->
+<script>
+  const client = window.ccClient;
+
+  const USE_SUPABASE = true;
+  const SUPABASE_URL = window.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+
+  const N8N_ODOMETER_HOOK = "";
+  const N8N_SERVICE_INBOX_MAILTO = "mailto:carlogs@yourdomain.com?subject=New%20Service%20Receipt";
+
+  const $ = s => document.querySelector(s);
+  const qs = new URLSearchParams(location.search);
+  const todayISO = () => new Date().toISOString().slice(0,10);
+  const fmtDate = s => s ? new Date(s).toLocaleDateString() : "—";
+  const isUUID = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
+
+  // Loose UUID check (accepts any v1–v5 UUID; used by mileage + loans routing)
+  function isUuidLoose(s){
+    return typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s.trim());
+  }
+
+  const LS = {
+    VEHICLES: "gs_carcare_vehicles",
+    SERVICES: "gs_carcare_services",
+    RULES: "gs_carcare_rules",
+    REMINDERS: "gs_carcare_reminders",
+    TOLLS: "gs_carcare_tolls"
+  };
+
+  function readLS(key, fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback; }catch{ return fallback; } }
+  function writeLS(key,val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+  // Seed demo data on first run
+  (function seedLocal(){
+    if(readLS(LS.VEHICLES,null)) {
+      if (!readLS(LS.TOLLS,null)) writeLS(LS.TOLLS,[]);
+      return;
+    }
+    const vehicles = [
+      { id:"v1", name:"2018 Cadillac Escalade", make:"Cadillac", model:"Escalade", year:2018, plate:"EXO-465", vin:"...", owner_type:"entity", owner_entity:"Exodon Profits", usage_type:"business", business_pct:100, current_odometer:78000, insurance_expiry:"2026-01-10", status:"active" },
+      { id:"v2", name:"2016 Ferrari California T", make:"Ferrari", model:"California T", year:2016, plate:"JIM-CA", vin:"...", owner_type:"personal", owner_entity:null, usage_type:"personal", business_pct:0, current_odometer:23000, inspection_expiry:"2025-12-15", status:"active" },
+      { id:"v3", name:"2018 Tesla Model Y", make:"Tesla", model:"Model Y", year:2018, plate:"VIC-SALON", owner_type:"entity", owner_entity:"Victoria Nails", usage_type:"business", business_pct:100, current_odometer:54000, registration_expiry:"2026-04-01", status:"active" },
+      { id:"v4", name:"2022 VW Taos", make:"Volkswagen", model:"Taos", year:2022, plate:"SAL-TAOS", owner_type:"entity", owner_entity:"Victoria Nails", usage_type:"mixed", business_pct:70, current_odometer:36000, status:"active" }
+    ];
+    const rules = [
+      { vehicle_id:"v1", service_type:"oil_change", interval_months:6, interval_miles:5000, lead_days:10 },
+      { vehicle_id:"v1", service_type:"tire_rotation", interval_months:6, interval_miles:6000, lead_days:10 },
+      { vehicle_id:"v2", service_type:"oil_change", interval_months:12, interval_miles:7000, lead_days:10 },
+      { vehicle_id:"v3", service_type:"tire_rotation", interval_months:6, interval_miles:6000, lead_days:10 },
+      { vehicle_id:"v4", service_type:"oil_change", interval_months:12, interval_miles:7000, lead_days:10 },
+    ];
+    const services = [
+      { id:"s1", vehicle_id:"v1", service_type:"oil_change", service_date:"2025-05-10", odometer:74000, vendor:"Jiffy Lube", amount:89.00 },
+      { id:"s2", vehicle_id:"v3", service_type:"tire_rotation", service_date:"2025-06-20", odometer:50000, vendor:"Discount Tire", amount:35.00 },
+      { id:"s3", vehicle_id:"v2", service_type:"oil_change", service_date:"2025-03-01", odometer:21000, vendor:"Ferrari SF", amount:350.00 }
+    ];
+    writeLS(LS.VEHICLES, vehicles); writeLS(LS.RULES, rules); writeLS(LS.SERVICES, services);
+    const rems = [];
+    for (const r of rules){
+      const last = services.filter(s=>s.vehicle_id===r.vehicle_id && s.service_type===r.service_type)
+                          .sort((a,b)=>new Date(b.service_date)-new Date(a.service_date))[0];
+      const v = vehicles.find(x=>x.id===r.vehicle_id);
+      const d = last ? new Date(last.service_date) : new Date();
+      if(r.interval_months){ d.setMonth(d.getMonth()+r.interval_months); }
+      const due_date = r.interval_months ? d.toISOString().slice(0,10) : null;
+      const due_miles = r.interval_miles ? ((last?.odometer ?? v.current_odometer) + r.interval_miles) : null;
+      rems.push({ id:`rm-${r.vehicle_id}-${r.service_type}`, vehicle_id:r.vehicle_id, service_type:r.service_type, due_date, due_miles, status:"open" });
+    }
+    writeLS(LS.REMINDERS, rems);
+    writeLS(LS.TOLLS, []);
+  })();
+
+  const api = {
+    async listVehicles(){
+      if (!USE_SUPABASE || !currentUser?.id) {
+        return readLS(LS.VEHICLES, []);
+      }
+
+      const { data, error } = await client
+        .from('vehicles')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('name');
+
+      if (error) {
+        console.error('Supabase vehicles error → fallback to localStorage', error);
+        return readLS(LS.VEHICLES, []);
+      }
+
+      return data || [];
+    },
+    async listReminders(){
+      if (!USE_SUPABASE || !currentUser?.id) return readLS(LS.REMINDERS,[]);
+      const { data, error } = await client
+        .from('service_reminders')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('status','open');
+
+      if (error) {
+        console.error('Supabase reminders error → fallback to localStorage', error);
+        return readLS(LS.REMINDERS,[]);
+      }
+      return data||[];
+    },
+    async addOdometer(vehicle_id, miles){
+      if(!USE_SUPABASE || !currentUser?.id){
+        const v = readLS(LS.VEHICLES,[]); const i = v.findIndex(x=>x.id===vehicle_id);
+        if(i>=0){ v[i].current_odometer = Number(miles); writeLS(LS.VEHICLES,v); }
+        return;
+      }
+      await client
+        .from('vehicles')
+        .update({ current_odometer:Number(miles) })
+        .eq('id',vehicle_id)
+        .eq('user_id', currentUser.id);
+    },
+    async saveVehicle(vehicle, isUpdate){
+      if(!USE_SUPABASE || !currentUser?.id) return null;
+
+      const payload = {
+        user_id: currentUser.id,
+        name: vehicle.name ?? null,
+        plate: vehicle.plate ?? null,
+        owner_type: vehicle.owner_type ?? 'personal',
+        owner_entity: vehicle.owner_entity ?? null,
+        usage_type: vehicle.usage_type ?? 'personal',
+        current_odometer: vehicle.current_odometer ?? null,
+        registration_expiry: vehicle.registration_expiry ?? null,
+        insurance_expiry: vehicle.insurance_expiry ?? null,
+        status: vehicle.status ?? 'active',
+        sold_date: vehicle.sold_date ?? null
+      };
+
+      if(isUpdate && vehicle.id){
+        const { data, error } = await client
+          .from('vehicles')
+          .update(payload)
+          .eq('id', vehicle.id)
+          .eq('user_id', currentUser.id)
+          .select('*')
+          .single();
+        if(error){
+          console.error('Supabase update vehicle failed → localStorage only', error);
+          return null;
+        }
+        return data;
+      } else {
+        delete payload.id;
+        const { data, error } = await client
+          .from('vehicles')
+          .insert(payload)
+          .select('*')
+          .single();
+        if(error){
+          console.error('Supabase insert vehicle failed → localStorage only', error);
+          return null;
+        }
+        return data;
+      }
+    },
+    async setVehicleStatus(vehicle_id, status, sold_date){
+      if(!USE_SUPABASE || !currentUser?.id) return;
+      const { error } = await client
+        .from('vehicles')
+        .update({ status, sold_date })
+        .eq('id', vehicle_id)
+        .eq('user_id', currentUser.id);
+      if(error){
+        console.error('Supabase update status failed', error);
+      }
+    },
+
+  };
+
+
+  let VEHICLES = [], REMINDERS = [], TOLLS = [];
+
+  function updateStats(){
+    const total = (VEHICLES||[]).length;
+    const active = (VEHICLES||[]).filter(v => (v.status||'active') !== 'sold').length;
+    const openRem = (REMINDERS||[]).filter(r => (r.status||'open') !== 'done' && (r.status||'open') !== 'closed');
+    const remindersOpen = openRem.length;
+
+    const now = new Date();
+    const soonCutoff = new Date(now);
+    soonCutoff.setDate(now.getDate()+14);
+    const dueSoon = openRem.filter(r => {
+      if(!r.due_date) return false;
+      const d = new Date(r.due_date);
+      return d >= new Date(now.toDateString()) && d <= soonCutoff;
+    }).length;
+
+    const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent = String(val); };
+    set('stat-total', total);
+    set('stat-active', active);
+    set('stat-reminders', remindersOpen);
+    set('stat-soon', dueSoon);
+  }
+
+  const VIEW = (qs.get('view')||'personal').toLowerCase();
+  const VIEW_ENTITY = qs.get('entity') || '';
+
+  function usageBadge(v){
+    const arr = [];
+    if(v.usage_type==='personal') arr.push(`<span class="badge b-personal">Personal</span>`);
+    if(v.usage_type==='business') arr.push(`<span class="badge b-business">Business</span>`);
+    if(v.usage_type==='mixed')    arr.push(`<span class="badge b-mixed">Mixed</span>`);
+    if(v.owner_type==='entity' && v.owner_entity) arr.push(`<span class="badge b-entity">${v.owner_entity}</span>`);
+    return arr.join(' ');
+  }
+
+  const state = { usage:(VIEW==='business'?'business':'all'), entity:VIEW_ENTITY||'', search:'' };
+  let editingVehicleId = null;
+
+  function renderFilters(){
+    document.querySelectorAll('.pill').forEach(p=>{
+      p.classList.toggle('active', p.dataset.usage === (state.usage||'all'));
+    });
+    const ents = [...new Set(VEHICLES.filter(v=>v.owner_type==='entity' && v.owner_entity).map(v=>v.owner_entity))].sort();
+    const sel = $('#entitySel'); sel.innerHTML = `<option value="">All Entities</option>` + ents.map(e=>`<option ${e===state.entity?'selected':''}>${e}</option>`).join('');
+    sel.style.display = ((state.usage==='business' || VIEW==='business') && state.usage!=='sold') ? '' : 'none';
+    const hint = [];
+    if (VIEW==='business') hint.push(`Business view${VIEW_ENTITY?` for ${VIEW_ENTITY}`:''}`);
+    else hint.push('Personal view');
+    if (state.usage && state.usage!=='all') hint.push(`• filter: ${state.usage}`);
+    if (state.entity) hint.push(`• entity: ${state.entity}`);
+    $('#contextHint').textContent = hint.join(' ');
+  }
+
+  function renderVehicles(){
+    const grid = $('#vehicleGrid'); 
+    grid.innerHTML='';
+    updateStats();
+
+    let list = (VEHICLES||[]).slice();
+
+    if(VIEW==='business'){
+      list = list.filter(v => v.owner_type==='entity' && (!VIEW_ENTITY || v.owner_entity===VIEW_ENTITY));
+    }
+
+    const u = (state.usage || 'all');
+    if(u === 'sold'){
+      list = list.filter(v => (v.status||'active') === 'sold');
+    } else {
+      list = list.filter(v => (v.status||'active') !== 'sold');
+    }
+
+    if(u && u !== 'all' && u !== 'sold'){
+      list = list.filter(v => v.usage_type === u);
+    }
+
+    if(state.entity){
+      list = list.filter(v => v.owner_entity===state.entity);
+    }
+
+    const q = (state.search||'').trim().toLowerCase();
+    if(q){
+      list = list.filter(v =>
+        (v.name||'').toLowerCase().includes(q) ||
+        (v.plate||'').toLowerCase().includes(q) ||
+        (v.vin||'').toLowerCase().includes(q)
+      );
+    }
+
+    for(const v of list){
+      if (!v.status) v.status = 'active';
+      const relRem = REMINDERS.filter(r => r.vehicle_id===v.id && r.status!=='done');
+      const soon = relRem.filter(r => r.due_date && new Date(r.due_date) <= addDays(new Date(), 14));
+      const tollCount = TOLLS.filter(t=>t.vehicle_id===v.id).length;
+
+      const card = document.createElement('div');
+      card.className = 'card' + (v.status === 'sold' ? ' sold' : '');
+      card.innerHTML = `
+        <div>
+          <h3>${v.name}</h3>
+          <div class="meta">${usageBadge(v)}</div>
+        </div>
+        <div class="meta">
+          <span class="badge">Odo: ${v.current_odometer?.toLocaleString() ?? '—'} mi</span>
+          ${v.registration_expiry ? `<span class="badge">Reg: ${fmtDate(v.registration_expiry)}</span>`:''}
+          ${v.inspection_expiry ? `<span class="badge">Inspect: ${fmtDate(v.inspection_expiry)}</span>`:''}
+          ${v.insurance_expiry ? `<span class="badge">Ins: ${fmtDate(v.insurance_expiry)}</span>`:''}
+        </div>
+        <div class="meta">
+          <span class="badge">Finance: ${v.finance_status ? (v.finance_status.replace(/_/g,' ')) : '—'}</span>
+          <span class="badge b-status">${v.status === 'sold' ? 'Status: Sold / inactive' : 'Status: Active'}</span>
+          ${v.sold_date ? `<span class="badge">Sold: ${fmtDate(v.sold_date)}</span>`:''}
+          <span class="badge b-tolls">Tolls: ${tollCount}</span>
+        </div>
+        <div class="row">
+          <button class="btn green small" data-act="odo" data-id="${v.id}">➕ Log Odometer</button>
+          <button class="btn ghost small" data-act="service" data-id="${v.id}">📎 Add Service</button>
+          <button class="btn blue small" data-act="history" data-id="${v.id}">📜 Service History</button>
+          <button class="btn primary small" data-act="hub" data-id="${v.id}">🚗 Open Hub</button>
+        </div>
+        <div class="row">
+          <button class="btn ghost small" data-act="edit" data-id="${v.id}">✏️ Edit</button>
+          <button class="btn ghost small" data-act="toll" data-id="${v.id}">🧾 Log Toll</button>
+          <button class="btn ghost small" data-act="toggle-status" data-id="${v.id}">
+            ${v.status === 'sold' ? '🚗 Mark Active' : '🚙 Mark Sold'}
+          </button>
+        </div>
+        <div class="meta">
+          ${relRem.length ? `<span class="badge b-entity">Reminders: ${relRem.length}${soon.length?` (soon: ${soon.length})`:''}</span>` : `<span class="badge">No reminders</span>`}
+        </div>
+      `;
+      grid.appendChild(card);
+    }
+    $('#noVehicles').style.display = grid.children.length ? 'none' : '';
+  }
+
+  
+function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+
+  function renderReminders(){
+    const ul = $('#reminderList'); ul.innerHTML='';
+    let arr = REMINDERS.filter(r => r.status==='open');
+    if(VIEW==='business'){
+      arr = arr.filter(r => {
+        const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+        return v && v.owner_type==='entity' && (!VIEW_ENTITY || v.owner_entity===VIEW_ENTITY);
+      });
+    } else {
+      arr = arr.filter(r => {
+        const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+        return !!v;
+      });
+    }
+    arr.sort((a,b)=>{
+      const ad = a.due_date? new Date(a.due_date).getTime(): Infinity;
+      const bd = b.due_date? new Date(b.due_date).getTime(): Infinity;
+      if(ad!==bd) return ad-bd;
+      return (a.due_miles??Infinity) - (b.due_miles??Infinity);
+    });
+    if(!arr.length){ ul.innerHTML = `<li class="empty">No reminders yet.</li>`; return; }
+    for(const r of arr){
+      const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+      const li = document.createElement('li');
+      const tag = r.service_type.replace(/_/g,' ');
+      const due = r.due_date ? `by ${fmtDate(r.due_date)}` : (r.due_miles ? `~ ${r.due_miles.toLocaleString()} mi` : '');
+      li.innerHTML = `${v?.name || 'Vehicle'} — <strong>${tag}</strong> ${due}`;
+      ul.appendChild(li);
+    }
+  }
+
+  // ----- Add / edit vehicle -----
+  function resetVehicleForm(){
+    editingVehicleId = null;
+    $('#vehicleFormTitle').textContent = 'Add vehicle';
+    $('#v-name').value = '';
+    $('#v-plate').value = '';
+    $('#v-owner-type').value = 'personal';
+    $('#v-entity').value = '';
+    $('#v-usage').value = 'personal';
+    if (document.getElementById('v-finance')) document.getElementById('v-finance').value = 'paid_off';
+    $('#v-odo').value = '';
+    $('#v-reg').value = '';
+    $('#v-ins').value = '';
+    $('#cancelEditBtn').style.display = 'none';
+  }
+
+  function populateVehicleForm(v){
+    editingVehicleId = v.id;
+    $('#vehicleFormTitle').textContent = 'Edit vehicle';
+    $('#v-name').value = v.name || '';
+    $('#v-plate').value = v.plate || '';
+    $('#v-owner-type').value = v.owner_type || 'personal';
+    $('#v-entity').value = v.owner_entity || '';
+    $('#v-usage').value = v.usage_type || 'personal';
+    $('#v-odo').value = v.current_odometer ?? '';
+    $('#v-reg').value = v.registration_expiry || '';
+    $('#v-ins').value = v.insurance_expiry || '';
+    $('#cancelEditBtn').style.display = 'inline-flex';
+    document.getElementById('addVehicleForm').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  async function addOrUpdateVehicleFromForm(){
+    const name   = document.getElementById('v-name').value.trim();
+    const plate  = document.getElementById('v-plate').value.trim();
+    const ownerType = document.getElementById('v-owner-type').value;
+    const entity = document.getElementById('v-entity').value.trim() || null;
+    const usage  = document.getElementById('v-usage').value;
+    const finance = document.getElementById('v-finance') ? document.getElementById('v-finance').value : 'paid_off';
+    const odo    = document.getElementById('v-odo').value;
+    const reg    = document.getElementById('v-reg').value || null;
+    const ins    = document.getElementById('v-ins').value || null;
+
+    if (!name){
+      alert('Please enter at least a vehicle name.');
+      return;
+    }
+
+    if (editingVehicleId){
+      const idx = VEHICLES.findIndex(v=>v.id===editingVehicleId);
+      if (idx >= 0){
+        const v = VEHICLES[idx];
+        v.name = name;
+        v.plate = plate || null;
+        v.owner_type = ownerType;
+        v.owner_entity = ownerType === 'entity' ? entity : null;
+        v.usage_type = usage;
+        v.finance_status = finance || 'paid_off';
+        v.current_odometer = odo ? Number(odo) : null;
+        v.registration_expiry = reg;
+        v.insurance_expiry = ins;
+        if (!v.status) v.status = 'active';
+      }
+    } else {
+      const id = 'v' + Date.now();
+      const newVehicle = {
+        id,
+        name,
+        plate: plate || null,
+        owner_type: ownerType,
+        owner_entity: ownerType === 'entity' ? entity : null,
+        usage_type: usage,
+        finance_status: finance || 'paid_off',
+        current_odometer: odo ? Number(odo) : null,
+        registration_expiry: reg,
+        insurance_expiry: ins,
+        status: 'active',
+        sold_date: null
+      };
+      VEHICLES.push(newVehicle);
+    }
+
+    // Persist to Supabase (real data) when available
+    if (USE_SUPABASE && currentUser?.id) {
+      const isUpdate = !!editingVehicleId;
+      const vToSave = isUpdate ? (VEHICLES.find(v=>v.id===editingVehicleId) || null) : (VEHICLES[VEHICLES.length-1] || null);
+      if (vToSave) {
+        const saved = await api.saveVehicle(vToSave, isUpdate);
+        if (saved) {
+          VEHICLES = await api.listVehicles();
+        }
+      }
+    } else {
+      writeLS(LS.VEHICLES, VEHICLES);
+    }
+
+    try{
+      const justSaved = (editingVehicleId ? editingVehicleId : (VEHICLES[VEHICLES.length-1]?.id));
+      const vJust = VEHICLES.find(v=>v.id===justSaved) || null;
+      if(vJust && vJust.finance_status==='financed'){
+        await vhLoad(vJust.id);
+        vhSetTab('loans');
+      }
+    }catch(e){ /* ignore */ }
+
+    resetVehicleForm();
+    renderFilters();
+    renderVehicles();
+    renderReminders();
+  }
+
+  document.getElementById('btn-save-vehicle')
+    .addEventListener('click', async function(e){
+      e.preventDefault();
+      await addOrUpdateVehicleFromForm();
+    });
+
+  document.getElementById('cancelEditBtn')
+    .addEventListener('click', async function(e){
+      e.preventDefault();
+      resetVehicleForm();
+    });
+
+  // ----- Tolls -----
+  function logToll(vehicleId){
+    const amountStr = prompt('Toll amount (optional, e.g. 3.50):');
+    const location = prompt('Toll road / location (optional):');
+    if (!amountStr && !location) return;
+
+    const toll = {
+      id: 't' + Date.now(),
+      vehicle_id: vehicleId,
+      date: todayISO(),
+      amount: amountStr ? Number(amountStr) : null,
+      location: location || null
+    };
+    TOLLS.push(toll);
+    writeLS(LS.TOLLS, TOLLS);
+    renderVehicles();
+    alert('Toll logged ✅');
+  }
+
+  function toggleVehicleStatus(id){
+    const v = VEHICLES.find(x=>x.id===id);
+    if (!v) return;
+
+    if (!v.status || v.status === 'active'){
+      v.status = 'sold';
+      v.sold_date = todayISO();
+    } else {
+      v.status = 'active';
+      v.sold_date = null;
+    }
+
+    if (USE_SUPABASE && currentUser?.id) {
+      api.setVehicleStatus(id, v.status, v.sold_date).then(async ()=>{
+        VEHICLES = await api.listVehicles();
+        renderVehicles();
+        renderReminders();
+      });
+      return;
+    }
+
+    writeLS(LS.VEHICLES, VEHICLES);
+    renderVehicles();
+    renderReminders();
+  }
+
+  // ----- Filters & search -----
+  document.querySelectorAll('.pill').forEach(p=>{
+    p.addEventListener('click', ()=>{
+      document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+      p.classList.add('active');
+      state.usage = p.dataset.usage;
+      renderFilters(); renderVehicles(); renderReminders(); updateStats();
+    });
+  });
+
+  document.getElementById('entitySel').addEventListener('change', e=>{
+    state.entity = e.target.value || '';
+    renderVehicles(); renderReminders();
+  });
+
+  document.getElementById('search').addEventListener('input', e=>{
+    state.search = e.target.value;
+    renderVehicles();
+  });
+
+  // ----- Card actions -----
+  document.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button[data-act]');
+    if(!btn) return;
+    const id = btn.dataset.id;
+    if(btn.dataset.act==='odo'){
+      const miles = prompt('Current odometer reading (miles)?');
+      if(!miles) return;
+      if(N8N_ODOMETER_HOOK){
+        try{
+          await fetch(N8N_ODOMETER_HOOK, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ vehicle_id:id, odometer:Number(miles) })
+          });
+        }catch(err){ console.warn('Webhook failed', err); }
+      }
+      await api.addOdometer(id, Number(miles));
+      VEHICLES = await api.listVehicles();
+      renderVehicles();
+      alert('Odometer logged ✅');
+    }
+    if(btn.dataset.act==='service'){
+      if(N8N_SERVICE_INBOX_MAILTO) location.href = N8N_SERVICE_INBOX_MAILTO;
+      else alert('Wire this to your service inbox/upload page.');
+    }
+    if(btn.dataset.act==='hub'){
+      await vhLoad(id);
+    }
+    if(btn.dataset.act==='history'){
+      window.location.href = `service-history.html?vehicle_id=${encodeURIComponent(id)}`;
+    }
+    if(btn.dataset.act==='edit'){
+      const v = VEHICLES.find(x=>x.id===id);
+      if (v) populateVehicleForm(v);
+    }
+    if(btn.dataset.act==='toll'){
+      logToll(id);
+    }
+    if(btn.dataset.act==='toggle-status'){
+      toggleVehicleStatus(id);
+    }
+  });
+
+
+  // Loans: open full loan page (explicit navigation + close drawer)
+  document.addEventListener('click', function(e){
+    const link = e.target && e.target.closest ? e.target.closest('#vhLoanFullPageLink') : null;
+    if(!link) return;
+    e.preventDefault();
+    const href = (link.getAttribute('href')||'').trim();
+    if(!href || href === '#'){
+      try{ vhToast && vhToast('Save this vehicle first to enable the full loan page.'); }catch(_){}
+      return;
+    }
+    try{ vhClose(); }catch(_){}
+    window.location.assign(href);
+  }, true);
+
+  // ----- Export / calendar tips -----
+  document.getElementById('btn-export').addEventListener('click', ()=>{
+    const rows = REMINDERS.map(r=>{
+      const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+      return {
+        vehicle: v?.name || '',
+        service_type: r.service_type,
+        due_date: r.due_date || '',
+        due_miles: r.due_miles || ''
+      };
+    });
+    const csv = 'vehicle,service_type,due_date,due_miles\n' + rows.map(r=>[
+      `"${String(r.vehicle).replaceAll('"','""')}"`,
+      `"${String(r.service_type).replaceAll('"','""')}"`,
+      `"${r.due_date}"`,
+      r.due_miles
+    ].join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=`car-reminders-${todayISO()}.csv`; a.click(); URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btn-calendar').addEventListener('click', ()=>{
+    alert('Tip: In n8n, add a step to create Google Calendar events whenever a reminder has a due_date.');
+  });
+
+  
+  /* ============================
+     Vehicle Hub Modules (Insurance / Registration / Expenses / Docs)
+     ============================ */
+  const VH = {
+    vehicleId: null,
+    vehicle: null,
+  };
+
+  const VH_TABLES = {
+    policies: "vehicle_insurance_policies",
+    registrations: "vehicle_registrations",
+    expenses: "vehicle_expenses",
+    documents: "vehicle_documents",
+    loans: "vehicle_loans",
+    loan_payments: "vehicle_loan_payments"
+  };
+
+  async function vhDb(){
+    return await window.getGSClient();
+  }
+
+  function vhOpen(){
+    const m = document.getElementById("vhModal");
+    m.classList.add("show");
+    m.setAttribute("aria-hidden","false");
+  }
+  function vhClose(){
+    const m = document.getElementById("vhModal");
+    m.classList.remove("show");
+    m.setAttribute("aria-hidden","true");
+    VH.vehicleId = null;
+    VH.vehicle = null;
+  }
+  document.addEventListener("click", (e)=>{
+    const c = e.target.closest("[data-close='vh']");
+    if(c) vhClose();
+  });
+
+  // Tabs
+  function vhSetTab(name){
+    document.querySelectorAll("#vhModal .tab").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+    document.querySelectorAll("#vhModal .vh-panel").forEach(p=>p.hidden = p.dataset.panel!==name);
+  }
+    // Use event delegation so tabs work even if the modal HTML is below this script
+  document.addEventListener("click", (e)=>{
+    const t = e.target.closest("#vhModal .tab");
+    if(!t) return;
+    vhSetTab(t.dataset.tab);
+  });
+
+  function vhDuePill(dateStr, label){
+    if(!dateStr) return `<span class="vh-pill">${label}: —</span>`;
+    const d = new Date(dateStr);
+    const days = Math.ceil((d - new Date())/(1000*60*60*24));
+    const cls = days <= 14 ? "warn" : "good";
+    return `<span class="vh-pill ${cls}">${label}: ${fmtDate(dateStr)} (${days}d)</span>`;
+  }
+
+  async function vhLoad(vehicleId){
+    VH.vehicleId = vehicleId;
+    VH.vehicle = VEHICLES.find(v=>v.id===vehicleId) || null;
+    const v = VH.vehicle;
+    document.getElementById("vhTitle").textContent = v ? `🚗 ${v.name}` : "🚗 Vehicle Hub";
+    document.getElementById("vhSub").textContent = v ? (v.plate ? `Plate ${v.plate}` : "Insurance • Registration • Expenses • Documents • Loans") : "Insurance • Registration • Expenses • Documents • Loans";
+
+    // profile kv
+    const kv = document.getElementById("vhProfileKv");
+    if(v){
+      kv.innerHTML = `
+        <div>VIN</div><b>${v.vin || "—"}</b>
+        <div>Plate</div><b>${v.plate || "—"}</b>
+        <div>Odometer</div><b>${(v.current_odometer!=null) ? Number(v.current_odometer).toLocaleString() + " mi" : "—"}</b>
+        <div>Owner</div><b>${v.owner_type==="entity" ? (v.owner_entity||"Entity") : "Personal"}</b>
+        <div>Usage</div><b>${v.usage_type || "—"}</b>
+      `;
+      document.getElementById("vhQuickPeek").innerHTML = [
+        vhDuePill(v.insurance_expiry, "Insurance"),
+        vhDuePill(v.registration_expiry, "Registration"),
+        vhDuePill(v.inspection_expiry, "Inspection"),
+      ].join(" ");
+    } else {
+      kv.innerHTML = "<div class='muted'>Vehicle not found.</div>";
+      document.getElementById("vhQuickPeek").innerHTML = "";
+    }
+
+    // wire quick actions
+    document.getElementById("vhLogOdo").onclick = () => document.querySelector(`button[data-act="odo"][data-id="${vehicleId}"]`)?.click();
+    document.getElementById("vhAddService").onclick = () => document.querySelector(`button[data-act="service"][data-id="${vehicleId}"]`)?.click();
+    document.getElementById("vhEditVehicle").onclick = () => document.querySelector(`button[data-act="edit"][data-id="${vehicleId}"]`)?.click();
+    // Loans: advanced full-page link (kept subtle to avoid overwhelming users)
+
+    const loanLink = document.getElementById("vhLoanFullPageLink");
+
+    function isUuidLoose(s){
+      // accepts any valid UUID (v1–v5), case-insensitive
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(s||"").trim());
+    }
+
+    if (loanLink) {
+      loanLink.hidden = false; // ALWAYS visible
+
+      const vid = String(vehicleId || "").trim();
+      const ok = isUuidLoose(vid);
+
+      loanLink.href = ok ? `car-loans.html?vehicle_id=${encodeURIComponent(vid)}` : "#";
+      loanLink.setAttribute("aria-disabled", ok ? "false" : "true");
+      loanLink.classList.toggle("is-disabled", !ok);
+
+      loanLink.onclick = (e) => {
+        if (!ok) {
+          e.preventDefault();
+          // Use your existing toast/snackbar if you have one; otherwise alert is fine.
+          alert("Save this vehicle to your account to enable the full loan page.");
+          return;
+        }
+        // Close drawer before navigating (if your close function exists)
+        try { vhCloseModal?.(); } catch {}
+        // Let the browser navigate via href (or do: window.location.href = loanLink.href)
+      };
+    }
+
+    vhOpen();
+    vhSetTab("profile");
+
+    
+    // Demo/local vehicles use ids like "v1" (not UUID). Skip Supabase modules in that case.
+    if(!isUUID(String(vehicleId||""))){
+      document.getElementById("vhInsuranceList").innerHTML = `<div class="muted">This vehicle is in <b>Demo mode</b>. Click “Edit Vehicle” and save to your account to enable Insurance/Registration/Expenses/Docs/Loans.</div>`;
+      document.getElementById("vhRegList").innerHTML = `<div class="muted">Demo vehicle (not synced).</div>`;
+      document.getElementById("vhExpenseList").innerHTML = `<div class="muted">Demo vehicle (not synced).</div>`;
+      document.getElementById("vhDocList").innerHTML = `<div class="muted">Demo vehicle (not synced).</div>`;
+
+      const loanLink = document.getElementById("vhLoanFullPageLink");
+      if(loanLink){ loanLink.hidden = true; loanLink.href = "#"; loanLink.onclick = null; }
+      const loanBox = document.getElementById("vhLoansBody");
+      if(loanBox) loanBox.innerHTML = `<div class="muted">Demo vehicle (not synced).</div>`;
+      return;
+    }
+await Promise.all([
+      vhRenderPolicies(),
+      vhRenderRegistrations(),
+      vhRenderExpenses(),
+      vhRenderDocs(),
+      vhRenderLoans(),
+    ]);
+  }
+
+  async function vhSelect(sqlTable, filterCol, filterVal, orderCol="created_at"){
+    const db = await vhDb();
+    if(!db) return { ok:false, data:[], mode:"local" };
+    // Guard: avoid querying UUID columns with demo/local ids like "v1"
+    if(filterCol === "vehicle_id" && !isUUID(String(filterVal||""))){
+      return { ok:false, data:[], mode:"INVALID_VEHICLE_ID" };
+    }
+
+    try{
+      const { data, error } = await db.from(sqlTable).select("*").eq(filterCol, filterVal).order(orderCol, {ascending:false});
+      if(error) throw error;
+      return { ok:true, data: data||[], mode:"supabase" };
+    }catch(e){
+      console.warn("vhSelect failed", e);
+      return { ok:false, data:[], mode:"supabase_error" };
+    }
+  }
+
+  async function vhUpsert(sqlTable, payload){
+    const db = await vhDb();
+    if(!db) return { ok:false, mode:"local" };
+    try{
+      const { error } = await db.from(sqlTable).upsert(payload);
+      if(error) throw error;
+      return { ok:true, mode:"supabase" };
+    }catch(e){
+      console.warn("vhUpsert failed", e);
+      return { ok:false, mode:"supabase_error" };
+    }
+  }
+
+  async function vhInsert(sqlTable, payload){
+    const db = await vhDb();
+    if(!db) return { ok:false, mode:"local" };
+    try{
+      const { error } = await db.from(sqlTable).insert(payload);
+      if(error) throw error;
+      return { ok:true, mode:"supabase" };
+    }catch(e){
+      console.warn("vhInsert failed", e);
+      return { ok:false, mode:"supabase_error" };
+    }
+  }
+
+  // Insurance
+  async function vhRenderPolicies(){
+    const box = document.getElementById("vhInsuranceList");
+    if(!VH.vehicleId){ box.textContent="—"; return; }
+
+    const res = await vhSelect(VH_TABLES.policies, "vehicle_id", VH.vehicleId, "effective_date");
+    if(!res.ok){ box.innerHTML = `<div class="muted">Login required to load Insurance module (Supabase).</div>`; return; }
+
+    if(!res.data.length){
+      box.innerHTML = `<div class="muted">No policies yet. Click “Add / Update Policy”.</div>`;
+      return;
+    }
+
+    box.innerHTML = res.data.map(p=>{
+      const active = p.is_active ? "good" : "";
+      const renew = p.renewal_date ? vhDuePill(p.renewal_date, "Renews") : "";
+      return `
+        <div class="vh-item">
+          <div class="left">
+            <div class="title">🛡️ ${p.provider || "Insurance"} <span class="vh-pill ${active}">${p.is_active ? "Active" : "History"}</span></div>
+            <div class="sub">Policy: ${p.policy_number || "—"} • Premium: ${p.premium ? "$"+Number(p.premium).toFixed(2) : "—"} • Effective: ${p.effective_date ? fmtDate(p.effective_date) : "—"}</div>
+            <div class="sub">${renew}</div>
+          </div>
+          <div class="right">
+            <button class="btn ghost small" data-vh="edit-policy" data-id="${p.id}">✏️ Edit</button>
+            ${p.document_url ? `<a class="btn ghost small" href="${p.document_url}" target="_blank" rel="noopener">📄 View</a>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+    window.addEventListener("DOMContentLoaded", ()=>{
+
+document.getElementById("btnAddPolicy").addEventListener("click", async ()=>{
+    if(!VH.vehicleId) return;
+    const provider = prompt("Insurance provider (e.g., GEICO)?") || "";
+    if(!provider) return;
+    const policy = prompt("Policy number?") || "";
+    const premium = prompt("Premium amount (number)?") || "";
+    const renewal = prompt("Renewal/expiration date (YYYY-MM-DD)?") || "";
+    const effective = prompt("Effective date (YYYY-MM-DD)? (optional)") || "";
+
+    const db = await vhDb();
+    if(!db){ alert("Login required (Supabase)"); return; }
+    const { data: u } = await db.auth.getUser();
+    const user_id = u?.user?.id;
+    if(!user_id){ alert("Login required"); return; }
+
+    // Mark all existing inactive, then insert new active
+    await db.from(VH_TABLES.policies).update({ is_active:false }).eq("vehicle_id", VH.vehicleId);
+
+    const payload = {
+      user_id,
+      vehicle_id: VH.vehicleId,
+      provider, policy_number: policy || null,
+      premium: premium ? Number(premium) : null,
+      renewal_date: renewal || null,
+      effective_date: effective || null,
+      is_active: true
+    };
+    const r = await vhInsert(VH_TABLES.policies, payload);
+    if(!r.ok){ alert("Could not save policy. Check table + RLS."); return; }
+
+    // Also update quick-peek expiry on vehicles table (optional)
+    if(renewal){
+      try{ await api.setVehicleInsuranceExpiry?.(VH.vehicleId, renewal); }catch(e){}
+    }
+
+    await vhRenderPolicies();
+    alert("Policy saved ✅");
+  });
+
+  // Registration
+  async function vhRenderRegistrations(){
+    const box = document.getElementById("vhRegList");
+    if(!VH.vehicleId){ box.textContent="—"; return; }
+
+    const res = await vhSelect(VH_TABLES.registrations, "vehicle_id", VH.vehicleId, "due_date");
+    if(!res.ok){ box.innerHTML = `<div class="muted">Login required to load Registration module (Supabase).</div>`; return; }
+
+    if(!res.data.length){
+      box.innerHTML = `<div class="muted">No registration records yet. Click “Add / Update Registration”.</div>`;
+      return;
+    }
+
+    box.innerHTML = res.data.map(r=>{
+      const due = r.due_date ? vhDuePill(r.due_date, "Due") : `<span class="vh-pill">Due: —</span>`;
+      const paid = r.paid ? "good" : "warn";
+      return `
+        <div class="vh-item">
+          <div class="left">
+            <div class="title">🪪 ${r.state || ""} Registration <span class="vh-pill ${paid}">${r.paid ? "Paid" : "Unpaid"}</span></div>
+            <div class="sub">Plate: ${r.plate_number || (VH.vehicle?.plate||"—")} • Fee: ${r.fee ? "$"+Number(r.fee).toFixed(2) : "—"}</div>
+            <div class="sub">${due}</div>
+          </div>
+          <div class="right">
+            <button class="btn ghost small" data-vh="toggle-paid" data-id="${r.id}" data-paid="${r.paid?1:0}">${r.paid ? "↩️ Mark Unpaid" : "✅ Mark Paid"}</button>
+            ${r.receipt_url ? `<a class="btn ghost small" href="${r.receipt_url}" target="_blank" rel="noopener">🧾 Receipt</a>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  document.getElementById("btnAddReg").addEventListener("click", async ()=>{
+    if(!VH.vehicleId) return;
+    const state = prompt("State (e.g., IL)?") || "";
+    const due = prompt("Renewal due date (YYYY-MM-DD)?") || "";
+    if(!due) return;
+    const fee = prompt("Fee (number)?") || "";
+    const plate = prompt("Plate number? (optional)") || "";
+
+    const db = await vhDb();
+    if(!db){ alert("Login required (Supabase)"); return; }
+    const { data: u } = await db.auth.getUser();
+    const user_id = u?.user?.id;
+    if(!user_id){ alert("Login required"); return; }
+
+    const payload = {
+      user_id,
+      vehicle_id: VH.vehicleId,
+      state: state || null,
+      due_date: due || null,
+      fee: fee ? Number(fee) : null,
+      plate_number: plate || null,
+      paid: false
+    };
+    const r = await vhInsert(VH_TABLES.registrations, payload);
+    if(!r.ok){ alert("Could not save registration. Check table + RLS."); return; }
+    await vhRenderRegistrations();
+    alert("Registration saved ✅");
+  });
+
+  // Expenses
+  async function vhRenderExpenses(){
+    const box = document.getElementById("vhExpenseList");
+    if(!VH.vehicleId){ box.textContent="—"; return; }
+
+    const res = await vhSelect(VH_TABLES.expenses, "vehicle_id", VH.vehicleId, "expense_date");
+    if(!res.ok){ box.innerHTML = `<div class="muted">Login required to load Expenses module (Supabase).</div>`; return; }
+
+    if(!res.data.length){
+      box.innerHTML = `<div class="muted">No expenses yet. Click “Add Expense”.</div>`;
+      return;
+    }
+
+    box.innerHTML = res.data.slice(0,40).map(x=>{
+      return `
+        <div class="vh-item">
+          <div class="left">
+            <div class="title">💰 ${x.category || "Expense"} <span class="vh-pill">${x.expense_date ? fmtDate(x.expense_date) : "—"}</span></div>
+            <div class="sub">${x.vendor ? x.vendor + " • " : ""}${x.notes || ""}</div>
+          </div>
+          <div class="right">
+            <span class="vh-pill good">$${Number(x.amount||0).toFixed(2)}</span>
+            ${x.receipt_url ? `<a class="btn ghost small" href="${x.receipt_url}" target="_blank" rel="noopener">📎 Receipt</a>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  document.getElementById("btnAddExpense").addEventListener("click", async ()=>{
+    if(!VH.vehicleId) return;
+    const category = prompt("Category (Fuel, Maintenance, Repair, Insurance, Registration, Wash)?") || "Maintenance";
+    const amount = prompt("Amount (number)?") || "";
+    if(!amount) return;
+    const date = prompt("Expense date (YYYY-MM-DD)?", todayISO()) || todayISO();
+    const vendor = prompt("Vendor (optional)?") || "";
+    const notes = prompt("Notes (optional)?") || "";
+
+    const db = await vhDb();
+    if(!db){ alert("Login required (Supabase)"); return; }
+    const { data: u } = await db.auth.getUser();
+    const user_id = u?.user?.id;
+    if(!user_id){ alert("Login required"); return; }
+
+    const payload = {
+      user_id,
+      vehicle_id: VH.vehicleId,
+      category: category || null,
+      amount: Number(amount),
+      expense_date: date || null,
+      vendor: vendor || null,
+      notes: notes || null
+    };
+    const r = await vhInsert(VH_TABLES.expenses, payload);
+    if(!r.ok){ alert("Could not save expense. Check table + RLS."); return; }
+    await vhRenderExpenses();
+    alert("Expense added ✅");
+  });
+
+  
+  // Loans (one per vehicle)
+  let __VH_LOAN = null;
+  let __VH_LOAN_PAYMENTS = [];
+
+  function money(n){
+    if(n==null || n==="" || Number.isNaN(Number(n))) return "—";
+    return "$" + Number(n).toFixed(2);
+  }
+
+  function pct(n){
+    if(n==null || n==="" || Number.isNaN(Number(n))) return "—";
+    return Number(n).toFixed(3).replace(/\.?0+$/,"") + "%";
+  }
+
+  function vhNextDueLabel(loan){
+    const dueDay = Number(loan?.due_day || 1);
+    const now = new Date();
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), dueDay);
+    const next = (now <= thisMonth) ? thisMonth : new Date(now.getFullYear(), now.getMonth()+1, dueDay);
+    return fmtDate(next.toISOString().slice(0,10));
+  }
+
+  async function vhGetUserId(){
+    const db = await vhDb();
+    if(!db) return null;
+    const { data: u } = await db.auth.getUser();
+    return u?.user?.id || null;
+  }
+
+  async function vhGetLoan(){
+    const db = await vhDb();
+    if(!db || !VH.vehicleId) return null;
+    // one row per vehicle_id
+    const { data, error } = await db
+      .from(VH_TABLES.loans)
+      .select("*")
+      .eq("vehicle_id", VH.vehicleId)
+      .order("created_at", { ascending:false })
+      .limit(1);
+    if(error){ console.warn("vhGetLoan error", error); return null; }
+    return (data && data[0]) ? data[0] : null;
+  }
+
+  async function vhGetLoanPayments(loanId){
+    const db = await vhDb();
+    if(!db || !loanId) return [];
+    const { data, error } = await db
+      .from(VH_TABLES.loan_payments)
+      .select("*")
+      .eq("loan_id", loanId)
+      .order("payment_date", { ascending:false })
+      .limit(80);
+    if(error){ console.warn("vhGetLoanPayments error", error); return []; }
+    return data || [];
+  }
+
+  async function vhRenderLoans(){
+    const sum = document.getElementById("vhLoanSummary");
+    const payBox = document.getElementById("vhLoanPayments");
+    if(!sum || !payBox) return;
+    if(!VH.vehicleId){ sum.textContent="—"; payBox.textContent="—"; return; }
+
+    // If somehow a demo id slipped through
+    if(!isUUID(String(VH.vehicleId||""))){
+      sum.innerHTML = `<div class="muted">Demo vehicle (not synced).</div>`;
+      payBox.innerHTML = `<div class="muted">Demo vehicle (not synced).</div>`;
+      return;
+    }
+
+    const loan = await vhGetLoan();
+    __VH_LOAN = loan;
+
+    if(!loan){
+      sum.innerHTML = `<div class="muted">No loan on file. Click “Add / Update Loan”.</div>`;
+      payBox.innerHTML = `<div class="muted">No payments yet.</div>`;
+      __VH_LOAN_PAYMENTS = [];
+      return;
+    }
+
+    const nextDue = vhNextDueLabel(loan);
+
+    sum.innerHTML = `
+      <div class="vh-item">
+        <div class="left">
+          <div class="title">🏦 ${loan.lender_name || "Auto Loan"} <span class="vh-pill">${loan.auto_pay ? "Auto-pay" : "Manual"}</span></div>
+          <div class="sub">Payment: <b>${money(loan.monthly_payment)}</b> • Next due: <b>${nextDue}</b> • Rate: <b>${pct(loan.interest_rate)}</b></div>
+          <div class="sub">Original: ${money(loan.original_amount)} • Term: ${loan.term_months ? loan.term_months + " mo" : "—"} • Start: ${loan.start_date ? fmtDate(loan.start_date) : "—"}</div>
+        </div>
+        <div class="right">
+          <span class="vh-pill good">Balance: ${money(loan.current_balance)}</span>
+        </div>
+      </div>
+    `;
+
+    const payments = await vhGetLoanPayments(loan.id);
+    __VH_LOAN_PAYMENTS = payments;
+
+    if(!payments.length){
+      payBox.innerHTML = `<div class="muted">No payments yet. Click “Add Payment”.</div>`;
+      return;
+    }
+
+    payBox.innerHTML = payments.map(p=>{
+      const pdate = p.payment_date ? fmtDate(p.payment_date) : "—";
+      const princ = (p.principal!=null) ? money(p.principal) : "—";
+      const intr  = (p.interest!=null) ? money(p.interest) : "—";
+      const bal   = (p.remaining_balance!=null) ? money(p.remaining_balance) : "—";
+      return `
+        <div class="vh-item">
+          <div class="left">
+            <div class="title">💳 ${pdate} <span class="vh-pill">${money(p.amount)}</span></div>
+            <div class="sub">Principal: ${princ} • Interest: ${intr}${p.extra_payment ? " • <b>Extra</b>" : ""}</div>
+            ${p.notes ? `<div class="sub">${p.notes}</div>` : ""}
+          </div>
+          <div class="right">
+            <span class="vh-pill">${bal}</span>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  async function vhPromptEditLoan(){
+    if(!VH.vehicleId) return;
+    const uid = await vhGetUserId();
+    if(!uid) return alert("Login required");
+
+    const cur = __VH_LOAN || {};
+    const lender = prompt("Lender name (e.g., GM Financial):", cur.lender_name || "") || "";
+    if(!lender) return;
+
+    const original_amount = prompt("Original loan amount (number):", (cur.original_amount ?? "").toString()) || "";
+    const interest_rate = prompt("Interest rate % (e.g., 6.49):", (cur.interest_rate ?? "").toString()) || "";
+    const term_months = prompt("Term months (e.g., 72):", (cur.term_months ?? "").toString()) || "";
+    const monthly_payment = prompt("Monthly payment (number):", (cur.monthly_payment ?? "").toString()) || "";
+    const start_date = prompt("Start date (YYYY-MM-DD):", (cur.start_date ?? "").toString()) || "";
+    const due_day = prompt("Payment due day (1-28):", (cur.due_day ?? "1").toString()) || "1";
+    const current_balance = prompt("Current balance (number):", (cur.current_balance ?? "").toString()) || "";
+    const auto_pay = confirm("Auto-pay enabled? (OK = Yes, Cancel = No)");
+
+    const payload = {
+      user_id: uid,
+      vehicle_id: VH.vehicleId,
+      lender_name: lender,
+      original_amount: original_amount ? Number(original_amount) : null,
+      interest_rate: interest_rate ? Number(interest_rate) : null,
+      term_months: term_months ? Number(term_months) : null,
+      monthly_payment: monthly_payment ? Number(monthly_payment) : null,
+      start_date: start_date || null,
+      due_day: due_day ? Number(due_day) : 1,
+      current_balance: current_balance ? Number(current_balance) : null,
+      auto_pay
+    };
+
+    const db = await vhDb();
+    // One row per vehicle: use upsert on vehicle_id
+    const { error } = await db.from(VH_TABLES.loans).upsert(payload, { onConflict: "vehicle_id" });
+    if(error){
+      console.warn("Loan upsert error", error);
+      return alert("Could not save loan. Check table + RLS.");
+    }
+    await vhRenderLoans();
+    alert("Loan saved ✅");
+  }
+
+  async function vhPromptAddPayment(){
+    if(!VH.vehicleId) return;
+    const uid = await vhGetUserId();
+    if(!uid) return alert("Login required");
+    if(!__VH_LOAN){
+      alert("No loan yet. Add/Update the loan first.");
+      return;
+    }
+
+    const payment_date = prompt("Payment date (YYYY-MM-DD):", todayISO()) || todayISO();
+    const amount = prompt("Payment amount (number):", "") || "";
+    if(!amount) return;
+
+    const principal = prompt("Principal portion (optional number):", "") || "";
+    const interest  = prompt("Interest portion (optional number):", "") || "";
+    const remaining_balance = prompt("Remaining balance after payment (optional number):", "") || "";
+    const extra_payment = confirm("Is this an extra principal payment? (OK = Yes)");
+    const notes = prompt("Notes (optional):", "") || "";
+
+    const payload = {
+      user_id: uid,
+      loan_id: __VH_LOAN.id,
+      vehicle_id: VH.vehicleId,
+      payment_date,
+      amount: Number(amount),
+      principal: principal ? Number(principal) : null,
+      interest: interest ? Number(interest) : null,
+      remaining_balance: remaining_balance ? Number(remaining_balance) : null,
+      extra_payment,
+      notes: notes || null
+    };
+
+    const db = await vhDb();
+    const { error } = await db.from(VH_TABLES.loan_payments).insert(payload);
+    if(error){
+      console.warn("Loan payment insert error", error);
+      return alert("Could not save payment. Check table + RLS.");
+    }
+
+    // Optional: update current_balance on loan when remaining_balance provided
+    if(remaining_balance){
+      await db.from(VH_TABLES.loans).update({ current_balance: Number(remaining_balance) }).eq("vehicle_id", VH.vehicleId);
+    }
+
+    await vhRenderLoans();
+    alert("Payment added ✅");
+  }
+
+  function vhExportLoanCSV(){
+    if(!__VH_LOAN || !__VH_LOAN_PAYMENTS) return alert("No loan payments to export.");
+    const rows = __VH_LOAN_PAYMENTS.map(p=>({
+      payment_date: p.payment_date || "",
+      amount: p.amount ?? "",
+      principal: p.principal ?? "",
+      interest: p.interest ?? "",
+      remaining_balance: p.remaining_balance ?? "",
+      extra_payment: p.extra_payment ? "yes" : "no",
+      notes: (p.notes || "").replaceAll("\n"," ").trim()
+    }));
+    const csv = "payment_date,amount,principal,interest,remaining_balance,extra_payment,notes\n" +
+      rows.map(r=>[
+        `"${r.payment_date}"`,
+        r.amount,
+        r.principal,
+        r.interest,
+        r.remaining_balance,
+        r.extra_payment,
+        `"${String(r.notes).replaceAll('"','""')}"`
+      ].join(",")).join("\n");
+    const blob = new Blob([csv], {type:"text/csv"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `loan-payments-${(VH.vehicle?.name||"vehicle").replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-${todayISO()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Loans buttons (wired when drawer exists)
+  document.addEventListener("click", (e)=>{
+    if(e.target && e.target.id === "btnLoanEdit") return vhPromptEditLoan();
+    if(e.target && e.target.id === "btnLoanPay") return vhPromptAddPayment();
+    if(e.target && e.target.id === "btnLoanExport") return vhExportLoanCSV();
+  });
+
+
+// Documents (Supabase Storage + metadata table)
+  async function vhRenderDocs(){
+    const box = document.getElementById("vhDocList");
+    if(!VH.vehicleId){ box.textContent="—"; return; }
+
+    const res = await vhSelect(VH_TABLES.documents, "vehicle_id", VH.vehicleId, "created_at");
+    if(!res.ok){ box.innerHTML = `<div class="muted">Login required to load Documents module (Supabase).</div>`; return; }
+
+    if(!res.data.length){
+      box.innerHTML = `<div class="muted">No documents yet. Upload one above.</div>`;
+      return;
+    }
+
+    box.innerHTML = res.data.map(d=>{
+      return `
+        <div class="vh-item">
+          <div class="left">
+            <div class="title">📎 ${d.doc_type || "Document"} <span class="vh-pill">${d.created_at ? fmtDate(d.created_at) : ""}</span></div>
+            <div class="sub">${d.file_name || ""}${d.tags ? " • " + d.tags : ""}</div>
+          </div>
+          <div class="right">
+            ${d.file_url ? `<a class="btn ghost small" href="${d.file_url}" target="_blank" rel="noopener">🔗 Open</a>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  document.getElementById("vhUpload").addEventListener("change", async (e)=>{
+    const file = e.target.files?.[0];
+    if(!file || !VH.vehicleId) return;
+
+    const db = await vhDb();
+    if(!db){ alert("Login required (Supabase)"); return; }
+    const { data: u } = await db.auth.getUser();
+    const user_id = u?.user?.id;
+    if(!user_id){ alert("Login required"); return; }
+
+    // Upload to bucket
+    const bucket = "vehicle-docs";
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${user_id}/${VH.vehicleId}/${Date.now()}_${safeName}`;
+
+    try{
+      const up = await db.storage.from(bucket).upload(path, file, { upsert:false });
+      if(up.error) throw up.error;
+      const pub = db.storage.from(bucket).getPublicUrl(path);
+      const url = pub?.data?.publicUrl || null;
+
+      const docType = prompt("Document type (insurance_card, registration, invoice, photo)?", "invoice") || "invoice";
+      const tags = prompt("Tags (optional)?", "") || "";
+
+      const payload = {
+        user_id,
+        vehicle_id: VH.vehicleId,
+        doc_type: docType,
+        file_name: file.name,
+        file_path: path,
+        file_url: url,
+        tags: tags || null
+      };
+      const r = await vhInsert(VH_TABLES.documents, payload);
+      if(!r.ok) throw new Error("DB insert failed");
+
+      await vhRenderDocs();
+      alert("Uploaded ✅");
+    }catch(err){
+      console.warn("Upload failed", err);
+      alert("Upload failed. Make sure bucket exists + policies allow upload.");
+    }finally{
+      e.target.value = "";
+    }
+  });
+
+
+  });
+
+  // Handle registration paid toggle
+  document.addEventListener("click", async (e)=>{
+    const b = e.target.closest("button[data-vh='toggle-paid']");
+    if(!b) return;
+    const id = b.getAttribute("data-id");
+    const paid = b.getAttribute("data-paid")==="1";
+    const db = await vhDb();
+    if(!db) return alert("Login required");
+    const { error } = await db.from(VH_TABLES.registrations).update({ paid: !paid }).eq("id", id);
+    if(error){ alert("Update failed"); return; }
+    await vhRenderRegistrations();
+  });
+
+  // Hook into vehicle cards
+
+  
+  // ===== Mileage Tracker (Option A) =====
+  const TRIP_LS = {
+    activePrefix: "gs_active_trip__",
+    tripsPrefix: "gs_trips__"
+  };
+
+  function tripPurposeGet(){
+    return (state.tripPurpose === "business") ? "business" : "personal";
+  }
+  function setTripPurpose(p){
+    state.tripPurpose = (p === "business") ? "business" : "personal";
+    const b1 = document.getElementById("tripPurposeBusiness");
+    const p1 = document.getElementById("tripPurposePersonal");
+    if(b1) b1.setAttribute("aria-pressed", state.tripPurpose==="business" ? "true":"false");
+    if(p1) p1.setAttribute("aria-pressed", state.tripPurpose==="personal" ? "true":"false");
+  }
+
+  function getVehicleByKey(key){
+    return (VEHICLES||[]).find(v => String(v.id) === String(key)) || null;
+  }
+
+  function getTripKeyForVehicle(v){
+    const vid = (v && v.id) ? String(v.id) : "";
+    if(isUuidLoose(vid)) return { mode:"db", vehicle_id: vid, local_vehicle_id: null, key: "db:"+vid };
+    return { mode:"local", vehicle_id: null, local_vehicle_id: vid, key: "local:"+vid };
+  }
+
+  function lsActiveKey(key){ return TRIP_LS.activePrefix + key; }
+  function lsTripsKey(key){ return TRIP_LS.tripsPrefix + key; }
+
+  function fmtDateTime(iso){
+    try{
+      const d = new Date(iso);
+      return d.toLocaleString();
+    }catch{ return iso || ""; }
+  }
+
+  function calcMiles(a,b){
+    const s = Number(a), e = Number(b);
+    if(!isFinite(s) || !isFinite(e)) return null;
+    return Math.max(e - s, 0);
+  }
+
+  async function dbGetUserId(db){
+    try{
+      const { data } = await db.auth.getUser();
+      return data?.user?.id || null;
+    }catch{ return null; }
+  }
+
+  async function dbLoadActiveTrip(db, ctx){
+    const uid = await dbGetUserId(db);
+    if(!uid) return null;
+    const { data, error } = await db
+      .from("vehicle_trips")
+      .select("*")
+      .eq("user_id", uid)
+      .eq("vehicle_id", ctx.vehicle_id)
+      .is("end_at", null)
+      .order("start_at", { ascending: false })
+      .limit(1);
+    if(error){ console.warn("[mileage] activeTrip load error", error); return null; }
+    return (data && data[0]) ? data[0] : null;
+  }
+
+  async function dbLoadRecentTrips(db, ctx){
+    const uid = await dbGetUserId(db);
+    if(!uid) return [];
+    let q = db.from("vehicle_trips").select("*").eq("user_id", uid).order("start_at", { ascending: false }).limit(30);
+    if(ctx && ctx.vehicle_id) q = q.eq("vehicle_id", ctx.vehicle_id);
+    const { data, error } = await q;
+    if(error){ console.warn("[mileage] trips load error", error); return []; }
+    return data || [];
+  }
+
+  function localLoadActiveTrip(ctx){
+    return readLS(lsActiveKey(ctx.key), null);
+  }
+  function localSaveActiveTrip(ctx, trip){
+    writeLS(lsActiveKey(ctx.key), trip);
+  }
+  function localClearActiveTrip(ctx){
+    writeLS(lsActiveKey(ctx.key), null);
+  }
+  function localLoadTrips(ctx){
+    return readLS(lsTripsKey(ctx.key), []);
+  }
+  function localSaveTrips(ctx, trips){
+    writeLS(lsTripsKey(ctx.key), trips);
+  }
+
+  function renderActiveTrip(trip, modeLabel){
+    const box = document.getElementById("activeTripBox");
+    if(!box) return;
+    if(!trip){
+      box.style.display = "none";
+      return;
+    }
+    box.style.display = "block";
+    document.getElementById("activeTripMode").textContent = modeLabel ? ("• " + modeLabel) : "";
+    document.getElementById("activeTripStartAt").textContent = fmtDateTime(trip.start_at || trip.startAt);
+    document.getElementById("activeTripStartOdo").textContent = (trip.start_odometer ?? trip.startOdo ?? "—");
+    document.getElementById("activeTripPurpose").textContent = (trip.purpose || "personal");
+  }
+
+  function renderTripsTable(trips){
+    const tb = document.getElementById("tripsTbody");
+    if(!tb) return;
+    tb.innerHTML = "";
+    if(!trips || !trips.length){
+      tb.innerHTML = '<tr><td class="muted" colspan="6" style="padding:12px">No trips yet.</td></tr>';
+      return;
+    }
+    for(const t of trips){
+      const v = (t.vehicle_id) ? (VEHICLES||[]).find(x => String(x.id)===String(t.vehicle_id)) : (t.local_vehicle_id ? getVehicleByKey(t.local_vehicle_id) : null);
+      const vname = v?.name || t.vehicle_name || t.vehicle_id || t.local_vehicle_id || "—";
+      const startO = t.start_odometer ?? t.startOdo;
+      const endO   = t.end_odometer ?? t.endOdo;
+      const miles  = (t.miles != null) ? t.miles : calcMiles(startO, endO);
+      const dateLabel = (t.start_at || t.startAt) ? new Date(t.start_at || t.startAt).toLocaleDateString() : "";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${dateLabel}</td>
+        <td>${escapeHtml(vname)}</td>
+        <td>${startO ?? "—"}</td>
+        <td>${endO ?? "—"}</td>
+        <td>${(miles==null) ? "—" : miles}</td>
+        <td class="muted">${escapeHtml(t.purpose || "personal")}</td>
+      `;
+      tb.appendChild(tr);
+    }
+  }
+
+  function populateMileageVehicles(){
+    const sel = document.getElementById("mileageVehicle");
+    if(!sel) return;
+    sel.innerHTML = "";
+    const list = (VEHICLES||[]);
+    if(!list.length){
+      sel.innerHTML = '<option value="">No vehicles</option>';
+      return;
+    }
+    for(const v of list){
+      const opt = document.createElement("option");
+      opt.value = String(v.id);
+      opt.textContent = v.name || v.id;
+      sel.appendChild(opt);
+    }
+  }
+
+  async function mileageRefreshForSelected(){
+    const sel = document.getElementById("mileageVehicle");
+    if(!sel) return;
+    const v = getVehicleByKey(sel.value);
+    if(!v) return;
+    const ctx = getTripKeyForVehicle(v);
+
+    const db = await vhDb();
+    if(ctx.mode === "db" && db){
+      const active = await dbLoadActiveTrip(db, ctx);
+      renderActiveTrip(active, "DB");
+      const trips = await dbLoadRecentTrips(db, ctx);
+      renderTripsTable(trips);
+    } else {
+      const active = localLoadActiveTrip(ctx);
+      renderActiveTrip(active, "Local");
+      const trips = localLoadTrips(ctx);
+      renderTripsTable(trips);
+    }
+  }
+
+  async function mileageStart(){
+    const sel = document.getElementById("mileageVehicle");
+    const startOdo = document.getElementById("startOdo");
+    if(!sel || !startOdo) return;
+
+    const v = getVehicleByKey(sel.value);
+    if(!v) return alert("Select a vehicle first.");
+    const ctx = getTripKeyForVehicle(v);
+    const purpose = tripPurposeGet();
+
+    const startVal = Number(startOdo.value || "");
+    if(!isFinite(startVal) || startVal <= 0){
+      return alert("Enter a valid Start Odometer.");
+    }
+
+    const nowIso = new Date().toISOString();
+
+    const db = await vhDb();
+    if(ctx.mode === "db"){
+      if(!db) return alert("Login required to save trips to your account.");
+      const uid = await dbGetUserId(db);
+      if(!uid) return alert("Login required.");
+      const { error } = await db.from("vehicle_trips").insert({
+        user_id: uid,
+        vehicle_id: ctx.vehicle_id,
+        start_at: nowIso,
+        start_odometer: startVal,
+        purpose
+      });
+      if(error){ console.warn("[mileage] start error", error); return alert("Could not start trip. Check console."); }
+    } else {
+      const active = localLoadActiveTrip(ctx);
+      if(active) return alert("You already have an active trip for this vehicle. End it first.");
+      localSaveActiveTrip(ctx, { id: "local_"+Date.now(), startAt: nowIso, startOdo: startVal, purpose, local_vehicle_id: ctx.local_vehicle_id });
+    }
+
+    document.getElementById("endOdo").value = "";
+    await mileageRefreshForSelected();
+  }
+
+  async function mileageEnd(){
+    const sel = document.getElementById("mileageVehicle");
+    const endOdo = document.getElementById("endOdo");
+    if(!sel || !endOdo) return;
+
+    const v = getVehicleByKey(sel.value);
+    if(!v) return alert("Select a vehicle first.");
+    const ctx = getTripKeyForVehicle(v);
+
+    const endVal = Number(endOdo.value || "");
+    if(!isFinite(endVal) || endVal <= 0){
+      return alert("Enter a valid End Odometer.");
+    }
+
+    const nowIso = new Date().toISOString();
+    const db = await vhDb();
+
+    if(ctx.mode === "db"){
+      if(!db) return alert("Login required.");
+      const active = await dbLoadActiveTrip(db, ctx);
+      if(!active) return alert("No active trip found for this vehicle.");
+      const miles = calcMiles(active.start_odometer, endVal);
+      const { error } = await db.from("vehicle_trips")
+        .update({ end_at: nowIso, end_odometer: endVal })
+        .eq("id", active.id);
+      if(error){ console.warn("[mileage] end error", error); return alert("Could not end trip. Check console."); }
+    } else {
+      const active = localLoadActiveTrip(ctx);
+      if(!active) return alert("No active trip found for this vehicle.");
+      const trip = {
+        ...active,
+        endAt: nowIso,
+        endOdo: endVal,
+        miles: calcMiles(active.startOdo, endVal)
+      };
+      localClearActiveTrip(ctx);
+      const trips = localLoadTrips(ctx);
+      trips.unshift(trip);
+      localSaveTrips(ctx, trips.slice(0, 60));
+    }
+
+    await mileageRefreshForSelected();
+  }
+
+  async function mileageExportCSV(){
+    const sel = document.getElementById("mileageVehicle");
+    const v = sel ? getVehicleByKey(sel.value) : null;
+    const ctx = v ? getTripKeyForVehicle(v) : null;
+
+    const db = await vhDb();
+    let trips = [];
+    if(ctx && ctx.mode === "db" && db){
+      trips = await dbLoadRecentTrips(db, ctx);
+    } else if(ctx){
+      trips = localLoadTrips(ctx);
+    }
+
+    let csv = "Date,Vehicle,Start Odometer,End Odometer,Miles,Purpose\n";
+    for(const t of (trips||[])){
+      const vname = (ctx && v) ? (v.name || v.id) : (t.vehicle_name || t.vehicle_id || t.local_vehicle_id || "");
+      const dateVal = (t.start_at || t.startAt) ? new Date(t.start_at || t.startAt).toLocaleDateString() : "";
+      const s = t.start_odometer ?? t.startOdo ?? "";
+      const e = t.end_odometer ?? t.endOdo ?? "";
+      const m = (t.miles != null) ? t.miles : calcMiles(s, e) ?? "";
+      csv += `"${dateVal}","${String(vname).replace(/"/g,'""')}","${s}","${e}","${m}","${(t.purpose||"").replace(/"/g,'""')}"\n`;
+    }
+    const blob = new Blob([csv], {type:"text/csv"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "vehicle_trips.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function mileageWireUI(){
+    const sel = document.getElementById("mileageVehicle");
+    if(sel){
+      sel.addEventListener("change", () => mileageRefreshForSelected());
+    }
+    document.getElementById("btnStartDrive")?.addEventListener("click", (e)=>{ e.preventDefault(); mileageStart(); });
+    document.getElementById("btnEndDrive")?.addEventListener("click", (e)=>{ e.preventDefault(); mileageEnd(); });
+    document.getElementById("btnExportTrips")?.addEventListener("click", (e)=>{ e.preventDefault(); mileageExportCSV(); });
+
+    document.getElementById("tripPurposePersonal")?.addEventListener("click", ()=>setTripPurpose("personal"));
+    document.getElementById("tripPurposeBusiness")?.addEventListener("click", ()=>setTripPurpose("business"));
+
+    // default
+    setTripPurpose("personal");
+  }
+
+
+// ----- Init -----
+async function initWhenReady(){
+  let tries = 0;
+  while (!currentUser && tries < 20) {
+    await new Promise(r => setTimeout(r, 100));
+    tries++;
+  }
+
+  VEHICLES  = await api.listVehicles();
+  populateMileageVehicles();
+  mileageWireUI();
+  await mileageRefreshForSelected();
+  REMINDERS = await api.listReminders();
+  TOLLS     = readLS(LS.TOLLS, []);
+
+  if (VIEW === 'business') state.usage = 'business';
+  if (VIEW_ENTITY) state.entity = VIEW_ENTITY;
+
+  renderFilters();
+  renderVehicles();
+  renderReminders();
+  updateStats();
+}
+
+initWhenReady();
+
+
+
+// ===== Toll Tag (vehicle_transponders) =====
+async function loadTollTagForVehicle(vehicleId){
+  try{
+    const client = await getClient();
+    if(!client || !vehicleId) return;
+
+    const { data: userRes } = await client.auth.getUser();
+    const uid = userRes?.user?.id;
+    if(!uid) return;
+
+    const { data, error } = await client
+      .from("vehicle_transponders")
+      .select("*")
+      .eq("user_id", uid)
+      .eq("vehicle_id", vehicleId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if(error){ console.warn("loadTollTagForVehicle error", error); return; }
+
+    const row = (data && data[0]) ? data[0] : null;
+    document.getElementById("toll_provider").value = row?.provider || "";
+    document.getElementById("toll_tag_number").value = row?.tag_number || "";
+    document.getElementById("toll_account_last4").value = row?.account_last4 || "";
+    document.getElementById("toll_auto_reload").value = String(!!row?.auto_reload);
+    document.getElementById("toll_reload_amount").value = (row?.reload_amount ?? "") === null ? "" : String(row?.reload_amount ?? "");
+    document.getElementById("toll_notes").value = row?.notes || "";
+  }catch(e){
+    console.warn("loadTollTagForVehicle exception", e);
+  }
+}
+
+async function saveTollTagForVehicle(vehicleId){
+  const client = await getClient();
+  if(!client) return alert("Supabase not ready");
+
+  const { data: userRes } = await client.auth.getUser();
+  const uid = userRes?.user?.id;
+  if(!uid) return alert("Please login first");
+
+  const provider = (document.getElementById("toll_provider").value || "").trim();
+  const tag_number = (document.getElementById("toll_tag_number").value || "").trim();
+  const account_last4 = (document.getElementById("toll_account_last4").value || "").trim();
+  const auto_reload = (document.getElementById("toll_auto_reload").value === "true");
+  const reload_amount_raw = (document.getElementById("toll_reload_amount").value || "").trim();
+  const reload_amount = reload_amount_raw ? Number(reload_amount_raw) : null;
+  const notes = (document.getElementById("toll_notes").value || "").trim();
+
+  if(!vehicleId) return alert("Select a vehicle first");
+  if(!provider && !tag_number){
+    return alert("Please enter at least Provider or Tag #");
+  }
+  if(account_last4 && !/^\d{4}$/.test(account_last4)){
+    return alert("Account last 4 must be exactly 4 digits (or blank).");
+  }
+  if(reload_amount_raw && (Number.isNaN(reload_amount) || reload_amount < 0)){
+    return alert("Reload amount must be a valid number.");
+  }
+
+  const payload = {
+    user_id: uid,
+    vehicle_id: vehicleId,
+    provider,
+    tag_number,
+    account_last4: account_last4 || null,
+    auto_reload,
+    reload_amount,
+    notes: notes || null
+  };
+
+  const { error } = await client
+    .from("vehicle_transponders")
+    .upsert(payload, { onConflict: "user_id,vehicle_id" });
+
+  if(error){
+    console.warn("saveTollTagForVehicle error", error);
+    return alert("Could not save toll tag. Check console.");
+  }
+
+  alert("Saved ✅");
+}
+
+document.addEventListener("click", (e) => {
+  if(e.target && e.target.id === "btnSaveTollTag"){
+    const vid = window.__GS_SELECTED_VEHICLE_ID || null;
+    saveTollTagForVehicle(vid);
+  }
+});
+
+function __gsSetSelectedVehicle(vehicleId){
+  __gsSetSelectedVehicle(vehicleId);
+  loadTollTagForVehicle(vehicleId);
+}
+// ===== /Toll Tag =====
+</script>
+
+
+<!-- ============================
+     Vehicle Hub Drawer (v1)
+     ============================ -->
+<div class="modal" id="vhModal" aria-hidden="true">
+  <div class="modal-backdrop" data-close="vh"></div>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-label="Vehicle Hub">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="vhTitle">🚗 Vehicle Hub</div>
+        <div class="modal-sub" id="vhSub">Insurance • Registration • Expenses • Documents • Loans</div>
+      </div>
+      <button class="btn ghost small" data-close="vh">✖ Close</button>
+    </div>
+
+    <div class="modal-tabs" role="tablist">
+      <button class="tab active" data-tab="profile" type="button">📋 Profile</button>
+      <button class="tab" data-tab="insurance" type="button">🛡️ Insurance</button>
+      <button class="tab" data-tab="registration" type="button">🪪 Registration</button>
+      <button class="tab" data-tab="expenses" type="button">💰 Expenses</button>
+      <button class="tab" data-tab="docs" type="button">📎 Documents</button>
+      <button class="tab" data-tab="loans" type="button">💳 Loans</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Profile -->
+      <section class="vh-panel" data-panel="profile">
+        <div class="vh-grid2">
+          <div class="vh-card">
+            <h4>Vehicle Details</h4>
+            <div class="vh-kv" id="vhProfileKv"></div>
+            <div class="meta" id="vhQuickPeek"></div>
+          </div>
+          <div class="vh-card">
+            <h4>Quick Actions</h4>
+            <div class="row">
+              <button class="btn green small" id="vhLogOdo">➕ Log Odometer</button>
+              <button class="btn ghost small" id="vhAddService">📎 Add Service</button>
+              <button class="btn ghost small" id="vhEditVehicle">✏️ Edit Vehicle</button>
+            </div>
+            <div class="hint" style="margin-top:10px">
+              Email Genie can auto-update renewals when you forward insurance/registration emails.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Insurance -->
+      <section class="vh-panel" data-panel="insurance" hidden>
+        <div class="vh-headrow">
+          <div class="meta">Active policy + history per vehicle.</div>
+          <button class="btn primary small" id="btnAddPolicy">➕ Add / Update Policy</button>
+        </div>
+        <div class="vh-card">
+          <div id="vhInsuranceList" class="vh-list">Loading…</div>
+        </div>
+      </section>
+
+      <!-- Registration -->
+      <section class="vh-panel" data-panel="registration" hidden>
+        <div class="vh-headrow">
+          <div class="meta">Track annual plate/registration renewals.</div>
+          <button class="btn primary small" id="btnAddReg">➕ Add / Update Registration</button>
+        </div>
+        <div class="vh-card">
+          <div id="vhRegList" class="vh-list">Loading…</div>
+        </div>
+      </section>
+
+      <!-- Expenses -->
+      <section class="vh-panel" data-panel="expenses" hidden>
+        <div class="vh-headrow">
+          <div class="meta">Fuel • Maintenance • Repairs • Fees</div>
+          <button class="btn primary small" id="btnAddExpense">➕ Add Expense</button>
+        </div>
+        <div class="vh-card">
+          <div id="vhExpenseList" class="vh-list">Loading…</div>
+        </div>
+      </section>
+
+      <!-- Loans -->
+      <section class="vh-panel" data-panel="loans" hidden>
+        <div class="vh-headrow">
+          <div class="meta">One loan per vehicle • track balance + payment history.</div>
+          <div class="row">
+            <button class="btn primary small" id="btnLoanEdit">✏️ Add / Update Loan</button>
+            <button class="btn ghost small" id="btnLoanPay">➕ Add Payment</button>
+            <button class="btn ghost small" id="btnLoanExport">⬇️ Export CSV</button>
+          </div>
+        </div>
+        <div class="vh-card">
+          <div id="vhLoanSummary" class="vh-list">Loading…</div>
+        </div>
+        <div class="vh-card">
+          <div class="vh-headrow">
+            <div class="meta">Recent payments</div>
+          </div>
+          <div id="vhLoanPayments" class="vh-list">—</div>
+          <div class="vh-footlink">
+            <a id="vhLoanFullPageLink" class="btn ghost small" href="#" rel="noopener">🔎 Open full loan page →</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Docs -->
+      <section class="vh-panel" data-panel="docs" hidden>
+        <div class="vh-headrow">
+          <div class="meta">Upload insurance cards, registration receipts, invoices.</div>
+          <label class="btn primary small" style="cursor:pointer">
+            ⬆️ Upload Document
+            <input id="vhUpload" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden />
+          </label>
+        </div>
+        <div class="vh-card">
+          <div id="vhDocList" class="vh-list">Loading…</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── User menu — standard across all pages ── */
+(function(){
+  var wrap=document.getElementById('user-menu');
+  var toggle=document.getElementById('user-menu-toggle');
+  var menu=document.getElementById('user-menu-dropdown');
+  if(!wrap||!toggle||!menu)return;
+  function openMenu(){wrap.classList.add('open');toggle.setAttribute('aria-expanded','true');menu.setAttribute('aria-hidden','false');}
+  function closeMenu(){wrap.classList.remove('open');toggle.setAttribute('aria-expanded','false');menu.setAttribute('aria-hidden','true');}
+  closeMenu();
+  toggle.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();wrap.classList.contains('open')?closeMenu():openMenu();});
+  document.addEventListener('click',function(e){if(wrap&&!wrap.contains(e.target))closeMenu();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu();});
+  menu.querySelectorAll('.dropdown-nav[data-target]').forEach(function(btn){
+    btn.addEventListener('click',function(){var t=btn.getAttribute('data-target');closeMenu();if(t)window.location.href=t;});
+  });
+  var authBtn=document.getElementById('user-auth-action');
+  if(authBtn)authBtn.addEventListener('click',function(){closeMenu();window.location.href='/onboarding/login.html';});
+  var signoutBtn=document.getElementById('user-signout-btn');
+  if(signoutBtn)signoutBtn.addEventListener('click',function(){
+    closeMenu();
+    try{if(window.GSClient)window.GSClient.getAsync().then(function(c){c.auth.signOut();});}catch(e){}
+    setTimeout(function(){window.location.href='/index.html';},300);
+  });
+
+  /* Default state: logged out */
+  if(authBtn) authBtn.style.display='flex';
+  if(signoutBtn) signoutBtn.style.display='none';
+
+  (function syncDropdownAuth(){
+    var attempts=0;
+    var maxAttempts=25;
+
+    function applyLoggedIn(user){
+      var meta=user.user_metadata||{};
+      var fullName=(meta.full_name||meta.name||'').trim();
+      var displayName=(meta.display_name||fullName||user.email||'').split(/\s+/)[0]||'';
+      var lbl=document.getElementById('user-name-label');
+      if(lbl&&(lbl.textContent==='Log in'||!lbl.textContent))lbl.textContent=displayName||'Account';
+      var dn=document.getElementById('dropdown-fullname');
+      var de=document.getElementById('dropdown-email');
+      if(dn) dn.textContent=fullName||displayName||user.email||'';
+      if(de) de.textContent=user.email||'';
+      if(authBtn) authBtn.style.display='none';
+      var identityEl=document.getElementById('dropdown-identity');
+      if(identityEl) identityEl.style.display='block';
+      if(signoutBtn) signoutBtn.style.display='flex';
+    }
+
+    function trySync(){
+      attempts++;
+      if(window.GSClient&&typeof window.GSClient.getAsync==='function'){
+        window.GSClient.getAsync().then(function(c){
+          return c.auth.getSession();
+        }).then(function(r){
+          var user=r&&r.data&&r.data.session&&r.data.session.user;
+          if(user) applyLoggedIn(user);
+        }).catch(function(){});
+        return;
+      }
+      var lbl=document.getElementById('user-name-label');
+      if(lbl&&lbl.textContent&&lbl.textContent!=='Log in'&&lbl.textContent!=='Account'){
+        if(authBtn) authBtn.style.display='none';
+        if(signoutBtn) signoutBtn.style.display='flex';
+        return;
+      }
+      if(attempts<maxAttempts) setTimeout(trySync,200);
+    }
+
+    setTimeout(trySync,100);
+  })();
+})();
+</script>
+</body>
+</html>

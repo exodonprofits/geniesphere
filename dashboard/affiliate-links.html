@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affiliate Links Manager</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabase = window.supabase.createClient('https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+  </script>
+  <script src="../auth-guard.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      height: 100vh;
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      z-index: 50;
+      transition: right 0.3s ease-in-out;
+      box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    }
+    .sidebar.open {
+      right: 0;
+    }
+  </style>
+</head>
+<body class="p-4 max-w-6xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">🔗 Affiliate Links Manager</h1>
+  </div>
+
+  <div id="linksGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"></div>
+
+  <div class="text-center space-y-4">
+    <button onclick="openSidebar('add')" class="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition">➕ Add Link</button>
+    <div>
+      <a href="admin_dashboard.html" class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">⬅️ Back</a>
+    </div>
+  </div>
+
+  <!-- Sidebar Form -->
+  <div id="sidebar" class="sidebar p-6 overflow-y-auto">
+    <h2 id="formTitle" class="text-xl font-bold mb-4">Add New Link</h2>
+    <form id="affiliateForm" class="space-y-4">
+      <input id="linkId" type="hidden">
+      <input id="name" placeholder="🔤 Name" class="w-full border rounded px-3 py-2" required>
+      <input id="category" placeholder="📁 Category" class="w-full border rounded px-3 py-2" required>
+      <input id="url" placeholder="🔗 URL" class="w-full border rounded px-3 py-2" required>
+      <input id="agent_scope" placeholder="📌 Agent Scope (optional)" class="w-full border rounded px-3 py-2">
+      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-full">💾 Save</button>
+      <button type="button" onclick="closeSidebar()" class="text-gray-600 ml-4">Cancel</button>
+    </form>
+  </div>
+
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const form = document.getElementById('affiliateForm');
+    const formTitle = document.getElementById('formTitle');
+    const linksGrid = document.getElementById('linksGrid');
+
+    function openSidebar(mode, link = {}) {
+      sidebar.classList.add('open');
+      formTitle.textContent = mode === 'edit' ? 'Edit Link' : 'Add New Link';
+      document.getElementById('linkId').value = link.id || '';
+      document.getElementById('name').value = link.name || '';
+      document.getElementById('category').value = link.category || '';
+      document.getElementById('url').value = link.url || '';
+      document.getElementById('agent_scope').value = link.agent_scope || '';
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      form.reset();
+    }
+
+    async function loadLinks() {
+      const { data, error } = await supabase.from('affiliate_links').select('*').order('created_at', { ascending: false });
+      if (error) return alert("Failed to load links");
+
+      linksGrid.innerHTML = '';
+      data.forEach(link => {
+        const card = document.createElement('div');
+        card.className = 'border rounded-lg p-4 shadow-sm';
+        card.innerHTML = `
+          <div class="font-semibold text-lg">${link.name}</div>
+          <div class="text-sm text-gray-500">📁 ${link.category} | 🔗 <a href="${link.url}" target="_blank" class="underline text-blue-600">Visit</a></div>
+          <div class="mt-2 flex gap-4 text-lg">
+            <button onclick='openSidebar("edit", ${JSON.stringify(link)})'>✏️</button>
+            <button onclick='deleteLink(${link.id})'>🗑️</button>
+          </div>
+        `;
+        linksGrid.appendChild(card);
+      });
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("linkId").value;
+      const name = document.getElementById("name").value;
+      const category = document.getElementById("category").value;
+      const url = document.getElementById("url").value;
+      const agent_scope = document.getElementById("agent_scope").value;
+
+      let result;
+      if (id) {
+        result = await supabase.from('affiliate_links').update({ name, category, url, agent_scope }).eq('id', id);
+      } else {
+        result = await supabase.from('affiliate_links').insert([{ name, category, url, agent_scope, active: true }]);
+      }
+
+      if (result.error) return alert("Save failed: " + result.error.message);
+
+      closeSidebar();
+      loadLinks();
+    });
+
+    async function deleteLink(id) {
+      if (!confirm("Delete this link?")) return;
+      const { error } = await supabase.from('affiliate_links').delete().eq('id', id);
+      if (error) return alert("Delete failed: " + error.message);
+      loadLinks();
+    }
+
+    loadLinks();
+  </script>
+</body>
+</html>

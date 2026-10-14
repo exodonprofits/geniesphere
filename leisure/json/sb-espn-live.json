@@ -1,0 +1,104 @@
+{
+  "name": "GenieSphere - ESPN Games + Live (CORS Enabled)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "sb-espn-games",
+        "httpMethod": "GET"
+      },
+      "name": "Webhook Games GET",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 120]
+    },
+    {
+      "parameters": {
+        "path": "sb-espn-games",
+        "httpMethod": "OPTIONS"
+      },
+      "name": "Webhook Games OPTIONS",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 260]
+    },
+    {
+      "parameters": {
+        "path": "sb-espn-live",
+        "httpMethod": "GET"
+      },
+      "name": "Webhook Live GET",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 420]
+    },
+    {
+      "parameters": {
+        "path": "sb-espn-live",
+        "httpMethod": "OPTIONS"
+      },
+      "name": "Webhook Live OPTIONS",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 560]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard",
+        "options": { "timeout": 20000 }
+      },
+      "name": "Fetch ESPN",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 260]
+    },
+    {
+      "parameters": {
+        "jsCode": "const events = $json.events || [];\n\nfunction mapGame(e){\n  const c = e.competitions?.[0];\n  const home = c?.competitors?.find(x=>x.homeAway==='home');\n  const away = c?.competitors?.find(x=>x.homeAway==='away');\n  return {\n    eventId: e.id,\n    homeTeam: home?.team?.displayName,\n    awayTeam: away?.team?.displayName,\n    startTime: e.date,\n    status: e.status?.type?.state\n  };\n}\n\nreturn [{ games: events.map(mapGame) }];"
+      },
+      "name": "Parse Games",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $json.query || {};\nconst wanted = q.eventId;\nconst events = $items('Fetch ESPN')[0].json.events || [];\nlet g = wanted ? events.find(e=>e.id===wanted) : events[0];\nif(!g) return [{}];\nconst c = g.competitions?.[0];\nconst home = c?.competitors?.find(x=>x.homeAway==='home');\nconst away = c?.competitors?.find(x=>x.homeAway==='away');\nreturn [{\n  leftTeam: home?.team?.displayName,\n  topTeam: away?.team?.displayName,\n  leftScore: Number(home?.score||0),\n  topScore: Number(away?.score||0),\n  quarter: g.status?.period,\n  clock: g.status?.displayClock,\n  status: g.status?.type?.state\n}];"
+      },
+      "name": "Parse Live",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 420]
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseHeaders": {
+          "entries": [
+            { "name": "Access-Control-Allow-Origin", "value": "*" },
+            { "name": "Access-Control-Allow-Methods", "value": "GET,OPTIONS" },
+            { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+          ]
+        }
+      },
+      "name": "Respond CORS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1040, 260]
+    }
+  ],
+  "connections": {
+    "Webhook Games GET": { "main": [[{ "node": "Fetch ESPN", "type": "main" }]] },
+    "Webhook Live GET": { "main": [[{ "node": "Fetch ESPN", "type": "main" }]] },
+    "Fetch ESPN": {
+      "main": [
+        [{ "node": "Parse Games", "type": "main" }],
+        [{ "node": "Parse Live", "type": "main" }]
+      ]
+    },
+    "Parse Games": { "main": [[{ "node": "Respond CORS", "type": "main" }]] },
+    "Parse Live": { "main": [[{ "node": "Respond CORS", "type": "main" }]] },
+    "Webhook Games OPTIONS": { "main": [[{ "node": "Respond CORS", "type": "main" }]] },
+    "Webhook Live OPTIONS": { "main": [[{ "node": "Respond CORS", "type": "main" }]] }
+  }
+}

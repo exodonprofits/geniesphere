@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>🎁 Card Rewards | GenieSphere</title>
+  <meta name="description" content="Track credit card rewards, utilization, and best card by category — in one clean view.">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121a2b;
+      --text:#e9f0ff;
+      --muted:#a9b6d9;
+      --accent:#3ee1a1;
+      --brand-blue:#4c6ef5;
+      --ring:rgba(62,225,161,.35);
+      --border-subtle:rgba(148,163,184,.3);
+      --danger:#f97373;
+      --danger-soft:rgba(248,113,113,.12);
+      --radius:7px;
+      --radius-lg:18px;
+      --radius-pill:999px;
+      --shadow-soft:0 18px 45px rgba(15,23,42,.9);
+      --shadow-subtle:0 10px 30px rgba(15,23,42,.7);
+      --input-bg:#020617;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:#0a0f1b;
+      color:var(--text);
+      font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+    }
+    a{color:inherit;text-decoration:none}
+
+    .site-header{
+      position:sticky; top:0; z-index:1000;
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+      border-bottom:1px solid rgba(120,155,255,.15);
+      box-shadow:0 8px 22px rgba(0,0,0,.25);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+    .site-header-inner{
+      max-width:1440px;
+      margin:0 auto;
+      padding:16px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{display:flex;align-items:center;gap:10px;color:var(--text);font-weight:700}
+    .logo{
+      width:44px;height:44px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+      box-shadow:0 0 0 3px var(--ring),0 8px 24px rgba(62,225,161,.35);
+      object-fit:cover;
+    }
+    .menu{
+      display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px;
+    }
+    .menu a{
+      display:inline-flex;align-items:center;gap:6px;padding:4px 2px;
+      color:var(--muted);font-weight:500;border-bottom:2px solid transparent;
+      transition:color .15s ease, border-bottom-color .15s ease;
+    }
+    .menu a:hover{color:var(--text);border-bottom-color:var(--brand-blue)}
+    .menu a.active{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+
+    .user-menu{position:relative;display:flex;align-items:center;margin-left:auto}
+    .user-menu-toggle{
+      display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(120,155,255,.35);background:#0e1626;color:var(--text);
+      font-size:14px;cursor:pointer;
+    }
+    .user-menu-toggle:hover{border-color:var(--accent)}
+    .user-menu-dropdown{
+      position:absolute;right:0;top:calc(100% + 6px);
+      min-width:180px;background:#0e1626;border-radius:var(--radius);
+      border:1px solid rgba(120,155,255,.25);
+      box-shadow:0 14px 34px rgba(0,0,0,.55);
+      padding:6px 0;display:none;z-index:1002;
+    }
+    .user-menu-dropdown a,.user-menu-dropdown button{
+      display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;
+      color:var(--text);font-size:14px;cursor:pointer;
+    }
+    .user-menu-dropdown a:hover,.user-menu-dropdown button:hover{background:#121a2b}
+    .user-menu-divider{height:1px;margin:4px 0;background:rgba(148,163,184,.4)}
+    .dropdown-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.7;padding:4px 12px 2px}
+
+    .hamburger{
+      display:none;border:1px solid rgba(120,155,255,.25);background:#0e1626;color:var(--text);
+      border-radius:8px;padding:8px 10px;cursor:pointer;
+    }
+    .drawer{
+      position:fixed; inset:60px 12px auto 12px;
+      background:#0e1626;border:1px solid rgba(120,155,255,.2);
+      border-radius:var(--radius); padding:10px; display:none; z-index:1001;
+      box-shadow:0 18px 34px rgba(0,0,0,.45);
+    }
+    .drawer a{
+      display:block;margin:6px 0;padding:10px 12px;border-radius:var(--radius);
+      color:var(--text);background:#121a2b;border:1px solid rgba(120,155,255,.15);
+    }
+    .drawer a.active{background:#18233a;border-color:rgba(62,225,161,.35)}
+
+    @media(max-width:720px){
+      .menu{display:none}
+      .hamburger{display:inline-flex}
+      .site-header-inner{padding:10px 12px}
+      .user-menu-toggle{padding-inline:10px}
+    }
+
+    main{
+      max-width:1440px;
+      margin:18px auto 32px;
+      padding:0 16px 32px;
+    }
+
+    .page-header{
+      display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:flex-start;
+      margin-bottom:12px;
+    }
+    .page-title{display:flex;flex-direction:column;gap:6px}
+    .page-title h1{font-size:26px;margin:0;letter-spacing:.01em}
+    .page-title p{margin:0;font-size:14px;color:var(--muted);max-width:1000px}
+    .pill-label{
+      display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:var(--radius-pill);
+      border:1px solid rgba(148, 163, 184, 0.35);
+      font-size:12px;color:var(--muted);background:rgba(15, 23, 42, 0.9);
+    }
+    .actions-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+    .btn{
+      border:none;outline:none;cursor:pointer;border-radius:var(--radius-pill);
+      padding:8px 14px;font-size:14px;display:inline-flex;align-items:center;gap:6px;
+      background:#1e293b;color:var(--text);border:1px solid rgba(148, 163, 184, 0.35);
+      transition:background .18s ease, transform .12s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .btn:hover{border-color:rgba(62,225,161,.45)}
+    .btn.primary{
+      background:linear-gradient(135deg,#22c55e,#16a34a);
+      border-color:rgba(34,197,94,.7);
+      box-shadow:0 12px 30px rgba(34,197,94,.25);
+    }
+    .btn.primary:hover{transform:translateY(-1px);box-shadow:0 16px 40px rgba(34,197,94,.35)}
+    .btn.ghost{background:transparent;border-style:dashed}
+    .btn.small{padding:5px 11px;font-size:13px}
+
+    .hub-tabs{
+      display:flex;flex-wrap:wrap;gap:8px;
+      margin:10px 0 14px;
+    }
+    .hub-tab{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;border-radius:999px;
+      border:1px solid rgba(148,163,184,.35);
+      background:rgba(15,23,42,.75);
+      color:var(--muted);
+      font-size:13px;
+      transition:transform .12s ease, border-color .18s ease, color .18s ease, background .18s ease;
+      white-space:nowrap;
+    }
+    .hub-tab:hover{border-color:rgba(76,110,245,.55);color:var(--text)}
+    .hub-tab.active{
+      background:linear-gradient(135deg, rgba(62,225,161,.18), rgba(76,110,245,.14));
+      border-color:rgba(62,225,161,.55);
+      color:var(--text);
+      box-shadow:0 10px 22px rgba(0,0,0,.25);
+    }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:12px;
+      align-items:start;
+    }
+    @media(max-width:980px){
+      .grid-2{grid-template-columns:1fr}
+    }
+
+    .panel{
+      background:rgba(15,23,42,.9);
+      border-radius:var(--radius-lg);
+      border:1px solid var(--border-subtle);
+      box-shadow:var(--shadow-soft);
+      padding:12px;
+    }
+    .panel h2{margin:0 0 8px;font-size:15px;letter-spacing:.01em}
+    .muted{color:var(--muted)}
+    .small{font-size:13px}
+
+    .summary-row{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap:12px;
+      margin-bottom:12px;
+    }
+    @media(max-width:980px){
+      .summary-row{grid-template-columns: repeat(2, minmax(0,1fr))}
+    }
+    .summary-card{
+      background: radial-gradient(circle at top left, #1f2937 0, #020617 70%);
+      border-radius:var(--radius-lg);
+      padding:10px 12px;
+      border:1px solid var(--border-subtle);
+      box-shadow:var(--shadow-subtle);
+      display:flex;flex-direction:column;gap:6px;
+      min-height:92px;
+    }
+    .summary-label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+    .summary-value{font-size:18px;font-weight:650}
+    .summary-foot{
+      font-size:12px;color:var(--muted);
+      display:flex;justify-content:space-between;align-items:center;gap:6px;
+    }
+    .chip{
+      display:inline-flex;padding:3px 9px;border-radius:var(--radius-pill);
+      font-size:11px;border:1px solid rgba(148,163,184,.6);
+      color:var(--muted);background:rgba(15,23,42,.9);
+    }
+    .chip.good{border-color:rgba(45,212,191,.8);color:#6ee7b7;background:rgba(22,163,74,.15)}
+    .chip.warn{border-color:rgba(244,63,94,.9);color:#fb7185;background:var(--danger-soft)}
+
+    .filter-bar{
+      background:rgba(15,23,42,.86);
+      border-radius:var(--radius-lg);
+      border:1px solid var(--border-subtle);
+      padding:10px;
+      display:flex;flex-wrap:wrap;gap:10px;
+      align-items:center;justify-content:space-between;
+      margin-bottom:12px;
+    }
+    .filter-group{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .filter-label{font-size:12px;color:var(--muted)}
+    .select, input[type="date"], input[type="text"], input[type="number"]{
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.4);
+      background:var(--input-bg);
+      padding:7px 10px;
+      font-size:13px;
+      color:var(--text);
+      outline:none;
+    }
+    input::placeholder{color:var(--muted)}
+    .segmented{
+      display:inline-flex;padding:2px;border-radius:999px;
+      background:rgba(15,23,42,.9);
+      border:1px solid rgba(148,163,184,.4);
+    }
+    .segmented button{
+      border:none;background:transparent;padding:5px 10px;font-size:12px;border-radius:999px;
+      color:var(--muted);cursor:pointer;transition:background .15s ease,color .15s ease;
+      white-space:nowrap;
+    }
+    .segmented button.active{
+      background:linear-gradient(135deg, rgba(56,189,248,.2), rgba(129,140,248,.2));
+      color:var(--text);
+    }
+
+    .tiles{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:10px;
+      margin-top:8px;
+    }
+    @media(max-width:980px){.tiles{grid-template-columns: repeat(2, minmax(0,1fr))}}
+    .tile{
+      border-radius:16px;
+      border:1px solid rgba(148,163,184,.25);
+      background:linear-gradient(180deg, rgba(18,26,43,.9), rgba(2,6,23,.92));
+      padding:10px;
+      box-shadow:0 12px 28px rgba(0,0,0,.35);
+      display:flex;flex-direction:column;gap:6px;min-height:92px;
+    }
+    .tile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .tile-cat{font-weight:700;font-size:14px;line-height:1.15}
+    .tile-rate{font-size:12px;color:var(--muted)}
+    .tile-card{font-size:12.5px;color:var(--text);opacity:.95;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .pill{display:inline-flex;padding:3px 8px;border-radius:999px;font-size:11px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.8);color:var(--muted)}
+    .pill.best{border-color:rgba(62,225,161,.5);color:#6ee7b7;background:rgba(22,163,74,.12)}
+
+    .list{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+    .row{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      border:1px solid rgba(148,163,184,.22);
+      background:rgba(2,6,23,.65);
+      padding:10px 10px;border-radius:14px;
+    }
+    .row strong{font-size:13px}
+    .row .meta{font-size:12px;color:var(--muted)}
+    .row .right{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;justify-content:flex-end;text-align:right}
+    .kpi{font-weight:700}
+    .kpi.good{color:#6ee7b7}
+    .kpi.warn{color:#fb7185}
+
+    .empty{
+      padding:10px;
+      border:1px dashed rgba(148,163,184,.35);
+      border-radius:14px;
+      color:var(--muted);
+      background:rgba(2,6,23,.6);
+      font-size:13px;
+    }
+
+    .rules-grid{display:grid;grid-template-columns: 1fr 1fr;gap:10px;margin-top:8px}
+    @media(max-width:980px){.rules-grid{grid-template-columns:1fr}}
+    .rule-card{border:1px solid rgba(148,163,184,.22);border-radius:16px;background:rgba(2,6,23,.6);padding:10px}
+    .rule-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+    .rule-head strong{font-size:13px}
+    .rule-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .rule-row{display:grid;grid-template-columns: 1.2fr .8fr;gap:8px;align-items:center;margin-top:8px}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px}
+
+    .site-footer{
+      margin-top:32px;
+      padding:32px 0 28px;
+      border-top:1px solid rgba(120,155,255,.15);
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+    }
+    .site-footer-inner{max-width:1440px;margin:0 auto;padding:0 24px}
+    .footer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 28px;align-items:start}
+    @media(max-width:900px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:560px){.footer-grid{grid-template-columns:1fr}}
+    .footer-col h4{margin:0 0 10px;font-size:14px}
+    .footer-col a{display:block;color:var(--muted);padding:4px 0;font-size:13px}
+    .footer-col a:hover{color:var(--text);text-decoration:underline}
+    .footer-bottom{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+      color:var(--muted);font-size:13px;margin-top:24px;padding-top:14px;
+      border-top:1px solid rgba(120,155,255,.12);text-align:center;
+    }
+    .social{display:flex;gap:16px;justify-content:center;font-size:18px}
+    .container{max-width:1440px;margin:0 auto;padding:24px}
+
+    /* Helpers */
+    .hidden{ display:none !important; }
+    .spacer-10{ height:10px; }
+    .select-plain{ background:transparent; border:0; color:inherit; font-weight:900; outline:none; }
+
+    /* Hub Filters (Workspace + Purpose) */
+    .hub-filters{
+      max-width:1440px;
+      margin: 10px auto 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:center;
+    }
+    .hub-filters[hidden]{ display:none !important; }
+    .filter-row{
+      width:100%;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      justify-content:center;
+      align-items:center;
+    }
+    .filter-row .filter-label{
+      font-size:12px;
+      font-weight:900;
+      color: var(--muted);
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      padding:6px 8px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.25);
+      background: rgba(0,0,0,.04);
+    }
+    .filter-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.35);
+      background:rgba(15,23,42,.75);
+      color:var(--muted);
+      font-size:13px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .12s ease, border-color .18s ease, color .18s ease, background .18s ease;
+      white-space:nowrap;
+    }
+    .filter-pill:hover{ border-color:rgba(76,110,245,.55); color:var(--text); }
+    .filter-pill.active{
+      background:linear-gradient(135deg, rgba(62,225,161,.18), rgba(76,110,245,.14));
+      border-color:rgba(62,225,161,.55);
+      color:var(--text);
+      box-shadow:0 10px 22px rgba(0,0,0,.25);
+    }
+    .filter-pill .count{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:22px;
+      height:22px;
+      padding:0 7px;
+      border-radius:999px;
+      background:rgba(76,110,245,.14);
+      border:1px solid rgba(76,110,245,.30);
+      color:var(--text);
+      font-size:12px;
+      font-weight:900;
+    }
+
+    /* Panel header actions */
+    .panel-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
+    }
+    .panel-head .left{ display:flex; flex-direction:column; gap:6px; }
+    .panel-actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+    .hint-row{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="brand" href="../index.html">
+          <img alt="GenieSphere" class="logo" src="../genie-logo.png"/>
+          <strong>GenieSphere</strong>
+        </a>
+
+        <nav aria-label="Primary" class="menu">
+          <a class="active" href="../dashboard/personal.html">🏡 Personal</a>
+          <a class="ghost" href="../dashboard/business.html">🏢 Business</a>
+          <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+          <a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+        </nav>
+
+        <button aria-expanded="false" aria-label="Open navigation" class="hamburger" id="hamburger">☰</button>
+
+        <div class="user-menu" id="user-menu">
+          <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle">
+            <span id="user-name-label">Log in</span>
+            <span aria-hidden="true">▾</span>
+          </button>
+          <div class="user-menu-dropdown" id="user-menu-dropdown">
+            <div class="dropdown-label">Areas</div>
+            <button class="dropdown-nav" data-target="../dashboard/personal.html" type="button">🏡 Personal</button>
+            <button class="dropdown-nav" data-target="../dashboard/business.html" type="button">🏢 Business</button>
+            <button class="dropdown-nav" data-target="../dashboard/investment.html" type="button">📈 Investment</button>
+            <button class="dropdown-nav" data-target="../dashboard/leisure.html" type="button">🏝️ Leisure</button>
+            <div class="user-menu-divider"></div>
+            <div class="dropdown-label">Account</div>
+            <button class="dropdown-nav" data-target="../onboarding/user_profile_form.html" type="button">👤 User profile</button>
+            <button class="dropdown-nav" data-target="../onboarding/display_settings.html" type="button">⚙️ Settings</button>
+            <div class="user-menu-divider"></div>
+            <button id="user-auth-action" type="button">Log in / Sign up</button>
+            <button class="auth-only" id="user-signout-btn" type="button">Log out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div aria-label="Mobile Navigation" aria-modal="true" class="drawer" id="mobile-drawer" role="dialog">
+      <a class="active" href="../dashboard/personal.html">🏡 Personal</a>
+      <a class="ghost" href="../dashboard/business.html">🏢 Business</a>
+      <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+      <a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+    </div>
+
+    <main>
+      <div class="page-header">
+        <div class="page-title">
+          <!--div class="pill-label">
+            <span>💳 Credit Cards</span><span>·</span><span>Rewards & Insights</span>
+          </div-->
+          <h1>Card Rewards</h1>
+          <p>See spend, estimated rewards, utilization, and the <strong>best card</strong> by category. Start simple now — plug in reward rates per card later for more accuracy.</p>
+        </div>
+
+        <div class="actions-row">
+          <button class="btn ghost small" id="btn-refresh" type="button">🔄 Refresh</button>
+          <button class="btn small ghost" id="btn-export-view" type="button">⬇️ Export view</button>
+          <a class="btn primary" href="./credit-card-optimizer.html">🏷️ Best Card</a>
+        </div>
+      </div>
+
+    <div class="hub-tabs" aria-label="Credit Card Hub Navigation">
+      <a class="hub-tab" href="credit-card-hub.html">🏠 Hub</a>
+      <a class="hub-tab" href="credit-card-tracker.html">💳 Cards</a>
+      <a class="hub-tab" href="credit-card-transactions.html">🧾 Transactions</a>
+      <span class="hub-tab  active">🎁 Rewards</span>
+      <a class="hub-tab" href="credit-card-optimizer.html">🏷️ Best Card</a>
+    </div>
+
+
+    <div class="hub-filters" id="hub-filters" hidden>
+      <div class="filter-row" id="workspace-filter-row" aria-label="Workspace filter">
+        <span class="filter-label">Workspace</span>
+      </div>
+      <div class="filter-row" id="purpose-filter-row" aria-label="Purpose filter">
+        <span class="filter-label">Purpose</span>
+      </div>
+    </div>
+
+
+      <div class="summary-row">
+        <div class="summary-card">
+          <div class="summary-label">Spend (period)</div>
+          <div class="summary-value" id="kpi-spend">$0</div>
+          <div class="summary-foot"><span class="muted">Charges only</span><span class="chip" id="kpi-spend-chip">–</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Estimated rewards</div>
+          <div class="summary-value" id="kpi-rewards">$0</div>
+          <div class="summary-foot"><span class="muted">From your rules</span><span class="chip good" id="kpi-rate-chip">–</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Missed rewards</div>
+          <div class="summary-value" id="kpi-missed">$0</div>
+          <div class="summary-foot"><span class="muted">Used non-best card</span><span class="chip warn" id="kpi-missed-chip">–</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Utilization</div>
+          <div class="summary-value" id="kpi-util">—</div>
+          <div class="summary-foot"><span class="muted">Needs credit limits</span><span class="chip" id="kpi-util-chip">Optional</span></div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <span class="filter-label">Period</span>
+          <div class="segmented" id="seg-period">
+            <button type="button" data-period="month">This month</button>
+            <button type="button" data-period="ytd" class="active">YTD</button>
+            <button type="button" data-period="custom">Custom</button>
+          </div>
+          <input type="date" id="date-from" aria-label="From date" />
+          <input type="date" id="date-to" aria-label="To date" />
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Card</span>
+          <select class="select" id="card-filter">
+            <option value="__all__">All cards</option>
+          </select>
+          <input type="text" id="search" placeholder="Search description / category…" />
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <section class="panel">
+          <div class="panel-head">
+            <div class="left">
+              <h2>📌 Best Card by Category</h2>
+              <div class="muted small">These tiles are based on your reward rules. If you haven't added rules yet, we use a simple default (2% on everything).</div>
+            </div>
+            <div class="panel-actions">
+              <label class="pill" title="Show more or fewer categories">Tiles: <select id="tiles-count" class="select-plain"><option value="9" selected>All</option><option value="6">Top 6</option><option value="4">Top 4</option></select></label>
+            </div>
+          </div>
+          <div class="tiles" id="best-tiles"></div>
+
+          <div class="spacer-10"></div>
+
+          <div class="panel-head">
+            <div class="left">
+              <h2>📊 Spend & Rewards by Category</h2>
+              <div class="muted small">Shows charges only. Rates come from your rules (or default 2%).</div>
+            </div>
+            <div class="panel-actions">
+              <label class="pill" title="Show more or fewer rows">Rows: <select id="breakdown-count" class="select-plain"><option value="12" selected>12</option><option value="20">20</option><option value="50">50</option></select></label>
+            </div>
+          </div>
+          <div class="list" id="breakdown-list"></div>
+
+          <div class="spacer-10"></div>
+
+          <div class="panel-head">
+            <div class="left">
+              <h2>⚠️ Missed Rewards (Top)</h2>
+              <div class="muted small">When a transaction has a category + card, we can estimate what you could've earned using the best card.</div>
+            </div>
+            <div class="panel-actions">
+              <button class="btn small ghost" id="btn-export-missed" type="button">⬇️ Export missed</button>
+            </div>
+          </div>
+          <div class="list" id="missed-list"></div>
+        </section>
+
+        <aside class="panel">
+          <h2>⚙️ Reward Rules (Simple Mode)</h2>
+          <div class="muted small">Set reward rates per card and category. Start with your top categories. Rates are stored per user in <span class="pill">localStorage</span> for now, and can be moved to Supabase later.</div>
+
+          <div class="rules-grid" id="rules-grid"></div>
+
+          <div class="hint">
+            Tip: Start with broad rules like:
+            <span class="pill">Dining 3%</span> · <span class="pill">Grocery 3%</span> · <span class="pill">Gas 3%</span> · <span class="pill">Travel 3%</span> · <span class="pill">Everything else 2%</span>.
+          </div>
+
+          <div class="spacer-10"></div>
+
+          <div class="row">
+            <div>
+              <strong>Want “real rewards”?</strong>
+              <div class="meta">Next upgrade: store rules in Supabase + add credit limits & statement info.</div>
+            </div>
+            <div class="right">
+              <a class="btn small" href="./credit-card-tracker.html">💳 Cards</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h4>Home &amp; Family</h4>
+            <a href="/personal/household-genie.html">Household Genie</a>
+            <a href="/personal/family-scheduler.html">Family Scheduler</a>
+            <a href="/personal/kids-school.html">Kids &amp; School Hub</a>
+          </div>
+          <div class="footer-col">
+            <h4>Health &amp; Money</h4>
+            <a href="/personal/nutrition-engine.html">Nutrition Engine</a>
+            <a href="/personal/medication-logger.html">Medication &amp; Vitals</a>
+            <a href="/personal/personal-budget.html">Personal Budget</a>
+          </div>
+          <div class="footer-col">
+            <h4>Life &amp; Travel</h4>
+            <a href="/personal/car-care">Car Care Tracker</a>
+            <a href="/leisure/travelplangenie/index.html">Trip Planner</a>
+            <a href="/personal/personal-insurance.html">Safety &amp; Insurance</a>
+          </div>
+          <div class="footer-col">
+            <h4>Help</h4>
+            <a href="/onboarding/api-key-settings.html">API Keys</a>
+            <a href="/about.html">About</a>
+            <a href="contact.html">Contact</a>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+          <div aria-label="Social" class="social">
+            <a aria-label="Twitter / X" href="#">🐦</a>
+            <a aria-label="YouTube" href="#">▶️</a>
+            <a aria-label="GitHub" href="#">🐙</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // IMPORTANT: Avoid naming this const "supabase"
+    const db = window.supabase.createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+
+    let currentUser = null;
+    let cards = [];
+    let txns = [];
+
+    const DEFAULT_CATEGORIES = [
+      { key:"dining", label:"🍽️ Dining" },
+      { key:"grocery", label:"🛒 Grocery" },
+      { key:"gas", label:"⛽ Gas" },
+      { key:"travel", label:"✈️ Travel" },
+      { key:"amazon", label:"📦 Amazon" },
+      { key:"drugstore", label:"💊 Drugstore" },
+      { key:"streaming", label:"📺 Streaming" },
+      { key:"online", label:"🛍️ Online Shopping" },
+      { key:"other", label:"🧾 Other" }
+    ];
+
+    const RULES_KEY_PREFIX = "gs_cc_rules_v1:";
+
+    // =========================
+    // Hub-style Filters (Workspace + Purpose)
+    // =========================
+    const HUB_STATE = {
+      workspace: 'all',
+      purpose: 'all',
+      workspaces: [],
+      purposes: []
+    };
+
+    function cardWorkspaceKey(card){
+      return (
+        card.business_profile_id ||
+        card.workspace_id ||
+        card.entity_id ||
+        card.owner_entity_id ||
+        card.owner ||
+        card.entity ||
+        card.company ||
+        card.business_name ||
+        ''
+      ) || '';
+    }
+    function cardWorkspaceLabel(card){
+      return (
+        card.business_name ||
+        card.entity ||
+        card.company ||
+        card.owner ||
+        card.nickname_entity ||
+        ''
+      ) || '';
+    }
+
+    function buildWorkspaces(cardsList){
+      const groups = new Map();
+      for(const c of cardsList){
+        const key = cardWorkspaceKey(c);
+        const label = cardWorkspaceLabel(c);
+        if(!key && !label) continue;
+        const gkey = key || label;
+        if(!groups.has(gkey)) groups.set(gkey, { key:gkey, label: label || String(gkey), count:0 });
+        groups.get(gkey).count += 1;
+      }
+      const list = [{ key:'all', label:'All', count: cardsList.length }, { key:'personal', label:'Personal', count: cardsList.length }];
+
+      const extra = Array.from(groups.values())
+        .filter(g => {
+          const s = (g.label || g.key || '').toString().toLowerCase();
+          return s && !['personal','me','myself'].includes(s);
+        })
+        .sort((a,b)=> (b.count - a.count) || String(a.label).localeCompare(String(b.label)));
+
+      if(extra.length){
+        const extraKeys = new Set(extra.map(e=>e.key));
+        const personalCount = cardsList.filter(c=>{
+          const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+          return !k || !extraKeys.has(k);
+        }).length;
+        list[1].count = personalCount;
+        return list.concat(extra.map(e=>({ key:e.key, label:e.label || e.key, count:e.count })));
+      }
+      return list;
+    }
+
+    function normalizeCategoryLoose(s){
+      const x = String(s || '').toLowerCase();
+      if(!x) return '';
+      if(x.includes('groc')) return 'grocery';
+      if(x.includes('dining') || x.includes('restaurant') || x.includes('coffee')) return 'dining';
+      if(x.includes('travel') || x.includes('air') || x.includes('hotel') || x.includes('uber') || x.includes('lyft')) return 'travel';
+      if(x.includes('gas') || x.includes('fuel')) return 'gas';
+      if(x.includes('drug') || x.includes('pharm')) return 'drugstore';
+      if(x.includes('stream') || x.includes('netflix') || x.includes('hulu') || x.includes('spotify')) return 'streaming';
+      return x.replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,'_');
+    }
+
+    function purposeFromTxn(t){
+      const cat = normalizeCategoryLoose(t.category || t.description);
+      const desc = String(t.description || '').toLowerCase();
+
+      if(desc.includes('insurance') || desc.includes('electric') || desc.includes('water') || desc.includes('internet') || desc.includes('phone')) return 'bills';
+      if(cat === 'streaming') return 'bills';
+
+      if(cat === 'travel' || desc.includes('airbnb') || desc.includes('hilton') || desc.includes('marriott') || desc.includes('delta') || desc.includes('southwest')) return 'travel';
+
+      if(desc.includes('robinhood') || desc.includes('etrade') || desc.includes('td ameritrade') || desc.includes('interactive brokers') || desc.includes('tradingview')) return 'investing';
+
+      if(desc.includes('quickbooks') || desc.includes('square') || desc.includes('clover') || desc.includes('stripe')) return 'bizops';
+
+      if(['dining','grocery','gas','drugstore'].includes(cat) || desc.includes('amazon')) return 'daily';
+
+      return 'other';
+    }
+
+    const PURPOSE_LABELS = {
+      all: 'All',
+      daily: '🛒 Daily',
+      bills: '🧾 Bills',
+      travel: '✈️ Travel',
+      bizops: '🏢 Biz Ops',
+      investing: '📈 Investing',
+      other: '✨ Other'
+    };
+
+    function buildPurposes(txnsList){
+      const counts = new Map();
+      for(const t of txnsList){
+        if(!(Number(t.amount) > 0)) continue;
+        const p = purposeFromTxn(t);
+        counts.set(p, (counts.get(p)||0)+1);
+      }
+      const list = [{ key:'all', label:PURPOSE_LABELS.all, count: txnsList.length }];
+      const keys = Array.from(counts.keys()).sort((a,b)=> (counts.get(b)-counts.get(a)));
+      for(const k of keys){
+        list.push({ key:k, label: PURPOSE_LABELS[k] || k, count: counts.get(k) });
+      }
+      return list;
+    }
+
+    function renderPills(container, items, activeKey, onClick){
+      container.querySelectorAll('.filter-pill').forEach(n=>n.remove());
+      items.forEach(item=>{
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'filter-pill' + (item.key === activeKey ? ' active' : '');
+        btn.setAttribute('data-key', item.key);
+        btn.innerHTML = `${escapeHtml(item.label)} <span class="count">${Number(item.count||0)}</span>`;
+        btn.addEventListener('click', ()=> onClick(item.key));
+        container.appendChild(btn);
+      });
+    }
+
+    function applyHubFilters(cardsList, txnsList){
+      const ws = HUB_STATE.workspace;
+
+      let filteredCards = cardsList;
+      if(ws === 'personal'){
+        const known = new Set(HUB_STATE.workspaces.slice(2).map(x=>x.key));
+        filteredCards = cardsList.filter(c=>{
+          const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+          return !k || !known.has(k);
+        });
+      }else if(ws !== 'all'){
+        filteredCards = cardsList.filter(c=>{
+          const k = cardWorkspaceKey(c) || cardWorkspaceLabel(c) || '';
+          return k === ws;
+        });
+      }
+
+      const cardIds = new Set(filteredCards.map(c=>c.id).filter(Boolean));
+      let filteredTxns = txnsList.filter(t=> !t.credit_card_id || cardIds.has(t.credit_card_id));
+
+      if(HUB_STATE.purpose !== 'all'){
+        filteredTxns = filteredTxns.filter(t => purposeFromTxn(t) === HUB_STATE.purpose);
+      }
+
+      return { cards: filteredCards, txns: filteredTxns };
+    }
+
+    function mountHubFilters(){
+      const wrap = document.getElementById('hub-filters');
+      const wsRow = document.getElementById('workspace-filter-row');
+      const pRow = document.getElementById('purpose-filter-row');
+      if(!wrap || !wsRow || !pRow) return;
+
+      HUB_STATE.workspaces = buildWorkspaces(cards);
+      const scoped = applyHubFilters(cards, txns);
+      HUB_STATE.purposes = buildPurposes(scoped.txns);
+
+      const showWorkspaces = HUB_STATE.workspaces.length > 2;
+      const showPurposes = HUB_STATE.purposes.length > 1;
+
+      if(!showWorkspaces && !showPurposes){
+        wrap.hidden = true;
+        return;
+      }
+      wrap.hidden = false;
+      wsRow.style.display = showWorkspaces ? 'flex' : 'none';
+      pRow.style.display = showPurposes ? 'flex' : 'none';
+
+      renderPills(wsRow, HUB_STATE.workspaces, HUB_STATE.workspace, (key)=>{
+        HUB_STATE.workspace = key;
+        // rebuild purposes scoped to workspace
+        const scoped2 = applyHubFilters(cards, txns);
+        HUB_STATE.purposes = buildPurposes(scoped2.txns);
+        if(!HUB_STATE.purposes.find(x=>x.key===HUB_STATE.purpose)) HUB_STATE.purpose = 'all';
+        mountHubFilters();
+        render();
+      });
+
+      renderPills(pRow, HUB_STATE.purposes, HUB_STATE.purpose, (key)=>{
+        HUB_STATE.purpose = key;
+        render();
+      });
+    }
+
+    function csvDownload(filename, rows){
+      const headers = Object.keys(rows[0] || {});
+      const lines = [];
+      lines.push(headers.map(h=>`"${String(h).replace(/"/g,'""')}"`).join(','));
+      for(const r of rows){
+        lines.push(headers.map(h=>`"${String(r[h] ?? '').replace(/"/g,'""')}"`).join(','));
+      }
+      const blob = new Blob([lines.join('\\n')], { type:'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+    }
+
+
+    function money(n){
+      const x = Number(n || 0);
+      return x.toLocaleString(undefined, { style:'currency', currency:'USD' });
+    }
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+    function escapeHtml(str){
+      return String(str ?? '').replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    }
+
+    function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+    function startOfYear(d){ return new Date(d.getFullYear(), 0, 1); }
+    function isoDate(d){
+      const x = new Date(d);
+      const mm = String(x.getMonth()+1).padStart(2,'0');
+      const dd = String(x.getDate()).padStart(2,'0');
+      return `${x.getFullYear()}-${mm}-${dd}`;
+    }
+
+    function getPeriodDates(period){
+      const now = new Date();
+      if(period === "month") return { from: startOfMonth(now), to: now };
+      if(period === "ytd") return { from: startOfYear(now), to: now };
+
+      const fromVal = document.getElementById("date-from").value;
+      const toVal = document.getElementById("date-to").value;
+      const from = fromVal ? new Date(fromVal + "T00:00:00") : startOfYear(now);
+      const to = toVal ? new Date(toVal + "T23:59:59") : now;
+      return { from, to };
+    }
+
+    function normalizeCategory(raw){
+      const s = String(raw || "").trim().toLowerCase();
+      if(!s) return "";
+      const map = [
+        ["dining", ["restaurant","dining","food","cafe","coffee"]],
+        ["grocery", ["grocery","supermarket","market","costco","walmart","target"]],
+        ["gas", ["gas","fuel","shell","exxon","chevron","bp"]],
+        ["travel", ["travel","airline","hotel","uber","lyft","rental","booking"]],
+        ["amazon", ["amazon","amzn"]],
+        ["drugstore", ["drug","pharmacy","cvs","walgreens"]],
+        ["streaming", ["netflix","spotify","hulu","disney","streaming"]],
+        ["online", ["online","shop","ecommerce","etsy","ebay"]],
+      ];
+      for(const [key, words] of map){
+        for(const w of words){
+          if(s.includes(w)) return key;
+        }
+      }
+      if(DEFAULT_CATEGORIES.some(c => c.key === s)) return s;
+      return "other";
+    }
+
+    function readRulesForUser(){
+      const key = RULES_KEY_PREFIX + (currentUser?.id || "anon");
+      try{
+        const obj = JSON.parse(localStorage.getItem(key) || "{}");
+        return obj && typeof obj === "object" ? obj : {};
+      }catch(e){
+        return {};
+      }
+    }
+    function saveRulesForUser(rules){
+      const key = RULES_KEY_PREFIX + (currentUser?.id || "anon");
+      localStorage.setItem(key, JSON.stringify(rules || {}));
+    }
+
+    function getRate(rules, cardId, catKey){
+      const byCard = rules[cardId] || {};
+      const specific = Number(byCard[catKey]);
+      if(Number.isFinite(specific) && specific > 0) return specific / 100;
+
+      const other = Number(byCard["other"]);
+      if(Number.isFinite(other) && other > 0) return other / 100;
+
+      return 0.02; // default 2%
+    }
+
+    function bestCardForCategory(rules, catKey){
+      let best = null;
+      for(const c of cards){
+        const r = getRate(rules, c.id, catKey);
+        if(!best || r > best.rate) best = { card: c, rate: r };
+      }
+      return best;
+    }
+
+    
+    function applyFilters(list){
+      const search = (document.getElementById("search").value || "").trim().toLowerCase();
+      const cardFilter = document.getElementById("card-filter").value || "__all__";
+
+      const periodBtn = document.querySelector('#seg-period button.active');
+      const period = periodBtn ? periodBtn.dataset.period : "ytd";
+      const { from, to } = getPeriodDates(period);
+
+      // Hub filters (workspace/purpose)
+      const scoped = applyHubFilters(cards, list);
+      const scopedTxns = scoped.txns;
+
+      return scopedTxns.filter(t => {
+        const d = new Date(t.posted_date + "T00:00:00");
+        if(d < from || d > to) return false;
+
+        if(cardFilter !== "__all__" && String(t.credit_card_id || "") !== cardFilter) return false;
+
+        if(search){
+          const text = `${t.description||""} ${t.category||""}`.toLowerCase();
+          if(!text.includes(search)) return false;
+        }
+        return true;
+      });
+    }
+
+
+    function render(){
+      const rules = readRulesForUser();
+      const filtered = applyFilters(txns);
+
+      const tilesCount = Number(document.getElementById('tiles-count')?.value || 9);
+      const breakdownCount = Number(document.getElementById('breakdown-count')?.value || 12);
+
+      const charges = filtered.filter(t => Number(t.amount) > 0);
+      const spend = charges.reduce((a,t)=>a+Number(t.amount||0),0);
+
+      const estRewards = charges.reduce((a,t)=>{
+        const cat = normalizeCategory(t.category || t.description) || "other";
+        const rate = t.credit_card_id ? getRate(rules, t.credit_card_id, cat) : 0.02;
+        return a + Number(t.amount||0) * rate;
+      },0);
+
+      let missed = 0;
+      const missedRows = [];
+      for(const t of charges){
+        const cat = normalizeCategory(t.category || t.description) || "other";
+        if(!t.credit_card_id) continue;
+        const usedRate = getRate(rules, t.credit_card_id, cat);
+        const best = bestCardForCategory(rules, cat);
+        if(!best || !best.card) continue;
+        if(best.card.id !== t.credit_card_id && best.rate > usedRate){
+          const delta = Number(t.amount||0) * (best.rate - usedRate);
+          missed += delta;
+          missedRows.push({ t, cat, delta, bestCard: best.card, bestRate: best.rate, usedRate });
+        }
+      }
+      missedRows.sort((a,b)=>b.delta-a.delta);
+
+      document.getElementById("kpi-spend").textContent = money(spend);
+      document.getElementById("kpi-spend-chip").textContent = `${charges.length} charges`;
+
+      document.getElementById("kpi-rewards").textContent = money(estRewards);
+      const effRate = spend > 0 ? (estRewards / spend) : 0;
+      document.getElementById("kpi-rate-chip").textContent = spend > 0 ? `${(effRate*100).toFixed(2)}% effective` : "–";
+
+      document.getElementById("kpi-missed").textContent = money(missed);
+      document.getElementById("kpi-missed-chip").textContent = missedRows.length ? `${missedRows.length} items` : "None";
+
+
+      // Utilization (optional)
+      const limits = cards
+        .map(c => ({ limit: Number(c.credit_limit ?? c.limit ?? 0), bal: Number(c.current_balance ?? c.balance ?? 0) }))
+        .filter(x => Number.isFinite(x.limit) && x.limit > 0 && Number.isFinite(x.bal) && x.bal >= 0);
+
+      if(limits.length){
+        const totalLimit = limits.reduce((a,x)=>a+x.limit,0);
+        const totalBal = limits.reduce((a,x)=>a+x.bal,0);
+        const util = totalLimit > 0 ? (totalBal/totalLimit) : 0;
+        document.getElementById("kpi-util").textContent = `${(util*100).toFixed(0)}%`;
+        document.getElementById("kpi-util-chip").textContent = `${money(totalBal)} / ${money(totalLimit)}`;
+      }else{
+        document.getElementById("kpi-util").textContent = "—";
+        document.getElementById("kpi-util-chip").textContent = "Optional";
+      }
+
+
+      // Tiles
+      const tiles = document.getElementById("best-tiles");
+      tiles.innerHTML = "";
+
+      // If user selects Top 4/6, rank categories by spend in this view.
+      const spendByCatForTiles = new Map();
+      for(const t of charges){
+        const cat = normalizeCategory(t.category || t.description) || "other";
+        spendByCatForTiles.set(cat, (spendByCatForTiles.get(cat)||0) + Number(t.amount||0));
+      }
+      let catList = DEFAULT_CATEGORIES.slice();
+      if([4,6].includes(tilesCount)){
+        catList = DEFAULT_CATEGORIES
+          .slice()
+          .sort((a,b)=>(spendByCatForTiles.get(b.key)||0) - (spendByCatForTiles.get(a.key)||0))
+          .slice(0, tilesCount);
+      }
+
+      catList.forEach(cat=>{
+        const best = bestCardForCategory(rules, cat.key);
+        const cardLabel = best?.card ? (best.card.card_name || "Card") : "Add a card";
+        const ratePct = best ? (best.rate * 100) : 0;
+
+        const el = document.createElement("div");
+        el.className = "tile";
+        el.innerHTML = `
+          <div class="tile-top">
+            <div>
+              <div class="tile-cat">${escapeHtml(cat.label)}</div>
+              <div class="tile-rate">Best rate: <strong>${ratePct.toFixed(2)}%</strong></div>
+            </div>
+            <span class="pill best">Best</span>
+          </div>
+          <div class="tile-card">
+            <span class="pill">${escapeHtml(cardLabel)}</span>
+          </div>
+        `;
+        tiles.appendChild(el);
+      });
+
+
+      // Breakdown by category
+      const byCat = new Map();
+      for(const t of charges){
+        const cat = normalizeCategory(t.category || t.description) || "other";
+        if(!byCat.has(cat)) byCat.set(cat, { spend:0, rewards:0, count:0 });
+        const item = byCat.get(cat);
+        item.spend += Number(t.amount||0);
+        const rate = t.credit_card_id ? getRate(rules, t.credit_card_id, cat) : 0.02;
+        item.rewards += Number(t.amount||0) * rate;
+        item.count += 1;
+      }
+      const breakdown = Array.from(byCat.entries()).map(([k,v])=>({ key:k, ...v })).sort((a,b)=>b.spend-a.spend);
+
+      const breakdownList = document.getElementById("breakdown-list");
+      breakdownList.innerHTML = "";
+      if(!breakdown.length){
+        breakdownList.innerHTML = `<div class="empty">No transactions in this period yet. Add or import transactions in <strong>🧾 Transactions</strong>.</div>`;
+      }else{
+        for(const row of breakdown.slice(0, breakdownCount)){
+          const label = (DEFAULT_CATEGORIES.find(x=>x.key===row.key)?.label) || ("🧾 " + row.key);
+          const rate = row.spend > 0 ? (row.rewards / row.spend) : 0;
+          const el = document.createElement("div");
+          el.className = "row";
+          el.innerHTML = `
+            <div>
+              <strong>${escapeHtml(label)}</strong>
+              <div class="meta">${row.count} txns</div>
+            </div>
+            <div class="right">
+              <div><div class="meta">Spend</div><div class="kpi">${money(row.spend)}</div></div>
+              <div><div class="meta">Rewards</div><div class="kpi good">${money(row.rewards)}</div></div>
+              <div><div class="meta">Rate</div><div class="kpi">${(rate*100).toFixed(2)}%</div></div>
+            </div>
+          `;
+          breakdownList.appendChild(el);
+        }
+      }
+
+      // Missed list
+      const missedList = document.getElementById("missed-list");
+      missedList.innerHTML = "";
+      if(!missedRows.length){
+        missedList.innerHTML = `<div class="empty">No missed rewards detected (or transactions missing card/category). Nice!</div>`;
+      }else{
+        missedRows.slice(0,8).forEach(m=>{
+          const label = (DEFAULT_CATEGORIES.find(x=>x.key===m.cat)?.label) || ("🧾 " + m.cat);
+          const usedCard = cards.find(c => c.id === m.t.credit_card_id);
+          const usedName = usedCard?.card_name || "Used card";
+          const bestName = m.bestCard?.card_name || "Best card";
+          const el = document.createElement("div");
+          el.className = "row";
+          el.innerHTML = `
+            <div>
+              <strong>${escapeHtml(label)} · ${escapeHtml(m.t.description || "Transaction")}</strong>
+              <div class="meta">Used: ${escapeHtml(usedName)} (${(m.usedRate*100).toFixed(2)}%) → Best: ${escapeHtml(bestName)} (${(m.bestRate*100).toFixed(2)}%)</div>
+            </div>
+            <div class="right">
+              <div><div class="meta">Amount</div><div class="kpi">${money(m.t.amount)}</div></div>
+              <div><div class="meta">Missed</div><div class="kpi warn">${money(m.delta)}</div></div>
+            </div>
+          `;
+          missedList.appendChild(el);
+        });
+      }
+
+      // Rules editor
+      const rulesGrid = document.getElementById("rules-grid");
+      rulesGrid.innerHTML = "";
+      if(!cards.length){
+        rulesGrid.innerHTML = `<div class="empty">No cards found. Add your cards first in <strong>💳 Cards</strong>.</div>`;
+      }else{
+        for(const c of cards.slice(0, 6)){
+          const cardRules = rules[c.id] || {};
+          const el = document.createElement("div");
+          el.className = "rule-card";
+
+          const options = DEFAULT_CATEGORIES.map(cat=>{
+            const val = Number(cardRules[cat.key] ?? "");
+            const display = Number.isFinite(val) && val > 0 ? String(val) : "";
+            return `
+              <div class="rule-row">
+                <div class="meta">${escapeHtml(cat.label)}</div>
+                <input type="number" inputmode="decimal" min="0" step="0.25"
+                  class="rate-input" data-card="${c.id}" data-cat="${cat.key}"
+                  placeholder="e.g. 3" value="${escapeHtml(display)}">
+              </div>
+            `;
+          }).join("");
+
+          const otherVal = Number(cardRules["other"] ?? "");
+          const otherDisplay = Number.isFinite(otherVal) && otherVal > 0 ? String(otherVal) : "";
+
+          el.innerHTML = `
+            <div class="rule-head">
+              <strong>${escapeHtml(c.card_name || "Card")}</strong>
+              <div class="rule-actions">
+                <button class="btn small ghost" type="button" data-action="fill2" data-card="${c.id}">2% all</button>
+                <button class="btn small" type="button" data-action="clear" data-card="${c.id}">Clear</button>
+              </div>
+            </div>
+            <div class="meta">Enter % rate (example: 3 means 3%).</div>
+            ${options}
+            <div class="rule-row">
+              <div class="meta">🧾 Other / default</div>
+              <input type="number" inputmode="decimal" min="0" step="0.25"
+                class="rate-input" data-card="${c.id}" data-cat="other"
+                placeholder="e.g. 2" value="${escapeHtml(otherDisplay)}">
+            </div>
+          `;
+          rulesGrid.appendChild(el);
+        }
+
+        if(cards.length > 6){
+          const more = document.createElement("div");
+          more.className = "empty";
+          more.innerHTML = `Showing 6 cards here to keep mobile clean. Other cards follow <strong>Other/default</strong> (or 2%) until you add rules later.`;
+          rulesGrid.appendChild(more);
+        }
+      }
+    }
+
+    async function loadCards(){
+      // Best-effort: include workspace-ish and utilization fields if they exist.
+      const trySelect = async (cols)=>{
+        const { data, error } = await db
+          .from('credit_cards')
+          .select(cols)
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending:false });
+        return { data, error };
+      };
+
+      let resp = await trySelect('*');
+      if(resp.error){
+        resp = await trySelect('id, user_id, card_name, nickname, is_active');
+      }
+      cards = resp.error ? [] : (resp.data || []);
+
+
+      const sel = document.getElementById("card-filter");
+      const keep = sel.value || "__all__";
+      sel.innerHTML = `<option value="__all__">All cards</option>`;
+      cards.forEach(c=>{
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = c.card_name || "Card";
+        sel.appendChild(opt);
+      });
+      sel.value = (keep && (keep === "__all__" || cards.some(c=>c.id===keep))) ? keep : "__all__";
+    }
+
+    async function loadTxns(){
+      const { data, error } = await db
+        .from('credit_card_transactions')
+        .select('id, user_id, credit_card_id, posted_date, description, amount, category, merchant, notes, source, created_at')
+        .eq('user_id', currentUser.id)
+        .order('posted_date', { ascending:false })
+        .limit(5000);
+
+      txns = error ? [] : (data || []);
+    }
+
+    function setPeriod(period){
+      document.querySelectorAll('#seg-period button').forEach(b=>b.classList.remove('active'));
+      const btn = document.querySelector(`#seg-period button[data-period="${period}"]`);
+      if(btn) btn.classList.add('active');
+
+      const now = new Date();
+      let from = startOfYear(now);
+      let to = now;
+
+      if(period === "month") from = startOfMonth(now);
+
+      const fromEl = document.getElementById("date-from");
+      const toEl = document.getElementById("date-to");
+
+      if(period !== "custom"){
+        fromEl.value = isoDate(from);
+        toEl.value = isoDate(to);
+        fromEl.disabled = true;
+        toEl.disabled = true;
+      }else{
+        fromEl.disabled = false;
+        toEl.disabled = false;
+        if(!fromEl.value) fromEl.value = isoDate(from);
+        if(!toEl.value) toEl.value = isoDate(to);
+      }
+    }
+
+    function attachEvents(){
+      document.getElementById('seg-period').addEventListener('click', (e)=>{
+        if(e.target.tagName !== "BUTTON") return;
+        setPeriod(e.target.dataset.period);
+        render();
+      });
+
+      document.getElementById("card-filter").addEventListener("change", ()=>{ mountHubFilters(); render(); });
+      document.getElementById("search").addEventListener("input", render);
+      document.getElementById("date-from").addEventListener("change", render);
+      document.getElementById("date-to").addEventListener("change", render);
+
+
+      const refreshBtn = document.getElementById("btn-refresh");
+      if(refreshBtn){
+        refreshBtn.addEventListener("click", async ()=>{ await bootstrap(true); });
+      }
+
+      const exportViewBtn = document.getElementById("btn-export-view");
+      if(exportViewBtn){
+        exportViewBtn.addEventListener("click", ()=>{
+          const filtered = applyFilters(txns);
+          const rows = filtered.map(t=>({
+            posted_date: t.posted_date || '',
+            credit_card_id: t.credit_card_id || '',
+            description: t.description || '',
+            category: t.category || '',
+            amount: t.amount ?? ''
+          }));
+          if(!rows.length){ alert("Nothing to export for the current view."); return; }
+          const stamp = new Date().toISOString().slice(0,10);
+          csvDownload(`rewards_view_${stamp}.csv`, rows);
+        });
+      }
+
+      const exportMissedBtn = document.getElementById("btn-export-missed");
+      if(exportMissedBtn){
+        exportMissedBtn.addEventListener("click", ()=>{
+          const rules = readRulesForUser();
+          const filtered = applyFilters(txns);
+          const charges = filtered.filter(t => Number(t.amount) > 0);
+          const missedRows = [];
+          for(const t of charges){
+            const cat = normalizeCategory(t.category || t.description) || "other";
+            if(!t.credit_card_id) continue;
+            const usedRate = getRate(rules, t.credit_card_id, cat);
+            const best = bestCardForCategory(rules, cat);
+            if(!best || !best.card) continue;
+            if(best.card.id !== t.credit_card_id && best.rate > usedRate){
+              const delta = Number(t.amount||0) * (best.rate - usedRate);
+              missedRows.push({
+                posted_date: t.posted_date || '',
+                description: t.description || '',
+                category: cat,
+                amount: t.amount ?? '',
+                used_card: (cards.find(c=>c.id===t.credit_card_id)?.card_name) || '',
+                used_rate_pct: (usedRate*100).toFixed(2),
+                best_card: best.card.card_name || '',
+                best_rate_pct: (best.rate*100).toFixed(2),
+                missed_usd: delta.toFixed(2)
+              });
+            }
+          }
+          missedRows.sort((a,b)=>Number(b.missed_usd)-Number(a.missed_usd));
+          if(!missedRows.length){ alert("No missed rewards in the current view."); return; }
+          const stamp = new Date().toISOString().slice(0,10);
+          csvDownload(`missed_rewards_${stamp}.csv`, missedRows);
+        });
+      }
+
+      document.getElementById("tiles-count")?.addEventListener("change", render);
+      document.getElementById("breakdown-count")?.addEventListener("change", render);
+
+
+      document.addEventListener("input", (e)=>{
+        if(!e.target.classList.contains("rate-input")) return;
+        const cardId = e.target.getAttribute("data-card");
+        const cat = e.target.getAttribute("data-cat");
+        const raw = (e.target.value || "").trim();
+        const rules = readRulesForUser();
+        rules[cardId] = rules[cardId] || {};
+
+        if(raw === ""){
+          delete rules[cardId][cat];
+        }else{
+          let v = Number(raw);
+          if(!Number.isFinite(v) || v <= 0) delete rules[cardId][cat];
+          else{
+            v = clamp(v, 0, 25);
+            rules[cardId][cat] = v;
+          }
+        }
+        saveRulesForUser(rules);
+        render();
+      });
+
+      document.addEventListener("click", (e)=>{
+        const btn = e.target.closest("button[data-action]");
+        if(!btn) return;
+        const action = btn.getAttribute("data-action");
+        const cardId = btn.getAttribute("data-card");
+        const rules = readRulesForUser();
+        rules[cardId] = rules[cardId] || {};
+
+        if(action === "fill2"){
+          DEFAULT_CATEGORIES.forEach(c=>rules[cardId][c.key] = 2);
+          rules[cardId]["other"] = 2;
+          saveRulesForUser(rules);
+          render();
+        }
+        if(action === "clear"){
+          delete rules[cardId];
+          saveRulesForUser(rules);
+          render();
+        }
+      });
+
+      document.getElementById('hamburger').addEventListener('click', ()=>{
+        const drawer = document.getElementById('mobile-drawer');
+        drawer.style.display = drawer.style.display === 'block' ? 'none' : 'block';
+      });
+
+      const menuToggle = document.getElementById('user-menu-toggle');
+      const menuDropdown = document.getElementById('user-menu-dropdown');
+      menuToggle.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        menuDropdown.style.display = menuDropdown.style.display === 'block' ? 'none' : 'block';
+      });
+      document.addEventListener('click', (ev)=>{
+        if(!menuDropdown.contains(ev.target) && !menuToggle.contains(ev.target)){
+          menuDropdown.style.display = 'none';
+        }
+      });
+
+      document.querySelectorAll('.dropdown-nav').forEach(b=>{
+        b.addEventListener('click', function(){
+          const t = this.getAttribute('data-target');
+          if(t) window.location.href = t;
+        });
+      });
+
+      document.getElementById('user-signout-btn').addEventListener('click', async ()=>{
+        await db.auth.signOut();
+        window.location.href = '../index.html';
+      });
+    }
+
+    async function bootstrap(force=false){
+      if(!currentUser || force){
+        const { data, error } = await db.auth.getUser();
+        if(error || !data?.user){
+          window.location.href = '../onboarding/login.html';
+          return;
+        }
+        currentUser = data.user;
+        document.getElementById('user-name-label').textContent =
+          currentUser.user_metadata?.full_name || currentUser.email.split('@')[0] || 'User';
+        document.querySelectorAll('.auth-only').forEach(el => el.style.display = '');
+      }
+
+      await loadCards();
+      await loadTxns();
+
+      mountHubFilters();
+      setPeriod("ytd");
+      render();
+    }
+
+    (async ()=>{
+      document.getElementById('year').textContent = new Date().getFullYear();
+      attachEvents();
+      await bootstrap();
+    })();
+  </script>
+</body>
+</html>

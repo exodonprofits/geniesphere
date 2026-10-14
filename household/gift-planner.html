@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gift Planner – GenieSphere</title>
+  <style>
+    :root{
+      --bg:#0b1220; /* deep blue */
+      --panel:#121a2b;
+      --muted:#1b2740;
+      --accent:#4ade80; /* green */
+      --accent-2:#3b82f6; /* blue */
+      --text:#e6edf5;
+      --sub:#b7c3d6;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --radius:18px;
+      --shadow:0 8px 24px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 800px at 10% -10%,#1a2440 0%,#0b1220 45%),radial-gradient(900px 600px at 110% 0%,#15213b 0%,#0b1220 55%);color:var(--text);font:16px/1.45 system-ui,Segoe UI,Roboto,Arial,sans-serif}
+
+    /* Header */
+    .header{position:sticky;top:0;z-index:50;backdrop-filter: blur(8px);background:rgba(11,18,32,.6);border-bottom:1px solid rgba(255,255,255,.06)}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{ display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); }
+    .logo{
+        width:40px; height:40px; border-radius:50%;
+        background: radial-gradient(circle at 30% 30%, #6af0c4, #3ee1a1 40%, #1c9369 75%);
+        box-shadow: 0 0 0 4px var(--ring), 0 8px 24px rgba(62,225,161,.35);
+    }
+    .brand-name{font-weight:800; letter-spacing:.2px;}
+
+    .nav{display:flex;gap:10px;flex-wrap:wrap}
+    .pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);text-decoration:none;color:var(--text);transition:.2s}
+    .pill:hover{transform:translateY(-1px);background:rgba(255,255,255,.1)}
+    .pill.primary{background:var(--accent-2);border-color:transparent;color:white}
+    .pill.success{background:var(--accent);border-color:transparent;color:#06250f}
+
+    /* Layout */
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
+
+    /* Cards */
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card h2{margin:0 0 10px;font-size:20px}
+    .card .head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+    .content{padding:16px}
+
+    /* Inputs */
+    label{display:block;margin:8px 0 6px;color:var(--sub);font-size:14px}
+    input,select,textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0f1627;color:var(--text);outline:none}
+    textarea{min-height:80px;resize:vertical}
+
+    .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:10px 16px;cursor:pointer;background:var(--muted);color:var(--text);transition:.2s;text-decoration:none}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.green{background:var(--accent);color:#06250f}
+    .btn.blue{background:var(--accent-2);color:#fff}
+    .btn.red{background:var(--danger);color:#fff}
+    .btn.yellow{background:var(--warning);color:#111827}
+
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+
+    .list{display:grid;gap:10px}
+
+    .tbl{width:100%;min-width:720px;border-collapse:collapse}
+    .table-wrap{overflow-x:auto}
+    .tbl th,.tbl td{border-bottom:1px solid rgba(255,255,255,.08);padding:10px;text-align:left}
+    .tbl th{color:var(--sub);font-weight:600}
+
+    .status{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+
+    .bar{height:10px;background:#0f1627;border:1px solid rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+    .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#22d3ee);width:0%}
+
+    footer{margin:24px 0 40px;color:var(--sub);text-align:center}
+
+    .flex{display:flex;gap:8px;align-items:center}
+    .right{justify-content:flex-end}
+    .space{height:8px}
+
+    @media print{ .header,.no-print{display:none !important} body{background:white;color:black} .card{box-shadow:none;border-color:#ddd} a::after{content:" (" attr(href) ")";font-size:12px;color:#555} }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="../index.html" aria-label="Back to GenieSphere Home">
+            <img src="../genie-logo.png" alt="GenieSphere Logo" class="logo"/>
+            <span class="brand-name">GenieSphere</span>
+        </a>
+        <nav class="nav">
+          <a class="pill primary" href="../dashboard/personal.html">👤 Personal</a>
+          <a class="pill" href="../dashboard/business.html">🏢 Business</a>
+          <a class="pill" href="../dashboard/investment.html">📈 Investing</a>
+          <a class="pill" href="../dashboard/leisure.html">🎉 Leisure</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="row">
+      <h1 style="margin:18px 0 0">🎁 Gift Planner</h1>
+      <div class="flex right no-print">
+        <!--a class="btn blue" href="personal.html">⬅️ Back to Personal</a-->
+        <button class="btn green" id="saveBtn">💾 Save</button>
+        <button class="btn" id="loadBtn">📂 Load</button>
+        <button class="btn" id="exportBtn">📤 Export</button>
+        <button class="btn" id="printBtn">🖨️ Print</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT COLUMN -->
+      <section class="card">
+        <div class="content">
+          <div class="head">
+            <h2>🗂️ Planner Overview</h2>
+            <div class="chips no-print">
+              <span class="chip" id="autosaveBadge">Auto‑saved</span>
+            </div>
+          </div>
+          <div class="list">
+            <div class="row" style="gap:12px;align-items:flex-start">
+              <div style="flex:1">
+                <label for="season">📅 Year / Season</label>
+                <input id="season" placeholder="2025 · Holidays, Birthdays" />
+              </div>
+              <div style="width:200px">
+                <label for="defaultBudget">💵 Default Budget</label>
+                <input id="defaultBudget" type="number" min="0" placeholder="100" />
+              </div>
+            </div>
+            <div>
+              <label for="overviewNotes">📝 Notes</label>
+              <textarea id="overviewNotes" placeholder="Themes, promo codes, shipping tips, etc."></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>👥 Recipients & Preferences</h2>
+            <button class="btn no-print" id="addRecipient">➕ Add Recipient</button>
+          </div>
+          <div id="recipients" class="list"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="content">
+          <div class="head">
+            <h2>💡 Gift Ideas & Purchases</h2>
+            <div class="flex no-print">
+              <input id="searchGifts" placeholder="Search gifts… (title, store, recipient)" style="min-width:260px"> 
+              <button class="btn" id="addGift">➕ Add Gift</button>
+            </div>
+          </div>
+          <div class="space"></div>
+          <div class="table-wrap"><table class="tbl" id="giftTable">
+            <thead>
+              <tr>
+                <th>Recipient</th>
+                <th>Item</th>
+                <th>Price</th>
+                <th>Store / Link</th>
+                <th>Status</th>
+                <th>Due</th>
+                <th class="no-print">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>🛒 Shopping List</h2>
+            <button class="btn no-print" id="exportCSV">⬇️ Export CSV</button>
+          </div>
+          <div id="shopping" class="list"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>📊 Budget Summary</h2></div>
+          <div id="budgetSummary" class="list"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="content">
+          <div class="head"><h2>⏳ Upcoming Dates</h2></div>
+          <div id="upcoming" class="list"></div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <p>© <span id="year"></span> GenieSphere · Gift Planner. Built to make life easier 💫</p>
+    </footer>
+  </main>
+
+  <script>
+    const $ = (s,ctx=document)=>ctx.querySelector(s);
+    const $$ = (s,ctx=document)=>Array.from(ctx.querySelectorAll(s));
+    const stateKey = 'gift_planner_v1';
+
+    // --- Data Model ---
+    const model = {
+      overview: { season:'', defaultBudget: 100, notes:'' },
+      recipients: [], // {id,name,occasion,date,budget,interests,sizes,likes,dislikes,wishlist,notes}
+      gifts: [] // {id,recipientId,title,link,price,store,status,due,priority,notes,thankYou:false}
+    };
+
+    const statuses = ['Idea','To Buy','Purchased','Wrapped','Delivered'];
+
+    // --- UI Builders ---
+    function recipientCard(r={id:uid(),name:'',occasion:'Birthday',date:'',budget:'',interests:'',sizes:'',likes:'',dislikes:'',wishlist:'',notes:''}){
+      const card = document.createElement('div');
+      card.className='card'; card.style.padding='12px'; card.dataset.id=r.id;
+      card.innerHTML = `
+        <div class="row" style="gap:12px;align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <label>Name</label>
+            <input value="${r.name}" placeholder="e.g., Alex" class="r-name"/>
+          </div>
+          <div style="width:180px">
+            <label>Occasion</label>
+            <input value="${r.occasion}" class="r-occasion" placeholder="Birthday / Christmas / Anniversary"/>
+          </div>
+          <div style="width:180px">
+            <label>Date</label>
+            <input type="date" value="${r.date}" class="r-date"/>
+          </div>
+          <div style="width:160px">
+            <label>Budget</label>
+            <input type="number" min="0" value="${r.budget}" class="r-budget" placeholder="${model.overview.defaultBudget||0}"/>
+          </div>
+          <div class="no-print" style="display:flex;align-items:flex-end">
+            <button class="btn red remove">🗑️ Remove</button>
+          </div>
+        </div>
+        <div class="row" style="gap:12px;flex-wrap:wrap;margin-top:8px">
+          <div style="flex:1;min-width:240px">
+            <label>Interests</label>
+            <input value="${r.interests}" class="r-interests" placeholder="Hobbies, brands"/>
+          </div>
+          <div style="flex:1;min-width:200px">
+            <label>Sizes</label>
+            <input value="${r.sizes}" class="r-sizes" placeholder="Shirt M, Shoes 9, Ring 6"/>
+          </div>
+          <div style="flex:1;min-width:260px">
+            <label>Wishlist URL</label>
+            <input value="${r.wishlist}" class="r-wishlist" placeholder="https://…"/>
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <label>Notes</label>
+          <textarea class="r-notes" placeholder="Avoid perfume; loves navy; will be traveling…">${r.notes||''}</textarea>
+        </div>
+      `;
+      card.querySelector('.remove').onclick=()=>{ removeRecipient(r.id) };
+      // save on edits
+      card.querySelectorAll('input,textarea').forEach(inp=> inp.addEventListener('input', save));
+      return card;
+    }
+
+    function giftRow(g={id:uid(),recipientId:'',title:'',link:'',price:'',store:'',status:'Idea',due:'',priority:3,notes:'',thankYou:false}){
+      const tr = document.createElement('tr'); tr.dataset.id=g.id;
+      tr.innerHTML = `
+        <td>
+          <select class="g-rec" style="width:160px">${model.recipients.map(r=>`<option value="${r.id}" ${g.recipientId===r.id?'selected':''}>${esc(r.name)}</option>`).join('')}</select>
+        </td>
+        <td>
+          <input class="g-title" placeholder="Item" value="${esc(g.title)}"/>
+          <div class="space"></div>
+          <input class="g-notes" placeholder="Notes (color, model)" value="${esc(g.notes||'')}"/>
+        </td>
+        <td><input type="number" min="0" step="0.01" class="g-price" value="${g.price||''}" style="width:120px"/></td>
+        <td>
+          <input class="g-store" placeholder="Store" value="${esc(g.store||'')}"/>
+          <div class="space"></div>
+          <input class="g-link" placeholder="https://link" value="${esc(g.link||'')}"/>
+        </td>
+        <td>
+          <select class="g-status" style="width:140px">${statuses.map(s=>`<option ${g.status===s?'selected':''}>${s}</option>`).join('')}</select>
+          <div class="space"></div>
+          <label style="color:var(--sub);font-size:12px">Thank‑you sent <input type="checkbox" class="g-thanks" ${g.thankYou?'checked':''}/></label>
+        </td>
+        <td>
+          <input type="date" class="g-due" value="${g.due||''}" style="width:150px"/>
+        </td>
+        <td class="no-print">
+          <div class="flex">
+            <button class="btn yellow advance">⏭️</button>
+            <button class="btn red del">🗑️</button>
+          </div>
+        </td>
+      `;
+      tr.querySelector('.advance').onclick=()=>{ advanceStatus(g.id); };
+      tr.querySelector('.del').onclick=()=>{ removeGift(g.id); };
+      tr.querySelectorAll('input,select').forEach(inp=> inp.addEventListener('input',save));
+      return tr;
+    }
+
+    // --- Actions ---
+    $('#addRecipient').onclick=()=>{ model.recipients.push({id:uid(),name:'',occasion:'Birthday',date:'',budget:$('#defaultBudget').value||'',interests:'',sizes:'',likes:'',dislikes:'',wishlist:'',notes:''}); renderRecipients(); save(); };
+    $('#addGift').onclick=()=>{ if(model.recipients.length===0){ alert('Add a recipient first.'); return; } model.gifts.push({id:uid(),recipientId:model.recipients[0].id,title:'',link:'',price:'',store:'',status:'Idea',due:'',priority:3,notes:'',thankYou:false}); renderGifts(); save(); };
+
+    function removeRecipient(id){
+      if(!confirm('Remove this recipient and their gifts?')) return;
+      model.recipients = model.recipients.filter(r=>r.id!==id);
+      model.gifts = model.gifts.filter(g=>g.recipientId!==id);
+      renderRecipients(); renderGifts(); renderSummary(); save();
+    }
+    function removeGift(id){ model.gifts = model.gifts.filter(g=>g.id!==id); renderGifts(); renderSummary(); save(); }
+    function advanceStatus(id){ const g=model.gifts.find(x=>x.id===id); if(!g) return; const i=statuses.indexOf(g.status); g.status = statuses[Math.min(statuses.length-1, i+1)]; renderGifts(); renderSummary(); save(); }
+
+    // --- Rendering ---
+    function renderRecipients(){
+      const wrap = $('#recipients'); wrap.innerHTML='';
+      model.recipients.forEach(r=> wrap.appendChild(recipientCard(r)) );
+      // Sync recipient selects in gifts table
+      renderGifts(); renderSummary(); renderUpcoming();
+    }
+
+    function renderGifts(){
+      const tbody = $('#giftTable tbody'); tbody.innerHTML='';
+      const term = ($('#searchGifts').value||'').toLowerCase();
+      model.gifts.forEach(g=>{
+        const rec = model.recipients.find(r=>r.id===g.recipientId); const rname = rec?rec.name:'';
+        const hay = [g.title,g.store,rname].join(' ').toLowerCase();
+        if(term && !hay.includes(term)) return;
+        tbody.appendChild(giftRow(g));
+      });
+      renderShopping(); renderSummary();
+    }
+
+    function renderShopping(){
+      const wrap = $('#shopping'); wrap.innerHTML='';
+      const toBuy = model.gifts.filter(g=>g.status==='To Buy');
+      if(toBuy.length===0){ wrap.innerHTML = '<span style="color:var(--sub)">No items to buy yet. Move an idea to <em>To Buy</em>.</span>'; return; }
+      toBuy.forEach(g=>{
+        const rec = model.recipients.find(r=>r.id===g.recipientId);
+        const row = document.createElement('div'); row.className='card'; row.style.padding='12px';
+        row.innerHTML = `
+          <div class="row" style="justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-weight:600">${esc(g.title||'Untitled')}</div>
+              <div style="color:var(--sub);font-size:13px">For: ${esc(rec?rec.name:'')}</div>
+            </div>
+            <div class="flex">
+              <a class="btn blue" href="${esc(g.link||'#')}" target="_blank">🔗 Open Link</a>
+              <button class="btn green" onclick="markPurchased('${g.id}')">✅ Mark Purchased</button>
+            </div>
+          </div>`;
+        wrap.appendChild(row);
+      });
+    }
+    function markPurchased(id){ const g=model.gifts.find(x=>x.id===id); if(!g) return; g.status='Purchased'; renderGifts(); save(); }
+
+    function renderSummary(){
+      // Budget totals per recipient
+      const wrap = $('#budgetSummary'); wrap.innerHTML='';
+      const sums = {};
+      model.recipients.forEach(r=> sums[r.id]={ name:r.name, budget: num(r.budget||model.overview.defaultBudget||0), planned:0, spent:0 });
+      model.gifts.forEach(g=>{ const r=sums[g.recipientId]; if(!r) return; const p=num(g.price); if(!isNaN(p)){ r.planned += p; if(['Purchased','Wrapped','Delivered'].includes(g.status)) r.spent += p; }});
+
+      let totalBudget=0,totalPlanned=0,totalSpent=0;
+      Object.values(sums).forEach(s=>{ totalBudget+=s.budget; totalPlanned+=s.planned; totalSpent+=s.spent; });
+
+      Object.values(sums).forEach(s=>{
+        const left = Math.max(0, s.budget - s.spent);
+        const usedPct = s.budget>0 ? Math.min(100, Math.round((s.spent/s.budget)*100)) : (s.spent>0?100:0);
+        const card=document.createElement('div'); card.className='card'; card.style.padding='12px';
+        card.innerHTML = `
+          <div class="row" style="justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-weight:700">${esc(s.name||'Unnamed')}</div>
+              <div style="color:var(--sub);font-size:13px">Budget: $${fmt(s.budget)} · Spent: $${fmt(s.spent)} · Planned: $${fmt(s.planned)}</div>
+            </div>
+            <div style="min-width:220px;flex:1">
+              <div class="bar"><i style="width:${usedPct}%"></i></div>
+              <div style="color:var(--sub);font-size:12px;margin-top:4px">${usedPct}% used · $${fmt(left)} left</div>
+            </div>
+          </div>`;
+        wrap.appendChild(card);
+      });
+
+      const total=document.createElement('div'); total.className='card'; total.style.padding='12px';
+      const left = Math.max(0, totalBudget-totalSpent);
+      const pct = totalBudget>0 ? Math.min(100, Math.round((totalSpent/totalBudget)*100)) : (totalSpent>0?100:0);
+      total.innerHTML = `
+        <div class="row" style="justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:800">Total</div>
+            <div style="color:var(--sub);font-size:13px">Budget: $${fmt(totalBudget)} · Spent: $${fmt(totalSpent)} · Planned: $${fmt(totalPlanned)}</div>
+          </div>
+          <div style="min-width:220px;flex:1">
+            <div class="bar"><i style="width:${pct}%"></i></div>
+            <div style="color:var(--sub);font-size:12px;margin-top:4px">${pct}% used · $${fmt(left)} left</div>
+          </div>
+        </div>`;
+      wrap.appendChild(total);
+    }
+
+    function renderUpcoming(){
+      const wrap=$('#upcoming'); wrap.innerHTML='';
+      const rows = model.recipients
+        .filter(r=>r.date)
+        .map(r=>({name:r.name,date:r.date,ts:Date.parse(r.date)}))
+        .sort((a,b)=>a.ts-b.ts);
+      if(rows.length===0){ wrap.innerHTML = '<span style="color:var(--sub)">No upcoming dates yet.</span>'; return; }
+      rows.forEach(r=>{
+        const item=document.createElement('div'); item.className='card'; item.style.padding='12px';
+        item.innerHTML = `<div class="row" style="justify-content:space-between"><div><strong>${esc(r.name)}</strong><div style="color:var(--sub);font-size:13px">${r.date}</div></div><div class="status">⏰ Reminder</div></div>`;
+        wrap.appendChild(item);
+      })
+    }
+
+    // --- Save / Load / Export ---
+    function snapshot(){
+      return {
+        overview: { season: $('#season').value, defaultBudget: $('#defaultBudget').value, notes: $('#overviewNotes').value },
+        recipients: $$('#recipients .card').map(c=>({
+          id: c.dataset.id,
+          name: c.querySelector('.r-name').value,
+          occasion: c.querySelector('.r-occasion').value,
+          date: c.querySelector('.r-date').value,
+          budget: c.querySelector('.r-budget').value,
+          interests: c.querySelector('.r-interests').value,
+          sizes: c.querySelector('.r-sizes').value,
+          wishlist: c.querySelector('.r-wishlist').value,
+          notes: c.querySelector('.r-notes').value
+        })),
+        gifts: $$('#giftTable tbody tr').map(tr=>({
+          id: tr.dataset.id,
+          recipientId: tr.querySelector('.g-rec').value,
+          title: tr.querySelector('.g-title').value,
+          notes: tr.querySelector('.g-notes').value,
+          price: tr.querySelector('.g-price').value,
+          store: tr.querySelector('.g-store').value,
+          link: tr.querySelector('.g-link').value,
+          status: tr.querySelector('.g-status').value,
+          thankYou: tr.querySelector('.g-thanks').checked,
+          due: tr.querySelector('.g-due').value
+        }))
+      }
+    }
+
+    function hydrate(s){
+      if(!s) return; Object.assign(model, {overview:s.overview||model.overview, recipients:s.recipients||[], gifts:s.gifts||[]});
+      $('#season').value = model.overview.season||'';
+      $('#defaultBudget').value = model.overview.defaultBudget||100;
+      $('#overviewNotes').value = model.overview.notes||'';
+      renderRecipients();
+      const tbody=$('#giftTable tbody'); tbody.innerHTML='';
+      model.gifts.forEach(g=> tbody.appendChild(giftRow(g)) );
+      renderGifts();
+      save();
+    }
+
+    function save(){ try{ localStorage.setItem(stateKey, JSON.stringify(snapshot())); $('#autosaveBadge').textContent='Auto‑saved \u2713'; }catch(e){ console.error(e); $('#autosaveBadge').textContent='Save error'; } }
+    function load(){ try{ const raw=localStorage.getItem(stateKey); if(!raw){ seed(); return; } hydrate(JSON.parse(raw)); }catch(e){ console.error(e); seed(); } }
+
+    function seed(){
+      model.overview = { season:'2025 Holiday Season', defaultBudget:100, notes:'Black Friday around Nov 28; watch shipping deadlines.' };
+      model.recipients = [
+        {id:uid(), name:'Alex', occasion:'Birthday', date: new Date().toISOString().slice(0,10), budget:120, interests:'Tech, coffee', sizes:'M / 9', likes:'Navy', dislikes:'Strong scents', wishlist:'', notes:''},
+        {id:uid(), name:'Jamie', occasion:'Christmas', date:'', budget:150, interests:'Cooking, travel', sizes:'L / 8', likes:'Green', dislikes:'', wishlist:'', notes:''}
+      ];
+      model.gifts = [
+        {id:uid(), recipientId:model.recipients[0].id, title:'Wireless earbuds', link:'', price:79.99, store:'Amazon', status:'Idea', due:'', priority:3, notes:'Prefer navy', thankYou:false},
+        {id:uid(), recipientId:model.recipients[1].id, title:'Chef knife', link:'', price:59.00, store:'Williams Sonoma', status:'To Buy', due:'', priority:2, notes:'8-inch', thankYou:false}
+      ];
+      hydrate(model);
+    }
+
+    $('#saveBtn').onclick=save;
+    $('#loadBtn').onclick=()=>{ load(); alert('Loaded saved plan.'); };
+    $('#exportBtn').onclick=()=>{
+      const blob = new Blob([JSON.stringify(snapshot(), null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='gift-planner.json'; a.click(); URL.revokeObjectURL(a.href);
+    };
+    $('#printBtn').onclick=()=>window.print();
+
+    $('#searchGifts').addEventListener('input', renderGifts);
+    document.addEventListener('input', e=>{ if(!e.target.closest('.no-auto')) save(); });
+
+    function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+    function uid(){ return 'id'+Math.random().toString(36).slice(2)+Date.now().toString(36); }
+    function num(x){ const n=parseFloat(x); return isNaN(n)?0:n; }
+    function fmt(n){ return (n||0).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2}); }
+
+    $('#year').textContent = new Date().getFullYear();
+    load();
+  </script>
+</body>
+</html>

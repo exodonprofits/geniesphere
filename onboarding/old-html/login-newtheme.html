@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login | GenieSphere</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg1:#0f172a; --bg2:#1e293b;
+      --card: rgba(255,255,255,.06); --card-border: rgba(255,255,255,.12);
+      --text:#f1f5f9; --muted:#94a3b8;
+      --input-bg:#0b1220; --input-border: rgba(148,163,184,.28);
+      --accent:#2BFFD9; --accent2:#7C3AED;
+      --danger:#fb7185; --success:#4ade80;
+      --radius: 16px; --radius-sm: 10px;
+      --shadow: 0 14px 34px rgba(0,0,0,.45);
+      --focus: 0 0 0 4px rgba(74,163,255,.18);
+    }
+    :root[data-theme="light"]{
+      --bg1:#f5f7ff; --bg2:#eaf0ff;
+      --card: rgba(255,255,255,.9); --card-border: rgba(15,23,42,.10);
+      --text:#0b1220; --muted:#475569;
+      --input-bg:#ffffff; --input-border: rgba(2,6,23,.16);
+      --shadow: 0 14px 34px rgba(2,6,23,.12);
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color: var(--text);
+      background: linear-gradient(120deg, var(--bg1), var(--bg2));
+      display:flex; min-height:100vh; align-items:center; justify-content:center;
+      padding: 22px; text-align:center;
+    }
+    .shell{ width:100%; max-width: 440px; }
+    .topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 14px; }
+    .brand{ display:flex; align-items:center; gap:10px; text-decoration:none; color: var(--text); }
+    .logo{
+      width:38px;height:38px;border-radius:12px;
+      background: radial-gradient(circle at 30% 30%, rgba(62,225,161,.95), rgba(74,110,245,.8));
+      box-shadow: 0 8px 18px rgba(0,0,0,.25);
+      flex:0 0 auto;
+    }
+    .brand-name{font-weight:900; letter-spacing:.2px}
+    h1{
+      margin: 10px 0 14px;
+      font-size: 2.15rem;
+      line-height:1.15;
+      background: linear-gradient(45deg, var(--accent), var(--accent2));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color: transparent;
+    }
+    .card{
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      text-align:left;
+    }
+    .field{ display:flex; flex-direction:column; gap:8px; margin-bottom: 12px; }
+    .label{ font-size: .92rem; color: var(--muted); text-align:left; }
+    .input, select.input{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+    }
+    .input:focus{ box-shadow: var(--focus); border-color: rgba(74,110,245,.55); }
+    .row{ display:flex; gap:12px; margin-top: 12px; }
+    .btn{
+      width:100%;
+      padding: 12px 14px;
+      border:none;
+      border-radius: var(--radius-sm);
+      cursor:pointer;
+      font-weight: 800;
+      font-size: 1rem;
+      color: #071018;
+      background: linear-gradient(45deg, var(--accent), var(--accent2));
+      transition: transform .12s ease, opacity .12s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0px); opacity:.92; }
+    .btn.secondary{
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--input-border);
+      font-weight: 800;
+    }
+    .linkrow{ margin-top: 14px; color: var(--muted); font-size: .95rem; text-align:center; }
+    a{ color: var(--accent); text-decoration:none; font-weight:700; }
+    a:hover{ text-decoration:underline; }
+    .helper{ display:flex; justify-content:space-between; align-items:center; margin: 6px 0 4px; gap: 10px; font-size:.92rem; }
+    .msg{ margin-top: 12px; font-size: .95rem; text-align:center; color: var(--muted); min-height: 1.2em; }
+    .msg.error{ color: var(--danger); }
+    .msg.success{ color: var(--success); }
+
+    .iconbtn{
+      border: 1px solid var(--input-border);
+      background: rgba(0,0,0,.12);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 800;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    :root[data-theme="light"] .iconbtn{ background: rgba(255,255,255,.55); }
+
+    .overlay{
+      position: fixed; inset: 0;
+      background: rgba(2,6,23,.55);
+      display:none; align-items:center; justify-content:center;
+      padding: 22px; z-index: 50;
+    }
+    .overlay.open{ display:flex; }
+    .panel{
+      width:100%; max-width: 440px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      text-align:left;
+    }
+    .panel h2{ margin: 0 0 10px; font-size: 1.15rem; color: var(--text); }
+    .pillrow{ display:flex; gap:10px; flex-wrap:wrap; }
+    .pill{
+      border: 1px solid var(--input-border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 12px;
+      cursor:pointer;
+      font-weight: 800;
+    }
+    .pill.active{ border-color: rgba(74,110,245,.55); box-shadow: var(--focus); }
+    .colorgrid{ display:grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 10px; }
+    .swatch{
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+    }
+    :root[data-theme="light"] .swatch{ border-color: rgba(2,6,23,.12); }
+    .swatch.active::after{
+      content:"✓";
+      position:absolute;
+      inset:auto 8px 6px auto;
+      background: rgba(2,6,23,.55);
+      color: #fff;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-weight: 900;
+      font-size: .85rem;
+    }
+    .panel .row{ margin-top: 14px; }
+    .small{ font-size: .9rem; color: var(--muted); margin-top: 6px; }
+    .pillrow-top{ margin-top: 8px; }
+    .label-top{ margin-top: 14px; }
+    .sw1{ background: linear-gradient(45deg,#2BFFD9,#7C3AED); }
+    .sw2{ background: linear-gradient(45deg,#3ee1a1,#4c6ef5); }
+    .sw3{ background: linear-gradient(45deg,#4c6ef5,#22c55e); }
+    .sw4{ background: linear-gradient(45deg,#f59e0b,#ef4444); }
+    .sw5{ background: linear-gradient(45deg,#a78bfa,#60a5fa); }
+    .sw6{ background: linear-gradient(45deg,#fb7185,#f97316); }
+  </style>
+
+</head>
+<body>
+  <main class="shell">
+
+    <div class="topbar">
+      <a class="brand" href="../index.html" aria-label="Go to GenieSphere home">
+        <span class="logo" aria-hidden="true"></span>
+        <span class="brand-name">GenieSphere</span>
+      </a>
+      <button id="openTheme" class="iconbtn" type="button" aria-haspopup="dialog" aria-controls="themeOverlay">🎨 Theme</button>
+    </div>
+
+    <div id="themeOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Theme Settings">
+      <div class="panel">
+        <h2>🎨 Theme Settings</h2>
+
+        <div class="label">Mode</div>
+        <div class="pillrow pillrow-top">
+          <button class="pill" type="button" data-theme-pick="dark">🌙 Dark</button>
+          <button class="pill" type="button" data-theme-pick="light">☀️ Light</button>
+        </div>
+
+        <div class="label label-top">Accent</div>
+        <div class="small">Pick a color pair (buttons + headings).</div>
+        <div class="colorgrid" aria-label="Accent color options">
+          <button class="swatch sw1" type="button" data-accent="#2BFFD9" data-accent2="#7C3AED" aria-label="Teal + Purple"></button>
+          <button class="swatch sw2" type="button" data-accent="#3ee1a1" data-accent2="#4c6ef5" aria-label="Green + Blue"></button>
+          <button class="swatch sw3" type="button" data-accent="#4c6ef5" data-accent2="#22c55e" aria-label="Blue + Green"></button>
+          <button class="swatch sw4" type="button" data-accent="#f59e0b" data-accent2="#ef4444" aria-label="Amber + Red"></button>
+          <button class="swatch sw5" type="button" data-accent="#a78bfa" data-accent2="#60a5fa" aria-label="Violet + Sky"></button>
+          <button class="swatch sw6" type="button" data-accent="#fb7185" data-accent2="#f97316" aria-label="Rose + Orange"></button>
+        </div>
+
+        <div class="row">
+          <button id="resetTheme" class="btn secondary" type="button">Reset</button>
+          <button id="closeTheme" class="btn" type="button">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <h1>Welcome Back</h1>
+    <section class="card">
+
+      <form id="loginForm">
+        <div class="field">
+          <div class="label">📧 Email</div>
+          <input class="input" type="email" id="email" placeholder="you@example.com" required />
+        </div>
+        <div class="field">
+          <div class="label">🔐 Password</div>
+          <input class="input" type="password" id="password" placeholder="Your password" required />
+        </div>
+
+        <div class="helper">
+          <span></span>
+          <a href="reset_password.html">Forgot Password?</a>
+        </div>
+
+        <div class="row">
+          <button class="btn" type="submit">Log In</button>
+          <button class="btn secondary" type="button" id="cancelBtn">Cancel</button>
+        </div>
+
+        <div class="msg" id="msg"></div>
+      </form>
+
+      <div class="linkrow">
+        New here? <a href="signup.html">Create an account</a>
+      </div>
+    
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const STORAGE_THEME = "gs_theme";
+      const STORAGE_ACCENT = "gs_accent";
+      const STORAGE_ACCENT2 = "gs_accent2";
+      const DEFAULTS = { theme: "dark", accent: "#2BFFD9", accent2: "#7C3AED" };
+
+      function get(k, fallback){ try{ return localStorage.getItem(k) || fallback; }catch(_){ return fallback; } }
+      function set(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
+
+      function applyTheme(theme){
+        document.documentElement.dataset.theme = theme;
+        set(STORAGE_THEME, theme);
+        syncUI();
+      }
+      function applyAccent(accent, accent2){
+        document.documentElement.style.setProperty("--accent", accent);
+        document.documentElement.style.setProperty("--accent2", accent2);
+        set(STORAGE_ACCENT, accent);
+        set(STORAGE_ACCENT2, accent2);
+        syncUI();
+      }
+
+      const theme = get(STORAGE_THEME, DEFAULTS.theme);
+      const accent = get(STORAGE_ACCENT, DEFAULTS.accent);
+      const accent2 = get(STORAGE_ACCENT2, DEFAULTS.accent2);
+
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.style.setProperty("--accent", accent);
+      document.documentElement.style.setProperty("--accent2", accent2);
+
+      function syncUI(){
+        const t = document.documentElement.dataset.theme || DEFAULTS.theme;
+        const a = get(STORAGE_ACCENT, DEFAULTS.accent);
+        const a2 = get(STORAGE_ACCENT2, DEFAULTS.accent2);
+
+        document.querySelectorAll("[data-theme-pick]").forEach(btn=>{
+          btn.classList.toggle("active", btn.getAttribute("data-theme-pick") === t);
+        });
+        document.querySelectorAll("[data-accent]").forEach(btn=>{
+          const isActive = (btn.getAttribute("data-accent") === a) && (btn.getAttribute("data-accent2") === a2);
+          btn.classList.toggle("active", isActive);
+        });
+      }
+
+      window.GSTheme = { applyTheme, applyAccent };
+
+      const openBtn = document.getElementById("openTheme");
+      const overlay = document.getElementById("themeOverlay");
+      const closeBtn = document.getElementById("closeTheme");
+      const resetBtn = document.getElementById("resetTheme");
+
+      if(openBtn && overlay){
+        const open = ()=> overlay.classList.add("open");
+        const close = ()=> overlay.classList.remove("open");
+
+        openBtn.addEventListener("click", open);
+        overlay.addEventListener("click", (e)=>{ if(e.target === overlay) close(); });
+        if(closeBtn) closeBtn.addEventListener("click", close);
+
+        document.querySelectorAll("[data-theme-pick]").forEach(btn=>{
+          btn.addEventListener("click", ()=> applyTheme(btn.getAttribute("data-theme-pick")));
+        });
+        document.querySelectorAll("[data-accent]").forEach(btn=>{
+          btn.addEventListener("click", ()=> applyAccent(btn.getAttribute("data-accent"), btn.getAttribute("data-accent2")));
+        });
+
+        if(resetBtn) resetBtn.addEventListener("click", ()=>{
+          applyTheme(DEFAULTS.theme);
+          applyAccent(DEFAULTS.accent, DEFAULTS.accent2);
+        });
+
+        document.addEventListener("keydown", (e)=>{
+          if(e.key === "Escape" && overlay.classList.contains("open")) close();
+        });
+
+        syncUI();
+      }
+    })();
+  </script>
+
+
+  <script>
+    if (!window.supabaseClient) {
+      const { createClient } = window.supabase;
+      window.supabaseClient = createClient("https://pbojacnagutipfhcxltj.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0");
+    }
+
+    document.getElementById("cancelBtn").addEventListener("click", () => {
+      window.location.href = "../index.html";
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let redirectTo = urlParams.get("redirectTo");
+
+    if (!redirectTo && document.referrer) {
+      try {
+        const refUrl = new URL(document.referrer);
+        const sameOrigin = refUrl.origin === window.location.origin;
+        const isLogin = refUrl.pathname.endsWith("/login.html");
+        const isSignup = refUrl.pathname.endsWith("/signup.html");
+        if (sameOrigin && !isLogin && !isSignup) {
+          redirectTo = refUrl.href;
+        }
+      } catch (e) {
+        console.warn("Unable to parse referrer for redirectTo:", e);
+      }
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("msg");
+      msg.className = "msg";
+      msg.textContent = "Signing in…";
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      const { data: login, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        msg.className = "msg error";
+        msg.textContent = "❌ " + error.message;
+        return;
+      }
+
+      const userId = login?.user?.id;
+      if (!userId) {
+        msg.className = "msg error";
+        msg.textContent = "❌ Unable to read user ID after login.";
+        return;
+      }
+
+      const { data: prefs, error: prefErr } = await window.supabaseClient
+        .from("user_preferences")
+        .select("role, agents")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (prefErr || !prefs?.role) {
+        msg.className = "msg error";
+        msg.textContent = "❌ Unable to determine your access level.";
+        return;
+      }
+
+      const role = prefs.role;
+      const agentList = prefs.agents || [];
+
+      if (redirectTo) {
+        window.location.href = redirectTo;
+        return;
+      }
+
+      if (role === "admin") {
+        window.location.href = "../dashboard/admin_dashboard.html";
+        return;
+      }
+
+      const encoded = encodeURIComponent(JSON.stringify(agentList));
+      window.location.href = `../dashboard/user_dashboard.html?agents=${encoded}`;
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,802 @@
+{
+  "name": "Cruise Trip Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "cruise-travel-agent",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        128
+      ],
+      "id": "a9e7f42e-1c51-40f5-b029-b832f327177e",
+      "webhookId": "74daa5fa-326b-464b-96eb-fa94f6109ffd"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -208,
+        128
+      ],
+      "id": "671ab52c-3139-4aa3-98fb-7e6a2f12faae"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9367f09a-cde4-4402-9731-740d15300139"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Request Details:', JSON.stringify($json, null, 2)); let method = $json.method; if (!method) { method = $json.headers[':method'] || 'POST'; } return [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "8d0c2de9-e60a-403f-925b-91d2faf2e2ae"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.method).toUpperCase() }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Method",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        240
+      ],
+      "id": "40f70a80-1705-4ae9-b0e8-43c270741ff2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\nconsole.log('Incoming form data:', JSON.stringify(body, null, 2));\nif (!body || typeof body !== 'object') throw new Error('400: Missing body');\n\nconst safeArray = v => Array.isArray(v) ? v : (v ? [v] : []);\n\nconst normaliseAgeRange = arr => arr.map(v => {\n  if (v === 'Kids')      return 'Kids_0_12';\n  if (v === 'Teens')     return 'Teens_13_19';\n  if (v === 'Adults')    return 'Adults_20_39';\n  if (v === 'MiddleAge') return 'Adults_40_59';\n  if (v === 'Seniors')   return 'Seniors_60plus';\n  return v;\n});\n\nconst flexDates = body.flexDates === 'yes' || body.flexDates === true || body.flexDates === 'true';\n\nreturn [{ json: {\n  // Step 1: Who & Vibe\n  tripType:           body.tripType           || 'Not specified',\n  groupSize:          body.groupSize          || '1',\n  travelPace:         body.travelPace         || 'Balanced',\n  budgetTier:         body.budgetTier         || 'Standard',\n  ageRange:           normaliseAgeRange(safeArray(body.ageRange)),\n  anniversaryUpgrade: body.anniversaryUpgrade === 'yes' || body.anniversaryUpgrade === true,\n  specialOccasion:    body.specialOccasion    || 'None',\n  // Step 2: Travel Details\n  departurePort:      body.departurePort      || 'Not specified',\n  cruiseRegion:       body.cruiseRegion       || 'Not specified',\n  startDate:          body.startDate          || '',\n  endDate:            body.endDate            || '',\n  flexDates,\n  cruiseDuration:     body.cruiseDuration     || 'Not specified',\n  // Step 3: Onboard\n  onboardPreferences: safeArray(body.onboardPreferences),\n  cabinType:          body.cabinType          || 'Not specified',\n  dietaryNeeds:       body.dietaryNeeds       || 'None',\n  // Step 4: Shore Excursions\n  shoreExcursions:    safeArray(body.shoreExcursions),\n  // Step 5: Budget & Contact\n  budget:             body.budget             || '0',\n  email:              (body.email || '').trim()\n}}];"
+      },
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        464
+      ],
+      "id": "6946521b-2aad-49d1-ab5b-d1acd11db952"
+    },
+    {
+      "parameters": {
+        "jsCode": "const {\n  tripType, groupSize, travelPace, budgetTier, ageRange,\n  anniversaryUpgrade, specialOccasion,\n  departurePort, cruiseRegion, startDate, endDate, flexDates, cruiseDuration,\n  onboardPreferences, cabinType, dietaryNeeds, shoreExcursions,\n  budget, email\n} = $json;\n\nconst fmt = v => Array.isArray(v) && v.length ? v.join(', ') : 'No preference';\n\nconst paceLabel = {\n  Relaxed:  'Relaxed & slow (max 2 shore excursions per port, spa days, long sea days)',\n  Balanced: 'Balanced (2–3 activities per port, mix of exploration and rest)',\n  Active:   'Packed & active (every port day fully booked, morning to evening)',\n}[travelPace] || travelPace;\n\nconst tierLabel = {\n  Economy:  'Economy — interior cabins, budget cruise lines, self-guided port days',\n  Standard: 'Standard — oceanview/balcony cabin, guided shore excursions, specialty dining',\n  Elite:    'Elite — suite class, luxury cruise lines, private excursions, fine dining',\n}[budgetTier] || budgetTier;\n\nconst dateLine = flexDates\n  ? 'Flexible — suggest the optimal sailing season for this region'\n  : (startDate && endDate ? `${startDate} to ${endDate}` : 'Not specified');\n\nconst prompt = `Please create a complete cruise itinerary with the following details:\n\n- Departure Port: ${departurePort}\n- Cruise Region: ${cruiseRegion}\n- Travel Dates: ${dateLine}\n- Cruise Duration: ${cruiseDuration} nights\n- Trip Type: ${tripType}\n- Travel Pace: ${paceLabel}\n- Plan Tier: ${tierLabel}\n- Total Budget: $${budget} USD\n- Group Size: ${groupSize}\n- Age Ranges: ${fmt(ageRange)}\n- Cabin Type: ${cabinType}\n- Onboard Preferences: ${fmt(onboardPreferences)}\n- Shore Excursion Interests: ${fmt(shoreExcursions)}\n- Dietary Needs: ${dietaryNeeds}\n- Special Occasion: ${specialOccasion}\n- Surprise Romance Upgrade: ${anniversaryUpgrade ? 'YES — include a special romantic gesture' : 'No'}\n\nPlease follow all formatting and content rules from the system prompt exactly.`;\n\nreturn [{ json: {\n  tripType, groupSize, travelPace, budgetTier, ageRange,\n  anniversaryUpgrade, specialOccasion,\n  departurePort, cruiseRegion, startDate, endDate, flexDates, cruiseDuration,\n  onboardPreferences, cabinType, dietaryNeeds, shoreExcursions,\n  budget, email, prompt\n}}];"
+      },
+      "name": "Prepare Cruise Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        464
+      ],
+      "id": "23cbff16-c57b-4e3d-9ed1-8f6e753eb4b2"
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "You are an expert cruise travel agent at Voyage Genie. Create exciting, detailed, and genuinely useful cruise itineraries. Every hotel, cruise line, excursion, and restaurant suggestion must include a real clickable booking link. Think and write like a real cruise specialist who has sailed every route.\n\n════════════════════════════════════\nBUDGET TIER — drives every recommendation\n════════════════════════════════════\nECONOMY tier:\n- Cruise lines: Carnival, MSC Cruise, Costa Cruises. Interior or oceanview cabins only.\n- Shore excursions: Self-guided port days, free beaches, local buses. Under $30/person.\n- Dining: Main dining room only, buffet, no specialty restaurants. ~$15–25/day extras.\n- Links: Carnival.com, MSC Cruises booking pages, free port walking guides.\n\nSTANDARD tier:\n- Cruise lines: Royal Caribbean, Norwegian, Princess Cruises. Balcony cabins recommended.\n- Shore excursions: Guided tours $30–$100/person. Mix of ship-organised and Viator.\n- Dining: 1–2 specialty restaurants per week, main dining for the rest. ~$40–80/day extras.\n- Links: RoyalCaribbean.com, NCL.com, Viator booking links for each excursion.\n\nELITE tier:\n- Cruise lines: Celebrity Cruises, Holland America, Silversea, Viking Ocean, Regent Seven Seas.\n- Cabin: Suite class only. Suggest specific suite categories.\n- Shore excursions: Private guides, chartered vehicles, exclusive experiences. $150–500+/person.\n- Dining: Private dining, Chef's Table, specialty restaurants every night. ~$100–200/day extras.\n- Links: Direct cruise line suite booking pages, private tour operators.\n\n════════════════════════════════════\nTRAVEL PACE ADAPTATION\n════════════════════════════════════\n- Relaxed: Max 2 activities per port day. Sea days are rest days — spa, pool, slow mornings. Never pack back-to-back excursions.\n- Balanced: 2–3 activities per port, mix of guided tours and free time. One evening activity on sea days.\n- Active (Packed): Every port day fully scheduled morning to evening. Early starts, multiple excursions, evening entertainment on ship.\n\n════════════════════════════════════\nTRIP TYPE ADAPTATION\n════════════════════════════════════\n- Solo: Social cruise lines, group excursions, communal dining, solo cabin options.\n- Couple: Romance, sunset excursions, couples spa, private shore experiences, balcony dining.\n- Honeymoon: Maximum romance, suite cabin, surprise upgrades, candlelit dinners, champagne on arrival.\n- Family: Kids clubs, calm port beaches, family cabins/suites, early dinner seatings, age-appropriate excursions.\n- Group: Group dining arrangements, shared excursion bookings, group discount cruise lines.\n\n════════════════════════════════════\nFLEXIBLE DATES\n════════════════════════════════════\nIf flexDates is true: recommend the optimal sailing season for the region — best weather, lowest crowds, best value months. Briefly explain why.\n\n════════════════════════════════════\nSURPRISE UPGRADE\n════════════════════════════════════\nIf anniversaryUpgrade = YES: include one specific romantic gesture — champagne and strawberries on cabin arrival, private sunset deck dinner, couples shore excursion, or a spa booking suggestion. Present as a special Genie recommendation.\n\n════════════════════════════════════\nBOOKING LINKS — MANDATORY\n════════════════════════════════════\nEvery suggestion must have a real booking link. Format: <a href=\"URL\">Link text →</a>\n\n- Cruise lines: link directly to the cruise line's search/booking page for that region\n- Shore excursions: https://www.viator.com/search?q=[port+name] or https://www.getyourguide.com/s/?q=[port]\n- Restaurants/dining: TripAdvisor or restaurant's own website\n- Flights to port: https://www.skyscanner.com or https://www.google.com/travel/flights\n- Travel insurance: https://www.worldnomads.com or https://www.safetywing.com\nNEVER use placeholder URLs.\n\n════════════════════════════════════\nSECTIONS — include ALL in this exact order\n════════════════════════════════════\n1. Cruise Lines and Ships: (3 options matching tier, port, region, duration — with real booking links)\n2. Onboard Activities: (tailored to travelPace and onboardPreferences)\n3. Shore Excursions: (per port of call, matched to interests and pace, with Viator/GetYourGuide links)\n4. Daily Schedule: (one entry per day, Morning/Afternoon/Evening — density matches travelPace. Day labels use <strong>Day 1: Embarkation in [port]</strong>)\n5. Dining Recommendations: (accounting for dietaryNeeds and budget tier)\n6. Estimated Food Budget: (per person per day, matched to tier)\n7. Cost Summary: (tab-separated — mandatory, always include)\n8. Travel Tips: (5–8 practical tips specific to region and trip type)\n\n════════════════════════════════════\nFORMATTING RULES\n════════════════════════════════════\n- No Markdown (no ###, **, or | tables)\n- Section headings: plain text ending with colon (e.g. \"Shore Excursions:\")\n- Bullets: leading hyphen (- item)\n- Day labels: <strong>Day 1: Embarkation in Miami</strong>\n- Cost Summary: tab-separated rows (Category\\tAmount)\n- <strong> tags on Total and Remaining Budget rows in Cost Summary\n- Blank line between each section\n- Emojis welcome but purposeful\n\nExample Cost Summary:\nCost Summary:\nCruise Fare\\t$1,600\nOnboard Activities\\t$50\nShore Excursions\\t$200\nFood\\t$350\n<strong>Total</strong>\\t<strong>$2,200</strong>\n<strong>Remaining Budget</strong>\\t<strong>$800</strong>",
+              "role": "system"
+            },
+            {
+              "content": "={{$json.prompt}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        960,
+        464
+      ],
+      "id": "ff9b7645-6408-45d6-9384-baf5a12fc93d",
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage-Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cruise = $node['Prepare Cruise Data'].json;\n// Read FORMATTED itinerary from Format Daily Schedule (not raw OpenAI)\nconst ai = $node['Format Daily Schedule'].json.itinerary || $node['OpenAI'].json.message?.content || 'No itinerary found.';\nconsole.log('Formatted itinerary (first 300 chars):', ai.substring(0, 300));\nreturn [{ json: {\n  departurePort:      cruise.departurePort,\n  cruiseRegion:       cruise.cruiseRegion,\n  startDate:          cruise.startDate,\n  endDate:            cruise.endDate,\n  flexDates:          cruise.flexDates,\n  cruiseDuration:     cruise.cruiseDuration,\n  tripType:           cruise.tripType,\n  travelPace:         cruise.travelPace,\n  budgetTier:         cruise.budgetTier,\n  onboardPreferences: cruise.onboardPreferences,\n  shoreExcursions:    cruise.shoreExcursions,\n  cabinType:          cruise.cabinType,\n  groupSize:          cruise.groupSize,\n  ageRange:           cruise.ageRange,\n  dietaryNeeds:       cruise.dietaryNeeds,\n  specialOccasion:    cruise.specialOccasion,\n  anniversaryUpgrade: cruise.anniversaryUpgrade,\n  budget:             cruise.budget,\n  email:              cruise.email,\n  itinerary:          ai\n}}];"
+      },
+      "name": "Cruise Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        464
+      ],
+      "id": "5e60a3a3-d4d8-419e-a404-8e0d8612179c"
+    },
+    {
+      "parameters": {
+        "jsCode": "const destination      = $json.cruiseRegion       || 'Your Destination';\nconst departurePort    = $json.departurePort      || 'Not specified';\nconst flexDates        = $json.flexDates          || false;\nconst travelDates      = flexDates\n  ? 'Flexible — Genie will suggest optimal dates'\n  : `${$json.startDate || 'N/A'} to ${$json.endDate || 'N/A'}`;\nconst cruiseDuration   = $json.cruiseDuration     || 'Not specified';\nconst budget           = $json.budget             || 'N/A';\nconst groupSize        = $json.groupSize          || 'N/A';\nconst tripType         = $json.tripType           || 'N/A';\nconst travelPace       = $json.travelPace         || '';\nconst budgetTier       = $json.budgetTier         || 'Standard';\nconst cabinType        = $json.cabinType          || 'Not specified';\nconst anniversaryUpgrade = $json.anniversaryUpgrade || false;\nconst specialOccasion  = $json.specialOccasion    || 'None';\nconst dietaryNeeds     = $json.dietaryNeeds       || 'None';\nconst onboardPrefs     = Array.isArray($json.onboardPreferences) ? $json.onboardPreferences.join(', ') : $json.onboardPreferences || 'Not specified';\nconst shoreExc         = Array.isArray($json.shoreExcursions)    ? $json.shoreExcursions.join(', ')    : $json.shoreExcursions    || 'Not specified';\nconst ageRange         = Array.isArray($json.ageRange)           ? $json.ageRange.join(', ')           : $json.ageRange           || 'Not specified';\nconst itineraryContent = $json.itinerary          || 'Itinerary details not available.';\n\nconst tierBadge  = { Economy: '🟢 Economy', Standard: '🔵 Standard', Elite: '⭐ Elite' }[budgetTier] || budgetTier;\nconst paceLabel  = { Relaxed: '🌅 Relaxed', Balanced: '🌊 Balanced', Active: '🏄 Active' }[travelPace] || travelPace;\n\nconst metaRow = (label, value) =>\n  `<p style=\"color:#333;font-size:15px;margin:8px 0;line-height:1.5;\"><strong style=\"color:#023e8a;\">${label}:</strong> ${value}</p>`;\n\nconst emailHtml = `\n<div style=\"font-family:'Helvetica Neue',Arial,sans-serif;max-width:660px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:12px;\">\n  <div style=\"background:linear-gradient(105deg,#023e8a,#0077b6);padding:26px 28px;border-radius:10px 10px 0 0;text-align:center;\">\n    <h1 style=\"color:#fff;margin:0;font-size:26px;font-family:Georgia,serif;\">🚢 Your Cruise Itinerary</h1>\n    <p style=\"color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:14px;\">Generated by Voyage Genie · ${tierBadge}</p>\n  </div>\n  <div style=\"background:#fff;padding:28px;border-radius:0 0 10px 10px;border:1px solid #e2e8f0;border-top:none;\">\n    <h2 style=\"color:#023e8a;font-size:18px;margin:0 0 16px;border-bottom:2px solid #eaf4fb;padding-bottom:10px;\">Trip Overview</h2>\n    ${metaRow('⚓ Departing from', departurePort)}\n    ${metaRow('🌍 Cruise Region', destination)}\n    ${metaRow('📅 Travel Dates', travelDates)}\n    ${metaRow('⏳ Duration', cruiseDuration + ' nights')}\n    ${metaRow('🛏️ Cabin Type', cabinType)}\n    ${metaRow('🧳 Trip Type', tripType)}\n    ${paceLabel ? metaRow('⚡ Travel Pace', paceLabel) : ''}\n    ${metaRow('⭐ Plan Tier', tierBadge)}\n    ${metaRow('👥 Group Size', groupSize + ' traveler(s)')}\n    ${ageRange ? metaRow('👨‍👩‍👧 Age Ranges', ageRange) : ''}\n    ${metaRow('🎉 Onboard Preferences', onboardPrefs)}\n    ${metaRow('🏝️ Shore Excursion Interests', shoreExc)}\n    ${dietaryNeeds !== 'None' ? metaRow('🍽️ Dietary Needs', dietaryNeeds) : ''}\n    ${specialOccasion !== 'None' ? metaRow('🎂 Special Occasion', specialOccasion) : ''}\n    ${anniversaryUpgrade ? metaRow('💍 Romantic Upgrade', 'Requested') : ''}\n    ${metaRow('💵 Budget', '$' + budget)}\n    <hr style=\"border:0;border-top:1px solid #e2e8f0;margin:20px 0;\">\n    <h3 style=\"color:#023e8a;font-size:16px;margin:0 0 14px;\">Your Itinerary Details</h3>\n    <div style=\"background:#f8fafc;padding:20px;border-radius:8px;font-size:14px;line-height:1.7;color:#1e293b;border:1px solid #e2e8f0;\">\n      ${itineraryContent}\n    </div>\n    <hr style=\"border:0;border-top:1px solid #e2e8f0;margin:24px 0 16px;\">\n    <p style=\"color:#64748b;font-size:12px;text-align:center;margin:0;\">\n      Generated by <strong>Voyage Genie</strong> 🌟 &nbsp;|&nbsp; Plan Less, Explore More\n    </p>\n  </div>\n</div>`;\n\nconst sessionId = Date.now().toString();\nconst subject   = `Your ${tierBadge} Cruise Itinerary for ${destination} – Voyage Genie`;\n\nconst formData = {\n  departurePort, cruiseRegion: destination,\n  startDate: $json.startDate || '', endDate: $json.endDate || '',\n  flexDates, cruiseDuration, tripType, travelPace, budgetTier,\n  cabinType, groupSize, budget,\n  onboardPreferences: $json.onboardPreferences || [],\n  shoreExcursions:    $json.shoreExcursions    || [],\n  ageRange:           $json.ageRange           || [],\n  dietaryNeeds, specialOccasion, anniversaryUpgrade\n};\n\nconsole.log('Resolved email for:', $json.email, '| sessionId:', sessionId);\n\nreturn [{ json: {\n  sessionId,\n  itineraryHtml:   itineraryContent,  // clean AI content for frontend display\n  emailHtml:       emailHtml,         // full branded wrapper for email sending\n  resolvedEmail:   ($json.email || '').trim(),\n  resolvedSubject: subject,\n  resolvedMessage: emailHtml,\n  formData\n}}];"
+      },
+      "name": "Resolve Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        464
+      ],
+      "id": "c93a1379-889d-42db-9d7f-dc47f87fc88e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const url = 'https://exodonprofits.app.n8n.cloud/webhook/send-email'; const payload = { resolvedEmail: $json.resolvedEmail, resolvedSubject: $json.resolvedSubject, resolvedMessage: $json.resolvedMessage }; try { const response = await $http({ method: 'POST', url: url, body: payload, headers: { 'Content-Type': 'application/json' } }); console.log('Email trigger response:', response); } catch (error) { console.error('Error triggering email workflow:', error.message); } return $input.all();"
+      },
+      "name": "Trigger Email Workflow",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        464
+      ],
+      "id": "b094b21b-6b7d-4155-8130-c97617e46e8e"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}"
+            },
+            {
+              "name": "redirectUrl",
+              "value": "cruise-trip-itinerary.html"
+            },
+            {
+              "name": "itineraryData",
+              "value": "={{ JSON.stringify($json.formData) }}"
+            },
+            {
+              "name": "itineraryHtml",
+              "value": "={{ $json.itineraryHtml }}"
+            },
+            {
+              "name": "emailHtml",
+              "value": "={{ $json.emailHtml }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Final Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        464
+      ],
+      "id": "056f8318-58c2-437d-a1c0-fc964aa40ed6"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: {\n  sessionId:     $json.sessionId,\n  redirectUrl:   $json.redirectUrl,\n  itineraryData: $json.itineraryData,\n  itineraryHtml: $json.itineraryHtml,\n  emailHtml:     $json.emailHtml\n}}];"
+      },
+      "name": "Clean Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2192,
+        464
+      ],
+      "id": "17cd8446-5186-4ab6-a33c-8afcd27715a1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return JSON Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2384,
+        464
+      ],
+      "id": "c050ae45-027b-44ef-bbc5-6b9955a321c3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET,OPTIONS",
+        "path": "cruise-get-itinerary",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Get Itinerary Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        608,
+        832
+      ],
+      "id": "321e0a51-fea0-4111-9d82-02860330194d",
+      "webhookId": "abcdef12-3456-7890-abcd-ef1234567890"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS for Get Itinerary",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        832
+      ],
+      "id": "b06932af-f44b-481d-8576-e424abd8088e"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS for Get Itinerary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        800
+      ],
+      "id": "5d5f817d-bc28-44aa-a272-f020c48de6e8"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Retrieve Itinerary node called, but itineraryHtml is now passed directly in the initial response.');\nreturn [{ json: { itineraryHtml: 'This endpoint is no longer needed.' } }];"
+      },
+      "name": "Retrieve Itinerary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        992
+      ],
+      "id": "7169fccc-c2df-47bd-abcf-56296b75b5f5"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Return Itinerary Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        992
+      ],
+      "id": "8f1f5ab4-c63f-4ce0-bdf2-a932df8cadc1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cruise-travel-agent-new-suggestion",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "name": "New Suggestion Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        624
+      ],
+      "id": "eadf713e-0f5d-4252-9b16-2ccf4d9e7422",
+      "webhookId": "12345678-90ab-cdef-1234-567890abcdef"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If OPTIONS New Suggestion",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        624
+      ],
+      "id": "601ea3a7-fa4f-4025-bc2b-a0e79466dfac"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to OPTIONS New Suggestion",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        32,
+        512
+      ],
+      "id": "d9ffd7f5-b6e4-49b9-b69e-05f1695e6a0a"
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Request Details:', JSON.stringify($json, null, 2));\nlet method = $json.method;\nif (!method) {\n  method = $json.headers[':method'] || 'POST';\n}\nreturn [{ json: { ...$json, method: method } }];"
+      },
+      "name": "Debug Method New Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        752
+      ],
+      "id": "66176286-72c1-49d2-9faa-1c0b704415bd"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.method).toUpperCase() }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "If Method New Suggestion",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        752
+      ],
+      "id": "b392486e-933e-4ffc-ad00-4125ecbfb7de"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Extract raw AI output ──\nconst itineraryRaw = $node['OpenAI'].json.message?.content || 'No itinerary found.';\nconsole.log('Raw OpenAI output (first 300 chars):', itineraryRaw.substring(0, 300));\n\nconst HEADING_COLOR = '#023e8a';\nconst HEADING_STYLE = `font-size:16px;color:${HEADING_COLOR};display:block;margin:18px 0 6px 0;font-weight:600;`;\nconst TABLE_CELL    = 'border:1px solid #e2e8f0;padding:9px 12px;font-size:14px;';\nconst TABLE_BOLD    = 'border:1px solid #e2e8f0;padding:9px 12px;font-size:14px;background:#eaf4fb;font-weight:600;color:#023e8a;';\n\n// Pre-process: normalise literal \\t (AI sometimes outputs backslash-t instead of real tab)\n// then strip markdown and convert **bold**\nlet processed = itineraryRaw\n  .replace(/\\\\t/g, '\\t')\n  .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>')\n  // Convert ### headings to section format\n  .replace(/^#{1,3}\\s+(.+)$/gm, '$1:')\n  // Normalise line endings\n  .replace(/\\r\\n/g, '\\n');\n\nconst lines = processed.split('\\n');\nlet html = '';\nlet inCostSummary = false;\nlet inDailySchedule = false;\nlet costRows = [];\nlet scheduleLines = [];\n\nfunction flushCostTable() {\n  if (costRows.length === 0) return '';\n  const rows = costRows.join('');\n  costRows = [];\n  return `<table style=\"border-collapse:collapse;width:100%;margin:12px 0;\" cellpadding=\"0\" cellspacing=\"0\">${rows}</table><br>`;\n}\n\nfunction flushDailySchedule(schedLines) {\n  let out = `<strong style=\"${HEADING_STYLE}\">Daily Schedule:</strong>`;\n  const joined = schedLines.join('\\n');\n  const dayBlocks = joined.split(/(?=<strong>Day \\d+:)/);\n  for (const block of dayBlocks) {\n    if (!block.trim()) continue;\n    const bulletLines = block.split('\\n').map(l => {\n      const t = l.trim();\n      if (!t) return '';\n      if (t.startsWith('<strong>')) return t + '<br>';\n      if (t.startsWith('- ')) return `<span style=\"display:block;padding-left:1em;margin:2px 0;\">${t.slice(2)}</span>`;\n      return t + '<br>';\n    });\n    out += bulletLines.join('');\n  }\n  return out + '<br>';\n}\n\nfor (let i = 0; i < lines.length; i++) {\n  const raw = lines[i];\n  const line = raw.trim();\n\n  if (!line) {\n    if (inCostSummary) {\n      html += flushCostTable();\n      inCostSummary = false;\n    } else if (inDailySchedule) {\n      html += flushDailySchedule(scheduleLines);\n      inDailySchedule = false;\n      scheduleLines = [];\n    } else {\n      html += '<br>';\n    }\n    continue;\n  }\n\n  const lower = line.toLowerCase();\n\n  // Daily Schedule section\n  if (lower.startsWith('daily schedule:')) {\n    if (inCostSummary) { html += flushCostTable(); inCostSummary = false; }\n    inDailySchedule = true;\n    scheduleLines = [];\n    continue;\n  }\n  if (inDailySchedule) {\n    scheduleLines.push(line);\n    continue;\n  }\n\n  // Cost Summary section\n  if (lower.startsWith('cost summary:')) {\n    html += `<strong style=\"${HEADING_STYLE}\">Cost Summary:</strong>`;\n    inCostSummary = true;\n    costRows = [];\n    continue;\n  }\n  if (inCostSummary) {\n    if (line.includes('\\t')) {\n      const parts = line.split('\\t').map(s => s.replace(/<[^>]+>/g,'').trim());\n      const cat  = parts[0] || '';\n      const cost = parts[1] || '';\n      const isTotals = cat.match(/^(Total|Remaining Budget)/i);\n      const style = isTotals ? TABLE_BOLD : TABLE_CELL;\n      costRows.push(`<tr><td style=\"${style}\">${cat}</td><td style=\"${style};text-align:right;\">${cost}</td></tr>`);\n      continue;\n    } else if (line.match(/^[-•]/)) {\n      // bullet inside cost section — close table first\n      html += flushCostTable();\n      inCostSummary = false;\n      // fall through\n    } else {\n      html += flushCostTable();\n      inCostSummary = false;\n      // fall through\n    }\n  }\n\n  // Section headings — end with colon, no inner HTML tags, not a bullet\n  if (line.endsWith(':') && !line.startsWith('-') && !line.startsWith('•') && !line.includes('<a ')) {\n    html += `<strong style=\"${HEADING_STYLE}\">${line}</strong>`;\n    continue;\n  }\n\n  // Bullet points\n  if (line.startsWith('- ') || line.startsWith('• ')) {\n    const text = line.startsWith('- ') ? line.slice(2) : line.slice(2);\n    html += `<span style=\"display:block;padding-left:1em;margin:2px 0;\">• ${text}</span>`;\n    continue;\n  }\n\n  // Everything else\n  html += line + '<br>';\n}\n\n// Flush anything still open at end of input\nif (inCostSummary) html += flushCostTable();\nif (inDailySchedule) html += flushDailySchedule(scheduleLines);\n\n// Fallback Cost Summary if none found\nconst budget = $json.budget || '0';\nif (!html.toLowerCase().includes('cost summary:')) {\n  html += `<strong style=\"${HEADING_STYLE}\">Cost Summary:</strong>`;\n  html += `<table style=\"border-collapse:collapse;width:100%;margin:12px 0;\" cellpadding=\"0\" cellspacing=\"0\">\n    <tr><td style=\"${TABLE_CELL}\">Cruise Fare</td><td style=\"${TABLE_CELL};text-align:right;\">$0</td></tr>\n    <tr><td style=\"${TABLE_CELL}\">Onboard Activities</td><td style=\"${TABLE_CELL};text-align:right;\">$0</td></tr>\n    <tr><td style=\"${TABLE_CELL}\">Shore Excursions</td><td style=\"${TABLE_CELL};text-align:right;\">$0</td></tr>\n    <tr><td style=\"${TABLE_CELL}\">Food</td><td style=\"${TABLE_CELL};text-align:right;\">$0</td></tr>\n    <tr><td style=\"${TABLE_BOLD}\">Total</td><td style=\"${TABLE_BOLD};text-align:right;\">$0</td></tr>\n    <tr><td style=\"${TABLE_BOLD}\">Remaining Budget</td><td style=\"${TABLE_BOLD};text-align:right;\">$${budget}</td></tr>\n  </table><br>`;\n}\n\nconsole.log('Formatted itinerary HTML (first 500 chars):', html.substring(0, 500));\nreturn [{ json: { ...$json, itinerary: html } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        464
+      ],
+      "id": "52d36674-aa1b-4a1a-8375-03a2068721bb",
+      "name": "Format Daily Schedule"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Method": {
+      "main": [
+        [
+          {
+            "node": "If Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Prepare Cruise Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Cruise Data": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Format Daily Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cruise Info": {
+      "main": [
+        [
+          {
+            "node": "Resolve Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Email Content": {
+      "main": [
+        [
+          {
+            "node": "Trigger Email Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Email Workflow": {
+      "main": [
+        [
+          {
+            "node": "Set Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Final Response": {
+      "main": [
+        [
+          {
+            "node": "Clean Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Output": {
+      "main": [
+        [
+          {
+            "node": "Return JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Itinerary Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS for Get Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS for Get Itinerary": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS for Get Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retrieve Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Itinerary": {
+      "main": [
+        [
+          {
+            "node": "Return Itinerary Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Suggestion Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Method New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Method New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "If Method New Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method New Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Cruise Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9b1909e9-e8d1-481c-b696-33b7fe49dbd1",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "BU6gOVzGMCRfxLpG",
+  "tags": []
+}

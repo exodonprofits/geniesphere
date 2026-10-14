@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🚗 Car Care Tracker | GenieSphere</title>
+
+
+<!-- ===== GenieSphere Unified Auth + DB Loader (Vehicle Hub v1) ===== -->
+<script>
+  window.GS_CONFIG_URL = "/shared/config.json";
+  window.GS_CONFIG_PATH = "/shared/config.json";
+</script>
+
+<script>
+(function(){
+  function add(src, cb){
+    const s = document.createElement("script");
+    s.src = src;
+    s.async = false;
+    s.defer = false;
+    if(cb) s.onload = cb;
+    document.head.appendChild(s);
+    return s;
+  }
+  function hasSdk(){ return !!(window.supabase && typeof window.supabase.createClient === "function"); }
+  function loadFallback(){
+    if(hasSdk()) return;
+    add("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js");
+  }
+  const local = add("/shared/vendor/supabase.min.js", ()=>setTimeout(loadFallback,0));
+  local.onerror = loadFallback;
+})();
+</script>
+
+<script src="/shared/js/app-config.js?v=20260212"></script>
+<script src="/shared/js/auth-header.js?v=20260212"></script>
+<script src="/shared/js/hub-badges.js?v=20260212"></script>
+<!-- ===== /GenieSphere Unified Auth + DB Loader ===== -->
+
+
+<style>
+  :root{
+    --bg:#0b1220;
+    --card:#121a2b;
+    --card2:#0e1626;
+    --line:rgba(120,155,255,.15);
+    --text:#e6efff;
+    --muted:#a9b6d9;
+    --green:#22c55e;
+    --green2:#16a34a;
+    --blue:#4aa3ff;
+    --accent:#3ee1a1;
+    --brand-blue:#4c6ef5;
+    --ring:rgba(74,163,255,.2);
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --radius:7px;
+    --pill:999px;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial;
+  }
+  a{text-decoration:none;color:inherit}
+
+  /* -------- GenieSphere header (from personal.html) -------- */
+  .site-header{
+    position:sticky;
+    top:0;
+    z-index:1000;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+    border-bottom:1px solid rgba(120,155,255,.15);
+    box-shadow:0 8px 22px rgba(0,0,0,.25);
+    backdrop-filter:saturate(120%) blur(10px);
+  }
+  .site-header-inner{
+    max-width:1440px;
+    margin:0 auto;
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:700;
+  }
+  .logo{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+    box-shadow:0 0 0 3px rgba(62,225,161,.35),0 8px 24px rgba(62,225,161,.35);
+  }
+  .menu{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    font-size:14px;
+  }
+  .menu a{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 2px;
+    border-radius:0;
+    text-decoration:none;
+    color:var(--muted);
+    font-weight:500;
+    border-bottom:2px solid transparent;
+    transition:color .15s ease,border-bottom-color .15s ease;
+  }
+  .menu a:hover{
+    color:var(--text);
+    border-bottom-color:var(--brand-blue);
+  }
+  .menu a.active{
+    color:var(--text);
+    border-bottom-color:var(--accent);
+    font-weight:600;
+  }
+  .menu a.ghost{color:var(--muted);}
+
+  .user-menu{
+    position:relative;
+    display:flex;
+    align-items:center;
+    margin-left:auto;
+  }
+  .user-menu-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:999px;
+    border:1px solid rgba(120,155,255,.35);
+    background:#0e1626;
+    color:var(--text);
+    font-size:14px;
+    cursor:pointer;
+  }
+  .user-menu-toggle:hover{border-color:var(--accent);}
+  .user-menu-dropdown{
+    position:absolute;
+    right:0;
+    top:calc(100% + 6px);
+    min-width:220px;
+    background:#0e1626;
+    border-radius:var(--radius);
+    border:1px solid rgba(120,155,255,.25);
+    box-shadow:0 14px 34px rgba(0,0,0,.55);
+    padding:6px 0;
+    display:none;
+    z-index:1002;
+    margin-right:4px;
+  }
+  .user-menu-dropdown a,
+  .user-menu-dropdown button{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:8px 14px;
+    background:none;
+    border:none;
+    color:var(--text);
+    font-size:14px;
+    cursor:pointer;
+  }
+  .user-menu-dropdown a:hover,
+  .user-menu-dropdown button:hover{
+    background:#121a2b;
+  }
+  .user-menu-divider{
+    height:1px;
+    margin:4px 0;
+    background:rgba(148,163,184,.4);
+  }
+  .dropdown-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    opacity:.7;
+    padding:4px 14px 2px;
+  }
+  .auth-only{}
+  @media(max-width:720px){
+    .menu{display:none}
+.site-header-inner{padding:10px 12px}
+    .user-menu-toggle{padding-inline:10px;}
+  }
+
+  /* -------- Car-care main layout -------- */
+  .wrap{
+    max-width:1440px;
+    margin:20px auto 40px;
+    padding:0 16px;
+  }
+  h1{margin:14px 0 6px;font-size:clamp(1.4rem,2.8vw,1.9rem);font-weight:900}
+  p.lead{margin:0 0 12px;color:var(--muted)}
+  .panel{
+    background:linear-gradient(180deg,rgba(24,35,58,.7),rgba(18,26,43,.9));
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:14px;
+  }
+  .panel h2{margin:0 0 10px}
+
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:var(--pill);
+    background:#0e1626;
+    border:1px solid var(--line);
+    font-weight:800;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .pill.active{background:var(--blue);color:#03101f;border-color:transparent}
+  select,input[type="search"]{
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:#0e1626;
+    color:var(--text);
+    outline:none;
+  }
+
+  .vehicle-form{
+    margin-bottom:12px;
+    background:var(--card2);
+    border-radius:12px;
+    padding:10px;
+    border:1px solid var(--line);
+  }
+  .vehicle-form-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6px;
+    font-size:0.9rem;
+  }
+  .vehicle-form-header strong{
+    font-weight:700;
+  }
+
+  .vehicle-form input,
+  .vehicle-form select{
+    flex:1;
+    min-width:0;
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:#0e1626;
+    color:var(--text);
+    font-size:0.9rem;
+  }
+  .vehicle-form input::placeholder{
+    color:var(--muted);
+  }
+
+  .grid{display:grid;gap:12px}
+  @media(min-width:880px){.grid{grid-template-columns:1fr 1fr}}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px;
+    display:grid;
+    gap:10px;
+    position:relative;
+  }
+  .card.sold{
+    opacity:.7;
+  }
+  .card h3{margin:0 0 4px}
+  .meta{display:flex;gap:8px;flex-wrap:wrap}
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:2px 10px;
+    border-radius:var(--pill);
+    font-weight:800;
+    font-size:.9rem;
+  }
+  .b-personal{background:#17334a;border:1px solid #22537a}
+  .b-business{background:#1f2f1f;border:1px solid #2a6a3a}
+  .b-mixed{background:#3a2a10;border:1px solid #8a5a1a}
+  .b-entity{background:#0f2234;border:1px solid #274966}
+  .b-status{background:#1e293b;border:1px solid #4b5563}
+  .b-tolls{background:#111827;border:1px dashed #4b5563}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row .btn{box-shadow:none}
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 16px;
+    border-radius:var(--pill);
+    font-weight:800;
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:.15s transform,.15s box-shadow,.15s background;
+    box-shadow:0 8px 20px rgba(74,163,255,.15);
+    font-size:.95rem;
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn.primary{background:var(--brand-blue); border-color:rgba(76,110,245,.35);} .btn.primary:hover{filter:brightness(1.08);} 
+
+  .btn.blue{background:var(--blue);color:#03101f}
+  .btn.green{background:var(--green);color:#041307}
+  .btn.ghost{background:#0e1626;color:var(--text);border:1px solid var(--line)}
+  .btn.small{padding:8px 12px}
+
+  .split{display:grid;gap:12px}
+  @media(min-width:1440px){.split{grid-template-columns:2fr 1.1fr}}
+
+  .list{margin:0;padding-left:18px;color:var(--muted)}
+  .empty{color:var(--muted);font-style:italic}
+
+  /* -------- Footer -------- */
+  .site-footer{
+    margin-top:32px;
+    padding:32px 0 28px;
+    border-top:1px solid rgba(120,155,255,.15);
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+  }
+  .site-footer-inner{max-width:1440px;margin:0 auto;padding:0 24px}
+  .footer-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px 28px;
+    align-items:start;
+  }
+  @media(max-width:900px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:560px){.footer-grid{grid-template-columns:1fr}}
+  .footer-col h4{margin:0 0 10px;font-size:14px}
+  .footer-col a{
+    display:block;
+    color:var(--muted);
+    text-decoration:none;
+    padding:4px 0;
+    font-size:13px;
+  }
+  .footer-col a:hover{
+    color:var(--text);
+    text-decoration:underline;
+  }
+  .footer-bottom{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    color:var(--muted);
+    font-size:13px;
+    margin-top:24px;
+    padding-top:14px;
+    border-top:1px solid rgba(120,155,255,.12);
+    text-align:center;
+  }
+  .social{
+    display:flex;
+    gap:16px;
+    justify-content:center;
+    font-size:18px;
+  }
+
+  /* -------- Industrial quick stats -------- */
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px;
+    margin:12px 0 14px;
+  }
+  @media(max-width:900px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media(max-width:520px){ .stats{grid-template-columns:1fr;} }
+
+  .stat{
+    background:linear-gradient(180deg,rgba(24,35,58,.7),rgba(18,26,43,.9));
+    border:1px solid rgba(120,155,255,.15);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:12px 14px;
+  }
+  .stat .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:900}
+  .stat .v{font-size:22px;font-weight:950;margin-top:4px;line-height:1.1}
+  .stat .s{font-size:13px;color:var(--muted);margin-top:4px}
+
+  /* Hide footer link columns on mobile (keep copyright + social) */
+  @media(max-width:720px){
+    .footer-grid{display:none !important;}
+  }
+
+
+  /* Upcoming panel placed under stats (full width) */
+  #upcomingPanel { margin-top: 12px; }
+  #upcomingPanel .row { flex-wrap: wrap; gap: 10px; }
+
+
+  /* Template-compatible logo (image) */
+  .logo-img{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    object-fit:contain;
+    display:block;
+    background:transparent;
+  }
+
+  /* Template helper (mobile-only items inside user dropdown) */
+  .mobile-only{ display:none; }
+  @media(max-width:720px){
+    .mobile-only{ display:block; }
+  }
+
+  /* ===== Mobile Bottom Nav (4 tabs) ===== */
+  .mobile-nav{
+    position:fixed; left:0; right:0; bottom:0;
+    display:none;
+    z-index:1200;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    background:#0e1626;
+    border-top:1px solid rgba(120,155,255,.15);
+    box-shadow:0 -10px 24px rgba(0,0,0,.18);
+  }
+  .mobile-nav-inner{
+    max-width:1440px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+  }
+  .mnav{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px;
+    padding:10px 8px;
+    border-radius:14px;
+    border:1px solid rgba(120,155,255,.15);
+    background:#121a2b;
+    color:var(--muted);
+    font-weight:800;
+    font-size:11px;
+    text-decoration:none;
+  }
+  .mnav .ico{ font-size:16px; line-height:1; }
+  .mnav.active{
+    color:var(--text);
+    border-color:rgba(76,110,245,.55);
+    box-shadow:0 0 0 4px rgba(76,110,245,.18);
+  }
+  .mobile-pad{ display:none; height:86px; }
+
+  @media (max-width: 860px){
+    .mobile-nav{ display:block; }
+    .mobile-pad{ display:block; }
+    main.wrap{ padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+  }
+
+
+  /* ===== Vehicle Hub Drawer ===== */
+  .modal{position:fixed; inset:0; display:none; z-index:3000;}
+  .modal.show{display:block;}
+  .modal-backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter: blur(2px);}
+  .modal-panel{
+    position:absolute; right:0; top:0; height:100%; width:min(860px, 100%);
+    background:linear-gradient(180deg, rgba(14,22,38,.98), rgba(11,18,32,.98));
+    border-left:1px solid rgba(120,155,255,.18);
+    box-shadow:-18px 0 40px rgba(0,0,0,.55);
+    display:flex; flex-direction:column;
+  }
+  .modal-head{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 18px; border-bottom:1px solid rgba(120,155,255,.15);}
+  .modal-title{font-weight:800; font-size:18px;}
+  .modal-sub{color:var(--muted); font-size:13px;}
+  .modal-tabs{display:flex; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(120,155,255,.12); overflow:auto;}
+  .modal-tabs .tab{white-space:nowrap; border:1px solid rgba(120,155,255,.18); background:rgba(255,255,255,.04); color:var(--text); padding:8px 10px; border-radius:12px; cursor:pointer;}
+  .modal-tabs .tab.active{border-color:rgba(76,110,245,.55); background:rgba(76,110,245,.18);}
+  .modal-body{padding:14px 16px 20px; overflow:auto; flex:1;}
+  .vh-grid2{display:grid; grid-template-columns: 1fr 1fr; gap:12px;}
+  @media(max-width:780px){ .vh-grid2{grid-template-columns:1fr;} }
+  .vh-card{background:rgba(255,255,255,.05); border:1px solid rgba(120,155,255,.15); border-radius:var(--radius); padding:12px 14px;}
+  .vh-card h4{margin:0 0 8px; font-size:14px;}
+  .vh-kv{display:grid; grid-template-columns: 120px 1fr; gap:6px 10px; font-size:13px; color:var(--muted);}
+  .vh-kv b{color:var(--text); font-weight:700;}
+  .vh-headrow{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
+  .vh-list{font-size:14px;}
+  .vh-item{display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px dashed rgba(120,155,255,.12);}
+  .vh-item:first-child{border-top:none; padding-top:0;}
+  .vh-item .left{min-width:0}
+  .vh-item .left .title{font-weight:700}
+  .vh-item .left .sub{color:var(--muted); font-size:13px; margin-top:2px}
+  .vh-item .right{display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; justify-content:flex-end}
+  .vh-pill{padding:4px 8px; border-radius:999px; border:1px solid rgba(120,155,255,.18); background:rgba(255,255,255,.04); color:var(--text); font-size:12px;}
+  .vh-pill.warn{border-color:rgba(255,196,0,.35); background:rgba(255,196,0,.08);}
+  .vh-pill.good{border-color:rgba(34,197,94,.35); background:rgba(34,197,94,.10);}
+
+/* Mobile: keep category links visible (no hamburger) */
+@media (max-width: 720px){
+  .gs-topnav .nav-links,
+  .gs-topnav .gs-nav-links,
+  .top-links,
+  .nav-links{
+    display:flex !important;
+    gap:10px !important;
+    overflow-x:auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom:6px;
+  }
+  .gs-topnav .nav-links a,
+  .gs-topnav .gs-nav-links a,
+  .top-links a,
+  .nav-links a{
+    font-size:12px;
+    white-space:nowrap;
+    padding:6px 8px;
+    border-radius:10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+  }
+  /* hide scrollbar but keep scroll */
+  .gs-topnav .nav-links::-webkit-scrollbar,
+  .gs-topnav .gs-nav-links::-webkit-scrollbar,
+  .top-links::-webkit-scrollbar,
+  .nav-links::-webkit-scrollbar{ height:0; }
+}
+
+</style>
+
+<script>
+// Global user handle used by older pages
+window.currentUser = window.currentUser || null;
+var currentUser = window.currentUser; // eslint-disable-line no-var
+
+// Create a shared DB client from /shared/config.json (no hardcoded keys)
+window.getGSClient = window.getGSClient || (async function(){
+  if (window.__GS_DB_CLIENT) return window.__GS_DB_CLIENT;
+  if (!(window.supabase && typeof window.supabase.createClient === "function")) return null;
+  try{
+    const res = await fetch(window.GS_CONFIG_URL || "/shared/config.json", { cache:"no-store" });
+    const cfg = await res.json();
+    const url = cfg.supabaseUrl || cfg.SUPABASE_URL || cfg.url;
+    const key = cfg.supabaseAnonKey || cfg.SUPABASE_ANON_KEY || cfg.anonKey;
+    // Back-compat for older pages
+    window.SUPABASE_URL = url;
+    window.SUPABASE_ANON_KEY = key;
+    if(!url || !key) throw new Error("Missing supabaseUrl/supabaseAnonKey in config.json");
+    window.__GS_DB_CLIENT = window.supabase.createClient(url, key);
+    return window.__GS_DB_CLIENT;
+  }catch(e){
+    console.warn("GS client init failed:", e);
+    return null;
+  }
+});
+
+// Keep currentUser in sync (best-effort)
+(async function syncUser(){
+  const db = await window.getGSClient();
+  if(!db) return;
+  try{
+    const { data } = await db.auth.getUser();
+    window.currentUser = data?.user || null;
+    currentUser = window.currentUser;
+    db.auth.onAuthStateChange((_evt, session)=>{
+      window.currentUser = session?.user || null;
+      currentUser = window.currentUser;
+    });
+  }catch(e){
+    console.warn("User sync failed:", e);
+  }
+})();
+</script>
+
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="../../index.html">
+      <img class="logo-img" src="../../genie-logo.png" alt="GenieSphere"/>
+      <strong>GenieSphere</strong>
+    </a>
+
+    <nav class="menu" aria-label="Primary">
+      <a class="ghost" href="../../dashboard/household.html">🏠 Household</a>
+      <a class="ghost" href="../../dashboard/business.html">🏢 Business</a>
+      <a class="ghost" href="../../dashboard/investment.html">📈 Investment</a>
+      <a class="ghost" href="../../dashboard/leisure.html">🏝️ Leisure</a>
+    </nav>
+
+    <div class="user-menu" id="user-menu">
+      <button class="user-menu-toggle" id="user-menu-toggle" aria-expanded="false">
+        <span id="user-name-label">Log in</span>
+        <span aria-hidden="true">▾</span>
+      </button>
+
+      <div class="user-menu-dropdown" id="user-menu-dropdown">
+        <div class="mobile-only">
+          <div class="dropdown-label">Areas</div>
+          <button type="button" class="dropdown-nav" data-target="../../dashboard/household.html">🏠 Household</button>
+          <button type="button" class="dropdown-nav" data-target="../../dashboard/business.html">🏢 Business</button>
+          <button type="button" class="dropdown-nav" data-target="../../dashboard/investment.html">📈 Investment</button>
+          <button type="button" class="dropdown-nav" data-target="../../dashboard/leisure.html">🏝️ Leisure</button>
+          <div class="user-menu-divider"></div>
+        </div>
+
+        <div class="dropdown-label">Account</div>
+        <button type="button" class="dropdown-nav" data-target="../../onboarding/user_profile_form.html">👤 User profile</button>
+        <button type="button" class="dropdown-nav" data-target="../../onboarding/display_settings.html">⚙️ Settings</button>
+        <button type="button" id="dropdown-open-appearance">🎨 Appearance</button>
+
+        <div class="user-menu-divider"></div>
+        <button type="button" id="user-auth-action">Log in / Sign up</button>
+        <button type="button" id="user-signout-btn" class="auth-only">Log out</button>
+      </div>
+    </div>
+</div>
+</header>
+<main class="wrap">
+  <h1>🚗 Car Care Tracker</h1>
+  <p class="lead">Maintenance, insurance, tolls, and service logs—organized for both personal and business vehicles.</p>
+
+  <section class="stats" aria-label="Quick stats">
+    <div class="stat">
+      <div class="k">Total vehicles</div>
+      <div class="v" id="stat-total">—</div>
+      <div class="s">Active + sold</div>
+    </div>
+    <div class="stat">
+      <div class="k">Active vehicles</div>
+      <div class="v" id="stat-active">—</div>
+      <div class="s">Currently in service</div>
+    </div>
+    <div class="stat">
+      <div class="k">Reminders open</div>
+      <div class="v" id="stat-reminders">—</div>
+      <div class="s">Maintenance & renewals</div>
+    </div>
+    <div class="stat">
+      <div class="k">Due soon</div>
+      <div class="v" id="stat-soon">—</div>
+      <div class="s">Next 14 days</div>
+    </div>
+  </section>
+  <section class="panel" id="upcomingPanel">
+        <h2>🔔 Upcoming</h2>
+        <ul id="reminderList" class="list"><li class="empty">No reminders yet.</li></ul>
+        <div class="row" style="margin-top:10px">
+          <a id="btn-export" class="btn ghost small" href="#">⬇️ Export CSV</a>
+          <a id="btn-calendar" class="btn ghost small" href="#">📅 Add to Calendar</a>
+        </div>
+      </section>
+
+
+
+  <!-- Filters / context -->
+  <section class="panel">
+    <div class="filters">
+      <div class="pills" aria-label="Usage filter">
+        <button class="pill active" data-usage="all">All</button>
+        <button class="pill" data-usage="personal">Personal</button>
+        <button class="pill" data-usage="business">Business</button>
+        <button class="pill" data-usage="mixed">Mixed</button>
+        <button class="pill" data-usage="sold">Sold</button>
+      </div>
+      <div style="flex:1"></div>
+      <label class="sr-only" for="entitySel">Entity</label>
+      <select id="entitySel" title="Business Entity (for business view)">
+        <option value="">All Entities</option>
+      </select>
+      <input id="search" type="search" placeholder="Search by name, plate, VIN…"/>
+    </div>
+    <div id="contextHint" class="empty" style="margin-top:8px"></div>
+  </section>
+<!-- Vehicles -->
+    <section class="panel">
+      <h2>Your Vehicles</h2>
+
+      <!-- Add / edit vehicle form -->
+      <div id="addVehicleForm" class="vehicle-form">
+        <div class="vehicle-form-header">
+          <strong id="vehicleFormTitle">Add vehicle</strong>
+          <button type="button" class="btn ghost small" id="cancelEditBtn" style="display:none;">Cancel edit</button>
+        </div>
+        <div class="row">
+          <input id="v-name"  type="text" placeholder="Name (e.g. 2018 Escalade)" />
+          <input id="v-plate" type="text" placeholder="Plate (optional)" />
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <select id="v-owner-type">
+            <option value="personal">Personal owner</option>
+            <option value="entity">Business entity</option>
+          </select>
+          <input id="v-entity" type="text" placeholder="Entity name (if business)" />
+          <select id="v-usage">
+            <option value="personal">Personal</option>
+            <option value="business">Business</option>
+            <option value="mixed">Mixed</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <input id="v-odo" type="number" min="0" placeholder="Odometer (mi)" />
+          <input id="v-reg" type="date"  placeholder="Registration due" />
+          <input id="v-ins" type="date"  placeholder="Insurance due" />
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn green small" id="btn-save-vehicle">💾 Save Vehicle</button>
+        </div>
+      </div>
+
+      <div id="vehicleGrid" class="grid"></div>
+      <div id="noVehicles" class="empty" style="display:none;margin-top:6px">
+        No vehicles match this view.
+      </div>
+    </section>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Home &amp; Family</h4>
+        <a href="../../dashboard/agent_users.html?agent=household-genie">Household Genie</a>
+        <a href="../../dashboard/agent_users.html?agent=family-scheduler">Family Scheduler</a>
+        <a href="../../dashboard/agent_users.html?agent=kids-school">Kids &amp; School Hub</a>
+      </div>
+      <div class="footer-col">
+        <h4>Health &amp; Money</h4>
+        <a href="../../dashboard/agent_users.html?agent=nutrition-engine">Nutrition Engine</a>
+        <a href="../../dashboard/agent_users.html?agent=medication-logger">Medication &amp; Vitals</a>
+        <a href="../../dashboard/agent_users.html?agent=personal-budget">Personal Budget</a>
+      </div>
+      <div class="footer-col">
+        <h4>Life &amp; Travel</h4>
+        <a href="../../dashboard/agent_users.html?agent=car-care">Car Care Tracker</a>
+        <a href="../../leisure/travelplangenie/index.html">Trip Planner</a>
+        <a href="../../dashboard/agent_users.html?agent=personal-insurance">Safety &amp; Insurance</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="../../onboarding/api-key-settings.html">API Keys</a>
+        <a href="../../about.html">About</a>
+        <a href="../../contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+      <div class="social" aria-label="Social">
+        <a href="#" aria-label="Twitter / X">🐦</a>
+        <a href="#" aria-label="YouTube">▶️</a>
+        <a href="#" aria-label="GitHub">🐙</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- Spacer so content isn't hidden behind the mobile bottom nav -->
+<div class="mobile-pad" aria-hidden="true"></div>
+
+<!-- ===== MOBILE BOTTOM NAV ===== -->
+<nav class="mobile-nav" aria-label="GenieSphere mobile navigation">
+  <div class="mobile-nav-inner">
+    <a class="mnav" href="../../dashboard/household.html" data-nav="household"><div class="ico">🏠</div><div>Household</div></a>
+    <a class="mnav" href="../../dashboard/business.html" data-nav="business"><div class="ico">🏢</div><div>Business</div></a>
+    <a class="mnav" href="../../dashboard/investment.html" data-nav="investment"><div class="ico">📈</div><div>Investment</div></a>
+    <a class="mnav" href="../../dashboard/leisure.html" data-nav="leisure"><div class="ico">🏝️</div><div>Leisure</div></a>
+  </div>
+</nav>
+
+
+
+<!-- GenieSphere Config + Auth (template standard) -->
+<script>
+  window.GS_CONFIG_URL = "/shared/config.json";
+  window.GS_CONFIG_PATH = "/shared/config.json";
+</script>
+<script src="/shared/js/app-config.js?v=20260208a"></script>
+
+<!-- Supabase SDK (used by this page data layer) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Create a single Supabase client for this page (keys come from /shared/config.json when available).
+  (function(){
+    const url = window.SUPABASE_URL;
+    const key = window.SUPABASE_ANON_KEY;
+    if (window.supabase && url && key && !window.ccClient){
+      try { window.ccClient = window.supabase.createClient(url, key); }
+      catch (e) { console.warn("Supabase client init failed:", e); }
+    }
+  })();
+</script>
+
+<!-- Header auth + badges -->
+<script src="/shared/js/auth-header.js?v=20260208a"></script>
+<script src="/shared/js/hub-badges.js"></script>
+
+<script>
+  // Global user handle (kept in sync by auth bootstrap)
+  window.currentUser = window.currentUser || null;
+  var currentUser = window.currentUser;
+
+  // Provide a simple global currentUser for pages that rely on it
+  (async function(){
+    try{
+      if (!window.ccClient || !window.ccClient.auth) return;
+      const { data } = await window.ccClient.auth.getUser();
+      window.currentUser = data?.user || null;
+      currentUser = window.currentUser;
+      window.ccClient.auth.onAuthStateChange((_evt, session)=>{
+        window.currentUser = session?.user || null;
+        currentUser = window.currentUser;
+      });
+    }catch(e){
+      console.warn("Auth bootstrap failed:", e);
+    }
+  })();
+</script>
+
+<!-- Car Care JS -->
+<script>
+  const client = window.ccClient;
+
+  const USE_SUPABASE = true;
+  const SUPABASE_URL = window.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+
+  const N8N_ODOMETER_HOOK = "";
+  const N8N_SERVICE_INBOX_MAILTO = "mailto:carlogs@yourdomain.com?subject=New%20Service%20Receipt";
+
+  const $ = s => document.querySelector(s);
+  const qs = new URLSearchParams(location.search);
+  const todayISO = () => new Date().toISOString().slice(0,10);
+  const fmtDate = s => s ? new Date(s).toLocaleDateString() : "—";
+  const isUUID = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
+
+  const LS = {
+    VEHICLES: "gs_carcare_vehicles",
+    SERVICES: "gs_carcare_services",
+    RULES: "gs_carcare_rules",
+    REMINDERS: "gs_carcare_reminders",
+    TOLLS: "gs_carcare_tolls"
+  };
+
+  function readLS(key, fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback; }catch{ return fallback; } }
+  function writeLS(key,val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+  // Seed demo data on first run
+  (function seedLocal(){
+    if(readLS(LS.VEHICLES,null)) {
+      if (!readLS(LS.TOLLS,null)) writeLS(LS.TOLLS,[]);
+      return;
+    }
+    const vehicles = [
+      { id:"v1", name:"2018 Cadillac Escalade", make:"Cadillac", model:"Escalade", year:2018, plate:"EXO-465", vin:"...", owner_type:"entity", owner_entity:"Exodon Profits", usage_type:"business", business_pct:100, current_odometer:78000, insurance_expiry:"2026-01-10", status:"active" },
+      { id:"v2", name:"2016 Ferrari California T", make:"Ferrari", model:"California T", year:2016, plate:"JIM-CA", vin:"...", owner_type:"personal", owner_entity:null, usage_type:"personal", business_pct:0, current_odometer:23000, inspection_expiry:"2025-12-15", status:"active" },
+      { id:"v3", name:"2018 Tesla Model Y", make:"Tesla", model:"Model Y", year:2018, plate:"VIC-SALON", owner_type:"entity", owner_entity:"Victoria Nails", usage_type:"business", business_pct:100, current_odometer:54000, registration_expiry:"2026-04-01", status:"active" },
+      { id:"v4", name:"2022 VW Taos", make:"Volkswagen", model:"Taos", year:2022, plate:"SAL-TAOS", owner_type:"entity", owner_entity:"Victoria Nails", usage_type:"mixed", business_pct:70, current_odometer:36000, status:"active" }
+    ];
+    const rules = [
+      { vehicle_id:"v1", service_type:"oil_change", interval_months:6, interval_miles:5000, lead_days:10 },
+      { vehicle_id:"v1", service_type:"tire_rotation", interval_months:6, interval_miles:6000, lead_days:10 },
+      { vehicle_id:"v2", service_type:"oil_change", interval_months:12, interval_miles:7000, lead_days:10 },
+      { vehicle_id:"v3", service_type:"tire_rotation", interval_months:6, interval_miles:6000, lead_days:10 },
+      { vehicle_id:"v4", service_type:"oil_change", interval_months:12, interval_miles:7000, lead_days:10 },
+    ];
+    const services = [
+      { id:"s1", vehicle_id:"v1", service_type:"oil_change", service_date:"2025-05-10", odometer:74000, vendor:"Jiffy Lube", amount:89.00 },
+      { id:"s2", vehicle_id:"v3", service_type:"tire_rotation", service_date:"2025-06-20", odometer:50000, vendor:"Discount Tire", amount:35.00 },
+      { id:"s3", vehicle_id:"v2", service_type:"oil_change", service_date:"2025-03-01", odometer:21000, vendor:"Ferrari SF", amount:350.00 }
+    ];
+    writeLS(LS.VEHICLES, vehicles); writeLS(LS.RULES, rules); writeLS(LS.SERVICES, services);
+    const rems = [];
+    for (const r of rules){
+      const last = services.filter(s=>s.vehicle_id===r.vehicle_id && s.service_type===r.service_type)
+                          .sort((a,b)=>new Date(b.service_date)-new Date(a.service_date))[0];
+      const v = vehicles.find(x=>x.id===r.vehicle_id);
+      const d = last ? new Date(last.service_date) : new Date();
+      if(r.interval_months){ d.setMonth(d.getMonth()+r.interval_months); }
+      const due_date = r.interval_months ? d.toISOString().slice(0,10) : null;
+      const due_miles = r.interval_miles ? ((last?.odometer ?? v.current_odometer) + r.interval_miles) : null;
+      rems.push({ id:`rm-${r.vehicle_id}-${r.service_type}`, vehicle_id:r.vehicle_id, service_type:r.service_type, due_date, due_miles, status:"open" });
+    }
+    writeLS(LS.REMINDERS, rems);
+    writeLS(LS.TOLLS, []);
+  })();
+
+  const api = {
+    async listVehicles(){
+      if (!USE_SUPABASE || !currentUser?.id) {
+        return readLS(LS.VEHICLES, []);
+      }
+
+      // Reuse the single Supabase client instance created in the header
+      const { data, error } = await client
+        .from('vehicles')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('name');
+
+      if (error) {
+        console.error('Supabase vehicles error → fallback to localStorage', error);
+        return readLS(LS.VEHICLES, []);
+      }
+
+      return data || [];
+    },
+    async listReminders(){
+      if (!USE_SUPABASE || !currentUser?.id) return readLS(LS.REMINDERS,[]);
+      // Reuse the single Supabase client instance created in the header
+      const { data, error } = await client
+        .from('service_reminders')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('status','open');
+
+      if (error) {
+        console.error('Supabase reminders error → fallback to localStorage', error);
+        return readLS(LS.REMINDERS,[]);
+      }
+      return data||[];
+    },
+    async addOdometer(vehicle_id, miles){
+      if(!USE_SUPABASE || !currentUser?.id){
+        const v = readLS(LS.VEHICLES,[]); const i = v.findIndex(x=>x.id===vehicle_id);
+        if(i>=0){ v[i].current_odometer = Number(miles); writeLS(LS.VEHICLES,v); }
+        return;
+      }
+      // Reuse the single Supabase client instance created in the header
+      await client
+        .from('vehicles')
+        .update({ current_odometer:Number(miles) })
+        .eq('id',vehicle_id)
+        .eq('user_id', currentUser.id);
+    },
+    async saveVehicle(vehicle, isUpdate){
+      // Save to Supabase when available; otherwise fall back to localStorage only
+      if(!USE_SUPABASE || !currentUser?.id) return null;
+
+      // Only send columns we expect; ignore unknown local-only fields
+      const payload = {
+        user_id: currentUser.id,
+        name: vehicle.name ?? null,
+        plate: vehicle.plate ?? null,
+        owner_type: vehicle.owner_type ?? 'personal',
+        owner_entity: vehicle.owner_entity ?? null,
+        usage_type: vehicle.usage_type ?? 'personal',
+        current_odometer: vehicle.current_odometer ?? null,
+        registration_expiry: vehicle.registration_expiry ?? null,
+        insurance_expiry: vehicle.insurance_expiry ?? null,
+        status: vehicle.status ?? 'active',
+        sold_date: vehicle.sold_date ?? null
+      };
+
+      if(isUpdate && vehicle.id){
+        const { data, error } = await client
+          .from('vehicles')
+          .update(payload)
+          .eq('id', vehicle.id)
+          .eq('user_id', currentUser.id)
+          .select('*')
+          .single();
+        if(error){
+          console.error('Supabase update vehicle failed → localStorage only', error);
+          return null;
+        }
+        return data;
+      } else {
+        // Insert: let Supabase generate id (UUID)
+        delete payload.id;
+        const { data, error } = await client
+          .from('vehicles')
+          .insert(payload)
+          .select('*')
+          .single();
+        if(error){
+          console.error('Supabase insert vehicle failed → localStorage only', error);
+          return null;
+        }
+        return data;
+      }
+    },
+    async setVehicleStatus(vehicle_id, status, sold_date){
+      if(!USE_SUPABASE || !currentUser?.id) return;
+      const { error } = await client
+        .from('vehicles')
+        .update({ status, sold_date })
+        .eq('id', vehicle_id)
+        .eq('user_id', currentUser.id);
+      if(error){
+        console.error('Supabase update status failed', error);
+      }
+    },
+
+  };
+
+
+  let VEHICLES = [], REMINDERS = [], TOLLS = [];
+
+  function updateStats(){
+    const total = (VEHICLES||[]).length;
+    const active = (VEHICLES||[]).filter(v => (v.status||'active') !== 'sold').length;
+    const openRem = (REMINDERS||[]).filter(r => (r.status||'open') !== 'done' && (r.status||'open') !== 'closed');
+    const remindersOpen = openRem.length;
+
+    const now = new Date();
+    const soonCutoff = new Date(now);
+    soonCutoff.setDate(now.getDate()+14);
+    const dueSoon = openRem.filter(r => {
+      if(!r.due_date) return false;
+      const d = new Date(r.due_date);
+      return d >= new Date(now.toDateString()) && d <= soonCutoff;
+    }).length;
+
+    const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent = String(val); };
+    set('stat-total', total);
+    set('stat-active', active);
+    set('stat-reminders', remindersOpen);
+    set('stat-soon', dueSoon);
+  }
+
+  const VIEW = (qs.get('view')||'personal').toLowerCase();
+  const VIEW_ENTITY = qs.get('entity') || '';
+
+  function usageBadge(v){
+    const arr = [];
+    if(v.usage_type==='personal') arr.push(`<span class="badge b-personal">Personal</span>`);
+    if(v.usage_type==='business') arr.push(`<span class="badge b-business">Business</span>`);
+    if(v.usage_type==='mixed')    arr.push(`<span class="badge b-mixed">Mixed</span>`);
+    if(v.owner_type==='entity' && v.owner_entity) arr.push(`<span class="badge b-entity">${v.owner_entity}</span>`);
+    return arr.join(' ');
+  }
+
+  const state = { usage:(VIEW==='business'?'business':'all'), entity:VIEW_ENTITY||'', search:'' };
+  let editingVehicleId = null;
+
+  function renderFilters(){
+    document.querySelectorAll('.pill').forEach(p=>{
+      p.classList.toggle('active', p.dataset.usage === (state.usage||'all'));
+    });
+    const ents = [...new Set(VEHICLES.filter(v=>v.owner_type==='entity' && v.owner_entity).map(v=>v.owner_entity))].sort();
+    const sel = $('#entitySel'); sel.innerHTML = `<option value="">All Entities</option>` + ents.map(e=>`<option ${e===state.entity?'selected':''}>${e}</option>`).join('');
+    sel.style.display = ((state.usage==='business' || VIEW==='business') && state.usage!=='sold') ? '' : 'none';
+    const hint = [];
+    if (VIEW==='business') hint.push(`Business view${VIEW_ENTITY?` for ${VIEW_ENTITY}`:''}`);
+    else hint.push('Personal view');
+    if (state.usage && state.usage!=='all') hint.push(`• filter: ${state.usage}`);
+    if (state.entity) hint.push(`• entity: ${state.entity}`);
+    $('#contextHint').textContent = hint.join(' ');
+  }
+
+  function renderVehicles(){
+    const grid = $('#vehicleGrid'); 
+    grid.innerHTML='';
+    // Stats always reflect full dataset (after Supabase/local load)
+    updateStats();
+
+    let list = (VEHICLES||[]).slice();
+
+    // View scoping
+    if(VIEW==='business'){
+      // Business view: only vehicles owned by an entity (optionally scoped to a specific entity)
+      list = list.filter(v => v.owner_type==='entity' && (!VIEW_ENTITY || v.owner_entity===VIEW_ENTITY));
+    } else {
+      // Personal area: show ALL of the user's vehicles.
+      // (Use the pills to narrow to personal/business/mixed/sold.)
+      // This prevents "Total vehicles" showing more than what the list can display.
+      // No pre-filter here.
+    }
+
+    // Sold filter (special)
+    const u = (state.usage || 'all');
+    if(u === 'sold'){
+      list = list.filter(v => (v.status||'active') === 'sold');
+    } else {
+      // default: hide sold in normal views
+      list = list.filter(v => (v.status||'active') !== 'sold');
+    }
+
+    // Usage type filter (personal/business/mixed)
+    if(u && u !== 'all' && u !== 'sold'){
+      list = list.filter(v => v.usage_type === u);
+    }
+
+    // Entity filter (only meaningful for business)
+    if(state.entity){
+      list = list.filter(v => v.owner_entity===state.entity);
+    }
+
+    // Search
+    const q = (state.search||'').trim().toLowerCase();
+    if(q){
+      list = list.filter(v =>
+        (v.name||'').toLowerCase().includes(q) ||
+        (v.plate||'').toLowerCase().includes(q) ||
+        (v.vin||'').toLowerCase().includes(q)
+      );
+    }
+
+for(const v of list){
+      if (!v.status) v.status = 'active';
+      const relRem = REMINDERS.filter(r => r.vehicle_id===v.id && r.status!=='done');
+      const soon = relRem.filter(r => r.due_date && new Date(r.due_date) <= addDays(new Date(), 14));
+      const tollCount = TOLLS.filter(t=>t.vehicle_id===v.id).length;
+
+      const card = document.createElement('div');
+      card.className = 'card' + (v.status === 'sold' ? ' sold' : '');
+      card.innerHTML = `
+        <div>
+          <h3>${v.name}</h3>
+          <div class="meta">${usageBadge(v)}</div>
+        </div>
+        <div class="meta">
+          <span class="badge">Odo: ${v.current_odometer?.toLocaleString() ?? '—'} mi</span>
+          ${v.registration_expiry ? `<span class="badge">Reg: ${fmtDate(v.registration_expiry)}</span>`:''}
+          ${v.inspection_expiry ? `<span class="badge">Inspect: ${fmtDate(v.inspection_expiry)}</span>`:''}
+          ${v.insurance_expiry ? `<span class="badge">Ins: ${fmtDate(v.insurance_expiry)}</span>`:''}
+        </div>
+        <div class="meta">
+          <span class="badge b-status">${v.status === 'sold' ? 'Status: Sold / inactive' : 'Status: Active'}</span>
+          ${v.sold_date ? `<span class="badge">Sold: ${fmtDate(v.sold_date)}</span>`:''}
+          <span class="badge b-tolls">Tolls: ${tollCount}</span>
+        </div>
+        <div class="row">
+          <button class="btn green small" data-act="odo" data-id="${v.id}">➕ Log Odometer</button>
+          <button class="btn ghost small" data-act="service" data-id="${v.id}">📎 Add Service</button>
+          <button class="btn blue small" data-act="history" data-id="${v.id}">📜 Service History</button>
+          <button class="btn primary small" data-act="hub" data-id="${v.id}">🚗 Open Hub</button>
+        </div>
+        <div class="row">
+          <button class="btn ghost small" data-act="edit" data-id="${v.id}">✏️ Edit</button>
+          <button class="btn ghost small" data-act="loans" data-id="${v.id}">💳 Loans</button>
+          <button class="btn ghost small" data-act="toll" data-id="${v.id}">🧾 Log Toll</button>
+          <button class="btn ghost small" data-act="toggle-status" data-id="${v.id}">
+            ${v.status === 'sold' ? '🚗 Mark Active' : '🚙 Mark Sold'}
+          </button>
+        </div>
+        <div class="meta">
+          ${relRem.length ? `<span class="badge b-entity">Reminders: ${relRem.length}${soon.length?` (soon: ${soon.length})`:''}</span>` : `<span class="badge">No reminders</span>`}
+        </div>
+      `;
+      grid.appendChild(card);
+    }
+    $('#noVehicles').style.display = grid.children.length ? 'none' : '';
+  }
+
+  
+function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+
+  function renderReminders(){
+    const ul = $('#reminderList'); ul.innerHTML='';
+    let arr = REMINDERS.filter(r => r.status==='open');
+    if(VIEW==='business'){
+      arr = arr.filter(r => {
+        const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+        return v && v.owner_type==='entity' && (!VIEW_ENTITY || v.owner_entity===VIEW_ENTITY);
+      });
+    } else {
+      // Personal area: show reminders for ALL of the user's vehicles.
+      // Filters (pills/search) apply to the vehicle list; reminders stay complete.
+      arr = arr.filter(r => {
+        const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+        return !!v;
+      });
+    }
+    arr.sort((a,b)=>{
+      const ad = a.due_date? new Date(a.due_date).getTime(): Infinity;
+      const bd = b.due_date? new Date(b.due_date).getTime(): Infinity;
+      if(ad!==bd) return ad-bd;
+      return (a.due_miles??Infinity) - (b.due_miles??Infinity);
+    });
+    if(!arr.length){ ul.innerHTML = `<li class="empty">No reminders yet.</li>`; return; }
+    for(const r of arr){
+      const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+      const li = document.createElement('li');
+      const tag = r.service_type.replace(/_/g,' ');
+      const due = r.due_date ? `by ${fmtDate(r.due_date)}` : (r.due_miles ? `~ ${r.due_miles.toLocaleString()} mi` : '');
+      li.innerHTML = `${v?.name || 'Vehicle'} — <strong>${tag}</strong> ${due}`;
+      ul.appendChild(li);
+    }
+  }
+
+  // ----- Add / edit vehicle -----
+  function resetVehicleForm(){
+    editingVehicleId = null;
+    $('#vehicleFormTitle').textContent = 'Add vehicle';
+    $('#v-name').value = '';
+    $('#v-plate').value = '';
+    $('#v-owner-type').value = 'personal';
+    $('#v-entity').value = '';
+    $('#v-usage').value = 'personal';
+    $('#v-odo').value = '';
+    $('#v-reg').value = '';
+    $('#v-ins').value = '';
+    $('#cancelEditBtn').style.display = 'none';
+  }
+
+  function populateVehicleForm(v){
+    editingVehicleId = v.id;
+    $('#vehicleFormTitle').textContent = 'Edit vehicle';
+    $('#v-name').value = v.name || '';
+    $('#v-plate').value = v.plate || '';
+    $('#v-owner-type').value = v.owner_type || 'personal';
+    $('#v-entity').value = v.owner_entity || '';
+    $('#v-usage').value = v.usage_type || 'personal';
+    $('#v-odo').value = v.current_odometer ?? '';
+    $('#v-reg').value = v.registration_expiry || '';
+    $('#v-ins').value = v.insurance_expiry || '';
+    $('#cancelEditBtn').style.display = 'inline-flex';
+    document.getElementById('addVehicleForm').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  async function addOrUpdateVehicleFromForm(){
+    const name   = document.getElementById('v-name').value.trim();
+    const plate  = document.getElementById('v-plate').value.trim();
+    const ownerType = document.getElementById('v-owner-type').value;
+    const entity = document.getElementById('v-entity').value.trim() || null;
+    const usage  = document.getElementById('v-usage').value;
+    const odo    = document.getElementById('v-odo').value;
+    const reg    = document.getElementById('v-reg').value || null;
+    const ins    = document.getElementById('v-ins').value || null;
+
+    if (!name){
+      alert('Please enter at least a vehicle name.');
+      return;
+    }
+
+    if (editingVehicleId){
+      const idx = VEHICLES.findIndex(v=>v.id===editingVehicleId);
+      if (idx >= 0){
+        const v = VEHICLES[idx];
+        v.name = name;
+        v.plate = plate || null;
+        v.owner_type = ownerType;
+        v.owner_entity = ownerType === 'entity' ? entity : null;
+        v.usage_type = usage;
+        v.current_odometer = odo ? Number(odo) : null;
+        v.registration_expiry = reg;
+        v.insurance_expiry = ins;
+        if (!v.status) v.status = 'active';
+      }
+    } else {
+      const id = 'v' + Date.now();
+      const newVehicle = {
+        id,
+        name,
+        plate: plate || null,
+        owner_type: ownerType,
+        owner_entity: ownerType === 'entity' ? entity : null,
+        usage_type: usage,
+        current_odometer: odo ? Number(odo) : null,
+        registration_expiry: reg,
+        insurance_expiry: ins,
+        status: 'active',
+        sold_date: null
+      };
+      VEHICLES.push(newVehicle);
+    }
+
+    // Persist to Supabase (real data) when available
+    if (USE_SUPABASE && currentUser?.id) {
+      const isUpdate = !!editingVehicleId;
+      const vToSave = isUpdate ? (VEHICLES.find(v=>v.id===editingVehicleId) || null) : (VEHICLES[VEHICLES.length-1] || null);
+      if (vToSave) {
+        const saved = await api.saveVehicle(vToSave, isUpdate);
+        // If insert succeeded, refresh from Supabase to get the real UUID id
+        if (saved) {
+          VEHICLES = await api.listVehicles();
+        }
+      }
+    } else {
+      // Local-only mode
+      writeLS(LS.VEHICLES, VEHICLES);
+    }
+
+    resetVehicleForm();
+    renderFilters();
+    renderVehicles();
+    renderReminders();
+  }
+
+  document.getElementById('btn-save-vehicle')
+    .addEventListener('click', async function(e){
+      e.preventDefault();
+      await addOrUpdateVehicleFromForm();
+    });
+
+  document.getElementById('cancelEditBtn')
+    .addEventListener('click', async function(e){
+      e.preventDefault();
+      resetVehicleForm();
+    });
+
+  // ----- Tolls -----
+  function logToll(vehicleId){
+    const amountStr = prompt('Toll amount (optional, e.g. 3.50):');
+    const location = prompt('Toll road / location (optional):');
+    if (!amountStr && !location) return;
+
+    const toll = {
+      id: 't' + Date.now(),
+      vehicle_id: vehicleId,
+      date: todayISO(),
+      amount: amountStr ? Number(amountStr) : null,
+      location: location || null
+    };
+    TOLLS.push(toll);
+    writeLS(LS.TOLLS, TOLLS);
+    renderVehicles();
+    alert('Toll logged ✅');
+  }
+
+  function toggleVehicleStatus(id){
+    const v = VEHICLES.find(x=>x.id===id);
+    if (!v) return;
+
+    if (!v.status || v.status === 'active'){
+      v.status = 'sold';
+      v.sold_date = todayISO();
+    } else {
+      v.status = 'active';
+      v.sold_date = null;
+    }
+
+    // Persist status to Supabase when available
+    if (USE_SUPABASE && currentUser?.id) {
+      api.setVehicleStatus(id, v.status, v.sold_date).then(async ()=>{
+        VEHICLES = await api.listVehicles();
+        renderVehicles();
+        renderReminders();
+      });
+      return;
+    }
+
+    // Local-only mode
+    writeLS(LS.VEHICLES, VEHICLES);
+    renderVehicles();
+    renderReminders();
+  }
+
+  // ----- Filters & search -----
+  document.querySelectorAll('.pill').forEach(p=>{
+    p.addEventListener('click', ()=>{
+      document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+      p.classList.add('active');
+      state.usage = p.dataset.usage;
+      renderFilters(); renderVehicles(); renderReminders(); updateStats();
+    });
+  });
+
+  document.getElementById('entitySel').addEventListener('change', e=>{
+    state.entity = e.target.value || '';
+    renderVehicles(); renderReminders();
+  });
+
+  document.getElementById('search').addEventListener('input', e=>{
+    state.search = e.target.value;
+    renderVehicles();
+  });
+
+  // ----- Card actions -----
+  document.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button[data-act]');
+    if(!btn) return;
+    const id = btn.dataset.id;
+    if(btn.dataset.act==='odo'){
+      const miles = prompt('Current odometer reading (miles)?');
+      if(!miles) return;
+      if(N8N_ODOMETER_HOOK){
+        try{
+          await fetch(N8N_ODOMETER_HOOK, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ vehicle_id:id, odometer:Number(miles) })
+          });
+        }catch(err){ console.warn('Webhook failed', err); }
+      }
+      await api.addOdometer(id, Number(miles));
+      VEHICLES = await api.listVehicles();
+      renderVehicles();
+      alert('Odometer logged ✅');
+    }
+    if(btn.dataset.act==='service'){
+      if(N8N_SERVICE_INBOX_MAILTO) location.href = N8N_SERVICE_INBOX_MAILTO;
+      else alert('Wire this to your service inbox/upload page.');
+    }
+    if(btn.dataset.act==='hub'){
+      await vhLoad(id);
+    }
+    if(btn.dataset.act==='history'){
+      window.location.href = `service-history.html?vehicle_id=${encodeURIComponent(id)}`;
+    }
+    if(btn.dataset.act==='loans'){
+      window.location.href = `car-loans.html?vehicle_id=${encodeURIComponent(id)}`;
+    }
+    if(btn.dataset.act==='edit'){
+      const v = VEHICLES.find(x=>x.id===id);
+      if (v) populateVehicleForm(v);
+    }
+    if(btn.dataset.act==='toll'){
+      logToll(id);
+    }
+    if(btn.dataset.act==='toggle-status'){
+      toggleVehicleStatus(id);
+    }
+  });
+
+  // ----- Export / calendar tips -----
+  document.getElementById('btn-export').addEventListener('click', ()=>{
+    const rows = REMINDERS.map(r=>{
+      const v = VEHICLES.find(x=>x.id===r.vehicle_id);
+      return {
+        vehicle: v?.name || '',
+        service_type: r.service_type,
+        due_date: r.due_date || '',
+        due_miles: r.due_miles || ''
+      };
+    });
+    const csv = 'vehicle,service_type,due_date,due_miles\n' + rows.map(r=>[
+      `"${String(r.vehicle).replaceAll('"','""')}"`,
+      `"${String(r.service_type).replaceAll('"','""')}"`,
+      `"${r.due_date}"`,
+      r.due_miles
+    ].join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=`car-reminders-${todayISO()}.csv`; a.click(); URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btn-calendar').addEventListener('click', ()=>{
+    alert('Tip: In n8n, add a step to create Google Calendar events whenever a reminder has a due_date.');
+  });
+
+  
+  /* ============================
+     Vehicle Hub Modules (Insurance / Registration / Expenses / Docs)
+     ============================ */
+  const VH = {
+    vehicleId: null,
+    vehicle: null,
+  };
+
+  const VH_TABLES = {
+    policies: "vehicle_insurance_policies",
+    registrations: "vehicle_registrations",
+    expenses: "vehicle_expenses",
+    documents: "vehicle_documents",
+  };
+
+  async function vhDb(){
+    return await window.getGSClient();
+  }
+
+  function vhOpen(){
+    const m = document.getElementById("vhModal");
+    m.classList.add("show");
+    m.setAttribute("aria-hidden","false");
+  }
+  function vhClose(){
+    const m = document.getElementById("vhModal");
+    m.classList.remove("show");
+    m.setAttribute("aria-hidden","true");
+    VH.vehicleId = null;
+    VH.vehicle = null;
+  }
+  document.addEventListener("click", (e)=>{
+    const c = e.target.closest("[data-close='vh']");
+    if(c) vhClose();
+  });
+
+  // Tabs
+  function vhSetTab(name){
+    document.querySelectorAll("#vhModal .tab").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+    document.querySelectorAll("#vhModal .vh-panel").forEach(p=>p.hidden = p.dataset.panel!==name);
+  }
+  document.querySelectorAll("#vhModal .tab").forEach(b=>{
+    b.addEventListener("click", ()=>vhSetTab(b.dataset.tab));
+  });
+
+  function vhDuePill(dateStr, label){
+    if(!dateStr) return `<span class="vh-pill">${label}: —</span>`;
+    const d = new Date(dateStr);
+    const days = Math.ceil((d - new Date())/(1000*60*60*24));
+    const cls = days <= 14 ? "warn" : "good";
+    return `<span class="vh-pill ${cls}">${label}: ${fmtDate(dateStr)} (${days}d)</span>`;
+  }
+
+  async function vhLoad(vehicleId){
+    VH.vehicleId = vehicleId;
+    VH.vehicle = VEHICLES.find(v=>v.id===vehicleId) || null;
+    const v = VH.vehicle;
+    document.getElementById("vhTitle").textContent = v ? `🚗 ${v.name}` : "🚗 Vehicle Hub";
+    document.getElementById("vhSub").textContent = v ? (v.plate ? `Plate ${v.plate}` : "Insurance • Registration • Expenses • Documents") : "Insurance • Registration • Expenses • Documents";
+
+    // profile kv
+    const kv = document.getElementById("vhProfileKv");
+    if(v){
+      kv.innerHTML = `
+        <div>VIN</div><b>${v.vin || "—"}</b>
+        <div>Plate</div><b>${v.plate || "—"}</b>
+        <div>Odometer</div><b>${(v.current_odometer!=null) ? Number(v.current_odometer).toLocaleString() + " mi" : "—"}</b>
+        <div>Owner</div><b>${v.owner_type==="entity" ? (v.owner_entity||"Entity") : "Personal"}</b>
+        <div>Usage</div><b>${v.usage_type || "—"}</b>
+      `;
+      document.getElementById("vhQuickPeek").innerHTML = [
+        vhDuePill(v.insurance_expiry, "Insurance"),
+        vhDuePill(v.registration_expiry, "Registration"),
+        vhDuePill(v.inspection_expiry, "Inspection"),
+      ].join(" ");
+    } else {
+      kv.innerHTML = "<div class='muted'>Vehicle not found.</div>";
+      document.getElementById("vhQuickPeek").innerHTML = "";
+    }
+
+    // wire quick actions
+    document.getElementById("vhLogOdo").onclick = () => document.querySelector(`button[data-act="odo"][data-id="${vehicleId}"]`)?.click();
+    document.getElementById("vhAddService").onclick = () => document.querySelector(`button[data-act="service"][data-id="${vehicleId}"]`)?.click();
+    document.getElementById("vhEditVehicle").onclick = () => document.querySelector(`button[data-act="edit"][data-id="${vehicleId}"]`)?.click();
+
+    const loansBtn = document.getElementById("vhOpenLoans");
+    if(loansBtn){
+      loansBtn.onclick = () => { window.location.href = `car-loans.html?vehicle_id=${encodeURIComponent(vehicleId)}`; };
+    }
+
+    vhOpen();
+    vhSetTab("profile");
+
+    // If this is a demo/local vehicle (id like "v1"), don't hit Supabase UUID filters.
+    if(!isUUID(String(vehicleId||""))){
+      document.getElementById("vhInsuranceList").innerHTML = `<div class="muted">This vehicle is in <b>Demo mode</b>. Click “Edit Vehicle” and save to your account to enable Insurance/Registration/Expenses.</div>`;
+      document.getElementById("vhRegList").innerHTML = `<div class="muted">Demo vehicle (not synced).</div>`;
+      document.getElementById("vhExpenseList").innerHTML = `<div class="muted">Demo vehicle (not synced).</div>`;
+      document.getElementById("vhDocList").innerHTML = `<div class="muted">Demo vehicle (not synced).</div>`;
+      return;
+    }
+
+    await Promise.all([
+      vhRenderPolicies(),
+      vhRenderRegistrations(),
+      vhRenderExpenses(),
+      vhRenderDocs(),
+    ]);
+  }
+
+  async function vhSelect(sqlTable, filterCol, filterVal, orderCol="created_at"){
+    const db = await vhDb();
+    if(!db) return { ok:false, data:[], mode:"local" };
+    // Guard: avoid querying UUID columns with demo/local ids like "v1"
+    if(filterCol === "vehicle_id" && !isUUID(String(filterVal||""))){
+      return { ok:false, data:[], mode:"INVALID_VEHICLE_ID" };
+    }
+    try{
+      const { data, error } = await db.from(sqlTable).select("*").eq(filterCol, filterVal).order(orderCol, {ascending:false});
+      if(error) throw error;
+      return { ok:true, data: data||[], mode:"supabase" };
+    }catch(e){
+      console.warn("vhSelect failed", e);
+      return { ok:false, data:[], mode:"supabase_error" };
+    }
+  }
+
+  async function vhUpsert(sqlTable, payload){
+    const db = await vhDb();
+    if(!db) return { ok:false, mode:"local" };
+    try{
+      const { error } = await db.from(sqlTable).upsert(payload);
+      if(error) throw error;
+      return { ok:true, mode:"supabase" };
+    }catch(e){
+      console.warn("vhUpsert failed", e);
+      return { ok:false, mode:"supabase_error" };
+    }
+  }
+
+  async function vhInsert(sqlTable, payload){
+    const db = await vhDb();
+    if(!db) return { ok:false, mode:"local" };
+    try{
+      const { error } = await db.from(sqlTable).insert(payload);
+      if(error) throw error;
+      return { ok:true, mode:"supabase" };
+    }catch(e){
+      console.warn("vhInsert failed", e);
+      return { ok:false, mode:"supabase_error" };
+    }
+  }
+
+  // Insurance
+  async function vhRenderPolicies(){
+    const box = document.getElementById("vhInsuranceList");
+    if(!VH.vehicleId){ box.textContent="—"; return; }
+
+    const res = await vhSelect(VH_TABLES.policies, "vehicle_id", VH.vehicleId, "effective_date");
+    if(!res.ok){ box.innerHTML = `<div class="muted">Login required to load Insurance module (Supabase).</div>`; return; }
+
+    if(!res.data.length){
+      box.innerHTML = `<div class="muted">No policies yet. Click “Add / Update Policy”.</div>`;
+      return;
+    }
+
+    box.innerHTML = res.data.map(p=>{
+      const active = p.is_active ? "good" : "";
+      const renew = p.renewal_date ? vhDuePill(p.renewal_date, "Renews") : "";
+      return `
+        <div class="vh-item">
+          <div class="left">
+            <div class="title">🛡️ ${p.provider || "Insurance"} <span class="vh-pill ${active}">${p.is_active ? "Active" : "History"}</span></div>
+            <div class="sub">Policy: ${p.policy_number || "—"} • Premium: ${p.premium ? "$"+Number(p.premium).toFixed(2) : "—"} • Effective: ${p.effective_date ? fmtDate(p.effective_date) : "—"}</div>
+            <div class="sub">${renew}</div>
+          </div>
+          <div class="right">
+            <button class="btn ghost small" data-vh="edit-policy" data-id="${p.id}">✏️ Edit</button>
+            ${p.document_url ? `<a class="btn ghost small" href="${p.document_url}" target="_blank" rel="noopener">📄 View</a>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  
+document.getElementById("btnAddPolicy").addEventListener("click", async ()=>{
+    if(!VH.vehicleId) return;
+    const provider = prompt("Insurance provider (e.g., GEICO)?") || "";
+    if(!provider) return;
+    const policy = prompt("Policy number?") || "";
+    const premium = prompt("Premium amount (number)?") || "";
+    const renewal = prompt("Renewal/expiration date (YYYY-MM-DD)?") || "";
+    const effective = prompt("Effective date (YYYY-MM-DD)? (optional)") || "";
+
+    const db = await vhDb();
+    if(!db){ alert("Login required (Supabase)"); return; }
+    const { data: u } = await db.auth.getUser();
+    const user_id = u?.user?.id;
+    if(!user_id){ alert("Login required"); return; }
+
+    // Mark all existing inactive, then insert new active
+    await db.from(VH_TABLES.policies).update({ is_active:false }).eq("vehicle_id", VH.vehicleId);
+
+    const payload = {
+      user_id,
+      vehicle_id: VH.vehicleId,
+      provider, policy_number: policy || null,
+      premium: premium ? Number(premium) : null,
+      renewal_date: renewal || null,
+      effective_date: effective || null,
+      is_active: true
+    };
+    const r = await vhInsert(VH_TABLES.policies, payload);
+    if(!r.ok){ alert("Could not save policy. Check table + RLS."); return; }
+
+    // Also update quick-peek expiry on vehicles table (optional)
+    if(renewal){
+      try{ await api.setVehicleInsuranceExpiry?.(VH.vehicleId, renewal); }catch(e){}
+    }
+
+    await vhRenderPolicies();
+    alert("Policy saved ✅");
+  });
+
+  // Registration
+  async function vhRenderRegistrations(){
+    const box = document.getElementById("vhRegList");
+    if(!VH.vehicleId){ box.textContent="—"; return; }
+
+    const res = await vhSelect(VH_TABLES.registrations, "vehicle_id", VH.vehicleId, "due_date");
+    if(!res.ok){ box.innerHTML = `<div class="muted">Login required to load Registration module (Supabase).</div>`; return; }
+
+    if(!res.data.length){
+      box.innerHTML = `<div class="muted">No registration records yet. Click “Add / Update Registration”.</div>`;
+      return;
+    }
+
+    box.innerHTML = res.data.map(r=>{
+      const due = r.due_date ? vhDuePill(r.due_date, "Due") : `<span class="vh-pill">Due: —</span>`;
+      const paid = r.paid ? "good" : "warn";
+      return `
+        <div class="vh-item">
+          <div class="left">
+            <div class="title">🪪 ${r.state || ""} Registration <span class="vh-pill ${paid}">${r.paid ? "Paid" : "Unpaid"}</span></div>
+            <div class="sub">Plate: ${r.plate_number || (VH.vehicle?.plate||"—")} • Fee: ${r.fee ? "$"+Number(r.fee).toFixed(2) : "—"}</div>
+            <div class="sub">${due}</div>
+          </div>
+          <div class="right">
+            <button class="btn ghost small" data-vh="toggle-paid" data-id="${r.id}" data-paid="${r.paid?1:0}">${r.paid ? "↩️ Mark Unpaid" : "✅ Mark Paid"}</button>
+            ${r.receipt_url ? `<a class="btn ghost small" href="${r.receipt_url}" target="_blank" rel="noopener">🧾 Receipt</a>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  document.getElementById("btnAddReg").addEventListener("click", async ()=>{
+    if(!VH.vehicleId) return;
+    const state = prompt("State (e.g., IL)?") || "";
+    const due = prompt("Renewal due date (YYYY-MM-DD)?") || "";
+    if(!due) return;
+    const fee = prompt("Fee (number)?") || "";
+    const plate = prompt("Plate number? (optional)") || "";
+
+    const db = await vhDb();
+    if(!db){ alert("Login required (Supabase)"); return; }
+    const { data: u } = await db.auth.getUser();
+    const user_id = u?.user?.id;
+    if(!user_id){ alert("Login required"); return; }
+
+    const payload = {
+      user_id,
+      vehicle_id: VH.vehicleId,
+      state: state || null,
+      due_date: due || null,
+      fee: fee ? Number(fee) : null,
+      plate_number: plate || null,
+      paid: false
+    };
+    const r = await vhInsert(VH_TABLES.registrations, payload);
+    if(!r.ok){ alert("Could not save registration. Check table + RLS."); return; }
+    await vhRenderRegistrations();
+    alert("Registration saved ✅");
+  });
+
+  // Expenses
+  async function vhRenderExpenses(){
+    const box = document.getElementById("vhExpenseList");
+    if(!VH.vehicleId){ box.textContent="—"; return; }
+
+    const res = await vhSelect(VH_TABLES.expenses, "vehicle_id", VH.vehicleId, "expense_date");
+    if(!res.ok){ box.innerHTML = `<div class="muted">Login required to load Expenses module (Supabase).</div>`; return; }
+
+    if(!res.data.length){
+      box.innerHTML = `<div class="muted">No expenses yet. Click “Add Expense”.</div>`;
+      return;
+    }
+
+    box.innerHTML = res.data.slice(0,40).map(x=>{
+      return `
+        <div class="vh-item">
+          <div class="left">
+            <div class="title">💰 ${x.category || "Expense"} <span class="vh-pill">${x.expense_date ? fmtDate(x.expense_date) : "—"}</span></div>
+            <div class="sub">${x.vendor ? x.vendor + " • " : ""}${x.notes || ""}</div>
+          </div>
+          <div class="right">
+            <span class="vh-pill good">$${Number(x.amount||0).toFixed(2)}</span>
+            ${x.receipt_url ? `<a class="btn ghost small" href="${x.receipt_url}" target="_blank" rel="noopener">📎 Receipt</a>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  document.getElementById("btnAddExpense").addEventListener("click", async ()=>{
+    if(!VH.vehicleId) return;
+    const category = prompt("Category (Fuel, Maintenance, Repair, Insurance, Registration, Wash)?") || "Maintenance";
+    const amount = prompt("Amount (number)?") || "";
+    if(!amount) return;
+    const date = prompt("Expense date (YYYY-MM-DD)?", todayISO()) || todayISO();
+    const vendor = prompt("Vendor (optional)?") || "";
+    const notes = prompt("Notes (optional)?") || "";
+
+    const db = await vhDb();
+    if(!db){ alert("Login required (Supabase)"); return; }
+    const { data: u } = await db.auth.getUser();
+    const user_id = u?.user?.id;
+    if(!user_id){ alert("Login required"); return; }
+
+    const payload = {
+      user_id,
+      vehicle_id: VH.vehicleId,
+      category: category || null,
+      amount: Number(amount),
+      expense_date: date || null,
+      vendor: vendor || null,
+      notes: notes || null
+    };
+    const r = await vhInsert(VH_TABLES.expenses, payload);
+    if(!r.ok){ alert("Could not save expense. Check table + RLS."); return; }
+    await vhRenderExpenses();
+    alert("Expense added ✅");
+  });
+
+  // Documents (Supabase Storage + metadata table)
+  async function vhRenderDocs(){
+    const box = document.getElementById("vhDocList");
+    if(!VH.vehicleId){ box.textContent="—"; return; }
+
+    const res = await vhSelect(VH_TABLES.documents, "vehicle_id", VH.vehicleId, "created_at");
+    if(!res.ok){ box.innerHTML = `<div class="muted">Login required to load Documents module (Supabase).</div>`; return; }
+
+    if(!res.data.length){
+      box.innerHTML = `<div class="muted">No documents yet. Upload one above.</div>`;
+      return;
+    }
+
+    box.innerHTML = res.data.map(d=>{
+      return `
+        <div class="vh-item">
+          <div class="left">
+            <div class="title">📎 ${d.doc_type || "Document"} <span class="vh-pill">${d.created_at ? fmtDate(d.created_at) : ""}</span></div>
+            <div class="sub">${d.file_name || ""}${d.tags ? " • " + d.tags : ""}</div>
+          </div>
+          <div class="right">
+            ${d.file_url ? `<a class="btn ghost small" href="${d.file_url}" target="_blank" rel="noopener">🔗 Open</a>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  document.getElementById("vhUpload").addEventListener("change", async (e)=>{
+    const file = e.target.files?.[0];
+    if(!file || !VH.vehicleId) return;
+
+    const db = await vhDb();
+    if(!db){ alert("Login required (Supabase)"); return; }
+    const { data: u } = await db.auth.getUser();
+    const user_id = u?.user?.id;
+    if(!user_id){ alert("Login required"); return; }
+
+    // Upload to bucket
+    const bucket = "vehicle-docs";
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${user_id}/${VH.vehicleId}/${Date.now()}_${safeName}`;
+
+    try{
+      const up = await db.storage.from(bucket).upload(path, file, { upsert:false });
+      if(up.error) throw up.error;
+      const pub = db.storage.from(bucket).getPublicUrl(path);
+      const url = pub?.data?.publicUrl || null;
+
+      const docType = prompt("Document type (insurance_card, registration, invoice, photo)?", "invoice") || "invoice";
+      const tags = prompt("Tags (optional)?", "") || "";
+
+      const payload = {
+        user_id,
+        vehicle_id: VH.vehicleId,
+        doc_type: docType,
+        file_name: file.name,
+        file_path: path,
+        file_url: url,
+        tags: tags || null
+      };
+      const r = await vhInsert(VH_TABLES.documents, payload);
+      if(!r.ok) throw new Error("DB insert failed");
+
+      await vhRenderDocs();
+      alert("Uploaded ✅");
+    }catch(err){
+      console.warn("Upload failed", err);
+      alert("Upload failed. Make sure bucket exists + policies allow upload.");
+    }finally{
+      e.target.value = "";
+    }
+  });
+
+
+
+  // Handle registration paid toggle
+  document.addEventListener("click", async (e)=>{
+    const b = e.target.closest("button[data-vh='toggle-paid']");
+    if(!b) return;
+    const id = b.getAttribute("data-id");
+    const paid = b.getAttribute("data-paid")==="1";
+    const db = await vhDb();
+    if(!db) return alert("Login required");
+    const { error } = await db.from(VH_TABLES.registrations).update({ paid: !paid }).eq("id", id);
+    if(error){ alert("Update failed"); return; }
+    await vhRenderRegistrations();
+  });
+
+  // Hook into vehicle cards
+
+  // ----- Init -----
+async function initWhenReady(){
+  let tries = 0;
+  while (!currentUser && tries < 20) {
+    await new Promise(r => setTimeout(r, 100));
+    tries++;
+  }
+
+  VEHICLES  = await api.listVehicles();
+  REMINDERS = await api.listReminders();
+  TOLLS     = readLS(LS.TOLLS, []);
+
+  if (VIEW === 'business') state.usage = 'business';
+  if (VIEW_ENTITY) state.entity = VIEW_ENTITY;
+
+  renderFilters();
+  renderVehicles();
+  renderReminders();
+  updateStats();
+}
+
+initWhenReady();
+
+
+
+// ===== Toll Tag (vehicle_transponders) =====
+async function loadTollTagForVehicle(vehicleId){
+  try{
+    const client = await getClient();
+    if(!client || !vehicleId) return;
+
+    const { data: userRes } = await client.auth.getUser();
+    const uid = userRes?.user?.id;
+    if(!uid) return;
+
+    const { data, error } = await client
+      .from("vehicle_transponders")
+      .select("*")
+      .eq("user_id", uid)
+      .eq("vehicle_id", vehicleId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if(error){ console.warn("loadTollTagForVehicle error", error); return; }
+
+    const row = (data && data[0]) ? data[0] : null;
+    document.getElementById("toll_provider").value = row?.provider || "";
+    document.getElementById("toll_tag_number").value = row?.tag_number || "";
+    document.getElementById("toll_account_last4").value = row?.account_last4 || "";
+    document.getElementById("toll_auto_reload").value = String(!!row?.auto_reload);
+    document.getElementById("toll_reload_amount").value = (row?.reload_amount ?? "") === null ? "" : String(row?.reload_amount ?? "");
+    document.getElementById("toll_notes").value = row?.notes || "";
+  }catch(e){
+    console.warn("loadTollTagForVehicle exception", e);
+  }
+}
+
+async function saveTollTagForVehicle(vehicleId){
+  const client = await getClient();
+  if(!client) return alert("Supabase not ready");
+
+  const { data: userRes } = await client.auth.getUser();
+  const uid = userRes?.user?.id;
+  if(!uid) return alert("Please login first");
+
+  const provider = (document.getElementById("toll_provider").value || "").trim();
+  const tag_number = (document.getElementById("toll_tag_number").value || "").trim();
+  const account_last4 = (document.getElementById("toll_account_last4").value || "").trim();
+  const auto_reload = (document.getElementById("toll_auto_reload").value === "true");
+  const reload_amount_raw = (document.getElementById("toll_reload_amount").value || "").trim();
+  const reload_amount = reload_amount_raw ? Number(reload_amount_raw) : null;
+  const notes = (document.getElementById("toll_notes").value || "").trim();
+
+  if(!vehicleId) return alert("Select a vehicle first");
+  if(!provider && !tag_number){
+    return alert("Please enter at least Provider or Tag #");
+  }
+  if(account_last4 && !/^\d{4}$/.test(account_last4)){
+    return alert("Account last 4 must be exactly 4 digits (or blank).");
+  }
+  if(reload_amount_raw && (Number.isNaN(reload_amount) || reload_amount < 0)){
+    return alert("Reload amount must be a valid number.");
+  }
+
+  const payload = {
+    user_id: uid,
+    vehicle_id: vehicleId,
+    provider,
+    tag_number,
+    account_last4: account_last4 || null,
+    auto_reload,
+    reload_amount,
+    notes: notes || null
+  };
+
+  const { error } = await client
+    .from("vehicle_transponders")
+    .upsert(payload, { onConflict: "user_id,vehicle_id" });
+
+  if(error){
+    console.warn("saveTollTagForVehicle error", error);
+    return alert("Could not save toll tag. Check console.");
+  }
+
+  alert("Saved ✅");
+}
+
+document.addEventListener("click", (e) => {
+  if(e.target && e.target.id === "btnSaveTollTag"){
+    saveTollTagForVehicle(VH.vehicleId);
+  }
+});
+// ===== /Toll Tag =====
+</script>
+
+<!-- ============================
+     Vehicle Hub Drawer (v1)
+     ============================ -->
+<div class="modal" id="vhModal" aria-hidden="true">
+  <div class="modal-backdrop" data-close="vh"></div>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-label="Vehicle Hub">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="vhTitle">🚗 Vehicle Hub</div>
+        <div class="modal-sub" id="vhSub">Insurance • Registration • Expenses • Documents</div>
+      </div>
+      <button class="btn ghost small" data-close="vh">✖ Close</button>
+    </div>
+
+    <div class="modal-tabs" role="tablist">
+      <button class="tab active" data-tab="profile" type="button">📋 Profile</button>
+      <button class="tab" data-tab="insurance" type="button">🛡️ Insurance</button>
+      <button class="tab" data-tab="registration" type="button">🪪 Registration</button>
+      <button class="tab" data-tab="expenses" type="button">💰 Expenses</button>
+      <button class="tab" data-tab="docs" type="button">📎 Documents</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Profile -->
+      <section class="vh-panel" data-panel="profile">
+        <div class="vh-grid2">
+          <div class="vh-card">
+            <h4>Vehicle Details</h4>
+            <div class="vh-kv" id="vhProfileKv"></div>
+            <div class="meta" id="vhQuickPeek"></div>
+          </div>
+          <div class="vh-card">
+            <h4>Quick Actions</h4>
+            <div class="row">
+              <button class="btn green small" id="vhLogOdo">➕ Log Odometer</button>
+              <button class="btn ghost small" id="vhAddService">📎 Add Service</button>
+              <button class="btn ghost small" id="vhEditVehicle">✏️ Edit Vehicle</button>
+            
+              <button class="btn ghost small" id="vhOpenLoans">💳 Car Loan</button></div>
+            <div class="hint" style="margin-top:10px">
+              Email Genie can auto-update renewals when you forward insurance/registration emails.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Insurance -->
+      <section class="vh-panel" data-panel="insurance" hidden>
+        <div class="vh-headrow">
+          <div class="meta">Active policy + history per vehicle.</div>
+          <button class="btn primary small" id="btnAddPolicy">➕ Add / Update Policy</button>
+        </div>
+        <div class="vh-card">
+          <div id="vhInsuranceList" class="vh-list muted">Loading…</div>
+        </div>
+      </section>
+
+      <!-- Registration -->
+      <section class="vh-panel" data-panel="registration" hidden>
+        <div class="vh-headrow">
+          <div class="meta">Track annual plate/registration renewals.</div>
+          <button class="btn primary small" id="btnAddReg">➕ Add / Update Registration</button>
+        </div>
+        <div class="vh-card">
+          <div id="vhRegList" class="vh-list muted">Loading…</div>
+        </div>
+      </section>
+
+      <!-- Expenses -->
+      <section class="vh-panel" data-panel="expenses" hidden>
+        <div class="vh-headrow">
+          <div class="meta">Fuel • Maintenance • Repairs • Fees</div>
+          <button class="btn primary small" id="btnAddExpense">➕ Add Expense</button>
+        </div>
+        <div class="vh-card">
+          <div id="vhExpenseList" class="vh-list muted">Loading…</div>
+        </div>
+      </section>
+
+      <!-- Docs -->
+      <section class="vh-panel" data-panel="docs" hidden>
+        <div class="vh-headrow">
+          <div class="meta">Upload insurance cards, registration receipts, invoices.</div>
+          <label class="btn primary small" style="cursor:pointer">
+            ⬆️ Upload Document
+            <input id="vhUpload" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden />
+          </label>
+        </div>
+        <div class="vh-card">
+          <div id="vhDocList" class="vh-list muted">Loading…</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

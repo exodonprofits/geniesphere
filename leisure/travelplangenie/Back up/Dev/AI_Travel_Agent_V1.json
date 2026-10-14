@@ -1,0 +1,430 @@
+{
+  "name": "Adventure_Trip_Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET,POST",
+        "path": "adventure-travel-agent",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "7e079377-4648-4365-ad36-3430934ba831",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        120
+      ],
+      "webhookId": "78347528-0c2d-45b9-9451-518b46e05735"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "method-condition-options",
+              "leftValue": "={{ $json.method }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "99fd2391-175e-4e07-a03d-d4f403d99b6a",
+      "name": "If OPTIONS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -200,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d3bf09e0-a9da-4ee5-beda-fda1d217d15f",
+      "name": "Respond to OPTIONS",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Request Details:', JSON.stringify($json, null, 2)); let method = $json.method; if (!method) { method = $json.headers[':method'] || 'POST'; } return [{ json: { ...$json, method: method } }];"
+      },
+      "id": "2391c0f3-1ec4-4277-a732-a2664e44735a",
+      "name": "Debug Method",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "method-condition-post",
+              "leftValue": "={{ String($json.method).toUpperCase() }}",
+              "rightValue": "POST",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "45986b14-1b38-4656-8be3-514f7da0918a",
+      "name": "If Method",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.body; console.log('Incoming form data ($json.body):', JSON.stringify(data, null, 2)); return [{ json: { departureLocation: data.departureLocation || 'Not specified', adventureDestination: data.adventureDestination || 'Not specified', activityType: data.activityType || [], intensity: data.intensity || 'Not specified', startDate: data.startDate || 'N/A', endDate: data.endDate || 'N/A', tripType: data.tripType || 'N/A', environment: data.environment || [], groupSize: data.groupSize || '1', ageRange: data.ageRange || [], budget: data.budget || '0', email: data.email || 'unknown' } }];"
+      },
+      "id": "7af13608-160c-4d4c-87c5-003e4697b976",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { departureLocation, adventureDestination, activityType, intensity, startDate, endDate, tripType, environment, groupSize, ageRange, budget, email } = $json; console.log('Preparing prompt with departureLocation:', departureLocation); return [{ json: { email, adventureDestination, activityType, intensity, startDate, endDate, tripType, environment, groupSize, ageRange, budget, departureLocation, prompt: `You are an experienced and helpful AI travel agent specializing in adventure trips. Your goal is to create exciting, practical, and well-organized travel itineraries tailored to each user's preferences. Be friendly, informative, and concise. - Departure Location: ${departureLocation} airport (e.g., JFK) - Destination: ${adventureDestination} - Activity Types: ${Array.isArray(activityType) ? activityType.join(', ') : activityType || 'Not specified'} - Adventure Intensity: ${intensity} - Travel Dates: ${startDate} to ${endDate} - Trip Type: ${tripType} - Preferred Environments: ${Array.isArray(environment) ? environment.join(', ') : environment || 'Not specified'} - Group Size: ${groupSize} - Age Ranges: ${Array.isArray(ageRange) ? ageRange.join(', ') : ageRange || 'not specified'} - Budget: $${budget}\\n\\nCreate a complete itinerary for this adventure trip. Include recommendations for:\\n1. Flights (airlines and routes from ${departureLocation} airport to ${adventureDestination}. Include estimated costs and a booking link.)\\n2. Adventure activities (specific activities matching the selected types and intensity, with estimated costs and booking links)\\n3. Accommodation options (suitable for the trip type and group size, include estimated cost per night, total cost for the trip, and booking links)\\n4. Daily schedule with activities, dining options, and sights\\n5. Estimated food budget (daily cost and recommendations for dining)\\n6. A cost summary table (flights, activities, accommodation, food, total, and remaining budget). This section is mandatory and must always be included. If no costs are available, use placeholder values (e.g., Flights\\t$0). Ensure the table includes all categories: Flights, Activities, Accommodation, Food, Total, and Remaining Budget, in that order.\\n7. Travel tips specific to the destination and adventure experience\\n\\nRespond in a clean and organized layout with sections. Include hyperlinks to flights, activities, accommodations, attractions, or dining options where relevant, using <a href=\\\"URL\\\">Description</a> format. Use real, functional URLs where users can book or learn more (e.g., airline websites, hotel booking sites, or activity providers). Do not use placeholder URLs like \\\"https://example.com\\\". Ensure the Cost Summary section is formatted as a tab-separated table (e.g., Flights\\t$1,000).` } }];"
+      },
+      "id": "5af494a3-93f3-489d-bdf6-de73528e806d",
+      "name": "Prepare Adventure Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "content": "You are an experienced and helpful AI travel agent specializing in adventure trips. Your goal is to create exciting, practical, and well-organized travel itineraries tailored to each user's preferences. Be friendly, informative, and concise.\n\nWhen suggesting activities, accommodations, attractions, restaurants, or tours, include relevant hyperlinks so users can easily click through to book or learn more. Ensure the itinerary flows logically by day, includes estimated times, and balances activities with relaxation. For all links, you must include a valid URL in the format <a href=\"URL\">Description</a>. Do not include placeholder URLs like \"https://example.com\"—use real, functional URLs where users can actually book or learn more. If a specific booking link is not available, use a general link to the provider's website or a relevant search page.\n\nAlways provide valuable travel tips and local insights to enhance the experience. Format your responses in a clean and organized layout with the following guidelines to ensure compatibility with HTML email rendering:\n- Use plain text without Markdown syntax (e.g., do not use ### for headings, ** for bold, or | for tables).\n- For headings, write the section title in plain text followed by a colon (e.g., \"Flights:\", \"Adventure Activities:\", \"Daily Schedule:\", etc.).\n- Use bullet points with a hyphen (-) at the start of each line (e.g., - Morning: Hike in the rainforest).\n- For the Cost Summary section, format it as a table with columns separated by tabs (\\t) without borders. Include the following categories in this order: Flights, Activities, Accommodation, Food, Total, and Remaining Budget (e.g., Flights\\t$1,000). Use <strong> tags for Total and Remaining Budget labels and values.\n- Add a blank line between sections by including an empty line in the output.\n- Include emojis where appropriate to improve engagement, but ensure they are relevant and not overused.\n- Do not repeat information already provided in the prompt (e.g., destination, travel dates, group size, budget) in the itinerary body, as this will be added separately in the email.\n\nExample output format:\nFlights:\n- Lufthansa: JFK → ZRH (1-stop via FRA)\n- Estimated Cost: $500 per person round trip\n- Link: <a href=\"https://www.lufthansa.com\">Book Flight with Lufthansa</a>\n\nAdventure Activities:\n- Skiing in Zermatt\n- Cost: $80 per person for day pass\n- Link: <a href=\"https://www.zermatt.ch/en/skipass\">Ski Pass in Zermatt</a>\n- Snowboard and Ski Rental\n- Cost: $50 per person per day\n- Link: <a href=\"https://www.zermatt.ch/en/rental\">Ski Rental in Zermatt</a>\n\nAccommodation Options:\nOption 1: Hotel Alpenhof Zermatt\n- Cost: $200 per night\n- Total for 7 nights: $1,400\n- Link: <a href=\"https://www.alpenhof-zermatt.ch\">Book Hotel Alpenhof</a>\n\nOption 2: Zermatt Budget Hotel\n- Cost: $120 per night\n- Total for 7 nights: $840\n- Link: <a href=\"https://www.zermattbudgethotel.ch\">Book Zermatt Budget Hotel</a>\n\nDaily Schedule:\n<strong>Day 1: Arrival in Zurich and Transfer to Zermatt</strong>\n- Morning: Flight to Zurich\n- Afternoon: Train from Zurich to Zermatt (approx. 3.5 hours)\n- Evening: Dinner at Pizzeria Helvetia\n\nEstimated Food Budget:\n- Daily Cost: $50 per person\n- Total for 7 Days: $350\n\nCost Summary:\nFlights\t$1,000\nActivities\t$430\nAccommodation\t$1,400\nFood\t$350\n<strong>Total</strong>\t<strong>$3,180</strong>\n<strong>Remaining Budget</strong>\t<strong>$820</strong>\n\nTravel Tips:\n- Don't forget to purchase travel insurance 🏔️\n- Make restaurant reservations ahead for dinner, especially during peak seasons 🍽️\n- Carry a reusable water bottle to stay hydrated while skiing 🚰\n- Check for weather updates before heading out on the slopes 🏂\n\nEnjoy your adventure! If you have any more questions, feel free to ask!",
+              "role": "system"
+            },
+            {
+              "content": "={{$json.prompt}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8fac2775-c959-4f54-aac7-9a4c9b599928",
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        760,
+        120
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const adventure = $node['Prepare Adventure Data'].json; const ai = $node['OpenAI'].json.message?.content || 'No itinerary found.'; console.log('Raw OpenAI output:', ai); return [{ json: { adventureDestination: adventure.adventureDestination, activityType: adventure.activityType, intensity: adventure.intensity, startDate: adventure.startDate, endDate: adventure.endDate, tripType: adventure.tripType, environment: adventure.environment, groupSize: adventure.groupSize, ageRange: adventure.ageRange, budget: adventure.budget, email: adventure.email, departureLocation: adventure.departureLocation, itinerary: ai } }];"
+      },
+      "id": "0211b5f7-31f8-4ad5-b613-bb22c7c92dcd",
+      "name": "Adventure Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const destination = $json.adventureDestination || 'Your Destination'; \nconst travelDates = `${$json.startDate || 'N/A'} to ${$json.endDate || 'N/A'}`; \nconst budget = $json.budget || 'N/A'; \nconst groupSize = $json.groupSize || 'N/A'; \nconst departureLocation = $json.departureLocation || 'Not specified'; \nconsole.log('Using departureLocation in itinerary:', departureLocation); \nlet itineraryRaw = $json.itinerary || 'Itinerary details not available.'; \nconsole.log('Initial itineraryRaw:', itineraryRaw);\nconsole.log('Checking for Cost Summary in itineraryRaw (case-insensitive)...');\n// Normalize itineraryRaw for comparison\nif (!itineraryRaw.toLowerCase().includes('cost summary:')) {\n  console.log('Cost Summary missing, adding fallback');\n  itineraryRaw = itineraryRaw + '\\n\\nCost Summary:\\nFlights\\t$0\\nActivities\\t$0\\nAccommodation\\t$0\\nFood\\t$0\\n<strong>Total</strong>\\t<strong>$0</strong>\\n<strong>Remaining Budget</strong>\\t<strong>$' + budget + '</strong>';\n} else {\n  console.log('Cost Summary found in itineraryRaw');\n}\nconsole.log('itineraryRaw after fallback check:', itineraryRaw);\n// Preprocess itinerary to clean up Markdown and add HTML formatting\nconst itineraryLines = itineraryRaw.split('\\n'); \nlet itinerary = ''; \nlet inTable = false; \nlet tableRows = []; \nfor (let line of itineraryLines) { \n  line = line.trim(); \n  // Skip empty lines\n  if (!line) { \n    itinerary += '<br>'; \n    continue; \n  } \n  // Handle Cost Summary table\n  if (line.toLowerCase().startsWith('cost summary:')) { \n    inTable = true; \n    tableRows = []; \n    itinerary += `<strong style=\"font-size: 16px; color: #2a4a6e; display: block; margin: 15px 0 5px 0;\">${line}</strong>`; \n    continue; \n  } \n  if (inTable && (line.startsWith('Total') || line.startsWith('Remaining Budget'))) { \n    const [category, cost] = line.split('\\t').map(item => item.trim()); \n    tableRows.push(`<tr><td style=\"border: 1px solid #e0e0e0; padding: 8px; background-color: #f0f0f0; font-weight: bold;\">${category}</td><td style=\"border: 1px solid #e0e0e0; padding: 8px; background-color: #f0f0f0; font-weight: bold;\">${cost}</td></tr>`); \n    continue; \n  } \n  if (inTable && line.includes('\\t')) { \n    const [category, cost] = line.split('\\t').map(item => item.trim()); \n    tableRows.push(`<tr><td style=\"border: 1px solid #e0e0e0; padding: 8px;\">${category}</td><td style=\"border: 1px solid #e0e0e0; padding: 8px;\">${cost}</td></tr>`); \n    continue; \n  } \n  if (inTable && !line.includes('\\t')) { \n    inTable = false; \n    itinerary += `<table style=\"border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px;\" cellpadding=\"0\" cellspacing=\"0\">${tableRows.join('')}</table><br>`; \n  } \n  // Handle headings and regular lines\n  if (!inTable) { \n    if (line.endsWith(':')) { \n      itinerary += `<strong style=\"font-size: 16px; color: #2a4a6e; display: block; margin: 15px 0 5px 0;\">${line}</strong>`; \n    } else { \n      itinerary += line + '<br>'; \n    } \n  } \n} \n// Add the table if we ended in table mode\nif (inTable) { \n  itinerary += `<table style=\"border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px;\" cellpadding=\"0\" cellspacing=\"0\">${tableRows.join('')}</table><br>`; \n} \nconsole.log('Final itinerary HTML:', itinerary);\nconst subject = `Your Adventure Itinerary for ${destination} - Voyage Genie`; \nconst message = `<div style=\"font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f7f7f7; padding: 25px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);\"><div style=\"background-color: #2a4a6e; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;\"><h1 style=\"color: #ffffff; margin: 0; font-size: 28px;\">✈️ Your Adventure Itinerary</h1></div><div style=\"padding: 25px; background-color: #ffffff; border-radius: 0 0 10px 10px;\"><h2 style=\"color: #2a4a6e; font-size: 22px; margin: 0 0 15px 0;\">Departing from: ${departureLocation}</h2><h2 style=\"color: #2a4a6e; font-size: 22px; margin: 0 0 15px 0;\">Destination: ${destination}</h2><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5;\"><strong>Travel Dates:</strong> ${travelDates}</p><p style=\"color: #333333; font-size: 16px; margin: 10px 0; line-height: 1.5;\"><strong>Budget:</strong> $${budget} (for ${groupSize} travelers)</p><hr style=\"border: 0; border-top: 1px solid #e0e0e0; margin: 25px 0;\"><h3 style=\"color: #2a4a6e; font-size: 18px; margin: 0 0 15px 0;\">Itinerary Details</h3><div style=\"background-color: #f9f9f9; padding: 20px; border-radius: 6px; font-size: 14px; line-height: 1.6; color: #333333;\">${itinerary}</div><hr style=\"border: 0; border-top: 1px solid #e0e0e0; margin: 25px 0;\"><p style=\"color: #666666; font-size: 12px; text-align: center; margin: 0;\">Generated by <strong>Voyage Genie</strong> 🌟</p></div></div>`; \nreturn [{ json: { resolvedEmail: $json.email || 'jtran112675@gmail.com', resolvedSubject: subject, resolvedMessage: message, itineraryHtml: message } }];"
+      },
+      "id": "bd780b02-5171-4c24-bf04-44a392e1f6e1",
+      "name": "Resolve Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const url = 'https://exodonprofits.app.n8n.cloud/webhook/send-email';\nconst payload = {\n  resolvedEmail: $json.resolvedEmail,\n  resolvedSubject: $json.resolvedSubject,\n  resolvedMessage: $json.resolvedMessage\n};\n\ntry {\n  const response = await $http({\n    method: 'POST',\n    url: url,\n    body: payload,\n    headers: {\n      'Content-Type': 'application/json'\n    }\n  });\n\n  console.log('Email trigger response:', response);\n} catch (error) {\n  console.error('Error triggering email workflow:', error.message);\n}\n\nreturn $input.all();"
+      },
+      "id": "bade0e97-c9ad-4d57-a531-23291be05672",
+      "name": "Trigger Email Workflow",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1460,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "finalResponse",
+              "value": "={{ $json.itineraryHtml }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2b87829e-bdd2-44e0-9b8f-9db56aca7193",
+      "name": "Set Final Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { finalResponse: $json.finalResponse } }];"
+      },
+      "id": "613c0a4c-9025-4d26-ad3e-76499e9efc12",
+      "name": "Clean Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1820,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "id": "211204f9-d731-4295-8752-bf0d858270b8",
+      "name": "Return HTML Page",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2020,
+        120
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If OPTIONS": {
+      "main": [
+        [
+          {
+            "node": "Respond to OPTIONS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Debug Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Method": {
+      "main": [
+        [
+          {
+            "node": "If Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Method": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Prepare Adventure Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Adventure Data": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Adventure Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adventure Info": {
+      "main": [
+        [
+          {
+            "node": "Resolve Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Email Content": {
+      "main": [
+        [
+          {
+            "node": "Trigger Email Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Email Workflow": {
+      "main": [
+        [
+          {
+            "node": "Set Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Final Response": {
+      "main": [
+        [
+          {
+            "node": "Clean Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Output": {
+      "main": [
+        [
+          {
+            "node": "Return HTML Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  ],
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "gfpvIwD8O8Hz4z1O",
+  "tags": []
+}

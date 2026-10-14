@@ -1,0 +1,200 @@
+{
+  "name": "Receipt Extract",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "receipt-extract",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "bfc6487d-044f-433e-9105-2ec431b42403",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        0
+      ],
+      "webhookId": "16b6a880-f5d9-4dcb-b05e-314f1048ec7d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "=$json\n"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=\n",
+        "options": {}
+      },
+      "id": "a01f0dbf-f981-4fce-945f-79f8a0e3788e",
+      "name": "OpenAI - Extract",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        544,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "a3k4PaLdtRKABoos",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "923442df-824b-489f-9a5f-736ae83ce328",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        944,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst root = item.json || {};\n\n// Try multiple common locations where n8n may place the request body\nconst j =\n  root.body ??\n  root.data ??\n  root.payload ??\n  root.query ??\n  root.params ??\n  root;\n\n// If the body is a STRING (raw JSON), parse it\nlet body = j;\nif (typeof body === 'string') {\n  try { body = JSON.parse(body); } catch (e) {}\n}\n\n// Helpers\nconst pick = (...keys) => {\n  for (const k of keys) {\n    if (body && body[k] != null && body[k] !== '') return body[k];\n  }\n  return undefined;\n};\n\nconst base64 = pick('base64', 'fileBase64', 'imageBase64', 'receiptBase64');\nconst mimeType = pick('mimeType', 'mime_type', 'contentType', 'content_type');\nconst fileName = pick('fileName', 'filename', 'name') || 'receipt';\n\n// If JSON has base64 + mimeType\nif (base64 && mimeType) {\n  return [{\n    json: {\n      ...body,\n      fileName,\n      mimeType,\n      base64,\n      image_url: `data:${mimeType};base64,${base64}`,\n    }\n  }];\n}\n\n// Otherwise, try binary\nconst bin = item.binary || {};\nconst binKey = Object.keys(bin)[0];\n\nif (binKey) {\n  const f = bin[binKey];\n  const b64 = f.data;\n  const mt = f.mimeType || 'application/octet-stream';\n  const fn = f.fileName || fileName;\n\n  return [{\n    json: {\n      ...body,\n      fileName: fn,\n      mimeType: mt,\n      base64: b64,\n      image_url: `data:${mt};base64,${b64}`,\n    }\n  }];\n}\n\n// If we still can't find anything, return diagnostic info (NOT an error)\nreturn [{\n  json: {\n    ok: false,\n    message: 'Webhook payload did not include base64/mimeType and no binary file was detected.',\n    gotTopLevelKeys: Object.keys(root),\n    sample: root,\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        0
+      ],
+      "id": "04ecd451-391a-4b79-993c-7306d646cfc1",
+      "name": "Prep DataUrl"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst content = raw.choices?.[0]?.message?.content;\n\nif (!content) {\n  throw new Error('No OpenAI content returned');\n}\n\nlet extracted;\ntry {\n  extracted = JSON.parse(content);\n} catch (e) {\n  extracted = { raw_text: content };\n}\n\nreturn [{\n  json: {\n    ok: true,\n    extracted\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        0
+      ],
+      "id": "dfb62c7c-9a80-4053-a415-e00963d05ba6",
+      "name": "Normalize Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\n\nreturn [{\n  json: {\n    gotJsonKeys: Object.keys(item.json || {}),\n    jsonPreview: item.json || {},\n    gotBinaryKeys: Object.keys(item.binary || {}),\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "d1e35001-4c2b-4c2c-bfd7-48ac821cf0cb",
+      "name": "Debug"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\nif (!item.image_url || typeof item.image_url !== 'string') {\n  return [{\n    json: {\n      ok: false,\n      error: \"image_url missing before OpenAI\",\n      gotKeys: Object.keys(item),\n      preview: item,\n    }\n  }];\n}\n\n// sanity check\nif (!item.image_url.startsWith('data:image/')) {\n  return [{\n    json: {\n      ok: false,\n      error: \"image_url does not look like a data URL\",\n      startsWith: item.image_url.slice(0, 30),\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    model: \"gpt-4.1-mini\",\n    temperature: 0,\n    messages: [\n      {\n        role: \"system\",\n        content: \"You are an expense receipt parser. Extract structured data only. Respond in valid JSON.\"\n      },\n      {\n        role: \"user\",\n        content: [\n          {\n            type: \"text\",\n            text: \"Extract receipt details: merchant, date, subtotal, tax, tip, total, currency, payment_method, last4, category, and line items (name, qty, price). Return JSON only.\"\n          },\n          { type: \"image_url\", image_url: { url: item.image_url } }\n        ]\n      }\n    ]\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        0
+      ],
+      "id": "33a50563-e251-4b97-b576-e2fc3fba3d45",
+      "name": "Build OpenAI Body"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Debug",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep DataUrl": {
+      "main": [
+        [
+          {
+            "node": "Build OpenAI Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI - Extract": {
+      "main": [
+        [
+          {
+            "node": "Normalize Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug": {
+      "main": [
+        [
+          {
+            "node": "Prep DataUrl",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build OpenAI Body": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5c977754-ce31-4eb4-bf31-87ef998f6c4e",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "cCsDFtQOJZsdWss5",
+  "tags": []
+}

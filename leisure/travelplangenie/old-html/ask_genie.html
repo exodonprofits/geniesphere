@@ -1,0 +1,640 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cruise Trip Planner – Voyage Genie</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+    .hidden { display: none; }
+    .option-card {
+      cursor: pointer;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .option-card:hover {
+      background-color: #f3f4f6;
+    }
+    .error {
+      border-color: #ef4444;
+    }
+    .error-message {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    .section-icon {
+      font-size: 1.5rem;
+      margin-right: 0.5rem;
+    }
+    .required::after {
+      content: " *";
+      color: #ef4444;
+    }
+    .optional {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-left: 0.5rem;
+    }
+    .custom-btn { 
+      @apply flex items-center justify-center px-10 py-4 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-opacity-50 text-2xl;
+    }
+    .next-btn { 
+      @apply custom-btn bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-300;
+    }
+    .prev-btn { 
+      @apply custom-btn bg-gray-500 text-white hover:bg-gray-600 focus:ring-gray-300;
+    }
+    .generate-btn { 
+      @apply custom-btn bg-green-500 text-white hover:bg-green-600 focus:ring-green-300;
+    }
+    .btn-icon {
+      @apply mr-2 text-2xl;
+    }
+    .planning-section {
+      max-width: 4xl;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #0096c7;
+      transition: width 0.3s ease;
+    }
+    select {
+      appearance: none;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232A6BCC"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center/16px;
+    }
+    .nav-icon {
+      height: 30px;
+      width: auto;
+      margin-right: 8px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+    }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 24px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .hamburger span {
+      width: 100%;
+      height: 3px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+    
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(7px, -7px);
+    }
+    .dropdown {
+      position: relative;
+    }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      background-color: white;
+      min-width: 200px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      z-index: 1;
+      border-radius: 8px;
+      padding: 8px 0;
+    }
+    .dropdown-menu a {
+      color: #333;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      transition: background-color 0.3s;
+    }
+    .dropdown-menu a:hover {
+      background-color: #f1f1f1;
+    }
+    .dropdown:hover .dropdown-menu {
+      display: block;
+    }
+    .spinner-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .spinner-text {
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-left: 1rem;
+    }
+    .ai-spinner {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .ai-spinner-core {
+      width: 20px;
+      height: 20px;
+      background: #00d4ff;
+      border-radius: 50%;
+      box-shadow: 0 0 15px #00d4ff, 0 0 30px #00d4ff;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+    .ai-spinner-particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #00d4ff;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #00d4ff;
+    }
+    .ai-spinner-particle:nth-child(2) {
+      animation: orbit1 2s infinite linear;
+    }
+    .ai-spinner-particle:nth-child(3) {
+      animation: orbit2 2s infinite linear;
+    }
+    .ai-spinner-particle:nth-child(4) {
+      animation: orbit3 2s infinite linear;
+    }
+    .ai-spinner-timer {
+      position: absolute;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.7; }
+    }
+    @keyframes orbit1 {
+      0% { transform: rotate(0deg) translateX(25px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(25px) rotate(-360deg); }
+    }
+    @keyframes orbit2 {
+      0% { transform: rotate(120deg) translateX(25px) rotate(0deg); }
+      100% { transform: rotate(480deg) translateX(25px) rotate(-360deg); }
+    }
+    @keyframes orbit3 {
+      0% { transform: rotate(240deg) translateX(25px) rotate(0deg); }
+      100% { transform: rotate(600deg) translateX(25px) rotate(-360deg); }
+    }
+    @media (max-width: 640px) {
+      .hamburger {
+        display: flex;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: linear-gradient(to bottom, #60a5fa, #4c6ef5);
+        width: 100%;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .nav-links.active {
+        display: flex;
+      }
+      .nav-links li {
+        margin: 0.5rem 0;
+      }
+      .nav-links a {
+        font-size: 1.1rem;
+        padding: 0.5rem;
+        display: block;
+        text-align: center;
+      }
+      .nav-brand h1 {
+        font-size: 1.125rem;
+      }
+      .dropdown-menu {
+        position: static;
+        display: none;
+        width: 100%;
+        box-shadow: none;
+      }
+      .dropdown:hover .dropdown-menu {
+        display: block;
+      }
+    }
+    .floating-chatbot {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background-color: #00c4b4;
+        color: white;
+        padding: 0.75rem;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        font-size: 1.5rem;
+        z-index: 50;
+        cursor: pointer;
+    }
+    .floating-chatbot:hover {
+        background-color: #009c8c;
+    }    
+  </style>
+  <style>
+    #travel-qa {
+        max-width: 1024px;
+        margin: 2rem auto;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+    }
+
+    .qa-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .qa-chat-box {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        height: 384px;
+        overflow-y: auto;
+        background-color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        box-sizing: border-box;
+    }
+
+    .qa-placeholder {
+        color: #9ca3af;
+        font-size: 0.875rem;
+    }
+
+    .qa-form {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        box-sizing: border-box;
+    }
+
+    #qa-form input[type="text"] {
+        flex: 1;
+        padding: 0.5rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+
+    #qa-form input[type="text"]:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+        box-sizing: border-box;
+    }
+
+    #qa-form button {
+        background-color: #2563eb;
+        color: white;
+        padding: 0.5rem 1.25rem;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: none;
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+        box-sizing: border-box;
+    }
+
+    #qa-form button:hover {
+        background-color: #1d4ed8;
+        box-sizing: border-box;
+    }
+
+    .chat-user,
+    .chat-genie {
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .chat-user {
+        justify-content: flex-end;
+    }
+
+    .chat-bubble {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        max-width: 80%;
+    }
+
+    .chat-user .chat-bubble {
+        background-color: #dbeafe;
+        color: #1e3a8a;
+    }
+
+    .chat-genie .chat-bubble {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .chat-error .chat-bubble {
+        background-color: #fee2e2;
+        color: #991b1b;
+        font-style: italic;
+    }
+
+    .chat-typing .chat-bubble {
+        background-color: #f3f4f6;
+        color: #6b7280;
+        font-style: italic;
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 0.5; }
+        50% { opacity: 1; }
+        100% { opacity: 0.5; }
+    }
+
+    .faq-section {
+    max-width: 1024px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .faq-title {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    }
+
+    .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    }
+
+    .faq-item {
+    background-color: #f9fafb;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    border-left: 4px solid #2563eb;
+    }
+
+    .faq-question {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #1e3a8a;
+    }
+
+    .faq-answer {
+    color: #4b5563;
+    line-height: 1.5;
+    }
+
+    </style>
+
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center nav-menu">
+      <a href="index.html" class="nav-brand" aria-label="Go to Home">
+        <img src="images/nav-icon.png" alt="Voyage Genie Icon" class="nav-icon">
+        <h1 class="text-2xl font-bold">Voyage Genie</h1>
+      </a>
+      <div class="hamburger" aria-label="Toggle navigation menu" role="button" tabindex="0">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <ul class="nav-links flex space-x-6">
+        <li><a href="index.html" class="hover:underline" aria-label="Go to Home">Home</a></li>
+        <li class="dropdown relative">
+          <a href="index.html" class="hover:underline flex items-center" aria-label="Plan A Trip" aria-haspopup="true">
+            Plan A Trip
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a href="tropical-trip-planner.html" class="hover:bg-blue-50" aria-label="Tropical Resort">🏖️ Tropical Resort</a></li>
+            <li><a href="cruise-trip-planner.html" class="hover:bg-blue-50" aria-label="Cruise Adventure">🚢 Cruise Adventure</a></li>
+            <li><a href="airbnb-trip-planner.html" class="hover:bg-blue-50" aria-label="Airbnb Getaway">🏠 Airbnb Getaway</a></li>
+            <li><a href="adventure-trip-planner.html" class="hover:bg-blue-50" aria-label="Adventure Trip">🌄 Adventure Trip</a></li>
+          </ul>
+        </li>
+        <li><a href="trip-dashboard.html" class="hover:underline">📋 My Trips</a></li>
+        <li><a href="features.html" class="hover:underline" aria-label="Go to Features">Features</a></li>
+        <li><a href="contact.html" class="hover:underline" aria-label="Go to Contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container mx-auto p-6">
+    <section id="travel-qa">
+    <h2 class="qa-title">🧞 Ask Voyage Genie</h2>
+    <div id="chat-box" class="qa-chat-box">
+        <div class="qa-placeholder">💡 Ask about destinations, prices, activities, tips, etc.</div>
+    </div>
+    <form id="qa-form" class="qa-form">
+        <input id="user-question" type="text" required placeholder="Type your travel question..." />
+        <button type="submit">Ask</button>
+    </form>
+    </section>
+    <section id="travel-faq" class="faq-section mt-12">
+    <h2 class="faq-title">📚 Frequently Asked Questions</h2>
+    <div class="faq-list">
+        <div class="faq-item">
+        <h3 class="faq-question">❓ What’s the best time to book flights?</h3>
+        <p class="faq-answer">Booking 6–8 weeks in advance for domestic flights and 2–4 months for international ones usually yields the best prices.</p>
+        </div>
+        <div class="faq-item">
+        <h3 class="faq-question">❓ Can Voyage Genie help me plan on a tight budget?</h3>
+        <p class="faq-answer">Absolutely! Just tell Genie your budget and travel style, and it’ll tailor suggestions to match.</p>
+        </div>
+        <div class="faq-item">
+        <h3 class="faq-question">❓ Does Genie provide visa or travel document info?</h3>
+        <p class="faq-answer">Genie can guide you on general requirements, but always check with official government sources for the latest visa rules.</p>
+        </div>
+        <div class="faq-item">
+        <h3 class="faq-question">❓ What kind of trips can Genie help with?</h3>
+        <p class="faq-answer">Genie supports beach getaways, cruises, road trips, Airbnb escapes, family vacations, romantic retreats, and more!</p>
+        </div>
+    </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gradient-to-r from-blue-400 to-indigo-600 text-center py-8 text-sm text-white" id="contact">
+      <p class="mb-2">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍 | Plan Smarter with Genie</p>
+      <form class="flex flex-col sm:flex-row justify-center items-center gap-2 mt-4">
+          <input class="px-4 py-2 rounded bg-white shadow border text-gray-800" placeholder="Enter your email" type="email"/>
+          <button class="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600">Subscribe</button>
+      </form>
+      <div class="mt-4">
+          <a class="mx-2 hover:underline text-white" href="#home">Home</a>
+          <a class="mx-2 hover:underline text-white" href="#plan-trip">Plan</a>
+          <a class="mx-2 hover:underline text-white" href="features.html">Features</a>
+          <a class="mx-2 hover:underline text-white" href="contact.html">Contact</a>
+      </div>
+  </footer>
+
+  <!-- Floating Chatbot Button -->
+  <div class="floating-chatbot" title="Ask Genie">
+          💬
+  </div>
+
+  <script>
+    const form = document.getElementById("qa-form");
+    const input = document.getElementById("user-question");
+    const chatBox = document.getElementById("chat-box");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const question = input.value.trim();
+        if (!question) return;
+
+        // User question bubble
+        const userDiv = document.createElement("div");
+        userDiv.className = "chat-user";
+        userDiv.innerHTML = `<div class="chat-bubble">${question}</div>`;
+        chatBox.appendChild(userDiv);
+
+        // Typing indicator
+        const typingDiv = document.createElement("div");
+        typingDiv.className = "chat-genie chat-typing";
+        typingDiv.innerHTML = `<div class="chat-bubble">Genie is thinking...</div>`;
+        chatBox.appendChild(typingDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        input.value = "";
+
+        try {
+        const res = await fetch("https://YOUR_N8N_WEBHOOK_URL_HERE", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question })
+        });
+
+        const data = await res.json();
+        const answer = data.answer || "Hmm, I couldn't find a good answer.";
+
+        typingDiv.className = "chat-genie";
+        typingDiv.innerHTML = `<div class="chat-bubble">${answer}</div>`;
+        } catch (err) {
+        typingDiv.className = "chat-error";
+        typingDiv.innerHTML = `<div class="chat-bubble">❌ Error getting answer from Genie.</div>`;
+        }
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+    </script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+
+    hamburger.addEventListener('click', function () {
+      hamburger.classList.toggle('active');
+      navLinks.classList.toggle('active');
+    });
+  });
+</script>
+  
+</body>
+</html>

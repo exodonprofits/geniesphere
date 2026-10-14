@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sign Up | GenieSphere</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #0f172a, #1e293b);
+    color: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 20px;
+    text-align: center;
+  }
+  h1 {
+    font-size: 2.5rem;
+    background: linear-gradient(45deg, #2BFFD9, #7C3AED);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  form {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 1rem;
+  }
+  input,
+  select {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border: none;
+    background-color: #0f172a;
+    color: white;
+    font-size: 1rem;
+    box-sizing: border-box;
+    appearance: none;
+  }
+  button {
+    width: 100%;
+    padding: 0.75rem;
+    background: linear-gradient(45deg, #2BFFD9, #7C3AED);
+    color: #0f172a;
+    font-weight: bold;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .alt {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #94a3b8;
+  }
+  a {
+    color: #2BFFD9;
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+<h1>Create Your GenieSphere Account</h1>
+<form id="signup-form">
+  <input id="email" placeholder="📧 Email address" required type="email"/>
+  <input id="password" placeholder="🔒 Password" required type="password"/>
+  <input id="confirm-password" placeholder="🔒 Confirm Password" required type="password"/>
+  <select id="role" required>
+    <option value="">🔽 Select Role</option>
+    <option value="owner">👑 Business Owner</option>
+    <option value="employee">👩‍💼 Employee</option>
+    <option value="client">🙋 Client / Guest</option>
+  </select>
+  <div style="display: flex; gap: 10px; justify-content: space-between;">
+    <button style="width: 48%;" type="submit">Continue</button>
+    <button style="width: 48%;" type="reset">Reset</button>
+  </div>
+</form>
+<div class="alt">
+  Already have an account?
+  <a href="login.html">Log in</a>
+</div>
+
+<script>
+  (() => {
+  if (!window.supabaseClient) window.supabaseClient = window.window.supabaseClient.createClient(
+    'https://pbojacnagutipfhcxltj.window.supabaseClient.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+  );
+
+  document.getElementById("signup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirm-password").value;
+    const role = document.getElementById("role").value;
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+    if (!role) {
+      alert("Please select a role.");
+      return;
+    }
+
+    const { data, error } = await window.supabaseClient.auth.signUp({ email, password });
+
+    if (error) {
+      if (error.message.includes("registered")) {
+        if (confirm("This email is already registered. Would you like to log in instead?")) {
+          window.location.href = "login.html";
+        }
+      } else {
+        alert(error.message);
+      }
+      return;
+    }
+
+    const userId = data?.user?.id;
+    if (userId) {
+      localStorage.setItem("genie_user_id", userId);
+
+      const { error: upsertError } = await supabase
+        .from("user_preferences")
+        .upsert({
+          user_id: userId,
+          role,
+          categories: [],
+          agents: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, { onConflict: ['user_id'] });
+
+      if (upsertError) {
+        alert("⚠️ Error saving user preferences. Please contact support.");
+        console.warn("Preferences init error:", upsertError.message);
+      }
+
+      if (role === "owner") {
+        alert("🎉 Signup successful! Redirecting to business profile setup...");
+        window.location.href = "/onboarding/business_profile_form.html";
+      } else {
+        alert("🎉 Signup complete! Please wait for your business owner to activate your access.");
+        window.location.href = "/thank-you.html";
+      }
+    } else {
+      alert("Signup successful but user ID not found.");
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

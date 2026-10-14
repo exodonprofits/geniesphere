@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>💳 Add Credit Card | GenieSphere</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Add a credit card to use with the GenieSphere Credit Card Optimizer.">
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --bg-soft:#0e1626;
+      --card:#121a2b;
+      --card-soft:#18233a;
+      --text:#e9f0ff;
+      --muted:#a9b6d9;
+      --accent:#3ee1a1;
+      --accent-blue:#4c6ef5;
+      --danger:#f97373;
+      --border-soft:rgba(120,155,255,.35);
+      --border-strong:rgba(120,155,255,.55);
+      --shadow-soft:0 10px 30px rgba(0,0,0,.35);
+      --radius:7px;
+      --radius-pill:999px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:radial-gradient(circle at top, #111827 0, #020617 58%);
+      color:var(--text);
+      font:500 15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+    }
+
+    .page{
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* Header (GenieSphere style) */
+    .site-header{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background:linear-gradient(180deg,rgba(9,14,25,.88),rgba(11,18,32,.96));
+      border-bottom:1px solid rgba(120,155,255,.18);
+      box-shadow:0 8px 22px rgba(0,0,0,.25);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+    .site-header-inner{
+      max-width:1200px;
+      margin:0 auto;
+      padding:12px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--text);
+      text-decoration:none;
+      font-weight:700;
+    }
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+      box-shadow:0 0 0 3px rgba(62,225,161,.3),0 8px 24px rgba(62,225,161,.35);
+    }
+    .menu{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      font-size:14px;
+    }
+    .menu a{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 2px;
+      text-decoration:none;
+      color:var(--muted);
+      border-bottom:2px solid transparent;
+      transition:color .15s ease,border-bottom-color .15s ease;
+    }
+    .menu a:hover{
+      color:var(--text);
+      border-bottom-color:var(--accent-blue);
+    }
+    .menu a.active{
+      color:var(--text);
+      border-bottom-color:var(--accent);
+      font-weight:600;
+    }
+    .hamburger{
+      display:none;
+      border:1px solid rgba(120,155,255,.25);
+      background:var(--bg-soft);
+      color:var(--text);
+      border-radius:8px;
+      padding:7px 10px;
+      cursor:pointer;
+      font-size:16px;
+    }
+    @media(max-width:720px){
+      .menu{display:none}
+      .hamburger{display:inline-flex}
+      .site-header-inner{padding:10px 12px}
+    }
+
+    .drawer{
+      position:fixed;
+      inset:60px 12px auto 12px;
+      background:#0e1626;
+      border:1px solid rgba(120,155,255,.2);
+      border-radius:var(--radius);
+      padding:10px;
+      display:none;
+      z-index:1001;
+      box-shadow:0 18px 34px rgba(0,0,0,.45);
+    }
+    .drawer a{
+      display:block;
+      margin:6px 0;
+      padding:10px 12px;
+      border-radius:var(--radius);
+      text-decoration:none;
+      color:var(--text);
+      background:#121a2b;
+      border:1px solid rgba(120,155,255,.15);
+    }
+    .drawer a.active{
+      background:#18233a;
+      border-color:rgba(62,225,161,.35);
+    }
+
+    /* Main layout */
+    .container{
+      max-width:900px;
+      margin:0 auto;
+      padding:20px 24px 32px;
+      flex:1;
+    }
+
+    .hero{
+      margin-bottom:18px;
+    }
+    .title{
+      margin:0 0 4px;
+      font-size:clamp(22px,3vw,28px);
+      font-weight:800;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .subtitle{
+      margin:0;
+      font-size:14px;
+      color:var(--muted);
+      max-width:640px;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,2.1fr) minmax(0,1.4fr);
+      gap:18px;
+    }
+    @media(max-width:840px){
+      .layout{grid-template-columns:1fr}
+    }
+
+    .card{
+      background:linear-gradient(180deg,rgba(24,35,58,.8),rgba(12,19,35,.98));
+      border-radius:var(--radius);
+      border:1px solid rgba(120,155,255,.4);
+      box-shadow:var(--shadow-soft);
+      padding:16px 16px 18px;
+    }
+    .card-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .card-title{
+      font-size:15px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .card-subtitle{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .pill{
+      font-size:11px;
+      padding:4px 10px;
+      border-radius:var(--radius-pill);
+      border:1px solid var(--border-soft);
+      background:#020617;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    /* Form */
+    form{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    label{
+      font-size:13px;
+      font-weight:600;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    label span.hint{
+      font-weight:400;
+      color:var(--muted);
+      font-size:11px;
+    }
+    input[type="text"],
+    select,
+    textarea{
+      width:100%;
+      border-radius:var(--radius);
+      border:1px solid var(--border-soft);
+      background:#020617;
+      color:var(--text);
+      padding:7px 9px;
+      font-size:13px;
+      outline:none;
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus{
+      border-color:var(--accent-blue);
+      box-shadow:0 0 0 1px rgba(76,110,245,.55);
+      background:#020617;
+    }
+    textarea{
+      min-height:60px;
+      resize:vertical;
+    }
+    .inline-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .inline-row .field{
+      flex:1;
+      min-width:140px;
+    }
+
+    .toggle-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin:4px 0 2px;
+    }
+    .toggle-label{
+      font-size:13px;
+      font-weight:600;
+    }
+    .toggle-switch{
+      position:relative;
+      width:40px;
+      height:20px;
+      border-radius:var(--radius-pill);
+      background:#020617;
+      border:1px solid var(--border-soft);
+      cursor:pointer;
+      flex-shrink:0;
+    }
+    .toggle-thumb{
+      position:absolute;
+      top:2px;
+      left:2px;
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      background:#9ca3af;
+      transition:transform .18s ease, background .18s ease;
+    }
+    .toggle-switch.active{
+      background:rgba(62,225,161,.25);
+      border-color:rgba(62,225,161,.8);
+    }
+    .toggle-switch.active .toggle-thumb{
+      transform:translateX(18px);
+      background:#3ee1a1;
+    }
+
+    .helper-text{
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    .btn-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:6px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 16px;
+      border-radius:var(--radius-pill);
+      font-size:13px;
+      font-weight:600;
+      border:0;
+      cursor:pointer;
+      text-decoration:none;
+      transition:.18s;
+      white-space:nowrap;
+    }
+    .btn-primary{
+      background:var(--accent);
+      color:#02130d;
+      box-shadow:0 8px 18px rgba(62,225,161,.25);
+    }
+    .btn-primary:hover{filter:brightness(1.05)}
+    .btn-outline{
+      background:#0e1626;
+      color:var(--text);
+      border:1px solid var(--border-soft);
+    }
+    .btn-outline:hover{
+      border-color:var(--accent-blue);
+      color:#eef2ff;
+    }
+
+    .status{
+      margin-top:8px;
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:var(--radius);
+      border:1px solid transparent;
+      display:none;
+    }
+    .status.success{
+      display:block;
+      border-color:rgba(62,225,161,.7);
+      background:rgba(62,225,161,.12);
+      color:#bbf7d0;
+    }
+    .status.error{
+      display:block;
+      border-color:rgba(248,113,113,.8);
+      background:rgba(248,113,113,.15);
+      color:#fecaca;
+    }
+
+    /* Sidebar */
+    .info-list{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .info-list li{
+      display:flex;
+      gap:6px;
+    }
+    .info-dot{
+      font-size:15px;
+      margin-top:1px;
+    }
+    .mini-card{
+      margin-top:10px;
+      padding:10px 11px;
+      border-radius:var(--radius);
+      background:linear-gradient(135deg,rgba(15,23,42,.9),rgba(15,118,110,.35));
+      border:1px dashed rgba(45,212,191,.6);
+      font-size:12px;
+    }
+    .mini-card strong{
+      display:block;
+      margin-bottom:2px;
+    }
+
+    @media(max-width:640px){
+      .container{padding:16px 12px 26px;}
+      .card{padding:12px 11px 14px;}
+      .hero{margin-bottom:12px;}
+    }
+
+        /* Manage cards list */
+    .cards-list{
+      margin-top:8px;
+      border-radius:var(--radius);
+      border:1px solid rgba(120,155,255,.35);
+      background:#020617;
+      max-height:260px;
+      overflow:auto;
+    }
+    .cards-list-empty{
+      font-size:12px;
+      color:var(--muted);
+      padding:10px 11px;
+    }
+    .cards-list-item{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+      padding:9px 11px;
+      border-bottom:1px solid rgba(15,23,42,.95);
+    }
+    .cards-list-item:last-child{
+      border-bottom:none;
+    }
+    .cards-list-main{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .cards-list-title{
+      font-size:13px;
+      font-weight:600;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .cards-list-sub{
+      font-size:11px;
+      color:var(--muted);
+    }
+    .badge-sm{
+      font-size:10px;
+      padding:2px 7px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.7);
+      background:#020617;
+      color:var(--muted);
+    }
+    .badge-sm.biz{
+      border-color:rgba(56,189,248,.8);
+      background:rgba(56,189,248,.15);
+    }
+    .badge-sm.pers{
+      border-color:rgba(34,197,94,.8);
+      background:rgba(34,197,94,.15);
+    }
+    .badge-sm.last4{
+      border-style:dashed;
+    }
+    .cards-list-actions{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      align-items:flex-end;
+    }
+    .btn-pill-sm{
+      border-radius:999px;
+      padding:4px 10px;
+      font-size:11px;
+      border:0;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+    }
+    .btn-pill-sm.edit{
+      background:#0e1626;
+      color:var(--text);
+      border:1px solid rgba(120,155,255,.5);
+    }
+    .btn-pill-sm.edit:hover{
+      border-color:var(--accent-blue);
+    }
+    .btn-pill-sm.delete{
+      background:rgba(127,29,29,.8);
+      color:#fecaca;
+      border:1px solid rgba(248,113,113,.9);
+    }
+    .btn-pill-sm.delete:hover{
+      filter:brightness(1.05);
+    }
+
+  </style>
+
+  
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img class="logo" src="../genie-logo.png" alt="GenieSphere logo">
+        <span>GenieSphere</span>
+      </a>
+      <nav class="menu" aria-label="Primary">
+        <a class="active" href="../personal/personal.html">🏡 Personal</a>
+        <a href="../personal/business.html">🏢 Business</a>
+        <a href="../personal/investment.html">📈 Investment</a>
+        <a href="../personal/leisure.html">🏝️ Leisure</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-expanded="false" aria-label="Toggle navigation">☰</button>
+    </div>
+  </header>
+
+  <!-- Mobile drawer -->
+  <div class="drawer" id="mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+    <a class="active" href="../personal/personal.html">🏡 Personal</a>
+    <a href="../personal/business.html">🏢 Business</a>
+    <a href="../personal/investment.html">📈 Investment</a>
+    <a href="../personal/leisure.html">🏝️ Leisure</a>
+  </div>
+
+  <main class="container">
+    <section class="hero">
+      <h1 class="title">💳 Add a Credit Card</h1>
+      <p class="subtitle">
+        Save non-sensitive card details so GenieSphere can recommend the best card for each personal and business expense.
+      </p>
+    </section>
+
+    <section class="layout">
+      <!-- Main form -->
+      <article class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              Card Details
+            </div>
+            <p class="card-subtitle">
+              We only store safe, high-level info: issuer, product name, nickname, and which business it belongs to.
+            </p>
+          </div>
+          <span class="pill">Step 1 · Add card</span>
+        </div>
+
+        <form id="cardForm">
+          <div class="field">
+            <label for="nickname">Card nickname <span class="hint">(what you want to see on screen)</span></label>
+            <input id="nickname" name="nickname" type="text" required
+                   placeholder="e.g. United Club Business, Main Groceries Card">
+          </div>
+
+          <div class="inline-row">
+            <div class="field">
+              <label for="issuer">Issuer</label>
+              <select id="issuer" name="issuer" required>
+                <option value="">Select issuer...</option>
+                <option>Chase</option>
+                <option>American Express</option>
+                <option>Citi</option>
+                <option>Bank of America</option>
+                <option>Capital One</option>
+                <option>Discover</option>
+                <option>Synchrony</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="product_name">Product / Card type</label>
+              <input id="product_name" name="product_name" type="text" required
+                     placeholder="e.g. Ink Business Cash, Blue Cash Preferred">
+            </div>
+          </div>
+
+          <div class="inline-row">
+            <div class="field">
+              <label for="last4">Last 4 digits <span class="hint">(optional)</span></label>
+              <input id="last4" name="last4" type="text" maxlength="4" pattern="[0-9]*"
+                     placeholder="1234">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="toggle-label">Is this a business card?</label>
+            <div class="toggle-row">
+              <div class="toggle-switch" id="businessToggle">
+                <div class="toggle-thumb"></div>
+              </div>
+              <span class="helper-text">Turn on if this card belongs to one of your businesses.</span>
+            </div>
+          </div>
+
+          <div class="field" id="businessField" style="display:none;">
+            <label for="businessSelect">
+              Business (optional)
+              <span class="hint">(links this card to a specific company)</span>
+            </label>
+            <select id="businessSelect" name="businessSelect">
+              <option value="">Select business...</option>
+            </select>
+            <p class="helper-text">
+              If you leave this blank, the card will still be saved as a business card but not tied to a specific profile yet.
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="notes">
+              Notes <span class="hint">(optional)</span>
+            </label>
+            <textarea id="notes" name="notes"
+                      placeholder="Example: Use this only for United flights. Autopay from Victoria Nails account."></textarea>
+          </div>
+
+          <div class="btn-row">
+            <button type="submit" class="btn btn-primary" id="saveBtn">
+              💾 Save Card
+            </button>
+            <a href="credit-card-optimizer.html" class="btn btn-outline">
+              📊 Go to Optimizer
+            </a>
+            <a href="../personal/personal.html" class="btn btn-outline">
+              ⬅️ Back to Personal Dashboard
+            </a>
+          </div>
+
+          <div class="status" id="statusMessage"></div>
+        </form>
+      </article>
+
+       <!-- Manage existing cards -->
+      <article class="card" style="margin-top:10px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              Your saved cards
+            </div>
+            <p class="card-subtitle">
+              Edit nicknames or notes, or delete cards you no longer use. These changes update instantly in the optimizer.
+            </p>
+          </div>
+          <span class="pill">Step 2 · Manage</span>
+        </div>
+
+        <div id="cardsList" class="cards-list">
+          <div class="cards-list-empty">
+            No cards saved yet. Add your first card using the form above.
+          </div>
+        </div>
+      </article>
+
+      <!-- Sidebar: info / tips -->
+      <aside class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              How GenieSphere uses your card info
+            </div>
+            <p class="card-subtitle">
+              Safe by design: we never store full card numbers or CVV. Only the basics needed for smart recommendations.
+            </p>
+          </div>
+        </div>
+
+        <ul class="info-list">
+          <li>
+            <span class="info-dot">✅</span>
+            <span>We store only issuer, card type, nickname, business link, optional last 4, and notes.</span>
+          </li>
+          <li>
+            <span class="info-dot">🛡️</span>
+            <span>No full card numbers, no CVV, no expiration dates are ever stored.</span>
+          </li>
+          <li>
+            <span class="info-dot">🧠</span>
+            <span>The optimizer uses this info to decide which card to use for groceries, utilities, travel, software, and more.</span>
+          </li>
+          <li>
+            <span class="info-dot">🔁</span>
+            <span>You can edit or add more cards later as your wallet changes.</span>
+          </li>
+        </ul>
+
+        <div class="mini-card">
+          <strong>Next step after saving</strong>
+          <span>
+            Once you’ve added your main cards, open the <em>Credit Card Optimizer</em> page to set usage rules
+            (e.g., “use this card for groceries,” “this one for AI software,” etc.).
+          </span>
+        </div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<!-- Supabase -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-init.js"></script>
+
+<script>
+  // --- Mobile drawer toggle ---
+  (function(){
+    const drawer = document.getElementById('mobile-drawer');
+    const btn = document.getElementById('hamburger');
+    if (!drawer || !btn) return;
+    const open = () => { drawer.style.display = 'block'; btn.setAttribute('aria-expanded','true'); };
+    const close = () => { drawer.style.display = 'none'; btn.setAttribute('aria-expanded','false'); };
+    btn.addEventListener('click', () => {
+      btn.getAttribute('aria-expanded') === 'true' ? close() : open();
+    });
+    drawer.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') close();
+    });
+  })();
+
+  // --- Helper: HTML escape ---
+  function escapeHtml(str){
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
+  }
+
+  // --- Toggle: business card ---
+  const businessToggle = document.getElementById('businessToggle');
+  const businessField  = document.getElementById('businessField');
+  let isBusinessCard = false;
+  let editingCardId = null;
+  let currentUser = null;
+  let businessMap = {}; // id -> name
+
+
+  if (businessToggle) {
+    businessToggle.addEventListener('click', () => {
+      isBusinessCard = !isBusinessCard;
+      businessToggle.classList.toggle('active', isBusinessCard);
+      businessField.style.display = isBusinessCard ? 'block' : 'none';
+    });
+  }
+
+  async function initCardSetup(){
+    if (!window.supabase) {
+      console.error('Supabase client not found.');
+      return;
+    }
+
+    // Get current user
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError) {
+      console.error('Error fetching user:', userError);
+      return;
+    }
+    const user = userData?.user;
+    if (!user) {
+      console.warn('No logged-in user. You may want to redirect to login.');
+      const status = document.getElementById('statusMessage');
+      if (status){
+        status.className = 'status error';
+        status.innerHTML = 'You must be logged in to add cards.';
+        status.style.display = 'block';
+      }
+      return;
+    }
+
+    // Load businesses for this user
+    const selectEl = document.getElementById('businessSelect');
+    if (selectEl) {
+      const { data: businesses, error: bizError } = await supabase
+        .from('business_profiles')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
+
+      if (bizError) {
+        console.error('Error loading businesses:', bizError);
+      } else if (businesses && businesses.length) {
+        businesses.forEach(biz => {
+          const opt = document.createElement('option');
+          opt.value = biz.id;
+          opt.textContent = biz.name;
+          selectEl.appendChild(opt);
+        });
+      }
+    }
+
+    // Handle form submit
+    const form   = document.getElementById('cardForm');
+    const status = document.getElementById('statusMessage');
+    const saveBtn = document.getElementById('saveBtn');
+
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!user) return;
+
+      const nickname     = form.nickname.value.trim();
+      const issuer       = form.issuer.value.trim();
+      const product_name = form.product_name.value.trim();
+      const last4        = form.last4.value.trim();
+      const notes        = form.notes.value.trim();
+      const businessId   = isBusinessCard ? (form.businessSelect.value || null) : null;
+
+      if (!nickname || !issuer || !product_name) {
+        status.className = 'status error';
+        status.innerHTML = 'Please fill in nickname, issuer, and product name.';
+        status.style.display = 'block';
+        return;
+      }
+
+      if (last4 && !/^[0-9]{1,4}$/.test(last4)) {
+        status.className = 'status error';
+        status.innerHTML = 'Last 4 digits must be numbers only (up to 4 digits).';
+        status.style.display = 'block';
+        return;
+      }
+
+      status.style.display = 'none';
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      const insertObj = {
+        user_id: user.id,
+        nickname,
+        issuer,
+        product_name,
+        is_business: isBusinessCard,
+        business_profile_id: businessId,
+        last4: last4 || null,
+        notes: notes || null
+      };
+
+      const { error: insertError } = await supabase
+        .from('credit_cards')
+        .insert(insertObj);
+
+      if (insertError) {
+        console.error('Error inserting card:', insertError);
+        status.className = 'status error';
+        status.innerHTML = 'Error saving card: ' + escapeHtml(insertError.message || 'Unknown error');
+        status.style.display = 'block';
+      } else {
+        status.className = 'status success';
+        status.innerHTML = '✅ Card saved! You can add another or go to the Credit Card Optimizer.';
+        status.style.display = 'block';
+        form.reset();
+        isBusinessCard = false;
+        businessToggle.classList.remove('active');
+        businessField.style.display = 'none';
+      }
+
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 Save Card';
+    });
+  }
+
+  initCardSetup();
+</script>
+</body>
+</html>

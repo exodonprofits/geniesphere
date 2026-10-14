@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Explore Destination – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean: #0077b6;
+  --ocean-deep: #023e8a;
+  --teal: #00b4d8;
+  --coral: #e76f51;
+  --coral-dark: #c1551c;
+  --off-white: #f8fafc;
+  --gray-light: #f1f5f9;
+  --gray-border: #e2e8f0;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --shadow-hover: 0 12px 32px rgba(0,0,0,0.13);
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; }
+.hidden { display: none !important; }
+
+/* ── HEADER ── */
+.vg-header { position: sticky; top: 0; z-index: 40; background: linear-gradient(105deg, #023e8a 0%, #0077b6 55%, #0096c7 100%); box-shadow: 0 2px 20px rgba(2,62,138,0.25); }
+.vg-nav { max-width: 1240px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vg-brand { display: flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.vg-brand img { width: 46px; height: 46px; border-radius: 10px; object-fit: contain; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+.vg-title-brand { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.4rem; color: #fff; }
+.vg-right { display: flex; align-items: center; gap: 12px; }
+.nav-chip { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; height: 38px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); font-size: 0.88rem; font-weight: 500; transition: background var(--transition); white-space: nowrap; }
+.nav-chip:hover { background: rgba(255,255,255,0.24); }
+.menu-group { position: relative; }
+.drop-menu { position: absolute; top: calc(100% + 8px); right: 0; min-width: 220px; padding: 6px; background: #fff; color: var(--text); border-radius: var(--radius); box-shadow: 0 16px 40px rgba(0,0,0,0.18); display: none; z-index: 60; border: 1px solid rgba(0,0,0,0.06); }
+.drop-menu a { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 8px; color: var(--text); text-decoration: none; font-size: 0.9rem; transition: background var(--transition); }
+.drop-menu a:hover { background: var(--gray-light); color: var(--ocean); }
+.drop-menu-divider { height: 1px; background: var(--gray-border); margin: 5px 4px; }
+.drop-menu-header { padding: 10px 12px 8px; border-bottom: 1px solid var(--gray-border); margin-bottom: 4px; }
+.drop-menu-user { font-weight: 700; font-size: 0.9rem; }
+.drop-menu-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; word-break: break-all; }
+.account-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 9px; background: rgba(255,255,255,0.14); color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,0.22); white-space: nowrap; transition: background var(--transition); font-size: 0.9rem; }
+.account-chip:hover { background: rgba(255,255,255,0.24); }
+.account-chip .caret { font-size: 0.68rem; opacity: 0.8; }
+
+/* ── PAGE BANNER ── */
+.page-banner { background: #eaf4fb; border-bottom: 1px solid #c9e4f5; padding: 1.4rem 1.5rem; }
+.page-banner-inner { max-width: 1200px; margin: 0 auto; }
+.page-banner h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.2rem, 2.5vw, 1.55rem); font-weight: 700; color: var(--ocean-deep); margin-bottom: 0.2rem; }
+.page-banner p { font-size: 0.87rem; color: var(--text-muted); }
+
+/* ── LAYOUT ── */
+.page-body { max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem 3rem; display: grid; grid-template-columns: 1fr 290px; gap: 1.5rem; align-items: start; }
+@media (max-width: 900px) { .page-body { grid-template-columns: 1fr; } }
+
+/* ── CARDS ── */
+.vg-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+.card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--gray-border); }
+.card-title { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 0.15rem; }
+.card-sub { font-size: 0.82rem; color: var(--text-muted); }
+.card-body { padding: 1.25rem; }
+
+/* ── INPUTS ── */
+.field { margin-bottom: 1.1rem; }
+.field-label { font-size: 0.85rem; font-weight: 500; color: var(--text); display: block; margin-bottom: 0.4rem; }
+.opt-tag { font-size: 0.73rem; color: var(--text-muted); font-weight: 400; background: var(--gray-light); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
+.vg-input, .vg-select { width: 100%; border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 0.62rem 0.9rem; background: var(--gray-light); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text); outline: none; transition: border-color var(--transition), background var(--transition); }
+.vg-input:focus, .vg-select:focus { border-color: var(--ocean); background: #fff; box-shadow: 0 0 0 3px rgba(0,119,182,0.1); }
+.vg-select { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230077b6"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; padding-right: 2.5rem; background-color: var(--gray-light); }
+.vg-select:focus { background-color: #fff; }
+
+/* ── INTEREST CHECKBOX GRID ── */
+.interest-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+@media (max-width: 480px) { .interest-grid { grid-template-columns: repeat(2, 1fr); } }
+.interest-chip { display: flex; align-items: center; gap: 8px; padding: 0.55rem 0.8rem; border-radius: var(--radius); border: 1px solid var(--gray-border); background: var(--gray-light); cursor: pointer; font-size: 0.85rem; transition: all var(--transition); user-select: none; }
+.interest-chip:hover { border-color: var(--teal); background: #e1f5ee; }
+.interest-chip input[type="checkbox"] { accent-color: var(--ocean); width: 15px; height: 15px; flex-shrink: 0; }
+.interest-chip.checked { background: #eaf4fb; border-color: var(--ocean); color: var(--ocean-deep); font-weight: 500; }
+
+/* ── DATE GRID ── */
+.date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 480px) { .date-grid { grid-template-columns: 1fr; } }
+
+/* ── BUTTONS ── */
+.vg-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--gray-border); border-radius: 8px; padding: 0.55rem 1rem; background: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; color: var(--text); cursor: pointer; transition: all var(--transition); white-space: nowrap; text-decoration: none; }
+.vg-btn:hover { background: var(--gray-light); transform: translateY(-1px); }
+.vg-btn-ocean { background: var(--ocean); color: #fff; border-color: var(--ocean); }
+.vg-btn-ocean:hover { background: var(--ocean-deep); border-color: var(--ocean-deep); }
+.generate-btn { width: 100%; justify-content: center; padding: 0.85rem 1.5rem; font-size: 1rem; font-weight: 600; background: linear-gradient(105deg, var(--ocean-deep), var(--ocean)); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; font-family: 'DM Sans', sans-serif; box-shadow: 0 4px 16px rgba(0,119,182,0.3); transition: all var(--transition); margin-top: 0.25rem; }
+.generate-btn:hover { box-shadow: 0 6px 24px rgba(0,119,182,0.45); transform: translateY(-1px); }
+.generate-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+/* ── SPINNER ── */
+.spinner-inline { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid #fff; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RESULTS ── */
+.results-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); box-shadow: var(--shadow); margin-top: 1.25rem; overflow: hidden; }
+.results-header { background: linear-gradient(105deg, #023e8a, #0077b6); padding: 1.1rem 1.4rem; color: #fff; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+.results-header h2 { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; }
+.results-header-actions { display: flex; gap: 0.5rem; }
+.results-body { padding: 1.5rem; font-size: 0.92rem; line-height: 1.75; color: var(--text); }
+.results-body strong, .results-body b { color: var(--ocean-deep); }
+.results-body a { color: var(--ocean); }
+.results-body a:hover { text-decoration: underline; }
+.results-body br + br { display: block; margin-top: 0.25rem; content: ''; }
+
+/* ── STREAMING CURSOR ── */
+.streaming-cursor::after { content: '▌'; color: var(--ocean); animation: blink 0.7s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* ── SIDEBAR ── */
+.sidebar { display: flex; flex-direction: column; gap: 1rem; }
+.dest-card { background: linear-gradient(135deg, #023e8a, #0077b6); border-radius: var(--radius-lg); padding: 1.25rem; color: #fff; }
+.dest-card h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; }
+.dest-card p { font-size: 0.82rem; opacity: 0.82; margin-bottom: 0.85rem; line-height: 1.5; }
+.deal-btn { display: block; text-align: center; background: var(--coral); color: #fff; padding: 0.6rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: background var(--transition); }
+.deal-btn:hover { background: var(--coral-dark); }
+
+.affiliate-card { background: #fff; border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 1.1rem; box-shadow: var(--shadow); }
+.affiliate-title { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.7rem; }
+.aff-link { display: flex; align-items: center; justify-content: space-between; padding: 0.58rem 0.85rem; border-radius: 8px; background: var(--gray-light); border: 1px solid var(--gray-border); text-decoration: none; color: var(--text); margin-bottom: 0.45rem; font-size: 0.86rem; font-weight: 500; transition: all var(--transition); }
+.aff-link:last-of-type { margin-bottom: 0; }
+.aff-link:hover { background: #eaf4fb; border-color: var(--teal); transform: translateX(2px); color: var(--ocean); }
+.aff-link .arr { font-size: 0.72rem; color: var(--text-muted); }
+.aff-link:hover .arr { color: var(--ocean); }
+.aff-note { font-size: 0.73rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic; }
+
+/* ── FOOTER ── */
+footer { background: linear-gradient(105deg, #023e8a 0%, #0077b6 100%); color: rgba(255,255,255,0.85); padding: 3rem 1.5rem 2rem; }
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-brand { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+.footer-tagline { font-size: 0.85rem; opacity: 0.7; }
+.footer-subscribe { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-email { padding: 0.65rem 1rem; border-radius: 9px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.12); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; flex: 1; min-width: 180px; outline: none; }
+.footer-email::placeholder { color: rgba(255,255,255,0.5); }
+.footer-sub-btn { padding: 0.65rem 1.2rem; background: var(--coral); color: #fff; border: none; cursor: pointer; border-radius: 9px; font-size: 0.9rem; font-weight: 600; font-family: 'DM Sans', sans-serif; transition: background var(--transition); }
+.footer-sub-btn:hover { background: var(--coral-dark); }
+.footer-links { display: flex; gap: 1.2rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+.footer-copy { margin-top: 2rem; font-size: 0.8rem; opacity: 0.55; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.12); }
+
+/* ── FLOATING CHATBOT ── */
+.floating-chatbot { position: fixed; bottom: 28px; right: 28px; background: linear-gradient(135deg, var(--teal), var(--ocean)); color: white; width: 58px; height: 58px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 24px rgba(0,119,182,0.4); font-size: 1.5rem; z-index: 50; cursor: pointer; border: 2px solid rgba(255,255,255,0.25); transition: transform var(--transition); }
+.floating-chatbot:hover { transform: scale(1.1); }
+
+@media print {
+  .vg-header, .page-banner, .sidebar, footer, .floating-chatbot, .no-print { display: none !important; }
+  .page-body { grid-template-columns: 1fr; padding: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- Supabase -->
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if (!window.supabase) {
+    window.supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+  }
+</script>
+
+<!-- ===== HEADER ===== -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html" aria-label="Voyage Genie Home">
+      <img src="images/nav-icon.png" alt="Voyage Genie"/>
+      <span class="vg-title-brand">Voyage Genie</span>
+    </a>
+    <div class="vg-right">
+      <a class="nav-chip" href="trip-dashboard.html">📋 My Trips</a>
+      <div id="authSlot">
+        <a class="nav-chip" href="login.html?next=explore-this-destination.html">🔑 Sign in</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== PAGE BANNER ===== -->
+<div class="page-banner">
+  <div class="page-banner-inner">
+    <h1 id="pageTitle">🌆 Explore This Destination</h1>
+    <p>AI-powered day plans — attractions, dining, hidden gems, and local tips.</p>
+  </div>
+</div>
+
+<!-- ===== MAIN ===== -->
+<main>
+<div class="page-body">
+
+  <!-- ── LEFT: FORM + RESULTS ── -->
+  <div>
+    <div class="vg-card">
+      <div class="card-header">
+        <div class="card-title">Plan Your Day</div>
+        <div class="card-sub">Tell Genie what you're in the mood for and get a personalised exploration plan.</div>
+      </div>
+      <div class="card-body">
+        <form id="exploreForm">
+
+          <!-- Destination -->
+          <div class="field">
+            <label class="field-label" for="destination">🌴 Destination <span style="color:#e76f51">*</span></label>
+            <input id="destination" name="destination" class="vg-input" placeholder="e.g. Bali, Cancun, Santorini" required/>
+          </div>
+
+          <!-- Current Location -->
+          <div class="field">
+            <label class="field-label">📍 Your Current Location <span class="opt-tag">Optional — helps with distances</span></label>
+            <div style="display:flex;gap:0.5rem">
+              <input id="currentLocation" name="currentLocation" class="vg-input" placeholder="Click Detect or type a city / neighbourhood" style="flex:1"/>
+              <button id="btnDetect" type="button" class="vg-btn no-print">📡 Detect</button>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">Location stays in your browser only — never uploaded.</div>
+          </div>
+
+          <!-- Dates -->
+          <div class="field">
+            <label class="field-label">📅 Visit Dates <span class="opt-tag">Optional</span></label>
+            <div class="date-grid">
+              <input id="startDate" name="startDate" class="vg-input" type="date"/>
+              <input id="endDate"   name="endDate"   class="vg-input" type="date"/>
+            </div>
+          </div>
+
+          <!-- Travel Style -->
+          <div class="field">
+            <label class="field-label" for="style">😎 Travel Style</label>
+            <select id="style" name="style" class="vg-select">
+              <option value="">No preference</option>
+              <option value="relaxed">🌅 Relaxed & Slow-paced</option>
+              <option value="adventurous">🏄 Adventurous & Active</option>
+              <option value="romantic">💑 Romantic Couple</option>
+              <option value="family">👨‍👩‍👧‍👦 Family with Kids</option>
+              <option value="solo">🎒 Solo Explorer</option>
+              <option value="luxury">✨ Luxury & Indulgent</option>
+              <option value="budget">💰 Budget Traveller</option>
+            </select>
+          </div>
+
+          <!-- Interests — checkbox grid -->
+          <div class="field">
+            <label class="field-label">🎯 What You're Into</label>
+            <div class="interest-grid" id="interestGrid">
+              <label class="interest-chip"><input type="checkbox" name="interests" value="sightseeing"> 🏛️ Sightseeing</label>
+              <label class="interest-chip"><input type="checkbox" name="interests" value="food"> 🍽️ Food & Dining</label>
+              <label class="interest-chip"><input type="checkbox" name="interests" value="nightlife"> 🌃 Nightlife</label>
+              <label class="interest-chip"><input type="checkbox" name="interests" value="culture"> 🎭 Culture & Art</label>
+              <label class="interest-chip"><input type="checkbox" name="interests" value="outdoors"> 🌿 Outdoors & Nature</label>
+              <label class="interest-chip"><input type="checkbox" name="interests" value="shopping"> 🛍️ Shopping</label>
+              <label class="interest-chip"><input type="checkbox" name="interests" value="hidden"> 🗝️ Hidden Gems</label>
+              <label class="interest-chip"><input type="checkbox" name="interests" value="beach"> 🏖️ Beach & Water</label>
+              <label class="interest-chip"><input type="checkbox" name="interests" value="wellness"> 🧘 Spa & Wellness</label>
+            </div>
+          </div>
+
+          <!-- Budget per day -->
+          <div class="field">
+            <label class="field-label" for="dailyBudget">💵 Daily Budget (USD) <span class="opt-tag">Optional</span></label>
+            <select id="dailyBudget" name="dailyBudget" class="vg-select">
+              <option value="">No preference</option>
+              <option value="under50">Under $50/day</option>
+              <option value="50-100">$50–$100/day</option>
+              <option value="100-200">$100–$200/day</option>
+              <option value="200+">$200+/day</option>
+            </select>
+          </div>
+
+          <!-- Action buttons -->
+          <button class="generate-btn" id="generateBtn" type="submit">
+            🧭 Generate My Exploration Plan
+          </button>
+
+          <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap" class="no-print">
+            <button type="button" class="vg-btn" onclick="shareLink()">🔗 Share</button>
+            <button type="button" class="vg-btn" onclick="window.print()">🖨️ Print</button>
+            <button type="button" class="vg-btn" id="btnReset">🧹 Reset</button>
+            <a class="vg-btn" href="tropical-trip-itinerary.html">← Back to Itinerary</a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-card hidden" id="resultsCard">
+      <div class="results-header">
+        <h2 id="resultsTitle">🌆 Your Exploration Plan</h2>
+        <div class="results-header-actions no-print">
+          <button class="vg-btn" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="window.print()">🖨️ Print</button>
+          <button class="vg-btn" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.2)" onclick="shareLink()">🔗 Share</button>
+        </div>
+      </div>
+      <div class="results-body" id="resultsBody"></div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: SIDEBAR ── -->
+  <aside class="sidebar">
+
+    <!-- Destination quick-book -->
+    <div class="dest-card">
+      <h3 id="sb-destTitle">🌴 Explore & Book</h3>
+      <p>Find tours, tickets, and experiences at your destination.</p>
+      <a href="https://www.viator.com" target="_blank" rel="noopener" class="deal-btn" id="viatorBtn">Browse Experiences →</a>
+    </div>
+
+    <!-- Tours & Activities -->
+    <div class="affiliate-card">
+      <div class="affiliate-title">🎟️ Tours & Activities</div>
+      <a href="https://www.viator.com" target="_blank" rel="noopener" class="aff-link" id="viatorLink"><span>Viator</span><span class="arr">↗</span></a>
+      <a href="https://www.getyourguide.com" target="_blank" rel="noopener" class="aff-link" id="gygLink"><span>GetYourGuide</span><span class="arr">↗</span></a>
+      <a href="https://www.airbnb.com/experiences" target="_blank" rel="noopener" class="aff-link" id="airbnbExpLink"><span>Airbnb Experiences</span><span class="arr">↗</span></a>
+      <p class="aff-note">Pre-filled with your destination.</p>
+    </div>
+
+    <!-- Dining -->
+    <div class="affiliate-card">
+      <div class="affiliate-title">🍽️ Find Restaurants</div>
+      <a href="https://www.tripadvisor.com" target="_blank" rel="noopener" class="aff-link" id="taLink"><span>TripAdvisor</span><span class="arr">↗</span></a>
+      <a href="https://www.yelp.com" target="_blank" rel="noopener" class="aff-link" id="yelpLink"><span>Yelp</span><span class="arr">↗</span></a>
+    </div>
+
+    <!-- Staying longer? -->
+    <div class="affiliate-card">
+      <div class="affiliate-title">🏨 Extend Your Stay</div>
+      <a href="https://www.booking.com" target="_blank" rel="noopener" class="aff-link" id="bkLink"><span>Booking.com</span><span class="arr">↗</span></a>
+      <a href="https://www.airbnb.com" target="_blank" rel="noopener" class="aff-link" id="airbnbLink"><span>Airbnb</span><span class="arr">↗</span></a>
+      <p class="aff-note">We may earn a small commission at no cost to you.</p>
+    </div>
+
+    <!-- Travel tools -->
+    <div class="affiliate-card">
+      <div class="affiliate-title">🔗 Helpful Tools</div>
+      <a href="packing-checklist.html" class="aff-link" id="packLink"><span>🧳 Packing Checklist</span><span class="arr">→</span></a>
+      <a href="visa-check.html" class="aff-link" id="visaLink"><span>🛂 Visa Check</span><span class="arr">→</span></a>
+      <a href="currency-converter.html" class="aff-link" id="currLink"><span>💱 Currency Converter</span><span class="arr">→</span></a>
+      <a href="emergency-info.html" class="aff-link"><span>🏥 Emergency Info</span><span class="arr">→</span></a>
+    </div>
+
+  </aside>
+</div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">✈️ Voyage Genie</div>
+    <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+    <div class="footer-subscribe">
+      <input class="footer-email" placeholder="Enter your email" type="email"/>
+      <button class="footer-sub-btn">Subscribe</button>
+    </div>
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#plan-trip">Plan</a>
+      <a href="features.html">Features</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-copy">© 2025 VoyageGenie.com – All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- ===== AUTH ===== -->
+<script type="module">
+  const sb = window.supabase;
+  const authSlot  = document.getElementById('authSlot');
+  const nextParam = encodeURIComponent('explore-this-destination.html');
+
+  function toggleMenu(menu, btn, open) {
+    menu.style.display = open ? 'block' : 'none';
+    btn.setAttribute('aria-expanded', String(open));
+  }
+
+  function accountDOM(email) {
+    const name = (email||'Account').split('@')[0];
+    const wrap = document.createElement('div');
+    wrap.className = 'menu-group';
+    wrap.innerHTML = `
+      <a href="#" class="account-chip" id="acctBtn" aria-haspopup="true" aria-expanded="false">
+        <span>🪪</span><span>${name}</span><span class="caret">▼</span>
+      </a>
+      <div class="drop-menu" id="acctMenu" role="menu">
+        <div class="drop-menu-header">
+          <div class="drop-menu-user">${name}</div>
+          <div class="drop-menu-sub">${email}</div>
+        </div>
+        <a href="trip-dashboard.html">📋 My Trips</a>
+        <div class="drop-menu-divider"></div>
+        <a href="account.html">👤 Account</a>
+        <a href="#" id="signOutBtn">🚪 Sign out</a>
+      </div>`;
+    return wrap;
+  }
+
+  async function renderAuth() {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      authSlot.innerHTML = '';
+      if (user) {
+        const node = accountDOM(user.email);
+        authSlot.appendChild(node);
+        const btn  = node.querySelector('#acctBtn');
+        const menu = node.querySelector('#acctMenu');
+        btn.addEventListener('click', e => { e.preventDefault(); const open = menu.style.display === 'block'; toggleMenu(menu, btn, !open); });
+        document.addEventListener('click', e => { if (!menu.contains(e.target) && e.target !== btn) toggleMenu(menu, btn, false); });
+        node.querySelector('#signOutBtn').addEventListener('click', async e => { e.preventDefault(); try { await sb.auth.signOut(); } finally { location.href = 'login.html'; }});
+      } else {
+        const a = document.createElement('a');
+        a.className = 'nav-chip'; a.href = `login.html?next=${nextParam}`; a.textContent = '🔑 Sign in';
+        authSlot.appendChild(a);
+      }
+    } catch {}
+  }
+  renderAuth();
+</script>
+
+<!-- ===== PAGE LOGIC ===== -->
+<script>
+const $ = id => document.getElementById(id);
+
+/* ── Pre-fill from URL params ── */
+function applyFromURL() {
+  const url  = new URL(location.href);
+  const dest = url.searchParams.get('destination') || '';
+  const start= url.searchParams.get('startDate')   || '';
+  const end  = url.searchParams.get('endDate')     || '';
+
+  if (dest) {
+    $('destination').value = dest;
+    $('pageTitle').textContent = `🌆 Explore ${dest}`;
+    document.title = `Explore ${dest} – Voyage Genie`;
+    updateAffiliateLinks(dest);
+  }
+  if (start) $('startDate').value = start;
+  if (end)   $('endDate').value   = end;
+
+  // Also check localStorage tripContext
+  try {
+    const ctx = JSON.parse(localStorage.getItem('tripContext') || '{}');
+    if (!dest && ctx.destination) {
+      $('destination').value = ctx.destination;
+      $('pageTitle').textContent = `🌆 Explore ${ctx.destination}`;
+      updateAffiliateLinks(ctx.destination);
+    }
+    if (!start && ctx.startDate) $('startDate').value = ctx.startDate;
+    if (!end   && ctx.endDate)   $('endDate').value   = ctx.endDate;
+  } catch {}
+}
+
+/* ── Update all affiliate links with destination ── */
+function updateAffiliateLinks(dest) {
+  if (!dest) return;
+  const q = encodeURIComponent(dest);
+  $('sb-destTitle').textContent    = `🌴 Explore ${dest}`;
+  $('viatorBtn').href              = `https://www.viator.com/search?q=${q}`;
+  $('viatorLink').href             = `https://www.viator.com/search?q=${q}`;
+  $('gygLink').href                = `https://www.getyourguide.com/s/?q=${q}`;
+  $('airbnbExpLink').href          = `https://www.airbnb.com/experiences?query=${q}`;
+  $('taLink').href                 = `https://www.tripadvisor.com/Search?q=${q}`;
+  $('yelpLink').href               = `https://www.yelp.com/search?find_desc=restaurants&find_loc=${q}`;
+  $('bkLink').href                 = `https://www.booking.com/searchresults.html?ss=${q}`;
+  $('airbnbLink').href             = `https://www.airbnb.com/s/${q}/homes`;
+  $('packLink').href               = `packing-checklist.html?destination=${q}`;
+  $('visaLink').href               = `visa-check.html?destination=${q}`;
+  $('currLink').href               = `currency-converter.html?to=${q}`;
+}
+
+/* ── Interest chip toggle ── */
+document.querySelectorAll('.interest-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chip.classList.toggle('checked');
+  });
+});
+
+/* ── Geolocation detect ── */
+$('btnDetect').addEventListener('click', () => {
+  if (!navigator.geolocation) { $('currentLocation').value = 'Not supported'; return; }
+  $('currentLocation').value = 'Locating…';
+  navigator.geolocation.getCurrentPosition(
+    pos => { $('currentLocation').value = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`; },
+    ()  => { $('currentLocation').value = ''; $('currentLocation').placeholder = 'Unable to detect. Type a city manually.'; },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+  );
+});
+
+/* ── Reset ── */
+$('btnReset').addEventListener('click', () => {
+  $('exploreForm').reset();
+  document.querySelectorAll('.interest-chip').forEach(c => c.classList.remove('checked'));
+  $('resultsCard').classList.add('hidden');
+  $('resultsBody').innerHTML = '';
+});
+
+/* ── Share link ── */
+function shareLink() {
+  const u    = new URL(location.href);
+  const dest = $('destination').value.trim();
+  if (dest) u.searchParams.set('destination', dest);
+  const sd = $('startDate').value; if (sd) u.searchParams.set('startDate', sd);
+  const ed = $('endDate').value;   if (ed) u.searchParams.set('endDate', ed);
+  navigator.clipboard?.writeText(u.toString())
+    .then(() => alert('Link copied!'))
+    .catch(() => prompt('Copy link:', u.toString()));
+}
+
+/* ── Generate with Anthropic API (streaming) ── */
+$('exploreForm').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const destination  = $('destination').value.trim();
+  const location     = $('currentLocation').value.trim();
+  const startDate    = $('startDate').value;
+  const endDate      = $('endDate').value;
+  const style        = $('style').value;
+  const dailyBudget  = $('dailyBudget').value;
+  const interests    = [...document.querySelectorAll('.interest-chip.checked input')].map(i => i.value);
+
+  if (!destination) { $('destination').focus(); return; }
+
+  // Update affiliate links with whatever destination was entered
+  updateAffiliateLinks(destination);
+
+  // Show results card with streaming state
+  const resultsCard  = $('resultsCard');
+  const resultsBody  = $('resultsBody');
+  const resultsTitle = $('resultsTitle');
+  const generateBtn  = $('generateBtn');
+
+  resultsTitle.textContent = `🌆 Exploring ${destination}…`;
+  resultsBody.innerHTML    = '<div style="color:var(--text-muted);font-size:0.9rem">Genie is crafting your exploration plan…</div>';
+  resultsBody.classList.add('streaming-cursor');
+  resultsCard.classList.remove('hidden');
+  resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  generateBtn.disabled = true;
+  generateBtn.innerHTML = '<span class="spinner-inline"></span> Generating…';
+
+  const dateStr = startDate && endDate
+    ? `Visit dates: ${startDate} to ${endDate}.`
+    : startDate ? `Arriving: ${startDate}.` : '';
+
+  // Calculate how many days the trip is so the itinerary covers every day
+  let tripDays = 1;
+  let dayPlanInstruction = `A morning → afternoon → evening flow for one perfect day${startDate ? ` on ${startDate}` : ''}.`;
+  if (startDate && endDate) {
+    const ms = new Date(endDate) - new Date(startDate);
+    tripDays = Math.max(1, Math.round(ms / 86400000) + 1); // inclusive of both start and end dates
+    if (tripDays === 1) {
+      dayPlanInstruction = `A morning → afternoon → evening flow for ${startDate}.`;
+    } else if (tripDays <= 7) {
+      dayPlanInstruction = `A full day-by-day itinerary covering all ${tripDays} days (${startDate} to ${endDate}). For each day, provide a morning → afternoon → evening plan with specific places, times, and activities. Label each day clearly (Day 1: [date], Day 2: [date], etc.).`;
+    } else {
+      // For longer trips, show first 7 days + summary of rest
+      dayPlanInstruction = `A day-by-day itinerary for the first 7 days of the trip (${startDate} onwards), then a brief overview of how to spend the remaining days. For each day provide a morning → afternoon → evening plan with specific places and times. Label each day clearly.`;
+    }
+  }
+
+  const prompt = `You are a local travel expert and destination guide. Create a rich, practical exploration guide for a traveller visiting ${destination}.
+
+${location ? `Their current base/location: ${location}.` : ''}
+${dateStr}
+${style ? `Travel style: ${style}.` : ''}
+${interests.length ? `Interests: ${interests.join(', ')}.` : ''}
+${dailyBudget ? `Daily budget: ${dailyBudget}.` : ''}
+
+Create a detailed exploration guide with these sections:
+
+**Top Attractions:**
+List 5–6 must-see places with a brief description and why it's worth visiting. Include a booking or info link where relevant using <a href="URL">Name</a> format.
+
+**Hidden Gems:**
+3–4 lesser-known spots that most tourists miss. Make these feel like insider tips.
+
+**Food & Dining:**
+5–6 specific restaurant or food experience recommendations. Include cuisine type, price range, and what to order.
+
+**Day Plan (Sample Itinerary):**
+${dayPlanInstruction}
+
+**Getting Around:**
+Best local transport options, tips on taxis vs rideshare vs walking, and any app recommendations.
+
+**Local Tips:**
+4–5 practical tips a local would tell you — customs, etiquette, safety, best times to visit sites, what to avoid.
+
+Format each section heading in bold. Use bullet points for lists. Include real, working hyperlinks where possible (booking sites, Google Maps, official tourism pages). Keep the tone friendly and enthusiastic.`;
+
+  try {
+    // ── Call n8n proxy — keeps API key server-side, fixes CORS ──
+    const N8N_WEBHOOK = 'https://exodonprofits.app.n8n.cloud/webhook/explore-destination';
+
+    resultsBody.innerHTML = '<div style="color:var(--text-muted);font-size:0.9rem;padding:0.5rem 0">Genie is crafting your exploration plan…</div>';
+    resultsTitle.textContent = `🌆 Exploring ${destination}`;
+
+    const response = await fetch(N8N_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ destination, location, startDate, endDate, tripDays, style, dailyBudget, interests, prompt })
+    });
+
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+
+    const data = await response.json();
+    const html = data.resultHtml || data.result || '';
+    if (!html) throw new Error('No content returned from server.');
+
+    resultsBody.innerHTML = html;
+    resultsBody.classList.remove('streaming-cursor');
+    resultsTitle.textContent = `🌆 Exploring ${destination}`;
+
+  } catch (err) {    resultsBody.classList.remove('streaming-cursor');
+    resultsBody.innerHTML = `
+      <div style="color:#dc2626;padding:1rem;background:#fee2e2;border-radius:8px;font-size:0.9rem">
+        <strong>Could not generate plan.</strong> ${err.message}<br>
+        <span style="font-size:0.82rem;color:#7f1d1d;margin-top:4px;display:block">Check your connection and try again.</span>
+      </div>`;
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.innerHTML = '🧭 Generate My Exploration Plan';
+  }
+});
+
+/* ── Init ── */
+applyFromURL();
+</script>
+<script src="js/genie-chat.js" defer></script>
+</body>
+</html>

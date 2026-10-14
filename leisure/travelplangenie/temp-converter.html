@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VoyageGenie – Temperature Converter</title>
+  <style>
+    :root{
+      --bg: #0b1324;
+      --panel: #121c33;
+      --ink: #eaf2ff;
+      --muted:#9bb2d1;
+      --accent:#1e90ff;     /* blue (navigation/back) */
+      --confirm:#16a34a;    /* green (save/confirm/convert) */
+      --danger:#ef4444;
+      --ring:#3b82f6;
+      --card:#0f172a;
+      --chip:#1f2a44;
+      --input:#0e162b;
+      --border:#20314f;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius-xl: 18px;
+      --radius-lg: 14px;
+      --radius-full: 999px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(30,144,255,.16), transparent 60%),
+        radial-gradient(900px 450px at -10% 10%, rgba(22,163,74,.12), transparent 60%),
+        var(--bg);
+      color:var(--ink);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .wrap{
+      max-width: 920px; margin: 28px auto; padding: 0 16px;
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;
+    }
+    .title{
+      display:flex; align-items:center; gap:12px;
+    }
+    .title h1{
+      font-size: clamp(20px, 2.4vw, 28px); margin:0; letter-spacing:.2px;
+    }
+    .subtitle{color:var(--muted); font-size:14px; margin-top:4px}
+    .card{
+      background: linear-gradient(180deg, var(--panel), var(--card));
+      border:1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    .grid{
+      display:grid; gap:16px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 860px){
+      .grid{grid-template-columns: 1.2fr .8fr}
+    }
+    label{display:block; font-size:14px; color:var(--muted); margin-bottom:8px}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+    .input, select, .slider{
+      width:100%;
+      background:var(--input);
+      border:1px solid var(--border);
+      color:var(--ink);
+      border-radius: var(--radius-lg);
+      padding:14px 16px;
+      outline:none;
+      transition: border .15s ease, box-shadow .15s ease;
+    }
+    .input:focus, select:focus, .slider:focus{
+      border-color: var(--ring);
+      box-shadow: 0 0 0 4px rgba(59,130,246,.25);
+    }
+    .unit-row{display:flex; gap:12px}
+    .unit-row > *{flex:1}
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      border:none; cursor:pointer; text-decoration:none;
+      color:white; padding:12px 18px; border-radius: var(--radius-full);
+      transition: transform .04s ease, filter .15s ease, background .2s ease;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px) }
+    .btn:hover{ filter: brightness(1.05) }
+    .btn-blue{ background: var(--accent) }
+    .btn-green{ background: var(--confirm) }
+    .btn-ghost{
+      background:transparent; border:1px solid var(--border); color:var(--ink)
+    }
+    .btn-danger{ background: var(--danger) }
+    .btn-full{ width:100%; justify-content:center }
+    .swap{
+      display:flex; align-items:center; justify-content:center;
+      width:48px; height:48px; border-radius: 50%;
+      border:1px solid var(--border); background: var(--chip);
+      cursor:pointer; transition: transform .1s ease, background .2s ease;
+    }
+    .swap:hover{ background:#26365a }
+    .result{
+      background: var(--chip); border:1px solid var(--border);
+      border-radius: var(--radius-xl); padding:16px;
+    }
+    .result h3{margin:0 0 6px 0; font-size:16px; color:var(--muted)}
+    .result .vals{display:grid; gap:8px}
+    .val{
+      display:flex; align-items:center; justify-content:space-between;
+      background: rgba(255,255,255,.02);
+      padding:12px; border-radius: 12px; border:1px solid var(--border);
+    }
+    .val b{font-size:16px}
+    .chip{
+      font-size:12px; color:var(--muted);
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      padding:6px 10px; border-radius: 999px;
+    }
+    .history{
+      margin-top:16px; display:grid; gap:8px;
+    }
+    .history-item{
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+      border:1px dashed var(--border); border-radius: 12px; padding:10px 12px;
+      background: rgba(255,255,255,.02)
+    }
+    .mini{font-size:12px; color:var(--muted)}
+    .copy{
+      background:transparent; border:1px solid var(--border); color:var(--ink);
+      border-radius: 999px; padding:6px 10px; cursor:pointer
+    }
+    .footer{
+      display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; justify-content:space-between
+    }
+    .range-row{display:flex; align-items:center; gap:10px}
+    .slider{appearance:none; height:8px; border-radius: 999px}
+    .slider::-webkit-slider-thumb{
+      -webkit-appearance:none; appearance:none;
+      width:20px; height:20px; border-radius:50%;
+      background: var(--ring); border:2px solid white
+    }
+    .help{font-size:12px; color:var(--muted); margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <div style="font-size:26px">🌡️</div>
+        <div>
+          <h1>Temperature Converter</h1>
+          <div class="subtitle">Quickly convert between °C, °F, and K — perfect for trip planning on VoyageGenie.</div>
+        </div>
+      </div>
+      <a class="btn btn-blue" href="#" onclick="history.back(); return false;">⬅️ Back</a>
+    </header>
+
+    <div class="card">
+      <div class="grid">
+        <!-- Left: Inputs -->
+        <section>
+          <div style="margin-bottom:14px">
+            <label for="tval">🔢 Enter temperature</label>
+            <input id="tval" class="input" placeholder='e.g., 72, 23.5, or try "72F", "300K", "21C"' inputmode="decimal" />
+            <div class="help">Tip: You can append a unit letter (C, F, or K) directly in the box.</div>
+          </div>
+
+          <div class="unit-row" style="align-items:center">
+            <div style="flex:1">
+              <label for="fromUnit">📥 From unit</label>
+              <select id="fromUnit">
+                <option value="C">°C – Celsius</option>
+                <option value="F">°F – Fahrenheit</option>
+                <option value="K">K – Kelvin</option>
+              </select>
+            </div>
+
+            <button class="swap" id="swapBtn" title="Swap units" aria-label="Swap units">⇄</button>
+
+            <div style="flex:1">
+              <label for="toUnit">📤 To unit</label>
+              <select id="toUnit">
+                <option value="F">°F – Fahrenheit</option>
+                <option value="C">°C – Celsius</option>
+                <option value="K">K – Kelvin</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="footer">
+            <button class="btn btn-green" id="convertBtn">✅ Convert</button>
+            <div class="range-row">
+              <span class="chip">Decimals</span>
+              <input id="decimals" class="slider" type="range" min="0" max="4" step="1" value="1" />
+              <span class="chip"><span id="decShow">1</span></span>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap">
+              <button class="btn btn-ghost" id="clearBtn">🧹 Clear</button>
+              <button class="btn btn-danger" id="resetBtn">↺ Reset</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right: Results -->
+        <section>
+          <div class="result">
+            <h3>Converted Values</h3>
+            <div class="vals" id="vals">
+              <div class="mini">No result yet. Enter a value and press “Convert”.</div>
+            </div>
+            <div class="history" id="history"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Conversion Core (reusable) ----
+    const Temp = {
+      // Parse input like "72F", "300 K", "21c", or plain "72"
+      parse(raw, fallbackUnit) {
+        if (raw == null) return { value: NaN, unit: fallbackUnit };
+        const s = String(raw).trim().toUpperCase();
+        const m = s.match(/^([+-]?\d+(\.\d+)?)(\s*[CFK])?$/);
+        if (!m) return { value: NaN, unit: fallbackUnit };
+        const value = parseFloat(m[1]);
+        const unit = (m[3] || fallbackUnit || "C").trim() || fallbackUnit || "C";
+        if (!["C","F","K"].includes(unit)) return { value: NaN, unit: fallbackUnit };
+        return { value, unit };
+      },
+      toC(val, unit){
+        if (unit === "C") return val;
+        if (unit === "F") return (val - 32) * 5/9;
+        if (unit === "K") return val - 273.15;
+        return NaN;
+      },
+      fromC(c, to){
+        if (to === "C") return c;
+        if (to === "F") return c * 9/5 + 32;
+        if (to === "K") return c + 273.15;
+        return NaN;
+      },
+      convert(value, from, to){
+        const c = this.toC(value, from);
+        return this.fromC(c, to);
+      },
+      all(value, from){
+        const c = this.toC(value, from);
+        return {
+          C: c,
+          F: this.fromC(c, "F"),
+          K: this.fromC(c, "K")
+        };
+      }
+    };
+
+    // ---- UI Wiring ----
+    const el = id => document.getElementById(id);
+    const tval = el('tval');
+    const fromUnit = el('fromUnit');
+    const toUnit = el('toUnit');
+    const convertBtn = el('convertBtn');
+    const vals = el('vals');
+    const decSlider = el('decimals');
+    const decShow = el('decShow');
+    const clearBtn = el('clearBtn');
+    const resetBtn = el('resetBtn');
+    const swapBtn = el('swapBtn');
+    const historyBox = el('history');
+
+    function round(v, d){
+      if (Number.isNaN(v)) return NaN;
+      const f = Math.pow(10, d);
+      return Math.round(v * f) / f;
+    }
+
+    function renderResults(obj, decimals, primaryTo){
+      const mapNames = { C: "°C", F: "°F", K: "K" };
+      vals.innerHTML = '';
+      Object.entries(obj).forEach(([u, v])=>{
+        const val = round(v, decimals);
+        const row = document.createElement('div');
+        row.className = 'val';
+        const left = document.createElement('div');
+        left.innerHTML = `<b>${Number.isNaN(val) ? '—' : val}</b> <span class="mini">${mapNames[u]}</span>`;
+        const right = document.createElement('div');
+        right.innerHTML = `<button class="copy" data-copy="${Number.isNaN(val)?'':val}">Copy</button>`;
+        row.appendChild(left); row.appendChild(right);
+        vals.appendChild(row);
+      });
+
+      // attach copy handlers
+      vals.querySelectorAll('.copy').forEach(btn=>{
+        btn.addEventListener('click', async (e)=>{
+          const v = e.currentTarget.getAttribute('data-copy');
+          if (!v) return;
+          try{
+            await navigator.clipboard.writeText(v);
+            e.currentTarget.textContent = 'Copied!';
+            setTimeout(()=> e.currentTarget.textContent = 'Copy', 900);
+          }catch{}
+        });
+      });
+    }
+
+    function pushHistory(inputStr, from, outObj, decimals){
+      const primary = toUnit.value;
+      const val = round(outObj[primary], decimals);
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      const left = document.createElement('div');
+      left.innerHTML = `<div><b>${inputStr}</b> → <b>${Number.isNaN(val)?'—':val} ${primary}</b></div>
+                        <div class="mini">All: ${round(outObj.C,decimals)} °C | ${round(outObj.F,decimals)} °F | ${round(outObj.K,decimals)} K</div>`;
+      const right = document.createElement('div');
+      const copyAll = document.createElement('button');
+      copyAll.className = 'copy';
+      copyAll.textContent = 'Copy all';
+      copyAll.addEventListener('click', async ()=>{
+        const txt = `Input: ${inputStr}\n` +
+                    `C: ${round(outObj.C,decimals)}\n` +
+                    `F: ${round(outObj.F,decimals)}\n` +
+                    `K: ${round(outObj.K,decimals)}`;
+        try{
+          await navigator.clipboard.writeText(txt);
+          copyAll.textContent = 'Copied!';
+          setTimeout(()=> copyAll.textContent = 'Copy all', 900);
+        }catch{}
+      });
+      right.appendChild(copyAll);
+      item.appendChild(left); item.appendChild(right);
+      historyBox.prepend(item);
+      // Keep last 6
+      while (historyBox.children.length > 6) historyBox.removeChild(historyBox.lastChild);
+    }
+
+    function doConvert(){
+      const decimals = parseInt(decSlider.value, 10);
+      const raw = tval.value;
+      const parsed = Temp.parse(raw, fromUnit.value);
+      // If user typed a unit suffix, sync the "from" selector
+      if (raw && /[cfk]$/i.test(raw.trim())) {
+        fromUnit.value = parsed.unit;
+      }
+      decShow.textContent = String(decimals);
+
+      if (Number.isNaN(parsed.value)) {
+        vals.innerHTML = `<div class="mini">Please enter a valid number (e.g., 23, 72F, or 300K).</div>`;
+        return;
+      }
+      const all = Temp.all(parsed.value, fromUnit.value);
+      renderResults(all, decimals, toUnit.value);
+      pushHistory(`${parsed.value} ${parsed.unit}`, fromUnit.value, all, decimals);
+    }
+
+    convertBtn.addEventListener('click', doConvert);
+    tval.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') doConvert(); });
+    decSlider.addEventListener('input', ()=>{ decShow.textContent = decSlider.value; });
+    clearBtn.addEventListener('click', ()=>{
+      tval.value = '';
+      vals.innerHTML = `<div class="mini">Cleared. Enter a value and press “Convert”.</div>`;
+    });
+    resetBtn.addEventListener('click', ()=>{
+      tval.value = '';
+      fromUnit.value = 'C';
+      toUnit.value = 'F';
+      decSlider.value = 1;
+      decShow.textContent = '1';
+      vals.innerHTML = `<div class="mini">Reset. Enter a value and press “Convert”.</div>`;
+      historyBox.innerHTML = '';
+    });
+    swapBtn.addEventListener('click', ()=>{
+      const a = fromUnit.value, b = toUnit.value;
+      fromUnit.value = b; toUnit.value = a;
+      if (tval.value.trim() !== '') doConvert();
+    });
+
+    // Initial render
+    vals.innerHTML = `<div class="mini">No result yet. Enter a value and press “Convert”.</div>`;
+  </script>
+</body>
+</html>

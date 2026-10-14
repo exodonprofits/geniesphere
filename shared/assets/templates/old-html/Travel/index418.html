@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Travel Planner</title>
+</head>
+<body>
+  <form id="travelForm">
+    <label>Departure Location:</label>
+    <select id="airportSelect" name="departureLocation">
+      <option value="Chicago O'Hare">Chicago O'Hare</option>
+      <option value="LAX">Los Angeles (LAX)</option>
+      <option value="OTHER">Can't find my airport ➔</option>
+    </select>
+    <input type="text" id="customAirportInput" name="customAirport" placeholder="Enter your airport..." style="display:none;" />
+
+    <label>Destination:</label>
+    <select name="destination">
+      <option value="Hawaii">Hawaii</option>
+      <option value="Florida">Florida</option>
+      <option value="OTHER">Can't find my destination ➔</option>
+    </select>
+    <input type="text" id="customDestinationInput" name="customDestination" placeholder="Enter your destination..." style="display:none;" />
+
+    <label>Email:</label>
+    <input type="email" name="email" required />
+
+    <button type="submit">🚀 Generate Travel Plan <div class="loading-spinner" style="display:none;"></div></button>
+  </form>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('travelForm');
+      const airportSelect = document.getElementById('airportSelect');
+      const customAirportInput = document.getElementById('customAirportInput');
+      const destinationSelect = document.querySelector('select[name="destination"]');
+      const customDestinationInput = document.getElementById('customDestinationInput');
+
+      airportSelect.addEventListener('change', function () {
+        customAirportInput.style.display = airportSelect.value === 'OTHER' ? 'block' : 'none';
+      });
+
+      destinationSelect.addEventListener('change', function () {
+        customDestinationInput.style.display = destinationSelect.value === 'OTHER' ? 'block' : 'none';
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Processing... <div class="loading-spinner" style="display:inline-block;"></div>';
+
+        const formData = new FormData(form);
+
+        if (airportSelect.value === 'OTHER') {
+          const typed = customAirportInput.value.trim();
+          if (typed) formData.set('departureLocation', typed);
+        }
+
+        if (destinationSelect.value === 'OTHER') {
+          const typed = customDestinationInput.value.trim();
+          if (typed) formData.set('destination', typed);
+        }
+
+        fetch('https://exodonprofits.app.n8n.cloud/webhook-test/travel-agent', {
+          method: 'POST',
+          body: formData
+        })
+        .then(() => {
+          window.location.href = 'workflow_confirmation.html';
+        })
+        .catch(() => {
+          alert("Submission failed. Please try again.");
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '🚀 Generate Travel Plan <div class="loading-spinner" style="display:none;"></div>';
+        });
+      });
+    });
+  </script>
+</body>
+</html>

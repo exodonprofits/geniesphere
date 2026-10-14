@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Calculator - WealthPath</title>
+    <style>
+        /* Include all CSS from index.html */
+        /* ... [paste entire style section from index.html] ... */
+
+        /* Risk Calculator Specific Styles */
+        .risk-container {
+            max-width: 1200px;
+            margin: 8rem auto 4rem;
+            padding: 0 5%;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .input-card {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .results-card {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+        }
+
+        .risk-meter {
+            height: 20px;
+            background: linear-gradient(to right, #2ecc71, #f1c40f, #e74c3c);
+            border-radius: 10px;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .risk-indicator {
+            position: absolute;
+            height: 30px;
+            width: 3px;
+            background: #2c3e50;
+            top: -5px;
+            transform: translateX(-50%);
+        }
+
+        .metric-box {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3498db;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation (same as index.html) -->
+    <nav class="navbar">
+        <div class="logo">WealthPath</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="services.html">Services</a>
+            <div class="dropdown">
+                <a href="#tools">Investment Tools ▾</a>
+                <div class="dropdown-content">
+                    <a href="stock-screener.html">Stock Screener</a>
+                    <a href="portfolio-analyzer.html">Portfolio Analyzer</a>
+                    <a href="risk-calculator.html">Risk Calculator</a>
+                    <a href="#market-calendar">Market Calendar</a>
+                </div>
+            </div>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+            <a href="#contact" class="cta-button">Get Started</a>
+        </div>
+    </nav>
+
+    <div class="risk-container">
+        <h1>Risk Management Calculator</h1>
+        <p>Optimize your position sizing and risk exposure</p>
+
+        <div class="calculator-grid">
+            <div class="input-card">
+                <h2>Position Size Calculator</h2>
+                <div class="input-group">
+                    <label>Account Balance ($)</label>
+                    <input type="number" id="accountBalance" value="10000">
+                </div>
+                <div class="input-group">
+                    <label>Risk Per Trade (%)</label>
+                    <input type="number" id="riskPercent" value="1" min="0.1" max="10" step="0.5">
+                </div>
+                <div class="input-group">
+                    <label>Entry Price ($)</label>
+                    <input type="number" id="entryPrice" value="50">
+                </div>
+                <div class="input-group">
+                    <label>Stop Loss Price ($)</label>
+                    <input type="number" id="stopLoss" value="45">
+                </div>
+                <button class="cta-button" onclick="calculateRisk()">Calculate</button>
+            </div>
+
+            <div class="results-card">
+                <h2>Risk Analysis</h2>
+                <div class="metric-box">
+                    <div>Position Size</div>
+                    <div class="metric-value" id="positionSize">0 shares</div>
+                </div>
+                
+                <div class="metric-box">
+                    <div>Risk Per Share</div>
+                    <div class="metric-value" id="riskPerShare">$0.00</div>
+                </div>
+
+                <div class="metric-box">
+                    <div>Potential Loss</div>
+                    <div class="metric-value" id="potentialLoss">$0.00</div>
+                </div>
+
+                <div class="risk-meter">
+                    <div class="risk-indicator" id="riskIndicator"></div>
+                </div>
+                <div id="riskAssessment">Risk Level: Low</div>
+
+                <h3 style="margin-top: 2rem;">Risk-Reward Ratio</h3>
+                <div class="input-group">
+                    <label>Target Price ($)</label>
+                    <input type="number" id="targetPrice" value="60">
+                </div>
+                <div class="metric-box">
+                    <div>Reward Ratio</div>
+                    <div class="metric-value" id="rewardRatio">1:0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateRisk() {
+            // Get input values
+            const accountBalance = parseFloat(document.getElementById('accountBalance').value);
+            const riskPercent = parseFloat(document.getElementById('riskPercent').value);
+            const entryPrice = parseFloat(document.getElementById('entryPrice').value);
+            const stopLoss = parseFloat(document.getElementById('stopLoss').value);
+            const targetPrice = parseFloat(document.getElementById('targetPrice').value);
+
+            // Calculate risk per share
+            const riskPerShare = Math.abs(entryPrice - stopLoss);
+            const dollarRisk = accountBalance * (riskPercent / 100);
+            const positionSize = Math.floor(dollarRisk / riskPerShare);
+            const potentialLoss = positionSize * riskPerShare;
+
+            // Calculate risk-reward ratio
+            const rewardPerShare = Math.abs(targetPrice - entryPrice);
+            const rewardRatio = (rewardPerShare / riskPerShare).toFixed(1);
+
+            // Update display
+            document.getElementById('positionSize').textContent = `${positionSize} shares`;
+            document.getElementById('riskPerShare').textContent = `$${riskPerShare.toFixed(2)}`;
+            document.getElementById('potentialLoss').textContent = `$${potentialLoss.toFixed(2)}`;
+            document.getElementById('rewardRatio').textContent = `1:${rewardRatio}`;
+
+            // Update risk meter
+            const riskPercentage = (potentialLoss / accountBalance * 100);
+            const riskIndicator = document.getElementById('riskIndicator');
+            riskIndicator.style.left = `${Math.min(100, riskPercentage)}%`;
+
+            // Risk assessment
+            const riskAssessment = document.getElementById('riskAssessment');
+            if (riskPercentage <= 1) {
+                riskAssessment.textContent = "Risk Level: Low";
+                riskAssessment.style.color = "#2ecc71";
+            } else if (riskPercentage <= 3) {
+                riskAssessment.textContent = "Risk Level: Moderate";
+                riskAssessment.style.color = "#f1c40f";
+            } else {
+                riskAssessment.textContent = "Risk Level: High";
+                riskAssessment.style.color = "#e74c3c";
+            }
+        }
+
+        // Initial calculation
+        calculateRisk();
+    </script>
+
+    <!-- Footer (same as index.html) -->
+    <footer>
+        <p>© 2023 WealthPath Coaching. All rights reserved.</p>
+    </footer>
+</body>
+</html>

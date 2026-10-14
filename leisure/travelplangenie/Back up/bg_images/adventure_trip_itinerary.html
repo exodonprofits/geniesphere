@@ -1,0 +1,424 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation ‚Äì Voyage Genie</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+    .confirmation-section {
+      max-width: 4xl;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+    }
+    .confirmation-section h1 {
+      color: #2c3e50;
+      font-size: 2.25rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .confirmation-section p {
+      text-align: center;
+      color: #555;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+    .action-links {
+      text-align: center;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+    .action-links a, .action-links button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      color: #0096c7;
+      font-size: 1.8rem;
+      text-decoration: none;
+      border: none;
+      background: none;
+      padding: 0;
+      transition: color 0.3s;
+    }
+    .action-links a:hover, .action-links button:hover {
+      color: #0077b6;
+    }
+    .action-links a:hover .tooltip, .action-links button:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+    .tooltip {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      top: -40px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      transition: opacity 0.3s;
+      z-index: 1;
+    }
+    .itinerary {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333333;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin: 2rem 0;
+      color: #0096c7;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+      color: #0077b6;
+    }
+    .nav-icon {
+      height: 30px;
+      width: auto;
+      margin-right: 8px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+    }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 24px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .hamburger span {
+      width: 100%;
+      height: 3px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+    .nav-links {
+      display: flex;
+      space-x-6;
+    }
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(7px, -7px);
+    }
+    /* Dropdown menu styles */
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      background-color: white;
+      min-width: 200px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      z-index: 1;
+      border-radius: 8px;
+      padding: 8px 0;
+    }
+    .dropdown-menu a {
+      color: #333;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      transition: background-color 0.3s;
+    }
+    .dropdown-menu a:hover {
+      background-color: #f1f1f1;
+    }
+    .dropdown:hover .dropdown-menu {
+      display: block;
+    }
+    @media (max-width: 640px) {
+      .hamburger {
+        display: flex;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: linear-gradient(to bottom, #60a5fa, #4c6ef5);
+        width: 100%;
+        padding: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .nav-links.active {
+        display: flex;
+      }
+      .nav-links li {
+        margin: 0.5rem 0;
+      }
+      .nav-links a {
+        font-size: 1.1rem;
+        padding: 0.5rem;
+        display: block;
+        text-align: center;
+      }
+      .nav-brand h1 {
+        font-size: 1.125rem;
+      }
+      .action-links {
+        gap: 1rem;
+      }
+      .action-links a, .action-links button {
+        width: 32px;
+        height: 32px;
+        font-size: 1.5rem;
+      }
+      .dropdown-menu {
+        position: static;
+        display: none;
+        width: 100%;
+        box-shadow: none;
+      }
+      .dropdown:hover .dropdown-menu {
+        display: block;
+      }
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .confirmation-section, .confirmation-section * {
+        visibility: visible;
+      }
+      .confirmation-section {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        padding: 1rem;
+      }
+      .action-links, .back-link, nav, footer {
+        display: none !important;
+      }
+      .itinerary {
+        background-color: transparent;
+        padding: 0;
+        font-size: 12pt;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      p {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html#home" class="nav-brand" aria-label="Go to Home">
+        <img src="/travel/nav-icon.png" alt="Voyage Genie Icon" class="nav-icon">
+        <h1 class="text-2xl font-bold">Voyage Genie</h1>
+      </a>
+      <div class="hamburger" aria-label="Toggle navigation menu" role="button" tabindex="0">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <ul class="nav-links flex space-x-6">
+        <li><a href="index.html#home" class="hover:underline" aria-label="Go to Home">Home</a></li>
+        <li class="dropdown relative">
+          <a href="#" class="hover:underline flex items-center" aria-label="Plan A Trip" aria-haspopup="true">
+            Plan A Trip
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a href="tropical_trip_plan_form.html" class="hover:bg-blue-50" aria-label="Tropical Resort">Tropical Resort</a></li>
+            <li><a href="cruise_trip_plan_form.html" class="hover:bg-blue-50" aria-label="Cruise Adventure">Cruise Adventure</a></li>
+            <li><a href="airbnb_trip_plan_form.html" class="hover:bg-blue-50" aria-label="Airbnb Getaway">Airbnb Getaway</a></li>
+            <li><a href="adventure_trip_plan_form.html" class="hover:bg-blue-50" aria-label="Adventure Trip">Adventure Trip</a></li>
+          </ul>
+        </li>
+        <li><a href="features.html" class="hover:underline" aria-label="Go to Features">Features</a></li>
+        <li><a href="contact.html" class="hover:underline" aria-label="Go to Contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main id="main-content">
+    <section class="confirmation-section">
+      <h1>üéâ Your Adventure Itinerary is Ready!</h1>
+      <p>Here‚Äôs your personalized travel plan. A copy has been sent to your email.</p>
+      <div class="action-links">
+        <button id="printItineraryBtn" aria-label="Print Itinerary">
+          üñ®Ô∏è
+          <span class="tooltip">Print Itinerary</span>
+        </button>
+        <a href="adventure_trip_plan_form.html" id="modifyLink" aria-label="Modify Search">
+          ‚úèÔ∏è
+          <span class="tooltip">Modify Search</span>
+        </a>
+      </div>
+      <div id="itinerary-header"></div>
+      <div id="itinerary"></div>
+      <a href="index.html" class="back-link">‚Üê Back to Home</a>
+    </section>
+  </main>
+
+  <footer class="bg-gray-200 text-center py-8">
+    <p class="text-sm">¬© 2025 VoyageGenie.com ‚Äì Plan Less, Explore More ‚úàÔ∏èüåç</p>
+    <div class="mt-4 flex justify-center space-x-6">
+      <a href="#" class="text-blue-500 hover:underline" aria-label="Visit our Facebook page">Facebook</a>
+      <a href="#" class="text-blue-500 hover:underline" aria-label="Visit our Instagram page">Instagram</a>
+      <a href="contact.html" class="text-blue-500 hover:underline" aria-label="Contact Us">Contact Us</a>
+    </div>
+    <div class="mt-4">
+      <a href="index.html#home" class="text-blue-500 hover:underline mx-2" aria-label="Go to Home">Home</a>
+      <a href="features.html" class="text-blue-500 hovıÍ˙uNdexdõ¨c mp=0 ¡IZy!≠(√AEl- d)ƒ F¡Ò4UzÁqb>‹%tucqs\*Ωæ8  t/%eh{v<*4.Ö&nop!n>Ï
+%!O!¡rt>
+£d ¢`oaÁ-aoD^`∂ds2ehtis|Âb~6('@dM;yjtuÓ∂Ó hetÁd¿äI=> Ìb©™ë   HSF*`eiÆÌckr¯Zt#m•=ÏÔaXAƒks}FÅ4nWuItd}+'≠xiNeRir·HpmnOâüY"(`  ê¿n˛{/m/|ÌßN&Rat“Î%WE‰1+wync¿£RqÃxm|±(pNloÛq¨”|op!fe:£,`itxkÚbFYtm`π h¥»o,"	s»»6›mK=F3v2eVs( , w4".*:@'ÒODDfmL· a47ä† À@',lÂtpte8ÈÚ|uS'ig´a$!{ =(/n›<h—Êe#kd˚e9J† ¥320d'~@Duhf·)o´`± gMbµq DuÛvin`lG˜n˜N#0`††
+"q"t·BudÖ1dec%ü9NAÁ4GñvÆE';"C"$`|UÙ$K%‰fe∞bæ%%´uy˜
+ (`Í Nx4 7aÔ5¯Waze"ø'/—';
+k$¥0, oj„_!n.b‘ÂÏq(smË§uAlag	t˜Graaué'+~Iuh-ÍÖímrÌF!Q•m;
+! ¥$c{lï-hÁ.loG˝ˆ@≈0bm%‘ƒ¸ jormdU·'ˆAB-qelspÁÚAgu:f""gÔrMareõgN);-„ ° ®d1πdárliæb~skÈ9 J&3"!2Ê  !Ì.stpÖe¢-EAt‚%Ω†JSO˛jp©rÛU®g*>)cpÂBÚ´Ãk;NG $ va8 DdPcrtpBam˚q˜i/np JÔsMƒAQ„Óe≈paZ~˝∏fJe#ad	[m t® !J^_(sS7j]&œdd&bÚ`! i\ (p3tin!4˚5 =8RGj)Eq\qÏÊVeÓtt"«gsl.`vjÎÓ$|¸ cU–ÏZÂpil4È''.†(`
+K,"tv·vu*EqtÒ2Pq`&[@_ri|oeÂ,S¸`‚Qy‘9˛o<áOß≈∑xA\U`§O-„3ma|·%oÃdDi~Ì -.'N?G&˝`;ä% v<d! b‚Á•c =8fkrOFcbe.*§%%·0,|9Ì∆-A'*ä:#r $ ÄdzgupQ˘Î$= ÊOêh``tAéfsovP2Ix‰ â^ sJ/A1;™lm`†Ä$"Bonwob∞7lgg*'T(ysr<ur°°¯mb·u∏O/≤&-,dmtÒ⁄|UBÂFOf·Úmom¨;Ç0 ©°§˜;0D "A E‡"8yt-,ÂÒi3{LtÌú :é ® x  `†tby':  *$(4&0*‚˜evÂ6p@pVGx?†NÛ€$P1>sen·ºh~ır‡i‡xM<!+
+‰0  Ä$"†»†ûÓl*4Q;|adÓ`Ijun“%sıÏAp- {
+DX∏0†Ä %`9µ‡o|in·¬Òpdmht-§ps3s1`^>mva‹2Ì”\}ÓsG;(†$®≈¶ë:Ã1"c/nçla.ÏoN™Wav3enkyN·–I”}\ei  „y*íÁOŒ<•.(nÒhUmÛPJ35:¶ò ipineÚi;ipuÌ,.[∑¢vt“iÓR( 42Ù ;( 4    d 
+ 0 00!d$<2CQ˛ßH`%("{
+0! ")a´ `$`+NSolef(nf#m49Jur%R}MVd0…Es&nO$(JSOÃ'%ˆÚEaD/n$$!€`Úq◊aSM;/, X¥MnersrA@toL5ˇusT3in±(0.#%20k$<8 `$$"ø
+>8  `  (§'[B˘yle/lc©/MˆiDord`} HtÅN ,UN/4hz.¨(i\)/eR„S9uÌl>je,ÖÎ(I  `–¿(aOn#aÌd.to$
+/Kt)oerÚ~x HpL$}cQ6iec˛ <$;pXn|SaﬂËQå≠l2{djcTvaÆeπp, 58|o`8*4à®bb `$aTO_d ¡TA˛%`ary=Cd5v0<Ó`Ô%5€%.|+qÁd–le≠Â∞F‡pMd(ß%¥{f%rar˙Ö`A!dGrk;D  $j3#4iyolir`´ie·F¸6˘xJ‹;ÀJML =à‚+† !  0*&<2 ÛÑheei≠ƒwÚ2d´x·ua6Â0neÍı-vozÂ{ 6"Új›¯∂fhf: 0 $#px 26`seZomm&9„.(„`N@u2b>÷Dp!vtingpbo∞z$Cwa|·RrqbdLÎcat@'.}</j9‡  0` (U0"<x:üvx}E12eoeÔr8.≥ös„öÌª"O4,si™mø 26py• Áezgi‰ì£8%∏ 1Ω"d>03 TaxP∏q|	gn: s7RveÚπ 4`gaTn.`tmÔC: Ñ4Sg{tajheilN}<Ár6
+"  )É`d0 @6{"c\ylÂΩ!b˜|.Ú(`Ç3s3≥#W;tooljΩﬂa¯5ö.34R{89u„vgjLØ†$px1ri·|if%*ò1+diu0")4 t‡x~èChy_Œ8fcÂmuÂ1	j>i|bo~vÈ¯Vavqe,Vaˆlc
+º≤îrefgd^p∫uv%.ﬁq%a]º=¯:L2 5†hÄ,†8|Ò¶W.P<u≠™ÆK¯iÚ8!cs˝1≥1k`&i~tsxv•ª107p\ª0m·pg©g>∞3tq(q;ÇjÂn≠e'ait: 1%°%pe¸D-√Âäem: #eΩÕer=">cw§zÔÓARr<cE|r5?wD2$Jb(fuJ≠U>Ω (fmv
+eªoroupën`$])tíab@iÂrs+ﬁ~P?n   09@ =&`>htæ∑taDc]"r,&BÕ?; 7?p2o0cMs-d/T∫.)px"s+din c5®T0g**mq6gMb18q"`)8i38`Ñ(#$ÈBi[0  ))nf `o√]M)j<&iedAgeaN4B)H$.¶	t)lIciÍ!Æ•fnarL]_å =†iºbè§aryVmÌ˚Ä† p'"!mÔka`Q8mbc˜e>S%m/Ê`MT!sxeyµI?Ew0Z}Hd√Ï5;) &Ù6«*‡= ∑iv°6{
+  ¡Ä` "„OVO~D,nig(Øe itkl+rAjyHul&%Ê+_o@o~$,KÛ´J_era%`¨;` <&†† 4d'Sﬁ˝O||^gmtƒde?gédg{I≠'±MnG`Ò{ôÖ)-9nj]V»]L = 'Ñ›ñm yvn ~ary8nètff. n| qa`vÙ}qo˘yÍﬁ8P9ß*‡#%†A8q2éq°9$ lØ§tmgn6.f.®E|emeËqVyh‰(≈v#F|IÊÒÓrA˙pBtÙ'[ail|eÍΩ}Ê9Ów3l'cdÕg.'0Hk3i6(s
+Ä`*,  $wM6Tév.zÍi.c)} Ä pº*˝28•"  Ó„omdndNeg}GddÌhM‰Cyid õMof+fxLin)≥#jiT·Â|eÊ$Nis`•/xhe‡|Èc/fä†j$/"º< ˘™T   (}?  `!b((knoSt`*k=ËUXÊe“"/!dokıh…pÇaqÂJYg‰EFëfÚ9#nj±jÚg2gEs#c8 r4°1∞c˜~”tbˇaÁlÈnIs¶5¢uf„}ÌfnÁduÂbqSE‰]cxrä!.n‡vn,9;}s')h+
+'f   ÅËÌ-N5pkeG"De~eÏfL{{dunt('hh©„;9"\jËc@Î!hD†e*¢†amSf˚A-r.blM˚'LÎbU^toCrla 3·2~iwnßM3Z|@!∞(d‚±radÜ5jãy.2|isw,È3\*ˆow?∂i8èa„FˇvI'π;
+"Z^x  ∞0+™È8  ` mF*®>cwFo;{v>'oJ2{Nart¸+OlpaanÚ1ectivN%I yJ ('  ($® &fjqmu]e*@∂g2{R˜nÁ¯pkzA<!£|dsÎDÕ5Í-mwnƒ-®>n/ÚGı"È(TrÔ¯Ã=%˙"<6Ss! /      ¢a "≥M¢}a(TLe§J˚TDAx8<ãn´ne':*<. ($®¬¢rZô; Ç   (©/y82°@†${e;. #($ï∆oSumeLÎ&ad$M:UnxOisqenÚ`('ÛÃqSk7Ï 	e("-^¢yÇ 0i""dp5‚0‚≈∑*¨teY.cLOu0+p®7*T≤ÔramvO&-¶¢î1‰N~cpectbâo3es$™-ñq‰,dubÁAK&=h0z©2†$† $",Adk`}-Â^’úu5er}EÏ%etowAll !¢dSÔpeÁnMltnW')>÷€ƒk„n/d^mƒtÔq¨®=û†{
+* °i†¶†  1,E‹GPDN˜owAynÂ.˘]:P,C] %&YnÔ~ı'ΩB≥π`h0ÍÂ$h}9+ B,  §  ÁJ "` ·}i˝
+ † 8Ädk„uı%Øt.qudÚye,qG|≈seÃ®ÆEt7wdmvÓ@n¨q')¨o/rUc"H(rO„dGWnUaÎhmg =6ek* ""   %drp$noDogC|G™Aƒ§U4m‚Ω‹i{µ‰fdC(#c}ick', function(e) {
+          if (window.innerWidth <= 640) {
+            e.preventDefault();
+            const dropdown = this.nextElementSibling;
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+          }
+        });
+      });
+
+      navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          navLinks.classList.remove('active');
+          hamburger.classList.remove('active');
+        });
+      });
+    });
+  </script>
+</body>
+</html>

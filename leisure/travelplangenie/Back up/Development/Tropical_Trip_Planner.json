@@ -1,0 +1,252 @@
+{
+  "name": "Tropical Trip Planner",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "tropical-travel-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        920,
+        240
+      ],
+      "webhookId": "generate-unique-webhook-id-here",
+      "id": "82e78704-ffe7-40e9-80a8-8c47074669b5"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "rawInput",
+              "value": "{{JSON.stringify($input.item)}}"
+            }
+          ]
+        }
+      },
+      "name": "Log Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const requiredFields = ['destination', 'departure', 'dates', 'groupSize', 'budget', 'email'];\nconst item = $input.item.json;\nfor (const field of requiredFields) {\n  if (!item[field]) {\n    throw new Error(`Missing required field: ${field}`);\n  }\n}\nconst groupSize = parseInt(item.groupSize);\nif (isNaN(groupSize) || groupSize <= 0) {\n  throw new Error('groupSize must be a positive number');\n}\nconst dates = item.dates.split(' – ');\nif (dates.length !== 2) {\n  throw new Error('dates must be in format \"YYYY-MM-DD – YYYY-MM-DD\"');\n}\nconst startDate = new Date(dates[0]);\nconst endDate = new Date(dates[1]);\nif (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate >= endDate) {\n  throw new Error('Invalid dates');\n}\nconst budget = parseFloat(item.budget.replace(/[^0-9.]/g, ''));\nif (isNaN(budget) || budget <= 0) {\n  throw new Error('budget must be a positive number');\n}\nreturn {\n  destination: item.destination,\n  departure: item.departure,\n  dates: item.dates,\n  groupSize: groupSize.toString(),\n  budget: `$${budget.toFixed(2)}`,\n  tripType: item.tripType || 'Standard',\n  ageRange: item.ageRange || 'Adults',\n  dayActivity: item.dayActivity || 'Beach relaxation',\n  nightActivity: item.nightActivity || 'Local dining',\n  email: item.email\n};"
+      },
+      "name": "Validate Inputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        240
+      ],
+      "id": "9ab6f861-8ecc-405c-a721-bc478f999a0c"
+    },
+    {
+      "parameters": {
+        "jsCode": "const airportMap = {\n  \"Jamaica\": { code: \"MBJ\", city: \"Montego Bay\" },\n  \"Honolulu\": { code: \"HNL\", city: \"Honolulu\" },\n  \"Cancun\": { code: \"CUN\", city: \"Cancun\" },\n  \"Aruba\": { code: \"AUA\", city: \"Aruba\" },\n  \"Bahamas\": { code: \"NAS\", city: \"Nassau\" },\n  \"Maldives\": { code: \"MLE\", city: \"Malé\" }\n};\nconst destination = $input.item.json.destination || \"Unknown\";\nconst mapping = airportMap[destination] || { code: \"Unknown\", city: destination };\nreturn {\n  airportCode: mapping.code,\n  destinationCity: mapping.city,\n  destination: destination\n};"
+      },
+      "name": "Map Destination to Airport Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        240
+      ],
+      "id": "32c72fb0-73d3-4911-8ce8-54ba14d58fb1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mock flight data (replace with Amadeus API if available)\nconst flightData = {\n  \"ORD-MBJ\": [\n    { airline: \"American Airlines\", layover: \"Miami (MIA)\", duration: \"5-7 hours\" },\n    { airline: \"United Airlines\", layover: \"Houston (IAH)\", duration: \"6-8 hours\" },\n    { airline: \"Delta Airlines\", layover: \"Atlanta (ATL)\", duration: \"5-7 hours\" }\n  ],\n  \"ORD-HNL\": [\n    { airline: \"American Airlines\", layover: \"Los Angeles (LAX)\", duration: \"10-12 hours\" },\n    { airline: \"United Airlines\", layover: \"San Francisco (SFO)\", duration: \"10-12 hours\" },\n    { airline: \"Delta Airlines\", layover: \"Seattle (SEA)\", duration: \"10-12 hours\" }\n  ]\n};\nconst route = `${$input.item.json.departure}-${$input.item.json.airportCode}`;\nreturn {\n  flights: flightData[route] || [{ airline: \"Unknown\", layover: \"Unknown\", duration: \"Unknown\" }]\n};"
+      },
+      "name": "Fetch Flight Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1580,
+        240
+      ],
+      "id": "9620a9af-937e-4a50-a497-25af2d3a288e"
+    },
+    {
+      "parameters": {
+        "model": "o4-mini",
+        "prompt": "You are a travel planning expert specializing in tropical beach getaways. Based on the inputs (destination: {{destination}}, airportCode: {{airportCode}}, destinationCity: {{destinationCity}}, departure: {{departure}}, groupSize: {{groupSize}}, dates: {{dates}}, tripType: {{tripType}}, budget: {{budget}}, ageRange: {{ageRange}}, dayActivity: {{dayActivity}}, nightActivity: {{nightActivity}}, flights: {{JSON.stringify(flights)}}), generate a detailed itinerary for {{destination}} (arriving at {{airportCode}} in {{destinationCity}}). Include the following sections:\n\n### Flights\n- **Recommended Airlines**: Use the provided flights data: {{JSON.stringify(flights)}}. Format each as: \"**Airline**: {{departure}} to {{airportCode}}, with a layover in Layover City, ~Duration total.\" Include booking tips with clickable URLs (e.g., [Google Flights](https://www.google.com/flights)).\n- **Estimated Flight Duration**: Use the duration from the flights data.\n\n### Accommodation Options\n- Suggest 2 accommodation options in {{destinationCity}} based on the tripType ({{tripType}}) and budget ({{budget}}). Include clickable URLs to their websites (e.g., [Sandals Montego Bay](https://www.sandals.com)).\n- Highlight amenities relevant to {{ageRange}} (e.g., family-friendly pools, adult-only bars).\n\n### Daily Itinerary\n- For each day between {{dates.split(' – ')[0]}} and {{dates.split(' – ')[1]}}, provide a detailed plan:\n  - Morning: Activity based on {{dayActivity}}.\n  - Afternoon: Complementary activity or relaxation.\n  - Evening: Activity based on {{nightActivity}}.\n- Include local recommendations (e.g., specific beaches, restaurants, cultural sites) with clickable URLs where possible.\n- Day 1 should include arrival, and the last day should include departure.\n\nEnsure the itinerary is engaging, personalized, and includes activities suitable for {{ageRange}}. Use realistic 2025 travel data and keep the total cost within {{budget}}.",
+        "options": {},
+        "requestOptions": {}
+      },
+      "name": "Generate Itinerary",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        240
+      ],
+      "id": "c6f7aeac-fd9f-4fb0-aefb-353e17ffb36b",
+      "credentials": {
+        "openAiApi": {
+          "id": "hUFF1jkJabK3Ewyn",
+          "name": "Voyage Genie"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const groupSize = parseInt($input.item.json.groupSize);\nconst dates = $input.item.json.dates.split(' – ');\nconst nights = Math.ceil((new Date(dates[1]) - new Date(dates[0])) / (1000 * 60 * 60 * 24));\nconst flightsCost = 800 * groupSize; // $800/person estimate\nconst accommodationCost = $input.item.json.tripType === \"All-inclusive resort\" ? 400 * nights : 200 * nights;\nconst activitiesCost = 165 * groupSize; // Based on typical activities\nconst mealsCost = $input.item.json.tripType === \"All-inclusive resort\" ? 0 : 50 * groupSize * nights;\nreturn {\n  costSummary: {\n    \"Flights\": `$${flightsCost}`,\n    \"Accommodation\": `$${accommodationCost}`,\n    \"Activities\": `$${activitiesCost}`,\n    \"Meals\": `$${mealsCost}`\n  }\n};"
+      },
+      "name": "Generate Cost Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        2020,
+        240
+      ],
+      "id": "9970ebe6-1ebf-4023-b0e2-07e5d24132b1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  tripTitle: `Tropical Beach Getaway to ${$input.item.json.destination}`,\n  itinerary: $input.item.json.itinerary,\n  costSummary: $input.item.json.costSummary,\n  email: $input.item.json.email,\n  departure: $input.item.json.departure,\n  dates: $input.item.json.dates,\n  groupSize: $input.item.json.groupSize,\n  budget: $input.item.json.budget,\n  tripType: $input.item.json.tripType,\n  ageRange: $input.item.json.ageRange,\n  dayActivity: $input.item.json.dayActivity,\n  nightActivity: $input.item.json.nightActivity\n};"
+      },
+      "name": "Combine Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        2240,
+        240
+      ],
+      "id": "89374938-9d03-430b-9e2a-c399e8206b5d"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          },
+          "responseKey": "=<script>\n  const itineraryId = Date.now().toString();\n  sessionStorage.setItem('itinerary_' + itineraryId, JSON.stringify({{JSON.stringify($input.item.json)}}));\n  window.location.href = 'tropical_trip_itinerary.html?itineraryId=' + itineraryId;\n</script>"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2460,
+        240
+      ],
+      "id": "14fa9ffe-b30e-4e67-a790-ca7b5e62cb79",
+      "name": "Webhook Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Log Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Input": {
+      "main": [
+        [
+          {
+            "node": "Validate Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Inputs": {
+      "main": [
+        [
+          {
+            "node": "Map Destination to Airport Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Destination to Airport Code": {
+      "main": [
+        [
+          {
+            "node": "Fetch Flight Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Flight Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Itinerary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Itinerary": {
+      "main": [
+        [
+          {
+            "node": "Generate Cost Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Cost Summary": {
+      "main": [
+        [
+          {
+            "node": "Combine Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Response": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "40581f7a-067a-435a-abea-12480a72ef3b",
+  "meta": {
+    "instanceId": "2cd559a29dd6efd6fe7dbdafc7702b357fbdeea9ac49cdfc5458c9691b39715b"
+  },
+  "id": "CvhUgstsoffUfaXN",
+  "tags": []
+}

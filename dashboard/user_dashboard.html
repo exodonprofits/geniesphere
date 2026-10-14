@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Dashboard | GenieSphere</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primary: #2BFFD9;
+      --secondary: #7C3AED;
+      --background: #0F172A;
+      --text: #F8FAFC;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      margin: 0;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+      max-width: 1000px;
+      margin: 40px auto;
+    }
+    a.card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 30px 20px;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform 0.2s ease;
+      cursor: pointer;
+    }
+    a.card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 24px rgba(43, 255, 217, 0.15);
+    }
+    .icon {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+    }
+    .card h2 {
+      font-size: 1.4rem;
+      margin: 10px 0 5px;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .card p {
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+    .headline {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      margin-top: 30px;
+      margin-bottom: 30px;
+      gap: 0.3rem;
+    }
+
+    
+    .headline h1,
+    .headline h2 {
+      margin: 0;
+      display: inline-block;
+      line-height: 1.2;
+    }
+
+    .headline h1{
+      font-size: 2.2rem;
+    }
+
+    .headline h2 {
+      font-size: 1.5rem;
+    }
+
+    /* 👇 Stack on mobile */
+    @media (max-width: 500px) {
+      .headline {
+        flex-direction: column;
+      }
+
+      .headline h1:first-of-type {
+        font-size: 2rem;
+      }
+
+      .headline h2 {
+        font-size: 1.4rem;
+      }
+
+      .headline h1:last-of-type {
+        font-size: 2.5rem;
+      }
+    }
+
+    hr.divider {
+      grid-column: 1 / -1;
+      border: none;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #94a3b8, transparent);
+      margin: 30px 100px 30px 100px;
+      opacity: 0.4;
+    }
+
+  </style>
+</head>
+<body>
+  <script type="module">import '/shared/js/header-dark.js?v=4.0';</script>
+  <!--script type="module" src="/shared/js/header-dark.js"></script-->
+  <div class="headline">
+    <h1>✨</h1> <h2>Welcome to</h2> <h1>GenieSphere</h1>
+  </div>
+  <p>Select a category to explore your AI tools:</p>
+  <div id="dashboard" class="grid"></div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+
+    const dashboard = document.getElementById("dashboard");
+
+    const categoryIcons = {
+      personal: '🏡',
+      business: '🧑‍💼',
+      leisure: '✈️',
+      investment: '📈'
+    };
+
+    const categoryNames = {
+      personal: 'Personal',
+      business: 'Business',
+      leisure: 'Leisure',
+      investment: 'Investment'
+    };
+
+    const categoryDescriptions = {
+      personal: 'Daily & family tools',
+      business: 'Operations & AI agents',
+      leisure: 'Travel & lifestyle',
+      investment: 'Finance & trading'
+    };
+
+    async function renderDashboard() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const params = new URLSearchParams(window.location.search);
+      let agentIds = [];
+
+      const { data: prefs } = await supabase
+        .from('user_preferences')
+        .select('agents')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (prefs?.agents?.length) {
+        agentIds = prefs.agents;
+      } else {
+        const agentsRaw = params.get("agents");
+        if (agentsRaw) {
+          try {
+            agentIds = JSON.parse(decodeURIComponent(agentsRaw));
+          } catch (e) {
+            console.warn("Invalid agents param:", agentsRaw);
+          }
+        }
+      }
+
+      console.log("agentIds:", agentIds);
+      if (agentIds.length === 0) {
+        dashboard.innerHTML = `
+          <p>No agents selected. Please choose your agents.</p><br>
+          <a class="card" href="../onboarding/select-categories.html">
+            <div class="icon">➕</div>
+            <h2>Add Category</h2>
+            <p>Customize your dashboard</p>
+          </a>
+        `;
+        return;
+      }
+
+      const { data: agentData, error } = await supabase
+        .from('agents')
+        .select('id, category')
+        .in('id', agentIds);
+
+      if (error) {
+        console.error("Supabase error:", error);
+        dashboard.innerHTML = "<p>Error loading agents.</p>";
+        return;
+      }
+
+      if (!agentData || agentData.length === 0) {
+        console.warn("No matching agents found for:", agentIds);
+        dashboard.innerHTML = "<p>No matching agents found.</p>";
+        return;
+      }
+
+      console.log("agentData:", agentData);
+
+      const categoriesWithAgents = [...new Set(agentData.map(a => a.category))];
+
+      categoriesWithAgents.forEach(cat => {
+        const icon = categoryIcons[cat] || '📁';
+        const title = categoryNames[cat] || cat;
+        const desc = categoryDescriptions[cat] || 'AI tools';
+        const link = `category.html?cat=${cat}`;
+
+        dashboard.innerHTML += `
+          <a class="card" href="${link}">
+            <div class="icon">${icon}</div>
+            <h2>${title}</h2>
+            <p>${desc}</p>
+          </a>`;
+      });
+
+      dashboard.innerHTML += `
+        <a class="card" href="../onboarding/select-categories.html">
+          <div class="icon">⚙️</div>
+          <h2>Manage Category</h2>
+          <p>add/edit category</p>
+        </a>`;
+    }
+
+    renderDashboard();
+
+    document.getElementById("upgrade-btn")?.addEventListener("click", async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("You must be logged in.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("user_preferences")
+        .update({ role: "business_owner", updated_at: new Date().toISOString() })
+        .eq("user_id", user.id);
+
+      if (error) {
+        alert("⚠️ Failed to upgrade your account.");
+        console.warn("Upgrade error:", error.message);
+        return;
+      }
+
+      alert("🎉 You’re now a Business Owner! Redirecting...");
+      window.location.href = "/onboarding/business_profile_form.html";
+    });
+  </script>
+
+  <div style="margin-top: 40px;">
+    <button id="upgrade-btn" style="padding: 12px 24px; border: none; border-radius: 999px; background: linear-gradient(45deg, #2BFFD9, #7C3AED); color: #0f172a; font-weight: bold; cursor: pointer;">
+      🏢 Upgrade to Business Owner
+    </button>
+  </div>
+
+  <hr class="divider"/>
+
+  <footer style="margin-top: 3rem; text-align: center; font-size: 0.85rem; color: #94A3B8;">
+  <div style="margin-bottom: 1rem; line-height: 1.8;">
+    <a href="privacy.html" style="color: #94A3B8; text-decoration: none; margin: 0 0.75rem;">Privacy Policy</a> |
+    <a href="terms_of_services.html" style="color: #94A3B8; text-decoration: none; margin: 0 0.75rem;">Terms</a> |
+    <a href="contact.html" style="color: #94A3B8; text-decoration: none; margin: 0 0.75rem;">Contact</a> |
+    <a href="support_help.html" style="color: #94A3B8; text-decoration: none; margin: 0 0.75rem;">Help</a> |
+    <a href="feedback.html" style="color: #94A3B8; text-decoration: none; margin: 0 0.75rem;">Feedback</a>
+  </div>
+  <div>© 2025 GenieSphere. All rights reserved.</div>
+</footer>
+
+</body>
+</html>

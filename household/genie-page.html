@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>GenieSphere – Personal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --page:#f3f4f6; --card:#ffffff; --text:#0f172a; --muted:#475569; --line:#e5e7eb;
+      --blue:#1d4ed8; --green:#16a34a; --amber:#f59e0b; --shadow:0 10px 15px -3px rgba(0,0,0,.10), 0 4px 6px -4px rgba(0,0,0,.10);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; background:var(--page); color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Oxygen, Ubuntu}
+
+    /* Header */
+    .gs-header{position:sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid var(--line)}
+    .nav{max-width:1100px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .brand{display:flex; align-items:center; gap:10px; font-weight:700}
+    .logo{width:36px; height:36px; display:grid; place-items:center; border-radius:999px; background:var(--blue); color:#fff; box-shadow:var(--shadow)}
+    .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border:none; border-radius:999px; font-weight:600; cursor:pointer; text-decoration:none; transition:.15s transform, .15s box-shadow, .15s background}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.blue{background:var(--blue); color:#fff; box-shadow:var(--shadow)}
+    .btn.ghost{background:#fff; color:var(--muted); border:1px solid var(--line)}
+
+    /* Shell */
+    .wrap{max-width:1100px; margin:24px auto 40px; padding:0 16px}
+    h1{margin:0 0 10px; font-size:1.6rem}
+    p.lead{margin:0 0 18px; color:var(--muted)}
+    .panel{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:16px}
+
+    /* Search / Filter */
+    .searchbar{display:flex; gap:10px; align-items:center; margin:14px 0}
+    .searchbar input{flex:1 1 280px; padding:12px 14px; border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--text); outline:none}
+    .sub{color:var(--muted); font-size:.92rem}
+
+    /* Grid */
+    .grid{display:grid; gap:14px; grid-template-columns: repeat( auto-fill, minmax(160px, 1fr) )}
+    .icon-card{background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; text-align:center; box-shadow:var(--shadow); transition:.15s transform}
+    .icon-card:hover{transform:translateY(-2px)}
+    .icon-card img{width:56px; height:56px; margin:6px auto 10px; display:block}
+    .icon-card p{margin:0; font-weight:600}
+    .icon-card small{display:block; margin-top:6px; color:var(--muted); font-size:.82rem}
+    .hidden{display:none!important}
+
+    /* Quick capture blocks */
+    .qc{display:grid; gap:12px}
+    @media (min-width:720px){ .qc{grid-template-columns:1fr 1fr} }
+    .qc .panel{padding:12px}
+    .row{display:grid; gap:10px}
+    @media (min-width:720px){ .row.cols-2{grid-template-columns:1fr auto} .row.cols-3{grid-template-columns:1.1fr 1fr auto} }
+    input[type="text"], input[type="date"], input[type="number"]{padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; color:var(--text); outline:none}
+    .btn.green{background:var(--green); color:#fff; box-shadow:var(--shadow)}
+    .hint{font-size:.9rem; color:var(--muted)}
+    footer{margin:28px 0 10px; text-align:center; color:var(--muted); font-size:.9rem}
+  </style>
+</head>
+<body>
+  <header class="gs-header">
+    <nav class="nav">
+      <div class="brand"><div class="logo" id="logo-emoji">🧰</div><div id="brand-name">Genie</div></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap">
+        <a class="btn ghost" href="personal.html">⬅️ Back to Personal</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <h1 id="page-title">Genie</h1>
+      <p class="lead" id="page-desc">Tools and quick actions.</p>
+
+      <div class="panel" style="margin-top:10px">
+        <div class="searchbar">
+          <input id="filterInput" type="search" placeholder="Filter tools…"/>
+          <span class="sub">Type to instantly filter cards.</span>
+        </div>
+      </div>
+
+      <section class="panel" style="margin-top:14px">
+        <h2 id="tools-heading" style="margin:0 0 10px; font-size:1.05rem">🧰 Tools</h2>
+        <div id="toolsGrid" class="grid"></div>
+      </section>
+
+      <section id="quickCapture" class="qc" style="margin-top:14px; display:none"></section>
+    </section>
+
+    <footer>© <span id="year"></span> GenieSphere</footer>
+  </main>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // --- PAGE MAP (add/adjust tools here) ---
+    const PAGES = {
+      inventory: {
+        emoji:'📦', name:'Home Inventory', desc:'Track household items, locations, values, and receipts.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/inventory.png', title:'All Items', sub:'Browse & search', href:'#'},
+          {icon:'https://img.icons8.com/color/96/barcode-reader.png', title:'Scan & Add', sub:'Barcode/QR intake', href:'#'},
+          {icon:'https://img.icons8.com/color/96/warehouse.png', title:'Rooms & Locations', sub:'Where things live', href:'#'},
+          {icon:'https://img.icons8.com/color/96/price-tag.png', title:'Valuations', sub:'Totals by category', href:'#'},
+          {icon:'https://img.icons8.com/color/96/receipt.png', title:'Receipts', sub:'Proof & returns', href:'../personal/receipts/add-receipt.html'},
+        ]
+      },
+      relationship: {
+        emoji:'👨‍👩‍👧‍👦', name:'Relationship Genie', desc:'Remember birthdays, plan quality time, track family goals.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/birthday.png', title:'Birthdays & Anniversaries', sub:'Never miss a date', href:'#'},
+          {icon:'https://img.icons8.com/color/96/handshake.png', title:'Quality Time Ideas', sub:'Prompts & plans', href:'#'},
+          {icon:'https://img.icons8.com/color/96/goal.png', title:'Family Goals', sub:'Set & review', href:'#'},
+        ],
+        quick:[
+          {title:'🎂 Add Birthday', inputs:[{id:'qName',ph:'Name'},{id:'qDate',type:'date'}], btn:'Save Birthday', store:'gs_rel_birthdays'}
+        ]
+      },
+      memory: {
+        emoji:'📖', name:'Memory Book', desc:'Save moments, milestones, and journals.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/journal.png', title:'Journal', sub:'Daily entries', href:'#'},
+          {icon:'https://img.icons8.com/color/96/photo-gallery.png', title:'Albums', sub:'Group by person/event', href:'#'},
+          {icon:'https://img.icons8.com/color/96/timeline.png', title:'Timeline', sub:'Milestones', href:'#'},
+        ],
+        quick:[
+          {title:'📝 Quick Journal', inputs:[{id:'qText',ph:'What happened today?'}], btn:'Add Entry', store:'gs_memory_entries'}
+        ]
+      },
+      meds: {
+        emoji:'💊', name:'Medication Logger', desc:'Track meds, doses, refills, and reminders.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/pill.png', title:'My Meds', sub:'List & schedules', href:'#'},
+          {icon:'https://img.icons8.com/color/96/alarm.png', title:'Dose Reminders', sub:'Times & alerts', href:'#'},
+          {icon:'https://img.icons8.com/color/96/medicine-bottle.png', title:'Refills', sub:'Runout forecast', href:'#'},
+        ],
+        quick:[
+          {title:'💊 Add Med', inputs:[{id:'qMed',ph:'Medication name'},{id:'qTime',type:'time'}], btn:'Save Med', store:'gs_meds'}
+        ]
+      },
+      doctors: {
+        emoji:'🏥', name:'Doctor & Dentist Visits', desc:'Appointments, prep checklists, and follow-ups.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/doctor-male.png', title:'Appointments', sub:'Upcoming & past', href:'#'},
+          {icon:'https://img.icons8.com/color/96/checklist.png', title:'Visit Prep', sub:'Questions & forms', href:'#'},
+          {icon:'https://img.icons8.com/color/96/stethoscope.png', title:'Follow-ups', sub:'Tasks & notes', href:'#'},
+        ],
+        quick:[
+          {title:'📅 Add Appointment', inputs:[{id:'qVisit',ph:'e.g., Dentist cleaning'},{id:'qDate',type:'date'}], btn:'Save Appt', store:'gs_doc_appts'}
+        ]
+      },
+      vitals: {
+        emoji:'📈', name:'Vitals & Symptoms', desc:'Log glucose, BP, sleep, steps—see trends.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/heart-health.png', title:'Vitals Log', sub:'BP, HR, glucose', href:'#'},
+          {icon:'https://img.icons8.com/color/96/sleeping-in-bed.png', title:'Sleep', sub:'Hours & quality', href:'#'},
+          {icon:'https://img.icons8.com/color/96/combo-chart--v1.png', title:'Trends', sub:'Charts & export', href:'#'},
+        ]
+      },
+      ids: {
+        emoji:'🪪', name:'ID & Passport Vault', desc:'Track expirations, renewals, and reminders.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/identification-documents.png', title:'Documents', sub:'IDs & passports', href:'#'},
+          {icon:'https://img.icons8.com/color/96/expiration.png', title:'Expirations', sub:'Alerts & renewals', href:'#'},
+          {icon:'https://img.icons8.com/color/96/cloud.png', title:'Secure Storage', sub:'Backups', href:'#'},
+        ]
+      },
+      budget: {
+        emoji:'📊', name:'Personal Budget', desc:'Plan monthly spending, savings, and goals.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/budget.png', title:'Monthly Plan', sub:'Income & bills', href:'#'},
+          {icon:'https://img.icons8.com/color/96/coins.png', title:'Savings Goals', sub:'Track progress', href:'#'},
+          {icon:'https://img.icons8.com/color/96/graph.png', title:'Reports', sub:'Trends & insights', href:'#'},
+        ]
+      },
+      repairs: {
+        emoji:'🛠️', name:'Repairs & Projects', desc:'Quotes, materials, and progress photos.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/fix.png', title:'Open Items', sub:'Tasks & quotes', href:'#'},
+          {icon:'https://img.icons8.com/color/96/toolbox.png', title:'Vendors', sub:'Contacts & bids', href:'#'},
+          {icon:'https://img.icons8.com/color/96/camera.png', title:'Progress Photos', sub:'Before/after', href:'#'},
+        ]
+      },
+      utilities: {
+        emoji:'🔌', name:'Utilities & Subscriptions', desc:'Due dates, autopay, and price changes.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/electricity.png', title:'Utilities', sub:'Electric • Gas • Water', href:'utility-tracker.html'},
+          {icon:'https://img.icons8.com/color/96/wifi.png', title:'Telecom', sub:'Phone • TV • Internet', href:'telecom-tracker.html'},
+          {icon:'https://img.icons8.com/color/96/renew-subscription.png', title:'Subscriptions', sub:'Apps & streaming', href:'subscription-tracker.html'},
+        ]
+      },
+      chores: {
+        emoji:'🧹', name:'Cleaning & Chores', desc:'Weekly schedule & rotation for kids.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/broom.png', title:'Weekly Plan', sub:'Rooms & tasks', href:'#'},
+          {icon:'https://img.icons8.com/color/96/time.png', title:'Rotations', sub:'Assignments', href:'#'},
+          {icon:'https://img.icons8.com/color/96/check-file.png', title:'Checklist', sub:'Mark complete', href:'#'},
+        ]
+      },
+      homework: {
+        emoji:'📚', name:'Homework Helper', desc:'Ask AI for explanations & step-by-step help.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/brain.png', title:'Explain a Problem', sub:'Math • Science • ELA', href:'#'},
+          {icon:'https://img.icons8.com/color/96/test-passed.png', title:'Practice Sets', sub:'Auto-generated', href:'#'},
+          {icon:'https://img.icons8.com/color/96/sand-timer.png', title:'Study Timer', sub:'Focus blocks', href:'#'},
+        ]
+      },
+      lunch: {
+        emoji:'🥪', name:'School Lunch Planner', desc:'Healthy menus, prep lists, and reminders.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/salad.png', title:'Menu Builder', sub:'Week at a glance', href:'#'},
+          {icon:'https://img.icons8.com/color/96/shopping-basket.png', title:'Groceries', sub:'Auto list', href:'grocery-list.html'},
+          {icon:'https://img.icons8.com/color/96/meal.png', title:'Prep & Storage', sub:'Guides', href:'#'},
+        ]
+      },
+      activities: {
+        emoji:'⚽', name:'Activities & Rides', desc:'Practice schedules and carpool coordination.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/schedule.png', title:'Practice Calendar', sub:'Team & times', href:'#'},
+          {icon:'https://img.icons8.com/color/96/car.png', title:'Carpool', sub:'Drivers & riders', href:'#'},
+          {icon:'https://img.icons8.com/color/96/whistle.png', title:'Games & Meets', sub:'Logistics', href:'#'},
+        ]
+      },
+      packing: {
+        emoji:'🧥', name:'Packing Lists', desc:'Auto-generate outfits and essentials by trip.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/luggage.png', title:'New Trip List', sub:'Destination-based', href:'#'},
+          {icon:'https://img.icons8.com/color/96/checklist.png', title:'Checklist', sub:'Mark items', href:'#'},
+          {icon:'https://img.icons8.com/color/96/cloud-sync.png', title:'Reuse & Share', sub:'Templates', href:'#'},
+        ]
+      },
+      visas: {
+        emoji:'🛂', name:'Travel Docs & Visas', desc:'Store confirmations and requirements.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/passport.png', title:'Docs Vault', sub:'IDs & tickets', href:'#'},
+          {icon:'https://img.icons8.com/color/96/worldwide-location.png', title:'Requirements', sub:'By country', href:'#'},
+          {icon:'https://img.icons8.com/color/96/ok.png', title:'Checklists', sub:'Before you go', href:'#'},
+        ]
+      },
+      roadside: {
+        emoji:'🚧', name:'Roadside & Emergencies', desc:'ICE contacts, steps, and checklists.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/ambulance.png', title:'ICE Contacts', sub:'Tap to call', href:'#'},
+          {icon:'https://img.icons8.com/color/96/alarm.png', title:'Emergency Steps', sub:'Guided flow', href:'#'},
+          {icon:'https://img.icons8.com/color/96/first-aid-kit.png', title:'Kits & Supplies', sub:'What to carry', href:'#'},
+        ]
+      },
+      medkit: {
+        emoji:'🧰', name:'Home Med Kit', desc:'Supplies list with expiry reminders.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/first-aid-kit.png', title:'Supplies', sub:'Track stock', href:'#'},
+          {icon:'https://img.icons8.com/color/96/calendar.png', title:'Expiries', sub:'Replace on time', href:'#'},
+          {icon:'https://img.icons8.com/color/96/refresh.png', title:'Reorder', sub:'One-tap list', href:'#'},
+        ]
+      },
+      forms: {
+        emoji:'✍️', name:'Forms & Letters', desc:'Draft letters for claims, disputes, requests.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/filled-message.png', title:'Letter Wizard', sub:'Guided prompts', href:'#'},
+          {icon:'https://img.icons8.com/color/96/contract.png', title:'Templates', sub:'Download & edit', href:'#'},
+          {icon:'https://img.icons8.com/color/96/email.png', title:'Send & Track', sub:'Follow responses', href:'#'},
+        ]
+      },
+      reminders: {
+        emoji:'⏰', name:'Smart Reminders', desc:'Birthdays, renewals, doctor visits, bills.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/reminder.png', title:'All Reminders', sub:'Today • Week • Month', href:'#'},
+          {icon:'https://img.icons8.com/color/96/process.png', title:'Rules', sub:'Auto-generate', href:'#'},
+          {icon:'https://img.icons8.com/color/96/calendar-plus.png', title:'Calendar Sync', sub:'Export events', href:'#'},
+        ],
+        quick:[
+          {title:'⏰ Quick Reminder', inputs:[{id:'qText',ph:'e.g., Renew passport'},{id:'qDate',type:'date'}], btn:'Save Reminder', store:'gs_smart_rem'}
+        ]
+      },
+      contacts: {
+        emoji:'📇', name:'Family Contacts', desc:'Who to call for what—shared directory.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/contacts.png', title:'Directory', sub:'Family & helpers', href:'#'},
+          {icon:'https://img.icons8.com/color/96/phone.png', title:'ICE & Services', sub:'Fast access', href:'#'},
+          {icon:'https://img.icons8.com/color/96/share.png', title:'Share List', sub:'With family', href:'#'},
+        ]
+      },
+      photos: {
+        emoji:'📸', name:'Photo Organizer', desc:'Auto-label & group albums by person/event.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/google-photos-old.png', title:'Albums', sub:'By event/person', href:'#'},
+          {icon:'https://img.icons8.com/color/96/face-recognition.png', title:'People', sub:'Auto tagging', href:'#'},
+          {icon:'https://img.icons8.com/color/96/cloud.png', title:'Backup', sub:'Storage & sync', href:'#'},
+        ]
+      },
+      cards: {
+        emoji:'💌', name:'Cards & Messages', desc:'Personalized wishes in seconds.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/love-letter.png', title:'Occasions', sub:'Birthday • Thanks', href:'#'},
+          {icon:'https://img.icons8.com/color/96/idea.png', title:'Message Ideas', sub:'AI suggestions', href:'#'},
+          {icon:'https://img.icons8.com/color/96/print.png', title:'Print & Share', sub:'Templates', href:'#'},
+        ]
+      },
+      english: {
+        emoji:'🇺🇸', name:'English Coach', desc:'Practice speaking, grammar, and interviews.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/microphone.png', title:'Speaking', sub:'Role-play', href:'#'},
+          {icon:'https://img.icons8.com/color/96/abc.png', title:'Grammar', sub:'Exercises', href:'#'},
+          {icon:'https://img.icons8.com/color/96/resume.png', title:'Interviews', sub:'Q&A sets', href:'#'},
+        ]
+      },
+      vietnamese: {
+        emoji:'🇻🇳', name:'Vietnamese Coach', desc:'Luyện nói/viết, từ vựng theo chủ đề.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/microphone.png', title:'Nói', sub:'Hội thoại', href:'#'},
+          {icon:'https://img.icons8.com/color/96/spellcheck.png', title:'Viết', sub:'Sửa lỗi', href:'#'},
+          {icon:'https://img.icons8.com/color/96/book.png', title:'Từ vựng', sub:'Chủ đề', href:'#'},
+        ]
+      },
+      skills: {
+        emoji:'🛠️', name:'New Skills', desc:'Learn budgeting, cooking, DIY, and more.',
+        tools:[
+          {icon:'https://img.icons8.com/color/96/school.png', title:'Courses', sub:'Curated lists', href:'#'},
+          {icon:'https://img.icons8.com/color/96/checklist.png', title:'Projects', sub:'Hands-on', href:'#'},
+          {icon:'https://img.icons8.com/color/96/goal.png', title:'Milestones', sub:'Track progress', href:'#'},
+        ]
+      }
+    };
+
+    // Parse page key (?page=inventory)
+    const params = new URLSearchParams(location.search);
+    const key = params.get('page') || 'inventory';
+    const info = PAGES[key] || {emoji:'🧰', name:'Genie', desc:'Tools and quick actions.', tools:[]};
+
+    // Set header + hero
+    document.getElementById('logo-emoji').textContent = info.emoji || '🧰';
+    document.getElementById('brand-name').textContent = info.name || 'Genie';
+    document.title = `${info.emoji||''} ${info.name} – GenieSphere`;
+    document.getElementById('page-title').textContent = `${info.emoji||''} ${info.name}`;
+    document.getElementById('page-desc').textContent = info.desc || '';
+
+    // Tools
+    const grid = document.getElementById('toolsGrid');
+    grid.innerHTML = (info.tools||[]).map(t=>`
+      <a class="icon-card" data-tags="${(t.title+' '+(t.sub||'')).toLowerCase()}" href="${t.href||'#'}">
+        <img src="${t.icon}" alt="${t.title}"/>
+        <p>${t.title}</p><small>${t.sub||''}</small>
+      </a>
+    `).join('');
+
+    // Filter
+    (function(){
+      const input = document.getElementById('filterInput');
+      const cards = Array.from(document.querySelectorAll('.icon-card'));
+      input.addEventListener('input', ()=>{
+        const q = input.value.trim().toLowerCase();
+        cards.forEach(c=>{
+          const text = (c.innerText + " " + (c.dataset.tags||"")).toLowerCase();
+          c.classList.toggle('hidden', q && !text.includes(q));
+        });
+      });
+    })();
+
+    // Quick capture (simple localStorage)
+    const qcWrap = document.getElementById('quickCapture');
+    if(info.quick && info.quick.length){
+      qcWrap.style.display='grid';
+      qcWrap.innerHTML = info.quick.map((q,idx)=>`
+        <div class="panel">
+          <h3 style="margin:0 0 6px; font-size:1rem;">${q.title}</h3>
+          <div class="row ${q.inputs.length===2?'cols-2':'cols-3'}">
+            ${q.inputs.map(i=>`<input id="qc-${idx}-${i.id}" type="${i.type||'text'}" placeholder="${i.ph||''}"/>`).join('')}
+            <button class="btn green" id="qc-btn-${idx}">${q.btn}</button>
+          </div>
+          <div class="hint" id="qc-msg-${idx}"></div>
+        </div>
+      `).join('');
+
+      info.quick.forEach((q,idx)=>{
+        document.getElementById(`qc-btn-${idx}`).addEventListener('click', ()=>{
+          const vals = q.inputs.map(i=> document.getElementById(`qc-${idx}-${i.id}`).value.trim());
+          if(vals.some(v=>!v)){ document.getElementById(`qc-msg-${idx}`).textContent = 'Please complete the fields.'; return; }
+          try{
+            const cur = JSON.parse(localStorage.getItem(q.store)||'[]');
+            cur.push({at: Date.now(), fields: vals});
+            localStorage.setItem(q.store, JSON.stringify(cur));
+            q.inputs.forEach(i=>{ document.getElementById(`qc-${idx}-${i.id}`).value=''; });
+            document.getElementById(`qc-msg-${idx}`).textContent = 'Saved!';
+          }catch{ document.getElementById(`qc-msg-${idx}`).textContent = 'Saved locally.'; }
+        });
+      });
+    }
+  </script>
+</body>
+</html>

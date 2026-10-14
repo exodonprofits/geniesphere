@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>💳 Credit Card Tracker | GenieSphere</title>
+  <meta name="description" content="Track your credit cards (due dates, balances, limits, and notes)."/>
+  <meta name="gs-config" content="/shared/config.json" />
+
+  <style>
+    :root{
+      --container: 1440px;
+      --radius: 7px;
+      --radius-lg: 14px;
+      --btn-radius: 999px;
+      --shadow: 0 18px 44px rgba(0,0,0,.50);
+      --shadow-soft: 0 10px 26px rgba(0,0,0,.30);
+      --focus: 0 0 0 4px rgba(76,110,245,.22);
+    }
+
+    /* Theme D: Pro Dark (default) */
+    body.theme-dark{
+      --bg:#0b1220; --panel:#121a2b; --panel-2:#0e1626;
+      --text:#e9f0ff; --muted:#a9b6d9;
+      --primary:#4c6ef5; --accent:#3ee1a1;
+      --border:rgba(120,155,255,.22); --border-strong:rgba(120,155,255,.42);
+      --shadow:0 18px 44px rgba(0,0,0,.50);
+      --shadow-soft:0 10px 26px rgba(0,0,0,.30);
+      --focus:0 0 0 4px rgba(76,110,245,.22);
+    }
+    /* Theme A: Calm Future */
+    body.theme-calm{
+      --bg:#f5f7fb; --panel:#ffffff; --panel-2:#f1f4ff;
+      --text:#111827; --muted:#4b5563;
+      --primary:#4c6ef5; --accent:#22c55e;
+      --border:rgba(148,163,184,.70); --border-strong:rgba(148,163,184,.92);
+      --shadow:0 18px 38px rgba(15,23,42,.14);
+      --shadow-soft:0 10px 26px rgba(15,23,42,.10);
+      --focus:0 0 0 4px rgba(76,110,245,.18);
+    }
+    /* Theme B: Soft Futuristic */
+    body.theme-future{
+      --bg:#0f172a; --panel:#111c36; --panel-2:#162447;
+      --text:#e5e7eb; --muted:#9ca3af;
+      --primary:#6366f1; --accent:#22d3ee;
+      --border:rgba(71,85,105,.65); --border-strong:rgba(71,85,105,.95);
+      --shadow:0 18px 44px rgba(0,0,0,.52);
+      --shadow-soft:0 10px 26px rgba(0,0,0,.34);
+      --focus:0 0 0 4px rgba(34,211,238,.16);
+    }
+    /* Theme C: Nature + Tech */
+    body.theme-nature{
+      --bg:#f6f9f7; --panel:#ffffff; --panel-2:#eef5f1;
+      --text:#0f172a; --muted:#475569;
+      --primary:#16a34a; --accent:#38bdf8;
+      --border:rgba(148,163,184,.70); --border-strong:rgba(148,163,184,.92);
+      --shadow:0 18px 38px rgba(15,23,42,.12);
+      --shadow-soft:0 10px 26px rgba(15,23,42,.09);
+      --focus:0 0 0 4px rgba(22,163,74,.16);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+    }
+    a{color:inherit;text-decoration:none}
+    .container{max-width:var(--container);margin:0 auto;padding:24px}
+
+    /* Header */
+    .site-header{
+      position:sticky;top:0;z-index:1000;
+      margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);
+      background:var(--panel);
+      border-bottom:1px solid var(--border);
+      box-shadow:0 8px 22px rgba(0,0,0,.25);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+    .site-header-inner{
+      max-width:var(--container);margin:0 auto;
+      padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .brand{display:flex;align-items:center;gap:10px;color:var(--text);font-weight:900}
+    .logo{
+      width:44px;height:44px;border-radius:50%;object-fit:cover;
+      box-shadow:0 0 0 3px rgba(62,225,161,.20),0 8px 24px rgba(0,0,0,.25);
+    }
+    .menu{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:14px}
+    .menu a{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 2px;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;
+      transition:color .15s ease, border-bottom-color .15s ease;
+    }
+    .menu a:hover{color:var(--text);border-bottom-color:var(--primary)}
+    .menu a.active{color:var(--text);border-bottom-color:var(--accent);font-weight:800}
+
+    .user-menu{position:relative;display:flex;align-items:center;margin-left:auto}
+    .user-menu-toggle{
+      display:flex;align-items:center;gap:6px;padding:6px 12px;
+      border-radius:999px;border:1px solid var(--border-strong);
+      background:var(--panel-2);color:var(--text);font-size:14px;cursor:pointer;
+    }
+    .user-menu-toggle:hover{border-color:var(--accent)}
+    .user-menu-dropdown{
+      position:absolute;right:0;top:calc(100% + 6px);min-width:220px;
+      background:var(--panel-2);border-radius:var(--radius);border:1px solid var(--border);
+      box-shadow:0 14px 34px rgba(0,0,0,.55);
+      padding:6px 0;display:none;z-index:1002;margin-right:4px;
+    }
+    .user-menu-dropdown button{
+      display:block;width:100%;text-align:left;padding:8px 14px;background:none;border:none;
+      color:var(--text);font-size:14px;cursor:pointer;
+    }
+    .user-menu-dropdown button:hover{background:var(--panel)}
+    .user-menu-divider{height:1px;margin:4px 0;background:rgba(148,163,184,.4)}
+    .dropdown-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.7;padding:4px 14px 2px}
+    .mobile-only{display:none}
+    @media(max-width:720px){
+      .menu{display:none}
+      .site-header-inner{padding:10px 12px}
+      .mobile-only{display:block}
+    }
+
+    /* Hero */
+    .hero{text-align:center;padding:16px 0 8px}
+    .title{font-size:clamp(26px,4vw,40px);margin:0 0 6px;font-weight:900}
+    .subtitle{color:var(--muted);margin:0 auto 12px;max-width:920px;font-size:15px}
+    .hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      background:rgba(0,0,0,.04);font-size:12px;font-weight:800;
+    }
+    body.theme-future .pill, body.theme-dark .pill{background:rgba(255,255,255,.06)}
+    .pill.ghost{background:transparent;color:var(--muted)}
+
+    /* Hub tabs */
+    .hub-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px auto 0;justify-content:center;max-width:var(--container)}
+    .hub-tab{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
+      border:1px solid rgba(148,163,184,.35);
+      background:rgba(0,0,0,.06);color:var(--muted);
+      font-size:13px;font-weight:900;white-space:nowrap;
+      transition:transform .12s ease, border-color .18s ease, color .18s ease, background .18s ease;
+    }
+    body.theme-future .hub-tab, body.theme-dark .hub-tab{background:rgba(255,255,255,.06)}
+    .hub-tab:hover{border-color:rgba(76,110,245,.55);color:var(--text)}
+    .hub-tab.active{
+      background:linear-gradient(135deg, rgba(62,225,161,.18), rgba(76,110,245,.14));
+      border-color:rgba(62,225,161,.55);
+      color:var(--text);
+      box-shadow:0 10px 22px rgba(0,0,0,.25);
+    }
+
+    /* Layout */
+    .kpis{
+      display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-top:14px;
+    }
+    @media(max-width:1200px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media(max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:520px){.kpis{grid-template-columns:1fr}}
+    .kpi-card{
+      background:radial-gradient(circle at top left, rgba(31,41,55,.95) 0, rgba(2,6,23,.95) 70%);
+      border-radius:var(--radius-lg);
+      padding:10px 12px;
+      border:1px solid rgba(148,163,184,.22);
+      box-shadow:0 10px 30px rgba(15,23,42,.35);
+      display:flex;flex-direction:column;gap:6px;min-height:92px;
+    }
+    body.theme-calm .kpi-card, body.theme-nature .kpi-card{background:var(--panel); box-shadow:var(--shadow-soft)}
+    .kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+    .kpi-value{font-size:18px;font-weight:950}
+    .kpi-foot{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:6px;align-items:center}
+
+    .tool-shell{max-width:var(--container);margin-top:20px;}
+    .grid-2{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:start;margin-top:14px}
+    @media(max-width:980px){.grid-2{grid-template-columns:1fr}}
+    .panel{
+      background:linear-gradient(180deg, rgba(24,35,58,.65), rgba(18,26,43,.85));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-soft);
+      overflow:hidden;
+    }
+    body.theme-calm .panel, body.theme-nature .panel{background:var(--panel)}
+    .panel-head{padding:14px 14px 10px;border-bottom:1px solid var(--border)}
+    .panel-title{margin:0;font-size:16px;font-weight:900}
+    .panel-sub{margin-top:4px;color:var(--muted);font-size:13px}
+    .panel-body{padding:14px}
+
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:9px 18px;border-radius:var(--btn-radius);
+      color:#03101f;background:var(--primary);
+      font-weight:900;border:0;cursor:pointer;
+      box-shadow:0 8px 18px rgba(74,163,255,.25);
+      font-size:14px;white-space:nowrap;justify-content:center;
+    }
+    .btn.primary{background:var(--accent);color:#04131a;box-shadow:0 8px 18px rgba(62,225,161,.25)}
+    .btn.ghost{background:transparent;border:1px dashed var(--border-strong);color:var(--text);box-shadow:none}
+    .btn.small{padding:6px 12px;font-size:13px}
+    .form-actions{display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap}
+    @media(max-width:640px){.form-actions{flex-direction:column}.form-actions .btn{width:100%}}
+
+    .table-wrap{overflow:auto;border:1px solid rgba(148,163,184,.22);border-radius:14px;background:rgba(2,6,23,.55)}
+    body.theme-calm .table-wrap, body.theme-nature .table-wrap{background:#fff}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:10px 12px;border-bottom:1px solid rgba(148,163,184,.18);text-align:left}
+    th{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);white-space:nowrap}
+    tr:hover td{background:rgba(255,255,255,.03)}
+    body.theme-calm tr:hover td, body.theme-nature tr:hover td{background:rgba(76,110,245,.06)}
+    .muted{color:var(--muted)}
+    .right{text-align:right}
+    .nowrap{white-space:nowrap}
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:3px 10px;border-radius:999px;border:1px solid rgba(120,155,255,.35);
+      background: rgba(255,255,255,.03);
+      font-size:11px;color:var(--muted);font-weight:900;
+    }
+    body.theme-calm .badge, body.theme-nature .badge{background:rgba(76,110,245,.06)}
+    .badge.good{border-color: rgba(62,225,161,.55); color:#6ee7b7}
+    .badge.warn{border-color: rgba(248,113,113,.55); color:#fca5a5}
+
+    .empty{
+      padding:12px;border:1px dashed rgba(148,163,184,.35);border-radius:14px;color:var(--muted);
+      background:rgba(2,6,23,.60);font-size:13px;
+    }
+    body.theme-calm .empty, body.theme-nature .empty{background:rgba(76,110,245,.05)}
+
+/* Mobile card list (for tables) */
+.cards-wrap{display:none}
+.card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:720px){
+  .table-wrap{display:none}
+  .cards-wrap{display:block}
+  .card-grid{grid-template-columns:1fr}
+}
+.record-card{
+  border:1px solid rgba(148,163,184,.22);
+  border-radius:14px;
+  background:rgba(2,6,23,.55);
+  box-shadow:0 10px 26px rgba(0,0,0,.25);
+  overflow:hidden;
+}
+body.theme-calm .record-card, body.theme-nature .record-card{background:#fff}
+.record-card-head{
+  padding:12px 12px 10px;
+  border-bottom:1px solid rgba(148,163,184,.18);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+}
+.record-title{margin:0;font-size:14px;font-weight:950;line-height:1.25}
+.record-sub{margin-top:4px;color:var(--muted);font-size:12px;line-height:1.3}
+.record-badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.record-card-body{padding:12px;display:grid;gap:10px}
+.kv{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+  padding:8px 10px;border-radius:12px;
+  border:1px solid rgba(148,163,184,.14);
+  background:rgba(255,255,255,.03);
+}
+body.theme-calm .kv, body.theme-nature .kv{background:rgba(76,110,245,.06)}
+.kv .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:900}
+.kv .v{font-size:13px;font-weight:900;text-align:right}
+.record-notes{
+  padding:10px;border-radius:12px;
+  border:1px dashed rgba(148,163,184,.28);
+  color:var(--muted);font-size:12px;line-height:1.45;
+  background:rgba(0,0,0,.06);
+  white-space:pre-wrap;
+}
+body.theme-future .record-notes, body.theme-dark .record-notes{background:rgba(255,255,255,.04)}
+.record-actions{
+  display:flex;gap:8px;flex-wrap:wrap;
+}
+.record-actions .btn{flex:1}
+
+    /* Drawer (Slide-out Add/Edit) */
+.drawer-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.55);
+  display:flex;align-items:flex-start;justify-content:flex-end;
+  z-index:1500;padding-top:76px;
+  opacity:0;pointer-events:none;
+  transition:opacity .18s ease;
+}
+.drawer-overlay.show{opacity:1;pointer-events:auto}
+.drawer-card{
+  width:100%;max-width:560px;background:var(--panel);
+  border-left:1px solid var(--border);
+  box-shadow:-18px 0 40px rgba(0,0,0,.55);
+  display:flex;flex-direction:column;max-height:calc(100vh - 76px);
+  border-top-left-radius:var(--radius-lg);border-top-right-radius:var(--radius-lg);overflow:hidden;
+  transform:translateX(110%);
+  transition:transform .22s ease;
+}
+.drawer-overlay.show .drawer-card{transform:translateX(0)}
+@media(max-width:720px){
+  .drawer-overlay{padding-top:60px}
+  .drawer-card{max-width:100%;max-height:calc(100vh - 60px);border-top-left-radius:0;border-top-right-radius:0}
+}
+.drawer-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.drawer-header h2{margin:0;font-size:18px;font-weight:950}
+.drawer-body{padding:12px 16px 16px;overflow:auto}
+.drawer-footer{padding:10px 16px 14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--panel)}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+@media(max-width:560px){.form-grid{grid-template-columns:1fr}}
+.form-field{display:flex;flex-direction:column;gap:6px}
+.form-field-full{grid-column:1/-1}
+.form-field label{font-size:12px;color:var(--muted);font-weight:900}
+.form-field input,.form-field select,.form-field textarea{
+  padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+  background:var(--panel-2);color:var(--text);font-size:14px;outline:none;
+}
+body.theme-calm .form-field input, body.theme-calm .form-field select, body.theme-calm .form-field textarea,
+body.theme-nature .form-field input, body.theme-nature .form-field select, body.theme-nature .form-field textarea{background:#fff}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{box-shadow:var(--focus);border-color:rgba(76,110,245,.65)}
+.help{font-size:12px;color:var(--muted)}
+
+/* Footer */
+    .site-footer{margin-top:30px;padding:22px 0 34px;border-top:1px solid var(--border);background:var(--panel);color:var(--muted)}
+    @media(max-width:600px){.site-footer{display:none !important}}
+    .site-footer-inner{max-width:var(--container);margin:0 auto;padding:0 24px}
+    .footer-bottom{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px}
+  </style>
+</head>
+
+<body class="theme-dark">
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="../index.html">
+        <img alt="GenieSphere" class="logo" src="../genie-logo.png"/>
+        <strong>GenieSphere</strong>
+      </a>
+
+      <nav aria-label="Primary" class="menu">
+        <a class="active" href="../dashboard/household.html">🏠 Household</a>
+        <a class="ghost" href="../dashboard/business.html">🏢 Business</a>
+        <a class="ghost" href="../dashboard/investment.html">📈 Investment</a>
+        <a class="ghost" href="../dashboard/leisure.html">🏝️ Leisure</a>
+      </nav>
+
+      <div class="user-menu" id="user-menu">
+        <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle">
+          <span id="user-name-label">Log in</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+
+        <div class="user-menu-dropdown" id="user-menu-dropdown">
+          <div class="mobile-only">
+            <div class="dropdown-label">Areas</div>
+            <button type="button" class="dropdown-nav" data-target="../dashboard/household.html">🏠 Household</button>
+            <button type="button" class="dropdown-nav" data-target="../dashboard/business.html">🏢 Business</button>
+            <button type="button" class="dropdown-nav" data-target="../dashboard/investment.html">📈 Investment</button>
+            <button type="button" class="dropdown-nav" data-target="../dashboard/leisure.html">🏝️ Leisure</button>
+            <div class="user-menu-divider"></div>
+          </div>
+
+          <div class="dropdown-label">Account</div>
+          <button class="dropdown-nav" data-target="../onboarding/user_profile_form.html" type="button">👤 User profile</button>
+          <button class="dropdown-nav" data-target="../onboarding/display_settings.html" type="button">⚙️ Settings</button>
+          <button id="dropdown-open-appearance" type="button">🎨 Appearance</button>
+          <div class="user-menu-divider"></div>
+          <button id="user-auth-action" type="button">Log in / Sign up</button>
+          <button class="auth-only" id="user-signout-btn" type="button">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1 class="title">💳 Credit Card Tracker</h1>
+      <p class="subtitle">Your card list is the foundation. Add due dates, balances, and limits so the Hub can surface “Due Soon” and utilization.</p>
+
+      <div class="hero-meta">
+        <span class="pill">Category: 🏠 Household</span>
+        <span class="pill">Type: 🧰 Tool</span>
+        <span class="pill ghost">Status: Beta</span>
+      </div>
+
+      <div class="hub-tabs" aria-label="Credit Card Hub Navigation">
+        <a class="hub-tab" href="./credit-card-hub.html">🏠 Hub</a>
+        <span class="hub-tab active" aria-current="page">💳 Cards</span>
+        <a class="hub-tab" href="./credit-card-transactions.html">🧾 Transactions</a>
+        <a class="hub-tab" href="./credit-card-rewards.html">🎁 Rewards</a>
+        <a class="hub-tab" href="./credit-card-optimizer.html">🏷️ Best Card</a>
+      </div>
+    </section>
+
+    <div class="kpis" aria-label="Cards KPIs">
+      <div class="kpi-card">
+        <div class="kpi-label">Cards</div>
+        <div class="kpi-value" id="kpi-total">0</div>
+        <div class="kpi-foot"><span class="muted">Total</span><span id="kpi-total-foot" class="muted">—</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Active</div>
+        <div class="kpi-value" id="kpi-active">0</div>
+        <div class="kpi-foot"><span class="muted">Enabled</span><span id="kpi-active-foot" class="muted">—</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Balance</div>
+        <div class="kpi-value" id="kpi-balance">$0</div>
+        <div class="kpi-foot"><span class="muted">Sum</span><span id="kpi-balance-foot" class="muted">—</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Credit Limit</div>
+        <div class="kpi-value" id="kpi-limit">$0</div>
+        <div class="kpi-foot"><span class="muted">Sum</span><span id="kpi-limit-foot" class="muted">—</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Utilization</div>
+        <div class="kpi-value" id="kpi-util">—</div>
+        <div class="kpi-foot"><span class="muted">Balance ÷ Limit</span><span id="kpi-util-foot" class="muted">—</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Due Soon (7d)</div>
+        <div class="kpi-value" id="kpi-due-soon">0</div>
+        <div class="kpi-foot"><span class="muted">Upcoming</span><span id="kpi-due-soon-foot" class="muted">—</span></div>
+      </div>
+    </div>
+
+    
+    <main class="tool-shell">
+      <section class="panel">
+        <div class="panel-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <h2 class="panel-title">💳 Your Cards</h2>
+            <div class="panel-sub">Edit, activate/deactivate, and keep notes for reward rules.</div>
+          </div>
+          <div class="form-actions" style="margin:0;justify-content:flex-end">
+            <button class="btn ghost" type="button" id="btnExport">⬇️ Export (CSV)</button>
+            <a class="btn ghost" href="./credit-card-transactions.html">🧾 Transactions</a>
+            <button class="btn primary" type="button" id="btnAddTop">➕ Add new card</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="table-wrap" id="tableWrap"></div>
+          <div class="cards-wrap" id="cardWrap" aria-label="Cards (mobile)"></div>
+          <div id="emptyState" class="empty" style="display:none;">No cards yet. Click <strong>“Add new card”</strong> to start.</div>
+        </div>
+      </section>
+    </main>
+
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <div class="footer-bottom">
+          <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+          <div class="muted">Tip: Keep balances updated weekly for accurate utilization.</div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Drawer -->
+  <div class="drawer-overlay" id="drawerOverlay" aria-hidden="true" hidden>
+    <div class="drawer-card" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <div class="drawer-header">
+        <h2 id="drawerTitle">Add card</h2>
+        <button class="btn ghost small" type="button" id="btnCloseDrawer">✕ Close</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="help" style="margin-bottom:10px;">
+          Required: <strong>Card name</strong>. Everything else is optional, but recommended for the Hub.
+        </div>
+
+        <form id="cardForm" autocomplete="off">
+          <input type="hidden" id="cardId"/>
+
+          <div class="form-grid">
+            <div class="form-field form-field-full">
+              <label for="cardName">💳 Card name *</label>
+              <input id="cardName" type="text" placeholder="e.g., Chase Freedom, Amex Gold" required/>
+            </div>
+
+            <div class="form-field">
+              <label for="issuer">🏦 Issuer</label>
+              <input id="issuer" type="text" placeholder="e.g., Chase, Amex, Citi"/>
+            </div>
+
+            <div class="form-field">
+              <label for="productName">🪪 Product</label>
+              <input id="productName" type="text" placeholder="e.g., Freedom Flex, Gold"/>
+            </div>
+
+            <div class="form-field">
+              <label for="last4">🔢 Last 4</label>
+              <input id="last4" type="text" maxlength="4" placeholder="1234"/>
+              <div class="help">Optional. Helps you quickly identify cards.</div>
+            </div>
+
+            <div class="form-field">
+              <label for="isBusiness">🏷️ Type</label>
+              <select id="isBusiness">
+                <option value="false">Personal</option>
+                <option value="true">Business</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="isActive">✅ Active?</label>
+              <select id="isActive">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="dueDay">📆 Due day (1–31)</label>
+              <input id="dueDay" type="number" min="1" max="31" placeholder="e.g., 18"/>
+            </div>
+
+            <div class="form-field">
+              <label for="dueDate">📅 Next due date</label>
+              <input id="dueDate" type="date"/>
+              <div class="help">If both are provided, <strong>Next due date</strong> wins.</div>
+            </div>
+
+            <div class="form-field">
+              <label for="minimumDue">💵 Minimum due</label>
+              <input id="minimumDue" type="number" step="0.01" placeholder="e.g., 35.00"/>
+            </div>
+
+            <div class="form-field">
+              <label for="balance">💳 Balance</label>
+              <input id="balance" type="number" step="0.01" placeholder="e.g., 420.75"/>
+            </div>
+
+            <div class="form-field">
+              <label for="creditLimit">🏦 Credit limit</label>
+              <input id="creditLimit" type="number" step="0.01" placeholder="e.g., 8000"/>
+            </div>
+
+            <div class="form-field form-field-full">
+              <label for="notes">📝 Notes / rules</label>
+              <textarea id="notes" rows="3" placeholder="What to use this card for, promos, rewards categories…"></textarea>
+            </div>
+          </div>
+
+          <div class="drawer-footer">
+            <button class="btn ghost" type="button" id="btnCancel">Cancel</button>
+            <button class="btn primary" type="submit">💾 Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+<!-- Shared scripts (your standard) -->
+  <script>
+    window.GS_CONFIG_URL = "/shared/config.json";
+    window.GS_CONFIG_PATH = "/shared/config.json";
+  </script>
+  <script src="/shared/js/app-config.js?v=20260208a"></script>
+  <script src="/shared/js/auth-header.js?v=20260208a"></script>
+  <script src="/shared/js/hub-badges.js"></script>
+<!-- ✅ Supabase SDK (UMD) + GSClient fallback (Household-style config) -->
+<!-- Prefer same-origin vendor file to avoid Tracking Prevention warnings. -->
+<script>
+(function(){
+  function loadScript(src){
+    return new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src=src;
+      s.async=true;
+      s.onload=()=>resolve(src);
+      s.onerror=()=>reject(new Error('Failed to load '+src));
+      document.head.appendChild(s);
+    });
+  }
+
+  // Try local paths first (your IIS/static setup may differ)
+  const localCandidates = [
+    '/shared/vendor/supabase.min.js?v=2.45.3',
+    '/shared/vendor/supabase.min.js'
+  ];
+
+  // CDN fallbacks (some browsers block jsdelivr; unpkg often works)
+  const cdnCandidates = [
+    'https://unpkg.com/@supabase/supabase-js@2.45.3/dist/umd/supabase.min.js',
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.3/dist/umd/supabase.min.js'
+  ];
+
+  async function loadAny(list){
+    let lastErr=null;
+    for(const src of list){
+      try{ await loadScript(src); return src; }catch(e){ lastErr=e; }
+    }
+    throw lastErr || new Error('No script sources provided');
+  }
+
+  // Kick off load; expose a promise so getClient can await it.
+  window.__GS_SUPABASE_SDK_READY__ = (async ()=>{
+    try{
+      return await loadAny(localCandidates);
+    }catch(_){
+      return await loadAny(cdnCandidates);
+    }
+  })();
+})();
+</script>
+
+<script>
+(function () {
+  // Household pages may only use cached header auth; tools that read/write data need a DB client.
+  // If /shared/js/gs-client.js exists on some environments, it will define GSClient first.
+  async function initGSClientFallback() {
+    if (window.GSClient && typeof window.GSClient.getAsync === "function") return;
+
+    if (!window.GSConfig || typeof window.GSConfig.getConfigPromise !== "function") {
+      console.error("GSConfig not available. Check that /shared/js/app-config.js loaded successfully.");
+      return;
+    }
+
+    async function waitForSupabase(maxMs=8000){
+      // Await the loader promise if present
+      try{ if(window.__GS_SUPABASE_SDK_READY__) await window.__GS_SUPABASE_SDK_READY__; }catch(_){}
+      const start = Date.now();
+      while(Date.now()-start < maxMs){
+        if (window.supabase && typeof window.supabase.createClient === 'function') return window.supabase;
+        await new Promise(r=>setTimeout(r, 60));
+      }
+      return null;
+    }
+
+    window.GSClient = {
+      _promise: null,
+      async getAsync() {
+        if (this._promise) return this._promise;
+
+        this._promise = (async () => {
+          const cfg = await window.GSConfig.getConfigPromise();
+          const sb = await waitForSupabase();
+          if (!sb) {
+            throw new Error("Supabase SDK not available. Check local vendor path or CDN access/CSP rules.");
+          }
+
+          // Note: keys are pulled from /shared/config.json (via app-config.js).
+          return sb.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          });
+        })();
+
+        return this._promise;
+      }
+    };
+  }
+
+  // Run after current tick so GSConfig has time to register.
+  setTimeout(() => { initGSClientFallback(); }, 0);
+})();
+</script>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Theme: remember selection
+    (function(){
+      const STORAGE_KEY = 'geniesphere_theme';
+      const THEMES = ['theme-calm','theme-future','theme-nature','theme-dark'];
+      const DEFAULT_THEME = 'theme-dark';
+      try{
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if(saved && THEMES.includes(saved)){
+          THEMES.forEach(t=>document.body.classList.remove(t));
+          document.body.classList.add(saved);
+        }else{
+          THEMES.forEach(t=>document.body.classList.remove(t));
+          document.body.classList.add(DEFAULT_THEME);
+        }
+      }catch(_){}
+    })();
+
+    const state = { client:null, user:null, cards:[] };
+
+    function money(n){
+      const x = Number(n || 0);
+      return x.toLocaleString(undefined, { style:'currency', currency:'USD' });
+    }
+    function escapeHtml(str){
+      return String(str ?? '').replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    }
+
+    async function loadConfig(){
+      const meta = document.querySelector('meta[name="gs-config"]');
+      const url  = meta?.content || '/shared/config.json';
+      const res  = await fetch(url, { cache: 'no-store' });
+      if(!res.ok) throw new Error('[GSConfig] Failed to load ' + url);
+      const cfg = await res.json();
+      if(!cfg?.supabaseUrl || !cfg?.supabaseAnonKey) throw new Error('[GSConfig] Missing supabaseUrl or supabaseAnonKey in config');
+      return cfg;
+    }
+    const CONFIG_PROMISE = loadConfig();
+
+    async  function getClient(){
+      // Household-style: prefer shared GSClient (config.json + shared scripts)
+      if (window.GSClient && typeof window.GSClient.getAsync === "function") {
+        return await window.GSClient.getAsync();
+      }
+
+      // Fallback: build a client directly from GSConfig (still uses /shared/config.json)
+      if (window.GSConfig && typeof window.GSConfig.getConfigPromise === "function") {
+        const cfg = await window.GSConfig.getConfigPromise();
+        const sb = window.supabase;
+        if (!sb || typeof sb.createClient !== "function") {
+          try { if(window.__GS_SUPABASE_SDK_READY__) await window.__GS_SUPABASE_SDK_READY__; } catch(_){}
+          const start = Date.now();
+          while(Date.now()-start < 8000){
+            if (window.supabase && typeof window.supabase.createClient === "function") break;
+            await new Promise(r=>setTimeout(r, 60));
+          }
+          if (!window.supabase || typeof window.supabase.createClient !== "function") {
+            throw new Error("Supabase SDK not available. Check local vendor path (/shared/vendor/supabase/supabase.min.js) or CDN/CSP in this browser.");
+          }
+        }
+        return sb.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+          auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+        });
+      }
+
+      throw new Error("GSClient not available. Check that /shared/js/app-config.js loaded successfully.");
+    }
+
+    async function requireUser(){
+      const { data, error } = await state.client.auth.getUser();
+      const user = data?.user;
+      if(error || !user){
+        window.location.href = '/onboarding/login.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+        return null;
+      }
+      return user;
+    }
+
+    async function safeSelectCards(){
+      const cols = [
+        'id','user_id','created_at',
+        'card_name','nickname',
+        'issuer','product_name','last4',
+        'is_business','is_active',
+        'due_day','next_due_date',
+        'minimum_due','balance','credit_limit',
+        'notes'
+      ].join(',');
+
+      let resp = await state.client
+        .from('credit_cards')
+        .select(cols)
+        .eq('user_id', state.user.id)
+        .order('created_at', { ascending:false });
+
+      if(resp.error){
+        resp = await state.client
+          .from('credit_cards')
+          .select('*')
+          .eq('user_id', state.user.id)
+          .order('created_at', { ascending:false });
+      }
+      if(resp.error){
+        console.warn(resp.error);
+        return [];
+      }
+      return resp.data || [];
+    }
+
+    function normalizeCard(c){
+      return {
+        id: c.id,
+        card_name: c.card_name ?? c.nickname ?? '',
+        nickname: c.nickname ?? null,
+        issuer: c.issuer ?? null,
+        product_name: c.product_name ?? null,
+        last4: c.last4 ?? null,
+        is_business: !!c.is_business,
+        is_active: (c.is_active === undefined || c.is_active === null) ? true : !!c.is_active,
+        due_day: (c.due_day === undefined) ? null : (c.due_day === null ? null : Number(c.due_day)),
+        next_due_date: c.next_due_date ?? null,
+        minimum_due: (c.minimum_due === undefined) ? null : c.minimum_due,
+        balance: (c.balance === undefined) ? null : c.balance,
+        credit_limit: (c.credit_limit === undefined) ? null : c.credit_limit,
+        notes: c.notes ?? null
+      };
+    }
+
+    function formatDue(c){
+      if(c.next_due_date) return escapeHtml(String(c.next_due_date));
+      if(c.due_day) return 'Day ' + c.due_day;
+      return '—';
+    }
+
+    function nextDueDate(card){
+      if(card.next_due_date){
+        const d = new Date(card.next_due_date + 'T00:00:00');
+        if(!isNaN(d.getTime())) return d;
+      }
+      const day = Number(card.due_day || 0);
+      if(!day) return null;
+
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+
+      function clampDay(year, month0, d){
+        const last = new Date(year, month0 + 1, 0).getDate();
+        return Math.min(Math.max(1, d), last);
+      }
+
+      const today = new Date(y, m, now.getDate());
+      const dThis = new Date(y, m, clampDay(y, m, day));
+      dThis.setHours(0,0,0,0);
+      if(dThis >= today) return dThis;
+
+      const y2 = (m === 11) ? y + 1 : y;
+      const m2 = (m === 11) ? 0 : m + 1;
+      const dNext = new Date(y2, m2, clampDay(y2, m2, day));
+      dNext.setHours(0,0,0,0);
+      return dNext;
+    }
+
+    function daysBetween(a,b){
+      const ms = 24*60*60*1000;
+      const aa = new Date(a.getFullYear(),a.getMonth(),a.getDate()).getTime();
+      const bb = new Date(b.getFullYear(),b.getMonth(),b.getDate()).getTime();
+      return Math.round((bb-aa)/ms);
+    }
+
+    function computeKPIs(cards){
+      const total = cards.length;
+      const active = cards.filter(c=>c.is_active).length;
+      const bal = cards.reduce((s,c)=> s + (Number(c.balance)||0), 0);
+      const lim = cards.reduce((s,c)=> s + (Number(c.credit_limit)||0), 0);
+      const util = (lim > 0) ? (bal/lim) : null;
+
+      // Due soon (next 7 days)
+      const today = new Date();
+      const horizon = 7;
+      const dueItems = cards
+        .filter(c=>c.is_active)
+        .map(c=>({ card:c, due: nextDueDate(c) }))
+        .filter(x=>x.due)
+        .map(x=>({ card:x.card, due:x.due, inDays: daysBetween(today, x.due) }))
+        .filter(x=>x.inDays >= 0 && x.inDays <= horizon)
+        .sort((a,b)=>a.inDays - b.inDays);
+
+      document.getElementById('kpi-total').textContent = String(total);
+      document.getElementById('kpi-active').textContent = String(active);
+      document.getElementById('kpi-balance').textContent = money(bal);
+      document.getElementById('kpi-limit').textContent = money(lim);
+      document.getElementById('kpi-util').textContent = (util === null) ? '—' : (Math.round(util*1000)/10) + '%';
+
+      const dueEl = document.getElementById('kpi-due-soon');
+      const dueFoot = document.getElementById('kpi-due-soon-foot');
+      if(dueEl) dueEl.textContent = String(dueItems.length);
+      if(dueFoot){
+        if(!dueItems.length){ dueFoot.textContent = 'None soon'; }
+        else{
+          const next = dueItems[0];
+          const label = next.inDays === 0 ? 'Today' : (next.inDays + 'd');
+          dueFoot.textContent = 'Next: ' + label;
+        }
+      }
+
+      document.getElementById('kpi-total-foot').textContent = total ? 'Tracked' : 'Add cards';
+      document.getElementById('kpi-active-foot').textContent = total ? 'In use' : '—';
+      document.getElementById('kpi-balance-foot').textContent = total ? 'Entered' : '—';
+      document.getElementById('kpi-limit-foot').textContent = total ? 'Entered' : '—';
+      document.getElementById('kpi-util-foot').textContent = (lim > 0) ? 'Overall' : 'Add limits';
+    }
+
+    function renderDueSoon(cards){
+      const list = document.getElementById('dueSoonList');
+      const today = new Date();
+      const horizon = 7;
+
+      const items = cards
+        .filter(c=>c.is_active)
+        .map(c=>({ card:c, due: nextDueDate(c) }))
+        .filter(x=>x.due)
+        .map(x=>({ card:x.card, due:x.due, inDays: daysBetween(today, x.due) }))
+        .filter(x=>x.inDays >= 0 && x.inDays <= horizon)
+        .sort((a,b)=>a.inDays - b.inDays);
+
+      if(!items.length){
+        list.className = 'empty';
+        list.textContent = 'No due dates in the next 7 days. ✅';
+        return;
+      }
+
+      list.className = '';
+      list.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+        '<thead><tr>' +
+        '<th style="text-align:left;padding:8px 8px;border-bottom:1px solid rgba(148,163,184,.18);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.12em">Card</th>' +
+        '<th style="text-align:left;padding:8px 8px;border-bottom:1px solid rgba(148,163,184,.18);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.12em">Due</th>' +
+        '<th style="text-align:right;padding:8px 8px;border-bottom:1px solid rgba(148,163,184,.18);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.12em">In</th>' +
+        '<th style="text-align:right;padding:8px 8px;border-bottom:1px solid rgba(148,163,184,.18);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.12em">Min Due</th>' +
+        '</tr></thead><tbody>' +
+        items.map(x=>{
+          const name = escapeHtml(x.card.card_name || 'Card');
+          const dueStr = x.due.toISOString().slice(0,10);
+          const inStr = x.inDays === 0 ? 'Today' : (x.inDays + 'd');
+          const minDue = (x.card.minimum_due !== null && x.card.minimum_due !== undefined && x.card.minimum_due !== '') ? money(x.card.minimum_due) : '—';
+          return '<tr>' +
+            '<td style="padding:8px 8px;border-bottom:1px solid rgba(148,163,184,.12)"><strong>' + name + '</strong></td>' +
+            '<td style="padding:8px 8px;border-bottom:1px solid rgba(148,163,184,.12)">' + dueStr + '</td>' +
+            '<td style="padding:8px 8px;border-bottom:1px solid rgba(148,163,184,.12);text-align:right" class="nowrap">' + inStr + '</td>' +
+            '<td style="padding:8px 8px;border-bottom:1px solid rgba(148,163,184,.12);text-align:right" class="nowrap">' + minDue + '</td>' +
+          '</tr>';
+        }).join('') +
+        '</tbody></table>';
+    }
+
+    function renderHealth(cards){
+      const el = document.getElementById('healthList');
+      const missingDue = cards.filter(c=>!c.next_due_date && !c.due_day).length;
+      const missingBal = cards.filter(c=>c.balance === null || c.balance === undefined || c.balance === '').length;
+      const missingLim = cards.filter(c=>c.credit_limit === null || c.credit_limit === undefined || c.credit_limit === '').length;
+
+      const lines = [];
+      if(!cards.length){
+        lines.push('Add at least one card to get started.');
+      }else{
+        if(missingDue) lines.push('⚠️ ' + missingDue + ' card(s) missing due date/day.');
+        if(missingBal) lines.push('ℹ️ ' + missingBal + ' card(s) missing balance (utilization may be inaccurate).');
+        if(missingLim) lines.push('ℹ️ ' + missingLim + ' card(s) missing credit limit (utilization may be inaccurate).');
+        if(!missingDue && !missingBal && !missingLim) lines.push('All set — your card data looks healthy. ✅');
+      }
+
+      el.className = 'empty';
+      el.textContent = lines.join('\n');
+    }
+
+    function badgeType(card){
+      return card.is_business ? '<span class="badge">Business</span>' : '<span class="badge">Personal</span>';
+    }
+    function badgeActive(card){
+      return card.is_active ? '<span class="badge good">Active</span>' : '<span class="badge warn">Inactive</span>';
+    }
+    function calcUsagePct(card){
+      const b = Number(card.balance || 0);
+      const l = Number(card.credit_limit || 0);
+      if(l <= 0) return null;
+      return b/l;
+    }
+
+        function renderTable(cards){
+      const wrap = document.getElementById('tableWrap');
+      const cardWrap = document.getElementById('cardWrap');
+      const empty = document.getElementById('emptyState');
+
+      if(!cards.length){
+        wrap.innerHTML = '';
+        if(cardWrap) cardWrap.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      // --- Desktop/table view ---
+      const rows = cards.map(c=>{
+        const name = escapeHtml(c.card_name || '—');
+        const issuer = escapeHtml(c.issuer || '—');
+        const product = escapeHtml(c.product_name || '—');
+        const last4 = c.last4 ? ('•••• ' + escapeHtml(c.last4)) : '—';
+        const due = formatDue(c);
+        const bal = (c.balance !== null && c.balance !== undefined && c.balance !== '') ? money(c.balance) : '—';
+        const lim = (c.credit_limit !== null && c.credit_limit !== undefined && c.credit_limit !== '') ? money(c.credit_limit) : '—';
+        const usage = calcUsagePct(c);
+        const usageStr = usage === null ? '—' : (Math.round(usage*1000)/10) + '%';
+        const notes = escapeHtml(c.notes || '—');
+
+        return '<tr>' +
+          '<td><strong>' + name + '</strong><div class="muted" style="font-size:12px">' + product + '</div></td>' +
+          '<td>' + issuer + '</td>' +
+          '<td class="nowrap">' + last4 + '</td>' +
+          '<td>' + badgeType(c) + '</td>' +
+          '<td>' + badgeActive(c) + '</td>' +
+          '<td class="nowrap">' + due + '</td>' +
+          '<td class="right nowrap">' + bal + '</td>' +
+          '<td class="right nowrap">' + lim + '</td>' +
+          '<td class="right nowrap">' + usageStr + '</td>' +
+          '<td style="min-width:240px">' + notes + '</td>' +
+          '<td class="right nowrap">' +
+            '<button class="btn small ghost" type="button" data-edit="' + c.id + '">✏️ Edit</button> ' +
+            '<button class="btn small ghost" type="button" data-toggle="' + c.id + '">' + (c.is_active ? '⏸ Deactivate' : '✅ Activate') + '</button> ' +
+            '<button class="btn small ghost" type="button" data-del="' + c.id + '">🗑️</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+
+      wrap.innerHTML = '<table aria-label="Cards"><thead><tr>' +
+        '<th>Card</th><th>Issuer</th><th>Last 4</th><th>Type</th><th>Active</th><th>Due</th>' +
+        '<th class="right">Balance</th><th class="right">Limit</th><th class="right">Usage</th><th>Notes</th><th class="right">Actions</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+      // --- Mobile/cards view ---
+      if(cardWrap){
+        const cardsHtml = cards.map(c=>{
+          const name = escapeHtml(c.card_name || '—');
+          const issuer = escapeHtml(c.issuer || '—');
+          const product = escapeHtml(c.product_name || '—');
+          const last4 = c.last4 ? ('•••• ' + escapeHtml(c.last4)) : '—';
+          const due = formatDue(c);
+          const bal = (c.balance !== null && c.balance !== undefined && c.balance !== '') ? money(c.balance) : '—';
+          const lim = (c.credit_limit !== null && c.credit_limit !== undefined && c.credit_limit !== '') ? money(c.credit_limit) : '—';
+          const usage = calcUsagePct(c);
+          const usageStr = usage === null ? '—' : (Math.round(usage*1000)/10) + '%';
+          const notes = escapeHtml((c.notes || '').trim());
+
+          return '' +
+            '<article class="record-card" data-card="' + c.id + '">' +
+              '<div class="record-card-head">' +
+                '<div>' +
+                  '<h3 class="record-title">' + name + '</h3>' +
+                  '<div class="record-sub">' +
+                    (product !== '—' ? (product + ' • ') : '') + issuer + (last4 !== '—' ? (' • ' + last4) : '') +
+                  '</div>' +
+                '</div>' +
+                '<div class="record-badges">' + badgeType(c) + badgeActive(c) + '</div>' +
+              '</div>' +
+              '<div class="record-card-body">' +
+                '<div class="kv"><div class="k">Due</div><div class="v">' + due + '</div></div>' +
+                '<div class="kv"><div class="k">Balance</div><div class="v">' + bal + '</div></div>' +
+                '<div class="kv"><div class="k">Limit</div><div class="v">' + lim + '</div></div>' +
+                '<div class="kv"><div class="k">Usage</div><div class="v">' + usageStr + '</div></div>' +
+                (notes ? ('<div class="record-notes">' + notes + '</div>') : '<div class="record-notes">No notes yet.</div>') +
+                '<div class="record-actions">' +
+                  '<button class="btn ghost" type="button" data-edit="' + c.id + '">✏️ Edit</button>' +
+                  '<button class="btn ghost" type="button" data-toggle="' + c.id + '">' + (c.is_active ? '⏸ Deactivate' : '✅ Activate') + '</button>' +
+                  '<button class="btn ghost" type="button" data-del="' + c.id + '">🗑️ Delete</button>' +
+                '</div>' +
+              '</div>' +
+            '</article>';
+        }).join('');
+
+        cardWrap.innerHTML = '<div class="card-grid">' + cardsHtml + '</div>';
+      }
+
+      // Wire actions (works for both table + cards)
+      document.querySelectorAll('[data-edit]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id = btn.getAttribute('data-edit');
+          const card = state.cards.find(x=>x.id === id);
+          if(card) openDrawer('edit', card);
+        });
+      });
+
+      document.querySelectorAll('[data-toggle]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const id = btn.getAttribute('data-toggle');
+          const card = state.cards.find(x=>x.id === id);
+          if(!card) return;
+          await toggleActive(card);
+        });
+      });
+
+      document.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const id = btn.getAttribute('data-del');
+          const card = state.cards.find(x=>x.id === id);
+          if(!card) return;
+          if(!confirm('Delete “' + (card.card_name || 'this card') + '”?')) return;
+          await deleteCard(card);
+        });
+      });
+    }
+
+    async function toggleActive(card){
+      const next = !card.is_active;
+      const { error } = await state.client.from('credit_cards')
+        .update({ is_active: next })
+        .eq('id', card.id)
+        .eq('user_id', state.user.id);
+      if(error){ console.warn(error); alert('Update failed.'); return; }
+      await refresh();
+    }
+
+    async function deleteCard(card){
+      const { error } = await state.client.from('credit_cards')
+        .delete()
+        .eq('id', card.id)
+        .eq('user_id', state.user.id);
+      if(error){ console.warn(error); alert('Delete failed.'); return; }
+      await refresh();
+    }
+
+    async function refresh(){
+      const raw = await safeSelectCards();
+      state.cards = raw.map(normalizeCard);
+      computeKPIs(state.cards);
+      renderTable(state.cards);
+    }
+
+    // Drawer wiring
+    const drawerOverlay = document.getElementById('drawerOverlay');
+    const drawerTitle = document.getElementById('drawerTitle');
+    const cardForm = document.getElementById('cardForm');
+    let lastFocusEl = null;
+
+    function openDrawer(mode, card){
+      lastFocusEl = document.activeElement;
+
+      drawerOverlay.hidden = false;
+      requestAnimationFrame(()=> drawerOverlay.classList.add('show'));
+      drawerOverlay.setAttribute('aria-hidden','false');
+
+      // Make the rest of the page non-interactive while drawer is open (better a11y)
+      document.querySelectorAll('header, main, footer').forEach(el=>{
+        if(el) el.setAttribute('inert','');
+      });
+
+      document.body.style.overflow='hidden';
+
+      if(mode === 'edit' && card){
+        drawerTitle.textContent = 'Edit card';
+        document.getElementById('cardId').value = card.id;
+        document.getElementById('cardName').value = card.card_name || '';
+        document.getElementById('issuer').value = card.issuer || '';
+        document.getElementById('productName').value = card.product_name || '';
+        document.getElementById('last4').value = card.last4 || '';
+        document.getElementById('isBusiness').value = card.is_business ? 'true' : 'false';
+        document.getElementById('isActive').value = card.is_active ? 'true' : 'false';
+        document.getElementById('dueDay').value = card.due_day || '';
+        document.getElementById('dueDate').value = card.next_due_date || '';
+        document.getElementById('minimumDue').value = (card.minimum_due ?? '') === null ? '' : (card.minimum_due ?? '');
+        document.getElementById('balance').value = (card.balance ?? '') === null ? '' : (card.balance ?? '');
+        document.getElementById('creditLimit').value = (card.credit_limit ?? '') === null ? '' : (card.credit_limit ?? '');
+        document.getElementById('notes').value = card.notes || '';
+      }else{
+        drawerTitle.textContent = 'Add card';
+        cardForm.reset();
+        document.getElementById('cardId').value = '';
+        document.getElementById('isBusiness').value = 'false';
+        document.getElementById('isActive').value = 'true';
+      }
+
+      // Focus first input for keyboard users
+      setTimeout(()=>{ document.getElementById('cardName')?.focus(); }, 0);
+    }
+
+    function closeDrawer(){
+      // Move focus out of the drawer BEFORE hiding it (prevents aria-hidden focus warning)
+      document.getElementById('btnAddTop')?.focus?.();
+
+      drawerOverlay.classList.remove('show');
+
+      // Restore background interactivity after the transition
+      setTimeout(()=>{
+        document.querySelectorAll('header, main, footer').forEach(el=>{
+          if(el) el.removeAttribute('inert');
+        });
+
+        drawerOverlay.setAttribute('aria-hidden','true');
+        drawerOverlay.hidden = true;
+
+        // Return focus to the element that opened the drawer (if still present)
+        if(lastFocusEl && document.contains(lastFocusEl)) lastFocusEl.focus();
+        lastFocusEl = null;
+      }, 220);
+
+      document.body.style.overflow='';
+    }
+
+    document.getElementById('btnAddTop')?.addEventListener('click', ()=> openDrawer('new'));
+    document.getElementById('btnCloseDrawer').addEventListener('click', closeDrawer);
+    document.getElementById('btnCancel').addEventListener('click', closeDrawer);
+    drawerOverlay.addEventListener('click', (e)=>{ if(e.target === drawerOverlay) closeDrawer(); });
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape' && !drawerOverlay.hidden) closeDrawer();
+    });
+
+    cardForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+
+      const id = (document.getElementById('cardId').value || '').trim();
+      const isEdit = !!id;
+
+      const payload = {
+        user_id: state.user.id,
+        card_name: document.getElementById('cardName').value.trim(),
+        issuer: document.getElementById('issuer').value.trim() || null,
+        product_name: document.getElementById('productName').value.trim() || null,
+        last4: document.getElementById('last4').value.trim() || null,
+        is_business: document.getElementById('isBusiness').value === 'true',
+        is_active: document.getElementById('isActive').value === 'true',
+        due_day: (document.getElementById('dueDay').value || '').trim() ? Number(document.getElementById('dueDay').value) : null,
+        next_due_date: (document.getElementById('dueDate').value || '').trim() || null,
+        minimum_due: (document.getElementById('minimumDue').value || '').trim() ? Number(document.getElementById('minimumDue').value) : null,
+        balance: (document.getElementById('balance').value || '').trim() ? Number(document.getElementById('balance').value) : null,
+        credit_limit: (document.getElementById('creditLimit').value || '').trim() ? Number(document.getElementById('creditLimit').value) : null,
+        notes: document.getElementById('notes').value.trim() || null
+      };
+
+      if(!payload.card_name){
+        alert('Please enter a card name.');
+        return;
+      }
+      if(payload.due_day !== null && (payload.due_day < 1 || payload.due_day > 31)){
+        alert('Due day must be between 1 and 31.');
+        return;
+      }
+
+      let resp;
+      if(isEdit){
+        resp = await state.client.from('credit_cards').update(payload).eq('id', id).eq('user_id', state.user.id);
+      }else{
+        resp = await state.client.from('credit_cards').insert(payload);
+      }
+
+      if(resp.error){
+        console.warn(resp.error);
+        alert('Save failed: ' + (resp.error?.message || 'Unknown error') + 'Tip: confirm columns exist: balance, credit_limit, minimum_due, next_due_date.');
+        return;
+      }
+
+      closeDrawer();
+      await refresh();
+    });
+
+    // Export
+    document.getElementById('btnExport').addEventListener('click', ()=>{
+      if(!state.cards.length){ alert('No cards to export yet.'); return; }
+      const headers = ['card_name','issuer','product_name','last4','is_business','is_active','due_day','next_due_date','minimum_due','balance','credit_limit','notes'];
+      const rows = [headers.join(',')];
+      state.cards.forEach(c=>{
+        const line = headers.map(h=>{
+          const v = c[h];
+          if(v === undefined || v === null) return '';
+          const s = String(v).replace(/"/g,'""');
+          return '"' + s + '"';
+        }).join(',');
+        rows.push(line);
+      });
+      const blob = new Blob([rows.join('\n')], { type:'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'credit-cards.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    async function bootstrap(){
+      state.client = await getClient();
+
+      try{
+        window.GSAuthHeader?.init?.({ loginUrl:'/onboarding/login.html', afterLogoutUrl:'/index.html' });
+      }catch(_){}
+
+      const user = await requireUser();
+      if(!user) return;
+      state.user = user;
+
+      await refresh();
+    }
+    bootstrap();
+  </script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+{
+  "name": "Voyage Genie — Parse Trip Confirmation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "parse-trip",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook — Receive Confirmation Text",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "notes": "POST body: { text: '...booking confirmation...', user_id: '...', save_to_supabase: true }"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body ?? $input.first().json;\nconst text = (body.text || '').trim();\nif (!text) {\n  throw new Error('No text provided in request body');\n}\nreturn [{\n  json: {\n    text,\n    user_id: body.user_id || null,\n    save_to_supabase: body.save_to_supabase !== false\n  }\n}];"
+      },
+      "id": "validate-input",
+      "name": "Validate & Extract Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "model": "claude-opus-4-5",
+        "options": {
+          "temperature": 0,
+          "maxTokensToSample": 1200,
+          "systemMessage": "You are a travel booking data extraction assistant. Extract structured trip information from booking confirmations. Always return valid JSON only — no markdown, no explanation, no code fences. Be precise with dates (YYYY-MM-DD format). If a field cannot be found, use an empty string."
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Extract trip details from the booking confirmation below.\n\nReturn ONLY a single valid JSON object with exactly these keys:\n{\n  \"name\": \"descriptive trip name, e.g. Maui Family Vacation 2026\",\n  \"destination\": \"city and/or country, e.g. Maui, Hawaii\",\n  \"tripType\": \"exactly one of: Tropical Resort, Cruise Adventure, Airbnb Getaway, Adventure Trip, City Break, Road Trip, Business Trip, Other\",\n  \"startDate\": \"YYYY-MM-DD or empty string\",\n  \"endDate\": \"YYYY-MM-DD or empty string\",\n  \"groupSize\": \"integer as string or empty string\",\n  \"budget\": \"total numeric amount only, no $ or commas, e.g. 5240.00, or empty string\",\n  \"participants\": \"comma-separated full names or empty string\",\n  \"bookingRef\": \"confirmation/booking/reservation number or empty string\",\n  \"agent\": \"travel agent name, airline, hotel brand, or booking platform or empty string\",\n  \"notes\": \"flight numbers, hotel name, room type, special requests, or any other key details\"\n}\n\nBooking confirmation:\n{{ $json.text }}"
+            }
+          ]
+        }
+      },
+      "id": "claude-parse",
+      "name": "Claude — Parse Confirmation",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [680, 300],
+      "credentials": {
+        "anthropicApi": {
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.text || $input.first().json.content || '';\nconst user_id = $('Validate & Extract Input').first().json.user_id;\nconst save = $('Validate & Extract Input').first().json.save_to_supabase;\n\n// Strip any accidental markdown fences\nconst clean = raw.replace(/```json|```/g, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(clean);\n} catch(e) {\n  // Try to extract JSON object from the text\n  const match = clean.match(/\\{[\\s\\S]+\\}/);\n  if (match) {\n    parsed = JSON.parse(match[0]);\n  } else {\n    throw new Error('Claude did not return valid JSON: ' + clean.slice(0, 200));\n  }\n}\n\n// Build the trip_data object that matches Voyage Genie schema\nconst participants = (parsed.participants || '')\n  .split(',')\n  .map(s => s.trim())\n  .filter(Boolean);\n\nconst tripData = {\n  name:          parsed.name        || '',\n  tripType:      parsed.tripType    || 'Other',\n  destination:   parsed.destination || '',\n  startDate:     parsed.startDate   || '',\n  endDate:       parsed.endDate     || '',\n  groupSize:     parsed.groupSize   ? Number(parsed.groupSize) : (participants.length || ''),\n  budget:        parsed.budget      ? Number(parsed.budget)    : '',\n  participants,\n  people:        participants.map(n => ({ name: n, payer: n })),\n  bookingRef:    parsed.bookingRef  || '',\n  agent:         parsed.agent       || '',\n  notes:         parsed.notes       || '',\n  expenses:      [],\n  addedManually: true,\n  parsedByAI:    true,\n  createdAt:     new Date().toISOString()\n};\n\nreturn [{\n  json: {\n    parsed,\n    tripData,\n    trip_name: parsed.name || 'My Trip',\n    user_id,\n    save\n  }\n}];"
+      },
+      "id": "build-trip-object",
+      "name": "Build Trip Data Object",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-save",
+              "leftValue": "={{ $json.save }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            },
+            {
+              "id": "check-user",
+              "leftValue": "={{ $json.user_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "should-save",
+      "name": "Should Save to Supabase?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://pbojacnagutipfhcxltj.supabase.co/rest/v1/user_trips",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ user_id: $json.user_id, trip_name: $json.trip_name, trip_data: $json.tripData }) }}"
+      },
+      "id": "save-to-supabase",
+      "name": "Save Trip to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 200],
+      "notes": "Uses Supabase anon key — RLS must allow INSERT for authenticated users. For production, swap to service_role key stored in n8n credentials."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"saved\": true,\n  \"trip\": {{ JSON.stringify($('Build Trip Data Object').first().json.tripData) }},\n  \"supabase_row\": {{ JSON.stringify($json) }}\n}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-saved",
+      "name": "Respond — Saved",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"saved\": false,\n  \"trip\": {{ JSON.stringify($json.tripData) }}\n}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-parsed-only",
+      "name": "Respond — Parsed Only",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1340, 420]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"{{ $json.message }}\"\n}",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-error",
+      "name": "Respond — Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [680, 520]
+    },
+    {
+      "parameters": {
+        "errorMessage": "={{ $json.message }}"
+      },
+      "id": "error-trigger",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [460, 520]
+    }
+  ],
+  "connections": {
+    "Webhook — Receive Confirmation Text": {
+      "main": [
+        [{ "node": "Validate & Extract Input", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validate & Extract Input": {
+      "main": [
+        [{ "node": "Claude — Parse Confirmation", "type": "main", "index": 0 }]
+      ]
+    },
+    "Claude — Parse Confirmation": {
+      "main": [
+        [{ "node": "Build Trip Data Object", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Trip Data Object": {
+      "main": [
+        [{ "node": "Should Save to Supabase?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Should Save to Supabase?": {
+      "main": [
+        [{ "node": "Save Trip to Supabase", "type": "main", "index": 0 }],
+        [{ "node": "Respond — Parsed Only", "type": "main", "index": 0 }]
+      ]
+    },
+    "Save Trip to Supabase": {
+      "main": [
+        [{ "node": "Respond — Saved", "type": "main", "index": 0 }]
+      ]
+    },
+    "Error Handler": {
+      "main": [
+        [{ "node": "Respond — Error", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["voyage-genie", "travel", "ai-parsing"],
+  "triggerCount": 1,
+  "updatedAt": "2026-03-22T00:00:00.000Z",
+  "versionId": "1"
+}

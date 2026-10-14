@@ -1,0 +1,209 @@
+{
+  "name": "Trip Plan Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trip-plan",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "value1": "={{$json[\"trip_type\"]}}",
+        "rules": [
+          {
+            "value2": "tropical"
+          },
+          {
+            "value2": "airbnb"
+          },
+          {
+            "value2": "adventure"
+          },
+          {
+            "value2": "cruise"
+          }
+        ]
+      },
+      "id": "2",
+      "name": "Switch Trip Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a travel agent creating tropical vacation plans. Respond with a day-by-day itinerary including flights, hotel recommendations, and activities."
+          },
+          {
+            "role": "user",
+            "content": "Create a tropical vacation plan for a group of {{$json.group_size}} departing from {{$json.departure}} to {{$json.destination}} between {{$json.start_date}} and {{$json.end_date}}."
+          }
+        ]
+      },
+      "id": "3",
+      "name": "ChatGPT Tropical",
+      "type": "n8n-nodes-base.openaiChat",
+      "typeVersion": 1,
+      "position": [
+        600,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a travel agent specializing in Airbnb stays and local experiences."
+          },
+          {
+            "role": "user",
+            "content": "Plan a trip using Airbnb for a group of {{$json.group_size}} departing from {{$json.departure}} to {{$json.destination}} between {{$json.start_date}} and {{$json.end_date}}."
+          }
+        ]
+      },
+      "id": "4",
+      "name": "ChatGPT Airbnb",
+      "type": "n8n-nodes-base.openaiChat",
+      "typeVersion": 1,
+      "position": [
+        600,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a travel planner focusing on adventure trips including hikes, water sports, and outdoor activities."
+          },
+          {
+            "role": "user",
+            "content": "Plan an adventure trip for a group of {{$json.group_size}} departing from {{$json.departure}} to {{$json.destination}} between {{$json.start_date}} and {{$json.end_date}}."
+          }
+        ]
+      },
+      "id": "5",
+      "name": "ChatGPT Adventure",
+      "type": "n8n-nodes-base.openaiChat",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a cruise travel expert. Include ship names, destinations, and cruise activities."
+          },
+          {
+            "role": "user",
+            "content": "Plan a cruise trip for {{$json.group_size}} departing from {{$json.departure}} to {{$json.destination}} between {{$json.start_date}} and {{$json.end_date}}."
+          }
+        ]
+      },
+      "id": "6",
+      "name": "ChatGPT Cruise",
+      "type": "n8n-nodes-base.openaiChat",
+      "typeVersion": 1,
+      "position": [
+        600,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "7",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        800,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch Trip Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Trip Type": {
+      "main": [
+        [
+          {
+            "node": "ChatGPT Tropical",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ChatGPT Airbnb",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "ChatGPT Adventure",
+            "type": "main",
+            "index": 2
+          }
+        ],
+        [
+          {
+            "node": "ChatGPT Cruise",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "ChatGPT Tropical": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

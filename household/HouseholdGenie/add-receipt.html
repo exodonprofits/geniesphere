@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>➕ Add Receipt</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.4/dist/tesseract.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-xl mx-auto p-6">
+    <h1 class="text-2xl font-bold text-center mb-4">➕ Add Receipt</h1>
+    <div class="bg-white p-6 rounded-2xl shadow">
+      <form id="receiptForm" class="space-y-4">
+        <div>
+          <label class="block font-semibold">📸 Upload or Take Photo</label>
+          <input type="file" id="receiptImage" accept="image/*" capture="environment" class="w-full p-2 border rounded" />
+        </div>
+        <div>
+          <label class="block font-semibold">🏬 Store</label>
+          <input type="text" name="store" id="store" placeholder="e.g. Costco, Amazon" class="w-full p-2 border rounded" required />
+        </div>
+        <div>
+          <label class="block font-semibold">📆 Purchase Date</label>
+          <input type="date" name="purchase_date" id="purchase_date" class="w-full p-2 border rounded" required />
+        </div>
+        <div>
+          <label class="block font-semibold">💵 Amount</label>
+          <input type="number" step="0.01" name="amount" id="amount" placeholder="e.g. 52.49" class="w-full p-2 border rounded" required />
+        </div>
+        <div>
+          <label class="block font-semibold">📝 Notes</label>
+          <textarea name="notes" id="notes" placeholder="Optional notes..." class="w-full p-2 border rounded"></textarea>
+        </div>
+        <div class="flex justify-center">
+          <button type="submit" class="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition">💾 Save</button>
+        </div>
+      </form>
+    </div>
+    <div class="text-center mt-4">
+      <a href="receipts.html" class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition w-max mx-auto">
+        ⬅️ Back to Receipts
+      </a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabase = createClient('https://pbojacnagutipfhcxltj.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+
+    const form = document.getElementById('receiptForm');
+    const imageInput = document.getElementById('receiptImage');
+
+    imageInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const { data: { text } } = await Tesseract.recognize(file, 'eng');
+
+      document.getElementById('notes').value = text;
+
+      const amountMatch = text.match(/\$\s?\d+[\.\d]{0,2}/);
+      if (amountMatch) {
+        document.getElementById('amount').value = amountMatch[0].replace(/[^\d\.]/g, '');
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const user = await supabase.auth.getUser();
+      const payload = Object.fromEntries(formData.entries());
+      payload.user_id = user.data.user.id;
+
+      const { error } = await supabase.from('receipts').insert([payload]);
+      if (error) return alert('Error saving: ' + error.message);
+      window.location.href = 'receipts.html';
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+

@@ -1,0 +1,221 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voyage Genie – Your AI Travel Companion</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f8fb;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    section {
+      padding: 4rem 1rem;
+    }
+    .hero-section {
+      background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      text-align: center;
+      padding: 6rem 1rem;
+    }
+    .hero-section h2 {
+      font-size: 3rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+    .hero-section p {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .travel-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .travel-option {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    .travel-option:hover {
+      transform: translateY(-5px);
+    }
+    .travel-option img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .travel-option h3 {
+      font-size: 1.5rem;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+    }
+    .travel-option p {
+      color: #555;
+      margin-bottom: 1rem;
+    }
+    /* Style for the navigation bar icon */
+    .nav-icon {
+      height: 30px; /* Adjust the height to fit the navigation bar */
+      width: auto;
+      margin-right: 8px; /* Space between the image and the text */
+    }
+    /* Flex container for the image and text */
+    .nav-brand {
+      display: flex;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="bg-gradient-to-r from-blue-400 to-indigo-600 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="#home" class="nav-brand" aria-label="Go to Home">
+        <img src="IMG_5840.jpg" alt="Voyage Genie Icon" class="nav-icon">
+        <h1 class="text-2xl font-bold">Voyage Genie</h1>
+      </a>
+      <ul class="flex space-x-6">
+        <li><a href="#home" class="hover:underline">Home</a></li>
+        <li><a href="features.html" class="hover:underline">Features</a></li>
+        <li><a href="trip_planning_form.html" class="hover:underline">Plan Trip</a></li>
+        <li><a href="contact.html" class="hover:underline">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="home" class="hero-section">
+    <h2>Voyage Genie</h2>
+    <p>Plan Less, Explore More</p>
+    <div id="destination-search" class="max-w-md mx-auto">
+      <label for="destination" class="sr-only">Search for a destination</label>
+      <input type="text" id="destination" placeholder="Where do you want to go?" class="w-full p-3 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <button id="search-btn" class="mt-2 bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600">Search</button>
+    </div>
+  </section>
+
+  <!-- Travel Options -->
+  <section id="plan" class="bg-white py-12">
+    <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Explore Travel Options</h2>
+    <div class="travel-options">
+      <div class="travel-option">
+        <img src="https://images.unsplash.com/photo-1615461066159-fea6697c34a9?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Tropical Resort">
+        <h3>Tropical Resort</h3>
+        <p>Relax in paradise with all-inclusive packages tailored to your preferences.</p>
+        <a href="trip_planning_form.html?type=resort" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 inline-block">Plan Now</a>
+      </div>
+      <div class="travel-option">
+        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Cruise Adventure">
+        <h3>Cruise Adventure</h3>
+        <p>Embark on a luxurious cruise with stunning ocean views and exciting stops.</p>
+        <a href="trip_planning_form.html?type=cruise" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 inline-block">Plan Now</a>
+      </div>
+      <div class="travel-option">
+        <img src="https://images.unsplash.com/photo-1519985330-48811b8596c2?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Airbnb Getaway">
+        <h3>Airbnb Getaway</h3>
+        <p>Find the perfect home away from home with personalized Airbnb recommendations.</p>
+        <a href="trip_planning_form.html?type=airbnb" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 inline-block">Plan Now</a>
+      </div>
+      <div class="travel-option">
+        <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Adventure Trip">
+        <h3>Adventure Trip</h3>
+        <p>Experience thrilling outdoor activities and explore new destinations.</p>
+        <a href="trip_planning_form.html?type=adventure" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 inline-block">Plan Now</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section id="features" class="bg-gray-100 text-center py-12">
+    <h2 class="text-3xl font-bold text-gray-800 mb-4">Ready to Plan Your Dream Trip?</h2>
+    <p class="text-lg text-gray-600 mb-6">Let Voyage Genie create a personalized itinerary just for you.</p>
+    <a href="trip_planning_form.html" class="bg-blue-500 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-600 inline-block">Plan My Trip</a>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact" class="bg-gray-200 text-center py-8">
+    <p class="text-sm">© 2025 VoyageGenie.com – Your AI Travel Companion ✈️🌍</p>
+    <div class="mt-4 flex justify-center space-x-6">
+      <a href="#" class="text-blue-500 hover:underline">Facebook</a>
+      <a href="#" class="text-blue-500 hover:underline">Instagram</a>
+      <a href="contact.html" class="text-blue-500 hover:underline">Contact Us</a>
+    </div>
+    <div class="mt-4">
+      <a href="#home" class="text-blue-500 hover:underline mx-2">Home</a>
+      <a href="features.html" class="text-blue-500 hover:underline mx-2">Features</a>
+      <a href="trip_planning_form.html" class="text-blue-500 hover:underline mx-2">Plan Trip</a>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('search-btn').addEventListener('click', () => {
+      const destination = document.getElementById('destination').value.trim();
+      if (destination) {
+        const selectedDestination = destination.charAt(0).toUpperCase() + destination.slice(1).toLowerCase();
+        window.location.href = `excursions_details.html?destination=${selectedDestination}`;
+      } else {
+        alert('Please enter a destination to search.');
+      }
+    });
+
+    document.getElementById('destination').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('search-btn').click();
+      }
+    });
+  </script>
+</body>
+</html>

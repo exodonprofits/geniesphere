@@ -1,0 +1,177 @@
+{
+  "name": "Party Planner AI",
+  "nodes": [
+    {
+      "id": "Webhook_In",
+      "name": "Webhook In",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [80, 260],
+      "parameters": {
+        "path": "party-planner",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": { "responseData": "allEntries" }
+      }
+    },
+    {
+      "id": "Prep_Input",
+      "name": "Prep Input",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [300, 260],
+      "parameters": {
+        "functionCode": "const b = items[0].json;\nconst occasion = b.occasion || '';\nconst dt = b.datetime || '';\nconst guests = Number(b.guests||0);\nconst location = b.location || '';\nconst theme = b.theme || '';\nconst vibe = b.vibe || '';\nconst dressCode = b.dressCode || '';\nconst colors = b.colors || '';\nconst diet = b.diet || '';\nconst cuisine = b.cuisine || '';\nconst alcohol = b.alcohol || '';\nconst budget = Number(b.budget||0);\nconst kids = b.kids || '';\nconst ages = b.ages || '';\nconst entertainment = b.entertainment || '';\nconst notes = b.notes || '';\nconst freePrompt = b.freePrompt || '';\nconst flags = {\n  autoEmail: !!b.autoEmail,\n  autoCalendar: !!b.autoCalendar,\n  autoShopping: !!b.autoShopping,\n  autoRsvp: !!b.autoRsvp\n};\nreturn [{ json: { occasion, dt, guests, location, theme, vibe, dressCode, colors, diet, cuisine, alcohol, budget, kids, ages, entertainment, notes, freePrompt, flags } }];"
+      }
+    },
+    {
+      "id": "ChatGPT",
+      "name": "ChatGPT (Plan JSON)",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 4,
+      "position": [540, 260],
+      "parameters": {
+        "resource": "chat",
+        "operation": "chat",
+        "model": "gpt-4o-mini",
+        "temperature": 0.6,
+        "messages": [
+          {
+            "type": "system",
+            "text": "You are Party Planner Genie. Always output STRICT JSON with the following shape:\n{\n  \"plan\": {\n    \"theme\": {\"summary\": string},\n    \"decor\": string[],\n    \"menu\": {\"summary\": string},\n    \"drinks\": string[],\n    \"entertainment\": {\"summary\": string, \"playlist\": string[]},\n    \"timeline\": string[],\n    \"checklist\": string[],\n    \"shopping\": string[],\n    \"budget\": {\"summary\": string},\n    \"rsvp\": {\"summary\": string}\n  }\n}\nNo commentary. No Markdown. JSON only."
+          },
+          {
+            "type": "user",
+            "text": "Inputs:\n{{$json}}"
+          },
+          {
+            "type": "assistant",
+            "text": "Acknowledge. Generate JSON next."
+          }
+        ],
+        "responseFormat": "json"
+      },
+      "credentials": {
+        "openAiApi": { "id": "YOUR_OPENAI_CREDENTIAL_ID", "name": "OpenAI" }
+      }
+    },
+    {
+      "id": "Guard_Parse",
+      "name": "Guard & Parse",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [780, 260],
+      "parameters": {
+        "functionCode": "let payload = items[0].json;\nif (payload.plan) return items;\n// If assistant returned a string, attempt JSON.parse\nif (typeof payload === 'string') {\n  try { payload = JSON.parse(payload); } catch(e) { payload = { plan: { theme:{summary:\"Unable to parse\"} } }; }\n}\nreturn [{ json: payload }];"
+      }
+    },
+    {
+      "id": "Webhook_Return",
+      "name": "Return to Web",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1020, 260],
+      "parameters": {
+        "responseBody": "={{$json}}",
+        "responseCode": 200
+      }
+    },
+
+    /* ---- Optional branches (toggle later) ---- */
+
+    {
+      "id": "If_Email",
+      "name": "IF autoEmail?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [540, 500],
+      "parameters": { "conditions": { "boolean": [{ "value1": "={{$json.flags.autoEmail}}"}] } }
+    },
+    {
+      "id": "Email_Send",
+      "name": "Send Invitations (stub)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [780, 500],
+      "parameters": {
+        "fromEmail": "no-reply@geniesphere.com",
+        "toList": "you@example.com",
+        "subject": "Your Party Plan & Invitations",
+        "text": "Here is your plan JSON:\n{{$json}}"
+      },
+      "disabled": true
+    },
+    {
+      "id": "If_Calendar",
+      "name": "IF autoCalendar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [540, 640],
+      "parameters": { "conditions": { "boolean": [{ "value1": "={{$json.flags.autoCalendar}}"}] } }
+    },
+    {
+      "id": "GCal_Create",
+      "name": "Create Calendar Event (stub)",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 4,
+      "position": [780, 640],
+      "parameters": {
+        "operation": "create",
+        "calendar": "primary",
+        "start": "={{$json.dt}}",
+        "end": "={{$json.dt}}",
+        "summary": "={{$json.occasion || \"Party\"}}",
+        "location": "={{$json.location}}",
+        "description": "Generated by Party Planner Genie"
+      },
+      "disabled": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": { "id": "YOUR_GCAL_CRED_ID", "name": "Google OAuth" }
+      }
+    },
+    {
+      "id": "If_Shopping",
+      "name": "IF autoShopping?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [540, 780],
+      "parameters": { "conditions": { "boolean": [{ "value1": "={{$json.flags.autoShopping}}"}] } }
+    },
+    {
+      "id": "Sheets_Add",
+      "name": "Shopping List to Sheets (stub)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [780, 780],
+      "parameters": {
+        "operation": "append",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "Shopping!A:B",
+        "options": {
+          "valueInputMode": "RAW"
+        },
+        "value": "={{$json.plan.shopping.map(i=>[i, new Date().toISOString()])}}"
+      },
+      "disabled": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "YOUR_SHEETS_CRED_ID", "name": "Google OAuth" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook_In": { "main": [[{ "node": "Prep_Input", "type": "main", "index": 0 }]] },
+    "Prep_Input": { "main": [[{ "node": "ChatGPT", "type": "main", "index": 0 }]] },
+    "ChatGPT": { "main": [[{ "node": "Guard_Parse", "type": "main", "index": 0 }]] },
+    "Guard_Parse": {
+      "main": [[
+        { "node": "Webhook_Return", "type": "main", "index": 0 },
+        { "node": "If_Email", "type": "main", "index": 0 },
+        { "node": "If_Calendar", "type": "main", "index": 0 },
+        { "node": "If_Shopping", "type": "main", "index": 0 }
+      ]]
+    },
+    "If_Email": { "main": [[{ "node": "Email_Send", "type": "main", "index": 0 }], []] },
+    "If_Calendar": { "main": [[{ "node": "GCal_Create", "type": "main", "index": 0 }], []] },
+    "If_Shopping": { "main": [[{ "node": "Sheets_Add", "type": "main", "index": 0 }], []] }
+  }
+}

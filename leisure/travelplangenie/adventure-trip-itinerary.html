@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Your Adventure Itinerary – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ocean:#0077b6;--ocean-deep:#023e8a;--teal:#00b4d8;--coral:#e76f51;--coral-dark:#c1551c;--off-white:#f8fafc;--gray-light:#f1f5f9;--gray-border:#e2e8f0;--text:#1e293b;--text-muted:#64748b;--radius:10px;--radius-lg:16px;--shadow:0 2px 16px rgba(0,0,0,0.07);--shadow-hover:0 12px 32px rgba(0,0,0,0.13);--transition:0.22s cubic-bezier(0.4,0,0.2,1);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+main{flex:1;}
+
+/* HEADER */
+.vg-header{position:sticky;top:0;z-index:40;background:linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%);box-shadow:0 2px 20px rgba(2,62,138,0.25);}
+.vg-nav{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.vg-brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none;}
+.vg-brand img{width:46px;height:46px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);}
+.vg-title{font-family:'Playfair Display',serif;font-weight:700;font-size:1.4rem;color:#fff;}
+.vg-right{display:flex;align-items:center;gap:10px;}
+.nav-chip{display:inline-flex;align-items:center;gap:8px;padding:0 14px;height:38px;border-radius:9px;background:rgba(255,255,255,0.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.22);font-size:0.88rem;font-weight:500;transition:background var(--transition);white-space:nowrap;}
+.nav-chip:hover{background:rgba(255,255,255,0.24);}
+
+/* PAGE BANNER */
+.page-banner{background:#eaf4fb;border-bottom:1px solid #c9e4f5;padding:1.4rem 1.5rem;}
+.page-banner-inner{max-width:1200px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+.banner-left h1{font-family:'Playfair Display',serif;font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:700;color:var(--ocean-deep);}
+.banner-left p{font-size:0.87rem;color:var(--text-muted);margin-top:0.2rem;}
+.banner-actions{display:flex;gap:0.5rem;flex-wrap:wrap;}
+
+/* BUTTONS */
+.action-btn{display:inline-flex;align-items:center;gap:7px;padding:0.5rem 1rem;border-radius:8px;font-size:0.85rem;font-weight:500;cursor:pointer;border:1px solid var(--gray-border);background:#fff;color:var(--text);text-decoration:none;transition:all var(--transition);font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.action-btn:hover{background:var(--gray-light);transform:translateY(-1px);}
+.action-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.action-btn-primary{background:var(--ocean);color:#fff;border-color:var(--ocean);}
+.action-btn-primary:hover{background:var(--ocean-deep);border-color:var(--ocean-deep);}
+
+/* LAYOUT */
+.page-body{max-width:1200px;margin:0 auto;padding:2rem 1.25rem 3rem;display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start;}
+@media(max-width:900px){.page-body{grid-template-columns:1fr;}}
+
+/* ITINERARY CARD */
+.itinerary-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;}
+.itinerary-card-header{background:linear-gradient(105deg,#023e8a,#0077b6);padding:1.5rem 1.75rem;color:#fff;}
+.itinerary-card-header h2{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;margin-bottom:0.3rem;}
+.itinerary-card-header p{font-size:0.88rem;opacity:0.8;}
+.itinerary-meta{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:1rem;}
+.meta-pill{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.22);border-radius:999px;padding:0.28rem 0.85rem;font-size:0.8rem;color:#fff;}
+.itinerary-body{padding:1.75rem;}
+.itinerary-content{font-size:0.93rem;line-height:1.75;color:var(--text);}
+.itinerary-content strong{color:var(--ocean-deep);}
+.itinerary-content a{color:var(--ocean);}
+.itinerary-content a:hover{text-decoration:underline;}
+.itinerary-content table{width:100%;border-collapse:collapse;margin:0.75rem 0;font-size:0.88rem;}
+.itinerary-content table th{background:var(--gray-light);padding:8px 12px;text-align:left;font-weight:600;border:1px solid var(--gray-border);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);}
+.itinerary-content table td{padding:9px 12px;border:1px solid var(--gray-border);vertical-align:top;}
+.itinerary-content table tr:nth-child(even) td{background:var(--gray-light);}
+
+/* LOADING */
+.loading-state{text-align:center;padding:4rem 2rem;}
+.spinner{width:48px;height:48px;border:3px solid rgba(0,119,182,0.2);border-top:3px solid var(--ocean);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 1.25rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.loading-state p{color:var(--text-muted);font-size:0.95rem;}
+
+/* NEXT STEPS */
+.next-steps{margin-top:1.5rem;border-top:1px solid var(--gray-border);padding-top:1.5rem;}
+.next-steps-title{font-size:0.82rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.85rem;}
+.next-steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;}
+@media(max-width:720px){.next-steps-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:380px){.next-steps-grid{grid-template-columns:1fr;}}
+
+/* TABLE OVERFLOW FIX */
+.itinerary-content table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+/* PRICE DISCLAIMER */
+.price-disclaimer{display:flex;align-items:flex-start;gap:0.75rem;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:0.9rem 1.1rem;margin-bottom:1.25rem;font-size:0.85rem;line-height:1.55;color:#78350f;}
+.price-disclaimer-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+.price-disclaimer strong{color:#92400e;display:block;margin-bottom:0.2rem;}
+
+/* AUTH MENU */
+.signin-text{color:rgba(255,255,255,0.75);text-decoration:none;font-size:0.9rem;font-weight:400;transition:color var(--transition);white-space:nowrap;}
+.signin-text:hover{color:#fff;}
+.signup-chip{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:9px;background:var(--coral);color:#fff;text-decoration:none;border:1px solid var(--coral-dark);white-space:nowrap;transition:background var(--transition);font-size:0.88rem;font-weight:600;}
+.signup-chip:hover{background:var(--coral-dark);text-decoration:none;}
+.account-chip{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:9px;background:rgba(255,255,255,0.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.22);white-space:nowrap;transition:background var(--transition);font-size:0.88rem;}
+.account-chip:hover{background:rgba(255,255,255,0.24);text-decoration:none;}
+.account-chip .caret{font-size:0.68rem;opacity:0.8;}
+.menu-group{position:relative;}
+.menu{position:absolute;top:calc(100% + 8px);right:0;min-width:220px;width:min(280px,calc(100vw - 24px));padding:6px;background:#fff;color:#1e293b;border-radius:var(--radius);box-shadow:0 16px 40px rgba(0,0,0,0.18);display:none;z-index:60;border:1px solid rgba(0,0,0,0.06);}
+.menu a{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:#1e293b;text-decoration:none;font-size:0.9rem;transition:background var(--transition);}
+.menu a:hover{background:#f1f5f9;color:var(--ocean);}
+.menu-divider{height:1px;background:#e2e8f0;margin:6px 4px;}
+.menu-header{padding:12px 14px 10px;border-bottom:1px solid #e2e8f0;margin-bottom:6px;}
+.menu-user{font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px;}
+.menu-user-sub{font-size:0.8rem;color:#64748b;margin-top:2px;word-break:break-all;}
+.menu-label{padding:6px 12px;color:#94a3b8;font-size:0.73rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;}
+.hamburger-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9px;background:rgba(255,255,255,0.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.22);transition:background var(--transition);}
+.hamburger-btn:hover{background:rgba(255,255,255,0.26);text-decoration:none;}
+.desktop-auth{display:flex;align-items:center;gap:10px;}
+.mobile-auth{display:none;}
+
+/* PRINT */
+@media print{.vg-header,.page-banner,.sidebar,footer,.floating-chatbot,.spinner-overlay{display:none!important;}.page-body{grid-template-columns:1fr;padding:0;}.itinerary-card{box-shadow:none;border:none;}}
+/* MOBILE */
+@media(max-width:640px){
+  .page-body{padding:1rem 0.85rem 2rem;}
+  .itinerary-card-header{padding:1.1rem;}
+  .itinerary-body{padding:1.1rem;}
+  .price-disclaimer{font-size:0.82rem;}
+  .page-banner-inner{flex-direction:column;align-items:flex-start;}
+  .banner-actions{width:100%;}
+  .action-btn .chip-label{display:none;}
+  .nav-chip .chip-label{display:none;}
+  .desktop-auth{display:none!important;}
+  .mobile-auth{display:block;}
+  .itinerary-content table{font-size:0.82rem;}
+}
+@media(max-width:380px){.banner-actions{flex-wrap:wrap;}}
+.next-step-card{background:var(--gray-light);border:1px solid var(--gray-border);border-radius:var(--radius);padding:1rem;text-decoration:none;color:var(--text);transition:all var(--transition);display:block;}
+.next-step-card:hover{background:#e8f4fd;transform:translateY(-2px);color:var(--ocean);}
+.next-step-card h4{font-size:0.88rem;font-weight:600;margin-bottom:0.2rem;}
+.next-step-card p{font-size:0.78rem;color:var(--text-muted);line-height:1.45;}
+.next-step-card:hover p{color:#2563eb;opacity:0.75;}
+
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:1rem;}
+.trip-summary-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;}
+.trip-summary-header{background:var(--gray-light);padding:0.85rem 1.1rem;border-bottom:1px solid var(--gray-border);}
+.trip-summary-header h3{font-size:0.82rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;}
+.trip-summary-body{padding:1rem 1.1rem;}
+.summary-row{display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;padding:0.45rem 0;border-bottom:1px solid var(--gray-border);font-size:0.85rem;}
+.summary-row:last-child{border-bottom:none;}
+.summary-label{color:var(--text-muted);font-weight:500;flex-shrink:0;}
+.summary-value{color:var(--text);text-align:right;font-size:0.83rem;}
+.deal-card{background:linear-gradient(135deg,#023e8a,#0077b6);border-radius:var(--radius-lg);padding:1.25rem;color:#fff;}
+.deal-card h3{font-size:0.95rem;font-weight:600;margin-bottom:0.4rem;}
+.deal-card p{font-size:0.83rem;opacity:0.85;margin-bottom:0.85rem;line-height:1.5;}
+.deal-btn{display:block;text-align:center;background:var(--coral);color:#fff;padding:0.6rem 1rem;border-radius:8px;text-decoration:none;font-size:0.88rem;font-weight:600;transition:background var(--transition);}
+.deal-btn:hover{background:var(--coral-dark);}
+.affiliate-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);padding:1.1rem;box-shadow:var(--shadow);}
+.affiliate-title{font-size:0.8rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.7rem;}
+.aff-link{display:flex;align-items:center;justify-content:space-between;padding:0.58rem 0.85rem;border-radius:8px;background:var(--gray-light);border:1px solid var(--gray-border);text-decoration:none;color:var(--text);margin-bottom:0.45rem;font-size:0.86rem;font-weight:500;transition:all var(--transition);}
+.aff-link:last-of-type{margin-bottom:0;}
+.aff-link:hover{background:#eaf4fb;border-color:var(--teal);transform:translateX(2px);color:var(--ocean);}
+.aff-link .arr{font-size:0.72rem;color:var(--text-muted);}
+.aff-link:hover .arr{color:var(--ocean);}
+.aff-note{font-size:0.73rem;color:var(--text-muted);margin-top:0.5rem;font-style:italic;}
+
+/* SPINNER OVERLAY */
+.spinner-overlay{position:fixed;inset:0;background:rgba(2,62,138,0.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:1000;}
+.spinner-overlay.active{display:flex;}
+.spinner-box{background:#fff;border-radius:var(--radius-lg);padding:2.5rem 3rem;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
+.spinner-box .spinner{margin-bottom:1rem;}
+.spinner-box h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text);margin-bottom:0.3rem;}
+.spinner-box p{font-size:0.85rem;color:var(--text-muted);}
+
+/* FOOTER */
+footer{background:linear-gradient(105deg,#023e8a 0%,#0077b6 100%);color:rgba(255,255,255,0.85);padding:3rem 1.5rem 2rem;}
+.footer-inner{max-width:1100px;margin:0 auto;}
+.footer-brand{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:#fff;margin-bottom:0.4rem;}
+.footer-tagline{font-size:0.85rem;opacity:0.7;}
+.footer-subscribe{display:flex;gap:0.5rem;margin-top:1.2rem;flex-wrap:wrap;}
+.footer-email{padding:0.65rem 1rem;border-radius:9px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.12);color:#fff;font-family:'DM Sans',sans-serif;font-size:0.9rem;flex:1;min-width:180px;outline:none;}
+.footer-email::placeholder{color:rgba(255,255,255,0.5);}
+.footer-sub-btn{padding:0.65rem 1.2rem;background:var(--coral);color:#fff;border:none;cursor:pointer;border-radius:9px;font-size:0.9rem;font-weight:600;font-family:'DM Sans',sans-serif;transition:background var(--transition);}
+.footer-sub-btn:hover{background:var(--coral-dark);}
+.footer-links{display:flex;gap:1.2rem;margin-top:1.2rem;flex-wrap:wrap;}
+.footer-links a{color:rgba(255,255,255,0.75);text-decoration:none;font-size:0.88rem;}
+.footer-links a:hover{color:#fff;text-decoration:underline;}
+.footer-copy{margin-top:2rem;font-size:0.8rem;opacity:0.55;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,0.12);}
+.floating-chatbot{position:fixed;bottom:28px;right:28px;background:linear-gradient(135deg,var(--teal),var(--ocean));color:white;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(0,119,182,0.4);font-size:1.5rem;z-index:50;cursor:pointer;border:2px solid rgba(255,255,255,0.25);transition:transform var(--transition);}
+.floating-chatbot:hover{transform:scale(1.1);}
+
+</style>
+</head>
+<body>
+
+<!-- Supabase -->
+<script type="module">
+  import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if(!window.supabase)window.supabase=createClient('https://pbojacnagutipfhcxltj.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+</script>
+
+<!-- HEADER -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html"><img src="images/nav-icon.png" alt="Voyage Genie"/><span class="vg-title">Voyage Genie</span></a>
+    <div class="vg-right">
+      <a class="nav-chip" href="adventure-trip-planner.html" id="modifyLink">✏️ <span class="chip-label">Modify</span></a>
+      <div id="authSlot"></div>
+    </div>
+  </div>
+</header>
+
+<!-- PAGE BANNER -->
+<div class="page-banner"><div class="page-banner-inner">
+  <div class="banner-left">
+    <h1 id="bannerTitle">🌄 Your Adventure Itinerary is Ready!</h1>
+    <p>Personalized by Genie · Review, print, or email your plan below.</p>
+  </div>
+  <div class="banner-actions">
+    <button class="action-btn" id="printBtn" aria-label="Print itinerary">🖨️ <span class="chip-label">Print</span></button>
+    <button class="action-btn" id="emailBtn" aria-label="Email itinerary">📧 <span class="chip-label">Email Me</span></button>
+    <button class="action-btn" id="newSuggestionBtn" aria-label="Generate new suggestion">🔄 <span class="chip-label">New Suggestion</span></button>
+    <button class="action-btn action-btn-primary" id="saveToTripsBtn" aria-label="Save to My Trips">💾 <span class="chip-label">Save to My Trips</span></button>
+  </div>
+</div></div>
+
+<!-- SPINNER -->
+<div class="spinner-overlay" id="spinnerOverlay">
+  <div class="spinner-box"><div class="spinner"></div>
+    <h3>Generating New Suggestion…</h3><p>Genie is finding an alternative route</p>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main id="main-content"><div class="page-body">
+
+  <!-- LEFT: ITINERARY -->
+  <div>
+    <div class="itinerary-card">
+      <div class="itinerary-card-header">
+        <h2 id="itineraryTitle">🌄 Adventure Itinerary</h2>
+        <p id="itinerarySubtitle">Your personalized expedition plan</p>
+        <div class="itinerary-meta" id="itineraryMeta"></div>
+      </div>
+
+      <div class="itinerary-body">
+        <!-- Price Disclaimer -->
+        <div class="price-disclaimer">
+          <span class="price-disclaimer-icon">💡</span>
+          <div>
+            <strong>Prices are AI estimates</strong>
+            Figures shown are based on typical rates for your budget tier and destination — not live quotes. Click any booking link for real-time pricing. Voyage Genie may earn a small affiliate commission when you book, at no extra cost to you.
+          </div>
+        </div>
+        <div class="itinerary-content" id="itinerary">
+          <div class="loading-state"><div class="spinner"></div><p>Loading your itinerary…</p></div>
+        </div>
+
+        <!-- What's Next -->
+        <div class="next-steps">
+          <div class="next-steps-title">What's next?</div>
+          <div class="next-steps-grid">
+            <a href="visa-check.html" class="next-step-card" id="visaLink">
+              <h4>🛂 Visa Check</h4>
+              <p>Confirm entry requirements before booking anything.</p>
+            </a>
+            <a href="packing-checklist.html" class="next-step-card" id="packingLink">
+              <h4>🧳 Packing Checklist</h4>
+              <p>Adventure-ready gear list for your destination.</p>
+            </a>
+            <a href="explore-this-destination.html" class="next-step-card" id="exploreLink">
+              <h4>🌆 Explore Destination</h4>
+              <p>Attractions, local dining, and hidden gems.</p>
+            </a>
+            <a href="https://www.skyscanner.com" target="_blank" rel="noopener" class="next-step-card" id="flightLink">
+              <h4>✈️ Search Flights</h4>
+              <p>Compare live prices from your departure city.</p>
+            </a>
+            <a href="https://www.viator.com" target="_blank" rel="noopener" class="next-step-card" id="activitiesLink">
+              <h4>🎟️ Book Activities</h4>
+              <p>Find and pre-book guided adventures at your destination.</p>
+            </a>
+            <a href="https://www.safetywing.com" target="_blank" rel="noopener" class="next-step-card" id="insuranceLink">
+              <h4>🛡️ Travel Insurance</h4>
+              <p>Essential for adventure travel — protect your trip.</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: SIDEBAR -->
+  <aside class="sidebar">
+    <div class="trip-summary-card">
+      <div class="trip-summary-header"><h3>📋 Trip Summary</h3></div>
+      <div class="trip-summary-body">
+        <div class="summary-row"><span class="summary-label">Destination</span><span class="summary-value" id="s-destination">—</span></div>
+        <div class="summary-row"><span class="summary-label">Travel Mode</span><span class="summary-value" id="s-mode">—</span></div>
+        <div class="summary-row"><span class="summary-label">Departure</span><span class="summary-value" id="s-departure">—</span></div>
+        <div class="summary-row"><span class="summary-label">Dates</span><span class="summary-value" id="s-dates">—</span></div>
+        <div class="summary-row"><span class="summary-label">Trip Type</span><span class="summary-value" id="s-triptype">—</span></div>
+          <div class="summary-row"><span class="summary-label">Plan Tier</span><span class="summary-value" id="s-tier">—</span></div>
+          <div class="summary-row"><span class="summary-label">Activity</span><span class="summary-value" id="s-activity">—</span></div>
+        <div class="summary-row"><span class="summary-label">Difficulty</span><span class="summary-value" id="s-difficulty">—</span></div>
+        <div class="summary-row"><span class="summary-label">Group</span><span class="summary-value" id="s-group">—</span></div>
+        <div class="summary-row"><span class="summary-label">Budget</span><span class="summary-value" id="s-budget">—</span></div>
+          <div class="summary-row"><span class="summary-label">Travel Pace</span><span class="summary-value" id="s-pace">—</span></div>
+      </div>
+    </div>
+
+    <div class="deal-card">
+      <h3>🎟️ Book Your Activities</h3>
+      <p>Find and pre-book guided tours and adventures.</p>
+      <a href="https://www.viator.com" target="_blank" rel="noopener" class="deal-btn" id="dealLink">Browse Viator →</a>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-title">🏕️ Activities & Tours</div>
+      <a href="https://www.viator.com" target="_blank" rel="noopener" class="aff-link" id="viatorLink"><span>Viator</span><span class="arr">↗</span></a>
+      <a href="https://www.getyourguide.com" target="_blank" rel="noopener" class="aff-link" id="gygLink"><span>GetYourGuide</span><span class="arr">↗</span></a>
+      <a href="https://www.airbnb.com/experiences" target="_blank" rel="noopener" class="aff-link" id="airbnbExpLink"><span>Airbnb Experiences</span><span class="arr">↗</span></a>
+      <p class="aff-note">We may earn a small commission at no cost to you.</p>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-title">🏨 Find Accommodation</div>
+      <a href="https://www.booking.com" target="_blank" rel="noopener" class="aff-link" id="bookingLink"><span>Booking.com</span><span class="arr">↗</span></a>
+      <a href="https://www.hostelworld.com" target="_blank" rel="noopener" class="aff-link" id="hostelLink"><span>Hostelworld</span><span class="arr">↗</span></a>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-title">🛫 Search Flights</div>
+      <a href="https://www.skyscanner.com" target="_blank" rel="noopener" class="aff-link" id="skyLink"><span>Skyscanner</span><span class="arr">↗</span></a>
+      <a href="https://www.kayak.com" target="_blank" rel="noopener" class="aff-link"><span>Kayak</span><span class="arr">↗</span></a>
+    </div>
+
+    <div class="affiliate-card">
+      <div class="affiliate-title">🛡️ Travel Insurance</div>
+      <a href="https://www.safetywing.com" target="_blank" rel="noopener" class="aff-link"><span>SafetyWing</span><span class="arr">↗</span></a>
+      <a href="https://www.worldnomads.com" target="_blank" rel="noopener" class="aff-link"><span>World Nomads</span><span class="arr">↗</span></a>
+      <p class="aff-note">Especially important for adventure travel.</p>
+    </div>
+  </aside>
+</div></main>
+
+<!-- FOOTER -->
+<footer><div class="footer-inner">
+  <div class="footer-brand">✈️ Voyage Genie</div>
+  <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+  <div class="footer-subscribe"><input class="footer-email" placeholder="Enter your email" type="email"/><button class="footer-sub-btn">Subscribe</button></div>
+  <div class="footer-links"><a href="index.html">Home</a><a href="index.html#plan-trip">Plan</a><a href="features.html">Features</a><a href="contact.html">Contact</a></div>
+  <div class="footer-copy">© 2026 VoyageGenie.com – All rights reserved.</div>
+</div></footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const urlParams     = new URLSearchParams(window.location.search);
+  const sessionId     = urlParams.get('sessionId') || localStorage.getItem('sessionId');
+  let   itineraryHtml = localStorage.getItem('itineraryHtml');
+  const emailHtml     = localStorage.getItem('emailHtml') || itineraryHtml;
+  let   formDataJson  = localStorage.getItem('formData');
+
+  let fd = {};
+  try { fd = JSON.parse(formDataJson || '{}'); } catch(e) {}
+
+  // Field mapping — handle both old and new key names from planner
+  const destination  = fd.destinationCity || fd.adventureDestination || fd.destination || 'Your Destination';
+  const departure    = fd.departureLocation || fd.departure || 'Not specified';
+  const startDate    = fd.startDate || '';
+  const endDate      = fd.endDate   || '';
+  const budget       = fd.budget    || 'N/A';
+  const groupSize    = fd.groupSize || 'N/A';
+  const tripType     = fd.tripType  || 'N/A';
+  const activityType = fd.activityType || 'N/A';
+  const difficulty   = fd.difficulty || 'N/A';
+  const email        = fd.email     || '';
+  const travelPace   = fd.travelPace  || '';
+  const budgetTier   = fd.budgetTier  || 'Standard';
+  const flexDates    = fd.flexDates === true || fd.flexDates === 'yes' || fd.flexDates === 'true';
+  const travelMode   = fd.travelMode || 'flight';
+
+  const tierLabelMap = { Economy: '🟢 Economy', Standard: '🔵 Standard', Elite: '⭐ Elite' };
+  const tierLabel    = tierLabelMap[budgetTier] || budgetTier;
+  const paceLabelMap = { Relaxed: '🌅 Relaxed', Balanced: '🌊 Balanced', Active: '🏄 Active' };
+  const paceLabel    = paceLabelMap[travelPace] || travelPace;
+  const modeLabelMap = { flight: '✈️ Flight', drive: '🚗 Driving', train: '🚂 Train', bus: '🚌 Bus', ferry: '⛴️ Ferry' };
+  const modeIcon     = { flight: '✈️', drive: '🚗', train: '🚂', bus: '🚌', ferry: '⛴️' };
+  const modeLabel    = modeLabelMap[travelMode] || '✈️ Flight';
+  // Human-readable departure label: prefix with mode icon if not flight
+  const departureLabel = departure && departure !== 'Not specified'
+    ? (travelMode !== 'flight' ? `${modeIcon[travelMode] || ''} ${departure}` : departure)
+    : 'Not specified';
+
+  // Page title
+  document.title = `${destination} Adventure – Voyage Genie`;
+  document.getElementById('bannerTitle').textContent    = `🌄 Your ${destination} Adventure is Ready!`;
+  document.getElementById('itineraryTitle').textContent = `🌄 ${destination} Adventure Plan`;
+
+  // Subtitle — show travel mode context
+  const departureStr = departure && departure !== 'Not specified' ? departure : null;
+  let subtitleText;
+  if (departureStr) {
+    if (travelMode === 'drive')  subtitleText = `🚗 Driving from ${departureStr} → ${destination}`;
+    else if (travelMode === 'train') subtitleText = `🚂 Train from ${departureStr} → ${destination}`;
+    else if (travelMode === 'bus')   subtitleText = `🚌 Bus from ${departureStr} → ${destination}`;
+    else if (travelMode === 'ferry') subtitleText = `⛴️ Ferry from ${departureStr} → ${destination}`;
+    else subtitleText = `${departureStr} → ${destination}`;
+  } else {
+    subtitleText = destination;
+  }
+  if (flexDates) subtitleText += ' · Flexible dates';
+  else if (startDate) subtitleText += ` · ${startDate} to ${endDate}`;
+  document.getElementById('itinerarySubtitle').textContent = subtitleText;
+
+  // Meta pills
+  const metaEl = document.getElementById('itineraryMeta');
+  [activityType!=='N/A'?`🏞️ ${activityType}`:null, difficulty!=='N/A'?`🌟 ${difficulty}`:null, tierLabel?tierLabel:null, groupSize!=='N/A'?`👥 ${groupSize} pax`:null, budget!=='N/A'?`💵 $${budget}`:null, paceLabel?paceLabel:null].filter(Boolean).forEach(p => {
+    const s = document.createElement('span'); s.className = 'meta-pill'; s.textContent = p; metaEl.appendChild(s);
+  });
+
+  // Trip summary sidebar
+  document.getElementById('s-destination').textContent = destination;
+  document.getElementById('s-mode').textContent        = modeLabel;
+  document.getElementById('s-departure').textContent   = departureLabel;
+  document.getElementById('s-dates').textContent       = startDate ? `${startDate} → ${endDate}` : '—';
+  document.getElementById('s-activity').textContent    = activityType;
+  document.getElementById('s-difficulty').textContent  = difficulty;
+  document.getElementById('s-group').textContent       = groupSize !== 'N/A' ? `${groupSize} (${tripType})` : '—';
+  document.getElementById('s-dates').textContent       = flexDates ? 'Flexible — Genie will suggest' : (startDate ? `${startDate} → ${endDate}` : '—');
+  document.getElementById('s-triptype').textContent  = tripType;
+  document.getElementById('s-tier').textContent      = tierLabel || '—';
+  document.getElementById('s-pace').textContent        = paceLabel || '—';
+  document.getElementById('s-budget').textContent      = budget !== 'N/A' ? `$${budget}` : '—';
+
+  // Affiliate links pre-filled
+  const q  = encodeURIComponent(destination);
+  const ci = startDate; const co = endDate;
+  document.getElementById('dealLink').href     = `https://www.viator.com/search?q=${q}`;
+  document.getElementById('viatorLink').href   = `https://www.viator.com/search?q=${q}`;
+  document.getElementById('gygLink').href      = `https://www.getyourguide.com/s/?q=${q}`;
+  document.getElementById('airbnbExpLink').href= `https://www.airbnb.com/experiences?query=${q}`;
+  document.getElementById('bookingLink').href  = `https://www.booking.com/searchresults.html?ss=${q}&checkin=${ci}&checkout=${co}`;
+  document.getElementById('hostelLink').href   = `https://www.hostelworld.com/search?q=${q}`;
+  document.getElementById('skyLink').href      = `https://www.skyscanner.com/transport/flights/${q}/`;
+
+  // For non-flight modes, hide the Skyscanner affiliate link
+  if (travelMode !== 'flight') {
+    const skyEl = document.getElementById('skyLink');
+    if (skyEl) skyEl.closest('.affiliate-card')?.style && (skyEl.style.display = 'none');
+  }
+
+  // Next steps pre-filled
+  const packParams = new URLSearchParams({ destination, startDate, endDate, travelers: String(groupSize), source: 'adventure-trip-planner' });
+  document.getElementById('packingLink').href    = `packing-checklist.html?${packParams}`;
+  document.getElementById('exploreLink').href    = `explore-this-destination.html?destination=${q}`;
+  document.getElementById('visaLink').href       = `visa-check.html?destination=${q}`;
+  document.getElementById('activitiesLink').href = `https://www.viator.com/search?q=${q}`;
+  document.getElementById('insuranceLink').href  = `https://www.safetywing.com?destination=${q}`;
+
+  // Flight / route next-step card — adapts to travel mode
+  const flightCard = document.getElementById('flightLink');
+  if (flightCard) {
+    if (travelMode === 'drive') {
+      flightCard.href = departureStr
+        ? `https://www.google.com/maps/dir/${encodeURIComponent(departureStr)}/${encodeURIComponent(destination)}`
+        : `https://www.google.com/maps/search/${q}`;
+      flightCard.querySelector('h4').textContent = '🗺️ Plan Your Route';
+      flightCard.querySelector('p').textContent  = 'Get driving directions and plan your road trip route.';
+    } else if (travelMode === 'train') {
+      flightCard.href = `https://www.rome2rio.com/map/${encodeURIComponent(departureStr || 'origin')}/${encodeURIComponent(destination)}`;
+      flightCard.querySelector('h4').textContent = '🚂 Find Train Routes';
+      flightCard.querySelector('p').textContent  = 'Search train connections and book your rail journey.';
+    } else if (travelMode === 'bus') {
+      flightCard.href = `https://www.rome2rio.com/map/${encodeURIComponent(departureStr || 'origin')}/${encodeURIComponent(destination)}`;
+      flightCard.querySelector('h4').textContent = '🚌 Find Bus Routes';
+      flightCard.querySelector('p').textContent  = 'Search bus connections to your destination.';
+    } else if (travelMode === 'ferry') {
+      flightCard.href = `https://www.rome2rio.com/map/${encodeURIComponent(departureStr || 'origin')}/${encodeURIComponent(destination)}`;
+      flightCard.querySelector('h4').textContent = '⛴️ Find Ferry Routes';
+      flightCard.querySelector('p').textContent  = 'Search ferry crossings and book your passage.';
+    } else {
+      flightCard.href = `https://www.skyscanner.com/transport/flights/${q}/${ci}/${co}`;
+    }
+  }
+
+  // Save packing context
+  try {
+    const days = startDate && endDate ? Math.max(1,Math.round((new Date(endDate)-new Date(startDate))/(1000*3600*24))+1) : 7;
+    localStorage.setItem('packingTrip',  JSON.stringify({ destination, days, type: 'Adventure Trip', activities: [activityType].filter(Boolean) }));
+    localStorage.setItem('tripContext', JSON.stringify({ destination, startDate, endDate, flexDates, travelers: groupSize, tripType, travelPace, budgetTier, activityType, difficulty, travelMode }));
+  } catch(e) {}
+
+  // Clean & render — same robust approach as tropical/airbnb
+  const buildCostTable = (items) => {
+    if (!items.length) return '';
+    const TH  = 'padding:9px 14px;background:#f1f5f9;border:1px solid #e2e8f0;color:#64748b;font-size:0.76rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600;';
+    const TD  = 'padding:10px 14px;border:1px solid #e2e8f0;font-size:0.88rem;vertical-align:top;';
+    const TDB = 'padding:10px 14px;border:1px solid #e2e8f0;font-size:0.88rem;background:#eaf4fb;font-weight:700;color:#023e8a;vertical-align:top;';
+    const rows = items.map(({cat, amt}) => {
+      const bold = /^(total|remaining)/i.test(cat.replace(/<[^>]+>/g,'').trim());
+      const s = bold ? TDB : TD;
+      return `<tr><td style="${s}">${cat}</td><td style="${s}text-align:right;">${amt}</td></tr>`;
+    }).join('');
+    return `<div style="overflow-x:auto;margin:1rem 0 1.5rem;"><table style="width:100%;border-collapse:collapse;">
+      <thead><tr>
+        <th style="${TH}text-align:left;">Category</th>
+        <th style="${TH}text-align:right;">Estimate</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+  };
+
+  const cleanHtml = (html) => {
+    if (!html) return '<p style="color:#64748b">No itinerary found. Please try again.</p>';
+
+    // Normalise literal \t (AI outputs backslash-t instead of real tab) → real tab
+    html = html.replace(/\\t/g, '\t');
+
+    // Strip **bold** markdown residue
+    html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong style="color:#023e8a">$1</strong>');
+
+    // ── PATH A: Raw text (no HTML tags at all) — full conversion ──
+    if (!/<(strong|br|div|span|table|p|h[1-6])[^>]*>/i.test(html)) {
+      const HS = 'font-size:16px;color:#023e8a;display:block;margin:20px 0 8px;font-weight:700;border-bottom:2px solid #eaf4fb;padding-bottom:4px;';
+      let out = '', inCost = false, costItems = [];
+      for (const raw of html.split('\n')) {
+        const line = raw.trim();
+        if (!line) {
+          if (inCost) { out += buildCostTable(costItems); inCost = false; costItems = []; }
+          else out += '<div style="margin:5px 0"></div>';
+          continue;
+        }
+        if (/^cost summary:/i.test(line)) {
+          out += `<strong style="${HS}">Cost Summary:</strong>`; inCost = true; continue;
+        }
+        if (inCost && line.includes('\t')) {
+          const [cat, ...rest] = line.split('\t').map(s => s.replace(/<[^>]+>/g,'').trim());
+          if (cat && cat.toLowerCase() !== 'category') costItems.push({cat, amt: rest.join(' ')});
+          continue;
+        }
+        if (inCost) { out += buildCostTable(costItems); inCost = false; costItems = []; }
+        if (line.endsWith(':') && !line.startsWith('-') && !line.includes('<')) {
+          out += `<strong style="${HS}">${line}</strong>`; continue;
+        }
+        if (line.startsWith('- ') || line.startsWith('\u2022 ')) {
+          out += `<div style="padding-left:1.1em;margin:3px 0;color:#374151;">&bull; ${line.slice(2)}</div>`; continue;
+        }
+        out += `<div style="margin:3px 0;color:#374151;line-height:1.6;">${line}</div>`;
+      }
+      if (inCost) out += buildCostTable(costItems);
+      return out;
+    }
+
+    // ── PATH B: Already HTML (from workflow formatter) ──
+    // Collapse excessive breaks
+    html = html.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Fix any h1 styling
+    const h1 = doc.querySelector('h1');
+    if (h1) { h1.style.backgroundColor = 'transparent'; h1.style.color = '#023e8a'; }
+
+    // ── Check if a proper cost table already exists ──
+    // If the workflow already formatted it correctly, leave it untouched.
+    const existingTable = doc.querySelector('table');
+    if (existingTable) {
+      // Table exists — just return the HTML as-is, no extraction needed
+      return doc.body.innerHTML;
+    }
+
+    // ── No table found — try to extract cost data and build one ──
+    // This handles edge cases where the workflow failed to format the table.
+    let costItems = [];
+
+    // Look for Cost Summary heading then collect tab-separated sibling text
+    const costStrong = Array.from(doc.querySelectorAll('strong')).find(el =>
+      el.textContent.toLowerCase().includes('cost summary')
+    );
+
+    if (costStrong) {
+      // Walk siblings after the heading looking for text nodes with \t
+      let el = costStrong.nextSibling;
+      while (el) {
+        const text = el.textContent || '';
+        if (text.includes('\t')) {
+          text.split('\n').forEach(line => {
+            const parts = line.split('\t').map(s => s.trim()).filter(Boolean);
+            if (parts.length >= 2 && parts[0].toLowerCase() !== 'category') {
+              costItems.push({cat: parts[0], amt: parts[1]});
+            }
+          });
+          const next = el.nextSibling;
+          el.parentNode.removeChild(el);
+          el = next;
+        } else {
+          el = el.nextSibling;
+        }
+      }
+    }
+
+    // Fallback: scan full innerHTML for tab patterns
+    if (!costItems.length) {
+      const tabRe = /([A-Za-z][\w\s\/]{1,25})	(\$[\d,\.][^\n\t<]{0,30})/g;
+      let m;
+      while ((m = tabRe.exec(doc.body.innerHTML)) !== null) {
+        if (m[1].toLowerCase().trim() !== 'category') {
+          costItems.push({cat: m[1].trim(), amt: m[2].trim()});
+        }
+      }
+      if (costItems.length) {
+        // Strip raw tab text lines from the doc
+        doc.body.innerHTML = doc.body.innerHTML.replace(
+          /([A-Za-z][\w\s\/]{1,25})	(\$[\d,\.][^\n\t<]{0,30})/g, ''
+        );
+      }
+    }
+
+    if (costItems.length > 0) {
+      const tableHtml = buildCostTable(costItems);
+      const freshStrong = Array.from(doc.querySelectorAll('strong')).find(el =>
+        el.textContent.toLowerCase().includes('cost summary')
+      );
+      if (freshStrong) {
+        const wrapper = doc.createElement('div');
+        wrapper.innerHTML = tableHtml;
+        freshStrong.parentNode.insertBefore(wrapper, freshStrong.nextSibling);
+      } else {
+        doc.body.insertAdjacentHTML('beforeend',
+          `<strong style="font-size:16px;color:#023e8a;display:block;margin:20px 0 8px;font-weight:700;">Cost Summary:</strong>${tableHtml}`
+        );
+      }
+    }
+
+    return doc.body.innerHTML;
+  };
+
+  const itinEl = document.getElementById('itinerary');
+  if (itineraryHtml) {
+    itinEl.innerHTML = cleanHtml(itineraryHtml);
+  } else {
+    itinEl.innerHTML = `<div style="text-align:center;padding:3rem 1rem;color:#64748b"><p style="font-size:1.1rem;margin-bottom:1rem">No itinerary found.</p><a href="adventure-trip-planner.html" style="color:#0077b6;text-decoration:underline">← Back to the planner</a></div>`;
+  }
+
+  // Print
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+  // Email
+  document.getElementById('emailBtn').addEventListener('click', async () => {
+    if (!itineraryHtml) { showToast('Itinerary not found. Please try generating again.', 'error'); return; }
+    const userEmail = email || prompt('Enter your email address:');
+    if (!userEmail) return;
+    const btn = document.getElementById('emailBtn'); btn.disabled = true; btn.innerHTML = '⏳ <span>Sending…</span>';
+    try {
+      const res = await fetch('https://exodonprofits.app.n8n.cloud/webhook/send-email', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolvedEmail: userEmail, resolvedSubject: `Your ${tierLabel} Adventure Itinerary for ${destination} – Voyage Genie`, resolvedMessage: emailHtml })
+      });
+      if (res.ok) showToast(`✅ Itinerary sent to ${userEmail}`, 'success');
+      else showToast('Failed to send email. Please try again.', 'error');
+    } catch(err) { showToast('Failed to send email. Please try again.', 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = '📧 <span>Email Me</span>'; }
+  });
+
+  // New Suggestion
+  document.getElementById('newSuggestionBtn').addEventListener('click', async () => {
+    if (!formDataJson) { showToast('Trip data not found. Please return to the form.', 'error'); return; }
+    const overlay = document.getElementById('spinnerOverlay'); overlay.classList.add('active');
+    const btn = document.getElementById('newSuggestionBtn'); btn.disabled = true;
+    try {
+      const res = await fetch('https://exodonprofits.app.n8n.cloud/webhook/adventure-travel-agent-new-suggestion', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: formDataJson
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const newHtml = data.itineraryHtml || data.suggestionsHtml || '';
+        if (newHtml) {
+          localStorage.setItem('itineraryHtml', newHtml);
+          if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
+          itineraryHtml = newHtml;
+          itinEl.innerHTML = cleanHtml(newHtml);
+        }
+      } else { showToast('Failed to generate a new suggestion. Please try again.', 'error'); }
+    } catch(err) { showToast('Failed to generate a new suggestion. Please try again.', 'error'); }
+    finally { overlay.classList.remove('active'); btn.disabled = false; }
+  });
+
+  // Save to My Trips
+  document.getElementById('saveToTripsBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveToTripsBtn'); btn.disabled = true; btn.innerHTML = '⏳ <span>Saving…</span>';
+    try {
+      const sb = window.supabase; if (!sb) throw new Error('Not signed in');
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { showToast('Please sign in to save your trip.', 'error'); window.location.href = 'login.html?next=adventure-trip-itinerary.html'; return; }
+      const tripData = { ...fd, tripType: 'Adventure Trip', name: `${destination} Adventure`, notes: 'Generated by Voyage Genie AI', itineraryHtml, sessionId };
+      const { error } = await sb.from('user_trips').insert({ user_id: user.id, trip_name: tripData.name, trip_data: tripData });
+      if (error) throw error;
+      btn.innerHTML = '✅ <span>Saved!</span>';
+      setTimeout(() => { btn.disabled = false; btn.innerHTML = '💾 <span>Save to My Trips</span>'; }, 3000);
+    } catch(err) {
+      showToast(err.message === 'Not signed in' ? 'Please sign in to save your trip.' : 'Failed to save trip. Please try again.', 'error');
+      btn.disabled = false; btn.innerHTML = '💾 <span>Save to My Trips</span>';
+    }
+  });
+
+  // Modify clears storage
+  document.getElementById('modifyLink').addEventListener('click', () => {
+    localStorage.removeItem('sessionId'); localStorage.removeItem('itineraryHtml'); localStorage.removeItem('emailHtml');
+  });
+
+  // ── Toast notifications ───────────────────────────────────────
+  function showToast(msg, type = 'info') {
+    const existing = document.getElementById('vgToast');
+    if (existing) existing.remove();
+    const colors = { success: '#059669', error: '#ef4444', info: '#0077b6' };
+    const toast = document.createElement('div');
+    toast.id = 'vgToast';
+    toast.setAttribute('role', 'alert');
+    toast.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${colors[type]||colors.info};color:#fff;padding:0.85rem 1.5rem;border-radius:12px;font-size:0.92rem;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:9999;max-width:90vw;text-align:center;animation:toastIn 0.2s ease;`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(),300); }, type==='success' ? 3000 : 5000);
+  }
+
+});
+</script>
+<!-- ===== GENIE CHAT WIDGET ===== -->
+<script src="js/genie-chat.js" defer></script>
+
+<!-- ===== AUTH ===== -->
+<script type="module">
+  function getSB(){ return window.supabase || null; }
+  const authSlot = document.getElementById('authSlot');
+  const nextParam = encodeURIComponent('adventure-trip-itinerary.html');
+  function toggle(el,show){ if(el) el.style.display=show?'block':'none'; }
+  function closeMenus(exceptEl){ document.querySelectorAll('.menu').forEach(el=>{ if(el!==exceptEl) el.style.display='none'; }); }
+  function buildMenuItems(name,email){
+    return `<div class="menu-header"><div class="menu-user">🪪 ${name}</div><div class="menu-user-sub">${email||''}</div></div>
+      <a href="trip-dashboard.html" role="menuitem">📋 My Trips</a>
+      <div class="menu-divider"></div><div class="menu-label">Start a New Trip</div>
+      <a href="tropical-trip-planner.html" role="menuitem">🏖️ Tropical Resort</a>
+      <a href="cruise-trip-planner.html" role="menuitem">🚢 Cruise Adventure</a>
+      <a href="airbnb-trip-planner.html" role="menuitem">🏨 City &amp; Stays</a>
+      <a href="adventure-trip-planner.html" role="menuitem">🌄 Adventure Trip</a>
+      <div class="menu-divider"></div>
+      <a href="account.html" role="menuitem">👤 Account</a>
+      <a href="#" id="_signOutBtn" role="menuitem">🚪 Sign out</a>`;
+  }
+  function accountDOM(email){
+    const name=(email||'Account').split('@')[0]; const items=buildMenuItems(name,email);
+    const wrap=document.createElement('div'); wrap.className='auth-wrap';
+    wrap.innerHTML=`<div class="desktop-auth"><div class="menu-group">
+      <a href="#" class="account-chip" id="acctDesktopBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctDesktopMenu">
+        <span>🪪</span><span>${name}</span><span class="caret">▼</span></a>
+      <div class="menu" id="acctDesktopMenu" role="menu">${items}</div></div></div>
+    <div class="mobile-auth"><div class="menu-group">
+      <a href="#" class="hamburger-btn" id="acctMobileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctMobileMenu"><span>☰</span></a>
+      <div class="menu" id="acctMobileMenu" role="menu">${items.replace('id="_signOutBtn"','id="_signOutMobileBtn"')}</div>
+    </div></div>`;
+    return wrap;
+  }
+  function signinDOM(){
+    const wrap=document.createElement('div'); wrap.className='auth-wrap';
+    wrap.innerHTML=`<div class="desktop-auth" style="display:flex;align-items:center;gap:10px;">
+      <a href="login.html?next=${nextParam}" class="signin-text">Sign in</a>
+      <a href="register.html" class="signup-chip">Start for free →</a></div>
+    <div class="mobile-auth"><div class="menu-group">
+      <a href="#" class="hamburger-btn" id="signinMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="signinMenu"><span>☰</span></a>
+      <div class="menu" id="signinMenu" role="menu">
+        <div class="menu-header"><div class="menu-user">Voyage Genie</div><div class="menu-user-sub">Travel menu</div></div>
+        <a href="login.html?next=${nextParam}" role="menuitem">🔑 Sign in</a>
+        <a href="register.html" role="menuitem">🚀 Start for free</a>
+        <div class="menu-divider"></div>
+        <a href="trip-dashboard.html" role="menuitem">📋 My Trips</a>
+        <a href="index.html#plan-trip" role="menuitem">🗺️ All Planners</a>
+      </div></div></div>`;
+    return wrap;
+  }
+  function bindMenu(buttonId,menuId){
+    const btn=document.getElementById(buttonId), menu=document.getElementById(menuId);
+    if(!btn||!menu) return;
+    btn.addEventListener('click',e=>{ e.preventDefault(); const open=menu.style.display==='block'; closeMenus(open?null:menu); toggle(menu,!open); btn.setAttribute('aria-expanded',String(!open)); });
+  }
+  async function renderAuth(session){
+    const sb=getSB(); if(!sb||!authSlot) return;
+    try {
+      let user;
+      if(session!==undefined){ user=session?.user??null; } else { const res=await sb.auth.getUser(); user=res.data?.user??null; }
+      authSlot.innerHTML='';
+      if(user){
+        const node=accountDOM(user.email); authSlot.appendChild(node);
+        bindMenu('acctDesktopBtn','acctDesktopMenu'); bindMenu('acctMobileBtn','acctMobileMenu');
+        async function signOut(e){ e.preventDefault(); e.stopPropagation(); const sb=getSB(); if(!sb) return; try{ await sb.auth.signOut(); }catch{} location.reload(); }
+        node.querySelector('#_signOutBtn')?.addEventListener('click',signOut);
+        node.querySelector('#_signOutMobileBtn')?.addEventListener('click',signOut);
+      } else { authSlot.appendChild(signinDOM()); bindMenu('signinMenuBtn','signinMenu'); }
+    } catch {}
+  }
+  document.addEventListener('click',e=>{ if(!document.querySelectorAll('.menu[style*="block"]').length) return; if(!e.target.closest('.menu,.hamburger-btn,.account-chip,.signin-text')) closeMenus(null); });
+  const _sb=getSB();
+  if(_sb){ await _sb.auth.getSession(); await renderAuth(); _sb.auth.onAuthStateChange((_event,session)=>renderAuth(session)); }
+</script>
+</body>
+</html>

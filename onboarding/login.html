@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in • GenieSphere</title>
+
+  <!-- Shared GenieSphere config + auth stack -->
+  <script>
+    window.GS_CONFIG_URL = "/shared/config.json";
+    window.GS_CONFIG_PATH = "/shared/config.json";
+  </script>
+  <script src="/shared/js/app-config.js?v=0313"></script>
+  <script type="module" src="/shared/js/sb-client.js?v=0313"></script>
+  <script src="/shared/js/auth-header.js?v=0313"></script>
+
+  <!--
+    Bridge: sb-client.js is an ES module, so its exports are not automatically attached to window.
+    This page expects window.getSbClient(). The bridge safely exposes it.
+  -->
+  <script type="module">
+    (async () => {
+      try{
+        if (typeof window.getSbClient === "function") return;
+        const mod = await import("/shared/js/sb-client.js?v=20260222a");
+
+        const getter =
+          (typeof mod.getSbClient === "function" ? mod.getSbClient : null) ||
+          (mod.default && typeof mod.default.getSbClient === "function" ? mod.default.getSbClient : null);
+
+        if (getter){
+          window.getSbClient = getter;
+          try{ window.SB_CLIENT = getter(); }catch(_){ /* getter may still be initializing */ }
+          return;
+        }
+
+        const direct = mod.sbClient || mod.client || (mod.default && (mod.default.sbClient || mod.default.client));
+        if (direct){
+          window.SB_CLIENT = direct;
+          window.getSbClient = () => direct;
+        }
+      }catch(e){
+        // If this fails, the login handler will show diagnostics.
+      }
+    })();
+  </script>
+
+  <style>
+:root{
+  --bg:#F5F7FA;
+  --panel:#FFFFFF;
+  --panel-soft:#F0F4F8;
+  --text:#111827;
+  --muted:#6B7280;
+  --muted-2:#9CA3AF;
+  --line:#E5EAF0;
+  --line-2:#D1D9E0;
+  /* Area palette — all 5 areas */
+  --green:   #2D6A4F; --green-2:#52B788;
+  --teal:    #22D3EE; --teal-dark:#0891B2;
+  --navy:    #3B82F6; --navy-dark:#1D4ED8;
+  --amber:   #F59E0B; --amber-dark:#B45309;
+  --coral:   #F97316; --coral-dark:#C2410C;
+  --violet:  #8B5CF6; --violet-dark:#6D28D9;
+  --teal-dim:rgba(34,211,238,.12);
+  --teal-bd: rgba(34,211,238,.30);
+  --ok-bg:#F0FDFA; --ok-bd:#99F6E4; --ok-txt:#0F766E;
+  --err-bg:#FEF2F2; --err-bd:#FECACA; --err-txt:#B91C1C;
+  --info-bg:#EFF6FF; --info-bd:#BFDBFE; --info-txt:#1D4ED8;
+  --shadow-card:0 2px 8px rgba(0,0,0,.06),0 24px 56px rgba(0,0,0,.10);
+  --radius:18px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0}
+body{
+  font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px 16px;
+  position:relative;overflow:hidden;
+}
+
+/* ════════════════════════════════════════
+   BACKGROUND — GenieSphere area colors
+   5 curved flowing strips, one per area
+════════════════════════════════════════ */
+.gs-bg{
+  position:fixed;inset:0;z-index:0;
+  pointer-events:none;overflow:hidden;
+  background:#F5F7FA;
+}
+
+/* SVG curves fill the entire viewport */
+.gs-bg svg{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+}
+
+/* Soft noise/grain texture overlay */
+.gs-bg::after{
+  content:'';
+  position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  opacity:.4;
+}
+
+/* center vignette — keeps focus on the card */
+.gs-vignette{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 70% at 50% 50%,
+    rgba(245,247,250,.0) 0%,
+    rgba(245,247,250,.55) 60%,
+    rgba(245,247,250,.82) 100%
+  );
+}
+
+/* ════════════════════════════════════════
+   CARD
+════════════════════════════════════════ */
+.page-content{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;align-items:center;width:100%;
+}
+
+.card{
+  width:100%;max-width:400px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-card);
+  overflow:hidden;
+  animation:card-in .65s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes card-in{
+  from{ opacity:0;transform:translateY(18px) scale(.98); }
+  to  { opacity:1;transform:translateY(0)    scale(1);   }
+}
+
+/* ── HEADER ── */
+.card-head{
+  padding:24px 24px 20px;
+  border-bottom:1px solid var(--line);
+}
+.card-head-top{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
+}
+.gs-logo{display:flex;align-items:center;gap:9px;}
+.gs-logo-mark{
+  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--green),var(--green-2));
+  display:flex;align-items:center;justify-content:center;
+}
+.gs-logo-mark img{width:20px;height:20px;object-fit:contain;border-radius:5px;display:block;}
+.gs-logo-fallback{
+  width:20px;height:20px;border-radius:5px;
+  background:radial-gradient(circle at 30% 30%,#7ef1c7,#0f9f68);
+}
+.gs-wordmark{
+  font-size:14px;font-weight:800;color:var(--text);letter-spacing:-.03em;
+}
+.secure-badge{
+  font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;
+  background:rgba(45,106,79,.08);
+  border:1px solid rgba(45,106,79,.20);
+  color:var(--green);
+}
+.card-title{
+  font-size:20px;font-weight:800;letter-spacing:-.04em;color:var(--text);margin:0 0 4px;
+}
+.card-sub{font-size:13px;color:var(--muted);margin:0;line-height:1.5;}
+
+/* ── BODY ── */
+.card-body{padding:20px 24px 8px;}
+.form{display:flex;flex-direction:column;}
+.lbl{
+  display:block;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);margin:14px 0 5px;
+}
+.lbl:first-child{margin-top:0;}
+input[type="email"],input[type="password"]{
+  width:100%;padding:11px 13px;border-radius:10px;
+  border:1.5px solid var(--line-2);background:var(--panel-soft);
+  color:var(--text);font-size:14px;font-family:inherit;
+  outline:none;transition:border-color .15s,box-shadow .15s;
+}
+input[type="email"]:focus,input[type="password"]:focus{
+  border-color:var(--teal);
+  box-shadow:0 0 0 3px rgba(34,211,238,.12);
+  background:#fff;
+}
+input::placeholder{color:var(--muted-2);}
+.row{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;margin-top:12px;
+}
+.chk{
+  display:flex;align-items:center;gap:7px;
+  font-size:13px;color:var(--muted);cursor:pointer;user-select:none;
+}
+.chk input{width:14px;height:14px;accent-color:var(--teal);}
+.link{
+  color:var(--teal-dark);text-decoration:none;
+  font-size:13px;font-weight:600;transition:color .13s;
+}
+.link:hover{color:#0E7490;text-decoration:underline;}
+
+/* ── ACTIONS ── */
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 0;}
+@media(max-width:400px){.actions{grid-template-columns:1fr;}}
+.btn{
+  border:none;border-radius:999px;padding:12px 16px;
+  font-weight:700;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  font-family:inherit;white-space:nowrap;
+  transition:filter .14s,transform .12s,box-shadow .14s;
+}
+.btn:hover{filter:brightness(1.05);transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn:disabled{opacity:.5;cursor:not-allowed;filter:none;transform:none;}
+.btn.primary{
+  background:var(--text);color:#fff;
+  box-shadow:0 4px 14px rgba(17,24,39,.20);
+}
+.btn.primary:hover{box-shadow:0 6px 20px rgba(17,24,39,.28);}
+.btn.ghost{
+  background:var(--panel-soft);color:var(--text);
+  border:1.5px solid var(--line-2);
+}
+.btn.ghost:hover{border-color:rgba(17,24,39,.22);background:var(--bg);}
+.btn-spin{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.25);border-top-color:rgba(255,255,255,.9);
+  display:none;animation:spin 700ms linear infinite;flex-shrink:0;
+}
+.btn.loading .btn-spin{display:inline-block;}
+.btn.loading .btn-label{opacity:.7;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── MSG ── */
+.msg{margin-top:12px;padding:11px 13px;border-radius:10px;font-size:13px;line-height:1.5;}
+.msg.err{background:var(--err-bg);border:1px solid var(--err-bd);color:var(--err-txt);}
+.msg.ok {background:var(--ok-bg); border:1px solid var(--ok-bd); color:var(--ok-txt);}
+.msg.info{background:var(--info-bg);border:1px solid var(--info-bd);color:var(--info-txt);}
+.msg.warn{background:#FFFBEB;border:1px solid #FCD34D;color:#92400E;}
+
+/* ── FOOTER ── */
+.card-foot{
+  padding:14px 24px 18px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;border-top:1px solid var(--line);margin-top:12px;flex-wrap:wrap;
+}
+.foot-left{font-size:12px;color:var(--muted-2);}
+.foot-right{
+  font-size:12px;font-weight:600;color:var(--teal-dark);text-decoration:none;
+}
+.foot-right:hover{text-decoration:underline;}
+
+/* ── TRUST ── */
+.trust-strip{
+  margin-top:16px;display:flex;align-items:center;
+  justify-content:center;gap:14px;flex-wrap:wrap;
+}
+.trust-item{
+  display:flex;align-items:center;gap:4px;
+  font-size:11px;color:var(--muted-2);font-weight:500;
+}
+
+/* Debug */
+.debug{
+  position:fixed;left:12px;bottom:12px;padding:7px 10px;
+  border-radius:10px;background:rgba(17,24,39,.85);
+  border:1px solid var(--line);color:#fff;font-size:11px;font-family:monospace;
+}
+.wrap,.brand-panel,.form-panel,.bg-deco{all:unset;}
+  </style>
+</head>
+
+<body class="gs-auth gs-universe">
+
+  <!-- ── GenieSphere area-color background ── -->
+  <div class="gs-bg" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice"
+         xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Household: teal -->
+        <radialGradient id="g-teal" cx="15%" cy="25%" r="55%">
+          <stop offset="0%"   stop-color="#22D3EE" stop-opacity=".18"/>
+          <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Business: navy -->
+        <radialGradient id="g-navy" cx="82%" cy="18%" r="48%">
+          <stop offset="0%"   stop-color="#3B82F6" stop-opacity=".15"/>
+          <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Investment: amber -->
+        <radialGradient id="g-amber" cx="88%" cy="78%" r="50%">
+          <stop offset="0%"   stop-color="#F59E0B" stop-opacity=".14"/>
+          <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Leisure: coral -->
+        <radialGradient id="g-coral" cx="12%" cy="80%" r="45%">
+          <stop offset="0%"   stop-color="#F97316" stop-opacity=".13"/>
+          <stop offset="100%" stop-color="#F97316" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Finance: violet -->
+        <radialGradient id="g-violet" cx="50%" cy="55%" r="38%">
+          <stop offset="0%"   stop-color="#8B5CF6" stop-opacity=".09"/>
+          <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Overview: green -->
+        <radialGradient id="g-green" cx="50%" cy="5%" r="40%">
+          <stop offset="0%"   stop-color="#52B788" stop-opacity=".12"/>
+          <stop offset="100%" stop-color="#52B788" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Glow blobs per area -->
+      <rect width="1440" height="900" fill="url(#g-teal)"/>
+      <rect width="1440" height="900" fill="url(#g-navy)"/>
+      <rect width="1440" height="900" fill="url(#g-amber)"/>
+      <rect width="1440" height="900" fill="url(#g-coral)"/>
+      <rect width="1440" height="900" fill="url(#g-violet)"/>
+      <rect width="1440" height="900" fill="url(#g-green)"/>
+
+      <!-- Curved flowing strips — one per area, sweeping across viewport -->
+      <!-- Teal strip: top-left diagonal sweep -->
+      <path d="M-80,140 C200,80 420,260 720,200 S1100,80 1520,160 L1520,-60 L-80,-60 Z"
+            fill="#22D3EE" fill-opacity=".055"/>
+      <path d="M-80,180 C180,120 400,300 700,240 S1080,120 1520,200 L1520,140 L-80,140 Z"
+            fill="#22D3EE" fill-opacity=".035"/>
+
+      <!-- Navy strip: upper right sweep -->
+      <path d="M600,-60 C800,60 1100,40 1300,140 S1500,240 1520,180 L1520,-60 Z"
+            fill="#3B82F6" fill-opacity=".06"/>
+      <path d="M700,-60 C900,80 1150,50 1350,160 S1500,260 1520,200 L1520,140 L700,140 Z"
+            fill="#3B82F6" fill-opacity=".03"/>
+
+      <!-- Amber strip: lower right arc -->
+      <path d="M960,960 C1100,820 1300,780 1520,700 L1520,960 Z"
+            fill="#F59E0B" fill-opacity=".07"/>
+      <path d="M800,960 C980,860 1200,820 1520,750 L1520,700 L800,700 Z"
+            fill="#F59E0B" fill-opacity=".04"/>
+
+      <!-- Coral strip: lower left arc -->
+      <path d="M-80,960 C80,820 240,780 480,840 S700,920 900,960 Z"
+            fill="#F97316" fill-opacity=".07"/>
+      <path d="M-80,840 C60,760 220,720 460,780 S680,860 880,900 L880,960 L-80,960 Z"
+            fill="#F97316" fill-opacity=".04"/>
+
+      <!-- Violet strip: centre flowing wave -->
+      <path d="M-80,520 C200,480 400,560 720,500 S1040,420 1520,500 L1520,560 C1040,480 720,560 400,620 S200,540 -80,580 Z"
+            fill="#8B5CF6" fill-opacity=".045"/>
+
+      <!-- Green strip: top centre arc -->
+      <path d="M300,-60 C420,40 580,20 720,60 S900,40 1060,-60 Z"
+            fill="#52B788" fill-opacity=".08"/>
+
+      <!-- Subtle curved accent lines (strokes only) -->
+      <!-- teal arc line -->
+      <path d="M-80,220 C300,140 600,320 1000,260 S1300,160 1520,240"
+            fill="none" stroke="#22D3EE" stroke-width="1" stroke-opacity=".12"/>
+      <!-- navy arc line -->
+      <path d="M-80,320 C200,280 500,380 800,320 S1100,220 1520,300"
+            fill="none" stroke="#3B82F6" stroke-width="1" stroke-opacity=".10"/>
+      <!-- violet arc line -->
+      <path d="M-80,500 C300,460 600,540 900,480 S1200,400 1520,480"
+            fill="none" stroke="#8B5CF6" stroke-width="1" stroke-opacity=".09"/>
+      <!-- amber arc line -->
+      <path d="M-80,640 C200,600 500,680 800,620 S1100,540 1520,620"
+            fill="none" stroke="#F59E0B" stroke-width=".8" stroke-opacity=".10"/>
+      <!-- coral arc line -->
+      <path d="M-80,760 C300,720 600,800 1000,740 S1300,660 1520,740"
+            fill="none" stroke="#F97316" stroke-width=".8" stroke-opacity=".09"/>
+    </svg>
+
+    <!-- Centre vignette keeps card readable -->
+    <div class="gs-vignette"></div>
+  </div>
+
+  <div class="page-content">
+
+    <div class="card" aria-label="Sign in">
+
+      <header class="card-head">
+        <div class="card-head-top">
+          <div class="gs-logo">
+            <div class="gs-logo-mark">
+              <img src="/shared/assets/images/genie-logo.png" alt=""
+                   onerror="this.parentElement.innerHTML='<div class=gs-logo-fallback></div>'"/>
+            </div>
+            <span class="gs-wordmark" id="brandName">GenieSphere</span>
+          </div>
+          <span class="secure-badge">✦ Secure login</span>
+        </div>
+        <h1 class="card-title" id="pageTitle">Sign in</h1>
+        <p class="card-sub" id="pageSubtitle">Enter your email and password to continue.</p>
+      </header>
+
+      <div class="card-body">
+        <form id="loginForm" class="form" method="post" action="javascript:void(0)" autocomplete="on" novalidate>
+
+          <label class="lbl" for="email">Email address</label>
+          <input id="email" name="email" type="email" inputmode="email"
+                 autocomplete="email" placeholder="you@email.com" required>
+
+          <label class="lbl" for="password">Password</label>
+          <input id="password" name="password" type="password"
+                 autocomplete="current-password" placeholder="••••••••" required>
+
+          <div class="row">
+            <label class="chk">
+              <input id="remember" type="checkbox" checked>
+              <span>Remember me</span>
+            </label>
+            <a class="link" id="forgotLink" href="#" role="button">Forgot password?</a>
+          </div>
+
+          <div class="actions">
+            <button id="btnLogin" class="btn primary" type="submit">
+              <span class="btn-label">Sign in</span>
+              <span class="btn-spin" aria-hidden="true"></span>
+            </button>
+            <button id="btnSignup" class="btn ghost" type="button">Create account</button>
+          </div>
+
+          <div id="msg" class="msg" role="status" aria-live="polite" hidden></div>
+
+        </form>
+      </div>
+
+      <footer class="card-foot">
+        <span class="foot-left" id="poweredBy">✨ Powered by GenieSphere</span>
+        <a class="foot-right" id="backLink" href="/index.html">← Back to GenieSphere</a>
+      </footer>
+
+    </div>
+
+    <div class="trust-strip">
+      <div class="trust-item">🔒 SSL encrypted</div>
+      <div class="trust-item">🛡️ Supabase Auth</div>
+      <div class="trust-item">✅ No data sold</div>
+    </div>
+
+  </div>
+
+  <!-- Debug pill (hidden unless ?debug=1) -->
+  <div class="debug" id="debugBar" hidden>
+    <span id="debugText">debug</span>
+  </div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ALL SCRIPTS BELOW ARE PRESERVED EXACTLY — DO NOT MODIFY
+═══════════════════════════════════════════════════════════ -->
+
+<script>
+  // UI compatibility shims (v9 single-panel)
+  (function(){
+    // If old scripts expect these IDs, provide them as aliases
+    const map = [
+      ['heroTitle','pageTitle'],
+      ['heroSubtitle','pageSubtitle'],
+      ['agentTitle','pageTitle']
+    ];
+    map.forEach(([oldId,newId])=>{
+      if(!document.getElementById(oldId)){
+        const el = document.getElementById(newId);
+        if(el){
+          const clone = el; // reuse
+          clone.id = newId; // ensure
+        }
+      }
+    });
+  })();
+
+  (function setDynamicBackLink(){
+  const backEl = document.getElementById("backLink");
+  if (!backEl) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const rawReturnTo = (params.get("returnTo") || "").trim();
+  const rawAgent = (params.get("agent") || "").trim().toLowerCase();
+
+  // Localhost multi-port friendly defaults
+  let label = "← Back to GenieSphere";
+  let href  = window.location.origin + "/index.html";
+
+  function safeUrlFrom(input){
+    if(!input) return null;
+    try{
+      const u = new URL(input, window.location.origin);
+      const protoOk = (u.protocol === "https:" || u.protocol === "http:");
+      const hostOk =
+        protoOk &&
+        (u.hostname === "localhost" || u.hostname === "127.0.0.1" || u.hostname === "[::1]" ||
+         u.hostname === "geniesphere.com" || u.hostname.endsWith(".geniesphere.com"));
+      return (protoOk && hostOk) ? u : null;
+    }catch(_){ return null; }
+  }
+
+  // Prefer returnTo if it's safe + allowed
+  const u = safeUrlFrom(rawReturnTo);
+  if (u) {
+    label = "← Back";
+    href  = u.href;
+  } else if (rawAgent) {
+    const agentName =
+      rawAgent === "salon" ? "Salon Genie" :
+      rawAgent === "rental" ? "Rental Genie" :
+      rawAgent === "finance" ? "Finance Genie" :
+      rawAgent === "voyage" ? "Voyage Genie" :
+      rawAgent === "investment" ? "Investment Genie" :
+      "GenieSphere";
+    label = agentName === "GenieSphere" ? "← Back to GenieSphere" : `← Back to ${agentName}`;
+    href  = window.location.origin + "/index.html";
+  }
+
+  backEl.textContent = label;
+  backEl.href = href;
+})();
+</script>
+
+
+<script>
+  (function GS_contextAndRedirect(){
+    const params = new URLSearchParams(window.location.search);
+    const rawReturnTo = (params.get("returnTo") || "").trim();
+    const rawAgent = (params.get("agent") || "").trim().toLowerCase();
+
+    function safeUrlFrom(input){
+      if(!input) return null;
+      try{
+        const u = new URL(input, window.location.origin);
+        const protoOk = (u.protocol === "https:" || u.protocol === "http:");
+        const hostOk =
+          protoOk &&
+          (u.hostname === "localhost" || u.hostname === "127.0.0.1" || u.hostname === "[::1]" ||
+           u.hostname === "geniesphere.com" || u.hostname.endsWith(".geniesphere.com"));
+        if(!protoOk || !hostOk) return null;
+        return u;
+      }catch(_){
+        return null;
+      }
+    }
+
+    function agentLabelFromParam(a){
+      if (a === "salon") return "Salon Genie";
+      if (a === "rental") return "Rental Genie";
+      if (a === "finance") return "Finance Genie";
+      if (a === "voyage") return "Voyage Genie";
+      if (a === "investment") return "Investment Genie";
+      return "GenieSphere";
+    }
+
+    const returnUrl = safeUrlFrom(rawReturnTo);
+    const agentName = rawAgent ? agentLabelFromParam(rawAgent) : "GenieSphere";
+
+    // Apply dynamic branding (title + header + footer)
+    const brandNameEl = document.getElementById("brandName");
+    const poweredByEl = document.getElementById("poweredBy");
+    const logoEl = document.querySelector(".brand-logo");
+    const pageTitleEl = document.getElementById("pageTitle");
+
+    const isAgent = agentName && agentName !== "GenieSphere";
+    const displayName = isAgent ? agentName : "GenieSphere";
+
+    if (brandNameEl) brandNameEl.textContent = displayName;
+    if (poweredByEl) poweredByEl.textContent = "✨ Powered by GenieSphere";
+    if (logoEl) logoEl.alt = displayName;
+
+    document.title = `Sign in • ${displayName}`;
+    if (pageTitleEl) pageTitleEl.textContent = isAgent ? `Sign in to ${displayName}` : "Sign in to GenieSphere";
+
+    function safeInternalPath(input){
+      if(!input) return null;
+      try{ input = decodeURIComponent(input); }catch(_){}
+      if(!input.startsWith("/")) return null;
+      if(input.startsWith("//")) return null;
+      if(input.toLowerCase().includes("javascript:")) return null;
+      return input;
+    }
+
+    const safeNext = safeInternalPath(params.get("next"));
+    let redirectTo = window.location.origin + "/dashboard/overview.html";
+    if (safeNext) {
+      redirectTo = new URL(safeNext, window.location.origin).href;
+    } else if (returnUrl) {
+      redirectTo = returnUrl.href;
+    }
+
+    async function tryAttachAuthRedirect(){
+      let client = null;
+      try{
+        if (typeof window.getSbClient === "function") {
+          const maybe = window.getSbClient();
+          client = (maybe && typeof maybe.then === "function") ? await maybe : maybe;
+        }
+      }catch(_){ client = null; }
+
+      client = client || window.sb || window.sbClient || window.SB_CLIENT || null;
+
+      const auth = client && client.auth ? client.auth : null;
+      if(!auth || typeof auth.onAuthStateChange !== "function") return false;
+
+      auth.onAuthStateChange((event, session) => {
+        if(event === "SIGNED_IN" && session){
+          setTimeout(() => { window.location.href = redirectTo; }, 50);
+        }
+      });
+
+      const _qs = new URLSearchParams(window.location.search);
+      const _auto = _qs.get("auto") === "1";
+      if(typeof auth.getSession === "function"){
+        auth.getSession().then(({ data }) => {
+          if(data && data.session){
+            if(_auto){
+              window.location.href = redirectTo;
+              return;
+            }
+            try{
+              const msg = document.getElementById("msg");
+              if(msg){
+                msg.hidden = false;
+                msg.classList.remove("ok","warn","err");
+                msg.classList.add("info");
+                msg.innerHTML = `
+                  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
+                    <div style="min-width:220px">
+                      <div style="font-weight:700;margin-bottom:2px">You're already signed in.</div>
+                      <div style="opacity:.9">Continue, or sign in with a different account.</div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center">
+                      <button type="button" id="gsContinueBtn" class="btn primary" style="width:auto;min-width:0;padding:10px 16px">Continue</button>
+                      <button type="button" id="gsSwitchBtn" class="btn ghost" style="width:auto;min-width:0;padding:10px 16px">Use another account</button>
+                    </div>
+                  </div>
+                `;
+                const cBtn = document.getElementById("gsContinueBtn");
+                const sBtn = document.getElementById("gsSwitchBtn");
+                if(cBtn) cBtn.onclick = () => { window.location.href = redirectTo; };
+                if(sBtn) sBtn.onclick = async () => {
+                  try{ await auth.signOut(); }catch(_e){}
+                  msg.hidden = true;
+                  msg.textContent = "";
+                };
+              }
+            }catch(_e){}
+          }
+        }).catch(()=>{});
+      }
+      return true;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 80;
+    const t = setInterval(() => {
+      attempts++;
+      tryAttachAuthRedirect()
+        .then((ok)=>{ if (ok || attempts >= maxAttempts) clearInterval(t); })
+        .catch(()=>{ if (attempts >= maxAttempts) clearInterval(t); });
+    }, 100);
+
+    window.GS_AFTER_LOGIN_REDIRECT = function(){
+      window.location.href = redirectTo;
+    };
+
+    const debug = params.get("debug");
+    const dbgBar = document.getElementById("debugBar");
+    const dbgText = document.getElementById("debugText");
+    if(debug === "1" && dbgBar && dbgText){
+      dbgBar.hidden = false;
+      dbgText.textContent = `context=${displayName} | redirect=${redirectTo}`;
+    }
+  })();
+</script>
+
+
+<script>
+  // Secure login handler (prevents credentials in URL). v1
+  (function GS_secureLoginHandler(){
+    const form = document.getElementById("loginForm");
+    const btnLogin = document.getElementById("btnLogin");
+    const btnSignup = document.getElementById("btnSignup");
+    const msg = document.getElementById("msg");
+    const backLink = document.getElementById("backLink");
+
+    function setMsg(kind, text){
+      if(!msg) return;
+      msg.hidden = false;
+      msg.className = "msg" + (kind ? (" " + kind) : "");
+      msg.textContent = text || "";
+    }
+    function clearMsg(){
+      if(!msg) return;
+      msg.hidden = true;
+      msg.textContent = "";
+      msg.className = "msg";
+    }
+    function setLoading(on){
+      if(!btnLogin) return;
+      btnLogin.classList.toggle("loading", !!on);
+      btnLogin.disabled = !!on;
+    }
+
+    if(btnSignup){
+      btnSignup.addEventListener("click", () => {
+        const qs = window.location.search || "";
+        window.location.href = `${window.location.origin}/onboarding/signup.html${qs}`;
+      });
+    }
+
+    if(!form) return;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearMsg();
+
+      const emailEl = document.getElementById("email");
+      const passEl = document.getElementById("password");
+      const email = (emailEl && emailEl.value || "").trim();
+      const password = (passEl && passEl.value || "");
+
+      if(!email || !password){
+        setMsg("err", "Please enter your email and password.");
+        return;
+      }
+
+      const getClientSync = () => window.sb || window.sbClient || window.SB_CLIENT || null;
+      const getClientAsync = async () => {
+        if (typeof window.getSbClient === "function") {
+          try{
+            const maybe = window.getSbClient();
+            const c = (maybe && typeof maybe.then === "function") ? await maybe : maybe;
+            if (c && c.auth) return c;
+          }catch(_){/* ignore */}
+        }
+        return getClientSync();
+      };
+
+      async function waitForClient(ms = 8000){
+        const start = Date.now();
+        while(Date.now() - start < ms){
+          const c = await getClientAsync();
+          if(c && c.auth) return c;
+          await new Promise(r => setTimeout(r, 100));
+        }
+        return null;
+      }
+
+      let client = await getClientAsync();
+      if(!client || !client.auth){
+        setMsg("err", "Initializing secure sign-in…");
+        client = await waitForClient(8000);
+      }
+      if(!client || !client.auth){
+        setMsg("err", "Auth client not ready. Please refresh. If it keeps happening, your /shared/js/sb-client.js or /shared/config.json may be blocked/unauthorized.");
+        return;
+      }
+
+      try{
+        setLoading(true);
+        const { data, error } = await client.auth.signInWithPassword({ email, password });
+        if(error){
+          setLoading(false);
+          setMsg("err", error.message || "Sign in failed.");
+          return;
+        }
+
+        setMsg("ok", "Signed in. Redirecting…");
+        setTimeout(() => {
+          if (typeof window.GS_AFTER_LOGIN_REDIRECT === "function") window.GS_AFTER_LOGIN_REDIRECT();
+        }, 120);
+      }catch(err){
+        setLoading(false);
+        setMsg("err", (err && err.message) ? err.message : "Sign in failed.");
+      }
+    });
+  })();
+</script>
+
+</body>
+</html>

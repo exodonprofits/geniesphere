@@ -1,0 +1,218 @@
+<!-- category.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Category Tools | GenieSphere</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #2BFFD9;
+      --secondary: #7C3AED;
+      --background: #0F172A;
+      --text: #F8FAFC;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      margin: 0;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 30px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+      max-width: 1000px;
+      margin: 0 auto 40px;
+    }
+    a.card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 30px 20px;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    a.card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 24px rgba(43, 255, 217, 0.15);
+    }
+    .icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    .card h2 {
+      font-size: 1.4rem;
+      margin: 10px 0 5px;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .card p {
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background-color: #2563eb;
+      color: white;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      text-decoration: none;
+      margin-top: 40px;
+      font-weight: 600;
+    }
+    .back-button:hover {
+      background-color: #1d4ed8;
+    }
+    .button-container {
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <!--script type="module" src="/shared/js/header-dark.js"></script-->
+  <script type="module">import '/shared/js/header-dark.js?v=4.0';</script>
+  <h1 id="categoryTitle">🧠 AI Tools</h1>
+  <div class="grid" id="agentGrid"></div>
+
+  <div class="button-container">
+    <button class="back-button" onclick="window.location.href='/dashboard/user_dashboard.html'">⬅️ Back Dashboard</button>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const supabase = createClient(
+      'https://pbojacnagutipfhcxltj.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+    );
+
+    async function loadCategory() {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // Redirect silently if cat param is missing
+      if (!urlParams.has("cat")) {
+        return location.href = "/dashboard/user_dashboard.html";
+      }
+
+      const catParam = urlParams.get("cat");
+      const validCategories = ["personal", "business", "leisure", "investment"];
+      const category = validCategories.includes(catParam) ? catParam : "personal";
+
+      const categoryTitleMap = {
+        personal: "🏡 Personal",
+        business: "🧑‍💼 Business",
+        leisure: "✈️ Leisure",
+        investment: "📈 Investment"
+      };
+      const categoryTitle = categoryTitleMap[category] || "🧠 AI Tools";
+      document.getElementById("categoryTitle").textContent = categoryTitle;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return location.href = '/onboarding/login.html';
+
+      const { data: prefs } = await supabase
+        .from("user_preferences")
+        .select("agents")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const allowed = prefs?.agents || [];
+
+      const { data: agents } = await supabase
+        .from("agents")
+        .select("id, name, icon, category, folder, description, primary_url, geniesphere_url, hosting_type, tier, status")
+        .eq("category", category);
+
+      const grid = document.getElementById("agentGrid");
+
+      if (!agents || agents.length === 0) {
+        grid.innerHTML = `<p style="grid-column: 1 / -1; color: #ccc;">No agents available in this category yet.</p>`;
+      } else {
+        const visibleAgents = agents.filter(agent => allowed.includes(agent.id));
+        visibleAgents.forEach(agent => {
+          // Use primary_url from DB — falls back to legacy path if not set yet
+          const href = agent.primary_url
+            || agent.geniesphere_url
+            || `/${agent.category}/${agent.folder}/${agent.id}.html`;
+
+          // Tier 2+ agents open in a new tab (own domain)
+          const isOwnDomain = agent.hosting_type === 'own' || agent.hosting_type === 'standalone';
+          const isComingSoon = agent.status === 'coming_soon';
+
+          // Tier badge for featured agents with own domain
+          const tierBadge = (agent.tier >= 2 && isOwnDomain)
+            ? `<span style="display:inline-block;font-size:0.65rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:rgba(43,255,217,0.15);border:1px solid rgba(43,255,217,0.35);color:#2BFFD9;padding:2px 7px;border-radius:999px;margin-bottom:6px;">✦ Featured</span>`
+            : '';
+
+          // Coming soon overlay
+          const comingSoonBadge = isComingSoon
+            ? `<span style="display:inline-block;font-size:0.65rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;padding:2px 7px;border-radius:999px;margin-bottom:6px;">Coming Soon</span>`
+            : '';
+
+          const a = document.createElement("a");
+          a.className = "card" + (isComingSoon ? " card-soon" : "");
+          a.href = isComingSoon ? "#" : href;
+          if (isOwnDomain && !isComingSoon) a.target = "_blank";
+          if (isOwnDomain && !isComingSoon) a.rel = "noopener";
+          if (isComingSoon) a.style.opacity = "0.55";
+          if (isComingSoon) a.style.cursor = "default";
+          a.innerHTML = `
+            <div class="icon">${agent.icon}</div>
+            ${tierBadge}${comingSoonBadge}
+            <h2>${agent.name}</h2>
+            <p>${agent.description || ''}</p>
+          `;
+          grid.appendChild(a);
+        });
+      }
+
+      const settingsCard = document.createElement("a");
+      settingsCard.className = "card";
+      settingsCard.href = `/onboarding/select-agents.html?from=${category}`;
+      settingsCard.innerHTML = `
+        <div class="icon">⚙️</div>
+        <h2>Manage Agents</h2>
+        <p>Add or remove AI agents in this ${categoryTitle.replace(/[^a-zA-Z ]/g, '')} category.</p>
+      `;
+      grid.appendChild(settingsCard);
+
+      // 🧑‍💼 Only show Business Profile card for business category
+      if (category === "business") {
+        const businessCard = document.createElement("a");
+        businessCard.className = "card";
+        businessCard.href = "/onboarding/business_profile_form.html";
+        businessCard.innerHTML = `
+          <div class="icon">🏢</div>
+          <h2>Update Business Profiles</h2>
+          <p>Update your business name, services, and contact information.</p>
+        `;
+        grid.appendChild(businessCard);
+      }
+    }
+    loadCategory();
+  </script>
+</body>
+</html>

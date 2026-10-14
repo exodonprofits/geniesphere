@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#67c5ff" />
+  <meta name="gs-config" content="/shared/config.json" />
+
+  <title>Task Assigner • Salon Genie</title>
+
+  <!-- Shared GenieSphere client (non-breaking if missing) -->
+  <script defer src="/shared/js/app-config.js"></script>
+  <script defer src="/shared/js/gs-client.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#111a2d;
+      --card2:#0f172a;
+      --text:#eaf2ff;
+      --muted:rgba(234,242,255,.72);
+      --muted2:rgba(234,242,255,.55);
+      --line:rgba(255,255,255,.10);
+      --blue:#67c5ff;
+      --blue2:#4c6ef5;
+      --green:#22c55e;
+      --amber:#f59e0b;
+      --red:#ef4444;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 14px;
+      --max: 1120px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(900px 600px at 25% -10%, rgba(103,197,255,.25), transparent 55%),
+        radial-gradient(900px 600px at 85% 0%, rgba(76,110,245,.22), transparent 55%),
+        radial-gradient(900px 700px at 60% 110%, rgba(34,197,94,.12), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+    a{ color:inherit; text-decoration:none; }
+    .wrap{ max-width:var(--max); margin:0 auto; padding:22px 16px 40px; }
+    .top{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:12px 14px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,26,45,.88), rgba(15,23,42,.72));
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      position: sticky; top: 12px; z-index: 20;
+      backdrop-filter: blur(10px);
+    }
+    .brand{ display:flex; align-items:center; gap:10px; }
+    .logo{
+      width:36px; height:36px; border-radius:12px;
+      background: radial-gradient(circle at 30% 30%, rgba(103,197,255,.95), rgba(76,110,245,.75));
+      box-shadow: 0 10px 22px rgba(76,110,245,.24);
+    }
+    .title{ display:flex; flex-direction:column; line-height:1.1; }
+    .title b{ font-size:14px; letter-spacing:.2px; }
+    .title span{ font-size:12px; color:var(--muted2); }
+    .actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .btn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius: 999px;
+      font-weight:800;
+      font-size:13px;
+      display:inline-flex; align-items:center; gap:8px;
+      cursor:pointer;
+      transition: transform .15s, background .15s, border-color .15s;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.16); }
+    .btn.primary{ background: rgba(76,110,245,.18); border-color: rgba(76,110,245,.35); }
+    .btn.primary:hover{ background: rgba(76,110,245,.24); }
+    .btn.ok{ background: rgba(34,197,94,.14); border-color: rgba(34,197,94,.32); }
+    .btn.ok:hover{ background: rgba(34,197,94,.20); }
+    .grid{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .top{ position: relative; top:auto; }
+    }
+    .card{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,26,45,.82), rgba(15,23,42,.72));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:14px;
+      overflow:hidden;
+    }
+    .card h2{
+      margin:0 0 6px;
+      font-size:14px;
+      letter-spacing:.2px;
+    }
+    .sub{ color:var(--muted2); font-size:12px; margin-bottom:12px; }
+    .banner{
+      border:1px dashed rgba(103,197,255,.35);
+      background: rgba(103,197,255,.10);
+      border-radius: 14px;
+      padding:10px 12px;
+      display:flex; gap:10px; align-items:flex-start;
+      margin-bottom:12px;
+    }
+    .banner b{ display:block; font-size:13px; }
+    .banner p{ margin:2px 0 0; color:var(--muted); font-size:12px; }
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .pill.green{ background: rgba(34,197,94,.14); border-color: rgba(34,197,94,.30); color:#bbf7d0; }
+    .pill.amber{ background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.30); color:#fde68a; }
+
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .list{
+      display:flex; flex-direction:column; gap:10px;
+      margin-top:10px;
+    }
+    .task{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 14px;
+      padding:12px;
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap:12px;
+    }
+    .task-left{ display:flex; gap:10px; align-items:flex-start; }
+    .check{
+      width:18px; height:18px; margin-top:2px;
+      accent-color: var(--blue2);
+    }
+    .task h3{ margin:0; font-size:13px; }
+    .task p{ margin:4px 0 0; font-size:12px; color:var(--muted2); }
+    .meta{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    .right{
+      display:flex; flex-direction:column; gap:14px;
+    }
+    label{ font-size:12px; color:var(--muted); display:block; margin:8px 0 6px; }
+    select, input, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius: 14px;
+      padding:10px 12px;
+      outline:none;
+    }
+    textarea{ min-height:120px; resize:vertical; }
+    .small{ font-size:11px; color:var(--muted2); margin-top:6px; }
+    .divider{ height:1px; background: var(--line); margin:12px 0; }
+    .status{ font-size:12px; color:var(--muted2); margin-top:8px; }
+    .error{ color:#fecaca; }
+    .ok{ color:#bbf7d0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">
+          <b>Task Assigner</b>
+          <span id="bizLine">Salon Genie • loading…</span>
+        </div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="salon-dashboard.html">⬅️ Dashboard</a>
+        <button class="btn primary" id="btnRefresh" type="button">🔄 Refresh</button>
+        <button class="btn ok" id="btnAssign" type="button">✅ Assign Selected</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Recommended tasks</h2>
+        <div class="sub">Pick what matters today. In <span class="pill" id="modePill">normal</span> mode you see all active tasks. In <span class="pill">genie</span> mode we pre-select a focused set.</div>
+
+        <div class="banner" id="genieBanner" style="display:none;">
+          <div>🧠</div>
+          <div>
+            <b>Genie mode is ON</b>
+            <p>We’ll use the latest Genie output (if available) to prefill a simple “today plan” and recommended tasks.</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="pill" id="pillRole">role: …</span>
+          <span class="pill" id="pillTasks">tasks: …</span>
+          <span class="pill amber" id="pillLoad" style="display:none;">loading…</span>
+        </div>
+
+        <div class="list" id="taskList"></div>
+
+        <div class="divider"></div>
+        <h2>Genie output (optional)</h2>
+        <div class="sub">If you came from the Genie panel, it will appear here to help you or your manager act fast.</div>
+        <textarea id="genieText" placeholder="Paste or keep Genie output here…"></textarea>
+        <div class="small">Tip: from <b>Salon Dashboard → Genie</b> click <b>🧠 Generate Today’s Tasks</b> to auto-fill this.</div>
+      </div>
+
+      <div class="right">
+        <div class="card">
+          <h2>Assign to</h2>
+          <div class="sub">Choose who should own the tasks. Keep it simple.</div>
+
+          <label for="assignee">👤 Employee</label>
+          <select id="assignee"></select>
+          <div class="small" id="assigneeHint">Loading team…</div>
+
+          <label for="due">📅 Due</label>
+          <input id="due" type="date" />
+
+          <label for="note">📝 Note</label>
+          <textarea id="note" placeholder="Example: Focus on morning rush + ask for reviews at checkout."></textarea>
+
+          <div class="divider"></div>
+          <div class="row">
+            <button class="btn" id="btnSelectAll" type="button">✅ Select all</button>
+            <button class="btn" id="btnSelectNone" type="button">🧹 Clear</button>
+          </div>
+
+          <div class="status" id="status"></div>
+        </div>
+
+        <div class="card">
+          <h2>Owner effort reducer</h2>
+          <div class="sub">Three quick wins that remove daily friction.</div>
+          <div class="list">
+            <div class="task">
+              <div class="task-left">
+                <div>⚡</div>
+                <div>
+                  <h3>Default “Ask for review” script</h3>
+                  <p>Give front desk a 1-line script + QR sign.</p>
+                  <div class="meta"><span class="pill green">5 min</span><span class="pill">daily</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="task">
+              <div class="task-left">
+                <div>📦</div>
+                <div>
+                  <h3>Restock top 10 items</h3>
+                  <p>Fast check: acetone, towels, gloves, tips, etc.</p>
+                  <div class="meta"><span class="pill green">10 min</span><span class="pill">2×/week</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="task">
+              <div class="task-left">
+                <div>🧾</div>
+                <div>
+                  <h3>Cash + tips reconciliation</h3>
+                  <p>One screen checklist → fewer end-of-day issues.</p>
+                  <div class="meta"><span class="pill amber">15 min</span><span class="pill">daily</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="small">This section is “UI-only” for now (won’t break anything) — we can wire it to your <code>tasks</code> table later.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Helpers ---
+    const qs = new URLSearchParams(location.search);
+    const MODE = (qs.get("mode") || "normal").toLowerCase();
+    const ROLE = (qs.get("role") || "").toLowerCase();
+    const BUSINESS_ID = qs.get("business_id") || (function(){ try{ return localStorage.getItem("gs.active_business_id")||""; }catch(_){ return ""; } })();
+
+    const el = (id)=>document.getElementById(id);
+    const setStatus = (msg, kind="")=>{
+      const s = el("status");
+      if(!s) return;
+      s.className = "status " + (kind || "");
+      s.textContent = msg;
+    };
+
+    // --- Very safe GS client access (won't crash if files missing) ---
+    async function getClient(){
+      try{
+        const c = window.GSClient || window.GS || null;
+        if(c && typeof c.getClient === "function") return await c.getClient();
+      }catch(_){}
+      return null;
+    }
+
+    function todayISO(){
+      const d = new Date();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${d.getFullYear()}-${mm}-${dd}`;
+    }
+
+    // --- UI setup ---
+    function setModeUI(){
+      el("modePill").textContent = MODE;
+      if(MODE === "genie"){
+        el("modePill").classList.add("green");
+        el("genieBanner").style.display = "flex";
+      }
+      el("due").value = todayISO();
+
+      // Pull last Genie output if present
+      try{
+        const t = localStorage.getItem("sg_genie_last_output") || "";
+        if(t && !el("genieText").value.trim()) el("genieText").value = t;
+      }catch(_){}
+    }
+
+    // --- Data loading (non-breaking) ---
+    function buildFallbackTasks(){
+      // These are safe defaults if DB isn't ready yet.
+      return [
+        { id:"fb-1", title:"Front desk: ask for reviews (QR + script)", detail:"Use the 1-line script at checkout + point to QR sign.", category:"🚀 Customer Journey", effort:5, frequency:"daily", role_visibility:["front_desk","manager","owner"], recommended:true },
+        { id:"fb-2", title:"No-show follow-up message", detail:"Send polite SMS to reschedule & reduce gaps.", category:"🚀 Customer Journey", effort:8, frequency:"daily", role_visibility:["front_desk","manager","owner"], recommended:true },
+        { id:"fb-3", title:"Restock: top 10 supplies", detail:"Quick scan: acetone, towels, gloves, tips, polish remover.", category:"📦 Operations & Finance", effort:10, frequency:"2×/week", role_visibility:["manager","owner"], recommended:true },
+        { id:"fb-4", title:"Team: confirm tomorrow schedule", detail:"Spot gaps + text techs if needed.", category:"💼 Staff Automation", effort:8, frequency:"daily", role_visibility:["manager","owner"], recommended:(MODE==="genie") },
+        { id:"fb-5", title:"Marketing: post 1 quick photo", detail:"Before/after + 3 hashtags, 1 CTA.", category:"🌟 Smart Marketing", effort:10, frequency:"daily", role_visibility:["manager","owner"], recommended:false }
+      ];
+    }
+
+    async function loadTasks(){
+      const pillLoad = el("pillLoad");
+      pillLoad.style.display = "inline-flex";
+
+      // Prefer DB if available, fallback otherwise.
+      let tasks = [];
+      const client = await getClient();
+      if(client && BUSINESS_ID){
+        try{
+          // Expected table: salon.tasks (active tasks). If your schema differs, this will fail gracefully.
+          const res = await client
+            .from("salon.tasks")
+            .select("*")
+            .eq("active", true)
+            .limit(200);
+
+          if(res && res.error) throw res.error;
+
+          tasks = (res.data || []).map(t => ({
+            id: t.id,
+            title: t.title || t.name || "Untitled task",
+            detail: t.detail || t.description || "",
+            category: t.category || t.section || "General",
+            effort: t.effort_minutes || t.effort || 10,
+            frequency: t.frequency || "one-time",
+            role_visibility: t.role_visibility || t.visible_roles || ["owner","manager","front_desk","staff"],
+            recommended: !!t.recommended
+          }));
+        }catch(err){
+          // silently fallback
+          tasks = [];
+        }
+      }
+
+      if(!tasks.length) tasks = buildFallbackTasks();
+
+      // Genie mode pre-select: recommended + role match
+      const role = ROLE || "manager";
+      const filtered = tasks.filter(t => {
+        const roles = Array.isArray(t.role_visibility) ? t.role_visibility : [];
+        return roles.length ? roles.map(r=>String(r).toLowerCase()).includes(role) : true;
+      });
+
+      renderTasks(filtered);
+
+      pillLoad.style.display = "none";
+      el("pillTasks").textContent = `tasks: ${filtered.length}`;
+    }
+
+    function renderTasks(tasks){
+      const list = el("taskList");
+      list.innerHTML = "";
+
+      const role = ROLE || "manager";
+      el("pillRole").textContent = `role: ${role}`;
+
+      const shouldAuto = (MODE==="genie");
+      tasks.forEach((t, i)=>{
+        const div = document.createElement("div");
+        div.className = "task";
+
+        const left = document.createElement("div");
+        left.className = "task-left";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "check";
+        cb.dataset.taskId = t.id;
+        cb.checked = shouldAuto ? !!t.recommended : false;
+
+        const text = document.createElement("div");
+        const h = document.createElement("h3");
+        h.textContent = t.title;
+        const p = document.createElement("p");
+        p.textContent = t.detail || "";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        const cat = document.createElement("span");
+        cat.className = "pill";
+        cat.textContent = t.category;
+        const eff = document.createElement("span");
+        eff.className = "pill " + ((t.effort||0) <= 10 ? "green" : "amber");
+        eff.textContent = `${t.effort || 10} min`;
+        const fr = document.createElement("span");
+        fr.className = "pill";
+        fr.textContent = t.frequency || "one-time";
+
+        meta.appendChild(cat); meta.appendChild(eff); meta.appendChild(fr);
+
+        text.appendChild(h);
+        if(t.detail) text.appendChild(p);
+        text.appendChild(meta);
+
+        left.appendChild(cb);
+        left.appendChild(text);
+
+        div.appendChild(left);
+        list.appendChild(div);
+      });
+
+      // UX: click card toggles checkbox
+      list.querySelectorAll(".task").forEach(card=>{
+        card.addEventListener("click", (e)=>{
+          if(e.target && (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON" || e.target.closest("button"))) return;
+          const cb = card.querySelector("input[type=checkbox]");
+          if(cb){ cb.checked = !cb.checked; }
+        });
+      });
+    }
+
+    async function loadEmployees(){
+      const select = el("assignee");
+      select.innerHTML = "";
+      const hint = el("assigneeHint");
+
+      const client = await getClient();
+      let rows = [];
+
+      if(client && BUSINESS_ID){
+        try{
+          // Expected table: salon.employees
+          const res = await client
+            .from("salon.employees")
+            .select("id, full_name, role")
+            .eq("business_id", BUSINESS_ID)
+            .order("full_name", { ascending: true })
+            .limit(200);
+
+          if(res && res.error) throw res.error;
+          rows = res.data || [];
+        }catch(_){
+          rows = [];
+        }
+      }
+
+      if(!rows.length){
+        // fallback demo list
+        rows = [
+          { id:"demo-1", full_name:"Manager (demo)", role:"manager" },
+          { id:"demo-2", full_name:"Front Desk (demo)", role:"front_desk" }
+        ];
+        hint.textContent = "Demo list (DB not connected yet).";
+      }else{
+        hint.textContent = "Pick an employee.";
+      }
+
+      rows.forEach(r=>{
+        const opt = document.createElement("option");
+        opt.value = r.id;
+        opt.textContent = `${r.full_name}${r.role ? " • " + r.role : ""}`;
+        select.appendChild(opt);
+      });
+    }
+
+    // --- Assignment (safe / no hard dependency) ---
+    async function assignSelected(){
+      const checked = [...document.querySelectorAll("input.check:checked")].map(x=>x.dataset.taskId);
+      if(!checked.length){
+        setStatus("Select at least 1 task.", "error");
+        return;
+      }
+      const assigneeId = el("assignee").value || "";
+      const due = el("due").value || todayISO();
+      const note = el("note").value || "";
+      const genie = el("genieText").value || "";
+
+      // If DB is available, we attempt to insert assignment rows. Otherwise, just confirm UI-only.
+      const client = await getClient();
+      if(client && BUSINESS_ID && assigneeId && assigneeId.startsWith("demo-") === false){
+        try{
+          const payload = checked.map(task_id => ({
+            business_id: BUSINESS_ID,
+            task_id,
+            assignee_id: assigneeId,
+            due_date: due,
+            note,
+            genie_context: genie
+          }));
+
+          // Expected table: salon.task_assignments
+          const res = await client.from("salon.task_assignments").insert(payload);
+          if(res && res.error) throw res.error;
+
+          setStatus(`Assigned ${checked.length} task(s) ✅`, "ok");
+          return;
+        }catch(err){
+          setStatus("Couldn’t save to DB yet — kept selections locally ✅", "error");
+          try{ localStorage.setItem("sg_task_assigner_last", JSON.stringify({checked, assigneeId, due, note, genie, at: Date.now()})); }catch(_){}
+          return;
+        }
+      }
+
+      // fallback behavior
+      try{ localStorage.setItem("sg_task_assigner_last", JSON.stringify({checked, assigneeId, due, note, genie, at: Date.now()})); }catch(_){}
+      setStatus(`Saved ${checked.length} task(s) (demo/local) ✅`, "ok");
+    }
+
+    function selectAll(val){
+      document.querySelectorAll("input.check").forEach(cb=>cb.checked = !!val);
+    }
+
+    // --- Boot ---
+    async function boot(){
+      setModeUI();
+
+      // Business line
+      el("bizLine").textContent = BUSINESS_ID ? `business_id: ${BUSINESS_ID}` : "No business selected (still works in demo mode)";
+
+      // If role missing, infer from last intent in genie mode (front desk vs manager)
+      try{
+        if(!ROLE && MODE==="genie"){
+          const intent = localStorage.getItem("sg_genie_last_intent") || "";
+          // simple heuristic
+          if(intent === "review_reply") el("pillRole").textContent = "role: front_desk";
+        }
+      }catch(_){}
+
+      await Promise.all([loadEmployees(), loadTasks()]);
+
+      // Buttons
+      el("btnAssign").addEventListener("click", assignSelected);
+      el("btnRefresh").addEventListener("click", ()=>location.reload());
+      el("btnSelectAll").addEventListener("click", ()=>selectAll(true));
+      el("btnSelectNone").addEventListener("click", ()=>selectAll(false));
+
+      setStatus("Ready.", "ok");
+    }
+
+    boot();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🧹 Chore Manager | Household · GenieSphere</title>
+<meta name="description" content="Create chores, assign family members, set schedules, and track completion."/>
+<meta name="gs-config" content="/shared/config.json"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   CHORE MANAGER — Household Light Theme · Teal Identity
+═══════════════════════════════════════════════════════════ */
+:root{
+  --bg:#F5F7FA;
+  --panel:#FFFFFF;
+  --panel-soft:#F0F4F8;
+  --text:#111827;
+  --muted:#6B7280;
+  --muted-2:#9CA3AF;
+  --line:#E5EAF0;
+  --line-2:#D1D9E0;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.05),0 12px 32px rgba(0,0,0,.08);
+  --radius:18px;
+  --radius-sm:12px;
+  --radius-xs:8px;
+  --max:1440px;
+
+  --teal:#22D3EE;
+  --teal-dark:#0891B2;
+  --teal-deep:#0E7490;
+  --teal-dim:rgba(34,211,238,.10);
+  --teal-soft:rgba(34,211,238,.06);
+  --teal-bd:rgba(34,211,238,.28);
+
+  --urgent-bg:#FEF2F2; --urgent-bd:#FECACA; --urgent-txt:#B91C1C;
+  --warn-bg:#FFFBEB;   --warn-bd:#FDE68A;   --warn-txt:#92400E;
+  --ok-bg:#F0FDFA;     --ok-bd:#99F6E4;     --ok-txt:#0F766E;
+  --ok-dim:rgba(16,185,129,.10);
+
+  --focus:0 0 0 3px rgba(34,211,238,.22);
+}
+
+*{box-sizing:border-box} html,body{margin:0;padding:0;min-height:100%}
+body{
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ── HEADER ── */
+.site-header{
+  position:sticky;top:0;z-index:1000;
+  background:var(--panel);border-bottom:1px solid var(--line);
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.site-header-inner{
+  max-width:var(--max);margin:0 auto;padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px}
+.logo-mark{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#22d3ee,#0891b2);
+  box-shadow:0 0 0 3px rgba(34,211,238,.20),0 4px 12px rgba(34,211,238,.22);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.nav-links{display:flex;align-items:center;gap:4px}
+.nav-links a{
+  padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;
+  color:var(--muted);transition:all .14s;
+}
+.nav-links a:hover{background:var(--teal-dim);color:var(--teal-dark)}
+.nav-links a.active{background:var(--teal-dim);color:var(--teal-dark);font-weight:700}
+
+.user-menu{position:relative;margin-left:auto;display:flex;align-items:center}
+.user-menu-toggle{
+  display:flex;align-items:center;gap:6px;padding:7px 14px;
+  border-radius:999px;border:1px solid var(--line-2);
+  background:var(--panel-soft);color:var(--text);
+  font-size:13px;font-weight:600;cursor:pointer;transition:border-color .14s;
+}
+.user-menu-toggle:hover{border-color:var(--teal-bd)}
+.user-menu-dropdown{
+  position:absolute;right:0;top:calc(100% + 6px);min-width:200px;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius-sm);box-shadow:var(--shadow-md);
+  padding:6px 0;display:none;z-index:1002;
+}
+.user-menu-dropdown button,.user-menu-dropdown a{
+  display:block;width:100%;text-align:left;padding:9px 14px;
+  background:none;border:none;color:var(--text);font-size:14px;
+  cursor:pointer;font-family:inherit;text-decoration:none;transition:background .12s;
+}
+.user-menu-dropdown button:hover,.user-menu-dropdown a:hover{background:var(--panel-soft)}
+.dd-divider{height:1px;background:var(--line);margin:4px 0}
+.dd-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted-2);padding:5px 14px 3px}
+
+/* ── PAGE ── */
+.page{max-width:var(--max);margin:0 auto;padding:28px 24px 72px}
+
+.back-link{
+  display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;
+  color:var(--teal-dark);padding:6px 12px;border-radius:999px;
+  border:1px solid var(--teal-bd);background:var(--teal-soft);
+  transition:all .14s;margin-bottom:16px;
+}
+.back-link:hover{background:var(--teal-dim)}
+.page-eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--teal-dark);margin-bottom:10px;
+}
+.eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block}
+.page-title{font-size:clamp(24px,4vw,36px);font-weight:900;letter-spacing:-.04em;line-height:1.06;margin:0 0 8px}
+.page-subtitle{color:var(--muted);font-size:15px;max-width:560px;margin:0 0 14px;line-height:1.65}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;
+  border:1px solid var(--line-2);background:var(--panel);font-size:12px;font-weight:600;color:var(--muted);
+}
+.pill.teal{border-color:var(--teal-bd);background:var(--teal-dim);color:var(--teal-dark)}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+@media(max-width:860px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+.stat-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:16px 18px;box-shadow:var(--shadow);
+}
+.stat-card.overdue{border-color:var(--urgent-bd);background:var(--urgent-bg)}
+.stat-card.due-today{border-color:var(--warn-bd);background:var(--warn-bg)}
+.stat-card.completed{border-color:var(--ok-bd);background:var(--ok-bg)}
+.stat-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.stat-card.overdue .stat-label{color:var(--urgent-txt)}
+.stat-card.due-today .stat-label{color:var(--warn-txt)}
+.stat-card.completed .stat-label{color:var(--ok-txt)}
+.stat-num{font-size:28px;font-weight:900;letter-spacing:-.04em;color:var(--text);line-height:1}
+.stat-card.overdue .stat-num{color:var(--urgent-txt)}
+.stat-card.due-today .stat-num{color:var(--warn-txt)}
+.stat-card.completed .stat-num{color:var(--ok-txt)}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* ── MAIN GRID ── */
+.main-grid{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+@media(max-width:1080px){.main-grid{grid-template-columns:1fr}}
+
+/* ── CARD ── */
+.card{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;
+}
+.card-head{
+  display:flex;align-items:center;gap:12px;padding:15px 20px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(135deg,rgba(34,211,238,.05),rgba(8,145,178,.01));
+}
+.card-icon{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#22d3ee,#0891b2);
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+  box-shadow:0 3px 10px rgba(34,211,238,.22);
+}
+.card-title{font-size:14px;font-weight:800;color:var(--text);margin:0 0 2px}
+.card-sub{font-size:12px;color:var(--muted)}
+
+/* ── FORM ── */
+.form-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.form-label{
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px;display:block;
+}
+.form-input{
+  width:100%;padding:10px 14px;border-radius:var(--radius-sm);
+  border:1px solid var(--line-2);background:var(--panel-soft);
+  color:var(--text);font-size:14px;font-family:inherit;outline:none;
+  transition:border-color .14s,box-shadow .14s;
+}
+.form-input:focus{border-color:var(--teal-bd);box-shadow:var(--focus)}
+.form-input::placeholder{color:var(--muted-2)}
+textarea.form-input{resize:vertical;min-height:72px;line-height:1.55}
+select.form-input{cursor:pointer}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.form-2col{grid-template-columns:1fr}}
+
+/* Assignee quick-picks */
+.assignee-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.assignee-chip{
+  padding:5px 12px;border-radius:999px;border:1px solid var(--line-2);
+  background:var(--panel-soft);color:var(--muted);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .14s;
+}
+.assignee-chip:hover{border-color:var(--teal-bd);color:var(--teal-dark);background:var(--teal-dim)}
+
+/* Priority selector */
+.priority-row{display:flex;gap:6px}
+.priority-btn{
+  flex:1;padding:8px 6px;border-radius:var(--radius-xs);border:1px solid var(--line-2);
+  background:var(--panel-soft);color:var(--muted);font-size:12px;font-weight:700;
+  cursor:pointer;text-align:center;transition:all .14s;
+}
+.priority-btn:hover{border-color:var(--teal-bd);color:var(--teal-dark)}
+.priority-btn.sel-normal{border-color:var(--teal-bd);background:var(--teal-dim);color:var(--teal-dark)}
+.priority-btn.sel-high{border-color:var(--warn-bd);background:var(--warn-bg);color:var(--warn-txt)}
+.priority-btn.sel-urgent{border-color:var(--urgent-bd);background:var(--urgent-bg);color:var(--urgent-txt)}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  border:none;cursor:pointer;border-radius:999px;
+  padding:10px 20px;font-weight:700;font-size:14px;font-family:inherit;
+  transition:filter .15s,transform .12s;white-space:nowrap;
+}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-primary{background:linear-gradient(135deg,#22d3ee,#0891b2);color:#fff;box-shadow:0 4px 14px rgba(34,211,238,.30)}
+.btn-ghost{background:var(--panel-soft);color:var(--muted);border:1px solid var(--line)}
+.btn-ghost:hover{color:var(--text);border-color:var(--line-2)}
+.btn-ok{background:var(--ok-bg);color:var(--ok-txt);border:1px solid var(--ok-bd)}
+.btn-warn{background:var(--warn-bg);color:var(--warn-txt);border:1px solid var(--warn-bd)}
+.btn-danger{background:var(--urgent-bg);color:var(--urgent-txt);border:1px solid var(--urgent-bd)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-xs{padding:4px 10px;font-size:11px;font-weight:700}
+.btn-full{width:100%}
+.form-actions{display:flex;gap:10px;flex-wrap:wrap;padding-top:2px}
+@media(max-width:480px){.form-actions .btn{flex:1}}
+
+/* ── CHORE LIST PANEL ── */
+.list-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;
+  background:linear-gradient(135deg,rgba(34,211,238,.05),rgba(8,145,178,.01));
+}
+.list-head-left{display:flex;align-items:center;gap:10px}
+.list-toolbar{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;
+}
+.search-box{
+  display:flex;align-items:center;gap:8px;flex:1;min-width:160px;
+  background:var(--panel-soft);border:1px solid var(--line-2);
+  border-radius:999px;padding:7px 14px;
+}
+.search-box input{border:none;background:transparent;outline:none;color:var(--text);font-size:13px;font-family:inherit;flex:1}
+.search-box input::placeholder{color:var(--muted-2)}
+.filter-tabs{display:flex;gap:4px}
+.ftab{
+  padding:5px 12px;border-radius:999px;border:1px solid var(--line-2);
+  background:transparent;color:var(--muted);font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .14s;
+}
+.ftab:hover{border-color:var(--teal-bd);color:var(--teal-dark)}
+.ftab.active{background:var(--teal-dim);border-color:var(--teal-bd);color:var(--teal-dark);font-weight:700}
+
+/* ── CHORE ITEMS ── */
+.chore-list{padding:8px 10px;display:flex;flex-direction:column;gap:6px;min-height:140px}
+.chore-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px 14px;border-radius:var(--radius-sm);
+  border:1px solid var(--line);background:var(--panel-soft);
+  transition:all .16s;
+}
+.chore-item:hover{border-color:var(--teal-bd);background:var(--teal-soft)}
+.chore-item.done-item{opacity:.55}
+.chore-item.done-item:hover{opacity:.75}
+.chore-item.overdue-item{border-color:var(--urgent-bd);background:var(--urgent-bg)}
+.chore-item.overdue-item:hover{filter:brightness(.98)}
+.chore-item.today-item{border-color:var(--warn-bd);background:var(--warn-bg)}
+
+/* Checkbox */
+.chore-check{
+  width:22px;height:22px;border-radius:50%;border:2px solid var(--line-2);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .16s;margin-top:1px;background:var(--panel);
+}
+.chore-check:hover{border-color:var(--teal-dark);background:var(--teal-dim)}
+.chore-check.checked{background:linear-gradient(135deg,#22d3ee,#0891b2);border-color:var(--teal-dark)}
+.chore-check.checked::after{content:'✓';font-size:12px;font-weight:900;color:#fff}
+.overdue-item .chore-check{border-color:var(--urgent-bd)}
+.today-item .chore-check{border-color:var(--warn-bd)}
+
+.chore-body{flex:1;min-width:0}
+.chore-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.done-item .chore-title{text-decoration:line-through;color:var(--muted)}
+.chore-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.chore-badge{
+  font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;
+  border:1px solid var(--line-2);background:var(--panel);color:var(--muted);
+}
+.chore-badge.overdue-badge{background:var(--urgent-bg);border-color:var(--urgent-bd);color:var(--urgent-txt)}
+.chore-badge.today-badge{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn-txt)}
+.chore-badge.done-badge{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-txt)}
+.chore-badge.pts-badge{background:var(--teal-dim);border-color:var(--teal-bd);color:var(--teal-dark)}
+.chore-badge.priority-high{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn-txt)}
+.chore-badge.priority-urgent{background:var(--urgent-bg);border-color:var(--urgent-bd);color:var(--urgent-txt)}
+
+.chore-actions{display:flex;gap:5px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+
+/* Empty state */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 20px;text-align:center;gap:10px;
+}
+.empty-icon{
+  width:52px;height:52px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(34,211,238,.10),rgba(8,145,178,.06));
+  border:1px solid var(--teal-bd);
+  display:flex;align-items:center;justify-content:center;font-size:24px;
+}
+.empty-title{font-size:14px;font-weight:700;color:var(--text)}
+.empty-sub{font-size:13px;color:var(--muted);max-width:220px}
+
+/* ── QUICK PROMPT BAR ── */
+.prompt-bar{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:14px 18px;margin-bottom:20px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.prompt-bar-icon{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#22d3ee,#0891b2);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  box-shadow:0 3px 10px rgba(34,211,238,.22);
+}
+.prompt-bar-text{font-size:13px;color:var(--muted);flex:0 0 auto}
+.prompt-input-row{display:flex;gap:8px;flex:1;min-width:200px}
+.prompt-input{
+  flex:1;padding:9px 14px;border-radius:999px;border:1px solid var(--line-2);
+  background:var(--panel-soft);color:var(--text);font-size:13px;font-family:inherit;outline:none;
+  transition:border-color .14s,box-shadow .14s;
+}
+.prompt-input:focus{border-color:var(--teal-bd);box-shadow:var(--focus)}
+.prompt-input::placeholder{color:var(--muted-2)}
+
+/* ── FOOTER ── */
+.site-footer{
+  margin-top:40px;padding:24px 0 36px;
+  border-top:1px solid var(--line);background:var(--panel-soft);
+}
+.site-footer-inner{max-width:var(--max);margin:0 auto;padding:0 24px}
+.footer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media(max-width:720px){.footer-grid{grid-template-columns:repeat(2,1fr)}}
+.footer-col h4{margin:0 0 10px;color:var(--text);font-size:13px;font-weight:700}
+.footer-col a{display:block;color:var(--muted);text-decoration:none;margin:6px 0;font-size:13px;transition:color .13s}
+.footer-col a:hover{color:var(--teal-dark)}
+.footer-bottom{margin-top:20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.social{display:flex;gap:8px}
+.social a{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);transition:border-color .13s}
+.social a:hover{border-color:var(--teal-bd)}
+
+/* ── MOBILE NAV ── */
+.mobile-nav{
+  position:fixed;left:0;right:0;bottom:0;display:none;
+  z-index:1200;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  background:var(--panel);border-top:1px solid var(--line);
+  box-shadow:0 -4px 16px rgba(0,0,0,.06);
+}
+.mobile-nav-inner{max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mnav{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;padding:10px 8px;border-radius:14px;border:1px solid var(--line);
+  background:var(--panel-soft);color:var(--muted);font-weight:700;font-size:11px;text-decoration:none;transition:all .13s;
+}
+.mnav .ico{font-size:16px;line-height:1}
+.mnav.active{color:var(--teal-dark);border-color:var(--teal-bd);background:var(--teal-dim)}
+.mobile-pad{display:none;height:86px}
+@media(max-width:860px){.mobile-nav{display:block}.mobile-pad{display:block}.page{padding-bottom:calc(86px + 20px)}}
+@media(max-width:720px){.nav-links{display:none}}
+@media(max-width:600px){.site-footer{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="../index.html">
+      <div class="logo-mark">🧞</div>
+      <strong>GenieSphere</strong>
+    </a>
+    <nav aria-label="Primary" class="nav-links">
+      <a class="active" href="../dashboard/household.html">🏠 Household</a>
+      <a href="../dashboard/business.html">🏢 Business</a>
+      <a href="../dashboard/investment.html">📈 Investment</a>
+      <a href="../dashboard/leisure.html">🏝️ Leisure</a>
+    </nav>
+    <div class="user-menu" id="user-menu">
+      <button aria-expanded="false" class="user-menu-toggle" id="user-menu-toggle">
+        <span id="user-name-label">Log in</span> <span aria-hidden="true">▾</span>
+      </button>
+      <div class="user-menu-dropdown" id="user-menu-dropdown">
+        <div class="dd-lbl">Account</div>
+        <button class="dropdown-nav" data-target="../onboarding/user_profile_form.html" type="button">👤 User profile</button>
+        <button class="dropdown-nav" data-target="../onboarding/display_settings.html" type="button">⚙️ Settings</button>
+        <div class="dd-divider"></div>
+        <button id="user-auth-action" type="button">Log in / Sign up</button>
+        <button class="auth-only" id="user-signout-btn" style="display:none" type="button">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── PAGE ── -->
+<main class="page">
+
+  <a class="back-link" href="../dashboard/household.html">← Household</a>
+  <div class="page-eyebrow"><span class="eyebrow-dot"></span> Household · Chore Manager</div>
+  <h1 class="page-title">🧹 Chore Manager</h1>
+  <p class="page-subtitle">Assign chores, set due dates, track completion, and log rewards to the budget — all in one place.</p>
+  <div class="hero-meta">
+    <span class="pill teal">🏠 Household Tool</span>
+    <span class="pill" id="mode-pill">💾 Local storage</span>
+    <span class="pill">🏆 Points &amp; rewards</span>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="stats-row">
+    <div class="stat-card overdue">
+      <div class="stat-label">⚠️ Overdue</div>
+      <div class="stat-num" id="stat-overdue">0</div>
+      <div class="stat-sub">Need attention now</div>
+    </div>
+    <div class="stat-card due-today">
+      <div class="stat-label">📌 Due Today</div>
+      <div class="stat-num" id="stat-today">0</div>
+      <div class="stat-sub">On today's list</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">⏳ Pending</div>
+      <div class="stat-num" id="stat-pending">0</div>
+      <div class="stat-sub">Upcoming</div>
+    </div>
+    <div class="stat-card completed">
+      <div class="stat-label">✅ Done (7d)</div>
+      <div class="stat-num" id="stat-done">0</div>
+      <div class="stat-sub">This week</div>
+    </div>
+  </div>
+
+  <!-- Quick prompt bar -->
+  <div class="prompt-bar">
+    <div class="prompt-bar-icon">✨</div>
+    <span class="prompt-bar-text">Ask:</span>
+    <div class="prompt-input-row">
+      <input class="prompt-input" id="tool-prompt-input" autocomplete="off"
+             placeholder="e.g. "what's due today?" or "make a weekly chore plan for 4 people"" type="text"/>
+      <button class="btn btn-primary btn-sm" id="btn-prompt" type="button">Go</button>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+
+    <!-- LEFT: Add chore -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">➕</div>
+        <div>
+          <div class="card-title">Add a Chore</div>
+          <div class="card-sub">Quick add — refine anytime</div>
+        </div>
+      </div>
+      <form class="form-body" id="tool-form">
+
+        <div>
+          <label class="form-label" for="chore-title">Chore name</label>
+          <input class="form-input" id="chore-title" placeholder="e.g. Take out trash, Vacuum living room…" type="text"/>
+        </div>
+
+        <div>
+          <label class="form-label" for="chore-assignee">Assign to</label>
+          <input class="form-input" id="chore-assignee" placeholder="e.g. Katie, Jaden, Everyone…" type="text"/>
+          <div class="assignee-row" id="assignee-quick">
+            <button class="assignee-chip" data-name="Katie" type="button">Katie</button>
+            <button class="assignee-chip" data-name="Jaden" type="button">Jaden</button>
+            <button class="assignee-chip" data-name="Jimmy" type="button">Jimmy</button>
+            <button class="assignee-chip" data-name="Jenny" type="button">Jenny</button>
+            <button class="assignee-chip" data-name="Everyone" type="button">Everyone</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">Priority</label>
+          <div class="priority-row" id="priorityRow">
+            <button class="priority-btn sel-normal" data-prio="normal" type="button">Normal</button>
+            <button class="priority-btn" data-prio="high" type="button">🔶 High</button>
+            <button class="priority-btn" data-prio="urgent" type="button">🔴 Urgent</button>
+          </div>
+        </div>
+
+        <div class="form-2col">
+          <div>
+            <label class="form-label" for="chore-due">Due date</label>
+            <input class="form-input" id="chore-due" type="date"/>
+          </div>
+          <div>
+            <label class="form-label" for="chore-frequency">Frequency</label>
+            <select class="form-input" id="chore-frequency">
+              <option value="">One-time</option>
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Every 2 weeks">Every 2 weeks</option>
+              <option value="Monthly">Monthly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-2col">
+          <div>
+            <label class="form-label" for="chore-points">Points (optional)</label>
+            <input class="form-input" id="chore-points" min="0" placeholder="e.g. 5" step="1" type="number"/>
+          </div>
+          <div>
+            <label class="form-label" for="chore-reward-to">Reward to</label>
+            <input class="form-input" id="chore-reward-to" placeholder="e.g. Jaden" type="text"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label" for="chore-budget-tag">Budget tag (optional)</label>
+          <input class="form-input" id="chore-budget-tag" placeholder="e.g. Kids Allowance, Family Rewards" type="text"/>
+        </div>
+
+        <div>
+          <label class="form-label" for="chore-notes">Notes (optional)</label>
+          <textarea class="form-input" id="chore-notes" placeholder="Which bins, where supplies are, photo needed…" rows="2"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btn-run" type="submit">💾 Save Chore</button>
+          <button class="btn btn-ghost" id="btn-clear" type="button">Clear</button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- RIGHT: Chore list -->
+    <div class="card">
+      <div class="list-head">
+        <div class="list-head-left">
+          <div class="card-icon">📋</div>
+          <div>
+            <div class="card-title">Chore List</div>
+            <div class="card-sub">Tap the circle to complete</div>
+          </div>
+        </div>
+        <span id="total-badge" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:var(--teal-dim);color:var(--teal-dark);border:1px solid var(--teal-bd);">0 chores</span>
+      </div>
+
+      <div class="list-toolbar">
+        <div class="search-box">
+          <span style="color:var(--muted-2);font-size:13px">🔍</span>
+          <input id="chore-search" placeholder="Search chores…" type="search"/>
+        </div>
+        <div class="filter-tabs">
+          <button class="ftab active" data-filter="all" type="button">All</button>
+          <button class="ftab" data-filter="pending" type="button">Pending</button>
+          <button class="ftab" data-filter="done" type="button">Done</button>
+        </div>
+      </div>
+
+      <div class="chore-list" id="chore-list-body">
+        <div class="empty-state">
+          <div class="empty-icon">🧹</div>
+          <div class="empty-title">No chores yet</div>
+          <div class="empty-sub">Add your first chore using the form on the left.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-grid -->
+
+</main>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Home &amp; Family</h4>
+        <a href="/household/householdgenie/household-genie.html">Household Genie</a>
+        <a href="/household/family-scheduler.html">Family Scheduler</a>
+        <a href="/household/kids-school.html">Kids &amp; School Hub</a>
+      </div>
+      <div class="footer-col">
+        <h4>Health &amp; Money</h4>
+        <a href="/household/nutrition-engine.html">Nutrition Engine</a>
+        <a href="/household/medication-logger.html">Medication &amp; Vitals</a>
+        <a href="/household/household-budget.html">Household Budget</a>
+      </div>
+      <div class="footer-col">
+        <h4>Life &amp; Travel</h4>
+        <a href="/household/car-care">Car Care Tracker</a>
+        <a href="/leisure/travelplangenie/index.html">Trip Planner</a>
+        <a href="/household/household-insurance.html">Safety &amp; Insurance</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="/onboarding/api-key-settings.html">API Keys</a>
+        <a href="/about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+      <div class="social">
+        <a aria-label="Twitter / X" href="#">🐦</a>
+        <a aria-label="YouTube" href="#">▶️</a>
+        <a aria-label="GitHub" href="#">🐙</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div aria-hidden="true" class="mobile-pad"></div>
+<nav aria-label="GenieSphere mobile navigation" class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <a class="mnav active" href="../dashboard/household.html"><div class="ico">🏠</div><div>Household</div></a>
+    <a class="mnav" href="../dashboard/business.html"><div class="ico">🏢</div><div>Business</div></a>
+    <a class="mnav" href="../dashboard/investment.html"><div class="ico">📈</div><div>Invest</div></a>
+    <a class="mnav" href="../dashboard/leisure.html"><div class="ico">🏝️</div><div>Leisure</div></a>
+  </div>
+</nav>
+
+<script>
+window.GS_CONFIG_URL = "/shared/config.json";
+window.GS_CONFIG_PATH = "/shared/config.json";
+</script>
+<script>
+/* ════════════════════════════════════════════
+   CHORE MANAGER — v3 (household light theme)
+   Preserves all original data/Supabase logic
+════════════════════════════════════════════ */
+(function(){
+  const $ = sel => document.querySelector(sel);
+  const $id = id => document.getElementById(id);
+  const LS_KEY      = "gs_chores";
+  const LS_SETTINGS = "gs_chore_settings";
+
+  /* ── DB helpers ── */
+  function getDb(){ return window.GS?.client || window.GS_CLIENT || window.gsClient || window.dbClient || null; }
+  function loadSettings(){ try{ return JSON.parse(localStorage.getItem(LS_SETTINGS)||"{}"); }catch{ return {}; } }
+  function loadChoresLocal(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"[]"); }catch{ return []; } }
+  function saveChoresLocal(l){ localStorage.setItem(LS_KEY, JSON.stringify(l)); }
+  function uid(){ return Math.random().toString(16).slice(2)+Date.now().toString(16); }
+
+  function todayISO(){
+    const d=new Date(); d.setHours(0,0,0,0);
+    return d.toISOString().slice(0,10);
+  }
+  function fmtDate(d){
+    if(!d) return "—";
+    try{
+      const dt=new Date(d+'T00:00:00');
+      if(isNaN(dt)) return d;
+      return dt.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    }catch{ return d; }
+  }
+  function isOverdue(due){
+    if(!due) return false;
+    return new Date(due+'T00:00:00') < new Date(todayISO());
+  }
+  function esc(s){
+    return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;')
+      .replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
+  }
+
+  const T_CHORES = "household_chores";
+  const T_LEDGER = "household_allowance_ledger";
+
+  async function getUserId(){
+    const auth=window.GS?.auth||window.GS_AUTH;
+    if(auth?.user?.id) return auth.user.id;
+    const db=getDb(); if(!db) return null;
+    try{ const {data}=await db.auth.getUser(); return data?.user?.id||null; }catch{ return null; }
+  }
+
+  function rowToChore(r){
+    return { id:r.id, title:r.title, assignee:r.assignee||"", frequency:r.frequency||"",
+      due:r.due||"", points:r.points??null, notes:r.notes||"", reward_to:r.reward_to||"",
+      budget_tag:r.budget_tag||"", priority:r.priority||"normal",
+      done:!!r.done, created_at:r.created_at||"", done_at:r.done_at||null };
+  }
+
+  async function loadChores(){
+    const db=getDb(); if(!db) return loadChoresLocal();
+    try{
+      const uid=await getUserId(); if(!uid) return loadChoresLocal();
+      const {data,error}=await db.from(T_CHORES).select("*").order("created_at",{ascending:false});
+      if(error) throw error;
+      return Array.isArray(data)?data.map(rowToChore):[];
+    }catch{ return loadChoresLocal(); }
+  }
+
+  async function saveChore(c){
+    const db=getDb();
+    if(!db){ const l=loadChoresLocal(); l.unshift(c); saveChoresLocal(l); return {mode:"local"}; }
+    try{
+      const userId=await getUserId(); if(!userId) throw new Error("No user");
+      const {error}=await db.from(T_CHORES).insert({
+        title:c.title, assignee:c.assignee||null, frequency:c.frequency||null,
+        due:c.due||null, points:c.points??null, notes:c.notes||null,
+        reward_to:c.reward_to||null, budget_tag:c.budget_tag||null,
+        priority:c.priority||null, done:false, done_at:null, user_id:userId
+      });
+      if(error) throw error;
+      return {mode:"supabase"};
+    }catch{
+      const l=loadChoresLocal(); l.unshift(c); saveChoresLocal(l);
+      return {mode:"local_fallback"};
+    }
+  }
+
+  async function setDone(choreId, done){
+    const db=getDb();
+    if(!db){
+      const l=loadChoresLocal(); const i=l.findIndex(x=>x.id===choreId);
+      if(i>=0){ l[i].done=!!done; l[i].done_at=done?new Date().toISOString():null; saveChoresLocal(l); }
+      return {mode:"local"};
+    }
+    try{
+      const userId=await getUserId(); if(!userId) throw new Error("No user");
+      const {error}=await db.from(T_CHORES).update({done:!!done,done_at:done?new Date().toISOString():null}).eq("id",choreId);
+      if(error) throw error; return {mode:"supabase"};
+    }catch{
+      const l=loadChoresLocal(); const i=l.findIndex(x=>x.id===choreId);
+      if(i>=0){ l[i].done=!!done; l[i].done_at=done?new Date().toISOString():null; saveChoresLocal(l); }
+      return {mode:"local_fallback"};
+    }
+  }
+
+  function computeReward(points){
+    const s=loadSettings();
+    const rate=Number(s.points_to_usd||0.5);
+    return Math.round((Number(points||0)*rate)*100)/100;
+  }
+
+  async function writeLedger(chore){
+    const db=getDb(); if(!db) return {ok:false,mode:"local"};
+    try{
+      const userId=await getUserId(); if(!userId) throw new Error("No user");
+      const points=Number(chore.points||0);
+      const amount=computeReward(points);
+      const {error}=await db.from(T_LEDGER).insert({
+        user_id:userId, type:"chore_reward",
+        member_name:chore.reward_to||chore.assignee||null,
+        amount, points, description:chore.title,
+        tag:chore.budget_tag||"Kids Allowance",
+        chore_title:chore.title, chore_ref:chore.id||null,
+        occurred_on:todayISO()
+      });
+      if(error) throw error;
+      return {ok:true,mode:"supabase",amount};
+    }catch(e){ return {ok:false,mode:"supabase_error",error:String(e?.message||e)}; }
+  }
+
+  /* ── UI State ── */
+  let selectedPriority = "normal";
+  let activeFilter     = "all";
+
+  /* Priority buttons */
+  document.querySelectorAll('.priority-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      selectedPriority=btn.dataset.prio;
+      document.querySelectorAll('.priority-btn').forEach(b=>{
+        b.className='priority-btn';
+        if(b.dataset.prio===selectedPriority) b.classList.add('sel-'+selectedPriority);
+      });
+    });
+  });
+
+  /* Assignee quick-picks */
+  document.querySelectorAll('.assignee-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      const inp=$id('chore-assignee');
+      if(inp){ inp.value=chip.dataset.name; inp.focus(); }
+    });
+  });
+
+  /* Filter tabs */
+  document.querySelectorAll('.ftab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      activeFilter=btn.dataset.filter;
+      document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    });
+  });
+
+  /* Search */
+  $id('chore-search')?.addEventListener('input', render);
+
+  /* ── Render ── */
+  async function render(){
+    const allChores = await loadChores();
+    const tISO = todayISO();
+
+    /* Stats */
+    const overdue   = allChores.filter(c=>!c.done&&c.due&&isOverdue(c.due)).length;
+    const dueToday  = allChores.filter(c=>!c.done&&c.due===tISO).length;
+    const pending   = allChores.filter(c=>!c.done&&(!c.due||(!isOverdue(c.due)&&c.due!==tISO))).length;
+    const done7d    = allChores.filter(c=>c.done&&c.done_at&&(Date.now()-new Date(c.done_at).getTime())<=(7*86400000)).length;
+
+    const setN=(id,n)=>{ const el=$id(id); if(el) el.textContent=n; };
+    setN('stat-overdue',overdue);
+    setN('stat-today',dueToday);
+    setN('stat-pending',pending);
+    setN('stat-done',done7d);
+
+    /* Mode pill */
+    const mp=$id('mode-pill');
+    if(mp) mp.textContent=getDb()?'☁️ Supabase':'💾 Local storage';
+
+    /* Filter & search */
+    const q=($id('chore-search')?.value||'').toLowerCase().trim();
+    let rows=[...allChores];
+    if(activeFilter==='pending') rows=rows.filter(c=>!c.done);
+    if(activeFilter==='done')    rows=rows.filter(c=>c.done);
+    if(q) rows=rows.filter(c=>(c.title||'').toLowerCase().includes(q)||(c.assignee||'').toLowerCase().includes(q)||(c.notes||'').toLowerCase().includes(q));
+
+    /* Sort: urgent/overdue first, then by due, then done at bottom */
+    rows.sort((a,b)=>{
+      if(a.done!==b.done) return a.done?1:-1;
+      const aPrio=a.priority==='urgent'?0:a.priority==='high'?1:2;
+      const bPrio=b.priority==='urgent'?0:b.priority==='high'?1:2;
+      if(aPrio!==bPrio) return aPrio-bPrio;
+      const aOver=!a.done&&a.due&&isOverdue(a.due);
+      const bOver=!b.done&&b.due&&isOverdue(b.due);
+      if(aOver!==bOver) return aOver?-1:1;
+      return (a.due||'9999-99-99').localeCompare(b.due||'9999-99-99');
+    });
+
+    /* Total badge */
+    const tb=$id('total-badge');
+    if(tb) tb.textContent=`${rows.length} chore${rows.length!==1?'s':''}`;
+
+    const body=$id('chore-list-body');
+    if(!body) return;
+
+    if(!rows.length){
+      body.innerHTML=`<div class="empty-state">
+        <div class="empty-icon">🧹</div>
+        <div class="empty-title">${q||activeFilter!=='all'?'No matching chores':'No chores yet'}</div>
+        <div class="empty-sub">${q||activeFilter!=='all'?'Try a different filter or search.':'Add your first chore using the form on the left.'}</div>
+      </div>`;
+      return;
+    }
+
+    body.innerHTML=rows.map(c=>{
+      const over=!c.done&&c.due&&isOverdue(c.due);
+      const isToday=!c.done&&c.due===tISO;
+      const itemClass=['chore-item',c.done?'done-item':'',over?'overdue-item':'',isToday&&!over?'today-item':''].filter(Boolean).join(' ');
+      const checkClass='chore-check'+(c.done?' checked':'');
+
+      /* Status badge */
+      let statusBadge='';
+      if(c.done) statusBadge=`<span class="chore-badge done-badge">✅ Done</span>`;
+      else if(over) statusBadge=`<span class="chore-badge overdue-badge">⚠️ Overdue ${fmtDate(c.due)}</span>`;
+      else if(isToday) statusBadge=`<span class="chore-badge today-badge">📌 Today</span>`;
+      else if(c.due) statusBadge=`<span class="chore-badge">${fmtDate(c.due)}</span>`;
+
+      /* Priority badge */
+      let prioBadge='';
+      if(!c.done&&c.priority==='high')   prioBadge=`<span class="chore-badge priority-high">🔶 High</span>`;
+      if(!c.done&&c.priority==='urgent') prioBadge=`<span class="chore-badge priority-urgent">🔴 Urgent</span>`;
+
+      const assignBadge=c.assignee?`<span class="chore-badge">👤 ${esc(c.assignee)}</span>`:'';
+      const freqBadge=c.frequency?`<span class="chore-badge">🔁 ${esc(c.frequency)}</span>`:'';
+      const ptsBadge=c.points!=null?`<span class="chore-badge pts-badge">🏆 ${c.points} pts</span>`:'';
+
+      /* Action buttons */
+      const completeBtn=!c.done
+        ?`<button class="btn btn-ok btn-xs" data-action="done" data-id="${esc(c.id)}" type="button">Complete</button>`
+        :`<button class="btn btn-ghost btn-xs" data-action="undo" data-id="${esc(c.id)}" type="button">↩ Undo</button>`;
+      const ledgerBtn=(!c.done&&c.points)
+        ?`<button class="btn btn-xs" style="background:var(--teal-dim);color:var(--teal-dark);border:1px solid var(--teal-bd)" data-action="ledger" data-id="${esc(c.id)}" type="button">💵 Budget</button>`
+        :'';
+      const deleteBtn=`<button class="btn btn-danger btn-xs" data-action="delete" data-id="${esc(c.id)}" type="button">✕</button>`;
+
+      return `<div class="${itemClass}" data-id="${esc(c.id)}">
+        <div class="${checkClass}" data-action="toggle" data-id="${esc(c.id)}" role="checkbox" aria-checked="${c.done}" tabindex="0"></div>
+        <div class="chore-body">
+          <div class="chore-title">${esc(c.title)}</div>
+          <div class="chore-meta">
+            ${statusBadge}${prioBadge}${assignBadge}${freqBadge}${ptsBadge}
+          </div>
+          ${c.notes?`<div style="font-size:12px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.notes)}</div>`:''}
+        </div>
+        <div class="chore-actions">
+          ${completeBtn}${ledgerBtn}${deleteBtn}
+        </div>
+      </div>`;
+    }).join('');
+
+    /* Event listeners on items */
+    body.querySelectorAll('[data-action]').forEach(el=>{
+      el.addEventListener('click', async()=>{
+        const id=el.dataset.id;
+        const action=el.dataset.action;
+        const chore=allChores.find(x=>String(x.id)===String(id));
+        if(!chore) return;
+
+        if(action==='toggle'||action==='done'){
+          await setDone(id,true); await render();
+        } else if(action==='undo'){
+          await setDone(id,false); await render();
+        } else if(action==='delete'){
+          const db=getDb();
+          if(db){
+            try{
+              const uid2=await getUserId();
+              if(uid2) await db.from(T_CHORES).delete().eq('id',id);
+            }catch{}
+          }
+          const l=loadChoresLocal().filter(x=>String(x.id)!==String(id));
+          saveChoresLocal(l);
+          await render();
+        } else if(action==='ledger'){
+          if(!chore.done){ await setDone(id,true); }
+          const res=await writeLedger(chore);
+          if(res.ok) alert(`💵 Added $${res.amount.toFixed(2)} to Budget for ${chore.reward_to||chore.assignee||'member'}.`);
+          else alert('Could not write to Budget ledger. Check Supabase table + RLS.');
+          await render();
+        }
+      });
+      /* Keyboard support for checkboxes */
+      if(el.classList.contains('chore-check')){
+        el.addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); el.click(); } });
+      }
+    });
+  }
+
+  /* ── Form submit ── */
+  $id('tool-form')?.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const title=($id('chore-title')?.value||'').trim();
+    if(!title){ $id('chore-title')?.focus(); return; }
+
+    const pointsVal=$id('chore-points')?.value;
+    const chore={
+      id:uid(), title,
+      assignee:($id('chore-assignee')?.value||'').trim(),
+      frequency:($id('chore-frequency')?.value||'').trim(),
+      due:$id('chore-due')?.value||'',
+      points:pointsVal===''?null:(Number(pointsVal)||null),
+      reward_to:($id('chore-reward-to')?.value||'').trim(),
+      budget_tag:($id('chore-budget-tag')?.value||'').trim(),
+      notes:($id('chore-notes')?.value||'').trim(),
+      priority:selectedPriority,
+      done:false, created_at:new Date().toISOString(), done_at:null
+    };
+    await saveChore(chore);
+    clearForm();
+    await render();
+  });
+
+  function clearForm(){
+    ['chore-title','chore-assignee','chore-points','chore-reward-to','chore-budget-tag','chore-notes'].forEach(id=>{
+      const el=$id(id); if(el) el.value='';
+    });
+    $id('chore-frequency').value='';
+    const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+    $id('chore-due').value=tomorrow.toISOString().slice(0,10);
+    selectedPriority='normal';
+    document.querySelectorAll('.priority-btn').forEach(b=>{ b.className='priority-btn'; if(b.dataset.prio==='normal') b.classList.add('sel-normal'); });
+    $id('chore-title')?.focus();
+  }
+
+  $id('btn-clear')?.addEventListener('click', clearForm);
+
+  /* ── Quick prompt ── */
+  $id('btn-prompt')?.addEventListener('click', async()=>{
+    const q=($id('tool-prompt-input')?.value||'').toLowerCase().trim();
+    const chores=await loadChores();
+    const tISO=todayISO();
+    const lines=[];
+    if(!q){
+      lines.push('Try: "what\'s due today?" or "make a weekly chore plan for 4 people"');
+    } else if(q.includes('due today')){
+      const due=chores.filter(c=>!c.done&&c.due===tISO);
+      lines.push('📌 Due today:');
+      if(!due.length) lines.push('• Nothing — you\'re all caught up! ✅');
+      else due.forEach(c=>lines.push(`• ${c.title} — ${c.assignee||'Unassigned'}`));
+    } else if(q.includes('overdue')){
+      const over=chores.filter(c=>!c.done&&c.due&&isOverdue(c.due));
+      lines.push('⚠️ Overdue:');
+      if(!over.length) lines.push('• None overdue ✅');
+      else over.forEach(c=>lines.push(`• ${c.title} — due ${fmtDate(c.due)}`));
+    } else {
+      lines.push('✅ Tip: Add points to chores → click "💵 Budget" to log rewards to the Budget ledger.');
+      lines.push('💡 Use due dates so n8n can send automated reminders.');
+    }
+    alert(lines.join('\n'));
+    $id('tool-prompt-input').value='';
+  });
+  $id('tool-prompt-input')?.addEventListener('keydown',e=>{ if(e.key==='Enter') $id('btn-prompt')?.click(); });
+
+  /* ── User menu ── */
+  (function(){
+    const wrap=$id('user-menu'),toggle=$id('user-menu-toggle'),menu=$id('user-menu-dropdown');
+    if(!wrap||!toggle||!menu) return;
+    const open=()=>{ menu.style.display='block'; toggle.setAttribute('aria-expanded','true'); };
+    const close=()=>{ menu.style.display='none'; toggle.setAttribute('aria-expanded','false'); };
+    close();
+    toggle.addEventListener('click',e=>{ e.stopPropagation(); menu.style.display==='block'?close():open(); });
+    document.addEventListener('click',e=>{ if(wrap&&!wrap.contains(e.target)) close(); });
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); });
+    menu.querySelectorAll('.dropdown-nav[data-target]').forEach(btn=>{
+      btn.addEventListener('click',()=>{ const t=btn.getAttribute('data-target'); close(); if(t) location.href=t; });
+    });
+  })();
+
+  /* ── Init ── */
+  const d=new Date(); d.setDate(d.getDate()+1);
+  const due=$id('chore-due');
+  if(due&&!due.value) due.value=d.toISOString().slice(0,10);
+  $id('year').textContent=new Date().getFullYear();
+  render();
+})();
+</script>
+<script src="/shared/js/app-config.js?v=20260208a"></script>
+<script src="/shared/js/auth-header.js?v=20260208a"></script>
+<script src="/shared/js/hub-badges.js"></script>
+</body>
+</html>

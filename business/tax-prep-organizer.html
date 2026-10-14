@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tax Prep Organizer | GenieSphere</title>
+<meta name="description" content="Quarterly estimates, deductions checklist, reminders."/>
+<style>
+
+:root{
+    --bg:#0b1220;
+    --card:#121a2b;
+    --card-hover:#18233a;
+    --text:#e9f0ff;
+    --muted:#a9b6d9;
+    --accent:#3ee1a1;          /* GenieSphere green */
+    --accent-2:#4aa3ff;        /* Legacy blue */
+    --brand-blue:#4c6ef5;      /* Hover blue */
+    --ring:rgba(62,225,161,.35);
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --radius:7px;              /* Global radius */
+    --gap:18px;
+    --btn-radius:999px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:#0a0f1b;
+    color:var(--text);
+    font:500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+  }
+
+  .sr-only{
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+
+  .container{max-width:1440px;margin:0 auto;padding:24px}
+
+  /* Header (aligned with personal.html / business.html) */
+  .site-header{
+    position:sticky;
+    top:0;
+    z-index:1000;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+    border-bottom:1px solid rgba(120,155,255,.15);
+    box-shadow:0 8px 22px rgba(0,0,0,.25);
+    backdrop-filter:saturate(120%) blur(10px);
+  }
+  .site-header-inner{
+    max-width:1440px;
+    margin:0 auto;
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--text);
+    text-decoration:none;
+    font-weight:700;
+  }
+  .logo{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+    box-shadow:0 0 0 3px var(--ring),0 8px 24px rgba(62,225,161,.35);
+  }
+  .menu{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    font-size:14px;
+  }
+  .menu a{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 2px;
+    border-radius:0;
+    text-decoration:none;
+    color:var(--muted);
+    font-weight:500;
+    border-bottom:2px solid transparent;
+    box-shadow:none;
+    background:transparent;
+    transition:color .15s ease, border-bottom-color .15s ease;
+  }
+  .menu a:hover{
+    color:var(--text);
+    border-bottom-color:var(--brand-blue);
+  }
+  .menu a.active{
+    color:var(--text);
+    border-bottom-color:var(--accent);
+    font-weight:600;
+  }
+  .menu a.ghost{
+    color:var(--muted);
+  }
+
+  /* User menu (desktop + mobile) */
+  .user-menu{
+    position:relative;
+    display:flex;
+    align-items:center;
+    margin-left:auto;
+  }
+  .user-menu-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:999px;
+    border:1px solid rgba(120,155,255,.35);
+    background:#0e1626;
+    color:var(--text);
+    font-size:14px;
+    cursor:pointer;
+  }
+  .user-menu-toggle:hover{
+    border-color:var(--accent);
+  }
+  .user-menu-dropdown{
+    position:absolute;
+    right:0;
+    top:calc(100% + 6px);
+    min-width:220px;
+    background:#0e1626;
+    border-radius:var(--radius);
+    border:1px solid rgba(120,155,255,.25);
+    box-shadow:0 14px 34px rgba(0,0,0,.55);
+    padding:6px 0;
+    display:none;
+    z-index:1002;
+    margin-right:4px;
+  }
+  .user-menu-dropdown a,
+  .user-menu-dropdown button{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:8px 14px;
+    background:none;
+    border:none;
+    color:var(--text);
+    font-size:14px;
+    text-decoration:none;
+    cursor:pointer;
+  }
+  .user-menu-dropdown a:hover,
+  .user-menu-dropdown button:hover{
+    background:#121a2b;
+  }
+  .user-menu-divider{
+    height:1px;
+    margin:4px 0;
+    background:rgba(148,163,184,.4);
+  }
+  .dropdown-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    opacity:.7;
+    padding:4px 14px 2px;
+  }
+  .auth-only{ }
+
+  .hamburger{
+    display:none;
+    border:1px solid rgba(120,155,255,.25);
+    background:#0e1626;
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 10px;
+    cursor:pointer;
+  }
+  @media(max-width:720px){
+    .menu{display:none}
+    .hamburger{display:inline-flex}
+    .site-header-inner{padding:10px 12px}
+    .user-menu-toggle{padding-inline:10px;}
+  }
+
+  .drawer{
+    position:fixed;
+    inset:60px 12px auto 12px;
+    background:#0e1626;
+    border:1px solid rgba(120,155,255,.2);
+    border-radius:var(--radius);
+    padding:10px;
+    display:none;
+    z-index:1001;
+    box-shadow:0 18px 34px rgba(0,0,0,.45);
+  }
+  .drawer a{
+    display:block;
+    margin:6px 0;
+    padding:10px 12px;
+    border-radius:var(--radius);
+    text-decoration:none;
+    color:var(--text);
+    background:#121a2b;
+    border:1px solid rgba(120,155,255,.15);
+  }
+  .drawer a.active{
+    background:#18233a;
+    border-color:rgba(62,225,161,.35);
+  }
+
+  /* Hero */
+  .hero{text-align:center;padding:16px 0 8px}
+  .title{
+    font-size:clamp(26px,4vw,40px);
+    margin:0 0 6px;
+    font-weight:900;
+  }
+  .subtitle{
+    color:var(--muted);
+    margin:0 auto 18px;
+    max-width:820px;
+    font-size:15px;
+  }
+
+  /* Ask Investment Genie */
+  .ask{
+    max-width:1440px;
+    margin:0 auto 22px;
+    background:linear-gradient(180deg,rgba(24,35,58,.75),rgba(18,26,43,.75));
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(120,155,255,.15);
+  }
+  .ask-row{display:flex;gap:12px}
+  .input{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#0e1626;
+    border:1px solid rgba(120,155,255,.18);
+    border-radius:var(--btn-radius);
+    padding:10px 16px;
+    color:var(--text);
+    font-size:14px;
+  }
+  .input:focus{
+    outline:none;
+    border-color:rgba(74,163,255,.45);
+    box-shadow:0 0 0 3px rgba(74,163,255,.15);
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 18px;
+    border-radius:var(--btn-radius);
+    text-decoration:none;
+    color:#03101f;
+    background:var(--accent-2);
+    font-weight:700;
+    border:0;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(74,163,255,.25);
+    font-size:14px;
+    white-space:nowrap;
+  }
+  .btn.primary{
+    background:var(--accent);
+    color:#04131a;
+    box-shadow:0 8px 18px rgba(62,225,161,.25);
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .hint{
+    margin-top:10px;
+    color:var(--muted);
+    font-size:13px;
+  }
+  @media(max-width:640px){
+    .ask-row{flex-direction:column}
+    .btn{width:100%}
+  }
+
+  /* Snapshot */
+  .snapshot{
+    max-width:1440px;
+    margin:0 auto 18px;
+    display:grid;
+    grid-template-columns:minmax(0,2fr) minmax(0,1.4fr);
+    gap:18px;
+  }
+  @media(max-width:880px){.snapshot{grid-template-columns:1fr}}
+  .snapshot-card{
+    background:linear-gradient(180deg,rgba(24,35,58,.85),rgba(18,26,43,.98));
+    border-radius:var(--radius);
+    border:1px solid rgba(120,155,255,.18);
+    padding:14px 16px;
+    box-shadow:var(--shadow);
+  }
+  .snapshot-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .snapshot-header h2{
+    margin:0;
+    font-size:15px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .snapshot-metrics{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 18px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .metric-label{color:var(--muted);font-size:12px}
+  .metric-value{font-weight:700;color:var(--text);font-size:14px}
+
+  .snapshot-allocation{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+    font-size:13px;
+  }
+  .allocation-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .allocation-bar{
+    flex:1;
+    height:6px;
+    border-radius:999px;
+    overflow:hidden;
+    background:#0e1626;
+    margin-left:8px;
+    margin-right:8px;
+  }
+  .allocation-fill{
+    height:100%;
+    border-radius:inherit;
+    background:linear-gradient(90deg,#4aa3ff,#3ee1a1);
+  }
+
+  /* Quick Peek */
+  details.overview{
+    max-width:1440px;
+    margin:12px auto 16px;
+    background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.85));
+    border:1px solid rgba(120,155,255,.15);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+  details.overview>summary{
+    list-style:none;
+    cursor:pointer;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  details.overview[open]>summary{
+    border-bottom:1px solid rgba(120,155,255,.12);
+  }
+  .summary-title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:900;
+  }
+  .summary-badges{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .summary-badge{
+    font-size:12px;
+    font-weight:800;
+    border-radius:999px;
+    padding:4px 10px;
+    background:var(--brand-blue);
+    color:#03101f;
+  }
+  .overview-content{
+    display:grid;
+    gap:14px;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    padding:12px;
+  }
+  .mini-card{
+    background:#0e1626;
+    border:1px solid rgba(120,155,255,.12);
+    border-radius:var(--radius);
+    padding:12px;
+    min-height:110px;
+  }
+  .mini-title{
+    margin:0 0 8px;
+    font-size:14px;
+    color:#d7e4ff;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .mini-list{
+    margin:0;
+    padding-left:18px;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  /* Sections */
+  .section-title{
+    margin:0;
+    font-size:clamp(17px,2.1vw,20px);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:700;
+  }
+  details.section{
+    margin:18px 0 6px;
+    background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.9));
+    border-radius:var(--radius);
+    border:1px solid rgba(120,155,255,.2);
+    box-shadow:var(--shadow);
+  }
+  details.section>summary{
+    list-style:none;
+    cursor:pointer;
+    padding:10px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  details.section>summary::-webkit-details-marker{display:none}
+  details.section[open]>summary{
+    border-bottom:1px solid rgba(120,155,255,.16);
+  }
+  .section-summary-right{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .section-body{
+    padding:10px 14px 14px;
+  }
+
+  /* Cards */
+  .grid{
+    display:grid;
+    gap:var(--gap);
+    grid-template-columns:repeat(1,1fr);
+  }
+  @media(min-width:760px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:1060px){.grid{grid-template-columns:repeat(3,1fr)}}
+
+  .card{
+    display:block;
+    text-decoration:none;
+    color:inherit;
+    background:linear-gradient(180deg,rgba(24,35,58,.7),rgba(18,26,43,.9));
+    border:1px solid rgba(120,155,255,.15);
+    border-radius:var(--radius);
+    padding:16px;
+    transition:.18s;
+    box-shadow:var(--shadow);
+    min-height:150px;
+  }
+  .card:hover{
+    transform:translateY(-2px);
+    background:#18233a;
+    border-color:rgba(62,225,161,.35);
+    box-shadow:0 14px 34px rgba(0,0,0,.45);
+  }
+  .card .icon{
+    font-size:26px;
+    margin-bottom:8px;
+  }
+  .card h3{
+    margin:0 0 4px;
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .card p{
+    margin:0;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    margin-left:6px;
+    background:rgba(62,225,161,.2);
+    color:#e9fff6;
+  }
+
+  /* Footer */
+  .site-footer{
+    margin-top:32px;
+    padding:32px 0 28px;
+    border-top:1px solid rgba(120,155,255,.15);
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    background:linear-gradient(180deg,rgba(9,14,25,.85),rgba(11,18,32,.9));
+  }
+  .site-footer-inner{max-width:1440px;margin:0 auto;padding:0 24px}
+  .footer-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px 28px;
+    align-items:start;
+  }
+  @media(max-width:900px){.footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:560px){.footer-grid{grid-template-columns:1fr}}
+  .footer-col h4{margin:0 0 10px;font-size:14px}
+  .footer-col a{
+    display:block;
+    color:var(--muted);
+    text-decoration:none;
+    padding:4px 0;
+    font-size:13px;
+  }
+  .footer-col a:hover{
+    color:var(--text);
+    text-decoration:underline;
+  }
+  .footer-bottom{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    color:var(--muted);
+    font-size:13px;
+    margin-top:24px;
+    padding-top:14px;
+    border-top:1px solid rgba(120,155,255,.12);
+    text-align:center;
+  }
+  .social{
+    display:flex;
+    gap:16px;
+    justify-content:center;
+    font-size:18px;
+  }
+
+/* inner page layout + mobile-first */
+.page-wrap{max-width:1440px;margin:0 auto;padding:24px}
+.page-hero{text-align:center;padding:12px 0 10px}
+.page-hero h1{margin:0;font-size:clamp(22px,3.6vw,34px);font-weight:900}
+.page-hero p{margin:8px auto 0;max-width:920px;color:var(--muted);font-size:14px}
+.panel{background:linear-gradient(180deg,rgba(24,35,58,.65),rgba(18,26,43,.9));border:1px solid rgba(120,155,255,.18);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.row.between{justify-content:space-between}
+.input-like{flex:1;min-width:220px;background:#0e1626;border:1px solid rgba(120,155,255,.18);border-radius:999px;padding:10px 14px;color:var(--text);outline:none;font-size:14px}
+.input-like:focus{border-color:rgba(74,163,255,.45);box-shadow:0 0 0 3px rgba(74,163,255,.15)}
+.btn-lite{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;border:1px solid rgba(120,155,255,.18);background:#0e1626;color:var(--text);text-decoration:none;font-weight:800}
+.btn-lite:hover{border-color:rgba(62,225,161,.35)}
+.btn-green{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;border:0;background:var(--accent);color:#04131a;text-decoration:none;font-weight:900;cursor:pointer;box-shadow:0 8px 18px rgba(62,225,161,.25)}
+.grid2{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:900px){.grid2{grid-template-columns:1fr 1fr}}
+.cardbox{background:#0e1626;border:1px solid rgba(120,155,255,.12);border-radius:var(--radius);padding:12px}
+.cardbox h2{margin:0 0 8px;font-size:16px}
+.muted{color:var(--muted);font-size:13px;margin:0}
+.list{margin:10px 0 0;padding-left:18px;color:var(--muted);font-size:13px}
+.empty{color:var(--muted);font-size:13px;margin:10px 0 0}
+.item{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:10px;border:1px solid rgba(120,155,255,.12);border-radius:var(--radius);background:#121a2b;margin-top:10px}
+.mini-actions{display:flex;gap:8px}
+.mini-btn{border:1px solid rgba(120,155,255,.18);background:#0e1626;color:var(--text);border-radius:999px;padding:6px 10px;font-weight:800;font-size:12px;cursor:pointer}
+.mini-btn.danger{border-color:rgba(239,68,68,.35)}
+/* floating chat */
+.fab{position:fixed;right:14px;bottom:14px;width:56px;height:56px;border-radius:999px;border:1px solid rgba(120,155,255,.28);background:linear-gradient(180deg,rgba(62,225,161,.95),rgba(38,181,129,.95));color:#04131a;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 14px 34px rgba(0,0,0,.45);cursor:pointer;z-index:2000}
+.chat-pop{position:fixed;right:14px;bottom:80px;width:min(360px, calc(100vw - 28px));background:#0e1626;border:1px solid rgba(120,155,255,.22);border-radius:var(--radius);box-shadow:0 18px 40px rgba(0,0,0,.55);padding:12px;display:none;z-index:2000}
+.chat-pop h4{margin:0 0 6px;font-size:14px}
+.chat-pop .tiny{color:var(--muted);font-size:12px;margin:0 0 10px}
+.chat-pop .chips{display:flex;flex-wrap:wrap;gap:8px}
+.chat-pop .chip-btn{border:1px solid rgba(120,155,255,.22);background:#121a2b;color:var(--text);border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer}
+/* hide footer link blocks on mobile */
+@media (max-width: 560px){
+  .footer-grid{display:none !important;}
+  .footer-bottom{border-top:none !important; padding-top:0 !important; margin-top:12px !important;}
+}
+
+/* Tax Prep Organizer enhancements */
+.kpis{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+@media(min-width:980px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.kpi{background:#0e1626;border:1px solid rgba(120,155,255,.12);border-radius:var(--radius);padding:12px}
+.kpi .k{color:var(--muted);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+.kpi .v{font-size:18px;font-weight:1000;margin-top:6px}
+.kpi .s{color:var(--muted);font-size:12px;margin-top:2px}
+
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tab{border:1px solid rgba(120,155,255,.18);background:#0e1626;color:var(--text);border-radius:999px;padding:8px 12px;font-weight:900;font-size:13px;cursor:pointer}
+.tab.active{border-color:rgba(62,225,161,.35);box-shadow:0 0 0 3px rgba(62,225,161,.10)}
+.tab:hover{border-color:rgba(62,225,161,.35)}
+
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:900;border:1px solid rgba(120,155,255,.18);background:#121a2b}
+.badge.green{border-color:rgba(62,225,161,.35);background:rgba(62,225,161,.10)}
+.badge.blue{border-color:rgba(74,163,255,.35);background:rgba(74,163,255,.10)}
+.badge.orange{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.10)}
+.badge.red{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.10)}
+
+.hr{height:1px;background:rgba(120,155,255,.12);margin:12px 0}
+
+.form-grid{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:980px){.form-grid{grid-template-columns:1fr 1fr}}
+.field{display:grid;gap:6px}
+.field label{font-size:12px;color:var(--muted);font-weight:900}
+.field input,.field select,.field textarea{
+  background:#0b1220;border:1px solid rgba(120,155,255,.18);border-radius:10px;padding:10px 12px;color:var(--text);
+  outline:none;font-size:14px
+}
+.field textarea{min-height:110px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:rgba(74,163,255,.45);box-shadow:0 0 0 3px rgba(74,163,255,.15)
+}
+
+.table{width:100%;border-collapse:separate;border-spacing:0 10px}
+.table th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;text-align:left;padding:0 10px}
+.table td{background:#121a2b;border:1px solid rgba(120,155,255,.12);padding:10px;border-left-width:1px}
+.table tr td:first-child{border-top-left-radius:var(--radius);border-bottom-left-radius:var(--radius)}
+.table tr td:last-child{border-top-right-radius:var(--radius);border-bottom-right-radius:var(--radius)}
+@media(max-width:720px){
+  .table thead{display:none}
+  .table, .table tbody, .table tr, .table td{display:block;width:100%}
+  .table tr{margin-top:10px}
+  .table td{border-radius:var(--radius);margin-top:8px}
+}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:3000}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 28px));background:#0e1626;border:1px solid rgba(120,155,255,.22);border-radius:var(--radius);box-shadow:0 18px 48px rgba(0,0,0,.65);padding:14px;display:none;z-index:3001}
+.modal h3{margin:0 0 8px;font-size:16px}
+.modal .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}
+@media(max-width:720px){.modal .actions .btn-green,.modal .actions .btn-lite{width:100%;justify-content:center}}
+
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="../index.html">
+      <img class="logo" src="../genie-logo.png" alt="GenieSphere" />
+      <strong>GenieSphere</strong>
+    </a>
+
+    <nav class="menu" aria-label="Primary">
+      <a class="ghost" href="../personal/personal.html">🏡 Personal</a>
+      <a class="active" href="business.html">🏢 Business</a>
+      <a class="ghost" href="../investment/investment.html">📈 Investment</a>
+      <a class="ghost" href="../leisure/leisure.html">🏝️ Leisure</a>
+    </nav>
+
+    <button class="hamburger" id="hamburger" aria-expanded="false" aria-label="Open navigation">☰</button>
+
+    <div class="user-menu" id="user-menu">
+      <button class="user-menu-toggle" id="user-menu-toggle" aria-expanded="false">
+        <span id="user-name-label">Log in</span>
+        <span aria-hidden="true">▾</span>
+      </button>
+      <div class="user-menu-dropdown" id="user-menu-dropdown">
+        <div class="dropdown-label">Areas</div>
+        <button type="button" class="dropdown-nav" data-target="../personal/personal.html">🏡 Personal</button>
+        <button type="button" class="dropdown-nav" data-target="business.html">🏢 Business</button>
+        <button type="button" class="dropdown-nav" data-target="../investment/investment.html">📈 Investment</button>
+        <button type="button" class="dropdown-nav" data-target="../leisure/leisure.html">🏝️ Leisure</button>
+
+        <div class="user-menu-divider"></div>
+        <div class="dropdown-label">Account</div>
+        <button type="button" class="dropdown-nav" data-target="../onboarding/user_profile_form.html">👤 User profile</button>
+        <button type="button" class="dropdown-nav" data-target="../onboarding/display_settings.html">⚙️ Settings</button>
+
+        <div class="user-menu-divider"></div>
+        <button type="button" id="user-auth-action">Log in / Sign up</button>
+        <button type="button" id="user-signout-btn" class="auth-only">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="drawer" id="mobile-drawer" aria-label="Mobile navigation">
+  <a href="../personal/personal.html">🏡 Personal</a>
+  <a class="active" href="business.html">🏢 Business</a>
+  <a href="../investment/investment.html">📈 Investment</a>
+  <a href="../leisure/leisure.html">🏝️ Leisure</a>
+</div>
+
+<main class="page-wrap">
+  <section class="page-hero">
+    <h1>🧮 Tax Prep Organizer</h1>
+    <p>Keep your books tax-ready: quarterly estimate dates, deductions checklist, documents, and reminders. (Prototype mode uses local storage.)</p>
+
+    <div class="kpis" aria-label="Tax snapshot">
+      <div class="kpi">
+        <div class="k">Next Estimate Due</div>
+        <div class="v" id="kpiNextDue">—</div>
+        <div class="s" id="kpiNextDueSub">Set your tax year</div>
+      </div>
+      <div class="kpi">
+        <div class="k">Open Checklist Items</div>
+        <div class="v" id="kpiOpen">0</div>
+        <div class="s">Things to gather</div>
+      </div>
+      <div class="kpi">
+        <div class="k">Documents Logged</div>
+        <div class="v" id="kpiDocs">0</div>
+        <div class="s">Receipts / 1099s</div>
+      </div>
+      <div class="kpi">
+        <div class="k">Quarter Status</div>
+        <div class="v" id="kpiQuarter">Q—</div>
+        <div class="s">Current quarter</div>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Tax tabs">
+      <button class="tab active" type="button" data-view="overview">📌 Overview</button>
+      <button class="tab" type="button" data-view="checklist">✅ Checklist</button>
+      <button class="tab" type="button" data-view="documents">📎 Documents</button>
+      <button class="tab" type="button" data-view="estimates">📅 Quarterly Estimates</button>
+      <button class="tab" type="button" data-view="settings">⚙️ Settings</button>
+      <a class="btn-lite" href="business.html" style="margin-left:auto;">⬅️ Back</a>
+    </div>
+  </section>
+
+  <section class="panel" id="view-overview">
+    <div class="row between">
+      <div>
+        <h2 style="margin:0;font-size:16px;">📌 What to do next</h2>
+        <div class="muted" style="margin-top:4px;">A simple “next actions” board so you’re not scrambling at tax time.</div>
+      </div>
+      <div class="badges">
+        <span class="badge blue" id="badgeYear">🗓 Year: —</span>
+        <span class="badge orange" id="badgeMode">🧪 Prototype: Local</span>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div class="cardbox">
+        <h2>⚡ Quick add</h2>
+        <p class="muted">Add a reminder / note. You can turn it into a checklist item later.</p>
+
+        <div class="form-grid" style="margin-top:10px;">
+          <div class="field">
+            <label for="quickTitle">Title</label>
+            <input id="quickTitle" placeholder="Example: Pull 1099s from platforms"/>
+          </div>
+          <div class="field">
+            <label for="quickDue">Due date</label>
+            <input id="quickDue" type="date"/>
+          </div>
+          <div class="field" style="grid-column:1/-1;">
+            <label for="quickNote">Notes</label>
+            <textarea id="quickNote" placeholder="Example: Need 1099-K, 1099-NEC, interest statements, etc."></textarea>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px;justify-content:flex-end;">
+          <button class="btn-green" type="button" id="btnQuickAdd">Save</button>
+        </div>
+        <div class="muted" id="quickMsg" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="cardbox">
+        <h2>🧾 Common deductions (starter)</h2>
+        <ul class="list">
+          <li>Vehicle / mileage logs</li>
+          <li>Supplies / materials</li>
+          <li>Software & subscriptions</li>
+          <li>Home office (if eligible)</li>
+          <li>Contract labor (1099s)</li>
+          <li>Advertising / marketing</li>
+        </ul>
+        <div class="hr"></div>
+        <button class="btn-lite" type="button" id="btnLoadStarter">✨ Load starter checklist</button>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="row between">
+      <h2 style="margin:0;font-size:16px;">🗂 Recent activity</h2>
+      <div class="row" style="gap:10px;">
+        <button class="btn-lite" type="button" id="btnExportCsv">⬇️ Export CSV</button>
+        <button class="mini-btn danger" type="button" id="btnClearAll">🗑 Clear all</button>
+      </div>
+    </div>
+
+    <div id="recentList"></div>
+    <div id="recentEmpty" class="empty" style="display:none;">Nothing yet. Add a reminder or load the starter checklist.</div>
+  </section>
+
+  <section class="panel" id="view-checklist" style="display:none;">
+    <div class="row between">
+      <div>
+        <h2 style="margin:0;font-size:16px;">✅ Tax checklist</h2>
+        <div class="muted" style="margin-top:4px;">Mark items done as you gather them. This stays clean on mobile.</div>
+      </div>
+      <div class="row" style="gap:10px;">
+        <input id="checkSearch" class="input-like" type="search" placeholder="Search checklist…" style="max-width:340px;"/>
+        <button class="btn-green" type="button" id="btnAddCheck">➕ Add</button>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <table class="table" aria-label="Checklist table">
+      <thead>
+        <tr>
+          <th>Item</th><th>Category</th><th>Due</th><th>Status</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="checkTable"></tbody>
+    </table>
+    <div id="checkEmpty" class="empty" style="display:none;">No checklist items yet.</div>
+  </section>
+
+  <section class="panel" id="view-documents" style="display:none;">
+    <div class="row between">
+      <div>
+        <h2 style="margin:0;font-size:16px;">📎 Documents</h2>
+        <div class="muted" style="margin-top:4px;">Prototype: add document entries (no real upload yet). Next step: connect to Storage + RLS.</div>
+      </div>
+      <button class="btn-green" type="button" id="btnAddDoc">➕ Add document</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <div id="docList"></div>
+    <div id="docEmpty" class="empty" style="display:none;">No documents yet.</div>
+  </section>
+
+  <section class="panel" id="view-estimates" style="display:none;">
+    <div class="row between">
+      <div>
+        <h2 style="margin:0;font-size:16px;">📅 Quarterly estimate dates</h2>
+        <div class="muted" style="margin-top:4px;">Shows a simple schedule based on the selected tax year.</div>
+      </div>
+      <button class="btn-lite" type="button" id="btnJumpNext">🎯 Jump to next due</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="grid2">
+      <div class="cardbox">
+        <h2>🗓 Schedule</h2>
+        <div class="muted">Common estimate due dates (prototype). Verify for your situation.</div>
+        <div id="estimateList" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="cardbox">
+        <h2>🧠 What to save each month</h2>
+        <ul class="list">
+          <li>Income summaries (by platform / client)</li>
+          <li>Bank/credit card statements</li>
+          <li>Receipts for supplies + equipment</li>
+          <li>Mileage log or vehicle expenses</li>
+          <li>Payroll / contractor payments</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="view-settings" style="display:none;">
+    <div class="row between">
+      <div>
+        <h2 style="margin:0;font-size:16px;">⚙️ Settings</h2>
+        <div class="muted" style="margin-top:4px;">Set the tax year and preferences for reminders.</div>
+      </div>
+      <button class="btn-green" type="button" id="btnSaveSettings">Save</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="taxYear">Tax year</label>
+        <select id="taxYear"></select>
+      </div>
+      <div class="field">
+        <label for="defaultCategory">Default checklist category</label>
+        <select id="defaultCategory">
+          <option value="Income">Income</option>
+          <option value="Deductions">Deductions</option>
+          <option value="Forms">Forms</option>
+          <option value="Books">Books</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label for="notes">Notes</label>
+        <textarea id="notes" placeholder="Example: CPA contact, filing deadlines, entity notes, etc."></textarea>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-backdrop" id="modalBackdrop"></div>
+<div class="modal" id="modal">
+  <h3 id="modalTitle">Add item</h3>
+  <div class="form-grid" style="margin-top:10px;">
+    <div class="field">
+      <label for="mTitle">Title</label>
+      <input id="mTitle" placeholder="Example: 1099-NEC from contractors"/>
+    </div>
+    <div class="field">
+      <label for="mCategory">Category</label>
+      <select id="mCategory">
+        <option value="Income">Income</option>
+        <option value="Deductions">Deductions</option>
+        <option value="Forms">Forms</option>
+        <option value="Books">Books</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="mDue">Due date</label>
+      <input id="mDue" type="date"/>
+    </div>
+    <div class="field" style="grid-column:1/-1;">
+      <label for="mNote">Notes</label>
+      <textarea id="mNote" placeholder="Optional…"></textarea>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn-lite" type="button" id="btnModalCancel">Cancel</button>
+    <button class="btn-green" type="button" id="btnModalSave">Save</button>
+  </div>
+</div>
+
+<button class="fab" id="fabChat" aria-label="Quick help">💬</button>
+<div class="chat-pop" id="chatPop" role="dialog" aria-label="Quick actions">
+  <h4>✨ Quick actions</h4>
+  <p class="tiny">Tap to add a common item fast.</p>
+  <div class="chips">
+    <button class="chip-btn" data-q="Gather all 1099 forms from platforms">Gather all 1099 forms</button>
+    <button class="chip-btn" data-q="Export bank statements for the year">Export bank statements</button>
+    <button class="chip-btn" data-q="Update mileage log / vehicle expenses">Update mileage log</button>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>Business Tools</h4>
+        <a href="crm-lite.html">Mini CRM</a>
+        <a href="invoicing-and-payments.html">Invoicing &amp; Payments</a>
+        <a href="reviews-andamp-reputation.html">Reviews &amp; Reputation</a>
+      </div>
+      <div class="footer-col">
+        <h4>Ops</h4>
+        <a href="scheduling-and-dispatch.html">Scheduling &amp; Dispatch</a>
+        <a href="inventory-andamp-supplies.html">Inventory &amp; Supplies</a>
+        <a href="hr-andamp-hiring.html">HR &amp; Hiring</a>
+      </div>
+      <div class="footer-col">
+        <h4>Automation</h4>
+        <a href="text-andamp-email-automation.html">Text &amp; Email Automation</a>
+        <a href="ai-phone-agent.html">AI Phone Agent</a>
+        <a href="lead-capture.html">Lead Capture</a>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <a href="../onboarding/api-key-settings.html">API Keys</a>
+        <a href="../about.html">About</a>
+        <a href="../contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© <span id="year"></span> GenieSphere. All rights reserved.</div>
+      <div class="social" aria-label="Social">
+        <a href="#" aria-label="Twitter / X">🐦</a>
+        <a href="#" aria-label="YouTube">▶️</a>
+        <a href="#" aria-label="GitHub">🐙</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // No 'supabase' identifier in our code
+  const client = window.supabase.createClient(
+    'https://pbojacnagutipfhcxltj.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0'
+  );
+
+  (function(){
+    const d = document.getElementById('mobile-drawer');
+    const b = document.getElementById('hamburger');
+    if(!d || !b) return;
+    const open = () => { d.style.display='block'; b.setAttribute('aria-expanded','true'); };
+    const close = () => { d.style.display='none'; b.setAttribute('aria-expanded','false'); };
+    b.addEventListener('click',()=>{ b.getAttribute('aria-expanded')==='true' ? close() : open(); });
+    d.addEventListener('click',e=>{ if(e.target.tagName==='A') close(); });
+  })();
+
+  let currentUser = null;
+
+  (async () => {
+    const nameLabel = document.getElementById('user-name-label');
+    const menuToggle = document.getElementById('user-menu-toggle');
+    const menuDropdown = document.getElementById('user-menu-dropdown');
+    const signoutBtn = document.getElementById('user-signout-btn');
+    const authActionBtn = document.getElementById('user-auth-action');
+    const authOnlyEls = document.querySelectorAll('.auth-only');
+
+    let menuOpen = false;
+
+    function closeMenu(){
+      if(!menuDropdown || !menuToggle) return;
+      menuOpen = false;
+      menuDropdown.style.display = 'none';
+      menuToggle.setAttribute('aria-expanded','false');
+    }
+
+    if (menuToggle && menuDropdown) {
+      menuToggle.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        menuOpen = !menuOpen;
+        menuDropdown.style.display = menuOpen ? 'block' : 'none';
+        menuToggle.setAttribute('aria-expanded', menuOpen ? 'true' : 'false');
+      });
+
+      document.addEventListener('click', (e)=>{
+        if (!menuOpen) return;
+        if (!menuDropdown.contains(e.target) && !menuToggle.contains(e.target)) closeMenu();
+      });
+    }
+
+    const { data: { user }, error } = await client.auth.getUser();
+    if (error) console.error('Error fetching user:', error);
+
+    if (user) {
+      currentUser = user;
+      const rawName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        (user.email ? user.email.split('@')[0] : '') ||
+        'Account';
+
+      if (nameLabel) nameLabel.textContent = rawName;
+
+      authOnlyEls.forEach(el => { el.style.display = ''; });
+      if (authActionBtn) authActionBtn.style.display = 'none';
+      if (signoutBtn) {
+        signoutBtn.style.display = 'block';
+        signoutBtn.addEventListener('click', async ()=>{
+          try { await client.auth.signOut(); } catch (e) { console.error('Error signing out:', e); }
+          window.location.href = '../index.html';
+        });
+      }
+    } else {
+      currentUser = null;
+      if (nameLabel) nameLabel.textContent = 'Log in';
+      authOnlyEls.forEach(el => { el.style.display = 'none'; });
+      if (signoutBtn) signoutBtn.style.display = 'none';
+      if (authActionBtn) {
+        authActionBtn.style.display = 'block';
+        authActionBtn.textContent = 'Log in / Sign up';
+        authActionBtn.addEventListener('click', ()=>{ window.location.href = '../onboarding/login.html'; });
+      }
+    }
+  })();
+
+  function goOrLogin(target){
+    if (currentUser) window.location.href = target;
+    else window.location.href = '../onboarding/login.html';
+  }
+  document.querySelectorAll('.dropdown-nav').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const target = this.getAttribute('data-target');
+      if (!target) return;
+      goOrLogin(target);
+    });
+  });
+
+  (function(){
+    const fab = document.getElementById('fabChat');
+    const pop = document.getElementById('chatPop');
+    if(!fab || !pop) return;
+    let open = false;
+    const close = ()=>{ open=false; pop.style.display='none'; };
+    const toggle = ()=>{ open=!open; pop.style.display = open ? 'block' : 'none'; };
+    fab.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
+    document.addEventListener('click', (e)=>{ if(!open) return; if(!pop.contains(e.target) && e.target!==fab) close(); });
+    pop.querySelectorAll('[data-q]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const q = btn.getAttribute('data-q') || '';
+        const t = document.getElementById('quickTitle');
+        if(t){ t.value = q; t.focus(); }
+        close();
+      });
+    });
+  })();
+
+  const KEY_SETTINGS = "gs_tax_settings_v1";
+  const KEY_CHECKLIST = "gs_tax_checklist_v1";
+  const KEY_DOCS = "gs_tax_docs_v1";
+  const KEY_NOTES = "gs_tax_notes_v1";
+
+  const $ = (id)=>document.getElementById(id);
+  function uid(){ return (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); }
+  function loadJson(key, fallback){ try{ const v = JSON.parse(localStorage.getItem(key)); return (v===null||v===undefined) ? fallback : v; }catch{ return fallback; } }
+  function saveJson(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+  function setView(view){
+    ["overview","checklist","documents","estimates","settings"].forEach(v=>{
+      const sec = $("view-"+v);
+      const tab = document.querySelector('.tab[data-view="'+v+'"]');
+      if(sec) sec.style.display = (v===view) ? "" : "none";
+      if(tab) tab.classList.toggle("active", v===view);
+    });
+  }
+  document.querySelectorAll(".tab[data-view]").forEach(b=>{
+    b.addEventListener("click", ()=> setView(b.getAttribute("data-view")));
+  });
+
+  (function initYearSelect(){
+    const y = new Date().getFullYear();
+    const sel = $("taxYear");
+    if(!sel) return;
+    const years = [y-1, y, y+1, y+2];
+    sel.innerHTML = years.map(v=>'<option value="'+v+'">'+v+'</option>').join("");
+  })();
+
+  function getSettings(){
+    const y = new Date().getFullYear();
+    return loadJson(KEY_SETTINGS, { taxYear: y, defaultCategory: "Deductions", notes: "" });
+  }
+  function setSettings(s){ saveJson(KEY_SETTINGS, s); }
+
+  function loadSettingsToUi(){
+    const s = getSettings();
+    $("taxYear").value = String(s.taxYear || new Date().getFullYear());
+    $("defaultCategory").value = s.defaultCategory || "Deductions";
+    $("notes").value = s.notes || "";
+    $("badgeYear").textContent = "🗓 Year: " + (s.taxYear || "—");
+  }
+
+  $("btnSaveSettings")?.addEventListener("click", ()=>{
+    const s = getSettings();
+    s.taxYear = Number($("taxYear").value || new Date().getFullYear());
+    s.defaultCategory = String($("defaultCategory").value || "Deductions");
+    s.notes = String($("notes").value || "");
+    setSettings(s);
+    loadSettingsToUi();
+    renderEstimates();
+    refreshKpis();
+    alert("Saved ✅");
+  });
+
+  function estimateDatesForYear(year){
+    const y = Number(year);
+    return [
+      { q:"Q1", label:"1st payment", due: y + "-04-15" },
+      { q:"Q2", label:"2nd payment", due: y + "-06-15" },
+      { q:"Q3", label:"3rd payment", due: y + "-09-15" },
+      { q:"Q4", label:"4th payment", due: (y+1) + "-01-15" },
+    ];
+  }
+  function currentQuarter(){
+    const m = new Date().getMonth()+1;
+    if(m<=3) return "Q1";
+    if(m<=6) return "Q2";
+    if(m<=9) return "Q3";
+    return "Q4";
+  }
+  function nextDueDate(){
+    const s = getSettings();
+    const list = estimateDatesForYear(s.taxYear || new Date().getFullYear());
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const upcoming = list.map(x=>({ q:x.q, label:x.label, due:x.due, dueDate:new Date(x.due+"T00:00:00") }))
+                         .filter(x=> x.dueDate >= today)
+                         .sort((a,b)=> a.dueDate - b.dueDate);
+    return upcoming[0] || null;
+  }
+  function renderEstimates(){
+    const s = getSettings();
+    const list = estimateDatesForYear(s.taxYear || new Date().getFullYear());
+    const wrap = $("estimateList");
+    if(!wrap) return;
+    wrap.innerHTML = "";
+    const nd = nextDueDate();
+    list.forEach(x=>{
+      const due = new Date(x.due+"T00:00:00");
+      const isNext = nd && x.due === nd.due;
+      const badge = isNext ? '<span class="badge orange">Next</span>' : '<span class="badge blue">'+x.q+'</span>';
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML =
+        '<div>' +
+          '<strong>'+ badge + ' ' + x.label + '</strong>' +
+          '<div class="muted" style="margin-top:4px;">Due: ' + due.toLocaleDateString() + '</div>' +
+        '</div>' +
+        '<div class="mini-actions">' +
+          '<button class="mini-btn" type="button" data-jump="'+x.due+'">Add reminder</button>' +
+        '</div>';
+      wrap.appendChild(div);
+    });
+
+    wrap.querySelectorAll("[data-jump]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const due = btn.getAttribute("data-jump");
+        openModal({ kind:"check", id:null, title:"Quarterly estimate payment", category:"Forms", due: due || "", note:"" });
+      });
+    });
+  }
+
+  function loadChecklist(){ return loadJson(KEY_CHECKLIST, []); }
+  function saveChecklist(rows){ saveJson(KEY_CHECKLIST, rows); }
+
+  function statusLabel(done){
+    return done ? '<span class="badge green">Done</span>' : '<span class="badge orange">Open</span>';
+  }
+
+  function renderChecklist(){
+    const q = ($("checkSearch")?.value || "").toLowerCase().trim();
+    const rows = loadChecklist().filter(r=>{
+      if(!q) return true;
+      return (r.title||"").toLowerCase().includes(q) || (r.category||"").toLowerCase().includes(q) || (r.note||"").toLowerCase().includes(q);
+    }).sort((a,b)=> (a.done===b.done) ? ((a.due||"").localeCompare(b.due||"")) : (a.done?1:-1));
+
+    const body = $("checkTable");
+    const empty = $("checkEmpty");
+    if(!body) return;
+    body.innerHTML = "";
+
+    if(!rows.length){
+      if(empty) empty.style.display = "block";
+      return;
+    }
+    if(empty) empty.style.display = "none";
+
+    rows.forEach(r=>{
+      const tr = document.createElement("tr");
+      const dueStr = r.due ? new Date(r.due+"T00:00:00").toLocaleDateString() : "—";
+      tr.innerHTML =
+        '<td><strong>'+escapeHtml(r.title||"")+'</strong><div class="muted" style="margin-top:4px;">'+escapeHtml(r.note||"")+'</div></td>' +
+        '<td>'+escapeHtml(r.category||"Other")+'</td>' +
+        '<td>'+dueStr+'</td>' +
+        '<td>'+statusLabel(!!r.done)+'</td>' +
+        '<td style="white-space:nowrap;">' +
+          '<button class="mini-btn" type="button" data-act="toggle" data-id="'+r.id+'">'+(r.done ? "Re-open" : "Done")+'</button> ' +
+          '<button class="mini-btn" type="button" data-act="edit" data-id="'+r.id+'">Edit</button> ' +
+          '<button class="mini-btn danger" type="button" data-act="del" data-id="'+r.id+'">Delete</button>' +
+        '</td>';
+      body.appendChild(tr);
+    });
+
+    body.querySelectorAll("[data-act]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const act = btn.getAttribute("data-act");
+        const id = btn.getAttribute("data-id");
+        const rows2 = loadChecklist();
+        const idx = rows2.findIndex(x=>x.id===id);
+        if(idx<0) return;
+        const r = rows2[idx];
+
+        if(act==="toggle"){
+          r.done = !r.done;
+          saveChecklist(rows2);
+          renderChecklist(); refreshKpis(); renderRecent();
+          return;
+        }
+        if(act==="del"){
+          if(!confirm("Delete this checklist item?")) return;
+          rows2.splice(idx,1);
+          saveChecklist(rows2);
+          renderChecklist(); refreshKpis(); renderRecent();
+          return;
+        }
+        if(act==="edit"){
+          openModal({ kind:"check", id:r.id, title:r.title, category:r.category, due:r.due||"", note:r.note||"" });
+          return;
+        }
+      });
+    });
+  }
+
+  $("checkSearch")?.addEventListener("input", renderChecklist);
+  $("btnAddCheck")?.addEventListener("click", ()=>{
+    const s = getSettings();
+    openModal({ kind:"check", id:null, title:"", category:(s.defaultCategory||"Deductions"), due:"", note:"" });
+  });
+
+  function loadDocs(){ return loadJson(KEY_DOCS, []); }
+  function saveDocs(rows){ saveJson(KEY_DOCS, rows); }
+
+  function renderDocs(){
+    const wrap = $("docList");
+    const empty = $("docEmpty");
+    if(!wrap) return;
+    const rows = loadDocs().sort((a,b)=> (b.created_at||0)-(a.created_at||0));
+    wrap.innerHTML = "";
+
+    if(!rows.length){
+      if(empty) empty.style.display = "block";
+      return;
+    }
+    if(empty) empty.style.display = "none";
+
+    rows.forEach(r=>{
+      const div = document.createElement("div");
+      div.className = "item";
+      const docDate = r.doc_date ? new Date(r.doc_date+"T00:00:00").toLocaleDateString() : "—";
+      div.innerHTML =
+        '<div>' +
+          '<strong>📎 '+escapeHtml(r.title||"Document")+'</strong>' +
+          '<div class="muted" style="margin-top:4px;">Type: '+escapeHtml(r.doc_type||"Other")+' • Date: '+docDate+'</div>' +
+          '<div class="muted" style="margin-top:4px;">'+escapeHtml(r.note||"")+'</div>' +
+        '</div>' +
+        '<div class="mini-actions">' +
+          '<button class="mini-btn" type="button" data-doc-edit="'+r.id+'">Edit</button> ' +
+          '<button class="mini-btn danger" type="button" data-doc-del="'+r.id+'">Delete</button>' +
+        '</div>';
+      wrap.appendChild(div);
+    });
+
+    wrap.querySelectorAll("[data-doc-del]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-doc-del");
+        if(!confirm("Delete this document entry?")) return;
+        saveDocs(loadDocs().filter(x=>x.id!==id));
+        renderDocs(); refreshKpis(); renderRecent();
+      });
+    });
+
+    wrap.querySelectorAll("[data-doc-edit]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-doc-edit");
+        const r = loadDocs().find(x=>x.id===id);
+        if(!r) return;
+        openModal({ kind:"doc", id:r.id, title:r.title, category:r.doc_type, due:r.doc_date||"", note:r.note||"" });
+      });
+    });
+  }
+
+  $("btnAddDoc")?.addEventListener("click", ()=>{
+    openModal({ kind:"doc", id:null, title:"", category:"Forms", due:"", note:"" });
+  });
+
+  function loadNotes(){ return loadJson(KEY_NOTES, []); }
+  function saveNotes(rows){ saveJson(KEY_NOTES, rows); }
+
+  $("btnQuickAdd")?.addEventListener("click", ()=>{
+    const title = ($("quickTitle").value || "").trim();
+    const due = ($("quickDue").value || "").trim();
+    const note = ($("quickNote").value || "").trim();
+    if(!title){
+      $("quickMsg").textContent = "Please enter a title.";
+      return;
+    }
+    const rows = loadNotes();
+    rows.unshift({ id: uid(), title:title, due: due||null, note:note, created_at: Date.now() });
+    saveNotes(rows);
+    $("quickTitle").value=""; $("quickDue").value=""; $("quickNote").value="";
+    $("quickMsg").textContent = "Saved ✅";
+    setTimeout(()=>{ $("quickMsg").textContent=""; }, 1200);
+    renderRecent();
+    refreshKpis();
+  });
+
+  $("btnLoadStarter")?.addEventListener("click", ()=>{
+    const starter = [
+      { title:"W-2 (if any)", category:"Forms" },
+      { title:"1099-NEC / 1099-K / 1099-INT", category:"Forms" },
+      { title:"Business bank statements (all months)", category:"Books" },
+      { title:"Credit card statements (all months)", category:"Books" },
+      { title:"Mileage log / vehicle expenses", category:"Deductions" },
+      { title:"Supplies & materials receipts", category:"Deductions" },
+      { title:"Software subscriptions receipts", category:"Deductions" },
+      { title:"Contractor payments summary", category:"Deductions" },
+      { title:"Rent/lease & utilities receipts", category:"Deductions" },
+      { title:"Owner draws / distributions notes", category:"Income" }
+    ];
+    const rows = loadChecklist();
+    const existing = new Set(rows.map(r=> (r.title||"").toLowerCase().trim()));
+    starter.forEach(s=>{
+      if(existing.has(s.title.toLowerCase())) return;
+      rows.push({ id: uid(), title:s.title, category:s.category, due:null, note:"", done:false, created_at: Date.now() });
+    });
+    saveChecklist(rows);
+    renderChecklist(); refreshKpis(); renderRecent();
+    alert("Starter checklist loaded ✅");
+  });
+
+  function renderRecent(){
+    const wrap = $("recentList");
+    const empty = $("recentEmpty");
+    if(!wrap) return;
+
+    const notes = loadNotes().map(x=>({ kind:"note", title:x.title, due:x.due, note:x.note, created_at:x.created_at }));
+    const checks = loadChecklist().map(x=>({ kind:"check", title:x.title, due:x.due, note:x.note, created_at:x.created_at, done:!!x.done, category:x.category }));
+    const docs = loadDocs().map(x=>({ kind:"doc", title:x.title, due:x.doc_date, note:x.note, created_at:x.created_at, category:x.doc_type }));
+    const rows = [].concat(notes, checks, docs).sort((a,b)=> (b.created_at||0)-(a.created_at||0)).slice(0,12);
+
+    wrap.innerHTML = "";
+    if(!rows.length){
+      if(empty) empty.style.display = "block";
+      return;
+    }
+    if(empty) empty.style.display = "none";
+
+    rows.forEach(r=>{
+      const div = document.createElement("div");
+      div.className = "item";
+      const kindBadge =
+        r.kind==="note" ? '<span class="badge blue">Note</span>' :
+        r.kind==="doc" ? '<span class="badge">Doc</span>' :
+        (r.done ? '<span class="badge green">Checklist Done</span>' : '<span class="badge orange">Checklist Open</span>');
+      const dueStr = r.due ? new Date(String(r.due)+"T00:00:00").toLocaleDateString() : "—";
+      div.innerHTML =
+        '<div>' +
+          '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+            '<strong>'+escapeHtml(r.title||"")+'</strong>' +
+            kindBadge +
+            (r.category ? '<span class="badge">'+escapeHtml(r.category)+'</span>' : '') +
+          '</div>' +
+          '<div class="muted" style="margin-top:4px;">Due: '+dueStr+' • Added: '+new Date(r.created_at||Date.now()).toLocaleDateString()+'</div>' +
+          (r.note ? '<div class="muted" style="margin-top:4px;">'+escapeHtml(r.note)+'</div>' : '') +
+        '</div>';
+      wrap.appendChild(div);
+    });
+  }
+
+  function refreshKpis(){
+    const open = loadChecklist().filter(x=> !x.done).length;
+    const docs = loadDocs().length;
+    const q = currentQuarter();
+    const nd = nextDueDate();
+    $("kpiOpen").textContent = open;
+    $("kpiDocs").textContent = docs;
+    $("kpiQuarter").textContent = q;
+    $("kpiNextDue").textContent = nd ? new Date(nd.due+"T00:00:00").toLocaleDateString() : "—";
+    $("kpiNextDueSub").textContent = nd ? (nd.q + " • " + nd.label) : "Set your tax year";
+  }
+
+  function toCsv(){
+    const rows = [];
+    loadNotes().forEach(x=> rows.push({ type:"note", title:x.title, category:"", due:x.due||"", note:x.note||"", done:"", created_at:x.created_at }));
+    loadChecklist().forEach(x=> rows.push({ type:"checklist", title:x.title, category:x.category||"", due:x.due||"", note:x.note||"", done:x.done?"yes":"no", created_at:x.created_at }));
+    loadDocs().forEach(x=> rows.push({ type:"document", title:x.title, category:x.doc_type||"", due:x.doc_date||"", note:x.note||"", done:"", created_at:x.created_at }));
+
+    const header = ["type","title","category","due","done","note","created_at"];
+    const esc = (v)=> ('"'+String(v==null?"":v).replaceAll('"','""')+'"');
+    const lines = [header.join(",")].concat(rows.map(r=> header.map(h=> esc(r[h])).join(",")));
+    return lines.join("\n");
+  }
+
+  document.getElementById("btnExportCsv")?.addEventListener("click", ()=>{
+    const csv = toCsv();
+    const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tax-prep-organizer.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("btnClearAll")?.addEventListener("click", ()=>{
+    if(!confirm("Clear ALL Tax Prep Organizer data for this page?")) return;
+    [KEY_SETTINGS, KEY_CHECKLIST, KEY_DOCS, KEY_NOTES].forEach(k=> localStorage.removeItem(k));
+    loadSettingsToUi();
+    renderChecklist(); renderDocs(); renderRecent(); renderEstimates(); refreshKpis();
+  });
+
+  let modalState = { kind:"check", id:null };
+  function openModal(data){
+    modalState = { kind:(data.kind || "check"), id:(data.id || null) };
+    document.getElementById("modalTitle").textContent = (modalState.kind==="doc") ? "Add / edit document" : "Add / edit checklist item";
+    document.getElementById("mTitle").value = data.title || "";
+    document.getElementById("mCategory").value = data.category || (getSettings().defaultCategory || "Deductions");
+    document.getElementById("mDue").value = data.due || "";
+    document.getElementById("mNote").value = data.note || "";
+    document.getElementById("modalBackdrop").style.display = "block";
+    document.getElementById("modal").style.display = "block";
+    document.getElementById("mTitle").focus();
+  }
+  function closeModal(){
+    document.getElementById("modalBackdrop").style.display = "none";
+    document.getElementById("modal").style.display = "none";
+  }
+  document.getElementById("btnModalCancel")?.addEventListener("click", closeModal);
+  document.getElementById("modalBackdrop")?.addEventListener("click", closeModal);
+  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeModal(); });
+
+  document.getElementById("btnModalSave")?.addEventListener("click", ()=>{
+    const title = (document.getElementById("mTitle").value || "").trim();
+    const category = String(document.getElementById("mCategory").value || "Other");
+    const due = (document.getElementById("mDue").value || "").trim();
+    const note = (document.getElementById("mNote").value || "").trim();
+
+    if(!title){ alert("Please enter a title."); return; }
+
+    if(modalState.kind==="doc"){
+      const rows = loadDocs();
+      if(modalState.id){
+        const idx = rows.findIndex(x=>x.id===modalState.id);
+        if(idx>=0){
+          rows[idx] = Object.assign({}, rows[idx], { title:title, doc_type:category, doc_date: due||null, note:note });
+        }
+      }else{
+        rows.unshift({ id: uid(), title:title, doc_type:category, doc_date: due||null, note:note, created_at: Date.now() });
+      }
+      saveDocs(rows);
+      renderDocs();
+    }else{
+      const rows = loadChecklist();
+      if(modalState.id){
+        const idx = rows.findIndex(x=>x.id===modalState.id);
+        if(idx>=0){
+          rows[idx] = Object.assign({}, rows[idx], { title:title, category:category, due: due||null, note:note });
+        }
+      }else{
+        rows.push({ id: uid(), title:title, category:category, due: due||null, note:note, done:false, created_at: Date.now() });
+      }
+      saveChecklist(rows);
+      renderChecklist();
+    }
+
+    closeModal();
+    refreshKpis();
+    renderRecent();
+  });
+
+  function escapeHtml(str){
+    return String(str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  loadSettingsToUi();
+  renderChecklist();
+  renderDocs();
+  renderRecent();
+  renderEstimates();
+  refreshKpis();
+</script>
+</body>
+</html>

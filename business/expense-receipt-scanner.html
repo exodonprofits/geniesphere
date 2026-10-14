@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Receipt Scanner | GenieSphere</title>
+<meta name="gs-config" content="/shared/config.json"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#FAFAF8;--bg-2:#F3F3EF;--panel:#fff;
+  --ink:#1A1A18;--ink-2:#3D3D39;--muted:#8A8A84;
+  --line:rgba(26,26,24,.08);--line-2:rgba(26,26,24,.13);
+  --green:#2D6A4F;--green-2:#52B788;--green-dim:rgba(45,106,79,.08);
+  --amber:#B5651D;--amber-dim:rgba(181,101,29,.09);
+  --red:#C0392B;--red-dim:rgba(192,57,43,.07);
+  --blue:#3B5BDB;--blue-dim:rgba(59,91,219,.08);
+  --shadow:0 2px 16px rgba(26,26,24,.07);
+  --shadow-md:0 8px 32px rgba(26,26,24,.11);
+  --radius:16px;--radius-lg:22px;--max:860px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;
+  background:var(--bg);color:var(--ink);
+  line-height:1.5;-webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+textarea,input,select{font-family:inherit}
+
+/* ── NAV ── */
+.nav{
+  position:sticky;top:0;z-index:50;height:58px;
+  background:rgba(250,250,248,.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;
+}
+.nav-inner{
+  max-width:var(--max);margin:0 auto;padding:0 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;width:100%;
+}
+.nav-brand{
+  display:flex;align-items:center;gap:9px;
+  font-family:'Playfair Display',serif;
+  font-size:18px;font-weight:500;color:var(--ink);
+}
+.nav-gem{
+  width:28px;height:28px;border-radius:8px;
+  background:linear-gradient(135deg,var(--green),var(--green-2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:#fff;flex-shrink:0;
+}
+.nav-back{
+  display:flex;align-items:center;gap:6px;
+  font-size:13px;color:var(--muted);
+  padding:7px 14px;border-radius:999px;
+  border:1px solid var(--line-2);background:var(--panel);
+  transition:all .18s;
+}
+.nav-back:hover{color:var(--ink);border-color:rgba(26,26,24,.22)}
+
+/* ── PAGE ── */
+.page{max-width:var(--max);margin:0 auto;padding:32px 24px 80px}
+
+/* ── PAGE HEADER ── */
+.page-eyebrow{
+  font-size:11px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:10px;
+}
+.page-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(28px,4vw,40px);font-weight:500;
+  letter-spacing:-.03em;color:var(--ink);
+  line-height:1.05;margin-bottom:8px;
+}
+.page-title em{font-style:italic;color:var(--green)}
+.page-sub{
+  font-size:15px;font-weight:300;color:var(--muted);
+  max-width:520px;line-height:1.65;margin-bottom:32px;
+}
+
+/* ── INTAKE TABS ── */
+.intake-tabs{
+  display:flex;gap:8px;flex-wrap:wrap;
+  margin-bottom:24px;
+}
+.intake-tab{
+  display:flex;align-items:center;gap:7px;
+  padding:9px 16px;border-radius:999px;
+  border:1px solid var(--line-2);background:var(--panel);
+  font-size:13px;font-weight:500;color:var(--muted);
+  cursor:pointer;transition:all .18s;
+}
+.intake-tab:hover{border-color:rgba(26,26,24,.22);color:var(--ink)}
+.intake-tab.active{
+  background:var(--ink);color:#fff;
+  border-color:var(--ink);
+}
+.intake-tab-icon{font-size:15px}
+
+/* ── INTAKE PANELS ── */
+.intake-panel{display:none}
+.intake-panel.active{display:block}
+
+/* ── DROP ZONE ── */
+.drop-zone{
+  border:2px dashed var(--line-2);border-radius:var(--radius-lg);
+  padding:52px 32px;text-align:center;
+  cursor:pointer;transition:all .2s;background:var(--panel);
+  position:relative;
+}
+.drop-zone:hover,.drop-zone.drag-over{
+  border-color:var(--green);background:var(--green-dim);
+}
+.drop-zone input[type="file"]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+}
+.drop-icon{font-size:36px;margin-bottom:14px}
+.drop-title{
+  font-family:'Playfair Display',serif;
+  font-size:20px;font-weight:500;color:var(--ink);margin-bottom:6px;
+}
+.drop-sub{font-size:13px;font-weight:300;color:var(--muted);line-height:1.6}
+.drop-formats{
+  display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+  margin-top:16px;
+}
+.drop-format{
+  font-size:11px;font-weight:600;letter-spacing:.05em;
+  padding:4px 10px;border-radius:999px;
+  border:1px solid var(--line-2);color:var(--muted);background:var(--bg-2);
+}
+
+/* Camera section */
+.camera-wrap{
+  background:var(--panel);border:1px solid var(--line-2);
+  border-radius:var(--radius-lg);overflow:hidden;
+}
+.camera-preview{
+  width:100%;aspect-ratio:4/3;background:#000;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.camera-preview video{width:100%;height:100%;object-fit:cover}
+.camera-overlay{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:12px;color:#fff;
+}
+.camera-frame{
+  width:260px;height:180px;border:2px solid rgba(255,255,255,.6);
+  border-radius:12px;position:relative;
+}
+.camera-frame::before,.camera-frame::after{
+  content:'';position:absolute;
+  width:20px;height:20px;
+  border-color:white;border-style:solid;
+}
+.camera-frame::before{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
+.camera-frame::after{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
+.camera-footer{
+  padding:16px 20px;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;border-top:1px solid var(--line);
+}
+.camera-hint{font-size:13px;color:var(--muted)}
+.camera-btn{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--ink);color:#fff;
+  border:none;font-size:22px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .18s;
+}
+.camera-btn:hover{background:var(--ink-2)}
+
+/* Email paste */
+.email-paste{
+  background:var(--panel);border:1px solid var(--line-2);
+  border-radius:var(--radius-lg);padding:22px;
+}
+.email-paste label{
+  display:block;font-size:11px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:10px;
+}
+.email-paste textarea{
+  width:100%;min-height:180px;padding:14px;
+  border:1px solid var(--line-2);border-radius:10px;
+  background:var(--bg-2);font-size:13px;color:var(--ink);
+  resize:vertical;outline:none;line-height:1.6;
+  transition:border-color .18s;
+}
+.email-paste textarea:focus{border-color:var(--green);background:var(--panel)}
+.email-paste textarea::placeholder{color:var(--muted)}
+.email-paste-hint{
+  font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5;
+}
+
+/* Manual entry form */
+.manual-form{
+  background:var(--panel);border:1px solid var(--line-2);
+  border-radius:var(--radius-lg);padding:22px;
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;
+}
+.form-field{display:flex;flex-direction:column;gap:6px}
+.form-field.full{grid-column:1/-1}
+.form-field label{
+  font-size:11px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);
+}
+.form-field input,.form-field select,.form-field textarea{
+  padding:11px 14px;border-radius:10px;
+  border:1px solid var(--line-2);background:var(--bg-2);
+  font-size:14px;color:var(--ink);outline:none;
+  transition:border-color .18s;
+}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{
+  border-color:var(--green);background:var(--panel);
+}
+.form-field input::placeholder,.form-field textarea::placeholder{color:var(--muted)}
+.form-field select option{background:var(--panel)}
+
+/* ── EXTRACT BUTTON ── */
+.extract-btn{
+  width:100%;margin-top:16px;padding:14px;border-radius:999px;
+  background:var(--ink);color:#fff;
+  font-size:15px;font-weight:500;border:none;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:background .18s;
+}
+.extract-btn:hover{background:var(--ink-2)}
+.extract-btn:disabled{opacity:.4;cursor:not-allowed}
+.extract-btn.loading{background:var(--muted)}
+
+/* ── PREVIEW STRIP (image shown after upload) ── */
+.preview-strip{
+  display:none;
+  background:var(--panel);border:1px solid var(--line-2);
+  border-radius:var(--radius);padding:14px;
+  margin-bottom:16px;
+  align-items:center;gap:14px;
+}
+.preview-strip.visible{display:flex}
+.preview-thumb{
+  width:64px;height:64px;border-radius:8px;object-fit:cover;
+  border:1px solid var(--line-2);flex-shrink:0;
+}
+.preview-info{flex:1;min-width:0}
+.preview-name{font-size:13px;font-weight:500;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.preview-size{font-size:12px;color:var(--muted);margin-top:2px}
+.preview-remove{
+  width:28px;height:28px;border-radius:999px;
+  border:1px solid var(--line-2);background:var(--bg-2);
+  color:var(--muted);font-size:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .18s;
+}
+.preview-remove:hover{border-color:var(--red);color:var(--red)}
+
+/* ── EXTRACTION RESULT CARD ── */
+.result-card{
+  display:none;
+  background:var(--panel);border:1px solid var(--line-2);
+  border-radius:var(--radius-lg);overflow:hidden;
+  box-shadow:var(--shadow-md);margin-top:24px;
+  animation:slideUp .3s cubic-bezier(.22,1,.36,1);
+}
+.result-card.visible{display:block}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.result-header{
+  padding:18px 22px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:linear-gradient(135deg,rgba(45,106,79,.06),rgba(82,183,136,.04));
+}
+.result-header-left{display:flex;align-items:center;gap:10px}
+.result-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:var(--green-dim);border:1px solid rgba(45,106,79,.2);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.result-title{font-size:16px;font-weight:500;color:var(--ink)}
+.result-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.result-confidence{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:500;
+  padding:5px 12px;border-radius:999px;
+}
+.result-confidence.high{background:var(--green-dim);color:var(--green)}
+.result-confidence.medium{background:var(--amber-dim);color:var(--amber)}
+.result-confidence.low{background:var(--red-dim);color:var(--red)}
+
+/* Extracted fields */
+.result-fields{padding:22px;display:grid;gap:14px}
+.result-row{display:grid;grid-template-columns:140px 1fr;gap:12px;align-items:start}
+.result-label{
+  font-size:11px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);padding-top:12px;
+}
+.result-input{
+  width:100%;padding:10px 14px;border-radius:10px;
+  border:1px solid var(--line-2);background:var(--bg-2);
+  font-size:14px;color:var(--ink);outline:none;
+  transition:border-color .18s;
+}
+.result-input:focus{border-color:var(--green);background:var(--panel)}
+.result-input.suggested{
+  border-color:rgba(45,106,79,.3);
+  background:rgba(45,106,79,.04);
+}
+.result-select{
+  width:100%;padding:10px 14px;border-radius:10px;
+  border:1px solid var(--line-2);background:var(--bg-2);
+  font-size:14px;color:var(--ink);outline:none;
+  transition:border-color .18s;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%238A8A84' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+  padding-right:32px;
+}
+.result-select:focus{border-color:var(--green)}
+.result-select.suggested{
+  border-color:rgba(45,106,79,.3);
+  background-color:rgba(45,106,79,.04);
+}
+
+/* Business assignment row */
+.biz-assign{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;border-radius:10px;
+  border:1px solid rgba(45,106,79,.25);
+  background:var(--green-dim);
+}
+.biz-assign-icon{font-size:18px;flex-shrink:0}
+.biz-assign-text{flex:1;min-width:0}
+.biz-assign-name{font-size:14px;font-weight:500;color:var(--ink)}
+.biz-assign-why{font-size:12px;color:var(--green);margin-top:2px}
+.biz-assign-change{
+  font-size:12px;font-weight:500;color:var(--muted);
+  padding:5px 10px;border-radius:999px;
+  border:1px solid var(--line-2);background:var(--panel);
+  cursor:pointer;white-space:nowrap;transition:all .18s;
+}
+.biz-assign-change:hover{border-color:var(--ink);color:var(--ink)}
+
+/* Split receipt toggle */
+.split-toggle{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;border-radius:10px;
+  border:1px solid var(--line-2);background:var(--bg-2);
+  cursor:pointer;transition:border-color .18s;
+}
+.split-toggle:hover{border-color:rgba(26,26,24,.22)}
+.split-toggle input{accent-color:var(--green)}
+.split-toggle-text{font-size:13px;color:var(--ink-2)}
+
+/* Meaning line */
+.result-meaning{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:10px 14px;border-radius:10px;
+  background:var(--amber-dim);border:1px solid rgba(181,101,29,.18);
+  font-size:13px;color:#5C3010;line-height:1.5;
+}
+.result-meaning-icon{flex-shrink:0;margin-top:1px}
+
+/* Result footer */
+.result-footer{
+  padding:16px 22px;border-top:1px solid var(--line);
+  display:flex;gap:10px;justify-content:flex-end;
+  background:var(--bg-2);
+}
+.btn-save{
+  padding:11px 28px;border-radius:999px;
+  background:var(--ink);color:#fff;
+  font-size:14px;font-weight:500;border:none;
+  cursor:pointer;transition:background .18s;
+}
+.btn-save:hover{background:var(--ink-2)}
+.btn-save:disabled{opacity:.4;cursor:not-allowed}
+.btn-discard{
+  padding:11px 20px;border-radius:999px;
+  background:transparent;color:var(--muted);
+  font-size:14px;font-weight:400;
+  border:1px solid var(--line-2);cursor:pointer;
+  transition:all .18s;
+}
+.btn-discard:hover{border-color:rgba(26,26,24,.22);color:var(--ink)}
+
+/* ── RECENT RECEIPTS ── */
+.recent-section{margin-top:48px}
+.recent-header{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:16px;
+}
+.recent-title{
+  font-family:'Playfair Display',serif;
+  font-size:20px;font-weight:500;color:var(--ink);
+}
+.recent-link{font-size:13px;color:var(--muted)}
+.recent-link:hover{color:var(--ink)}
+.recent-list{display:grid;gap:10px}
+.recent-item{
+  display:grid;grid-template-columns:40px 1fr auto;gap:12px;
+  align-items:center;padding:14px 16px;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);transition:all .18s;
+}
+.recent-item:hover{border-color:var(--line-2);box-shadow:var(--shadow)}
+.recent-item-icon{
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  background:var(--bg-2);
+}
+.recent-item-name{font-size:14px;font-weight:500;color:var(--ink)}
+.recent-item-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.recent-item-amount{
+  font-family:'Playfair Display',serif;
+  font-size:18px;font-weight:500;color:var(--ink);text-align:right;
+}
+.recent-item-cat{
+  font-size:11px;font-weight:500;padding:3px 8px;
+  border-radius:999px;margin-top:3px;text-align:right;
+}
+.recent-empty{
+  text-align:center;padding:40px 24px;
+  font-size:14px;color:var(--muted);
+  border:1px dashed var(--line-2);border-radius:var(--radius);
+}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:28px;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--ink);color:#fff;
+  padding:12px 22px;border-radius:999px;
+  font-size:13px;font-weight:500;
+  box-shadow:0 8px 28px rgba(26,26,24,.2);
+  z-index:300;transition:transform .3s cubic-bezier(.22,1,.36,1);
+  white-space:nowrap;pointer-events:none;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── MOBILE ── */
+@media(max-width:640px){
+  .page{padding:24px 16px 64px}
+  .result-row{grid-template-columns:1fr;gap:4px}
+  .result-label{padding-top:0}
+  .manual-form{grid-template-columns:1fr}
+  .manual-form .form-field.full{grid-column:1}
+  .result-footer{flex-direction:column}
+  .btn-save,.btn-discard{width:100%;justify-content:center;text-align:center}
+  .intake-tabs{gap:6px}
+  .intake-tab{padding:8px 12px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="/dashboard/business.html">
+      <div class="nav-gem">✦</div>
+      GenieSphere
+    </a>
+    <a class="nav-back" href="/dashboard/business.html">← Back office</a>
+  </div>
+</nav>
+
+<main class="page">
+
+  <div class="page-eyebrow">Back office · Receipt scanner</div>
+  <h1 class="page-title">Scan a receipt.<br>Genie does the <em>rest.</em></h1>
+  <p class="page-sub">Take a photo, upload a file, paste an email, or type it in. Genie extracts the details, suggests a category and business, and waits for your confirmation before saving anything.</p>
+
+  <!-- Intake method tabs -->
+  <div class="intake-tabs" role="tablist">
+    <button class="intake-tab active" data-panel="photo" role="tab" aria-selected="true">
+      <span class="intake-tab-icon">📷</span> Camera
+    </button>
+    <button class="intake-tab" data-panel="upload" role="tab" aria-selected="false">
+      <span class="intake-tab-icon">📎</span> Upload
+    </button>
+    <button class="intake-tab" data-panel="email" role="tab" aria-selected="false">
+      <span class="intake-tab-icon">✉️</span> Email
+    </button>
+    <button class="intake-tab" data-panel="manual" role="tab" aria-selected="false">
+      <span class="intake-tab-icon">✏️</span> Manual
+    </button>
+  </div>
+
+  <!-- ① CAMERA -->
+  <div class="intake-panel active" id="panel-photo">
+    <div class="camera-wrap">
+      <div class="camera-preview" id="cameraPreview">
+        <div class="camera-overlay" id="cameraOverlay">
+          <div class="camera-frame"></div>
+          <p style="font-size:13px;opacity:.75">Tap the button to start camera</p>
+        </div>
+        <video id="cameraVideo" autoplay playsinline style="display:none"></video>
+        <canvas id="cameraCanvas" style="display:none"></canvas>
+      </div>
+      <div class="camera-footer">
+        <span class="camera-hint" id="cameraHint">Point camera at receipt</span>
+        <button class="camera-btn" id="cameraBtn" title="Capture" aria-label="Capture photo">📷</button>
+      </div>
+    </div>
+    <div class="preview-strip" id="previewStripCamera">
+      <img class="preview-thumb" id="previewThumbCamera" src="" alt="Captured receipt"/>
+      <div class="preview-info">
+        <div class="preview-name" id="previewNameCamera">receipt-photo.jpg</div>
+        <div class="preview-size" id="previewSizeCamera">Ready to extract</div>
+      </div>
+      <button class="preview-remove" id="previewRemoveCamera" aria-label="Remove">✕</button>
+    </div>
+    <button class="extract-btn" id="extractBtnCamera" disabled>
+      ✦ Extract receipt details
+    </button>
+  </div>
+
+  <!-- ② UPLOAD -->
+  <div class="intake-panel" id="panel-upload">
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept="image/*,.pdf" aria-label="Upload receipt file"/>
+      <div class="drop-icon">📂</div>
+      <div class="drop-title">Drop your receipt here</div>
+      <div class="drop-sub">or click to browse your files</div>
+      <div class="drop-formats">
+        <span class="drop-format">JPG</span>
+        <span class="drop-format">PNG</span>
+        <span class="drop-format">PDF</span>
+        <span class="drop-format">HEIC</span>
+      </div>
+    </div>
+    <div class="preview-strip" id="previewStripUpload">
+      <img class="preview-thumb" id="previewThumbUpload" src="" alt="Receipt preview"/>
+      <div class="preview-info">
+        <div class="preview-name" id="previewNameUpload"></div>
+        <div class="preview-size" id="previewSizeUpload"></div>
+      </div>
+      <button class="preview-remove" id="previewRemoveUpload" aria-label="Remove">✕</button>
+    </div>
+    <button class="extract-btn" id="extractBtnUpload" disabled>
+      ✦ Extract receipt details
+    </button>
+  </div>
+
+  <!-- ③ EMAIL PASTE -->
+  <div class="intake-panel" id="panel-email">
+    <div class="email-paste">
+      <label for="emailText">Paste email receipt content</label>
+      <textarea id="emailText"
+        placeholder="Paste the text from an email receipt here — from Vagaro, Amazon, Sam's Club, Square, or any vendor. Genie will read the amount, vendor, date, and items."></textarea>
+      <p class="email-paste-hint">
+        In your email, select all the text in the receipt email and paste it here. Genie will extract the key details automatically.
+      </p>
+    </div>
+    <button class="extract-btn" id="extractBtnEmail" disabled>
+      ✦ Extract receipt details
+    </button>
+  </div>
+
+  <!-- ④ MANUAL ENTRY -->
+  <div class="intake-panel" id="panel-manual">
+    <div class="manual-form" id="manualForm">
+      <div class="form-field">
+        <label for="manualVendor">Vendor / Store name</label>
+        <input id="manualVendor" type="text" placeholder="e.g. Sam's Club, OPI, Vagaro"/>
+      </div>
+      <div class="form-field">
+        <label for="manualAmount">Amount</label>
+        <input id="manualAmount" type="number" step="0.01" min="0" placeholder="0.00"/>
+      </div>
+      <div class="form-field">
+        <label for="manualDate">Date</label>
+        <input id="manualDate" type="date"/>
+      </div>
+      <div class="form-field">
+        <label for="manualCategory">Category</label>
+        <select id="manualCategory">
+          <option value="">— Genie will suggest —</option>
+          <option>Salon supplies</option>
+          <option>Software & subscriptions</option>
+          <option>Utilities</option>
+          <option>Payroll</option>
+          <option>Marketing</option>
+          <option>Office supplies</option>
+          <option>Meals & entertainment</option>
+          <option>Travel</option>
+          <option>Insurance</option>
+          <option>Rent & lease</option>
+          <option>Equipment</option>
+          <option>Personal</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-field full">
+        <label for="manualDesc">Description (optional)</label>
+        <input id="manualDesc" type="text" placeholder="e.g. Monthly color restock, OPI nail gel set"/>
+      </div>
+    </div>
+    <button class="extract-btn" id="extractBtnManual">
+      ✦ Review &amp; save
+    </button>
+  </div>
+
+  <!-- ── EXTRACTION RESULT ── -->
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <div class="result-header-left">
+        <div class="result-icon">🧾</div>
+        <div>
+          <div class="result-title" id="resultTitle">Receipt extracted</div>
+          <div class="result-sub" id="resultSub">Review the details below and confirm before saving</div>
+        </div>
+      </div>
+      <div class="result-confidence" id="resultConfidence">
+        <span id="confIcon">●</span>
+        <span id="confLabel">High confidence</span>
+      </div>
+    </div>
+
+    <div class="result-fields">
+
+      <!-- Plain English meaning line -->
+      <div class="result-meaning" id="resultMeaning" style="display:none">
+        <span class="result-meaning-icon">💡</span>
+        <span id="resultMeaningText"></span>
+      </div>
+
+      <!-- Vendor -->
+      <div class="result-row">
+        <div class="result-label">Vendor</div>
+        <input class="result-input suggested" id="fieldVendor" type="text" placeholder="Vendor name"/>
+      </div>
+
+      <!-- Amount -->
+      <div class="result-row">
+        <div class="result-label">Amount</div>
+        <input class="result-input suggested" id="fieldAmount" type="number" step="0.01" placeholder="0.00"/>
+      </div>
+
+      <!-- Date -->
+      <div class="result-row">
+        <div class="result-label">Date</div>
+        <input class="result-input suggested" id="fieldDate" type="date"/>
+      </div>
+
+      <!-- Category -->
+      <div class="result-row">
+        <div class="result-label">Category</div>
+        <select class="result-select suggested" id="fieldCategory">
+          <option value="">Select category</option>
+          <option>Salon supplies</option>
+          <option>Software & subscriptions</option>
+          <option>Utilities</option>
+          <option>Payroll</option>
+          <option>Marketing</option>
+          <option>Office supplies</option>
+          <option>Meals & entertainment</option>
+          <option>Travel</option>
+          <option>Insurance</option>
+          <option>Rent & lease</option>
+          <option>Equipment</option>
+          <option>Personal</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <!-- Business assignment -->
+      <div class="result-row">
+        <div class="result-label">Business</div>
+        <div>
+          <div class="biz-assign" id="bizAssign">
+            <div class="biz-assign-icon" id="bizAssignIcon">🏢</div>
+            <div class="biz-assign-text">
+              <div class="biz-assign-name" id="bizAssignName">Detecting…</div>
+              <div class="biz-assign-why" id="bizAssignWhy">Auto-detected from vendor name</div>
+            </div>
+            <button class="biz-assign-change" id="bizAssignChange">Change</button>
+          </div>
+          <select class="result-select" id="bizSelect" style="display:none;margin-top:8px">
+            <option value="">Select a business</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Split receipt -->
+      <div class="result-row">
+        <div class="result-label">Split?</div>
+        <label class="split-toggle">
+          <input type="checkbox" id="splitToggle"/>
+          <span class="split-toggle-text">This receipt has both business and personal items</span>
+        </label>
+      </div>
+
+      <!-- Notes -->
+      <div class="result-row">
+        <div class="result-label">Notes</div>
+        <input class="result-input" id="fieldNotes" type="text" placeholder="Optional notes about this receipt"/>
+      </div>
+
+    </div>
+
+    <div class="result-footer">
+      <button class="btn-discard" id="btnDiscard">Discard</button>
+      <button class="btn-save" id="btnSave">Save to Back Office →</button>
+    </div>
+  </div>
+
+  <!-- ── RECENT RECEIPTS ── -->
+  <div class="recent-section">
+    <div class="recent-header">
+      <div class="recent-title">Recent receipts</div>
+      <a class="recent-link" href="/business/accounting-assistant.html">View all →</a>
+    </div>
+    <div class="recent-list" id="recentList">
+      <div class="recent-empty" id="recentEmpty">
+        No receipts saved yet. Scan your first one above.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/shared/js/app-config.js"></script>
+<script src="/shared/js/gs-client.js"></script>
+<script>
+(function(){
+'use strict';
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let sg = null;
+let currentUser = null;
+let businesses = [];
+let capturedImageBase64 = null;
+let capturedImageFile = null;
+let stream = null;
+let currentSource = 'camera'; // camera | upload | email | manual
+
+const CATEGORIES = {
+  'opi':'Salon supplies','nail':'Salon supplies','beauty':'Salon supplies',
+  'vagaro':'Software & subscriptions','square':'Software & subscriptions',
+  'shopify':'Software & subscriptions','adobe':'Software & subscriptions',
+  'amazon':'Office supplies','costco':'Salon supplies','sams club':'Salon supplies',
+  "sam's club":'Salon supplies','walmart':'Office supplies',
+  'at&t':'Utilities','verizon':'Utilities','xfinity':'Utilities',
+  'comcast':'Utilities','electric':'Utilities','water':'Utilities',
+  'insurance':'Insurance','staples':'Office supplies',
+  'uber':'Travel','lyft':'Travel','delta':'Travel','united':'Travel',
+  'restaurant':'Meals & entertainment','cafe':'Meals & entertainment',
+  'coffee':'Meals & entertainment','starbucks':'Meals & entertainment',
+};
+
+const BIZ_VENDOR_HINTS = {
+  salon:      ['opi','nail','beauty','vagaro','color','gelish','orly','salon'],
+  rental:     ['home depot','lowes','ace hardware','plumber','electrician','maintenance'],
+  restaurant: ['sysco','us foods','restaurant depot','chef'],
+  contractor: ['home depot','lowes','grainger','fastenal','tool'],
+  retail:     ['wholesale','supplier','inventory','shopify'],
+};
+
+// ── INIT ──────────────────────────────────────────────────────────────
+async function init(){
+  try{
+    if(window.GSClient && typeof window.GSClient.getAsync === 'function'){
+      sg = await window.GSClient.getAsync();
+      const { data } = await sg.auth.getSession();
+      currentUser = data?.session?.user || null;
+    }
+  }catch(_){}
+
+  if(sg && currentUser) await loadBusinesses();
+  await loadRecentReceipts();
+  bindUI();
+  document.getElementById('manualDate').value = new Date().toISOString().slice(0,10);
+}
+
+async function loadBusinesses(){
+  try{
+    const { data } = await sg.from('businesses')
+      .select('id,name,business_type,status')
+      .eq('owner_id', currentUser.id)
+      .eq('status','active')
+      .order('name');
+    // Normalise to business_name so the rest of the code stays unchanged
+    businesses = (data || []).map(b => ({
+      id: b.id,
+      business_name: b.name,
+      business_type: b.business_type,
+    }));
+
+    const sel = document.getElementById('bizSelect');
+    businesses.forEach(b => {
+      const o = document.createElement('option');
+      o.value = b.id;
+      o.textContent = b.business_name;
+      sel.appendChild(o);
+    });
+  }catch(_){}
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────
+function bindUI(){
+  // Tab switching
+  document.querySelectorAll('.intake-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.intake-tab').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected','false');
+      });
+      document.querySelectorAll('.intake-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      const panelId = 'panel-' + btn.getAttribute('data-panel');
+      document.getElementById(panelId).classList.add('active');
+      currentSource = btn.getAttribute('data-panel');
+      hideResult();
+      if(stream && currentSource !== 'camera') stopCamera();
+    });
+  });
+
+  // Camera
+  document.getElementById('cameraBtn').addEventListener('click', handleCamera);
+  document.getElementById('previewRemoveCamera').addEventListener('click', resetCamera);
+
+  // Upload
+  const fileInput = document.getElementById('fileInput');
+  const dropZone  = document.getElementById('dropZone');
+  fileInput.addEventListener('change', e => handleFileSelect(e.target.files[0]));
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    if(e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]);
+  });
+  document.getElementById('previewRemoveUpload').addEventListener('click', resetUpload);
+  document.getElementById('extractBtnUpload').addEventListener('click', () => extractFromFile('upload'));
+
+  // Email
+  const emailTa = document.getElementById('emailText');
+  emailTa.addEventListener('input', () => {
+    document.getElementById('extractBtnEmail').disabled = !emailTa.value.trim();
+  });
+  document.getElementById('extractBtnEmail').addEventListener('click', extractFromEmail);
+
+  // Manual
+  ['manualVendor','manualAmount'].forEach(id => {
+    document.getElementById(id).addEventListener('input', checkManualReady);
+  });
+  document.getElementById('extractBtnManual').addEventListener('click', extractFromManual);
+
+  // Camera extract
+  document.getElementById('extractBtnCamera').addEventListener('click', () => extractFromFile('camera'));
+
+  // Result actions
+  document.getElementById('btnSave').addEventListener('click', saveReceipt);
+  document.getElementById('btnDiscard').addEventListener('click', hideResult);
+  document.getElementById('bizAssignChange').addEventListener('click', () => {
+    document.getElementById('bizAssign').style.display = 'none';
+    document.getElementById('bizSelect').style.display = 'block';
+  });
+
+  // Split toggle
+  document.getElementById('splitToggle').addEventListener('change', function(){
+    const meaning = document.getElementById('resultMeaning');
+    const text    = document.getElementById('resultMeaningText');
+    if(this.checked){
+      meaning.style.display = 'flex';
+      text.textContent = "You've marked this as a split receipt. Genie will save the full amount and flag it for review — you can split the categories manually in Accounting.";
+    } else {
+      meaning.style.display = 'none';
+    }
+  });
+}
+
+// ── CAMERA ────────────────────────────────────────────────────────────
+async function handleCamera(){
+  const btn = document.getElementById('cameraBtn');
+  const video = document.getElementById('cameraVideo');
+  const overlay = document.getElementById('cameraOverlay');
+  const hint = document.getElementById('cameraHint');
+
+  if(!stream){
+    // Start camera
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:'environment', width:{ideal:1920}, height:{ideal:1080} }
+      });
+      video.srcObject = stream;
+      video.style.display = 'block';
+      overlay.style.display = 'none';
+      btn.textContent = '⬤';
+      hint.textContent = 'Align receipt in frame, then tap to capture';
+    }catch(err){
+      showToast('Camera not available — use Upload instead');
+    }
+    return;
+  }
+
+  // Capture frame
+  const canvas = document.getElementById('cameraCanvas');
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  capturedImageBase64 = canvas.toDataURL('image/jpeg', .92).split(',')[1];
+  stopCamera();
+
+  // Show preview
+  const strip = document.getElementById('previewStripCamera');
+  const thumb = document.getElementById('previewThumbCamera');
+  const name  = document.getElementById('previewNameCamera');
+  const size  = document.getElementById('previewSizeCamera');
+  thumb.src = 'data:image/jpeg;base64,' + capturedImageBase64;
+  name.textContent = 'receipt-photo.jpg';
+  size.textContent = 'Photo captured — ready to extract';
+  strip.classList.add('visible');
+  document.getElementById('extractBtnCamera').disabled = false;
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `<img src="data:image/jpeg;base64,${capturedImageBase64}" style="max-width:100%;max-height:100%;object-fit:contain;opacity:.7"/>`;
+}
+
+function stopCamera(){
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+  const video = document.getElementById('cameraVideo');
+  video.srcObject = null;
+  video.style.display = 'none';
+  document.getElementById('cameraBtn').textContent = '📷';
+  document.getElementById('cameraHint').textContent = 'Point camera at receipt';
+}
+
+function resetCamera(){
+  capturedImageBase64 = null;
+  document.getElementById('previewStripCamera').classList.remove('visible');
+  document.getElementById('extractBtnCamera').disabled = true;
+  document.getElementById('cameraOverlay').style.display = 'flex';
+  document.getElementById('cameraOverlay').innerHTML = `
+    <div class="camera-frame"></div>
+    <p style="font-size:13px;opacity:.75">Tap the button to start camera</p>`;
+  hideResult();
+}
+
+// ── FILE UPLOAD ────────────────────────────────────────────────────────
+function handleFileSelect(file){
+  if(!file) return;
+  capturedImageFile = file;
+  const url = URL.createObjectURL(file);
+  const strip = document.getElementById('previewStripUpload');
+  const thumb = document.getElementById('previewThumbUpload');
+  document.getElementById('previewNameUpload').textContent = file.name;
+  document.getElementById('previewSizeUpload').textContent = formatBytes(file.size) + ' — ready to extract';
+  if(file.type.startsWith('image/')){
+    thumb.src = url; thumb.style.display = 'block';
+  } else {
+    thumb.src = ''; thumb.style.display = 'none';
+  }
+  strip.classList.add('visible');
+  document.getElementById('extractBtnUpload').disabled = false;
+}
+
+function resetUpload(){
+  capturedImageFile = null;
+  document.getElementById('previewStripUpload').classList.remove('visible');
+  document.getElementById('extractBtnUpload').disabled = true;
+  document.getElementById('fileInput').value = '';
+  hideResult();
+}
+
+function formatBytes(b){
+  if(b < 1024) return b + ' B';
+  if(b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+// ── MANUAL ENTRY ──────────────────────────────────────────────────────
+function checkManualReady(){
+  const v = document.getElementById('manualVendor').value.trim();
+  const a = document.getElementById('manualAmount').value.trim();
+  document.getElementById('extractBtnManual').disabled = !(v && a);
+}
+
+// ── EXTRACTION ────────────────────────────────────────────────────────
+async function extractFromFile(source){
+  const btn = source === 'camera'
+    ? document.getElementById('extractBtnCamera')
+    : document.getElementById('extractBtnUpload');
+  setExtracting(btn, true);
+
+  try{
+    let imageData = null;
+    let mediaType = 'image/jpeg';
+
+    if(source === 'camera' && capturedImageBase64){
+      imageData = capturedImageBase64;
+    } else if(source === 'upload' && capturedImageFile){
+      if(capturedImageFile.type === 'application/pdf'){
+        // PDF: send as text prompt
+        await extractFromText(`PDF receipt from file: ${capturedImageFile.name}`, btn);
+        return;
+      }
+      imageData = await fileToBase64(capturedImageFile);
+      mediaType = capturedImageFile.type || 'image/jpeg';
+    }
+
+    if(!imageData){ showToast('No image to extract'); setExtracting(btn,false); return; }
+
+    const result = await callClaudeImage(imageData, mediaType);
+    showResult(result, 'scan');
+  }catch(err){
+    showToast('Could not extract — try manual entry');
+    console.error(err);
+  }
+  setExtracting(btn, false);
+}
+
+async function extractFromEmail(){
+  const text = document.getElementById('emailText').value.trim();
+  if(!text) return;
+  const btn = document.getElementById('extractBtnEmail');
+  setExtracting(btn, true);
+  try{
+    const result = await callClaudeText(text, 'email receipt');
+    showResult(result, 'email');
+  }catch(err){
+    showToast('Could not extract — try manual entry');
+  }
+  setExtracting(btn, false);
+}
+
+async function extractFromManual(){
+  const vendor   = document.getElementById('manualVendor').value.trim();
+  const amount   = parseFloat(document.getElementById('manualAmount').value) || 0;
+  const date     = document.getElementById('manualDate').value || new Date().toISOString().slice(0,10);
+  const category = document.getElementById('manualCategory').value;
+  const desc     = document.getElementById('manualDesc').value.trim();
+
+  const guessedCategory = category || guessCategory(vendor);
+  const bizMatch = matchBusiness(vendor);
+
+  showResult({
+    vendor, amount, date,
+    category: guessedCategory,
+    description: desc || vendor,
+    confidence: 1.0,
+    notes: ''
+  }, 'manual', bizMatch);
+}
+
+// ── CLAUDE API CALLS ──────────────────────────────────────────────────
+async function callClaudeImage(base64, mediaType){
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      system:`You are a receipt data extractor for a small business management app.
+Extract structured data from receipts and return ONLY valid JSON, no other text.
+Return this exact structure:
+{
+  "vendor": "store/vendor name",
+  "amount": 0.00,
+  "date": "YYYY-MM-DD",
+  "category": "one of: Salon supplies, Software & subscriptions, Utilities, Payroll, Marketing, Office supplies, Meals & entertainment, Travel, Insurance, Rent & lease, Equipment, Personal, Other",
+  "description": "brief description of what was purchased",
+  "confidence": 0.0 to 1.0,
+  "items": ["item 1", "item 2"],
+  "notes": "anything unusual or worth flagging"
+}
+If you cannot read a field clearly, use null. Date format must be YYYY-MM-DD.`,
+      messages:[{
+        role:'user',
+        content:[
+          { type:'image', source:{ type:'base64', media_type: mediaType, data: base64 }},
+          { type:'text', text:'Extract all receipt data from this image. Return only JSON.' }
+        ]
+      }]
+    })
+  });
+  const data = await resp.json();
+  const raw = data.content?.map(b=>b.text||'').join('') || '{}';
+  return JSON.parse(raw.replace(/```json|```/g,'').trim());
+}
+
+async function callClaudeText(text, type){
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      system:`You are a receipt data extractor for a small business management app.
+Extract structured data from ${type} text and return ONLY valid JSON, no other text.
+Return this exact structure:
+{
+  "vendor": "store/vendor name",
+  "amount": 0.00,
+  "date": "YYYY-MM-DD",
+  "category": "one of: Salon supplies, Software & subscriptions, Utilities, Payroll, Marketing, Office supplies, Meals & entertainment, Travel, Insurance, Rent & lease, Equipment, Personal, Other",
+  "description": "brief description",
+  "confidence": 0.0 to 1.0,
+  "items": ["item 1", "item 2"],
+  "notes": "anything unusual"
+}
+If a field is missing, use null. Date must be YYYY-MM-DD.`,
+      messages:[{
+        role:'user',
+        content:`Extract receipt data from this ${type}:\n\n${text}\n\nReturn only JSON.`
+      }]
+    })
+  });
+  const data = await resp.json();
+  const raw = data.content?.map(b=>b.text||'').join('') || '{}';
+  return JSON.parse(raw.replace(/```json|```/g,'').trim());
+}
+
+async function extractFromText(text, btn){
+  setExtracting(btn, true);
+  try{
+    const result = await callClaudeText(text, 'receipt');
+    showResult(result, 'upload');
+  }catch(err){
+    showToast('Could not extract — check the file and try again');
+  }
+  setExtracting(btn, false);
+}
+
+// ── SHOW RESULT ────────────────────────────────────────────────────────
+function showResult(data, source, bizMatchOverride){
+  const card = document.getElementById('resultCard');
+
+  // Populate fields
+  setField('fieldVendor',   data.vendor   || '');
+  setField('fieldAmount',   data.amount   || '');
+  setField('fieldDate',     data.date     || new Date().toISOString().slice(0,10));
+  setField('fieldCategory', data.category || '');
+  setField('fieldNotes',    data.notes    || '');
+
+  // Confidence
+  const conf = data.confidence || 0.8;
+  const confEl = document.getElementById('resultConfidence');
+  const confIcon = document.getElementById('confIcon');
+  const confLabel = document.getElementById('confLabel');
+  if(conf >= 0.85){
+    confEl.className = 'result-confidence high';
+    confIcon.textContent = '●'; confLabel.textContent = 'High confidence';
+  } else if(conf >= 0.6){
+    confEl.className = 'result-confidence medium';
+    confIcon.textContent = '◐'; confLabel.textContent = 'Review suggested';
+  } else {
+    confEl.className = 'result-confidence low';
+    confIcon.textContent = '○'; confLabel.textContent = 'Please verify';
+  }
+
+  // Business auto-detection
+  const bizMatch = bizMatchOverride || matchBusiness(data.vendor || '');
+  const assignName = document.getElementById('bizAssignName');
+  const assignWhy  = document.getElementById('bizAssignWhy');
+  const assignIcon = document.getElementById('bizAssignIcon');
+  if(bizMatch){
+    assignName.textContent = bizMatch.name;
+    assignWhy.textContent  = 'Auto-detected from vendor name';
+    assignIcon.textContent = bizMatch.icon;
+    document.getElementById('bizSelect').value = bizMatch.id;
+  } else if(businesses.length === 1){
+    assignName.textContent = businesses[0].business_name;
+    assignWhy.textContent  = 'Your only business';
+    document.getElementById('bizSelect').value = businesses[0].id;
+  } else if(businesses.length === 0){
+    assignName.textContent = 'No business set up';
+    assignWhy.textContent  = 'Add a business in Back Office';
+  } else {
+    assignName.textContent = 'Multiple businesses — please select';
+    assignWhy.textContent  = 'Tap Change to pick the right one';
+    document.getElementById('bizAssign').style.display = 'none';
+    document.getElementById('bizSelect').style.display = 'block';
+  }
+
+  // Meaning line — show if low confidence or has notes
+  const meaning    = document.getElementById('resultMeaning');
+  const meaningTxt = document.getElementById('resultMeaningText');
+  if(conf < 0.7 || data.notes){
+    meaning.style.display = 'flex';
+    meaningTxt.textContent = data.notes
+      ? data.notes
+      : "Genie wasn't fully confident about some details — please review the fields before saving.";
+  } else {
+    meaning.style.display = 'none';
+  }
+
+  // Title
+  document.getElementById('resultTitle').textContent =
+    data.vendor ? `Receipt from ${data.vendor}` : 'Receipt extracted';
+  document.getElementById('resultSub').textContent =
+    source === 'manual'
+      ? 'Review and confirm before saving'
+      : 'Genie extracted these details — confirm or edit before saving';
+
+  card.classList.add('visible');
+  card.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function setField(id, val){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(el.tagName === 'SELECT'){
+    // Try to match option value
+    const opts = [...el.options];
+    const match = opts.find(o => o.value.toLowerCase() === String(val||'').toLowerCase()
+                               || o.text.toLowerCase()  === String(val||'').toLowerCase());
+    if(match) el.value = match.value;
+    else el.value = '';
+  } else {
+    el.value = val || '';
+  }
+}
+
+function hideResult(){
+  document.getElementById('resultCard').classList.remove('visible');
+  document.getElementById('resultMeaning').style.display = 'none';
+  document.getElementById('splitToggle').checked = false;
+  document.getElementById('bizAssign').style.display = 'flex';
+  document.getElementById('bizSelect').style.display = 'none';
+}
+
+// ── BUSINESS MATCHING ─────────────────────────────────────────────────
+function matchBusiness(vendorName){
+  if(!businesses.length || !vendorName) return null;
+  const v = vendorName.toLowerCase();
+  for(const biz of businesses){
+    const hints = BIZ_VENDOR_HINTS[biz.business_type] || [];
+    if(hints.some(h => v.includes(h))){
+      return {
+        id: biz.id,
+        name: biz.business_name,
+        icon: bizIcon(biz.business_type)
+      };
+    }
+  }
+  return null;
+}
+
+function bizIcon(type){
+  const map = {salon:'💅',rental:'🏡',restaurant:'🍽️',contractor:'🔧',retail:'🛍️'};
+  return map[type] || '🏢';
+}
+
+function guessCategory(vendor){
+  const v = vendor.toLowerCase();
+  for(const [kw, cat] of Object.entries(CATEGORIES)){
+    if(v.includes(kw)) return cat;
+  }
+  return 'Other';
+}
+
+// ── SAVE TO SUPABASE ──────────────────────────────────────────────────
+async function saveReceipt(){
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const vendor      = document.getElementById('fieldVendor').value.trim();
+  const amount      = parseFloat(document.getElementById('fieldAmount').value) || 0;
+  const date        = document.getElementById('fieldDate').value;
+  const category    = document.getElementById('fieldCategory').value;
+  const notes       = document.getElementById('fieldNotes').value.trim();
+  const isSplit     = document.getElementById('splitToggle').checked;
+  // Resolve business ID — from dropdown if visible, else from auto-assigned name
+  const selEl  = document.getElementById('bizSelect');
+  const bizId  = (selEl.style.display !== 'none' && selEl.value)
+    ? selEl.value
+    : businesses.find(b => b.business_name === document.getElementById('bizAssignName').textContent)?.id || null;
+
+  const row = {
+    vendor,
+    amount,
+    occurred_on:  date,
+    description:  vendor + (notes ? ' — ' + notes : ''),
+    direction:    'debit',
+    category,
+    source:       currentSource === 'camera' ? 'scan'
+                : currentSource === 'upload' ? 'scan'
+                : currentSource === 'email'  ? 'email'
+                : 'manual',
+    needs_review: isSplit,
+    confidence:   isSplit ? 0.5 : 0.95,
+    notes:        notes || null,
+  };
+
+  // Only attach business/workspace when a business was actually selected
+  // (personal receipts have no workspace — omit entirely to avoid NOT NULL violations)
+  if(bizId){
+    row.business_id  = bizId;
+    row.workspace_id = bizId;
+  }
+
+  // Save to localStorage always (works without auth)
+  saveToLocal({ ...row, user_id: currentUser?.id || null });
+
+  // Save to Supabase if available
+  if(sg && currentUser){
+    try{
+      row.user_id = currentUser.id;
+      const { error } = await sg.from('finance_transactions').insert(row);
+      if(error) throw error;
+      showToast('✓ Saved to Back Office');
+    }catch(err){
+      console.error('Supabase insert failed:', err.message, err);
+      showToast('Saved locally — sync error: ' + (err.message || 'unknown'));
+    }
+  } else {
+    showToast('✓ Saved locally — log in to sync');
+  }
+
+  hideResult();
+  await loadRecentReceipts();
+  resetAllIntake();
+
+  btn.disabled = false; btn.textContent = 'Save to Back Office →';
+}
+
+// ── LOCAL STORAGE ─────────────────────────────────────────────────────
+const LOCAL_KEY = 'gs_receipts_v1';
+
+function saveToLocal(row){
+  try{
+    const existing = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+    existing.unshift({ ...row, id: Date.now(), saved_at: new Date().toISOString() });
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(existing.slice(0, 50)));
+  }catch(_){}
+}
+
+function loadLocal(){
+  try{ return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); }
+  catch(_){ return []; }
+}
+
+// ── RECENT RECEIPTS ────────────────────────────────────────────────────
+async function loadRecentReceipts(){
+  let rows = [];
+
+  if(sg && currentUser){
+    try{
+      const { data } = await sg.from('finance_transactions')
+        .select('*')
+        .eq('direction','debit')
+        .eq('user_id', currentUser.id)
+        .order('occurred_on',{ascending:false})
+        .limit(8);
+      if(data && data.length) rows = data;
+    }catch(_){}
+  }
+
+  if(!rows.length) rows = loadLocal().slice(0,8);
+
+  const list  = document.getElementById('recentList');
+  const empty = document.getElementById('recentEmpty');
+
+  if(!rows.length){
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = rows.map(r => {
+    const catColor = categoryColor(r.category);
+    return `
+    <div class="recent-item">
+      <div class="recent-item-icon">${categoryIcon(r.category)}</div>
+      <div>
+        <div class="recent-item-name">${esc(r.vendor || r.description || 'Receipt')}</div>
+        <div class="recent-item-meta">
+          ${r.occurred_on ? fmtDate(r.occurred_on) : 'Recent'}
+          ${r.source ? ' · ' + r.source : ''}
+          ${r.needs_review ? ' · <span style="color:var(--amber)">Split</span>' : ''}
+        </div>
+      </div>
+      <div>
+        <div class="recent-item-amount">$${Number(r.amount||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        ${r.category ? `<div class="recent-item-cat" style="background:${catColor.bg};color:${catColor.text}">${esc(r.category)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function categoryIcon(cat){
+  const map = {
+    'Salon supplies':'💅','Software & subscriptions':'💻',
+    'Utilities':'⚡','Payroll':'💵','Marketing':'📢',
+    'Office supplies':'📦','Meals & entertainment':'🍽️',
+    'Travel':'✈️','Insurance':'🛡️','Rent & lease':'🏠',
+    'Equipment':'🔧','Personal':'👤','Other':'🧾',
+  };
+  return map[cat] || '🧾';
+}
+
+function categoryColor(cat){
+  const map = {
+    'Salon supplies':             {bg:'rgba(196,133,106,.1)',  text:'#7A3820'},
+    'Software & subscriptions':   {bg:'rgba(59,91,219,.08)',   text:'#1E3A8A'},
+    'Utilities':                  {bg:'rgba(245,158,11,.09)',  text:'#78350F'},
+    'Payroll':                    {bg:'rgba(45,106,79,.08)',   text:'#14532D'},
+    'Marketing':                  {bg:'rgba(139,92,246,.08)',  text:'#4C1D95'},
+    'Office supplies':            {bg:'rgba(107,114,128,.08)', text:'#374151'},
+    'Meals & entertainment':      {bg:'rgba(239,68,68,.08)',   text:'#7F1D1D'},
+    'Travel':                     {bg:'rgba(14,165,233,.08)',  text:'#0C4A6E'},
+    'Insurance':                  {bg:'rgba(168,85,247,.08)',  text:'#581C87'},
+    'Rent & lease':               {bg:'rgba(20,184,166,.08)',  text:'#134E4A'},
+    'Equipment':                  {bg:'rgba(249,115,22,.08)',  text:'#7C2D12'},
+    'Personal':                   {bg:'rgba(156,163,175,.08)' ,text:'#374151'},
+  };
+  return map[cat] || {bg:'rgba(26,26,24,.05)',text:'var(--muted)'};
+}
+
+function fmtDate(str){
+  if(!str) return '';
+  return new Date(str + 'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function setExtracting(btn, on){
+  btn.disabled = on;
+  btn.textContent = on ? '✦ Extracting…' : '✦ Extract receipt details';
+  if(on) btn.classList.add('loading');
+  else   btn.classList.remove('loading');
+}
+
+function resetAllIntake(){
+  capturedImageBase64 = null;
+  capturedImageFile   = null;
+  document.getElementById('previewStripCamera').classList.remove('visible');
+  document.getElementById('previewStripUpload').classList.remove('visible');
+  document.getElementById('extractBtnCamera').disabled = true;
+  document.getElementById('extractBtnUpload').disabled = true;
+  document.getElementById('emailText').value = '';
+  document.getElementById('extractBtnEmail').disabled = true;
+  document.getElementById('manualVendor').value = '';
+  document.getElementById('manualAmount').value = '';
+  document.getElementById('manualDesc').value   = '';
+  document.getElementById('manualCategory').value = '';
+}
+
+async function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Run
+init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>🛡️ Insurance Dashboard | GenieSphere</title>
+  <meta name="description" content="Insurance Genie dashboard: protection score, gaps, and next actions."/>
+  <meta name="gs-config" content="/shared/config.json" />
+
+  <style>
+    :root{
+      --container: 1440px;
+      --radius: 7px;
+      --radius-lg: 14px;
+      --btn-radius: 999px;
+
+      --shadow: 0 16px 38px rgba(15,23,42,.16);
+      --shadow-soft: 0 10px 24px rgba(15,23,42,.10);
+
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+      --border: rgba(148,163,184,.70);
+      --border-strong: rgba(148,163,184,.92);
+    }
+
+    body.theme-calm{
+      --bg:#f5f7fb; --panel:#fff; --panel-2:#f1f4ff; --text:#111827; --muted:#4b5563;
+      --primary:#4c6ef5; --accent:#22c55e;
+      --border: rgba(148,163,184,.70); --border-strong: rgba(148,163,184,.92);
+      --focus: 0 0 0 4px rgba(76,110,245,.18);
+    }
+    body.theme-future{
+      --bg:#0f172a; --panel:#111c36; --panel-2:#162447; --text:#e5e7eb; --muted:#9ca3af;
+      --primary:#6366f1; --accent:#22d3ee;
+      --border: rgba(71,85,105,.65); --border-strong: rgba(71,85,105,.95);
+      --shadow: 0 18px 44px rgba(0,0,0,.52); --shadow-soft: 0 10px 26px rgba(0,0,0,.34);
+      --focus: 0 0 0 4px rgba(34,211,238,.16);
+    }
+    body.theme-nature{
+      --bg:#f6f9f7; --panel:#fff; --panel-2:#eef5f1; --text:#0f172a; --muted:#475569;
+      --primary:#16a34a; --accent:#38bdf8;
+      --border: rgba(148,163,184,.70); --border-strong: rgba(148,163,184,.92);
+      --focus: 0 0 0 4px rgba(22,163,74,.16);
+    }
+    body.theme-dark{
+      --bg:#0b1220; --panel:#121a2b; --panel-2:#0e1626; --text:#e9f0ff; --muted:#a9b6d9;
+      --primary:#4c6ef5; --accent:#3ee1a1;
+      --border: rgba(120,155,255,.22); --border-strong: rgba(120,155,255,.42);
+      --shadow: 0 18px 44px rgba(0,0,0,.50); --shadow-soft: 0 10px 26px rgba(0,0,0,.30);
+      --focus: 0 0 0 4px rgba(76,110,245,.22);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background: var(--bg);
+      color: var(--text);
+      font: 500 16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial;
+    }
+    a{ color:inherit; }
+
+    .container{ max-width: var(--container); margin: 0 auto; padding: 24px; }
+
+    /* Header */
+    .site-header{
+      position:sticky; top:0; z-index:1000;
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+      background:var(--panel);
+      border-bottom:1px solid var(--border);
+      box-shadow:0 8px 22px rgba(0,0,0,.20);
+      backdrop-filter:saturate(120%) blur(10px);
+    }
+    .site-header-inner{
+      max-width:var(--container);
+      margin:0 auto;
+      padding: 12px 24px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; text-decoration:none; font-weight:800; }
+    .logo{
+      width:40px;height:40px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%, #6af0c4,#3ee1a1 40%,#1c9369 75%);
+      box-shadow:0 0 0 3px rgba(62,225,161,.25),0 8px 22px rgba(62,225,161,.20);
+    }
+    .menu{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:14px; }
+    .menu a{
+      display:inline-flex; align-items:center; gap:6px;
+      padding: 4px 2px; text-decoration:none; color:var(--muted);
+      border-bottom:2px solid transparent;
+      transition: color .15s ease, border-bottom-color .15s ease;
+    }
+    .menu a:hover{ color:var(--text); border-bottom-color:var(--primary); }
+    .menu a.active{ color:var(--text); border-bottom-color:var(--accent); font-weight:700; }
+
+    .right-head{ display:flex; align-items:center; gap:10px; }
+    .pillbtn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius: var(--btn-radius);
+      border:1px solid var(--border-strong); background: var(--panel-2);
+      color: var(--text); cursor:pointer; text-decoration:none;
+      font-weight:800; font-size:13px; white-space:nowrap;
+    }
+    .pillbtn:hover{ border-color: rgba(76,110,245,.55); }
+
+    .theme-gear{
+      width:40px;height:40px;
+      border-radius:999px;
+      border:1px solid var(--border-strong);
+      background: var(--panel-2);
+      color: var(--text);
+      cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center;
+    }
+    .theme-gear:hover{ border-color: var(--accent); }
+
+    @media(max-width: 860px){
+      .menu{ display:none; }
+      .site-header-inner{ padding: 10px 12px; }
+    }
+
+    /* Cards */
+    .grid{ display:grid; grid-template-columns: 1.2fr .8fr; gap: 16px; align-items:start; }
+    @media(max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      overflow:hidden;
+    }
+    .card-head{
+      padding: 14px;
+      border-bottom:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(76,110,245,.10), rgba(0,0,0,0));
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .card-head strong{ font-size:14px; font-weight:950; }
+    .card-head span{ color: var(--muted); font-size:12px; }
+    .card-body{ padding:14px; }
+
+    .hero{ padding: 18px 0 10px; }
+    .title{ margin:0 0 6px; font-weight:950; font-size: clamp(24px, 4vw, 38px); }
+    .subtitle{ margin: 0; color: var(--muted); font-size: 14px; }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 12px; border-radius:999px;
+      border:1px solid var(--border);
+      background: var(--panel-2);
+      font-size:12px; font-weight:850;
+    }
+
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 10px 14px;
+      border-radius: var(--btn-radius);
+      border: 1px solid transparent;
+      cursor:pointer;
+      text-decoration:none;
+      font-weight:900;
+      font-size:14px;
+      background: var(--primary);
+      color: #081227;
+    }
+    .btn:hover{ filter: brightness(1.04); }
+    .btn.secondary{ background: var(--panel-2); color: var(--text); border-color: var(--border); }
+    .btn.primary{ background: var(--accent); color:#04131a; }
+    .btn.small{ padding:8px 12px; font-size:13px; }
+
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+    .kpis{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+    @media(max-width: 560px){ .kpis{ grid-template-columns: 1fr; } }
+
+    .kpi{
+      border:1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .kpi .k{ margin:0; font-size:11px; color: var(--muted); font-weight:900; text-transform:uppercase; letter-spacing:.08em; }
+    .kpi .v{ margin:6px 0 0; font-weight:950; font-size:18px; }
+    .kpi .s{ margin:4px 0 0; color: var(--muted); font-size:12px; }
+
+    /* Protection gauge */
+    .gauge{
+      border:1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .gauge-top{ display:flex; justify-content:space-between; gap:10px; align-items:center; }
+    .gauge-title{ font-weight:950; }
+    .bar{
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(148,163,184,.35);
+      overflow:hidden;
+      margin-top: 10px;
+      border:1px solid rgba(148,163,184,.25);
+    }
+    .bar > div{
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      border-radius: 999px;
+      transition: width .35s ease;
+    }
+    .actions{ margin-top: 10px; display:flex; gap:10px; flex-wrap:wrap; }
+
+    /* List */
+    .list{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+    .item{
+      border:1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: 12px;
+      padding: 12px;
+      display:flex; justify-content:space-between; gap:12px; align-items:flex-start;
+    }
+    .item h4{ margin:0; font-size:13px; font-weight:950; }
+    .item p{ margin:4px 0 0; color: var(--muted); font-size:12px; }
+    .muted{ color: var(--muted); }
+
+    /* Toast */
+    .toast{ position: fixed; left: 16px; bottom: 16px; z-index: 2500; display:none; }
+    .toast.show{ display:block; }
+    .toast-inner{
+      max-width: 520px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: 0 18px 44px rgba(0,0,0,.35);
+      padding: 12px 12px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .toast-icon{
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      display:flex; align-items:center; justify-content:center;
+      background: rgba(76,110,245,.12);
+      border: 1px solid rgba(76,110,245,.22);
+      flex:0 0 auto;
+    }
+    .toast-title{ margin:0; font-weight:950; font-size:13px; }
+    .toast-msg{ margin:2px 0 0; color: var(--muted); font-size:12px; }
+    .toast-close{
+      margin-left:auto;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 10px;
+      cursor:pointer;
+    }
+
+    /* Theme modal */
+    .theme-overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.60);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 3000;
+      padding:18px;
+    }
+    .theme-overlay.show{ display:flex; }
+    .theme-modal{
+      width: min(720px, 96vw);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: 0 30px 90px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .theme-modal-header{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding: 12px 14px;
+      border-bottom:1px solid var(--border);
+    }
+    .theme-modal-title strong{ font-size:15px; }
+    .theme-modal-title span{ display:block; font-size:13px; color: var(--muted); margin-top:2px; }
+    .theme-close{ border:1px solid var(--border); background: var(--panel-2); color: var(--text); border-radius:999px; padding:8px 10px; cursor:pointer; }
+    .theme-close:hover{ border-color: var(--accent); }
+    .theme-modal-body{ padding: 14px; }
+    .theme-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+    @media(max-width: 560px){ .theme-grid{ grid-template-columns:1fr; } }
+    .theme-option{
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 12px;
+      cursor:pointer;
+      text-align:left;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .theme-option:hover{ border-color: rgba(76,110,245,.55); }
+    .theme-option.selected{ border-color: rgba(76,110,245,.85); box-shadow: var(--focus); }
+    .theme-option-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .theme-option-name{ margin:0; font-weight:950; font-size:14px; }
+    .theme-option-desc{ margin:0; font-size:12px; color: var(--muted); }
+    .theme-option-tag{
+      font-size:11px;
+      font-weight:950;
+      padding:4px 8px;
+      background: rgba(76,110,245,.16);
+      border: 1px solid rgba(76,110,245,.35);
+      border-radius: 999px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .theme-modal-footer{
+      display:flex; justify-content:flex-end; gap:10px;
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+
+<body class="theme-dark">
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="./index.html">
+        <img class="logo" alt="GenieSphere" src="./genie-logo.png"/>
+        <strong>GenieSphere</strong>
+      </a>
+
+      <nav class="menu" aria-label="Primary">
+        <a class="ghost" href="./dashboard/household.html">🏠 Household</a>
+        <a class="active" href="./dashboard/business.html">🏢 Business</a>
+        <a class="ghost" href="./dashboard/investment.html">📈 Investment</a>
+        <a class="ghost" href="./dashboard/leisure.html">🏝️ Leisure</a>
+      </nav>
+
+      <div class="right-head">
+        <a class="pillbtn" href="./insurance-genie.phase1.html">➕ New Intake</a>
+        <button class="theme-gear" id="openThemeBtn" type="button" aria-label="Open appearance settings">⚙️</button>
+        <span class="pill" id="userPill">👤 Guest</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1 class="title">🛡️ Insurance Dashboard</h1>
+      <p class="subtitle">Protection score, gaps, and next actions — tied to your assets across GenieSphere (Phase 1 foundation).</p>
+    </section>
+
+    <div class="grid">
+      <main class="card" aria-label="Insurance snapshot">
+        <div class="card-head">
+          <div>
+            <strong>📌 Snapshot</strong><br/>
+            <span id="snapSub">Latest intake • —</span>
+          </div>
+          <div class="row">
+            <a class="btn secondary small" href="./insurance-genie.phase1.html">✍️ Edit / New Intake</a>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="gauge" aria-label="Protection score gauge">
+            <div class="gauge-top">
+              <div class="gauge-title">🛡️ Protection Score</div>
+              <div class="pill" id="scorePill">—</div>
+            </div>
+            <div class="bar"><div id="scoreBar"></div></div>
+            <div class="actions">
+              <button class="btn primary small" id="btnOpenIntake" type="button">📄 Open Intake</button>
+              <button class="btn secondary small" id="btnCopySummary" type="button">📋 Copy Summary</button>
+            </div>
+            <p class="muted" style="margin:10px 0 0;font-size:12px;" id="scoreHint">—</p>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="kpis">
+            <div class="kpi">
+              <p class="k">Estimated Overpay</p>
+              <p class="v" id="kpiOverpay">—</p>
+              <p class="s" id="kpiOverpaySub">Based on your goals & basic coverage signals</p>
+            </div>
+            <div class="kpi">
+              <p class="k">Umbrella Status</p>
+              <p class="v" id="kpiUmbrella">—</p>
+              <p class="s" id="kpiUmbrellaSub">We’ll refine once assets auto-sync (Phase 2)</p>
+            </div>
+            <div class="kpi">
+              <p class="k">Liability Target</p>
+              <p class="v" id="kpiLiability">—</p>
+              <p class="s">Rule-of-thumb starter target (not advice)</p>
+            </div>
+            <div class="kpi">
+              <p class="k">Top Actions</p>
+              <p class="v" id="kpiActions">—</p>
+              <p class="s" id="kpiActionsSub">Auto-generated from your selections</p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="card" aria-label="Recent intakes">
+        <div class="card-head">
+          <div>
+            <strong>🧾 Recent Intakes</strong><br/>
+            <span>From your account</span>
+          </div>
+          <div class="row">
+            <button class="btn secondary small" id="btnRefresh" type="button">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <ul class="list" id="recentList">
+            <li class="muted">Loading…</li>
+          </ul>
+
+          <p class="muted" style="margin:10px 0 0;font-size:12px;">
+            Tip: Save all renewals here — GenieSphere can track your protection score over time.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Theme Modal -->
+  <div class="theme-overlay" id="themeOverlay" role="dialog" aria-modal="true" aria-label="Appearance settings">
+    <div class="theme-modal">
+      <div class="theme-modal-header">
+        <div class="theme-modal-title">
+          <strong>🎨 Appearance</strong>
+          <span>Pick a theme. Saved on this device.</span>
+        </div>
+        <button class="theme-close" id="closeThemeBtn" type="button">✖</button>
+      </div>
+
+      <div class="theme-modal-body">
+        <div class="theme-grid" id="themeGrid">
+          <button class="theme-option" data-theme="theme-calm" type="button">
+            <div class="theme-option-head">
+              <p class="theme-option-name">Calm Future</p>
+              <span class="theme-option-tag">Default</span>
+            </div>
+            <p class="theme-option-desc">Clean, bright, business-friendly.</p>
+          </button>
+
+          <button class="theme-option" data-theme="theme-future" type="button">
+            <div class="theme-option-head">
+              <p class="theme-option-name">Soft Futuristic</p>
+              <span class="theme-option-tag">Neon</span>
+            </div>
+            <p class="theme-option-desc">Deep navy + cool accents.</p>
+          </button>
+
+          <button class="theme-option" data-theme="theme-nature" type="button">
+            <div class="theme-option-head">
+              <p class="theme-option-name">Nature + Tech</p>
+              <span class="theme-option-tag">Green</span>
+            </div>
+            <p class="theme-option-desc">Light eco tones with modern blue.</p>
+          </button>
+
+          <button class="theme-option" data-theme="theme-dark" type="button">
+            <div class="theme-option-head">
+              <p class="theme-option-name">Pro Dark</p>
+              <span class="theme-option-tag">Dark</span>
+            </div>
+            <p class="theme-option-desc">Your current GenieSphere dark style.</p>
+          </button>
+        </div>
+      </div>
+
+      <div class="theme-modal-footer">
+        <button class="btn secondary" id="resetThemeBtn" type="button">↩️ Reset</button>
+        <button class="btn primary" id="applyThemeBtn" type="button">✅ Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="toast-inner">
+      <div class="toast-icon" id="toast_icon">ℹ️</div>
+      <div>
+        <p class="toast-title" id="toast_title">Notice</p>
+        <p class="toast-msg" id="toast_msg">—</p>
+      </div>
+      <button class="toast-close" id="toast_close" type="button">Close</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const state = {
+      cfg: null,
+      sb: null,     // do not name "supabase"
+      user: null,
+      intakeId: "",
+      intake: null,
+      analysis: null
+    };
+
+    // Toast
+    const toast = $("#toast");
+    $("#toast_close").addEventListener("click", () => toast.classList.remove("show"));
+    function showToast({ title="Notice", msg="—", icon="ℹ️" }){
+      $("#toast_title").textContent = title;
+      $("#toast_msg").textContent = msg;
+      $("#toast_icon").textContent = icon;
+      toast.classList.add("show");
+      window.clearTimeout(showToast._t);
+      showToast._t = window.setTimeout(()=>toast.classList.remove("show"), 4200);
+    }
+
+    // Theme
+    (function initTheme(){
+      const KEY = "gs_theme";
+      const overlay = $("#themeOverlay");
+      const grid = $("#themeGrid");
+      const openBtn = $("#openThemeBtn");
+      const closeBtn = $("#closeThemeBtn");
+      const applyBtn = $("#applyThemeBtn");
+      const resetBtn = $("#resetThemeBtn");
+
+      let pending = null;
+
+      function applyTheme(theme){
+        document.body.classList.remove("theme-calm","theme-future","theme-nature","theme-dark");
+        document.body.classList.add(theme);
+        localStorage.setItem(KEY, theme);
+      }
+      function select(theme){
+        pending = theme;
+        $$(".theme-option", grid).forEach(b => b.classList.toggle("selected", b.dataset.theme === theme));
+      }
+      function open(){
+        overlay.classList.add("show");
+        const current = localStorage.getItem(KEY) || (document.body.classList.contains("theme-dark") ? "theme-dark" : "theme-calm");
+        select(pending || current);
+      }
+      function close(){ overlay.classList.remove("show"); }
+
+      const saved = localStorage.getItem(KEY);
+      if(saved) applyTheme(saved);
+
+      openBtn?.addEventListener("click", open);
+      closeBtn?.addEventListener("click", close);
+      overlay?.addEventListener("click", (e)=>{ if(e.target === overlay) close(); });
+
+      $$(".theme-option", grid).forEach(btn => btn.addEventListener("click", ()=> select(btn.dataset.theme)));
+      applyBtn?.addEventListener("click", ()=>{ if(pending) applyTheme(pending); close(); showToast({title:"Appearance saved", msg:"Theme applied on this device.", icon:"🎨"}); });
+      resetBtn?.addEventListener("click", ()=>{ pending = "theme-calm"; select(pending); });
+    })();
+
+    async function loadConfig(){
+      const meta = document.querySelector('meta[name="gs-config"]');
+      const url = meta?.getAttribute("content") || "/shared/config.json";
+      const res = await fetch(url, { cache:"no-store" });
+      if(!res.ok) throw new Error("Config load failed: HTTP " + res.status);
+      return await res.json();
+    }
+
+    async function initSupabase(){
+      if(!window.supabase?.createClient) return null;
+      state.cfg = state.cfg || await loadConfig();
+      const url = state.cfg?.supabase_url;
+      const key = state.cfg?.supabase_anon_key;
+      if(!url || !key) return null;
+      return window.supabase.createClient(url, key, {
+        auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
+      });
+    }
+
+    function fmtMoney(n){
+      if(n === null || n === undefined || n === "") return "—";
+      const v = Number(n);
+      if(Number.isNaN(v)) return "—";
+      return v.toLocaleString(undefined, { style:"currency", currency:"USD", maximumFractionDigits:0 });
+    }
+
+    function scoreColor(score){
+      if(score >= 80) return { pill:"🟢 Strong", hint:"You’re in a strong protection range. Next step: optimize price." };
+      if(score >= 55) return { pill:"🟡 Moderate", hint:"Decent baseline. Biggest wins: liability + umbrella alignment." };
+      return { pill:"🔴 Weak", hint:"High chance of being underinsured. Focus on liability limits first." };
+    }
+
+    function computeProtectionScore(intake, analysis){
+      // If analysis provides risk_score, use it (clamped)
+      const aScore = analysis?.risk_score;
+      if(typeof aScore === "number") return Math.max(0, Math.min(100, Math.round(aScore)));
+
+      // Phase 1 heuristic from intake only (starter logic)
+      let score = 50;
+      const covLevel = intake?.coverage?.coverage_level || "";
+      if(covLevel === "budget") score -= 10;
+      if(covLevel === "premium") score += 12;
+      if(covLevel === "balanced") score += 4;
+
+      const liab = (intake?.coverage?.auto_liability || "").toString();
+      if(liab.includes("250/500") || liab.includes("500/500")) score += 12;
+      else if(liab.includes("100/300")) score += 6;
+      else if(liab.includes("50/100")) score += 2;
+      else if(liab.includes("state_min")) score -= 8;
+
+      const umb = intake?.coverage?.umbrella_limit || "";
+      if(umb === "1m") score += 8;
+      if(umb === "2m") score += 12;
+      if(umb === "5m") score += 16;
+
+      const propDed = (intake?.coverage?.property_deductible || "").toString();
+      if(propDed === "2_percent") score -= 4;
+      if(propDed === "1_percent") score -= 2;
+
+      // goals
+      const goals = intake?.goals || [];
+      if(goals.includes("max_protection")) score += 6;
+      if(goals.includes("lowest_price")) score -= 2;
+
+      return Math.max(0, Math.min(100, Math.round(score)));
+    }
+
+    function deriveUmbrellaStatus(intake){
+      const types = intake?.insurance_types || [];
+      const umb = intake?.coverage?.umbrella_limit || "";
+      if(types.includes("umbrella")){
+        if(!umb) return { v:"⚠️ Not set", s:"You selected umbrella, but no limit was chosen." };
+        return { v:`✅ ${umb.toUpperCase()}`, s:"Umbrella selected. Phase 2 will validate against assets." };
+      }
+      // if multiple policies, suggest umbrella
+      if(types.includes("auto") && (types.includes("home") || types.includes("landlord"))){
+        return { v:"💡 Consider", s:"Auto + property often benefits from umbrella." };
+      }
+      return { v:"—", s:"Not selected." };
+    }
+
+    function liabilityTarget(intake){
+      // Phase 1 simple target based on policy mix
+      const types = intake?.insurance_types || [];
+      if(types.includes("landlord") || types.includes("home")) return "250/500 + ☂️";
+      if(types.includes("auto")) return "100/300+";
+      return "—";
+    }
+
+    function topActions(intake, analysis){
+      const actions = [];
+      const liab = intake?.coverage?.auto_liability || "";
+      const types = intake?.insurance_types || [];
+      const umb = intake?.coverage?.umbrella_limit || "";
+      const goals = intake?.goals || [];
+
+      if(types.includes("auto") && (liab === "" || liab === "state_min" || liab === "50/100")){
+        actions.push("Increase auto liability");
+      }
+      if((types.includes("home") || types.includes("landlord") || types.includes("auto")) && !types.includes("umbrella")){
+        actions.push("Consider umbrella");
+      }
+      if(types.includes("umbrella") && !umb){
+        actions.push("Pick umbrella limit");
+      }
+      if(goals.includes("bundle_savings")){
+        actions.push("Bundle check");
+      }
+      if(actions.length === 0) actions.push("Run quote comparison");
+
+      // Prefer analysis top actions if provided
+      const a = analysis?.top_3_actions;
+      if(Array.isArray(a) && a.length){
+        return a.slice(0,3);
+      }
+
+      return actions.slice(0,3);
+    }
+
+    function renderSnapshot(){
+      const intake = state.intake?.intake || state.intake || null; // depending on how fetched/passed
+      const analysis = state.analysis?.analysis || state.analysis || null;
+
+      if(!intake){
+        $("#snapSub").textContent = "No intake found yet";
+        $("#scorePill").textContent = "—";
+        $("#scoreHint").textContent = "Create your first intake to generate a protection score.";
+        return;
+      }
+
+      const created = state.intake?.created_at ? new Date(state.intake.created_at) : null;
+      $("#snapSub").textContent = created ? ("Latest intake • " + created.toLocaleString()) : "Loaded intake";
+
+      const score = computeProtectionScore(intake, analysis);
+      const sc = scoreColor(score);
+      $("#scorePill").textContent = `${score}/100 • ${sc.pill}`;
+      $("#scoreBar").style.width = `${score}%`;
+      $("#scoreHint").textContent = sc.hint;
+
+      // KPIs
+      const overpay = (analysis?.overpay_estimate ?? null);
+      $("#kpiOverpay").textContent = overpay ? fmtMoney(overpay) + "/yr" : "—";
+      $("#kpiOverpaySub").textContent = overpay ? "AI estimate (if provided by webhook)" : "Add webhook analysis to estimate overpay.";
+
+      const umb = deriveUmbrellaStatus(intake);
+      $("#kpiUmbrella").textContent = umb.v;
+      $("#kpiUmbrellaSub").textContent = umb.s;
+
+      $("#kpiLiability").textContent = liabilityTarget(intake);
+
+      const acts = topActions(intake, analysis);
+      $("#kpiActions").textContent = acts[0] ? ("• " + acts[0]) : "—";
+      $("#kpiActionsSub").textContent = acts.slice(1).map(x=>"• "+x).join("  ") || "—";
+
+      // Buttons
+      $("#btnOpenIntake").onclick = ()=>{
+        // Phase 1: open intake (new) — later we add ?intake_id= to edit/duplicate
+        window.location.href = "./insurance-genie.phase1.html";
+      };
+
+      $("#btnCopySummary").onclick = async ()=>{
+        const summary = {
+          protection_score: score,
+          insurance_types: intake.insurance_types || [],
+          state: intake.location?.state || "",
+          zip: intake.location?.zip || "",
+          suggested_actions: acts
+        };
+        try{
+          await navigator.clipboard.writeText(JSON.stringify(summary, null, 2));
+          showToast({ title:"Copied", msg:"Snapshot summary copied to clipboard.", icon:"📋" });
+        }catch(e){
+          showToast({ title:"Copy failed", msg:"Clipboard blocked by browser.", icon:"⚠️" });
+        }
+      };
+    }
+
+    function renderRecent(list){
+      const ul = $("#recentList");
+      ul.innerHTML = "";
+      if(!list?.length){
+        ul.innerHTML = `<li class="muted">No intakes yet. Create one from “New Intake”.</li>`;
+        return;
+      }
+
+      list.slice(0,6).forEach(row=>{
+        const intake = row.intake || {};
+        const types = (intake.insurance_types || []).join(", ") || "—";
+        const loc = [intake.location?.state, intake.location?.zip].filter(Boolean).join(" • ") || "—";
+        const d = row.created_at ? new Date(row.created_at) : null;
+
+        const li = document.createElement("li");
+        li.className = "item";
+        li.innerHTML = `
+          <div>
+            <h4>🧾 ${types}</h4>
+            <p>${loc} • ${d ? d.toLocaleString() : ""}</p>
+          </div>
+          <div class="row">
+            <button class="btn secondary small" type="button" data-open="${row.id}">Open</button>
+          </div>
+        `;
+        ul.appendChild(li);
+      });
+
+      $$('button[data-open]').forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const id = btn.getAttribute("data-open");
+          if(!id) return;
+          const qs = new URLSearchParams();
+          qs.set("intake_id", id);
+          window.location.href = "./insurance-dashboard.html?" + qs.toString();
+        });
+      });
+    }
+
+    async function loadByIntakeId(intakeId){
+      // Load intake + latest analysis for that intake
+      const { data: intake, error: ie } = await state.sb
+        .from("insurance_intakes")
+        .select("id, created_at, intake")
+        .eq("id", intakeId)
+        .single();
+      if(ie) throw ie;
+
+      const { data: analyses } = await state.sb
+        .from("insurance_analyses")
+        .select("id, created_at, analysis, risk_score, coverage_gap_score, overpay_estimate")
+        .eq("intake_id", intakeId)
+        .order("created_at", { ascending:false })
+        .limit(1);
+
+      state.intake = intake;
+      state.analysis = analyses?.[0] || null;
+    }
+
+    async function loadLatest(){
+      // Load most recent intake + its analysis
+      const { data: list, error } = await state.sb
+        .from("insurance_intakes")
+        .select("id, created_at, intake")
+        .order("created_at", { ascending:false })
+        .limit(1);
+
+      if(error) throw error;
+
+      const intake = list?.[0] || null;
+      state.intake = intake;
+
+      if(intake?.id){
+        const { data: analyses } = await state.sb
+          .from("insurance_analyses")
+          .select("id, created_at, analysis, risk_score, coverage_gap_score, overpay_estimate")
+          .eq("intake_id", intake.id)
+          .order("created_at", { ascending:false })
+          .limit(1);
+        state.analysis = analyses?.[0] || null;
+      }
+    }
+
+    async function loadRecent(){
+      const { data, error } = await state.sb
+        .from("insurance_intakes")
+        .select("id, created_at, intake")
+        .order("created_at", { ascending:false })
+        .limit(6);
+      if(error) throw error;
+      renderRecent(data || []);
+    }
+
+    async function boot(){
+      // read query params
+      const qs = new URLSearchParams(window.location.search);
+      state.intakeId = qs.get("intake_id") || "";
+
+      state.sb = await initSupabase();
+      if(!state.sb){
+        showToast({ title:"Supabase not configured", msg:"Missing config.json or supabase_url/anon key.", icon:"⚠️" });
+        return;
+      }
+
+      const { data } = await state.sb.auth.getUser().catch(()=>({data:null}));
+      state.user = data?.user || null;
+
+      $("#userPill").textContent = state.user ? ("👤 " + (state.user.user_metadata?.full_name || state.user.email || "Account")) : "👤 Guest (log in)";
+
+      if(!state.user){
+        showToast({ title:"Please log in", msg:"Dashboard reads your saved intakes from your account.", icon:"🔒" });
+        $("#recentList").innerHTML = `<li class="muted">Log in to view saved intakes.</li>`;
+        return;
+      }
+
+      try{
+        if(state.intakeId) await loadByIntakeId(state.intakeId);
+        else await loadLatest();
+        await loadRecent();
+        renderSnapshot();
+      }catch(e){
+        showToast({ title:"Load error", msg:"Check tables/RLS: insurance_intakes + insurance_analyses.", icon:"⚠️" });
+        $("#recentList").innerHTML = `<li class="muted">Could not load data.</li>`;
+      }
+
+      $("#btnRefresh").addEventListener("click", async ()=>{
+        try{
+          if(state.intakeId) await loadByIntakeId(state.intakeId);
+          else await loadLatest();
+          await loadRecent();
+          renderSnapshot();
+          showToast({ title:"Updated", msg:"Dashboard refreshed.", icon:"↻" });
+        }catch(e){
+          showToast({ title:"Refresh failed", msg:"Check RLS or network.", icon:"⚠️" });
+        }
+      });
+    }
+
+    boot();
+  </script>
+</body>
+</html>

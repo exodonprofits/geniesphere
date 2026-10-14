@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan Your Adventure Trip – Voyage Genie</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean:#0077b6; --ocean-deep:#023e8a; --teal:#00b4d8;
+  --coral:#e76f51; --coral-dark:#c1551c;
+  --off-white:#f8fafc; --gray-light:#f1f5f9; --gray-border:#e2e8f0;
+  --text:#1e293b; --text-muted:#64748b;
+  --radius:10px; --radius-lg:16px;
+  --shadow:0 2px 16px rgba(0,0,0,0.07);
+  --transition:0.22s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+main{flex:1;padding:2rem 1rem 3rem;}
+.hidden{display:none!important;}
+
+/* HEADER */
+.vg-header{position:sticky;top:0;z-index:40;background:linear-gradient(105deg,#023e8a 0%,#0077b6 55%,#0096c7 100%);box-shadow:0 2px 20px rgba(2,62,138,0.25);}
+.vg-nav{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.vg-brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none;}
+.vg-brand img{width:46px;height:46px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);}
+.vg-title-brand{font-family:'Playfair Display',serif;font-weight:700;font-size:1.4rem;color:#fff;}
+.vg-right{display:flex;align-items:center;gap:12px;}
+.nav-chip{display:inline-flex;align-items:center;gap:8px;padding:0 14px;height:38px;border-radius:9px;background:rgba(255,255,255,0.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.22);font-size:0.88rem;font-weight:500;transition:background var(--transition);white-space:nowrap;}
+.nav-chip:hover{background:rgba(255,255,255,0.24);}
+
+/* PAGE BANNER */
+.page-banner{background:#eaf4fb;border-bottom:1px solid #c9e4f5;padding:1.4rem 1.5rem;}
+.page-banner-inner{max-width:1200px;margin:0 auto;}
+.page-banner h1{font-family:'Playfair Display',serif;font-size:clamp(1.2rem,2.5vw,1.55rem);font-weight:700;color:var(--ocean-deep);margin-bottom:0.2rem;}
+.page-banner p{font-size:0.87rem;color:var(--text-muted);}
+
+/* LAYOUT */
+.planner-layout{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start;}
+@media(max-width:860px){.planner-layout{grid-template-columns:1fr;}}
+
+/* FORM CARD */
+.planning-card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:2rem;border:1px solid var(--gray-border);}
+
+/* STEP INDICATOR */
+.step-indicator{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:1.75rem;}
+.step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:600;background:var(--gray-light);color:var(--text-muted);border:2px solid var(--gray-border);transition:all var(--transition);flex-shrink:0;position:relative;z-index:1;}
+.step-dot.active{background:var(--ocean);color:#fff;border-color:var(--ocean);}
+.step-dot.done{background:#d1fae5;color:#065f46;border-color:#6ee7b7;}
+.step-line{flex:1;height:2px;background:var(--gray-border);margin:0 4px;}
+.step-line.done{background:#6ee7b7;}
+.progress-bar{width:100%;height:5px;background:var(--gray-border);border-radius:999px;overflow:hidden;margin-bottom:1.75rem;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--ocean));transition:width 0.4s ease;border-radius:999px;}
+
+/* STEP */
+.step h2{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--text);margin-bottom:0.3rem;}
+.step-desc{font-size:0.88rem;color:var(--text-muted);margin-bottom:1.5rem;}
+.field{margin-bottom:1.25rem;}
+.field label{display:flex;align-items:center;gap:6px;font-size:0.88rem;font-weight:500;color:var(--text);margin-bottom:0.4rem;}
+.required-star{color:var(--coral);}
+.opt-tag{font-size:0.75rem;color:var(--text-muted);font-weight:400;background:var(--gray-light);border-radius:999px;padding:1px 8px;margin-left:2px;}
+.vg-select,.vg-input{width:100%;padding:0.65rem 1rem;border:1px solid var(--gray-border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:0.92rem;color:var(--text);background:var(--gray-light);outline:none;transition:border-color var(--transition),background var(--transition);}
+.vg-select:focus,.vg-input:focus{border-color:var(--ocean);background:#fff;box-shadow:0 0 0 3px rgba(0,119,182,0.1);}
+.vg-select{appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230077b6"><path d="M7 10l5 5 5-5z"/></svg>');background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:2.5rem;background-color:var(--gray-light);}
+.vg-select:focus{background-color:#fff;}
+.error-field{border-color:#ef4444!important;background:#fff5f5!important;}
+.error-msg{color:#ef4444;font-size:0.8rem;margin-top:0.3rem;display:flex;align-items:center;gap:4px;}
+.date-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:480px){.date-grid{grid-template-columns:1fr;}}
+.section-label{font-size:0.82rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;margin-top:1.25rem;}
+
+/* OPTION CARDS */
+.option-cards{display:flex;flex-direction:column;gap:0.5rem;}
+.option-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+@media(max-width:480px){.option-grid{grid-template-columns:1fr;}}
+.option-card{display:flex;align-items:center;gap:10px;border:1px solid var(--gray-border);border-radius:var(--radius);padding:0.7rem 1rem;cursor:pointer;transition:background var(--transition),border-color var(--transition);background:#fff;}
+.option-card:hover{background:#eaf4fb;border-color:var(--teal);}
+.option-card input[type="checkbox"],.option-card input[type="radio"]{accent-color:var(--ocean);width:16px;height:16px;flex-shrink:0;}
+.option-card label{cursor:pointer;font-size:0.92rem;margin:0;font-weight:400;}
+
+/* NAV BUTTONS */
+.navigation{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--gray-border);gap:1rem;}
+.btn-prev{display:inline-flex;align-items:center;gap:8px;padding:0.75rem 1.5rem;border-radius:var(--radius);border:1px solid var(--gray-border);background:#fff;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:500;color:var(--text);cursor:pointer;transition:background var(--transition),transform var(--transition);}
+.btn-prev:hover{background:var(--gray-light);transform:translateY(-1px);}
+.btn-next{display:inline-flex;align-items:center;gap:8px;padding:0.75rem 2rem;border-radius:var(--radius);border:none;background:var(--ocean);color:#fff;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;margin-left:auto;transition:background var(--transition),transform var(--transition),box-shadow var(--transition);box-shadow:0 4px 14px rgba(0,119,182,0.3);}
+.btn-next:hover{background:var(--ocean-deep);transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,119,182,0.4);}
+.btn-generate{background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,0.35);}
+.btn-generate:hover{background:linear-gradient(135deg,#059669,#047857);}
+
+/* SIDEBAR */
+.affiliate-sidebar{display:flex;flex-direction:column;gap:1rem;}
+.deal-banner{background:linear-gradient(135deg,#023e8a,#0077b6);border-radius:var(--radius-lg);padding:1.1rem;color:#fff;}
+.deal-banner h3{font-size:0.92rem;font-weight:600;margin-bottom:0.4rem;}
+.deal-banner p{font-size:0.82rem;opacity:0.85;margin-bottom:0.75rem;line-height:1.5;}
+.deal-btn{display:block;text-align:center;background:var(--coral);color:#fff;padding:0.55rem 1rem;border-radius:8px;text-decoration:none;font-size:0.88rem;font-weight:600;transition:background var(--transition);}
+.deal-btn:hover{background:var(--coral-dark);}
+.affiliate-card{background:#fff;border:1px solid var(--gray-border);border-radius:var(--radius-lg);padding:1.1rem;box-shadow:var(--shadow);}
+.affiliate-card-title{font-size:0.82rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;}
+.affiliate-link{display:flex;align-items:center;justify-content:space-between;padding:0.65rem 0.85rem;border-radius:8px;background:var(--gray-light);border:1px solid var(--gray-border);text-decoration:none;color:var(--text);margin-bottom:0.5rem;font-size:0.88rem;font-weight:500;transition:all var(--transition);}
+.affiliate-link:last-child{margin-bottom:0;}
+.affiliate-link:hover{background:#eaf4fb;border-color:var(--teal);transform:translateX(2px);}
+.affiliate-link .arr{font-size:0.75rem;color:var(--text-muted);}
+.affiliate-link:hover .arr{color:var(--ocean);}
+.affiliate-note{font-size:0.75rem;color:var(--text-muted);margin-top:0.6rem;font-style:italic;}
+
+/* SPINNER */
+.spinner-overlay{position:fixed;inset:0;background:rgba(2,62,138,0.55);backdrop-filter:blur(4px);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:1000;}
+.spinner-box{background:#fff;border-radius:var(--radius-lg);padding:2.5rem 3rem;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
+.ai-spinner{position:relative;width:64px;height:64px;margin:0 auto 1.25rem;display:flex;justify-content:center;align-items:center;}
+.ai-spinner-core{width:22px;height:22px;background:var(--teal);border-radius:50%;box-shadow:0 0 18px var(--teal);animation:pulse 1.5s infinite ease-in-out;}
+.ai-spinner-particle{position:absolute;width:9px;height:9px;background:#90e0ef;border-radius:50%;}
+.ai-spinner-particle:nth-child(2){animation:orbit1 2s infinite linear;}
+.ai-spinner-particle:nth-child(3){animation:orbit2 2s infinite linear;}
+.ai-spinner-particle:nth-child(4){animation:orbit3 2s infinite linear;}
+.spinner-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:0.3rem;}
+.spinner-sub{font-size:0.85rem;color:var(--text-muted);}
+.spinner-timer{font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:0.7;}50%{transform:scale(1.2);opacity:1;}}
+@keyframes orbit1{0%{transform:rotate(0deg) translateX(26px);}100%{transform:rotate(360deg) translateX(26px);}}
+@keyframes orbit2{0%{transform:rotate(120deg) translateX(26px);}100%{transform:rotate(480deg) translateX(26px);}}
+@keyframes orbit3{0%{transform:rotate(240deg) translateX(26px);}100%{transform:rotate(600deg) translateX(26px);}}
+
+/* FOOTER */
+footer{background:linear-gradient(105deg,#023e8a 0%,#0077b6 100%);color:rgba(255,255,255,0.85);padding:3rem 1.5rem 2rem;}
+.footer-inner{max-width:1100px;margin:0 auto;}
+.footer-brand{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:#fff;margin-bottom:0.4rem;}
+.footer-tagline{font-size:0.85rem;opacity:0.7;}
+.footer-subscribe{display:flex;gap:0.5rem;margin-top:1.2rem;flex-wrap:wrap;}
+.footer-email{padding:0.65rem 1rem;border-radius:9px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.12);color:#fff;font-family:'DM Sans',sans-serif;font-size:0.9rem;flex:1;min-width:180px;outline:none;}
+.footer-email::placeholder{color:rgba(255,255,255,0.5);}
+.footer-sub-btn{padding:0.65rem 1.2rem;background:var(--coral);color:#fff;border:none;cursor:pointer;border-radius:9px;font-size:0.9rem;font-weight:600;font-family:'DM Sans',sans-serif;transition:background var(--transition);}
+.footer-sub-btn:hover{background:var(--coral-dark);}
+.footer-links{display:flex;gap:1.2rem;margin-top:1.2rem;flex-wrap:wrap;}
+.footer-links a{color:rgba(255,255,255,0.75);text-decoration:none;font-size:0.88rem;}
+.footer-links a:hover{color:#fff;text-decoration:underline;}
+.footer-copy{margin-top:2rem;font-size:0.8rem;opacity:0.55;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,0.12);}
+.floating-chatbot{position:fixed;bottom:28px;right:28px;background:linear-gradient(135deg,var(--teal),var(--ocean));color:white;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(0,119,182,0.4);font-size:1.5rem;z-index:50;cursor:pointer;border:2px solid rgba(255,255,255,0.25);transition:transform var(--transition);}
+.floating-chatbot:hover{transform:scale(1.1);}
+@media(max-width:640px){.nav-chip{display:none!important;}}
+
+/* AUTH MENU */
+.signin-text{color:rgba(255,255,255,0.75);text-decoration:none;font-size:0.9rem;font-weight:400;transition:color var(--transition);white-space:nowrap;}
+.signin-text:hover{color:#fff;}
+.signup-chip{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:9px;background:var(--coral);color:#fff;text-decoration:none;border:1px solid var(--coral-dark);white-space:nowrap;transition:background var(--transition);font-size:0.88rem;font-weight:600;}
+.signup-chip:hover{background:var(--coral-dark);text-decoration:none;}
+.account-chip{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:9px;background:rgba(255,255,255,0.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.22);white-space:nowrap;transition:background var(--transition);font-size:0.88rem;}
+.account-chip:hover{background:rgba(255,255,255,0.24);text-decoration:none;}
+.account-chip .caret{font-size:0.68rem;opacity:0.8;}
+.menu-group{position:relative;}
+.menu{position:absolute;top:calc(100% + 8px);right:0;min-width:220px;width:min(280px,calc(100vw - 24px));padding:6px;background:#fff;color:#1e293b;border-radius:var(--radius);box-shadow:0 16px 40px rgba(0,0,0,0.18);display:none;z-index:60;border:1px solid rgba(0,0,0,0.06);}
+.menu a{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;color:#1e293b;text-decoration:none;font-size:0.9rem;transition:background var(--transition);}
+.menu a:hover{background:#f1f5f9;color:var(--ocean);}
+.menu-divider{height:1px;background:#e2e8f0;margin:6px 4px;}
+.menu-header{padding:12px 14px 10px;border-bottom:1px solid #e2e8f0;margin-bottom:6px;}
+.menu-user{font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px;}
+.menu-user-sub{font-size:0.8rem;color:#64748b;margin-top:2px;word-break:break-all;}
+.menu-label{padding:6px 12px;color:#94a3b8;font-size:0.73rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;}
+.hamburger-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9px;background:rgba(255,255,255,0.14);color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,0.22);transition:background var(--transition);}
+.hamburger-btn:hover{background:rgba(255,255,255,0.26);text-decoration:none;}
+.desktop-auth{display:flex;align-items:center;gap:10px;}
+.mobile-auth{display:none;}
+@media(max-width:640px){.desktop-auth{display:none!important;}.mobile-auth{display:block;}}
+
+/* ── VIBE CARDS ── */
+.vibe-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+@media (max-width: 480px) { .vibe-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 360px) { .vibe-grid { grid-template-columns: 1fr; } }
+.vibe-card { border: 2px solid var(--gray-border); border-radius: var(--radius-lg); padding: 1.1rem 0.9rem; cursor: pointer; text-align: center; transition: all var(--transition); background: #fff; position: relative; }
+.vibe-card:hover { border-color: var(--teal); background: #f0fdff; transform: translateY(-2px); }
+.vibe-card.selected { border-color: var(--ocean); background: #eaf4fb; box-shadow: 0 0 0 3px rgba(0,119,182,0.12); }
+.vibe-card input { position: absolute; opacity: 0; width: 0; height: 0; }
+.vibe-icon { font-size: 1.8rem; display: block; margin-bottom: 0.4rem; }
+.vibe-label { font-size: 0.85rem; font-weight: 600; color: var(--text); display: block; margin-bottom: 0.2rem; }
+.vibe-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
+
+/* TRAVEL MODE SELECTOR */
+.travel-mode-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;margin-bottom:1.25rem;}
+@media(max-width:480px){.travel-mode-grid{grid-template-columns:repeat(3,1fr);}}
+.travel-mode-card{display:flex;flex-direction:column;align-items:center;gap:4px;padding:0.65rem 0.4rem;border:2px solid var(--gray-border);border-radius:var(--radius);cursor:pointer;background:#fff;transition:all var(--transition);text-align:center;}
+.travel-mode-card:hover{border-color:var(--teal);background:#f0fdff;}
+.travel-mode-card.selected{border-color:var(--ocean);background:#eaf4fb;box-shadow:0 0 0 3px rgba(0,119,182,0.1);}
+.travel-mode-card input{position:absolute;opacity:0;width:0;height:0;}
+.travel-mode-icon{font-size:1.4rem;line-height:1;}
+.travel-mode-label{font-size:0.74rem;font-weight:600;color:var(--text);}
+
+/* TRANSPORT FEASIBILITY */
+.travel-mode-card{position:relative;}
+.mode-badge{display:none;position:absolute;top:-7px;right:-7px;font-size:0.62rem;font-weight:700;padding:1px 5px;border-radius:999px;line-height:1.6;pointer-events:none;}
+.travel-mode-card.mode-ok   .mode-badge{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;}
+.travel-mode-card.mode-warn .mode-badge{display:block;background:#fef9c3;color:#854d0e;border:1px solid #fde047;}
+.travel-mode-card.mode-no   .mode-badge{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+.travel-mode-card.mode-ok  {border-color:#22c55e;background:#f0fdf4;}
+.travel-mode-card.mode-warn{border-color:#eab308;background:#fefce8;}
+.travel-mode-card.mode-no  {border-color:#f87171;background:#fff5f5;opacity:0.65;}
+.travel-mode-card.mode-no .travel-mode-icon{filter:grayscale(0.5);}
+.travel-mode-card.selected.mode-ok  {box-shadow:0 0 0 3px rgba(34,197,94,0.2);}
+.travel-mode-card.selected.mode-warn{box-shadow:0 0 0 3px rgba(234,179,8,0.2);}
+.travel-mode-card.selected.mode-no  {box-shadow:0 0 0 3px rgba(248,113,113,0.2);}
+/* Transport hint banner */
+#transportHint{display:none;border-radius:var(--radius);padding:0.8rem 1rem;margin-bottom:1rem;font-size:0.84rem;line-height:1.6;border:1px solid;}
+#transportHint.hint-ok  {background:#f0fdf4;border-color:#bbf7d0;color:#14532d;}
+#transportHint.hint-warn{background:#fffbeb;border-color:#fde68a;color:#78350f;}
+#transportHint ul{margin:0.3rem 0 0 1.1rem;padding:0;}
+#transportHint li{margin-bottom:0.15rem;}
+.agent-tip { display: flex; align-items: flex-start; gap: 10px; background: linear-gradient(105deg, #eaf4fb, #f0f9ff); border: 1px solid #bae6fd; border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--ocean-deep); line-height: 1.55; }
+.agent-tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.agent-tip strong { font-weight: 600; }
+.budget-hint { font-size: 0.8rem; color: var(--text-muted); background: var(--gray-light); border-radius: 8px; padding: 0.55rem 0.85rem; margin-top: 0.4rem; border-left: 3px solid var(--teal); line-height: 1.5; }
+.budget-hint strong { color: var(--ocean-deep); }
+.flex-dates-row { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; font-size: 0.88rem; color: var(--text-muted); }
+.flex-dates-row input[type="checkbox"] { accent-color: var(--ocean); width: 15px; height: 15px; }
+.duration-badge { display: inline-flex; align-items: center; background: var(--ocean); color: #fff; font-size: 0.8rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+.conditional-section { border-left: 3px solid var(--teal); padding-left: 1rem; margin-top: 1rem; }
+/* ── TIER CARDS ── */
+.tier-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 560px) { .tier-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 380px) { .tier-grid { grid-template-columns: 1fr; } }
+.tier-card {
+  border: 2px solid var(--gray-border); border-radius: var(--radius-lg);
+  padding: 1.2rem 1rem; cursor: pointer; text-align: center;
+  transition: all var(--transition); background: #fff; position: relative;
+}
+.tier-card input { position: absolute; opacity: 0; width: 0; height: 0; }
+.tier-icon  { font-size: 1.6rem; display: block; margin-bottom: 0.5rem; }
+.tier-label { font-size: 0.95rem; font-weight: 700; display: block; margin-bottom: 0.25rem; }
+.tier-desc  { font-size: 0.76rem; color: var(--text-muted); line-height: 1.45; display: block; margin-bottom: 0.5rem; }
+.tier-example { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; display: inline-block; }
+.tier-card.economy:hover,  .tier-card.economy.selected  { border-color: #16a34a; background: #f0fdf4; box-shadow: 0 0 0 3px rgba(22,163,74,0.12); }
+.tier-card.standard:hover, .tier-card.standard.selected { border-color: var(--ocean); background: #eaf4fb; box-shadow: 0 0 0 3px rgba(0,119,182,0.12); }
+.tier-card.elite:hover,    .tier-card.elite.selected    { border-color: #b45309; background: #fffbeb; box-shadow: 0 0 0 3px rgba(180,83,9,0.12); }
+.tier-card.economy  .tier-label { color: #15803d; }
+.tier-card.standard .tier-label { color: var(--ocean-deep); }
+.tier-card.elite    .tier-label { color: #92400e; }
+.tier-card.economy  .tier-example { background: #dcfce7; color: #15803d; }
+.tier-card.standard .tier-example { background: #dbeafe; color: var(--ocean-deep); }
+.tier-card.elite    .tier-example { background: #fef3c7; color: #92400e; }
+
+/* ── SEARCH HISTORY PANEL ── */
+.history-panel {
+  background: #fff;
+  border: 1px solid var(--gray-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.history-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.85rem 1.1rem;
+  background: var(--gray-light);
+  border-bottom: 1px solid var(--gray-border);
+  cursor: pointer;
+  user-select: none;
+}
+.history-panel-header:hover { background: #e8f4fd; }
+.history-panel-title {
+  font-size: 0.82rem; font-weight: 600;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
+  display: flex; align-items: center; gap: 6px;
+}
+.history-panel-title .history-count {
+  background: var(--ocean); color: #fff;
+  font-size: 0.7rem; font-weight: 700;
+  padding: 1px 7px; border-radius: 999px;
+  text-transform: none; letter-spacing: 0;
+}
+.history-chevron {
+  font-size: 0.75rem; color: var(--text-muted);
+  transition: transform var(--transition);
+}
+.history-chevron.open { transform: rotate(180deg); }
+.history-list {
+  padding: 0.75rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.history-card {
+  display: flex; flex-direction: column;
+  padding: 0.75rem 0.9rem;
+  background: var(--gray-light);
+  border: 1px solid var(--gray-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  gap: 0.5rem;
+}
+.history-card:hover {
+  background: #eaf4fb; border-color: var(--teal);
+}
+.history-card-info { min-width: 0; }
+.history-card-title {
+  font-size: 0.9rem; font-weight: 700; color: var(--text);
+  margin-bottom: 0.35rem;
+}
+.history-card-meta {
+  font-size: 0.76rem; color: var(--text-muted);
+  display: flex; flex-wrap: wrap; gap: 5px;
+}
+.history-card-meta span {
+  background: #fff; border: 1px solid var(--gray-border);
+  border-radius: 999px; padding: 2px 8px; font-size: 0.72rem;
+  white-space: nowrap;
+}
+.history-card-actions {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 0.2rem;
+}
+.history-refill-btn {
+  font-size: 0.8rem; font-weight: 600;
+  color: var(--ocean); background: #fff;
+  border: 1px solid var(--ocean);
+  border-radius: 7px; padding: 5px 14px;
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--transition);
+}
+.history-refill-btn:hover { background: var(--ocean); color: #fff; }
+.history-delete-btn {
+  font-size: 0.9rem; color: var(--text-muted);
+  background: none; border: none; cursor: pointer;
+  padding: 4px 6px; border-radius: 6px;
+  transition: color var(--transition);
+}
+.history-delete-btn:hover { color: #ef4444; }
+.history-footer {
+  padding: 0.5rem 0.75rem;
+  text-align: right;
+  border-top: 1px solid var(--gray-border);
+}
+.history-clear-btn {
+  font-size: 0.75rem; color: var(--text-muted);
+  background: none; border: none; cursor: pointer;
+  text-decoration: underline;
+}
+.history-clear-btn:hover { color: #ef4444; }
+</style>
+</head>
+<body>
+
+<!-- Supabase -->
+<script type="module">
+  import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  if(!window.supabase)window.supabase=createClient('https://pbojacnagutipfhcxltj.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0');
+</script>
+
+<!-- HEADER -->
+<header class="vg-header">
+  <div class="vg-nav">
+    <a class="vg-brand" href="index.html"><img src="images/nav-icon.png" alt="Voyage Genie"/><span class="vg-title-brand">Voyage Genie</span></a>
+    <div class="vg-right">
+      <a class="nav-chip" href="index.html#plan-trip">🗺️ Other Planners</a>
+      <div id="authSlot"></div>
+    </div>
+  </div>
+</header>
+
+<!-- PAGE BANNER -->
+<div class="page-banner"><div class="page-banner-inner">
+  <h1>🌄 Adventure Trip Planner</h1>
+  <p>Tell Genie your adventure preferences and get a personalised action-packed itinerary.</p>
+</div></div>
+
+<!-- MAIN -->
+<main>
+<div class="planner-layout">
+
+  <!-- FORM -->
+  <div class="planning-card">
+          <!-- ── SEARCH HISTORY PANEL ── -->
+      <div class="history-panel hidden" id="historyPanel">
+        <div class="history-panel-header" id="historyToggle">
+          <div class="history-panel-title">🕐 Recent Searches<span class="history-count" id="historyCount">0</span></div>
+          <span class="history-chevron" id="historyChevron">▼</span>
+        </div>
+        <div id="historyList" class="history-list hidden"></div>
+        <div class="history-footer hidden" id="historyFooter">
+          <button class="history-clear-btn" id="historyClearBtn">Clear all history</button>
+        </div>
+      </div>
+
+      <div class="step-indicator" id="stepIndicator">
+      <div class="step-dot active" id="dot1">1</div><div class="step-line" id="line1"></div>
+      <div class="step-dot" id="dot2">2</div><div class="step-line" id="line2"></div>
+      <div class="step-dot" id="dot3">3</div><div class="step-line" id="line3"></div>
+      <div class="step-dot" id="dot4">4</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+    <form id="travelForm" novalidate>
+
+      <!-- STEP 1: Travel Details -->
+      <div id="step1" class="step">
+          <h2>Step 1: Who's Going?</h2>
+          <p class="step-desc">Genie adapts the difficulty, group dynamics, and safety briefings based on who's in your party.</p>
+
+          <div class="section-label">🧳 Trip Type <span class="required-star">*</span></div>
+          <div class="option-cards">
+            <label class="option-card"><input type="radio" name="tripType" value="Solo" required/> 👤 Solo Adventurer</label>
+            <label class="option-card"><input type="radio" name="tripType" value="Couple"/> 💑 Couple's Adventure</label>
+            <label class="option-card"><input type="radio" name="tripType" value="Family"/> 👨‍👩‍👧‍👦 Family Trip</label>
+            <label class="option-card"><input type="radio" name="tripType" value="Group"/> 👥 Group Expedition</label>
+          </div>
+          <div id="tripTypeError" class="error-msg hidden" style="margin-top:0.3rem">⚠ Please select a trip type.</div>
+
+          <div class="section-label" style="margin-top:1.5rem" id="groupSizeLabel">👥 Group Size <span class="required-star">*</span></div>
+          <div class="option-grid">
+            <label class="option-card"><input type="radio" name="groupSize" value="1" required/> 1 Traveler</label>
+            <label class="option-card"><input type="radio" name="groupSize" value="2"/> 2 People</label>
+            <label class="option-card"><input type="radio" name="groupSize" value="3-4"/> 3–4 People</label>
+            <label class="option-card"><input type="radio" name="groupSize" value="5+"/> 5+ People</label>
+          </div>
+          <div id="groupSizeError" class="error-msg hidden" style="margin-top:0.3rem">⚠ Please select a group size.</div>
+
+          <div id="ageRangeSection" class="conditional-section hidden" style="margin-top:1.25rem">
+            <div class="section-label">👶 Ages in your group <span class="opt-tag">Helps Genie adjust difficulty and safety</span></div>
+            <div class="option-grid">
+              <label class="option-card"><input type="checkbox" name="ageRange" value="Kids_0_12"/> 👶 Kids (0–12)</label>
+              <label class="option-card"><input type="checkbox" name="ageRange" value="Teens_13_19"/> 🧑 Teens (13–19)</label>
+              <label class="option-card"><input type="checkbox" name="ageRange" value="Adults_20_39"/> 👩‍💼 Adults (20–39)</label>
+              <label class="option-card"><input type="checkbox" name="ageRange" value="Adults_40_59"/> 🧓 Adults (40–59)</label>
+              <label class="option-card"><input type="checkbox" name="ageRange" value="Seniors_60plus"/> 👴 Seniors (60+)</label>
+            </div>
+          </div>
+          <div class="section-label" style="margin-top:1.5rem">⚡ Travel Pace <span class="required-star">*</span></div>
+          <div class="vibe-grid">
+            <label class="vibe-card"><input type="radio" name="travelPace" value="Relaxed" required/><span class="vibe-icon">🌅</span><span class="vibe-label">Gentle Pace</span><span class="vibe-desc">Scenic, unhurried, room to breathe</span></label>
+            <label class="vibe-card"><input type="radio" name="travelPace" value="Balanced"/><span class="vibe-icon">🌊</span><span class="vibe-label">Mix of Both</span><span class="vibe-desc">Challenge yourself, rest in between</span></label>
+            <label class="vibe-card"><input type="radio" name="travelPace" value="Active"/><span class="vibe-icon">🏔️</span><span class="vibe-label">Push the Limits</span><span class="vibe-desc">Maximum challenge, every single day</span></label>
+          </div>
+          <div id="travelPaceError" class="error-msg hidden" style="margin-top:0.3rem">⚠ Please select a travel pace.</div>
+        </div>
+
+                <div id="step2" class="step hidden">
+          <h2>Step 2: Where &amp; When</h2>
+          <p class="step-desc">Tell Genie where you're heading and when you want to go.</p>
+          <div class="agent-tip" id="travelTip"><span class="agent-tip-icon">🌍</span><span id="travelTipText">Best adventure destinations: Queenstown for adrenaline, Himalayas for trekking, Patagonia for raw wilderness, Iceland for unique landscapes.</span></div>
+
+          <!-- Geolocation tip -->
+          <div class="agent-tip hidden" id="locationTip" style="margin-bottom:0.75rem;">
+            <span class="agent-tip-icon">📍</span>
+            <div style="flex:1"><span id="locationTipText">Detecting your location…</span></div>
+            <button type="button" id="locationTipDismiss" style="background:none;border:none;cursor:pointer;color:var(--ocean-deep);font-size:1rem;padding:0 0 0 8px;flex-shrink:0;" aria-label="Dismiss">✕</button>
+          </div>
+
+          <!-- TRAVEL MODE -->
+          <div class="section-label">🚀 How are you getting there? <span class="opt-tag">Optional</span></div>
+          <div class="travel-mode-grid" id="travelModeGrid">
+            <label class="travel-mode-card selected" id="mode-flight">
+              <input type="radio" name="travelMode" value="flight" checked/>
+              <span class="travel-mode-icon">✈️</span>
+              <span class="travel-mode-label">Flight</span>
+            </label>
+            <label class="travel-mode-card" id="mode-drive">
+              <input type="radio" name="travelMode" value="drive"/>
+              <span class="travel-mode-icon">🚗</span>
+              <span class="travel-mode-label">Driving</span>
+            </label>
+            <label class="travel-mode-card" id="mode-train">
+              <input type="radio" name="travelMode" value="train"/>
+              <span class="travel-mode-icon">🚂</span>
+              <span class="travel-mode-label">Train</span>
+            </label>
+            <label class="travel-mode-card" id="mode-bus">
+              <input type="radio" name="travelMode" value="bus"/>
+              <span class="travel-mode-icon">🚌</span>
+              <span class="travel-mode-label">Bus</span>
+            </label>
+            <label class="travel-mode-card" id="mode-ferry">
+              <input type="radio" name="travelMode" value="ferry"/>
+              <span class="travel-mode-icon">⛴️</span>
+              <span class="travel-mode-label">Ferry</span>
+            </label>
+          </div>
+
+          <!-- Transport feasibility hint — populated by JS when destination is picked -->
+          <div id="transportHint" role="status" aria-live="polite"></div>
+
+          <!-- FLIGHT: Airport select -->
+          <div id="flightDepartureSection">
+            <div class="field">
+              <label for="airportSelect">✈️ Departure Airport <span class="opt-tag">Optional</span></label>
+              <select id="airportSelect" name="departureLocation" class="vg-select">
+                <option value="">-- Select Airport (optional) --</option>
+                <!-- 📍 Nearest to You injected by JS -->
+                <optgroup label="🇺🇸 United States — East Coast">
+                  <option value="New York JFK (JFK)">New York JFK (JFK)</option>
+                  <option value="New York LaGuardia (LGA)">New York LaGuardia (LGA)</option>
+                  <option value="Newark (EWR)">Newark (EWR)</option>
+                  <option value="Boston Logan (BOS)">Boston Logan (BOS)</option>
+                  <option value="Philadelphia (PHL)">Philadelphia (PHL)</option>
+                  <option value="Washington Dulles (IAD)">Washington Dulles (IAD)</option>
+                  <option value="Washington Reagan (DCA)">Washington Reagan (DCA)</option>
+                  <option value="Baltimore (BWI)">Baltimore (BWI)</option>
+                  <option value="Charlotte Douglas (CLT)">Charlotte Douglas (CLT)</option>
+                  <option value="Atlanta (ATL)">Atlanta (ATL)</option>
+                  <option value="Miami (MIA)">Miami (MIA)</option>
+                  <option value="Fort Lauderdale (FLL)">Fort Lauderdale (FLL)</option>
+                  <option value="Orlando (MCO)">Orlando (MCO)</option>
+                  <option value="Raleigh-Durham (RDU)">Raleigh-Durham (RDU)</option>
+                </optgroup>
+                <optgroup label="🇺🇸 United States — Midwest">
+                  <option value="Chicago O'Hare (ORD)">Chicago O'Hare (ORD)</option>
+                  <option value="Chicago Midway (MDW)">Chicago Midway (MDW)</option>
+                  <option value="Detroit Metro (DTW)">Detroit Metro (DTW)</option>
+                  <option value="Minneapolis–St. Paul (MSP)">Minneapolis–St. Paul (MSP)</option>
+                  <option value="Kansas City (MCI)">Kansas City (MCI)</option>
+                  <option value="Nashville (BNA)">Nashville (BNA)</option>
+                  <option value="Indianapolis (IND)">Indianapolis (IND)</option>
+                  <option value="Cleveland Hopkins (CLE)">Cleveland Hopkins (CLE)</option>
+                  <option value="Columbus (CMH)">Columbus (CMH)</option>
+                </optgroup>
+                <optgroup label="🇺🇸 United States — South &amp; Central">
+                  <option value="Dallas/Fort Worth (DFW)">Dallas/Fort Worth (DFW)</option>
+                  <option value="Houston George Bush (IAH)">Houston George Bush (IAH)</option>
+                  <option value="Austin-Bergstrom (AUS)">Austin-Bergstrom (AUS)</option>
+                  <option value="Denver (DEN)">Denver (DEN)</option>
+                  <option value="Phoenix Sky Harbor (PHX)">Phoenix Sky Harbor (PHX)</option>
+                  <option value="Salt Lake City (SLC)">Salt Lake City (SLC)</option>
+                  <option value="Albuquerque (ABQ)">Albuquerque (ABQ)</option>
+                  <option value="New Orleans (MSY)">New Orleans (MSY)</option>
+                </optgroup>
+                <optgroup label="🇺🇸 United States — West Coast">
+                  <option value="Los Angeles (LAX)">Los Angeles (LAX)</option>
+                  <option value="San Diego (SAN)">San Diego (SAN)</option>
+                  <option value="San Francisco (SFO)">San Francisco (SFO)</option>
+                  <option value="Oakland (OAK)">Oakland (OAK)</option>
+                  <option value="Seattle-Tacoma (SEA)">Seattle-Tacoma (SEA)</option>
+                  <option value="Portland (PDX)">Portland (PDX)</option>
+                  <option value="Las Vegas (LAS)">Las Vegas (LAS)</option>
+                  <option value="Sacramento (SMF)">Sacramento (SMF)</option>
+                  <option value="Anchorage (ANC)">Anchorage (ANC)</option>
+                </optgroup>
+                <optgroup label="🇨🇦 Canada">
+                  <option value="Toronto Pearson (YYZ)">Toronto Pearson (YYZ)</option>
+                  <option value="Vancouver (YVR)">Vancouver (YVR)</option>
+                  <option value="Montreal Trudeau (YUL)">Montreal Trudeau (YUL)</option>
+                  <option value="Calgary (YYC)">Calgary (YYC)</option>
+                  <option value="Ottawa (YOW)">Ottawa (YOW)</option>
+                </optgroup>
+                <optgroup label="🇬🇧 United Kingdom &amp; Ireland">
+                  <option value="London Heathrow (LHR)">London Heathrow (LHR)</option>
+                  <option value="London Gatwick (LGW)">London Gatwick (LGW)</option>
+                  <option value="Manchester (MAN)">Manchester (MAN)</option>
+                  <option value="Edinburgh (EDI)">Edinburgh (EDI)</option>
+                  <option value="Dublin (DUB)">Dublin (DUB)</option>
+                </optgroup>
+                <optgroup label="🇪🇺 Europe">
+                  <option value="Amsterdam Schiphol (AMS)">Amsterdam Schiphol (AMS)</option>
+                  <option value="Paris CDG (CDG)">Paris CDG (CDG)</option>
+                  <option value="Frankfurt (FRA)">Frankfurt (FRA)</option>
+                  <option value="Munich (MUC)">Munich (MUC)</option>
+                  <option value="Zurich (ZRH)">Zurich (ZRH)</option>
+                  <option value="Madrid (MAD)">Madrid (MAD)</option>
+                  <option value="Barcelona (BCN)">Barcelona (BCN)</option>
+                  <option value="Rome Fiumicino (FCO)">Rome Fiumicino (FCO)</option>
+                  <option value="Vienna (VIE)">Vienna (VIE)</option>
+                  <option value="Oslo (OSL)">Oslo (OSL)</option>
+                  <option value="Bergen (BGO)">Bergen (BGO)</option>
+                  <option value="Stockholm (ARN)">Stockholm (ARN)</option>
+                  <option value="Copenhagen (CPH)">Copenhagen (CPH)</option>
+                  <option value="Lisbon (LIS)">Lisbon (LIS)</option>
+                  <option value="Athens (ATH)">Athens (ATH)</option>
+                </optgroup>
+                <optgroup label="🇦🇺 Australia &amp; NZ">
+                  <option value="Sydney (SYD)">Sydney (SYD)</option>
+                  <option value="Melbourne (MEL)">Melbourne (MEL)</option>
+                  <option value="Brisbane (BNE)">Brisbane (BNE)</option>
+                  <option value="Perth (PER)">Perth (PER)</option>
+                  <option value="Auckland (AKL)">Auckland (AKL)</option>
+                  <option value="Queenstown (ZQN)">Queenstown (ZQN)</option>
+                </optgroup>
+                <optgroup label="🌏 Asia &amp; Pacific">
+                  <option value="Singapore Changi (SIN)">Singapore Changi (SIN)</option>
+                  <option value="Tokyo Narita (NRT)">Tokyo Narita (NRT)</option>
+                  <option value="Bangkok Suvarnabhumi (BKK)">Bangkok Suvarnabhumi (BKK)</option>
+                  <option value="Kathmandu (KTM)">Kathmandu (KTM)</option>
+                  <option value="Delhi (DEL)">Delhi (DEL)</option>
+                  <option value="Kuala Lumpur (KUL)">Kuala Lumpur (KUL)</option>
+                  <option value="Manila (MNL)">Manila (MNL)</option>
+                  <option value="Jakarta (CGK)">Jakarta (CGK)</option>
+                  <option value="Denpasar Bali (DPS)">Denpasar Bali (DPS)</option>
+                  <option value="Dubai (DXB)">Dubai (DXB)</option>
+                  <option value="Istanbul (IST)">Istanbul (IST)</option>
+                </optgroup>
+                <optgroup label="🌍 Africa &amp; Latin America">
+                  <option value="Nairobi (NBO)">Nairobi (NBO)</option>
+                  <option value="Johannesburg (JNB)">Johannesburg (JNB)</option>
+                  <option value="Cape Town (CPT)">Cape Town (CPT)</option>
+                  <option value="Kilimanjaro (JRO)">Kilimanjaro (JRO)</option>
+                  <option value="Lima (LIM)">Lima (LIM)</option>
+                  <option value="Bogotá (BOG)">Bogotá (BOG)</option>
+                  <option value="Santiago (SCL)">Santiago (SCL)</option>
+                  <option value="Buenos Aires (EZE)">Buenos Aires (EZE)</option>
+                  <option value="Mexico City (MEX)">Mexico City (MEX)</option>
+                  <option value="San José, Costa Rica (SJO)">San José, Costa Rica (SJO)</option>
+                  <option value="Reykjavik (KEF)">Reykjavik (KEF)</option>
+                </optgroup>
+                <optgroup label="✈️ Other">
+                  <option value="OTHER">Can't find my airport →</option>
+                </optgroup>
+              </select>
+              <div id="customAirportDiv" class="hidden" style="margin-top:0.5rem">
+                <input id="customAirportInput" name="customDeparture" type="text" class="vg-input" placeholder="Enter your airport or city" disabled/>
+              </div>
+            </div>
+          </div>
+
+          <!-- DRIVING / TRAIN / BUS / FERRY: Starting point -->
+          <div id="groundDepartureSection" class="hidden">
+            <div class="field">
+              <label for="departureCity" id="departureCityLabel">🚗 Departing From <span class="opt-tag">Optional</span></label>
+              <input id="departureCity" name="departureLocation" type="text" class="vg-input" placeholder="Enter your city, town, or trailhead" disabled/>
+              <div id="departureCityHint" class="budget-hint" style="margin-top:0.4rem">
+                Genie will factor in your travel time and suggest the best route to your adventure.
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="citySelect">📍 Destination <span class="required-star">*</span></label>
+            <select id="citySelect" name="destinationCity" class="vg-select" required>
+              <option value="">-- Select Destination --</option>
+              <optgroup label="🇺🇸 United States — National Parks">
+                <option value="Grand Canyon, AZ">Grand Canyon, AZ</option>
+                <option value="Yellowstone, WY">Yellowstone, WY</option>
+                <option value="Yosemite, CA">Yosemite, CA</option>
+                <option value="Zion National Park, UT">Zion National Park, UT</option>
+                <option value="Bryce Canyon, UT">Bryce Canyon, UT</option>
+                <option value="Arches National Park, UT">Arches National Park, UT</option>
+                <option value="Canyonlands, UT">Canyonlands, UT</option>
+                <option value="Rocky Mountain NP, CO">Rocky Mountain NP, CO</option>
+                <option value="Glacier NP, MT">Glacier NP, MT</option>
+                <option value="Olympic NP, WA">Olympic NP, WA</option>
+                <option value="North Cascades, WA">North Cascades, WA</option>
+                <option value="Denali, AK">Denali, AK</option>
+                <option value="Kenai Fjords, AK">Kenai Fjords, AK</option>
+                <option value="Acadia NP, ME">Acadia NP, ME</option>
+                <option value="Great Smoky Mountains, TN">Great Smoky Mountains, TN</option>
+                <option value="Shenandoah, VA">Shenandoah, VA</option>
+                <option value="Big Bend, TX">Big Bend, TX</option>
+                <option value="Death Valley, CA">Death Valley, CA</option>
+                <option value="Sequoia &amp; Kings Canyon, CA">Sequoia &amp; Kings Canyon, CA</option>
+                <option value="Hawaii Volcanoes NP, HI">Hawaii Volcanoes NP, HI</option>
+              </optgroup>
+              <optgroup label="🇺🇸 United States — Adventure Hubs">
+                <option value="Moab, UT">Moab, UT</option>
+                <option value="Jackson Hole, WY">Jackson Hole, WY</option>
+                <option value="Bend, OR">Bend, OR</option>
+                <option value="Sedona, AZ">Sedona, AZ</option>
+                <option value="Steamboat Springs, CO">Steamboat Springs, CO</option>
+                <option value="Telluride, CO">Telluride, CO</option>
+                <option value="Bozeman, MT">Bozeman, MT</option>
+                <option value="Juneau, AK">Juneau, AK</option>
+              </optgroup>
+              <optgroup label="🇨🇦 Canada">
+                <option value="Banff NP, Alberta">Banff NP, Alberta</option>
+                <option value="Jasper NP, Alberta">Jasper NP, Alberta</option>
+                <option value="Vancouver Island, BC">Vancouver Island, BC</option>
+                <option value="Whistler, BC">Whistler, BC</option>
+                <option value="Yukon Territory">Yukon Territory</option>
+                <option value="Newfoundland">Newfoundland</option>
+              </optgroup>
+              <optgroup label="🇪🇺 Europe — Mountains &amp; Wilderness">
+                <option value="Swiss Alps, Switzerland">Swiss Alps, Switzerland</option>
+                <option value="Zermatt &amp; Matterhorn, Switzerland">Zermatt &amp; Matterhorn, Switzerland</option>
+                <option value="Chamonix, France">Chamonix, France</option>
+                <option value="Dolomites, Italy">Dolomites, Italy</option>
+                <option value="Scottish Highlands, UK">Scottish Highlands, UK</option>
+                <option value="Norwegian Fjords, Norway">Norwegian Fjords, Norway</option>
+                <option value="Lofoten Islands, Norway">Lofoten Islands, Norway</option>
+                <option value="Trolltunga, Norway">Trolltunga, Norway</option>
+                <option value="Pyrenees, Spain/France">Pyrenees, Spain/France</option>
+                <option value="Sierra Nevada, Spain">Sierra Nevada, Spain</option>
+                <option value="Picos de Europa, Spain">Picos de Europa, Spain</option>
+                <option value="Faroe Islands">Faroe Islands</option>
+                <option value="Iceland">Iceland</option>
+                <option value="Landmannalaugar, Iceland">Landmannalaugar, Iceland</option>
+                <option value="Laugavegur Trail, Iceland">Laugavegur Trail, Iceland</option>
+                <option value="Tatras Mountains, Poland">Tatras Mountains, Poland</option>
+                <option value="Julian Alps, Slovenia">Julian Alps, Slovenia</option>
+                <option value="Plitvice Lakes, Croatia">Plitvice Lakes, Croatia</option>
+                <option value="Transylvania, Romania">Transylvania, Romania</option>
+              </optgroup>
+              <optgroup label="🌏 Asia — Trekking &amp; Wilderness">
+                <option value="Himalayas, Nepal">Himalayas, Nepal</option>
+                <option value="Everest Base Camp, Nepal">Everest Base Camp, Nepal</option>
+                <option value="Annapurna Circuit, Nepal">Annapurna Circuit, Nepal</option>
+                <option value="Langtang Valley, Nepal">Langtang Valley, Nepal</option>
+                <option value="Bhutan">Bhutan</option>
+                <option value="Ladakh, India">Ladakh, India</option>
+                <option value="Spiti Valley, India">Spiti Valley, India</option>
+                <option value="Western Ghats, India">Western Ghats, India</option>
+                <option value="Chiang Mai, Thailand">Chiang Mai, Thailand</option>
+                <option value="Pai, Thailand">Pai, Thailand</option>
+                <option value="Borneo, Malaysia">Borneo, Malaysia</option>
+                <option value="Mount Kinabalu, Malaysia">Mount Kinabalu, Malaysia</option>
+                <option value="Flores, Indonesia">Flores, Indonesia</option>
+                <option value="Komodo Island, Indonesia">Komodo Island, Indonesia</option>
+                <option value="Sapa, Vietnam">Sapa, Vietnam</option>
+                <option value="Ha Giang Loop, Vietnam">Ha Giang Loop, Vietnam</option>
+                <option value="Yangshuo, China">Yangshuo, China</option>
+                <option value="Zhangjiajie, China">Zhangjiajie, China</option>
+                <option value="Hokkaido, Japan">Hokkaido, Japan</option>
+                <option value="Kamchatka, Russia">Kamchatka, Russia</option>
+                <option value="Caucasus, Georgia">Caucasus, Georgia</option>
+              </optgroup>
+              <optgroup label="🌍 Africa — Safari &amp; Mountains">
+                <option value="Safari, Tanzania">Safari, Tanzania</option>
+                <option value="Serengeti, Tanzania">Serengeti, Tanzania</option>
+                <option value="Mount Kilimanjaro, Tanzania">Mount Kilimanjaro, Tanzania</option>
+                <option value="Masai Mara, Kenya">Masai Mara, Kenya</option>
+                <option value="Mount Kenya">Mount Kenya</option>
+                <option value="Rwenzori Mountains, Uganda">Rwenzori Mountains, Uganda</option>
+                <option value="Gorilla Trekking, Rwanda">Gorilla Trekking, Rwanda</option>
+                <option value="Drakensberg, South Africa">Drakensberg, South Africa</option>
+                <option value="Table Mountain, South Africa">Table Mountain, South Africa</option>
+                <option value="Atlas Mountains, Morocco">Atlas Mountains, Morocco</option>
+                <option value="Sahara Desert, Morocco">Sahara Desert, Morocco</option>
+                <option value="Victoria Falls, Zambia/Zimbabwe">Victoria Falls, Zambia/Zimbabwe</option>
+                <option value="Okavango Delta, Botswana">Okavango Delta, Botswana</option>
+                <option value="Simien Mountains, Ethiopia">Simien Mountains, Ethiopia</option>
+                <option value="Socotra Island, Yemen">Socotra Island, Yemen</option>
+              </optgroup>
+              <optgroup label="🌎 South America">
+                <option value="Patagonia, Argentina/Chile">Patagonia, Argentina/Chile</option>
+                <option value="Torres del Paine, Chile">Torres del Paine, Chile</option>
+                <option value="Atacama Desert, Chile">Atacama Desert, Chile</option>
+                <option value="Machu Picchu, Peru">Machu Picchu, Peru</option>
+                <option value="Inca Trail, Peru">Inca Trail, Peru</option>
+                <option value="Amazon Rainforest, Brazil">Amazon Rainforest, Brazil</option>
+                <option value="Pantanal, Brazil">Pantanal, Brazil</option>
+                <option value="Galapagos Islands, Ecuador">Galapagos Islands, Ecuador</option>
+                <option value="Cotopaxi, Ecuador">Cotopaxi, Ecuador</option>
+                <option value="Angel Falls, Venezuela">Angel Falls, Venezuela</option>
+                <option value="Los Llanos, Colombia">Los Llanos, Colombia</option>
+                <option value="Cocora Valley, Colombia">Cocora Valley, Colombia</option>
+                <option value="Roraima, Guyana/Venezuela">Roraima, Guyana/Venezuela</option>
+                <option value="Tierra del Fuego, Argentina">Tierra del Fuego, Argentina</option>
+              </optgroup>
+              <optgroup label="🌏 Pacific &amp; Oceania">
+                <option value="Queenstown, New Zealand">Queenstown, New Zealand</option>
+                <option value="Milford Sound, New Zealand">Milford Sound, New Zealand</option>
+                <option value="Tongariro Alpine Crossing, NZ">Tongariro Alpine Crossing, NZ</option>
+                <option value="Fiordland, New Zealand">Fiordland, New Zealand</option>
+                <option value="Blue Mountains, Australia">Blue Mountains, Australia</option>
+                <option value="Kimberley, Australia">Kimberley, Australia</option>
+                <option value="Kakadu NP, Australia">Kakadu NP, Australia</option>
+                <option value="Tasmania, Australia">Tasmania, Australia</option>
+                <option value="Papua New Guinea">Papua New Guinea</option>
+                <option value="Vanuatu">Vanuatu</option>
+              </optgroup>
+              <optgroup label="❄️ Arctic &amp; Polar">
+                <option value="Svalbard, Norway">Svalbard, Norway</option>
+                <option value="Greenland">Greenland</option>
+                <option value="Antarctica">Antarctica</option>
+                <option value="Northwest Territories, Canada">Northwest Territories, Canada</option>
+                <option value="Finnish Lapland">Finnish Lapland</option>
+                <option value="Swedish Lapland">Swedish Lapland</option>
+              </optgroup>
+              <optgroup label="📍 Custom">
+                <option value="OTHER">Can't find my destination →</option>
+              </optgroup>
+            </select>
+            <div id="customDestDiv" class="hidden" style="margin-top:0.5rem">
+              <input id="customDestInput" name="customDestination" type="text" class="vg-input" placeholder="Enter your destination" disabled/>
+            </div>
+            <div id="destinationError" class="error-msg hidden">⚠ Please select a destination.</div>
+          </div>
+
+          <div class="flex-dates-row"><input type="checkbox" id="flexDates" name="flexDates" value="yes"/><label for="flexDates">I'm flexible on dates — let Genie suggest the best season</label></div>
+
+          <div id="dateFields">
+            <div class="date-grid">
+              <div class="field">
+                <label for="startDate">📅 Start Date <span class="required-star">*</span></label>
+                <input id="startDate" name="startDate" type="date" class="vg-input" required/>
+                <div id="startDateError" class="error-msg hidden">⚠ Please select a start date.</div>
+              </div>
+              <div class="field">
+                <label for="endDate">📅 End Date <span class="required-star">*</span> <span id="durationBadge" class="duration-badge hidden"></span></label>
+                <input id="endDate" name="endDate" type="date" class="vg-input" required/>
+                <div id="endDateError" class="error-msg hidden">⚠ End date must be after start date.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="step3" class="step hidden">
+        <h2>Step 3: Adventure Preferences</h2>
+        <p class="step-desc">What kind of adventure are you after?</p>
+
+        <div class="section-label">🏞️ Activity Type <span class="required-star">*</span></div>
+        <div class="option-grid">
+          <label class="option-card"><input type="checkbox" name="activityType" value="Hiking"/> ⛰️ Hiking</label>
+          <label class="option-card"><input type="checkbox" name="activityType" value="Rafting"/> 🛶 White-water Rafting</label>
+          <label class="option-card"><input type="checkbox" name="activityType" value="Camping"/> ⛺ Camping</label>
+          <label class="option-card"><input type="checkbox" name="activityType" value="Wildlife Safari"/> 🦒 Wildlife Safari</label>
+          <label class="option-card"><input type="checkbox" name="activityType" value="Skiing/Snowboarding"/> 🎿 Skiing / Snowboarding</label>
+          <label class="option-card"><input type="checkbox" name="activityType" value="Rock Climbing"/> 🧗 Rock Climbing</label>
+          <label class="option-card"><input type="checkbox" name="activityType" value="Cycling/Mountain Biking"/> 🚵 Mountain Biking</label>
+          <label class="option-card"><input type="checkbox" name="activityType" value="Scuba Diving/Snorkeling"/> 🤿 Diving / Snorkeling</label>
+        </div>
+        <div id="activityTypeError" class="error-msg hidden" style="margin-top:0.4rem">⚠ Please select an activity type.</div>
+
+        <div class="section-label" style="margin-top:1.5rem">🌟 Difficulty Level <span class="required-star">*</span></div>
+        <div class="option-cards">
+          <label class="option-card"><input type="radio" name="difficulty" value="Beginner" required/> 🌿 Beginner — Easy pace, suitable for all fitness levels</label>
+          <label class="option-card"><input type="radio" name="difficulty" value="Intermediate"/> 🏔️ Intermediate — Moderate challenge, some experience needed</label>
+          <label class="option-card"><input type="radio" name="difficulty" value="Advanced"/> 🦅 Advanced — Intense, requires high fitness and experience</label>
+        </div>
+        <div id="difficultyError" class="error-msg hidden" style="margin-top:0.4rem">⚠ Please select a difficulty level.</div>
+
+        <div class="section-label" style="margin-top:1.5rem">🌲 Preferred Environment <span class="opt-tag">Optional</span></div>
+        <div class="option-grid">
+          <label class="option-card"><input type="checkbox" name="environment" value="Mountains"/> 🏔️ Mountains</label>
+          <label class="option-card"><input type="checkbox" name="environment" value="Jungle/Rainforest"/> 🌿 Jungle / Rainforest</label>
+          <label class="option-card"><input type="checkbox" name="environment" value="Desert"/> 🏜️ Desert</label>
+          <label class="option-card"><input type="checkbox" name="environment" value="Ocean/Coastal"/> 🌊 Ocean / Coastal</label>
+          <label class="option-card"><input type="checkbox" name="environment" value="Arctic/Snow"/> ❄️ Arctic / Snow</label>
+          <label class="option-card"><input type="checkbox" name="environment" value="Savanna/Grasslands"/> 🦁 Savanna / Grasslands</label>
+        </div>
+      </div>
+
+      <!-- STEP 3: Traveler Info -->
+      <div id="step4" class="step hidden">
+        <h2>Step 4: Budget &amp; Contact</h2>
+        <p class="step-desc">Choose your plan style — Genie tailors every recommendation to match.</p>
+
+        <div class="section-label">💎 Plan Style <span class="required-star">*</span></div>
+        <div class="tier-grid">
+          <label class="tier-card economy">
+            <input type="radio" name="budgetTier" value="Economy" required/>
+            <span class="tier-icon">🟢</span>
+            <span class="tier-label">Economy</span>
+            <span class="tier-desc">Budget gear rental, guesthouses, local guides, self-organised</span>
+            <span class="tier-example">~$60–100/day</span>
+          </label>
+          <label class="tier-card standard selected">
+            <input type="radio" name="budgetTier" value="Standard" checked/>
+            <span class="tier-icon">🔵</span>
+            <span class="tier-label">Standard</span>
+            <span class="tier-desc">Quality outfitters, guided tours, comfortable lodges</span>
+            <span class="tier-example">~$150–300/day</span>
+          </label>
+          <label class="tier-card elite">
+            <input type="radio" name="budgetTier" value="Elite"/>
+            <span class="tier-icon">⭐</span>
+            <span class="tier-label">Elite</span>
+            <span class="tier-desc">Private guides, premium gear, luxury lodges, exclusive access</span>
+            <span class="tier-example">~$400+/day</span>
+          </label>
+        </div>
+        <div id="budgetTierError" class="error-msg hidden" style="margin-top:0.4rem">⚠ Please select a plan style.</div>
+
+        <div class="field" style="margin-top:1.5rem">
+          <label for="budget">💵 Total Budget (USD) <span class="opt-tag">Optional</span></label>
+          <input id="budget" name="budget" type="number" min="0" step="100" class="vg-input" placeholder="e.g. 3000"/>
+        <div class="budget-hint" id="budgetHint">Typical adventure budgets: Queenstown 7 days ~$2,500. Nepal trekking 14 days ~$2,000–$4,000. Safari Tanzania 7 days ~$3,000–$8,000. Iceland 7 days ~$2,500–$4,500.</div>
+        </div>
+        <div class="field">
+          <label for="email">📧 Email <span class="opt-tag">Optional — receive your itinerary</span></label>
+          <input id="email" name="email" type="email" class="vg-input" placeholder="you@example.com"/>
+          <div id="emailError" class="error-msg hidden">⚠ Please enter a valid email address.</div>
+        </div>
+
+        <!-- Quick affiliate nudge -->
+        <div style="background:#eaf4fb;border:1px solid #c9e4f5;border-radius:var(--radius);padding:1rem;margin-top:1rem">
+          <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:0.6rem;font-weight:600">🔗 Browse while we build your plan:</p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+            <a href="https://www.viator.com" target="_blank" rel="noopener" style="font-size:0.82rem;padding:0.35rem 0.8rem;background:#fff;border:1px solid var(--gray-border);border-radius:999px;text-decoration:none;color:var(--ocean);font-weight:500">🎟️ Book Activities</a>
+            <a href="https://www.getyourguide.com" target="_blank" rel="noopener" style="font-size:0.82rem;padding:0.35rem 0.8rem;background:#fff;border:1px solid var(--gray-border);border-radius:999px;text-decoration:none;color:var(--ocean);font-weight:500">🗺️ GetYourGuide</a>
+            <a href="https://www.skyscanner.com" target="_blank" rel="noopener" style="font-size:0.82rem;padding:0.35rem 0.8rem;background:#fff;border:1px solid var(--gray-border);border-radius:999px;text-decoration:none;color:var(--ocean);font-weight:500">🛫 Search Flights</a>
+            <a href="https://www.safetywing.com" target="_blank" rel="noopener" style="font-size:0.82rem;padding:0.35rem 0.8rem;background:#fff;border:1px solid var(--gray-border);border-radius:999px;text-decoration:none;color:var(--ocean);font-weight:500">🛡️ Travel Insurance</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- NAVIGATION -->
+      <div class="navigation">
+        <button type="button" id="prevButton" class="btn-prev hidden" onclick="prevStep()">← Previous</button>
+        <button type="button" id="nextButton" class="btn-next" onclick="nextStep()">Next →</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="affiliate-sidebar">
+    <div class="deal-banner">
+      <h3>🎟️ Book Your Adventure</h3>
+      <p>Find guided tours, activities, and gear for your destination.</p>
+      <a href="https://www.viator.com" target="_blank" rel="noopener" class="deal-btn" id="viatorMainLink">Browse Viator →</a>
+    </div>
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🏕️ Book Activities & Tours</div>
+      <a href="https://www.viator.com" target="_blank" rel="noopener" class="affiliate-link" id="viatorLink"><span>Viator</span><span class="arr">↗</span></a>
+      <a href="https://www.getyourguide.com" target="_blank" rel="noopener" class="affiliate-link" id="gygLink"><span>GetYourGuide</span><span class="arr">↗</span></a>
+      <a href="https://www.airbnb.com/experiences" target="_blank" rel="noopener" class="affiliate-link" id="airbnbExpLink"><span>Airbnb Experiences</span><span class="arr">↗</span></a>
+      <p class="affiliate-note">We may earn a small commission at no cost to you.</p>
+    </div>
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🏨 Find Accommodation</div>
+      <a href="https://www.booking.com" target="_blank" rel="noopener" class="affiliate-link" id="bookingLink"><span>Booking.com</span><span class="arr">↗</span></a>
+      <a href="https://www.hostelworld.com" target="_blank" rel="noopener" class="affiliate-link" id="hostelLink"><span>Hostelworld</span><span class="arr">↗</span></a>
+    </div>
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🛫 Search Flights</div>
+      <a href="https://www.skyscanner.com" target="_blank" rel="noopener" class="affiliate-link" id="skyLink"><span>Skyscanner</span><span class="arr">↗</span></a>
+      <a href="https://www.google.com/travel/flights" target="_blank" rel="noopener" class="affiliate-link"><span>Google Flights</span><span class="arr">↗</span></a>
+    </div>
+    <div class="affiliate-card">
+      <div class="affiliate-card-title">🛡️ Travel Insurance</div>
+      <a href="https://www.safetywing.com" target="_blank" rel="noopener" class="affiliate-link"><span>SafetyWing</span><span class="arr">↗</span></a>
+      <a href="https://www.worldnomads.com" target="_blank" rel="noopener" class="affiliate-link"><span>World Nomads</span><span class="arr">↗</span></a>
+      <p class="affiliate-note">Especially important for adventure travel.</p>
+    </div>
+  </aside>
+</div>
+</main>
+
+<!-- FOOTER -->
+<footer><div class="footer-inner">
+  <div class="footer-brand">✈️ Voyage Genie</div>
+  <div class="footer-tagline">Plan Less, Explore More · Your AI Travel Companion</div>
+  <div class="footer-subscribe"><input class="footer-email" placeholder="Enter your email" type="email"/><button class="footer-sub-btn">Subscribe</button></div>
+  <div class="footer-links"><a href="index.html">Home</a><a href="index.html#plan-trip">Plan</a><a href="features.html">Features</a><a href="contact.html">Contact</a></div>
+  <div class="footer-copy">© 2026 VoyageGenie.com – All rights reserved.</div>
+</div></footer>
+
+<script>
+let currentStep = 1;
+const totalSteps = 4;
+const form = document.getElementById('travelForm');
+const airportSelect    = document.getElementById('airportSelect');
+const customAirportDiv = document.getElementById('customAirportDiv');
+const customAirportInput = document.getElementById('customAirportInput');
+const citySelect       = document.getElementById('citySelect');
+const customDestDiv    = document.getElementById('customDestDiv');
+const customDestInput  = document.getElementById('customDestInput');
+const startDateInput   = document.getElementById('startDate');
+const endDateInput     = document.getElementById('endDate');
+
+// Set today min
+const today = new Date().toISOString().split('T')[0];
+startDateInput.min = today; endDateInput.min = today;
+
+startDateInput.addEventListener('change', () => {
+  if (startDateInput.value) { endDateInput.min = startDateInput.value; if (!endDateInput.value || endDateInput.value < startDateInput.value) endDateInput.value = startDateInput.value; }
+  updateAffiliateLinks(); updateDurationBadge();
+});
+endDateInput.addEventListener('change', updateDurationBadge);
+endDateInput.addEventListener('change', updateAffiliateLinks);
+
+airportSelect.addEventListener('change', () => {
+  const other = airportSelect.value === 'OTHER';
+  customAirportDiv.classList.toggle('hidden', !other);
+  customAirportInput.disabled = !other; customAirportInput.required = other;
+  if (!other) customAirportInput.value = '';
+});
+citySelect.addEventListener('change', () => {
+  const other = citySelect.value === 'OTHER';
+  customDestDiv.classList.toggle('hidden', !other);
+  customDestInput.disabled = !other; customDestInput.required = other;
+  if (!other) customDestInput.value = '';
+  updateAffiliateLinks();
+  updateTransportHint();
+});
+
+// Update hint when user types a custom destination (debounced)
+let _destHintTimer;
+customDestInput.addEventListener('input', () => {
+  clearTimeout(_destHintTimer);
+  _destHintTimer = setTimeout(updateTransportHint, 500);
+});
+
+// ── TRANSPORT FEASIBILITY ENGINE ─────────────────────────────────────────
+// ok = practical & common | warn = possible with caveats | no = not practical
+const TRANSPORT_PROFILES = {
+  // US National Parks
+  'Grand Canyon, AZ':              {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Zion National Park, UT':        {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Bryce Canyon, UT':              {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'no'  },
+  'Arches National Park, UT':      {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'no'  },
+  'Canyonlands, UT':               {flight:'ok', drive:'ok',   train:'no',   bus:'no',   ferry:'no'  },
+  'Yellowstone, WY':               {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Yosemite, CA':                  {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Rocky Mountain NP, CO':         {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Glacier NP, MT':                {flight:'ok', drive:'ok',   train:'ok',   bus:'warn', ferry:'no'  },
+  'Olympic NP, WA':                {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'warn'},
+  'North Cascades, WA':            {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Denali, AK':                    {flight:'ok', drive:'warn', train:'warn', bus:'warn', ferry:'warn'},
+  'Kenai Fjords, AK':              {flight:'ok', drive:'warn', train:'no',   bus:'no',   ferry:'ok'  },
+  'Acadia NP, ME':                 {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Great Smoky Mountains, TN':     {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Shenandoah, VA':                {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Big Bend, TX':                  {flight:'ok', drive:'ok',   train:'no',   bus:'no',   ferry:'no'  },
+  'Death Valley, CA':              {flight:'ok', drive:'ok',   train:'no',   bus:'no',   ferry:'no'  },
+  'Sequoia & Kings Canyon, CA':    {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'no'  },
+  'Hawaii Volcanoes NP, HI':       {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'no'  },
+  // US Adventure Hubs
+  'Moab, UT':                      {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'no'  },
+  'Jackson Hole, WY':              {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Bend, OR':                      {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Sedona, AZ':                    {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'no'  },
+  'Steamboat Springs, CO':         {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Telluride, CO':                 {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Bozeman, MT':                   {flight:'ok', drive:'ok',   train:'ok',   bus:'warn', ferry:'no'  },
+  'Juneau, AK':                    {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'ok'  },
+  // Canada
+  'Banff NP, Alberta':             {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Jasper NP, Alberta':            {flight:'ok', drive:'ok',   train:'ok',   bus:'warn', ferry:'no'  },
+  'Vancouver Island, BC':          {flight:'ok', drive:'warn', train:'no',   bus:'no',   ferry:'ok'  },
+  'Whistler, BC':                  {flight:'ok', drive:'ok',   train:'warn', bus:'ok',   ferry:'no'  },
+  'Yukon Territory':               {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'no'  },
+  'Newfoundland':                  {flight:'ok', drive:'warn', train:'no',   bus:'warn', ferry:'ok'  },
+  // Europe
+  'Swiss Alps, Switzerland':       {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Zermatt & Matterhorn, Switzerland':{flight:'ok',drive:'warn',train:'ok',  bus:'warn', ferry:'no'  },
+  'Chamonix, France':              {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Dolomites, Italy':              {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Scottish Highlands, UK':        {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'warn'},
+  'Norwegian Fjords, Norway':      {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'ok'  },
+  'Lofoten Islands, Norway':       {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'ok'  },
+  'Trolltunga, Norway':            {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Pyrenees, Spain/France':        {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Faroe Islands':                 {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'ok'  },
+  'Iceland':                       {flight:'ok', drive:'ok',   train:'no',   bus:'ok',   ferry:'ok'  },
+  'Landmannalaugar, Iceland':      {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'no'  },
+  'Laugavegur Trail, Iceland':     {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'no'  },
+  'Julian Alps, Slovenia':         {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Plitvice Lakes, Croatia':       {flight:'ok', drive:'ok',   train:'warn', bus:'ok',   ferry:'no'  },
+  'Tatras Mountains, Poland':      {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Transylvania, Romania':         {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  // Asia
+  'Himalayas, Nepal':              {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'no'  },
+  'Everest Base Camp, Nepal':      {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'no'  },
+  'Annapurna Circuit, Nepal':      {flight:'ok', drive:'no',   train:'no',   bus:'warn', ferry:'no'  },
+  'Langtang Valley, Nepal':        {flight:'ok', drive:'no',   train:'no',   bus:'warn', ferry:'no'  },
+  'Bhutan':                        {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'no'  },
+  'Ladakh, India':                 {flight:'ok', drive:'warn', train:'warn', bus:'warn', ferry:'no'  },
+  'Spiti Valley, India':           {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Chiang Mai, Thailand':          {flight:'ok', drive:'no',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Pai, Thailand':                 {flight:'ok', drive:'no',   train:'no',   bus:'ok',   ferry:'no'  },
+  'Borneo, Malaysia':              {flight:'ok', drive:'no',   train:'no',   bus:'warn', ferry:'warn'},
+  'Mount Kinabalu, Malaysia':      {flight:'ok', drive:'no',   train:'no',   bus:'warn', ferry:'no'  },
+  'Flores, Indonesia':             {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'ok'  },
+  'Komodo Island, Indonesia':      {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'ok'  },
+  'Sapa, Vietnam':                 {flight:'ok', drive:'no',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Ha Giang Loop, Vietnam':        {flight:'ok', drive:'warn', train:'no',   bus:'warn', ferry:'no'  },
+  'Hokkaido, Japan':               {flight:'ok', drive:'warn', train:'ok',   bus:'ok',   ferry:'ok'  },
+  'Kamchatka, Russia':             {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'warn'},
+  'Caucasus, Georgia':             {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  // Africa
+  'Safari, Tanzania':              {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'no'  },
+  'Serengeti, Tanzania':           {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'no'  },
+  'Mount Kilimanjaro, Tanzania':   {flight:'ok', drive:'no',   train:'no',   bus:'warn', ferry:'no'  },
+  'Masai Mara, Kenya':             {flight:'ok', drive:'no',   train:'warn', bus:'warn', ferry:'no'  },
+  'Mount Kenya':                   {flight:'ok', drive:'no',   train:'warn', bus:'warn', ferry:'no'  },
+  'Gorilla Trekking, Rwanda':      {flight:'ok', drive:'no',   train:'no',   bus:'warn', ferry:'no'  },
+  'Drakensberg, South Africa':     {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Table Mountain, South Africa':  {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Atlas Mountains, Morocco':      {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'warn'},
+  'Sahara Desert, Morocco':        {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Victoria Falls, Zambia/Zimbabwe':{flight:'ok',drive:'no',   train:'warn', bus:'warn', ferry:'no'  },
+  'Okavango Delta, Botswana':      {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'no'  },
+  'Simien Mountains, Ethiopia':    {flight:'ok', drive:'no',   train:'no',   bus:'warn', ferry:'no'  },
+  // South America
+  'Patagonia, Argentina/Chile':    {flight:'ok', drive:'warn', train:'no',   bus:'ok',   ferry:'ok'  },
+  'Torres del Paine, Chile':       {flight:'ok', drive:'ok',   train:'no',   bus:'ok',   ferry:'warn'},
+  'Atacama Desert, Chile':         {flight:'ok', drive:'ok',   train:'warn', bus:'ok',   ferry:'no'  },
+  'Machu Picchu, Peru':            {flight:'ok', drive:'no',   train:'ok',   bus:'warn', ferry:'no'  },
+  'Inca Trail, Peru':              {flight:'ok', drive:'no',   train:'ok',   bus:'warn', ferry:'no'  },
+  'Amazon Rainforest, Brazil':     {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'ok'  },
+  'Pantanal, Brazil':              {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'ok'  },
+  'Galapagos Islands, Ecuador':    {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'ok'  },
+  'Cotopaxi, Ecuador':             {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'no'  },
+  'Tierra del Fuego, Argentina':   {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'ok'  },
+  // Pacific & Oceania
+  'Queenstown, New Zealand':       {flight:'ok', drive:'ok',   train:'warn', bus:'ok',   ferry:'warn'},
+  'Milford Sound, New Zealand':    {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'ok'  },
+  'Tongariro Alpine Crossing, NZ': {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Fiordland, New Zealand':        {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'ok'  },
+  'Blue Mountains, Australia':     {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Kimberley, Australia':          {flight:'ok', drive:'warn', train:'no',   bus:'no',   ferry:'no'  },
+  'Kakadu NP, Australia':          {flight:'ok', drive:'ok',   train:'warn', bus:'warn', ferry:'no'  },
+  'Tasmania, Australia':           {flight:'ok', drive:'warn', train:'no',   bus:'no',   ferry:'ok'  },
+  'Papua New Guinea':              {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'warn'},
+  // Arctic & Polar
+  'Svalbard, Norway':              {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'ok'  },
+  'Greenland':                     {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'ok'  },
+  'Antarctica':                    {flight:'ok', drive:'no',   train:'no',   bus:'no',   ferry:'ok'  },
+  'Finnish Lapland':               {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Swedish Lapland':               {flight:'ok', drive:'ok',   train:'ok',   bus:'ok',   ferry:'no'  },
+  'Northwest Territories, Canada': {flight:'ok', drive:'ok',   train:'no',   bus:'warn', ferry:'no'  },
+};
+
+const MODE_LABELS  = {flight:'✈️ Flight', drive:'🚗 Driving', train:'🚂 Train', bus:'🚌 Bus', ferry:'⛴️ Ferry'};
+const WARN_NOTES   = {
+  drive: 'very long drive — consider flying and renting a car locally',
+  train: 'limited train connections — verify routes before booking',
+  bus:   'possible but a very long journey',
+  ferry: 'ferry is seasonal or infrequent — check schedules',
+};
+const NO_REASONS   = {
+  drive: 'requires crossing an ocean or is inaccessible by road',
+  train: 'no usable train connections to this destination',
+  bus:   'no practical bus routes available',
+  ferry: 'landlocked or too far from any ferry route',
+};
+// Special-case positive ferry notes
+const FERRY_OK_DESTS = new Set(['Komodo Island, Indonesia','Flores, Indonesia','Galapagos Islands, Ecuador','Amazon Rainforest, Brazil','Tasmania, Australia','Kenai Fjords, AK','Vancouver Island, BC','Antarctica','Svalbard, Norway','Greenland','Newfoundland','Milford Sound, New Zealand','Fiordland, New Zealand','Juneau, AK']);
+
+function updateTransportHint() {
+  const dest = citySelect.value === 'OTHER' ? customDestInput.value.trim() : citySelect.value;
+  const hintEl = document.getElementById('transportHint');
+  if (!hintEl) return;
+
+  // Clear all mode overlays first
+  ['flight','drive','train','bus','ferry'].forEach(m => {
+    const card = document.getElementById('mode-' + m);
+    if (!card) return;
+    card.classList.remove('mode-ok','mode-warn','mode-no');
+    card.querySelector('.mode-badge')?.remove();
+  });
+
+  if (!dest || dest === 'OTHER') { hintEl.style.display='none'; hintEl.className=''; return; }
+
+  // Find profile — exact match, then first-word partial
+  let profile = TRANSPORT_PROFILES[dest];
+  if (!profile) {
+    const destKey = dest.split(',')[0].toLowerCase();
+    const match = Object.keys(TRANSPORT_PROFILES).find(k => k.split(',')[0].toLowerCase() === destKey);
+    profile = match ? TRANSPORT_PROFILES[match] : null;
+  }
+
+  if (!profile) { hintEl.style.display='none'; return; }
+
+  const modes = ['flight','drive','train','bus','ferry'];
+
+  // Apply badge + colour to each card
+  modes.forEach(m => {
+    const card = document.getElementById('mode-' + m);
+    if (!card) return;
+    const status = profile[m];
+    card.classList.add('mode-' + status);
+    const badge = document.createElement('span');
+    badge.className = 'mode-badge';
+    badge.textContent = status === 'ok' ? '✓' : status === 'warn' ? '!' : '✕';
+    card.appendChild(badge);
+  });
+
+  const noModes   = modes.filter(m => profile[m] === 'no');
+  const warnModes = modes.filter(m => profile[m] === 'warn');
+  const okModes   = modes.filter(m => profile[m] === 'ok');
+  const destShort = dest.split(',')[0];
+
+  // If everything is ok/warn with no 'no' modes — no need for a banner
+  if (!noModes.length && !warnModes.length) { hintEl.style.display='none'; return; }
+
+  // Build banner
+  let html = '<strong>Getting to ' + destShort + ':</strong><ul>';
+
+  if (okModes.length && okModes.length < 5) {
+    html += '<li>✅ <strong>Recommended:</strong> ' + okModes.map(m => MODE_LABELS[m]).join(', ') + '</li>';
+  }
+  warnModes.forEach(m => {
+    html += '<li>⚠️ <strong>' + MODE_LABELS[m] + '</strong> — ' + (WARN_NOTES[m] || 'possible but limited') + '</li>';
+  });
+  // Add positive ferry note when applicable
+  if (profile.ferry === 'ok' && FERRY_OK_DESTS.has(dest)) {
+    html += '<li>⛴️ <strong>Ferry</strong> — a boat or small cruise is actually the best way to reach this destination</li>';
+  }
+  if (noModes.length) {
+    noModes.forEach(m => {
+      html += '<li>❌ <strong>' + MODE_LABELS[m] + '</strong> — ' + (NO_REASONS[m] || 'not practical') + '</li>';
+    });
+  }
+  html += '</ul>';
+
+  hintEl.className = noModes.length ? 'hint-warn' : 'hint-ok';
+  hintEl.innerHTML = html;
+  hintEl.style.display = 'block';
+
+  // Auto-switch away from a 'no' mode to the first 'ok' mode
+  const currentMode = document.querySelector('input[name="travelMode"]:checked')?.value || 'flight';
+  if (profile[currentMode] === 'no' && okModes.length) {
+    setTravelMode(okModes[0]);
+  }
+}
+
+function updateAffiliateLinks() {
+  const dest = citySelect.value === 'OTHER' ? customDestInput.value : citySelect.value;
+  if (!dest || dest === 'OTHER') return;
+  const q = encodeURIComponent(dest);
+  document.getElementById('viatorMainLink').href = `https://www.viator.com/search?q=${q}`;
+  document.getElementById('viatorLink').href     = `https://www.viator.com/search?q=${q}`;
+  document.getElementById('gygLink').href        = `https://www.getyourguide.com/s/?q=${q}`;
+  document.getElementById('airbnbExpLink').href  = `https://www.airbnb.com/experiences?query=${q}`;
+  document.getElementById('bookingLink').href    = `https://www.booking.com/searchresults.html?ss=${q}`;
+  document.getElementById('hostelLink').href     = `https://www.hostelworld.com/search?q=${q}`;
+  document.getElementById('skyLink').href        = `https://www.skyscanner.com/transport/flights/${q}/`;
+}
+
+function nextStep() {
+  if (validateStep(currentStep)) {
+    if (currentStep < totalSteps) {
+      document.getElementById(`step${currentStep}`).classList.add('hidden');
+      currentStep++;
+      document.getElementById(`step${currentStep}`).classList.remove('hidden');
+      updateProgress(); updateNavigation(); saveFormData();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else { submitForm(); }
+  }
+}
+function prevStep() {
+  if (currentStep > 1) {
+    document.getElementById(`step${currentStep}`).classList.add('hidden');
+    currentStep--;
+    document.getElementById(`step${currentStep}`).classList.remove('hidden');
+    updateProgress(); updateNavigation();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+function updateProgress() {
+  const pct = ((currentStep - 1) / (totalSteps - 1)) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  for (let i = 1; i <= totalSteps; i++) {
+    const dot = document.getElementById('dot' + i);
+    dot.classList.remove('active','done');
+    if (i < currentStep) { dot.classList.add('done'); dot.textContent = '✓'; }
+    else if (i === currentStep) { dot.classList.add('active'); dot.textContent = i; }
+    else dot.textContent = i;
+    if (i < totalSteps) document.getElementById('line' + i)?.classList.toggle('done', i < currentStep);
+  }
+}
+function updateNavigation() {
+  document.getElementById('prevButton').classList.toggle('hidden', currentStep === 1);
+  document.getElementById('prevButton').disabled = currentStep === 1;
+  const nb = document.getElementById('nextButton');
+  if (currentStep === totalSteps) { nb.className = 'btn-next btn-generate'; nb.innerHTML = '✔ Generate My Adventure Plan'; }
+  else { nb.className = 'btn-next'; nb.innerHTML = 'Next →'; }
+}
+function applyConditionalLogic() {
+  const type = form.querySelector('input[name="tripType"]:checked')?.value;
+  if (!type) return;
+  document.getElementById('ageRangeSection').classList.toggle('hidden', type !== 'Family');
+  const tips = { Solo:'Solo adventure: Queenstown, Patagonia, Iceland, Nepal — great for independent explorers.', Couple:'Couples adventures: Dolomites, Norway, Bali, New Zealand — scenic and memorable.', Family:'Family-friendly: Yellowstone, Yosemite, Costa Rica, New Zealand (gentle + safe + wildlife).', Group:'Group expeditions: Patagonia, Nepal, Tanzania safari, Swiss Alps — team challenges.' };
+  const el = document.getElementById('travelTipText');
+  if (el && tips[type]) el.textContent = tips[type];
+}
+form.querySelectorAll('input[name="tripType"]').forEach(r => r.addEventListener('change', applyConditionalLogic));
+
+  // Vibe card selection
+  form.querySelectorAll('.vibe-card input').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('.vibe-card').forEach(c => c.classList.remove('selected'));
+      radio.closest('.vibe-card').classList.add('selected');
+    });
+  });
+  // Option card radio selection
+  form.querySelectorAll('.option-card input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      form.querySelectorAll(`input[name="${radio.name}"]`).forEach(r => r.closest('.option-card')?.classList.remove('selected'));
+      radio.closest('.option-card')?.classList.add('selected');
+    });
+  });
+  // Flexible dates toggle
+  document.getElementById('flexDates')?.addEventListener('change', function() {
+    const df = document.getElementById('dateFields');
+    if (df) df.classList.toggle('hidden', this.checked);
+    if (startDateInput) startDateInput.required = !this.checked;
+    if (endDateInput)   endDateInput.required   = !this.checked;
+  });
+  // Duration badge
+  function updateDurationBadge() {
+    const badge = document.getElementById('durationBadge');
+    if (!badge || !startDateInput?.value || !endDateInput?.value) { badge?.classList.add('hidden'); return; }
+    const diff = Math.round((new Date(endDateInput.value) - new Date(startDateInput.value)) / 86400000);
+    if (diff > 0) { badge.textContent = diff + ' night' + (diff !== 1 ? 's' : ''); badge.classList.remove('hidden'); }
+    else badge?.classList.add('hidden');
+  }
+
+function validateStep(step) {
+  clearErrors(); let ok = true;
+  if (step === 1) {
+    if (!form.querySelector('input[name="tripType"]:checked')) { document.getElementById('tripTypeError').classList.remove('hidden'); ok = false; }
+    if (!form.querySelector('input[name="groupSize"]:checked')) { document.getElementById('groupSizeError').classList.remove('hidden'); ok = false; }
+    if (!form.querySelector('input[name="travelPace"]:checked')) { document.getElementById('travelPaceError').classList.remove('hidden'); ok = false; }
+  } else if (step === 2) {
+    if (!citySelect.value || (citySelect.value === 'OTHER' && !customDestInput.value.trim())) { showErr('citySelect','destinationError'); ok = false; }
+    const flexDates = document.getElementById('flexDates')?.checked;
+    if (!flexDates) {
+      if (!startDateInput.value) { showErr('startDate','startDateError'); ok = false; }
+      if (!endDateInput.value || endDateInput.value < startDateInput.value) { showErr('endDate','endDateError'); ok = false; }
+    }
+  } else if (step === 3) {
+    if (!form.querySelectorAll('input[name="activityType"]:checked').length) { document.getElementById('activityTypeError').classList.remove('hidden'); ok = false; }
+    if (!form.querySelector('input[name="difficulty"]:checked')) { document.getElementById('difficultyError').classList.remove('hidden'); ok = false; }
+  } else if (step === 4) {
+    if (!form.querySelector('input[name="budgetTier"]:checked')) { document.getElementById('budgetTierError').classList.remove('hidden'); ok = false; }
+    const email = document.getElementById('email').value;
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('email','emailError'); ok = false; }
+    const budget = document.getElementById('budget').value;
+    if (budget && budget < 0) { document.getElementById('budget').value = ''; ok = false; }
+  }
+  return ok;
+}
+function showErr(inputId, errorId) { document.getElementById(inputId)?.classList.add('error-field'); if (errorId) document.getElementById(errorId)?.classList.remove('hidden'); }
+function clearErrors() { document.querySelectorAll('.error-field').forEach(el=>el.classList.remove('error-field')); document.querySelectorAll('.error-msg').forEach(el=>el.classList.add('hidden')); }
+function saveFormData() {
+  const travelMode = form.querySelector('input[name="travelMode"]:checked')?.value || 'flight';
+  const depLocation = travelMode === 'flight'
+    ? (airportSelect.value === 'OTHER' ? customAirportInput.value : airportSelect.value)
+    : (document.getElementById('departureCity')?.value || '');
+  const data = {
+    travelMode,
+    departureLocation: depLocation,
+    destinationCity:   citySelect.value    === 'OTHER' ? customDestInput.value  : citySelect.value,
+    startDate: startDateInput.value, endDate: endDateInput.value,
+    activityType: [...form.querySelectorAll('input[name="activityType"]:checked')].map(i=>i.value),
+    difficulty:   form.querySelector('input[name="difficulty"]:checked')?.value   || '',
+    environment:  [...form.querySelectorAll('input[name="environment"]:checked')].map(i=>i.value),
+    tripType:     form.querySelector('input[name="tripType"]:checked')?.value     || '',
+    groupSize:    form.querySelector('input[name="groupSize"]:checked')?.value    || '',
+    ageRange:     [...form.querySelectorAll('input[name="ageRange"]:checked')].map(i=>i.value),
+    travelPace: form.querySelector('input[name="travelPace"]:checked')?.value || '',
+    flexDates:  document.getElementById('flexDates')?.checked || false,
+    budget:     document.getElementById('budget').value,
+    budgetTier: form.querySelector('input[name="budgetTier"]:checked')?.value || 'Standard',
+    email:      document.getElementById('email').value
+  };
+  localStorage.setItem('travelFormData', JSON.stringify(data));
+}
+function loadFormData() {
+  // Read from travelFormData (step-by-step saves) OR formData (post-submit restore via modify)
+  const saved     = JSON.parse(localStorage.getItem('travelFormData') || '{}');
+  const submitted = JSON.parse(localStorage.getItem('formData')       || '{}');
+  const data = Object.keys(saved).length ? saved : submitted;
+  if (!Object.keys(data).length) return;
+  if (data.departureLocation) {
+    if (airportSelect.querySelector(`option[value="${data.departureLocation}"]`)) airportSelect.value = data.departureLocation;
+    else { airportSelect.value='OTHER'; customAirportInput.value=data.departureLocation; customAirportDiv.classList.remove('hidden'); customAirportInput.disabled=false; }
+  }
+  if (data.destinationCity) {
+    if (citySelect.querySelector(`option[value="${data.destinationCity}"]`)) citySelect.value = data.destinationCity;
+    else { citySelect.value='OTHER'; customDestInput.value=data.destinationCity; customDestDiv.classList.remove('hidden'); customDestInput.disabled=false; }
+  }
+  startDateInput.value = data.startDate || ''; endDateInput.value = data.endDate || '';
+  // Activity types (checkboxes — multi-select)
+  (data.activityType ? (Array.isArray(data.activityType) ? data.activityType : [data.activityType]) : [])
+    .forEach(v => { const el=form.querySelector(`input[name="activityType"][value="${v}"]`); if(el)el.checked=true; });
+  if (data.difficulty) { const el=form.querySelector(`input[name="difficulty"][value="${data.difficulty}"]`); if(el)el.checked=true; }
+  (Array.isArray(data.environment) ? data.environment : (data.environment ? [data.environment] : []))
+    .forEach(v=>{ const el=form.querySelector(`input[name="environment"][value="${v}"]`); if(el)el.checked=true; });
+  if (data.tripType)  { const el=form.querySelector(`input[name="tripType"][value="${data.tripType}"]`);   if(el){ el.checked=true; el.closest('.option-card')?.classList.add('selected'); } }
+  if (data.groupSize) { const el=form.querySelector(`input[name="groupSize"][value="${data.groupSize}"]`); if(el){ el.checked=true; el.closest('.option-card')?.classList.add('selected'); } }
+  (Array.isArray(data.ageRange) ? data.ageRange : (data.ageRange ? [data.ageRange] : []))
+    .forEach(v=>{ const el=form.querySelector(`input[name="ageRange"][value="${v}"]`); if(el)el.checked=true; });
+  // Travel pace vibe card
+  if (data.travelPace) {
+    const r = form.querySelector(`input[name="travelPace"][value="${data.travelPace}"]`);
+    if (r) { r.checked=true; document.querySelectorAll('.vibe-card').forEach(vc=>vc.classList.remove('selected')); r.closest('.vibe-card')?.classList.add('selected'); }
+  }
+  // Budget tier card
+  if (data.budgetTier) {
+    const r = form.querySelector(`input[name="budgetTier"][value="${data.budgetTier}"]`);
+    if (r) { r.checked=true; document.querySelectorAll('.tier-card').forEach(tc=>tc.classList.remove('selected')); r.closest('.tier-card')?.classList.add('selected'); }
+  }
+  // Flex dates
+  if (data.flexDates) {
+    const fd = document.getElementById('flexDates');
+    if (fd) { fd.checked=true; fd.dispatchEvent(new Event('change')); }
+  }
+  if (data.budget) document.getElementById('budget').value = data.budget;
+  if (data.email)  document.getElementById('email').value  = data.email;
+}
+
+async function submitForm() {
+  const overlay = document.createElement('div'); overlay.className = 'spinner-overlay';
+  overlay.innerHTML = `<div class="spinner-box"><div class="ai-spinner"><div class="ai-spinner-core"></div><div class="ai-spinner-particle"></div><div class="ai-spinner-particle"></div><div class="ai-spinner-particle"></div></div><div class="spinner-title">Crafting Your Adventure Plan…</div><div class="spinner-sub">Genie is mapping out the perfect expedition</div><div class="spinner-timer">⏱ <span id="timer">0</span>s</div></div>`;
+  document.body.appendChild(overlay);
+  let secs = 0; const timer = setInterval(()=>{ secs++; const el=document.getElementById('timer'); if(el)el.textContent=secs; }, 1000);
+
+  const formData = new FormData(form);
+  const travelMode = form.querySelector('input[name="travelMode"]:checked')?.value || 'flight';
+  if (travelMode === 'flight') {
+    if (airportSelect.value === 'OTHER' && customAirportInput.value.trim()) formData.set('departureLocation', customAirportInput.value.trim());
+  } else {
+    const cityInput = document.getElementById('departureCity');
+    if (cityInput?.value?.trim()) formData.set('departureLocation', cityInput.value.trim());
+  }
+  if (citySelect.value    === 'OTHER' && customDestInput.value.trim())    formData.set('destinationCity',   customDestInput.value.trim());
+
+  try {
+    const response = await fetch('https://exodonprofits.app.n8n.cloud/webhook/adventure-travel-agent', {
+      method: 'POST', body: formData, redirect: 'follow'
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const formObj = Object.fromEntries(formData);
+      localStorage.setItem('sessionId',     data.sessionId    || '');
+      localStorage.setItem('formData',      JSON.stringify(formObj));
+      localStorage.setItem('itineraryHtml', data.itineraryHtml || '');
+      if (data.emailHtml) localStorage.setItem('emailHtml', data.emailHtml);
+      // Fix 5: Write tripContext for downstream tools (packing, explore, visa, currency)
+      localStorage.setItem('tripContext', JSON.stringify({
+        destination: formObj.destinationCity || formObj.customDestination || '',
+        departure:   formObj.departureLocation || formObj.customDeparture || '',
+        startDate:   formObj.startDate  || '',
+        endDate:     formObj.endDate    || '',
+        tripType:    formObj.tripType   || 'Adventure',
+        plannerType: 'adventure',
+      }));
+      window.location.href = `adventure-trip-itinerary.html?sessionId=${data.sessionId || ''}`;
+    } else {
+      throw new Error(`Server returned ${response.status}`);
+    }
+  } catch(err) {
+    // Fix 6: Inline toast instead of alert()
+    showSubmitError(`Something went wrong: ${err.message}. Please try again.`);
+  }
+  finally { clearInterval(timer); overlay.remove(); localStorage.removeItem('travelFormData'); }
+}
+
+function showSubmitError(msg) {
+  const existing = document.getElementById('submitErrorToast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'submitErrorToast';
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;padding:0.85rem 1.5rem;border-radius:12px;font-size:0.92rem;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:9999;max-width:90vw;text-align:center;';
+  toast.textContent = '⚠ ' + msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 6000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyConditionalLogic(); updateDurationBadge(); loadFormData(); updateNavigation(); updateAffiliateLinks();
+
+  // Restore travel mode if saved
+  const saved2 = JSON.parse(localStorage.getItem('travelFormData') || localStorage.getItem('formData') || '{}');
+  if (saved2.travelMode) setTravelMode(saved2.travelMode, false);
+
+  // Geolocation — suggest nearest airports + pre-fill city
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => onLocationDetected(pos.coords.latitude, pos.coords.longitude),
+      () => {},
+      { timeout: 6000, maximumAge: 3600000 }
+    );
+  }
+});
+
+// ── TRAVEL MODE ENGINE ────────────────────────────────────────────────────
+function setTravelMode(mode, save = true) {
+  document.querySelectorAll('.travel-mode-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById(`mode-${mode}`);
+  if (card) { card.classList.add('selected'); const r = card.querySelector('input[type="radio"]'); if (r) r.checked = true; }
+
+  const flightSection = document.getElementById('flightDepartureSection');
+  const groundSection = document.getElementById('groundDepartureSection');
+  const cityInput     = document.getElementById('departureCity');
+  const labelEl       = document.getElementById('departureCityLabel');
+  const hintEl        = document.getElementById('departureCityHint');
+
+  const configs = {
+    flight: null,
+    drive:  { icon: '🚗', label: 'Driving From', hint: 'Genie will plan road trip logistics — scenic routes, trailheads, and stops along the way.' },
+    train:  { icon: '🚂', label: 'Departing Station / City', hint: 'Genie will factor in train connections and journey time.' },
+    bus:    { icon: '🚌', label: 'Departing Bus Station / City', hint: 'Genie will include bus routes and travel time in your plan.' },
+    ferry:  { icon: '⛴️', label: 'Departing Ferry Port / City', hint: 'Genie will include ferry crossings in your adventure plan.' },
+  };
+  const config = configs[mode];
+
+  if (mode === 'flight') {
+    flightSection.classList.remove('hidden');
+    groundSection.classList.add('hidden');
+    if (cityInput) { cityInput.disabled = true; }
+  } else {
+    flightSection.classList.add('hidden');
+    groundSection.classList.remove('hidden');
+    if (cityInput) { cityInput.disabled = false; }
+    if (labelEl && config) labelEl.innerHTML = `${config.icon} ${config.label} <span class="opt-tag">Optional</span>`;
+    if (hintEl && config) hintEl.textContent = config.hint;
+  }
+  if (save) saveFormData();
+  // Refresh transport hint when mode changes
+  if (typeof updateTransportHint === 'function') updateTransportHint();
+}
+
+document.querySelectorAll('.travel-mode-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const radio = card.querySelector('input[type="radio"]');
+    if (radio) setTravelMode(radio.value);
+  });
+});
+
+document.getElementById('locationTipDismiss')?.addEventListener('click', () => {
+  document.getElementById('locationTip')?.classList.add('hidden');
+});
+
+// ── GEOLOCATION ENGINE ────────────────────────────────────────────────────
+const AIRPORT_MAP = [
+  [40.64,-73.78,'New York JFK (JFK)','New York JFK (JFK)','New York'],
+  [40.78,-73.87,'New York LaGuardia (LGA)','New York LaGuardia (LGA)','New York'],
+  [40.69,-74.17,'Newark (EWR)','Newark (EWR)','New York'],
+  [42.36,-71.01,'Boston Logan (BOS)','Boston Logan (BOS)','Boston'],
+  [39.87,-75.24,'Philadelphia (PHL)','Philadelphia (PHL)','Philadelphia'],
+  [38.94,-77.46,'Washington Dulles (IAD)','Washington Dulles (IAD)','Washington DC'],
+  [38.85,-77.04,'Washington Reagan (DCA)','Washington Reagan (DCA)','Washington DC'],
+  [39.18,-76.67,'Baltimore (BWI)','Baltimore (BWI)','Baltimore'],
+  [35.21,-80.94,'Charlotte Douglas (CLT)','Charlotte Douglas (CLT)','Charlotte'],
+  [33.64,-84.43,'Atlanta (ATL)','Atlanta (ATL)','Atlanta'],
+  [25.80,-80.29,'Miami (MIA)','Miami (MIA)','Miami'],
+  [28.43,-81.31,'Orlando (MCO)','Orlando (MCO)','Orlando'],
+  [35.88,-78.79,'Raleigh-Durham (RDU)','Raleigh-Durham (RDU)','Raleigh'],
+  [36.12,-86.68,'Nashville (BNA)','Nashville (BNA)','Nashville'],
+  [29.99,-90.26,'New Orleans (MSY)','New Orleans (MSY)','New Orleans'],
+  [41.97,-87.91,"Chicago O'Hare (ORD)","Chicago O'Hare (ORD)",'Chicago'],
+  [41.78,-87.75,'Chicago Midway (MDW)','Chicago Midway (MDW)','Chicago'],
+  [42.21,-83.35,'Detroit Metro (DTW)','Detroit Metro (DTW)','Detroit'],
+  [44.88,-93.22,'Minneapolis–St. Paul (MSP)','Minneapolis–St. Paul (MSP)','Minneapolis'],
+  [39.30,-94.71,'Kansas City (MCI)','Kansas City (MCI)','Kansas City'],
+  [32.90,-97.04,'Dallas/Fort Worth (DFW)','Dallas/Fort Worth (DFW)','Dallas'],
+  [29.98,-95.34,'Houston George Bush (IAH)','Houston George Bush (IAH)','Houston'],
+  [30.19,-97.67,'Austin-Bergstrom (AUS)','Austin-Bergstrom (AUS)','Austin'],
+  [39.86,-104.67,'Denver (DEN)','Denver (DEN)','Denver'],
+  [33.43,-112.01,'Phoenix Sky Harbor (PHX)','Phoenix Sky Harbor (PHX)','Phoenix'],
+  [40.79,-111.98,'Salt Lake City (SLC)','Salt Lake City (SLC)','Salt Lake City'],
+  [35.04,-106.61,'Albuquerque (ABQ)','Albuquerque (ABQ)','Albuquerque'],
+  [33.94,-118.41,'Los Angeles (LAX)','Los Angeles (LAX)','Los Angeles'],
+  [32.73,-117.19,'San Diego (SAN)','San Diego (SAN)','San Diego'],
+  [37.62,-122.38,'San Francisco (SFO)','San Francisco (SFO)','San Francisco'],
+  [37.72,-122.22,'Oakland (OAK)','Oakland (OAK)','San Francisco'],
+  [47.45,-122.31,'Seattle-Tacoma (SEA)','Seattle-Tacoma (SEA)','Seattle'],
+  [45.59,-122.60,'Portland (PDX)','Portland (PDX)','Portland'],
+  [36.08,-115.15,'Las Vegas (LAS)','Las Vegas (LAS)','Las Vegas'],
+  [61.17,-149.99,'Anchorage (ANC)','Anchorage (ANC)','Anchorage'],
+  [43.68,-79.63,'Toronto Pearson (YYZ)','Toronto Pearson (YYZ)','Toronto'],
+  [49.19,-123.18,'Vancouver (YVR)','Vancouver (YVR)','Vancouver'],
+  [45.47,-73.74,'Montreal Trudeau (YUL)','Montreal Trudeau (YUL)','Montreal'],
+  [51.13,-114.01,'Calgary (YYC)','Calgary (YYC)','Calgary'],
+  [51.48,-0.46,'London Heathrow (LHR)','London Heathrow (LHR)','London'],
+  [51.15,-0.18,'London Gatwick (LGW)','London Gatwick (LGW)','London'],
+  [53.35,-2.27,'Manchester (MAN)','Manchester (MAN)','Manchester'],
+  [55.95,-3.37,'Edinburgh (EDI)','Edinburgh (EDI)','Edinburgh'],
+  [53.43,-6.27,'Dublin (DUB)','Dublin (DUB)','Dublin'],
+  [52.31,4.76,'Amsterdam Schiphol (AMS)','Amsterdam Schiphol (AMS)','Amsterdam'],
+  [49.01,2.55,'Paris CDG (CDG)','Paris CDG (CDG)','Paris'],
+  [50.04,8.56,'Frankfurt (FRA)','Frankfurt (FRA)','Frankfurt'],
+  [48.35,11.79,'Munich (MUC)','Munich (MUC)','Munich'],
+  [47.46,8.55,'Zurich (ZRH)','Zurich (ZRH)','Zurich'],
+  [40.49,-3.57,'Madrid (MAD)','Madrid (MAD)','Madrid'],
+  [41.80,12.25,'Rome Fiumicino (FCO)','Rome Fiumicino (FCO)','Rome'],
+  [60.19,11.10,'Oslo (OSL)','Oslo (OSL)','Oslo'],
+  [59.65,17.93,'Stockholm (ARN)','Stockholm (ARN)','Stockholm'],
+  [55.63,12.66,'Copenhagen (CPH)','Copenhagen (CPH)','Copenhagen'],
+  [38.78,-9.13,'Lisbon (LIS)','Lisbon (LIS)','Lisbon'],
+  [37.94,23.94,'Athens (ATH)','Athens (ATH)','Athens'],
+  [-33.95,151.18,'Sydney (SYD)','Sydney (SYD)','Sydney'],
+  [-37.67,144.84,'Melbourne (MEL)','Melbourne (MEL)','Melbourne'],
+  [-27.38,153.12,'Brisbane (BNE)','Brisbane (BNE)','Brisbane'],
+  [-45.01,168.74,'Queenstown (ZQN)','Queenstown (ZQN)','Queenstown'],
+  [-36.84,174.77,'Auckland (AKL)','Auckland (AKL)','Auckland'],
+  [1.36,103.99,'Singapore Changi (SIN)','Singapore Changi (SIN)','Singapore'],
+  [35.76,140.39,'Tokyo Narita (NRT)','Tokyo Narita (NRT)','Tokyo'],
+  [13.69,100.75,'Bangkok Suvarnabhumi (BKK)','Bangkok Suvarnabhumi (BKK)','Bangkok'],
+  [27.70,85.36,'Kathmandu (KTM)','Kathmandu (KTM)','Kathmandu'],
+  [28.57,77.10,'Delhi (DEL)','Delhi (DEL)','Delhi'],
+  [2.74,101.71,'Kuala Lumpur (KUL)','Kuala Lumpur (KUL)','Kuala Lumpur'],
+  [-8.75,-115.21,'Denpasar Bali (DPS)','Denpasar Bali (DPS)','Bali'],
+  [25.25,55.36,'Dubai (DXB)','Dubai (DXB)','Dubai'],
+  [41.26,28.73,'Istanbul (IST)','Istanbul (IST)','Istanbul'],
+  [-1.32,36.93,'Nairobi (NBO)','Nairobi (NBO)','Nairobi'],
+  [-26.14,28.24,'Johannesburg (JNB)','Johannesburg (JNB)','Johannesburg'],
+  [-33.97,18.60,'Cape Town (CPT)','Cape Town (CPT)','Cape Town'],
+  [-3.43,37.07,'Kilimanjaro (JRO)','Kilimanjaro (JRO)','Kilimanjaro'],
+  [-12.02,-77.11,'Lima (LIM)','Lima (LIM)','Lima'],
+  [4.70,-74.15,'Bogotá (BOG)','Bogotá (BOG)','Bogotá'],
+  [-33.39,-70.79,'Santiago (SCL)','Santiago (SCL)','Santiago'],
+  [-34.82,-58.54,'Buenos Aires (EZE)','Buenos Aires (EZE)','Buenos Aires'],
+  [64.13,-21.90,'Reykjavik (KEF)','Reykjavik (KEF)','Reykjavik'],
+  [9.99,-84.21,'San José, Costa Rica (SJO)','San José, Costa Rica (SJO)','San José'],
+];
+
+function geoDist(lat1,lng1,lat2,lng2){
+  const R=6371,dL=(lat2-lat1)*Math.PI/180,dG=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dL/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dG/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function onLocationDetected(lat, lng) {
+  // 1. Find 3 nearest airports and inject at top of select
+  const seen = new Set();
+  const nearby = AIRPORT_MAP
+    .map(([alat,alng,label,value,region]) => ({label,value,region,dist:geoDist(lat,lng,alat,alng)}))
+    .sort((a,b) => a.dist - b.dist)
+    .filter(a => { if (seen.has(a.region)) return false; seen.add(a.region); return true; })
+    .slice(0,3);
+
+  if (nearby.length) {
+    const sel = document.getElementById('airportSelect');
+    const grp = document.createElement('optgroup');
+    grp.label = '📍 Nearest to You';
+    nearby.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.value; opt.textContent = a.label;
+      grp.appendChild(opt);
+    });
+    sel.insertBefore(grp, sel.querySelector('optgroup'));
+    if (!sel.value) { sel.value = nearby[0].value; updateAffiliateLinks(); }
+  }
+
+  // 2. Reverse geocode for city pre-fill (ground modes)
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10`, { headers:{'Accept-Language':'en'} })
+  .then(r => r.json())
+  .then(data => {
+    const city = data.address?.city || data.address?.town || data.address?.county || '';
+    const country = data.address?.country || '';
+    const label = city ? `${city}${country ? ', '+country : ''}` : '';
+    if (label) {
+      const cityInput = document.getElementById('departureCity');
+      if (cityInput && !cityInput.value) cityInput.value = label;
+    }
+    const tipEl = document.getElementById('locationTip');
+    const tipText = document.getElementById('locationTipText');
+    if (tipEl && tipText && nearby.length) {
+      const names = nearby.slice(0,2).map(a => a.label.replace(/\s*\([A-Z]{3}\)/,'')).join(', ');
+      const loc = city ? ` near ${city}` : '';
+      tipText.textContent = `We detected you're${loc} — suggested ${names} for flights, or enter your starting point for driving/train.`;
+      tipEl.classList.remove('hidden');
+    }
+  })
+  .catch(() => {
+    const tipEl = document.getElementById('locationTip');
+    const tipText = document.getElementById('locationTipText');
+    if (tipEl && tipText && nearby.length) {
+      tipText.textContent = `We detected you're nearby — suggested ${nearby.slice(0,2).map(a=>a.label.replace(/\s*\([A-Z]{3}\)/,'')).join(', ')} at the top of the airport list.`;
+      tipEl.classList.remove('hidden');
+    }
+  });
+}
+  // ══════════════════════════════════════════════════════════════
+  // SEARCH HISTORY ENGINE
+  // ══════════════════════════════════════════════════════════════
+  const HISTORY_KEY     = 'vg_search_history';
+  const HISTORY_MAX     = 10;
+  const HISTORY_VERSION = 1;
+
+  // ── Helpers ──────────────────────────────────────────────────
+  function historyLoad() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+    catch { return []; }
+  }
+  function historySave(list) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  }
+
+  function historyAdd(entry) {
+    let list = historyLoad();
+    // Remove any duplicate (same destination + departure + dates)
+    list = list.filter(h =>
+      !(h.destination === entry.destination &&
+        h.departure   === entry.departure   &&
+        h.startDate   === entry.startDate   &&
+        h.endDate     === entry.endDate)
+    );
+    // Add to front, trim to max
+    list.unshift({ ...entry, savedAt: Date.now(), v: HISTORY_VERSION });
+    list = list.slice(0, HISTORY_MAX);
+    historySave(list);
+  }
+
+  function historyFormatDate(iso) {
+    if (!iso) return '';
+    try {
+      return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    } catch { return iso; }
+  }
+
+  function historyTimeAgo(ts) {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    const hrs  = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (mins < 2)   return 'Just now';
+    if (mins < 60)  return `${mins}m ago`;
+    if (hrs  < 24)  return `${hrs}h ago`;
+    if (days === 1) return 'Yesterday';
+    if (days < 7)   return `${days}d ago`;
+    return historyFormatDate(new Date(ts).toISOString().split('T')[0]);
+  }
+
+  // ── Sync to Supabase for signed-in users ─────────────────────
+  async function historySync(entry) {
+    const sb = window.supabase;
+    if (!sb) return;
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      await sb.from('search_history').upsert({
+        user_id:     user.id,
+        destination: entry.destination,
+        departure:   entry.departure,
+        search_data: entry,
+        searched_at: new Date().toISOString()
+      }, { onConflict: 'user_id,destination,departure' });
+    } catch(e) { console.warn('History sync skipped:', e.message); }
+  }
+
+  // ── Restore Supabase history for signed-in users ─────────────
+  async function historyRestoreFromSupabase() {
+    const sb = window.supabase;
+    if (!sb) return;
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      const { data } = await sb.from('search_history')
+        .select('search_data, searched_at')
+        .eq('user_id', user.id)
+        .order('searched_at', { ascending: false })
+        .limit(HISTORY_MAX);
+      if (!data || !data.length) return;
+      // Merge Supabase history with localStorage
+      let local = historyLoad();
+      const localKeys = new Set(local.map(h => `${h.destination}|${h.departure}|${h.startDate}`));
+      data.forEach(row => {
+        const entry = row.search_data;
+        const key = `${entry.destination}|${entry.departure}|${entry.startDate}`;
+        if (!localKeys.has(key)) {
+          entry.savedAt = new Date(row.searched_at).getTime();
+          local.push(entry);
+          localKeys.add(key);
+        }
+      });
+      local.sort((a, b) => b.savedAt - a.savedAt);
+      historySave(local.slice(0, HISTORY_MAX));
+      historyRender();
+    } catch(e) { console.warn('History restore skipped:', e.message); }
+  }
+
+  // ── Render history panel ──────────────────────────────────────
+  function historyRender() {
+    const list   = historyLoad();
+    const panel  = document.getElementById('historyPanel');
+    const listEl = document.getElementById('historyList');
+    const footer = document.getElementById('historyFooter');
+    const countEl = document.getElementById('historyCount');
+    if (!panel) return;
+
+    if (!list.length) { panel.classList.add('hidden'); return; }
+
+    panel.classList.remove('hidden');
+    countEl.textContent = list.length;
+
+    listEl.innerHTML = list.map((h, idx) => {
+      const tierBadge = { Economy:'🟢', Standard:'🔵', Elite:'⭐' }[h.budgetTier] || '🔵';
+      const paceEmoji = { Relaxed:'🌅', Balanced:'🌊', Active:'🏄' }[h.travelPace] || '';
+      const modeIcon  = { flight:'✈️', drive:'🚗', train:'🚂', bus:'🚌', ferry:'⛴️' }[h.travelMode] || '✈️';
+      const dates = h.flexDates
+        ? 'Flexible dates'
+        : (h.startDate ? `${historyFormatDate(h.startDate)} → ${historyFormatDate(h.endDate)}` : '');
+      const depLabel = h.departure ? `${modeIcon} ${h.departure}` : '';
+      return `
+        <div class="history-card" data-idx="${idx}">
+          <div class="history-card-info">
+            <div class="history-card-title">🌄 ${h.destinationCity || h.destination || 'Unknown destination'}</div>
+            <div class="history-card-meta">
+              ${depLabel    ? `<span>${depLabel}</span>` : ''}
+              ${dates       ? `<span>📅 ${dates}</span>` : ''}
+              ${h.tripType  ? `<span>🧳 ${h.tripType}</span>` : ''}
+              ${h.budgetTier? `<span>${tierBadge} ${h.budgetTier}</span>` : ''}
+              ${paceEmoji   ? `<span>${paceEmoji} ${h.travelPace}</span>` : ''}
+            </div>
+          </div>
+          <div class="history-card-actions">
+            <button class="history-refill-btn" data-idx="${idx}">Fill form →</button>
+            <span style="font-size:0.72rem;color:var(--text-muted)">🕐 ${historyTimeAgo(h.savedAt)}</span>
+            <button class="history-delete-btn" data-idx="${idx}" title="Remove">✕</button>
+          </div>
+        </div>`;
+    }).join('');
+    footer.classList.remove('hidden');
+  }
+
+  // ── Refill form from a history entry ─────────────────────────
+  function historyRefill(entry) {
+    // Restore travel mode first
+    const mode = entry.travelMode || 'flight';
+    setTravelMode(mode, false);
+
+    // Departure — flight or ground
+    const depVal = entry.departure || entry.departureLocation || '';
+    if (depVal) {
+      if (mode === 'flight') {
+        const opt = [...airportSelect.options].find(o => o.value === depVal);
+        if (opt) { airportSelect.value = depVal; }
+        else { airportSelect.value = 'OTHER'; customAirportInput.value = depVal; customAirportDiv.classList.remove('hidden'); customAirportInput.disabled = false; customAirportInput.required = true; }
+      } else {
+        const cityInput = document.getElementById('departureCity');
+        if (cityInput) cityInput.value = depVal;
+      }
+    }
+    // Destination city (adventure)
+    const destVal = entry.destinationCity || entry.destination || '';
+    if (destVal) {
+      const opt = [...citySelect.options].find(o => o.value === destVal);
+      if (opt) { citySelect.value = destVal; }
+      else {
+        citySelect.value = 'OTHER';
+        customDestInput.value = destVal;
+        customDestDiv.classList.remove('hidden');
+        customDestInput.disabled = false; customDestInput.required = true;
+      }
+      if (typeof updateAffiliateLinks === 'function') updateAffiliateLinks();
+    }
+    // Dates
+    if (entry.flexDates) {
+      document.getElementById('flexDates').checked = true;
+      document.getElementById('flexDates').dispatchEvent(new Event('change'));
+    } else {
+      if (entry.startDate) startDateInput.value = entry.startDate;
+      if (entry.endDate)   endDateInput.value   = entry.endDate;
+      updateDurationBadge();
+    }
+    // Trip type
+    if (entry.tripType) {
+      const r = form.querySelector(`input[name="tripType"][value="${entry.tripType}"]`);
+      if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
+    }
+    // Travel pace
+    if (entry.travelPace) {
+      const r = form.querySelector(`input[name="travelPace"][value="${entry.travelPace}"]`);
+      if (r) {
+        r.checked = true;
+        document.querySelectorAll('.vibe-card').forEach(c => c.classList.remove('selected'));
+        r.closest('.vibe-card')?.classList.add('selected');
+      }
+    }
+    // Group size
+    if (entry.groupSize) {
+      const r = form.querySelector(`input[name="groupSize"][value="${entry.groupSize}"]`);
+      if (r) { r.checked = true; r.closest('.option-card')?.classList.add('selected'); }
+    }
+    // Budget tier
+    if (entry.budgetTier) {
+      const r = form.querySelector(`input[name="budgetTier"][value="${entry.budgetTier}"]`);
+      if (r) {
+        r.checked = true;
+        document.querySelectorAll('.tier-card').forEach(c => c.classList.remove('selected'));
+        r.closest('.tier-card')?.classList.add('selected');
+      }
+    }
+    // Budget amount
+    if (entry.budget) document.getElementById('budget').value = entry.budget;
+    // Email
+    if (entry.email) document.getElementById('email').value = entry.email;
+    // Flight preference / transfer
+    if (entry.flightPreference) document.getElementById('flightPreference').value = entry.flightPreference;
+    if (entry.transferNeeds)    document.getElementById('transferNeeds').value    = entry.transferNeeds;
+    // Dietary / accessibility
+    if (entry.dietaryNeeds)       document.getElementById('dietaryNeeds').value       = entry.dietaryNeeds;
+    if (entry.accessibilityNeeds) document.getElementById('accessibilityNeeds').value = entry.accessibilityNeeds;
+    // Accommodation
+    if (entry.accommodationType) document.getElementById('accommodationType').value = entry.accommodationType;
+    if (entry.starRating)        document.getElementById('starRating').value         = entry.starRating;
+    // Adventure-specific: activity types (multi-select checkboxes)
+    const activities = Array.isArray(entry.activityType) ? entry.activityType : (entry.activityType ? [entry.activityType] : []);
+    form.querySelectorAll('input[name="activityType"]').forEach(cb => {
+      cb.checked = activities.includes(cb.value);
+    });
+    // Difficulty
+    if (entry.difficulty) {
+      const r = form.querySelector(`input[name="difficulty"][value="${entry.difficulty}"]`);
+      if (r) { r.checked = true; r.closest('.option-card')?.classList.add('selected'); }
+    }
+    // Environment (checkboxes)
+    if (entry.environment) {
+      form.querySelectorAll('input[name="environment"]').forEach(cb => {
+        cb.checked = (entry.environment || []).includes(cb.value);
+      });
+    }
+    // Trigger conditional logic
+    applyConditionalLogic();
+    updateDurationBadge();
+    // Scroll to form
+    document.querySelector('.planning-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Save current search to history (called on submit) ─────────
+  function historySaveCurrentSearch() {
+    const travelMode = form.querySelector('input[name="travelMode"]:checked')?.value || 'flight';
+    const depValue = travelMode === 'flight'
+      ? (airportSelect.value === 'OTHER' ? customAirportInput.value : airportSelect.value)
+      : (document.getElementById('departureCity')?.value || '');
+    const entry = {
+      travelMode,
+      destinationCity:   citySelect.value    === 'OTHER' ? customDestInput.value  : citySelect.value,
+      departure:         depValue,
+      departureLocation: depValue,
+      startDate:         startDateInput.value,
+      endDate:           endDateInput.value,
+      flexDates:         document.getElementById('flexDates')?.checked || false,
+      tripType:          form.querySelector('input[name="tripType"]:checked')?.value    || '',
+      travelPace:        form.querySelector('input[name="travelPace"]:checked')?.value  || '',
+      groupSize:         form.querySelector('input[name="groupSize"]:checked')?.value   || '',
+      budgetTier:        form.querySelector('input[name="budgetTier"]:checked')?.value  || 'Standard',
+      activityType:      [...form.querySelectorAll('input[name="activityType"]:checked')].map(i=>i.value),
+      difficulty:        form.querySelector('input[name="difficulty"]:checked')?.value   || '',
+      environment:       [...form.querySelectorAll('input[name="environment"]:checked')].map(i=>i.value),
+      budget:            document.getElementById('budget').value,
+      email:             document.getElementById('email').value,
+    };
+    if (!entry.destinationCity && !entry.destination) return;
+    historyAdd(entry);
+    historySync(entry); // async Supabase sync — non-blocking
+  }
+
+  // ── History panel toggle ──────────────────────────────────────
+  document.getElementById('historyToggle')?.addEventListener('click', () => {
+    const listEl  = document.getElementById('historyList');
+    const chevron = document.getElementById('historyChevron');
+    const footer  = document.getElementById('historyFooter');
+    const isOpen  = !listEl.classList.contains('hidden');
+    listEl.classList.toggle('hidden', isOpen);
+    footer.classList.toggle('hidden', isOpen);
+    chevron.classList.toggle('open', !isOpen);
+  });
+
+  // ── History card event delegation ────────────────────────────
+  document.getElementById('historyList')?.addEventListener('click', (e) => {
+    const fillBtn = e.target.closest('.history-refill-btn');
+    const delBtn  = e.target.closest('.history-delete-btn');
+    const card    = e.target.closest('.history-card');
+
+    if (fillBtn || (card && !delBtn)) {
+      const idx = parseInt((fillBtn || card).dataset.idx);
+      const list = historyLoad();
+      if (list[idx]) historyRefill(list[idx]);
+    } else if (delBtn) {
+      e.stopPropagation();
+      const idx = parseInt(delBtn.dataset.idx);
+      const list = historyLoad();
+      list.splice(idx, 1);
+      historySave(list);
+      historyRender();
+    }
+  });
+
+  // ── Clear all ─────────────────────────────────────────────────
+  document.getElementById('historyClearBtn')?.addEventListener('click', () => {
+    if (confirm('Clear all search history?')) {
+      historySave([]);
+      historyRender();
+    }
+  });
+
+  // ── Init: render on load + restore from Supabase ─────────────
+  historyRender();
+  // Open panel by default if history exists
+  const _initList = historyLoad();
+  if (_initList.length) {
+    document.getElementById('historyList')?.classList.remove('hidden');
+    document.getElementById('historyFooter')?.classList.remove('hidden');
+    document.getElementById('historyChevron')?.classList.add('open');
+  }
+  // Restore Supabase history async (non-blocking)
+  historyRestoreFromSupabase();
+
+
+</script>
+<!-- ===== GENIE CHAT WIDGET ===== -->
+<script src="js/genie-chat.js" defer></script>
+
+<!-- ===== AUTH ===== -->
+<script type="module">
+  function getSB(){ return window.supabase || null; }
+  const authSlot = document.getElementById('authSlot');
+  const nextParam = encodeURIComponent('adventure-trip-planner.html');
+
+  function toggle(el, show){ if(el) el.style.display = show ? 'block' : 'none'; }
+  function closeMenus(exceptEl){
+    document.querySelectorAll('.menu').forEach(el => { if(el !== exceptEl) el.style.display = 'none'; });
+  }
+
+  function buildMenuItems(name, email){
+    return `
+      <div class="menu-header">
+        <div class="menu-user">🪪 ${name}</div>
+        <div class="menu-user-sub">${email || ''}</div>
+      </div>
+      <a href="trip-dashboard.html" role="menuitem">📋 My Trips</a>
+      <div class="menu-divider"></div>
+      <div class="menu-label">Start a New Trip</div>
+      <a href="tropical-trip-planner.html" role="menuitem">🏖️ Tropical Resort</a>
+      <a href="cruise-trip-planner.html" role="menuitem">🚢 Cruise Adventure</a>
+      <a href="airbnb-trip-planner.html" role="menuitem">🏨 City &amp; Stays</a>
+      <a href="adventure-trip-planner.html" role="menuitem">🌄 Adventure Trip</a>
+      <div class="menu-divider"></div>
+      <a href="account.html" role="menuitem">👤 Account</a>
+      <a href="#" id="_signOutBtn" role="menuitem">🚪 Sign out</a>`;
+  }
+
+  function accountDOM(email){
+    const name = (email || 'Account').split('@')[0];
+    const items = buildMenuItems(name, email);
+    const wrap = document.createElement('div');
+    wrap.className = 'auth-wrap';
+    wrap.innerHTML = `
+      <div class="desktop-auth">
+        <div class="menu-group">
+          <a href="#" class="account-chip" id="acctDesktopBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctDesktopMenu">
+            <span>🪪</span><span>${name}</span><span class="caret">▼</span>
+          </a>
+          <div class="menu" id="acctDesktopMenu" role="menu">${items}</div>
+        </div>
+      </div>
+      <div class="mobile-auth">
+        <div class="menu-group">
+          <a href="#" class="hamburger-btn" id="acctMobileBtn" aria-haspopup="true" aria-expanded="false" aria-controls="acctMobileMenu">
+            <span>☰</span>
+          </a>
+          <div class="menu" id="acctMobileMenu" role="menu">${items.replace('id="_signOutBtn"','id="_signOutMobileBtn"')}</div>
+        </div>
+      </div>`;
+    return wrap;
+  }
+
+  function signinDOM(){
+    const wrap = document.createElement('div');
+    wrap.className = 'auth-wrap';
+    wrap.innerHTML = `
+      <div class="desktop-auth" style="display:flex;align-items:center;gap:10px;">
+        <a href="login.html?next=${nextParam}" class="signin-text">Sign in</a>
+        <a href="register.html" class="signup-chip">Start for free →</a>
+      </div>
+      <div class="mobile-auth">
+        <div class="menu-group">
+          <a href="#" class="hamburger-btn" id="signinMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="signinMenu">
+            <span>☰</span>
+          </a>
+          <div class="menu" id="signinMenu" role="menu">
+            <div class="menu-header"><div class="menu-user">Voyage Genie</div><div class="menu-user-sub">Travel menu</div></div>
+            <a href="login.html?next=${nextParam}" role="menuitem">🔑 Sign in</a>
+            <a href="register.html" role="menuitem">🚀 Start for free</a>
+            <div class="menu-divider"></div>
+            <a href="index.html#plan-trip" role="menuitem">🗺️ All Planners</a>
+            <a href="trip-dashboard.html" role="menuitem">📋 My Trips</a>
+          </div>
+        </div>
+      </div>`;
+    return wrap;
+  }
+
+  function bindMenu(buttonId, menuId){
+    const btn = document.getElementById(buttonId), menu = document.getElementById(menuId);
+    if(!btn || !menu) return;
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const open = menu.style.display === 'block';
+      closeMenus(open ? null : menu);
+      toggle(menu, !open);
+      btn.setAttribute('aria-expanded', String(!open));
+    });
+  }
+
+  async function renderAuth(session){
+    const sb = getSB();
+    if(!sb || !authSlot) return;
+    try {
+      let user;
+      if(session !== undefined){ user = session?.user ?? null; }
+      else { const res = await sb.auth.getUser(); user = res.data?.user ?? null; }
+      authSlot.innerHTML = '';
+      if(user){
+        const node = accountDOM(user.email);
+        authSlot.appendChild(node);
+        bindMenu('acctDesktopBtn', 'acctDesktopMenu');
+        bindMenu('acctMobileBtn', 'acctMobileMenu');
+        async function signOut(e){
+          e.preventDefault(); e.stopPropagation();
+          const sb = getSB(); if(!sb) return;
+          try { await sb.auth.signOut(); } catch {}
+          location.reload();
+        }
+        node.querySelector('#_signOutBtn')?.addEventListener('click', signOut);
+        node.querySelector('#_signOutMobileBtn')?.addEventListener('click', signOut);
+      } else {
+        authSlot.appendChild(signinDOM());
+        bindMenu('signinMenuBtn', 'signinMenu');
+      }
+    } catch {}
+  }
+
+  document.addEventListener('click', e => {
+    if(!document.querySelectorAll('.menu[style*="block"]').length) return;
+    if(!e.target.closest('.menu,.hamburger-btn,.account-chip,.signin-text')) closeMenus(null);
+  });
+
+  const _sb = getSB();
+  if(_sb){
+    await _sb.auth.getSession();
+    await renderAuth();
+    _sb.auth.onAuthStateChange((_event, session) => renderAuth(session));
+  } else {
+    // Supabase CDN may still be loading — retry after a short delay
+    setTimeout(async () => {
+      const sb2 = getSB();
+      if(sb2){ await sb2.auth.getSession(); await renderAuth(); sb2.auth.onAuthStateChange((_event,session)=>renderAuth(session)); }
+    }, 800);
+  }
+</script>
+</body>
+</html>

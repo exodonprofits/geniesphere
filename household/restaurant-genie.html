@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Restaurant Center • GenieSphere</title>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- GenieSphere shared auth/client -->
+  <script src="/shared/js/app-config.js"></script>
+  <script src="/shared/js/gs-client.js"></script>
+  <script src="/shared/js/auth-header.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:rgba(255,255,255,.04);
+      --border:rgba(255,255,255,.12);
+      --muted:rgba(255,255,255,.72);
+      --muted2:rgba(255,255,255,.55);
+      --accent:#4c6ef5;
+      --ok:#3cdc78;
+      --danger:#ff7878;
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;background:var(--bg);color:#fff;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+    h1{font-size:1.2rem;margin:0}
+    .sub{color:var(--muted);font-size:.92rem;margin-top:4px;max-width:68ch}
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 12px;border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:#fff;cursor:pointer;text-decoration:none;
+      white-space:nowrap;
+    }
+    .btn:hover{background:rgba(255,255,255,.10)}
+    .btn.primary{background:rgba(76,110,245,.25);border-color:rgba(76,110,245,.45)}
+    .btn.ok{background:rgba(60,220,120,.14);border-color:rgba(60,220,120,.36)}
+    .btn.danger{background:rgba(255,120,120,.12);border-color:rgba(255,120,120,.32)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+    .card{
+      border:1px solid var(--border);
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:14px;
+      overflow:hidden;
+    }
+    h3{margin:0 0 8px;font-size:1rem}
+    .small{font-size:.85rem;color:var(--muted2)}
+    label{display:block;margin:10px 0 6px;color:var(--muted);font-size:.85rem}
+    input,select,textarea{
+      width:100%;padding:10px 12px;border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+    }
+    textarea{min-height:70px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row > *{flex:1;min-width:150px}
+    .split{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .list{display:grid;gap:10px;margin-top:10px}
+    .item{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      padding:12px;
+      display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      align-items:flex-start;
+    }
+    .item h4{margin:0;font-size:1rem}
+    .meta{margin-top:4px;font-size:.85rem;color:var(--muted)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:.72rem;
+      padding:3px 8px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+    }
+    .notice{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+    }
+    .tabs{
+      display:flex;gap:8px;flex-wrap:wrap;margin-top:12px
+    }
+    .tab{
+      padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);color:#fff;cursor:pointer;
+      font-size:.9rem;
+    }
+    .tab.active{border-color:rgba(76,110,245,.55);background:rgba(76,110,245,.18)}
+    .hide{display:none !important}
+
+    @media(max-width:760px){
+      .grid{grid-template-columns:1fr}
+      header{flex-direction:column;align-items:stretch}
+      .btn{width:100%;justify-content:center}
+      .split .actions{width:100%}
+      .split .actions > *{flex:1}
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🍜 Restaurant Center</h1>
+      <div class="sub">
+        Save favorite places and track upcoming reservations. Your Leisure Hub badge reads from Supabase directly.
+      </div>
+      <div class="tabs" role="tablist" aria-label="Restaurant sections">
+        <button class="tab active" data-tab="favorites" type="button">⭐ Favorites</button>
+        <button class="tab" data-tab="reservations" type="button">📅 Reservations</button>
+      </div>
+    </div>
+    <a class="btn" href="/dashboard/leisure.html">⬅️ Back to Leisure Hub</a>
+  </header>
+
+  <div class="grid" id="tab-favorites">
+    <section class="card">
+      <div class="split">
+        <h3 style="margin:0;">➕ Add favorite</h3>
+        <button class="btn" id="btnSeedFavs" type="button">✨ Add starters</button>
+      </div>
+      <div class="small">Save places you love (or want to try).</div>
+
+      <label>Restaurant name</label>
+      <input id="favName" placeholder="Pho Saigon, Din Tai Fung, Sushi Spot…" />
+
+      <div class="row">
+        <div>
+          <label>Cuisine (optional)</label>
+          <input id="favCuisine" placeholder="Vietnamese, Sushi, BBQ…" />
+        </div>
+        <div>
+          <label>City (optional)</label>
+          <input id="favCity" placeholder="Memphis, Bartlett…" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Neighborhood (optional)</label>
+          <input id="favNeighborhood" placeholder="Downtown, East Memphis…" />
+        </div>
+        <div>
+          <label>Rating (optional)</label>
+          <select id="favRating">
+            <option value="">—</option>
+            <option value="5">⭐⭐⭐⭐⭐</option>
+            <option value="4">⭐⭐⭐⭐</option>
+            <option value="3">⭐⭐⭐</option>
+            <option value="2">⭐⭐</option>
+            <option value="1">⭐</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Link (optional)</label>
+      <input id="favUrl" placeholder="https://maps.google.com/..." />
+
+      <label>Notes (optional)</label>
+      <textarea id="favNotes" placeholder="Best dish, parking tips, happy hour…"></textarea>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="btnSaveFav" type="button">Save favorite</button>
+        <button class="btn" id="btnClearFav" type="button">Clear</button>
+      </div>
+
+      <div class="notice" id="favNotice" style="display:none;"></div>
+    </section>
+
+    <section class="card">
+      <div class="split">
+        <h3 style="margin:0;">⭐ Your favorites</h3>
+        <div class="actions">
+          <button class="btn" id="btnRefreshFavs" type="button">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="small">Tap “Reserve” to create a reservation using this restaurant.</div>
+
+      <div class="row" style="margin-top:10px">
+        <div style="flex:2;min-width:220px">
+          <label style="margin-top:0;">Search</label>
+          <input id="favSearch" placeholder="Search name, cuisine, city…" />
+        </div>
+        <div style="min-width:160px">
+          <label style="margin-top:0;">Sort</label>
+          <select id="favSort">
+            <option value="new">Newest</option>
+            <option value="name">Name</option>
+            <option value="rating">Rating</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="list" id="favList"></div>
+    </section>
+  </div>
+
+  <div class="grid hide" id="tab-reservations">
+    <section class="card">
+      <div class="split">
+        <h3 style="margin:0;">➕ Add reservation</h3>
+        <button class="btn" id="btnSeedRes" type="button">✨ Add starter reservations</button>
+      </div>
+      <div class="small">Track upcoming bookings so “Next:” shows up on the Hub.</div>
+
+      <label>Link to favorite (optional)</label>
+      <select id="resRestaurant">
+        <option value="">— Not linked —</option>
+      </select>
+
+      <label>Restaurant name (required if not linked)</label>
+      <input id="resName" placeholder="Enter name if you didn’t link a favorite…" />
+
+      <div class="row">
+        <div>
+          <label>Reservation time</label>
+          <input id="resStart" type="datetime-local" />
+        </div>
+        <div>
+          <label>Party size (optional)</label>
+          <input id="resParty" type="number" min="1" placeholder="2" />
+        </div>
+      </div>
+
+      <label>Location (optional)</label>
+      <input id="resLocation" placeholder="Address, neighborhood, notes…" />
+
+      <div class="row">
+        <div>
+          <label>Confirmation code (optional)</label>
+          <input id="resCode" placeholder="ABC123" />
+        </div>
+        <div>
+          <label>End time (optional)</label>
+          <input id="resEnd" type="datetime-local" />
+        </div>
+      </div>
+
+      <label>Notes (optional)</label>
+      <textarea id="resNotes" placeholder="Parking, dress code, special requests…"></textarea>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="btnSaveRes" type="button">Save reservation</button>
+        <button class="btn" id="btnClearRes" type="button">Clear</button>
+      </div>
+
+      <div class="notice" id="resNotice" style="display:none;"></div>
+    </section>
+
+    <section class="card">
+      <div class="split">
+        <h3 style="margin:0;">📅 Upcoming reservations</h3>
+        <div class="actions">
+          <button class="btn" id="btnRefreshRes" type="button">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="small">Keep it simple: Scheduled → Done / Canceled.</div>
+
+      <div class="list" id="resList"></div>
+
+      <div class="notice">
+        💡 Hub “Next:” uses the next scheduled reservation. If you want tasks-first later, we can add a
+        <span class="pill">reservation tasks</span> table the same way we did Events.
+      </div>
+    </section>
+  </div>
+
+</div>
+
+<script>
+const T_FAV = "user_restaurants";
+const T_RES = "user_reservations";
+
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function toISO(dtLocal){
+  if(!dtLocal) return null;
+  const d = new Date(dtLocal);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+function fmtLocal(iso){
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return "—";
+  return d.toLocaleString([], { weekday:"short", month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+}
+
+async function getClient(){
+  const client = await window.GSClient.getAsync();
+  const { data:{user} } = await client.auth.getUser();
+  return {client,user};
+}
+
+function setNotice(id, msg){
+  const el = document.getElementById(id);
+  el.style.display = "block";
+  el.textContent = msg;
+  setTimeout(()=>{ el.style.display="none"; }, 4500);
+}
+
+function clearFav(){
+  ["favName","favCuisine","favNeighborhood","favCity","favUrl","favNotes"].forEach(x=>document.getElementById(x).value="");
+  document.getElementById("favRating").value = "";
+}
+function clearRes(){
+  document.getElementById("resRestaurant").value = "";
+  document.getElementById("resName").value = "";
+  document.getElementById("resStart").value = "";
+  document.getElementById("resEnd").value = "";
+  document.getElementById("resParty").value = "";
+  document.getElementById("resLocation").value = "";
+  document.getElementById("resCode").value = "";
+  document.getElementById("resNotes").value = "";
+}
+
+function applyTabs(tab){
+  document.querySelectorAll(".tab").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab === tab);
+  });
+  document.getElementById("tab-favorites").classList.toggle("hide", tab !== "favorites");
+  document.getElementById("tab-reservations").classList.toggle("hide", tab !== "reservations");
+}
+
+async function saveFavorite(){
+  const name = document.getElementById("favName").value.trim();
+  if(!name) return alert("Enter a restaurant name");
+
+  const {client,user} = await getClient();
+  if(!user) return alert("Please log in.");
+
+  const payload = {
+    user_id: user.id,
+    name,
+    cuisine: document.getElementById("favCuisine").value.trim() || null,
+    neighborhood: document.getElementById("favNeighborhood").value.trim() || null,
+    city: document.getElementById("favCity").value.trim() || null,
+    url: document.getElementById("favUrl").value.trim() || null,
+    notes: document.getElementById("favNotes").value.trim() || null,
+    rating: document.getElementById("favRating").value ? Number(document.getElementById("favRating").value) : null
+  };
+
+  const { error } = await client.from(T_FAV).insert(payload);
+  if(error) return alert("Could not save favorite. Check table + RLS.");
+
+  clearFav();
+  setNotice("favNotice", "Saved. Your Hub badge will update automatically.");
+  await refreshFavorites();
+  await refreshFavDropdown();
+}
+
+async function loadFavorites(){
+  const list = document.getElementById("favList");
+  list.innerHTML = "";
+
+  const {client,user} = await getClient();
+  if(!user){
+    list.innerHTML = "<div class='small'>Please log in.</div>";
+    return [];
+  }
+
+  const q = document.getElementById("favSearch").value.trim().toLowerCase();
+  const sort = document.getElementById("favSort").value;
+
+  let query = client.from(T_FAV).select("*").eq("user_id", user.id);
+
+  if(sort === "new") query = query.order("created_at", { ascending:false });
+  if(sort === "name") query = query.order("name", { ascending:true });
+  if(sort === "rating") query = query.order("rating", { ascending:false, nullsFirst:false });
+
+  const { data, error } = await query.limit(300);
+  if(error){
+    list.innerHTML = "<div class='small'>Couldn’t load favorites.</div>";
+    return [];
+  }
+
+  let rows = data || [];
+  if(q){
+    rows = rows.filter(r=>{
+      const s = `${r.name||""} ${r.cuisine||""} ${r.city||""} ${r.neighborhood||""}`.toLowerCase();
+      return s.includes(q);
+    });
+  }
+
+  if(!rows.length){
+    list.innerHTML = "<div class='small'>No favorites yet.</div>";
+    return [];
+  }
+
+  rows.forEach(r=>{
+    const rating = r.rating ? "⭐".repeat(Math.max(1, Math.min(5, r.rating))) : "";
+    const meta = [
+      r.cuisine ? esc(r.cuisine) : null,
+      r.neighborhood ? esc(r.neighborhood) : null,
+      r.city ? esc(r.city) : null
+    ].filter(Boolean).join(" • ");
+
+    const link = r.url ? `<a class="btn" href="${esc(r.url)}" target="_blank" rel="noreferrer">📍 Link</a>` : "";
+
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div>
+        <h4>${esc(r.name)} ${rating ? `<span class="pill">${rating}</span>` : ""}</h4>
+        <div class="meta">${meta || "—"}</div>
+        ${r.notes ? `<div class="small" style="margin-top:6px;">${esc(r.notes)}</div>` : ""}
+      </div>
+      <div class="actions">
+        <button class="btn" data-fact="reserve" data-id="${r.id}" data-name="${esc(r.name)}">📅 Reserve</button>
+        ${link}
+        <button class="btn danger" data-fact="delete" data-id="${r.id}">🗑️ Delete</button>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+
+  return rows;
+}
+
+async function deleteFavorite(id){
+  if(!confirm("Delete this favorite?")) return;
+
+  const {client,user} = await getClient();
+  if(!user) return;
+
+  const { error } = await client.from(T_FAV).delete().eq("id", id).eq("user_id", user.id);
+  if(error) return alert("Could not delete favorite.");
+
+  await refreshFavorites();
+  await refreshFavDropdown();
+}
+
+async function refreshFavorites(){
+  await loadFavorites();
+}
+
+async function refreshFavDropdown(){
+  const sel = document.getElementById("resRestaurant");
+  const current = sel.value || "";
+  sel.innerHTML = '<option value="">— Not linked —</option>';
+
+  const {client,user} = await getClient();
+  if(!user) return;
+
+  const { data } = await client.from(T_FAV).select("id,name,city").eq("user_id", user.id).order("name", {ascending:true}).limit(250);
+  (data || []).forEach(r=>{
+    const opt = document.createElement("option");
+    opt.value = r.id;
+    opt.textContent = r.city ? `${r.name} • ${r.city}` : r.name;
+    sel.appendChild(opt);
+  });
+
+  sel.value = current;
+}
+
+async function saveReservation(){
+  const rid = document.getElementById("resRestaurant").value || null;
+  const nameManual = document.getElementById("resName").value.trim();
+  const startISO = toISO(document.getElementById("resStart").value);
+  if(!startISO) return alert("Pick a reservation time");
+  if(!rid && !nameManual) return alert("Enter restaurant name (or link a favorite)");
+
+  const {client,user} = await getClient();
+  if(!user) return alert("Please log in.");
+
+  let linkedName = null;
+  if(rid){
+    const { data } = await client.from(T_FAV).select("name").eq("id", rid).eq("user_id", user.id).maybeSingle();
+    linkedName = data?.name || null;
+  }
+
+  const payload = {
+    user_id: user.id,
+    restaurant_id: rid,
+    restaurant_name: linkedName || nameManual,
+    start_time: startISO,
+    end_time: toISO(document.getElementById("resEnd").value),
+    party_size: document.getElementById("resParty").value ? Number(document.getElementById("resParty").value) : null,
+    location: document.getElementById("resLocation").value.trim() || null,
+    confirmation_code: document.getElementById("resCode").value.trim() || null,
+    notes: document.getElementById("resNotes").value.trim() || null,
+    status: "scheduled"
+  };
+
+  const { error } = await client.from(T_RES).insert(payload);
+  if(error) return alert("Could not save reservation. Check table + RLS.");
+
+  clearRes();
+  setNotice("resNotice", "Saved. Your Hub “Next:” will update automatically.");
+  await refreshReservations();
+}
+
+async function loadReservations(){
+  const list = document.getElementById("resList");
+  list.innerHTML = "";
+
+  const {client,user} = await getClient();
+  if(!user){
+    list.innerHTML = "<div class='small'>Please log in.</div>";
+    return [];
+  }
+
+  const nowIso = new Date().toISOString();
+
+  const { data, error } = await client
+    .from(T_RES)
+    .select("id,restaurant_name,start_time,end_time,party_size,location,confirmation_code,notes,status,restaurant_id,user_restaurants(name)")
+    .eq("user_id", user.id)
+    .eq("status", "scheduled")
+    .gte("start_time", nowIso)
+    .order("start_time", { ascending:true })
+    .limit(200);
+
+  if(error){
+    list.innerHTML = "<div class='small'>Couldn’t load reservations.</div>";
+    return [];
+  }
+
+  const rows = data || [];
+  if(!rows.length){
+    list.innerHTML = "<div class='small'>No upcoming reservations.</div>";
+    return [];
+  }
+
+  rows.forEach(r=>{
+    const name = (r.user_restaurants && r.user_restaurants.name) || r.restaurant_name || "Reservation";
+    const party = r.party_size ? ` • Party: ${r.party_size}` : "";
+    const loc = r.location ? ` • ${esc(r.location)}` : "";
+    const code = r.confirmation_code ? ` • Code: ${esc(r.confirmation_code)}` : "";
+    const notes = r.notes ? `<div class="small" style="margin-top:6px;">${esc(r.notes)}</div>` : "";
+
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div>
+        <h4>${esc(name)}</h4>
+        <div class="meta">${fmtLocal(r.start_time)}${r.end_time ? " → " + fmtLocal(r.end_time) : ""}${party}${loc}${code}</div>
+        ${notes}
+      </div>
+      <div class="actions">
+        <button class="btn ok" data-ract="done" data-id="${r.id}">✅ Done</button>
+        <button class="btn danger" data-ract="cancel" data-id="${r.id}">❌ Cancel</button>
+        <button class="btn danger" data-ract="delete" data-id="${r.id}">🗑️ Delete</button>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+
+  return rows;
+}
+
+async function updateReservation(id, status){
+  const {client,user} = await getClient();
+  if(!user) return;
+
+  const { error } = await client
+    .from(T_RES)
+    .update({ status })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if(error) return alert("Could not update reservation.");
+  await refreshReservations();
+}
+
+async function deleteReservation(id){
+  if(!confirm("Delete this reservation?")) return;
+
+  const {client,user} = await getClient();
+  if(!user) return;
+
+  const { error } = await client.from(T_RES).delete().eq("id", id).eq("user_id", user.id);
+  if(error) return alert("Could not delete reservation.");
+  await refreshReservations();
+}
+
+async function refreshReservations(){
+  await loadReservations();
+}
+
+async function seedFavorites(){
+  const {client,user} = await getClient();
+  if(!user) return alert("Please log in first.");
+
+  const starters = [
+    { user_id:user.id, name:"Pho Saigon", cuisine:"Vietnamese", city:"Memphis", neighborhood:"", rating:5, notes:"Starter item — edit/delete anytime." },
+    { user_id:user.id, name:"Sushi Spot", cuisine:"Japanese", city:"Bartlett", neighborhood:"", rating:4, notes:"Starter item — edit/delete anytime." },
+    { user_id:user.id, name:"BBQ House", cuisine:"BBQ", city:"Memphis", neighborhood:"Downtown", rating:4, notes:"Starter item — edit/delete anytime." },
+  ];
+
+  const { data: existing } = await client.from(T_FAV).select("name").eq("user_id", user.id).limit(300);
+  const exists = new Set((existing || []).map(x => (x.name||"").toLowerCase().trim()));
+  const toInsert = starters.filter(s => !exists.has((s.name||"").toLowerCase().trim()));
+
+  if(!toInsert.length){
+    setNotice("favNotice", "Starters already exist (nothing to add).");
+    return;
+  }
+
+  const { error } = await client.from(T_FAV).insert(toInsert);
+  if(error) return alert("Could not add starters. Check table + RLS.");
+
+  setNotice("favNotice", `Added ${toInsert.length} starter favorite(s).`);
+  await refreshFavorites();
+  await refreshFavDropdown();
+}
+
+async function seedReservations(){
+  const {client,user} = await getClient();
+  if(!user) return alert("Please log in first.");
+
+  const now = new Date();
+  const mk = (days, hour, min, restaurant_name) => {
+    const d = new Date(now);
+    d.setDate(d.getDate()+days);
+    d.setHours(hour, min, 0, 0);
+    return {
+      user_id: user.id,
+      restaurant_id: null,
+      restaurant_name,
+      start_time: d.toISOString(),
+      end_time: null,
+      party_size: 2,
+      location: null,
+      confirmation_code: null,
+      notes: "Starter item — edit/delete anytime.",
+      status: "scheduled"
+    };
+  };
+
+  const starters = [
+    mk(2, 19, 0, "Date night dinner"),
+    mk(7, 18, 30, "Family dinner"),
+  ];
+
+  const end = new Date(now); end.setDate(end.getDate()+14);
+  const { data: existing } = await client
+    .from(T_RES)
+    .select("restaurant_name,start_time,status")
+    .eq("user_id", user.id)
+    .eq("status", "scheduled")
+    .gte("start_time", now.toISOString())
+    .lte("start_time", end.toISOString());
+
+  const sig = new Set((existing || []).map(x => `${(x.restaurant_name||"").toLowerCase().trim()}|${(x.start_time||"").slice(0,16)}`));
+  const toInsert = starters.filter(s => !sig.has(`${(s.restaurant_name||"").toLowerCase().trim()}|${(s.start_time||"").slice(0,16)}`));
+
+  if(!toInsert.length){
+    setNotice("resNotice", "Starter reservations already exist (nothing to add).");
+    return;
+  }
+
+  const { error } = await client.from(T_RES).insert(toInsert);
+  if(error) return alert("Could not add starter reservations. Check table + RLS.");
+
+  setNotice("resNotice", `Added ${toInsert.length} starter reservation(s).`);
+  await refreshReservations();
+}
+
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    applyTabs(btn.dataset.tab);
+  });
+});
+
+document.getElementById("btnSaveFav").addEventListener("click", saveFavorite);
+document.getElementById("btnClearFav").addEventListener("click", clearFav);
+document.getElementById("btnRefreshFavs").addEventListener("click", refreshFavorites);
+document.getElementById("btnSeedFavs").addEventListener("click", seedFavorites);
+
+document.getElementById("favSearch").addEventListener("input", ()=>{
+  clearTimeout(window.__favTimer);
+  window.__favTimer = setTimeout(()=>{ refreshFavorites().catch(()=>{}); }, 180);
+});
+document.getElementById("favSort").addEventListener("change", ()=>{ refreshFavorites().catch(()=>{}); });
+
+document.getElementById("favList").addEventListener("click", async (e)=>{
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  const act = btn.dataset.fact;
+  const id = btn.dataset.id;
+
+  if(act === "delete") return deleteFavorite(id);
+
+  if(act === "reserve"){
+    applyTabs("reservations");
+    document.getElementById("resRestaurant").value = id;
+    document.getElementById("resName").value = btn.dataset.name || "";
+    const dt = new Date();
+    dt.setDate(dt.getDate()+2);
+    dt.setHours(19,0,0,0);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth()+1).padStart(2,"0");
+    const d = String(dt.getDate()).padStart(2,"0");
+    document.getElementById("resStart").value = `${y}-${m}-${d}T19:00`;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+});
+
+document.getElementById("btnSaveRes").addEventListener("click", saveReservation);
+document.getElementById("btnClearRes").addEventListener("click", clearRes);
+document.getElementById("btnRefreshRes").addEventListener("click", refreshReservations);
+document.getElementById("btnSeedRes").addEventListener("click", seedReservations);
+
+document.getElementById("resList").addEventListener("click", async (e)=>{
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  const act = btn.dataset.ract;
+  const id = btn.dataset.id;
+
+  if(act === "done") return updateReservation(id, "done");
+  if(act === "cancel") return updateReservation(id, "canceled");
+  if(act === "delete") return deleteReservation(id);
+});
+
+(async function init(){
+  await refreshFavorites();
+  await refreshFavDropdown();
+  await refreshReservations();
+})();
+</script>
+</body>
+</html>

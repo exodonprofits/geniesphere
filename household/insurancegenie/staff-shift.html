@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Shift Hub — Salon Genie</title>
+<meta name="gs-config" content="/shared/config.json"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<script type="module">
+import { requireAuth } from "/shared/js/core/auth.js";
+window.__requireAuth = requireAuth;
+</script>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   SALON GENIE — SHIFT HUB (Staff Portal)
+   Warm cream · DM Serif Display · DM Sans · matches agent pages
+═══════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#FDFAF6;--s1:#FFFFFF;--s2:#F5F0E8;--s3:#EDE6D8;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.11);
+  --ink:#1C1814;--mid:#6A6058;--muted:#A89A8E;
+  --blush:#C4856A;--blush-dim:rgba(196,133,106,0.12);
+  --amber:#C4993A;--amber-dim:rgba(196,153,58,0.12);
+  --teal:#3D7A72;--teal-dim:rgba(61,122,114,0.12);
+  --rose:#C45A4A;--rose-dim:rgba(196,90,74,0.10);
+  --violet:#7A4EA8;--violet-dim:rgba(122,78,168,0.10);
+  --shadow:0 2px 14px rgba(28,24,20,0.07);
+  --shadow-lg:0 8px 32px rgba(28,24,20,0.10);
+  --r:10px;--r2:14px;--header-h:58px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;font-weight:400;min-height:100vh}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+header{position:sticky;top:0;z-index:100;height:var(--header-h);background:var(--s2);border-bottom:1px solid var(--border);box-shadow:0 1px 8px rgba(28,24,20,0.06)}
+.ap-header{max-width:1280px;margin:0 auto;display:flex;align-items:center;height:100%;padding:0 28px;gap:16px}
+.ap-left{display:flex;align-items:center;gap:14px;flex:1}
+.ap-brand{display:flex;align-items:center;gap:10px}
+.ap-logo-gem{width:30px;height:30px;background:linear-gradient(135deg,var(--blush),var(--amber));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.ap-brandname{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink)}
+.ap-brandname span{color:var(--blush)}
+.ap-brandtag{font-size:10px;color:var(--muted);margin-top:1px}
+.ap-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ap-user{position:relative}
+.ap-userstack{display:flex;flex-direction:column;gap:2px;align-items:flex-end;padding:7px 10px;cursor:pointer;min-width:160px;text-align:right;border:none;background:transparent}
+.ap-user-label{font-size:.92rem;font-weight:600;color:var(--ink);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-user-location{font-size:.78rem;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-menu{position:absolute;right:0;top:calc(100% + 8px);width:220px;border-radius:var(--r2);background:var(--s1);border:1px solid var(--border2);box-shadow:var(--shadow-lg);overflow:hidden;padding:6px;z-index:300}
+.ap-menu-item{width:100%;display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:var(--r);font-size:13px;font-weight:500;color:var(--mid);background:transparent;border:none;cursor:pointer;text-decoration:none}
+.ap-menu-item:hover{background:var(--blush-dim);color:var(--blush)}
+.ap-menu-item.danger{color:var(--rose)}
+.ap-menu-item.danger:hover{background:var(--rose-dim)}
+.ap-menu-divider{height:1px;background:var(--border);margin:4px 0}
+main{max-width:1280px;margin:0 auto;padding:28px 28px 80px}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.page-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--muted)}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--border2);background:var(--s1);color:var(--mid);cursor:pointer;transition:all .18s;text-decoration:none}
+.pill:hover{border-color:var(--blush);color:var(--blush)}
+.pill.primary{background:var(--blush);color:white;border-color:var(--blush);box-shadow:0 2px 10px rgba(196,133,106,.28)}
+.pill.primary:hover{background:#B5745A}
+.pill.teal{background:var(--teal-dim);color:var(--teal);border-color:rgba(61,122,114,.25)}
+.pill.teal:hover{background:var(--teal);color:white}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:860px){.split{grid-template-columns:1fr}}
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.panel-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--ink)}
+.panel-meta{font-size:11px;color:var(--muted)}
+.mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:700px){.mini-grid{grid-template-columns:1fr}}
+.mini{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.mini .k{font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--mid);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.mini .v{font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink);margin-bottom:3px;line-height:1.2}
+.mini .s{font-size:11px;color:var(--muted);line-height:1.4}
+.mini-actions{margin-top:10px}
+/* pending highlight */
+.mini.has-pending{border-color:rgba(196,153,58,0.4);background:var(--amber-dim)}
+.mini.has-pending .v{color:var(--amber)}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--ink)}
+.searchbar{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:9px 14px;margin-bottom:14px}
+.searchbar input{border:none;outline:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);width:100%}
+.searchbar input::placeholder{color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border2);background:var(--s1);color:var(--muted);cursor:pointer;transition:all .15s}
+.chip:hover,.chip[aria-pressed="true"]{background:var(--blush);color:white;border-color:var(--blush)}
+.tools-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+@media(max-width:1100px){.tools-grid{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:860px){.tools-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:600px){.tools-grid{grid-template-columns:repeat(3,1fr)}}
+.tool-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:16px 10px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;cursor:pointer;text-decoration:none;color:var(--ink);transition:transform .18s,box-shadow .18s,border-color .18s;box-shadow:var(--shadow);position:relative}
+.tool-card:hover{transform:translateY(-3px);border-color:var(--blush);box-shadow:0 6px 20px rgba(196,133,106,0.15)}
+.tool-card .tool-icon{font-size:26px;line-height:1}
+.tool-card p{font-size:11px;font-weight:500;color:var(--mid);line-height:1.3}
+.fav-btn{position:absolute;top:7px;right:7px;font-size:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;line-height:1;transition:color .15s}
+.fav-btn:hover{color:var(--amber)}
+.fav-btn[aria-pressed="true"]{color:var(--amber)}
+.tools-empty{font-size:12px;color:var(--muted);text-align:center;padding:24px 0}
+.back-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.site-footer{background:var(--s2);border-top:1px solid var(--border);padding:24px 0;margin-top:40px}
+.sf-inner{max-width:1280px;margin:0 auto;padding:0 28px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.sf-title{font-weight:700;color:var(--ink);margin-bottom:4px}
+.sf-sub,.sf-meta{font-size:12px;color:var(--muted)}
+.sf-links{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.sf-link{font-size:12px;color:var(--mid)}
+.sf-link:hover{color:var(--blush)}
+.sf-badges{display:flex;gap:8px}
+.sf-badge{font-size:10px;padding:3px 10px;border-radius:20px;background:var(--s1);border:1px solid var(--border2);color:var(--muted)}
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:500;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--ink);color:white;border-radius:10px;padding:12px 16px;font-size:12px;display:flex;align-items:flex-start;gap:10px;opacity:0;transform:translateY(8px);transition:all .2s;min-width:220px;max-width:320px;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast .t1{font-weight:600;margin-bottom:2px}
+.toast .t2{opacity:.75;font-size:11px}
+.toast .x{background:none;border:none;color:white;cursor:pointer;font-size:14px;opacity:.6;flex-shrink:0;margin-top:1px}
+.toast .x:hover{opacity:1}
+/* ── time-off request status pills ── */
+.tor-pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid transparent;white-space:nowrap;margin-left:6px}
+.tor-pill.pending{background:var(--amber-dim);color:var(--amber);border-color:rgba(196,153,58,.25)}
+.tor-pill.approved{background:var(--teal-dim);color:var(--teal);border-color:rgba(61,122,114,.25)}
+.tor-pill.denied{background:var(--rose-dim);color:var(--rose);border-color:rgba(196,90,74,.25)}
+.tor-req-row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:8px;background:var(--s2);font-size:12px}
+.tor-req-row-left{display:flex;flex-direction:column;gap:2px}
+.tor-req-label{font-weight:600;color:var(--ink)}
+.tor-req-dates{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+<a class="skip-link" style="position:absolute;left:-9999px" href="#main">Skip to main content</a>
+
+<header>
+  <div class="ap-header">
+    <div class="ap-left">
+      <a class="ap-brand" href="staff-shift.html">
+        <div class="ap-logo-gem">✦</div>
+        <div>
+          <div class="ap-brandname">Salon <span>Genie</span></div>
+          <div class="ap-brandtag">Shift Hub · Staff Portal</div>
+        </div>
+      </a>
+    </div>
+    <div class="ap-right" id="apRight">
+      <div class="ap-user" id="apUserWrap">
+        <button class="ap-userstack" id="userLabelBtn" type="button" aria-label="Open menu" aria-expanded="false">
+          <span class="ap-user-label" id="userLabel">Loading…</span>
+          <span class="ap-user-location" id="userLocationLabel">📍 Loading…</span>
+        </button>
+        <!-- Static HTML menu (pre-JS fallback) — PATCH: added 🔔 Notifications -->
+        <div class="ap-menu" id="userMenu" hidden>
+          <a href="staff-shift.html" class="ap-menu-item">📅 Shift Hub</a>
+          <a href="my-shifts.html" class="ap-menu-item">📋 Schedule Portal</a>
+          <a href="availability.html" class="ap-menu-item">✅ My Availability</a>
+          <a href="swap-shift.html" class="ap-menu-item">🔁 Swap Shift</a>
+          <a href="availability.html" class="ap-menu-item">🙋 Time Off Request</a>
+          <a href="notifications.html" class="ap-menu-item">🔔 Notifications</a>
+          <a href="task-board.html" class="ap-menu-item">📊 My Tasks</a>
+          <div class="ap-menu-divider"></div>
+          <a href="staff-profile.html" class="ap-menu-item">👤 My Profile</a>
+          <button type="button" class="ap-menu-item danger" id="menuSignOut">🚪 Sign out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">📅 Shift Hub</h1>
+      <div class="page-sub">Your staff portal — access your schedule, swap shifts, manage availability, and more.</div>
+    </div>
+    <div class="head-actions">
+      <button class="pill" type="button" id="btnToday">🧭 Today</button>
+      <a class="pill teal" href="swap-shift.html">🔁 Swap Shift</a>
+      <button class="pill" type="button" id="btnHelp">💡 Tips</button>
+    </div>
+  </div>
+
+  <div class="split">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">✨ My Schedule</div>
+        <div class="panel-meta" id="snapshotMeta">Loading…</div>
+      </div>
+      <div class="mini-grid">
+        <div class="mini" id="miniNext">
+          <div class="k">⏭️ Next shift</div>
+          <div class="v" id="miniNextVal">—</div>
+          <div class="s" id="miniNextSub">Your next scheduled shift.</div>
+        </div>
+        <div class="mini" id="miniWeek">
+          <div class="k">🗓️ This week</div>
+          <div class="v" id="miniWeekVal">—</div>
+          <div class="s" id="miniWeekSub">Total shifts this week.</div>
+        </div>
+        <!-- PATCH: pending card links to notifications and highlights when >0 -->
+        <div class="mini" id="miniAlerts">
+          <div class="k">🔔 Pending <a href="notifications.html" style="font-size:10px;color:var(--blush);margin-left:auto">View →</a></div>
+          <div class="v" id="miniAlertsVal">—</div>
+          <div class="s" id="miniAlertsSub">Swap or day-off requests.</div>
+        </div>
+      </div>
+      <!-- My Time Off Requests summary -->
+      <div id="torStatusWrap" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">🙋 My Time Off Requests</div>
+        <div id="torStatusList" style="display:flex;flex-direction:column;gap:6px"></div>
+        <a href="availability.html" style="display:inline-block;margin-top:8px;font-size:11px;font-weight:600;color:var(--blush);text-decoration:none">+ New request →</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">🚀 Quick Actions</div>
+        <div class="panel-meta">Common requests</div>
+      </div>
+      <div class="mini-grid">
+        <div class="mini">
+          <div class="k">🙋 Time off</div>
+          <div class="v" style="font-size:14px">Request off</div>
+          <div class="s">Submit via availability page.</div>
+          <div class="mini-actions"><a class="pill" href="availability.html">Open</a></div>
+        </div>
+        <div class="mini">
+          <div class="k">🔁 Swap shift</div>
+          <div class="v" style="font-size:14px">Ask teammate</div>
+          <div class="s">Propose a swap with a note.</div>
+          <div class="mini-actions"><a class="pill" href="swap-shift.html">Open</a></div>
+        </div>
+        <div class="mini">
+          <div class="k">✅ Availability</div>
+          <div class="v" style="font-size:14px">Update hours</div>
+          <div class="s">Set your regular schedule.</div>
+          <div class="mini-actions"><a class="pill" href="availability.html">Open</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-head">
+      <div class="section-title">🧰 Shift Tools</div>
+      <div class="panel-meta" id="toolsMeta">⭐ Star your favorites for quick access</div>
+    </div>
+
+    <div class="searchbar">
+      <span style="color:var(--muted)">🔍</span>
+      <input id="toolSearch" type="search" placeholder="Search tools… (calendar, swap, reminders)" autocomplete="off"/>
+    </div>
+
+    <div class="chips" id="filterChips">
+      <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
+      <button class="chip" type="button" data-filter="favorites" aria-pressed="false">⭐ Favorites</button>
+      <button class="chip" type="button" data-filter="planning" aria-pressed="false">🗓️ Planning</button>
+      <button class="chip" type="button" data-filter="requests" aria-pressed="false">🧾 Requests</button>
+      <button class="chip" type="button" data-filter="alerts" aria-pressed="false">🔔 Alerts</button>
+      <button class="chip" type="button" data-filter="history" aria-pressed="false">📚 History</button>
+    </div>
+
+    <div class="tools-grid" id="toolsGrid">
+      <a class="tool-card" href="swap-shift.html" data-tags="requests swap shift">
+        <button class="fav-btn" type="button" aria-label="Favorite Swap Shift" data-tool-id="swap-shift" aria-pressed="false">☆</button>
+        <div class="tool-icon">🔁</div><p>Swap Shift</p>
+      </a>
+      <a class="tool-card" href="availability.html#request" data-tags="requests time off">
+        <button class="fav-btn" type="button" aria-label="Favorite Request Off" data-tool-id="request-day-off" aria-pressed="false">☆</button>
+        <div class="tool-icon">🙋</div><p>Request Off</p>
+      </a>
+      <a class="tool-card" href="availability.html" data-tags="planning availability schedule">
+        <button class="fav-btn" type="button" aria-label="Favorite Availability" data-tool-id="availability" aria-pressed="false">☆</button>
+        <div class="tool-icon">✅</div><p>My Availability</p>
+      </a>
+      <a class="tool-card" href="shift-calendar.html" data-tags="planning calendar">
+        <button class="fav-btn" type="button" aria-label="Favorite Calendar" data-tool-id="shift-calendar" aria-pressed="false">☆</button>
+        <div class="tool-icon">📆</div><p>My Calendar</p>
+      </a>
+      <a class="tool-card" href="task-board.html" data-tags="tasks assigned my tasks today">
+        <button class="fav-btn" type="button" aria-label="Favorite My Tasks" data-tool-id="task-board" aria-pressed="false">☆</button>
+        <div class="tool-icon">📊</div><p>My Tasks</p>
+      </a>
+      <a class="tool-card" href="notifications.html" data-tags="alerts notifications">
+        <button class="fav-btn" type="button" aria-label="Favorite Notifications" data-tool-id="notifications" aria-pressed="false">☆</button>
+        <div class="tool-icon">🔔</div><p>Notifications</p>
+      </a>
+      <a class="tool-card" href="missed-shifts.html" data-tags="alerts missed shifts">
+        <button class="fav-btn" type="button" aria-label="Favorite Missed Shifts" data-tool-id="missed-shifts" aria-pressed="false">☆</button>
+        <div class="tool-icon">❌</div><p>Missed Shifts</p>
+      </a>
+      <a class="tool-card" href="shift-reminders.html" data-tags="alerts reminders notification">
+        <button class="fav-btn" type="button" aria-label="Favorite Reminders" data-tool-id="shift-reminders" aria-pressed="false">☆</button>
+        <div class="tool-icon">⏰</div><p>Reminders</p>
+      </a>
+      <a class="tool-card" href="google-calendar-sync.html" data-tags="planning sync google calendar">
+        <button class="fav-btn" type="button" aria-label="Favorite Google Sync" data-tool-id="google-calendar-sync" aria-pressed="false">☆</button>
+        <div class="tool-icon">📅</div><p>Sync Google</p>
+      </a>
+      <a class="tool-card" href="my-shifts.html" data-tags="planning schedule history">
+        <button class="fav-btn" type="button" aria-label="Favorite Schedule Portal" data-tool-id="my-shifts" aria-pressed="false">☆</button>
+        <div class="tool-icon">📋</div><p>Schedule Portal</p>
+      </a>
+    </div>
+    <div id="toolsEmpty" class="tools-empty" hidden>No tools match your search. Try clearing filters.</div>
+  </div>
+
+  <div class="back-row">
+    <a class="pill" href="my-shifts.html">📋 Schedule Portal</a>
+    <button class="pill" type="button" id="btnReset">♻️ Reset filters</button>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="sf-inner">
+    <div>
+      <div class="sf-title">Salon Genie</div>
+      <div class="sf-sub">Built for real salon teams — simple, fast, and reliable.</div>
+      <div class="sf-meta">© <span id="year"></span> Salon Genie. All rights reserved.</div>
+    </div>
+    <div>
+      <div class="sf-links">
+        <a class="sf-link" href="help.html">Help</a>
+        <a class="sf-link" href="privacy.html">Privacy</a>
+        <a class="sf-link" href="terms.html">Terms</a>
+      </div>
+      <div class="sf-badges">
+        <span class="sf-badge">🔒 Secure</span>
+        <span class="sf-badge">⚡ Fast</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+<script>
+'use strict';
+let sg = null;
+
+async function waitForAuth(ms) {
+  const t = Date.now();
+  while (Date.now() - t < ms) {
+    if (typeof window.__requireAuth === 'function') return window.__requireAuth;
+    await new Promise(r => setTimeout(r, 50));
+  }
+  return null;
+}
+
+async function initAuthGate(){
+  const requireAuth = await waitForAuth(5000);
+  if (!requireAuth) {
+    location.replace('/login.html?agent=salon&next=' + encodeURIComponent(location.pathname + location.search));
+    return {ok:false, user:null};
+  }
+  try {
+    const result = await requireAuth({ agent: 'salon' });
+    sg = result.client;
+    return {ok:true, user:result.user};
+  } catch(e) {
+    return {ok:false, user:null};
+  }
+}
+
+const apRight = document.getElementById('apRight');
+const userLabelBtn = document.getElementById('userLabelBtn');
+const userMenu = document.getElementById('userMenu');
+
+function closeMenu(){ if(userMenu){userMenu.hidden=true; userLabelBtn?.setAttribute('aria-expanded','false');} }
+function openMenu(){  if(userMenu){userMenu.hidden=false; userLabelBtn?.setAttribute('aria-expanded','true');} }
+if(userLabelBtn) userLabelBtn.addEventListener('click',e=>{e.stopPropagation();userMenu?.hidden?openMenu():closeMenu();});
+document.addEventListener('click',e=>{ if(apRight&&!apRight.contains(e.target)) closeMenu(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeMenu(); });
+
+function displayName(user){
+  if(!user) return 'Account';
+  const md=user.user_metadata||{};
+  const full=(md.full_name||md.name||'').trim();
+  if(full) return full;
+  const e=(user.email||'').split('@')[0]||'Account';
+  return e.length>18?e.slice(0,18)+'…':e;
+}
+
+function toast(title,msg){
+  const wrap=document.getElementById('toastWrap');
+  if(!wrap) return;
+  const el=document.createElement('div');
+  el.className='toast';
+  el.innerHTML=`<div class="t"><div class="t1">${esc(title)}</div><div class="t2">${esc(msg||'')}</div></div><button class="x" type="button" aria-label="Dismiss">✕</button>`;
+  wrap.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  const kill=()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(),200); };
+  el.querySelector('button.x').addEventListener('click',kill);
+  setTimeout(kill,4200);
+}
+
+function esc(s){ return String(s??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+async function initHeader(user){
+  const nextParam = encodeURIComponent(location.pathname+location.search);
+  const labelEl = document.getElementById('userLabel');
+  if(labelEl) labelEl.textContent = displayName(user);
+
+  let businessId=null, bizName='';
+
+  // ── Step 1: public.user_preferences (NOT salon schema) ──
+  try{
+    const {data:pref} = await sg.from('user_preferences')
+      .select('selected_business_id,active_business_id')
+      .eq('user_id',user.id)
+      .maybeSingle();
+    businessId = pref?.selected_business_id || pref?.active_business_id || null;
+  }catch(_){}
+
+  // ── Step 2: localStorage fallback ──
+  if(!businessId){
+    try{
+      businessId = localStorage.getItem('gs.active_business_id')
+                || localStorage.getItem('sg.active_business_id')
+                || null;
+    }catch(_){}
+  }
+
+  // ── Step 3: resolve business name ──
+  if(businessId){
+    try{ localStorage.setItem('gs.active_business_id', businessId); }catch(_){}
+    try{ localStorage.setItem('sg.active_business_id', businessId); }catch(_){}
+
+    // Try public business_profiles
+    try{
+      const {data:biz} = await sg.from('business_profiles')
+        .select('business_name')
+        .eq('id',businessId)
+        .maybeSingle();
+      bizName = biz?.business_name || '';
+    }catch(_){}
+
+    // Fallback: try salon.employees to confirm/correct business_id then retry
+    if(!bizName){
+      try{
+        const db = sg.schema ? sg.schema('salon') : sg;
+        const {data:emp} = await db.from('employees')
+          .select('business_id')
+          .eq('user_id',user.id)
+          .maybeSingle();
+        if(emp?.business_id) businessId = emp.business_id;
+        const {data:biz2} = await sg.from('business_profiles')
+          .select('business_name')
+          .eq('id',businessId)
+          .maybeSingle();
+        bizName = biz2?.business_name || '';
+      }catch(_){}
+    }
+  }
+
+  const locEl = document.getElementById('userLocationLabel');
+  if(locEl) locEl.textContent = bizName ? `📍 ${bizName}` : '📍 Location not set';
+
+  // PATCH: JS-injected menu includes 🔔 Notifications before divider
+  if(userMenu){
+    userMenu.innerHTML=`
+      <a href="staff-shift.html" class="ap-menu-item">📅 Shift Hub</a>
+      <a href="my-shifts.html" class="ap-menu-item">📋 Schedule Portal</a>
+      <a href="availability.html" class="ap-menu-item">✅ My Availability</a>
+      <a href="swap-shift.html" class="ap-menu-item">🔁 Swap Shift</a>
+      <a href="availability.html" class="ap-menu-item">🙋 Time Off Request</a>
+      <a href="notifications.html" class="ap-menu-item">🔔 Notifications</a>
+      <a href="task-board.html" class="ap-menu-item">📊 My Tasks</a>
+      <div class="ap-menu-divider"></div>
+      <a href="staff-profile.html" class="ap-menu-item">👤 My Profile</a>
+      <button type="button" class="ap-menu-item danger" id="btnSignOut">🚪 Sign out</button>`;
+    document.getElementById('btnSignOut')?.addEventListener('click',async()=>{
+      try{await sg.auth.signOut();}finally{location.href='/login.html?agent=salon&next='+nextParam;}
+    });
+  }
+
+  return {businessId};
+}
+
+function fmtDay(d){ try{return new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric'}).format(d);}catch(_){return d.toDateString();} }
+function fmtTime(d){ try{return new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(d);}catch(_){return '';} }
+
+async function loadShifts({userId, businessId}){
+  let employeeId = null;
+  try{
+    const db = sg.schema ? sg.schema('salon') : sg;
+    const {data:emp} = await db.from('employees').select('id').eq('business_id',businessId).eq('user_id',userId).maybeSingle();
+    employeeId = emp?.id||null;
+  }catch(_){}
+
+  if(employeeId && businessId){
+    try{
+      const db = sg.schema ? sg.schema('salon') : sg;
+      const todayStr = new Date().toISOString().slice(0,10);
+      const {data,error} = await db.from('shifts')
+        .select('id,shift_date,start_time,end_time,status,notes')
+        .eq('business_id',businessId).eq('employee_id',employeeId)
+        .gte('shift_date',todayStr).order('shift_date',{ascending:true}).limit(50);
+      if(!error && data) return {rows:data, via:'salon.shifts', employeeId};
+    }catch(_){}
+  }
+
+  for(const [tbl,userCol,timeCol] of [['staff_shifts','staff_user_id','start_time'],['shifts','user_id','start_time']]){
+    try{
+      let q = sg.from(tbl).select(`id,${timeCol},end_time,role,status`).limit(50).order(timeCol,{ascending:true});
+      if(businessId) q=q.eq('business_id',businessId);
+      q = q.eq(userCol,userId).gte(timeCol,new Date().toISOString());
+      const {data,error} = await q;
+      if(!error && data) return {rows:data, via:tbl, employeeId};
+    }catch(_){}
+  }
+  return {rows:[], via:null, employeeId};
+}
+
+// PATCH: query actual pending request tables instead of shift.status
+async function loadPendingCount({userId, businessId, employeeId}){
+  if(!businessId) return 0;
+  let count = 0;
+  const db = sg.schema ? sg.schema('salon') : sg;
+
+  // Outgoing swap requests from this employee
+  if(employeeId){
+    try{
+      const {count:c,error} = await db.from('shift_swap_requests')
+        .select('id', {count:'exact',head:true})
+        .eq('requester_id', employeeId)
+        .eq('status','pending');
+      if(!error && c) count += c;
+    }catch(_){}
+    // Incoming swap requests to this employee
+    try{
+      const {count:c,error} = await db.from('shift_swap_requests')
+        .select('id', {count:'exact',head:true})
+        .eq('partner_id', employeeId)
+        .eq('status','pending');
+      if(!error && c) count += c;
+    }catch(_){}
+  }
+
+  // Time-off requests for this employee (our table uses employee_id not user_id)
+  if(employeeId){
+    try{
+      const {count:c,error} = await db.from('time_off_requests')
+        .select('id', {count:'exact',head:true})
+        .eq('employee_id', employeeId)
+        .eq('status','pending');
+      if(!error && typeof c === 'number') count += c;
+    }catch(_){}
+  }
+
+  return count;
+}
+
+function updateSnapshot({rows, via, employeeId}){
+  const now = new Date();
+  const metaEl = document.getElementById('snapshotMeta');
+  // Show "not connected" only if we couldn't find the employee record at all
+  // Having no shifts is normal — don't show a scary "not connected" message
+  const isConnected = via || employeeId;
+  if(metaEl) metaEl.textContent = via ? `Live · ${fmtTime(now)}` : isConnected ? `Live · ${fmtTime(now)}` : 'Schedule not connected';
+
+  const shifts = (rows||[]).map(r=>{
+    const start = new Date(r.shift_date ? r.shift_date+'T'+(r.start_time||'00:00:00') : (r.start_time||r.starts_at||''));
+    const end   = new Date(r.shift_date ? r.shift_date+'T'+(r.end_time||'00:00:00')   : (r.end_time||r.ends_at||start));
+    return {start,end,status:r.status||'',title:r.role||r.title||'Shift'};
+  }).filter(x=>!isNaN(x.start.getTime()) && x.start >= new Date(now.toDateString()));
+
+  shifts.sort((a,b)=>a.start-b.start);
+
+  const nextEl = document.getElementById('miniNextVal');
+  const nextSub = document.getElementById('miniNextSub');
+  const weekEl = document.getElementById('miniWeekVal');
+  const weekSub = document.getElementById('miniWeekSub');
+
+  if(!shifts.length){
+    if(nextEl) nextEl.textContent='No upcoming shifts';
+    if(nextSub) nextSub.textContent='Ask your manager to publish the schedule.';
+    if(weekEl) weekEl.textContent='0';
+    if(weekSub) weekSub.textContent='No shifts this week.';
+    return;
+  }
+
+  const next = shifts[0];
+  if(nextEl) nextEl.textContent = `${fmtDay(next.start)} · ${fmtTime(next.start)}–${fmtTime(next.end)}`;
+  if(nextSub) nextSub.textContent = next.title;
+
+  const weekEnd = new Date(now.getTime()+7*24*60*60*1000);
+  const thisWeek = shifts.filter(x=>x.start<=weekEnd);
+  let mins = 0;
+  for(const s of thisWeek){ const d=(s.end-s.start)/60000; if(isFinite(d)&&d>0) mins+=d; }
+  const hrs = Math.round(mins/60*10)/10;
+  if(weekEl) weekEl.textContent = `${thisWeek.length} shift${thisWeek.length!==1?'s':''}${hrs?` · ${hrs}h`:''}`;
+  if(weekSub) weekSub.textContent='Next 7 days';
+}
+
+function updatePendingUI(count){
+  const alertEl = document.getElementById('miniAlertsVal');
+  const alertSub = document.getElementById('miniAlertsSub');
+  const miniAlerts = document.getElementById('miniAlerts');
+  if(alertEl) alertEl.textContent = String(count);
+  if(alertSub) alertSub.textContent = count ? 'Pending requests to review.' : 'No pending actions.';
+  // Highlight the card amber when there are pending items
+  if(miniAlerts) miniAlerts.classList.toggle('has-pending', count > 0);
+}
+
+const FAV_KEY='sg_staff_shift_favorites_v1';
+function readFavs(){ try{return new Set(JSON.parse(localStorage.getItem(FAV_KEY)||'[]'));}catch(_){return new Set();} }
+function saveFavs(s){ try{localStorage.setItem(FAV_KEY,JSON.stringify([...s]));}catch(_){} }
+
+function applyFavs(){
+  const favs=readFavs();
+  document.querySelectorAll('.fav-btn[data-tool-id]').forEach(btn=>{
+    const on=favs.has(btn.dataset.toolId);
+    btn.setAttribute('aria-pressed',String(on));
+    btn.textContent=on?'⭐':'☆';
+  });
+}
+
+let activeFilter='all';
+function runFilter(){
+  const q=(document.getElementById('toolSearch')?.value||'').toLowerCase();
+  const favs=readFavs();
+  let shown=0;
+  document.querySelectorAll('#toolsGrid .tool-card').forEach(card=>{
+    const tags=(card.dataset.tags||'').toLowerCase();
+    const label=(card.querySelector('p')?.textContent||'').toLowerCase();
+    const id=card.querySelector('.fav-btn')?.dataset.toolId||'';
+    const matchSearch=!q||tags.includes(q)||label.includes(q);
+    let matchFilter=true;
+    if(activeFilter==='favorites') matchFilter=favs.has(id);
+    else if(activeFilter==='planning') matchFilter=tags.includes('planning')||tags.includes('calendar');
+    else if(activeFilter==='requests') matchFilter=tags.includes('requests')||tags.includes('swap');
+    else if(activeFilter==='alerts') matchFilter=tags.includes('alerts')||tags.includes('reminders')||tags.includes('missed');
+    else if(activeFilter==='history') matchFilter=tags.includes('history');
+    const ok=matchSearch&&matchFilter;
+    card.style.display=ok?'':'none';
+    if(ok) shown++;
+  });
+  document.getElementById('toolsEmpty').hidden=shown!==0;
+}
+
+async function loadTorStatus({employeeId}){
+  if(!sg || !employeeId) return;
+  try{
+    const db = sg.schema ? sg.schema('salon') : sg;
+    const {data,error} = await db.from('time_off_requests')
+      .select('id,from_date,to_date,type_label,type,status')
+      .eq('employee_id', employeeId)
+      .order('requested_at', {ascending:false})
+      .limit(5);
+    if(error || !data || !data.length) return;
+
+    const wrap = document.getElementById('torStatusWrap');
+    const list = document.getElementById('torStatusList');
+    if(!wrap || !list) return;
+
+    const TYPE_ICONS = {pto:'🌴',personal:'🙂',sick:'🤒',family:'👨‍👩‍👧',unpaid:'📋'};
+    const STATUS_LABEL = {pending:'⏳ Pending',approved:'✓ Approved',denied:'✕ Denied'};
+    const STATUS_CLS   = {pending:'pending',approved:'approved',denied:'denied'};
+
+    list.innerHTML = data.map(r => {
+      const icon  = TYPE_ICONS[r.type] || '📋';
+      const label = r.type_label || r.type || 'Time Off';
+      const from  = r.from_date ? new Date(r.from_date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+      const to    = r.to_date   ? new Date(r.to_date  +'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+      const dates = r.from_date === r.to_date ? from : from+' – '+to;
+      const cls   = STATUS_CLS[r.status] || 'pending';
+      const stxt  = STATUS_LABEL[r.status] || r.status;
+      return `<div class="tor-req-row">
+        <div class="tor-req-row-left">
+          <span class="tor-req-label">${icon} ${label}</span>
+          <span class="tor-req-dates">${dates}</span>
+        </div>
+        <span class="tor-pill ${cls}">${stxt}</span>
+      </div>`;
+    }).join('');
+
+    wrap.style.display = 'block';
+  }catch(_){}
+}
+
+(async function boot(){
+  const gate = await initAuthGate();
+  if(!gate?.ok) return;
+
+  const {businessId} = await initHeader(gate.user);
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // Snapshot — load shifts and pending in parallel
+  document.getElementById('snapshotMeta').textContent='Loading…';
+  const result = await loadShifts({userId:gate.user.id, businessId});
+  updateSnapshot(result);
+
+  // PATCH: load pending count from actual request tables, not shift.status
+  const pendingCount = await loadPendingCount({
+    userId: gate.user.id,
+    businessId,
+    employeeId: result.employeeId
+  });
+  updatePendingUI(pendingCount);
+
+  // Load and show the staff member's own time-off request history
+  if(result.employeeId) loadTorStatus({employeeId: result.employeeId});
+
+  if(!result.via && !result.employeeId){
+    const m=document.getElementById('toolsMeta');
+    if(m) m.textContent='⭐ Star favorites · Schedule not connected yet — ask your manager.';
+  }
+
+  applyFavs();
+  document.querySelectorAll('.fav-btn[data-tool-id]').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.preventDefault(); e.stopPropagation();
+      const id=btn.dataset.toolId; if(!id) return;
+      const favs=readFavs();
+      if(favs.has(id)) favs.delete(id); else favs.add(id);
+      saveFavs(favs);
+      applyFavs();
+      runFilter();
+      toast('Saved',favs.has(id)?'Added to favorites.':'Removed from favorites.');
+    });
+  });
+
+  document.querySelectorAll('.chip[data-filter]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      activeFilter=btn.dataset.filter||'all';
+      document.querySelectorAll('.chip[data-filter]').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.filter===activeFilter)));
+      runFilter();
+    });
+  });
+
+  document.getElementById('toolSearch')?.addEventListener('input',runFilter);
+
+  document.getElementById('btnReset')?.addEventListener('click',()=>{
+    document.getElementById('toolSearch').value='';
+    activeFilter='all';
+    document.querySelectorAll('.chip[data-filter]').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.filter==='all')));
+    runFilter();
+    toast('Reset','Filters cleared.');
+  });
+  document.getElementById('btnToday')?.addEventListener('click',()=>{ window.scrollTo({top:0,behavior:'smooth'}); toast('Today','Scrolled to top.'); });
+  document.getElementById('btnHelp')?.addEventListener('click',()=>toast('Tips','⭐ Favorite your most-used tools. Use "Swap Shift" early so teammates can cover.'));
+
+  runFilter();
+})();
+</script>
+</body>
+</html>
