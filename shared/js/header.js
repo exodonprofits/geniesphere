@@ -30,7 +30,7 @@ async function injectUserBar() {
     logoWrapper.id = "logo-wrapper";
     logoWrapper.innerHTML = `
       <a href="/dashboard/${role}_dashboard.html">
-        <img src="/shared/assets/logo/genie-logo.png" alt="GenieSphere Logo" class="genie-logo" />
+        <img src="/shared/assets/logo/geniesphere_logo.png" alt="GenieSphere Logo" class="genie-logo" />
       </a>
     `;
     document.body.prepend(logoWrapper);
