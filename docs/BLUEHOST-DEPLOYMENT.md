@@ -1,50 +1,25 @@
-# Bluehost upload from GitHub
+# Bluehost FTPS connection test
 
-This workflow packages public files and uploads them only when manually started
-on main with preview_only unchecked. Existing files with matching paths are
-overwritten; other server files are retained. Back up the existing website first.
-The current index.html is the starter homepage: uploading it replaces your live homepage.
+The workflow currently performs a read-only explicit FTPS test on port 21.
+It verifies the TLS certificate, authenticates, encrypts the data channel, and
+lists the FTP account root. No files are uploaded, created, overwritten or deleted.
+Automatic website publishing is paused during this connection-only test.
 
-## Bluehost setup
+Repository Actions secrets required:
+- BLUEHOST_HOST: qyg.lxt.mybluehost.me
+- BLUEHOST_USER: deploybhgeniesphere@geniesphere.com
+- BLUEHOST_FTP_PASSWORD: this FTP account's password
 
-1. Open Websites > Manage > Files & Access. Confirm the document root for geniesphere.com.
-   Use the exact absolute directory, for example /home/ACCOUNT/public_html.
-2. Enable SSH access. Confirm the server hostname, account username and SSH port.
-3. Create a dedicated SSH key and authorize its public key in Bluehost.
-   Store the private key only in GitHub secrets, never in this repository.
-4. Confirm SSH login works and tar is available on the server.
-5. Obtain the server host key and verify its fingerprint with Bluehost before trusting it.
-   A known_hosts line uses HOST for port 22 or [HOST]:PORT for other ports.
+SSH keys, known_hosts, and document-root variables are not used by this test.
+The FTP account is scoped to /home2/qyglxtmy/public_html; FTPS sees that as /.
+The test verifies access, but does not independently verify domain routing.
 
-## GitHub setup
+Upload .github/workflows/bluehost.yml to main through your GitHub account.
+Only this workflow is needed for the test; it does not check out website code.
+It starts on a change to that workflow on main and can also be run manually:
+Actions > Bluehost FTPS connection test > Run workflow.
+Review the connection job's output for PASS lines or the missing-secret names.
 
-Open Settings > Environments and create bluehost. Add environment secrets:
-
-- BLUEHOST_HOST: Bluehost server hostname or IP.
-- BLUEHOST_USER: Bluehost account username.
-- BLUEHOST_SSH_KEY: complete private key, without a passphrase, including header/footer.
-- BLUEHOST_KNOWN_HOSTS: verified SSH known_hosts entry for that server.
-
-Add environment variables:
-
-- BLUEHOST_DOCUMENT_ROOT: exact absolute domain document root.
-- BLUEHOST_SSH_PORT: SSH port, usually 22.
-
-Commit and push the logo changes, scripts, and workflow to main.
-Open Actions > Bluehost upload > Run workflow. First leave preview_only checked.
-Download bluehost-website and review manifest.txt. Run again with preview_only
-unchecked to upload. Check the homepage, dashboard, and both logo URLs afterwards.
-
-## Scope and limitations
-
-The package uses Git-tracked public HTML, scripts, styles, JSON and media.
-It excludes configuration, environment files, database migrations, documentation,
-archives, backups and vendor source code (the browser Supabase bundle is included).
-Review JSON and browser scripts for private data before publishing.
-This deploys the static website only; it does not implement missing APIs or repair
-broken links. SSH connection and a real upload require your Bluehost setup.
-No automatic uploads on push are enabled.
-
-References:
-- https://www.bluehost.com/help/article/sftp
-- https://www.bluehost.com/help/article/am-website-files-and-access-tab
+The connected GitHub integration returned 403 Resource not accessible by
+integration when attempting to create the workflow. No remote workflow was
+created by that attempt, and no real connection test has run yet.

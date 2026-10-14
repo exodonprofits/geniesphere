@@ -1,68 +1,55 @@
-name: Bluehost upload
+name: Bluehost FTPS connection test
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bluehost.yml'
   workflow_dispatch:
-    inputs:
-      preview_only:
-        description: "Prepare downloadable files only (no upload)"
-        type: boolean
-        default: true
 permissions:
   contents: read
 concurrency:
-  group: bluehost-upload
+  group: bluehost-connection-test
   cancel-in-progress: false
 jobs:
-  package:
+  connection:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: python scripts/package_site.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: bluehost-website
-          path: dist/
-          retention-days: 7
-  upload:
-    if: ${{ !inputs.preview_only && github.ref == 'refs/heads/main' }}
-    needs: package
-    runs-on: ubuntu-latest
-    environment: bluehost
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: bluehost-website
-          path: dist/
-      - name: Upload website over SSH
+      - name: Verify FTPS login and destination (read only)
         env:
-          BH_HOST: ${{ secrets.BLUEHOST_HOST }}
-          BH_USER: ${{ secrets.BLUEHOST_USER }}
-          BH_KEY: ${{ secrets.BLUEHOST_SSH_KEY }}
-          BH_KNOWN_HOSTS: ${{ secrets.BLUEHOST_KNOWN_HOSTS }}
-          BH_PATH: ${{ vars.BLUEHOST_DOCUMENT_ROOT }}
-          BH_PORT: ${{ vars.BLUEHOST_SSH_PORT || '22' }}
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USER: ${{ secrets.BLUEHOST_USER }}
+          BLUEHOST_FTP_PASSWORD: ${{ secrets.BLUEHOST_FTP_PASSWORD }}
         shell: bash
         run: |
-          set -euo pipefail
-          [[ "$BH_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
-          [[ "$BH_USER" =~ ^[a-zA-Z0-9_-]+$ ]]
-          [[ "$BH_PORT" =~ ^[0-9]+$ ]]
-          [[ "$BH_PATH" =~ ^/home/[a-zA-Z0-9_-]+/[a-zA-Z0-9_./-]+$ ]]
-          [[ "$BH_PATH" != *".."* ]]
-          test -n "$BH_KEY"
-          test -n "$BH_KNOWN_HOSTS"
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' "$BH_KEY" > ~/.ssh/bluehost
-          printf '%s\n' "$BH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/bluehost ~/.ssh/known_hosts
-          trap 'rm -f ~/.ssh/bluehost' EXIT
-          target="$BH_USER@$BH_HOST"
-          options=(-i ~/.ssh/bluehost -o BatchMode=yes -o StrictHostKeyChecking=yes)
-          ssh "${options[@]}" -p "$BH_PORT" "$target" "test -d '$BH_PATH'"
-          remote_archive=$(ssh "${options[@]}" -p "$BH_PORT" "$target" 'mktemp /tmp/geniesphere-upload.XXXXXXXX.tar.gz')
-          [[ "$remote_archive" =~ ^/tmp/geniesphere-upload\.[a-zA-Z0-9]+\.tar\.gz$ ]]
-          scp "${options[@]}" -P "$BH_PORT" dist/website.tar.gz "$target:$remote_archive"
-          ssh "${options[@]}" -p "$BH_PORT" "$target" "tar -xzf '$remote_archive' -C '$BH_PATH' && rm -f '$remote_archive'"
+          python3 - <<'PY'
+          import ftplib
+          import os
+          import ssl
+          import sys
+          required = ("BLUEHOST_HOST", "BLUEHOST_USER", "BLUEHOST_FTP_PASSWORD")
+          missing = [key for key in required if not os.environ.get(key)]
+          if missing:
+              sys.exit("Missing GitHub repository secrets: " + ", ".join(missing))
+          try:
+              with ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=30) as ftp:
+                  ftp.connect(os.environ["BLUEHOST_HOST"], 21)
+                  ftp.auth()
+                  print("PASS: explicit FTPS connection and server certificate verification")
+                  ftp.login(os.environ["BLUEHOST_USER"], os.environ["BLUEHOST_FTP_PASSWORD"])
+                  print("PASS: account authentication")
+                  ftp.prot_p()
+                  ftp.cwd("/")
+                  names = ftp.nlst()
+                  print("PASS: encrypted directory listing at account root")
+                  print(f"Directory contains {len(names)} entries.")
+                  if "index.html" in names:
+                      print("Existing index.html detected.")
+                  elif "public_html" in names:
+                      sys.exit("Root contains public_html; verify account scope before deployment.")
+                  print("Connection test passed. No files were uploaded, created, or deleted.")
+          except Exception as exc:
+              print("FTPS test failed: " + type(exc).__name__)
+              print("Check hostname/certificate, account password, and FTP access in Bluehost.")
+              sys.exit(1)
+          PY
