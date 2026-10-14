@@ -106,7 +106,7 @@ async function generateMealPlanFromData(data) {
     Pantry Staples: ${data.shopping_budget.pantry_staples_available.join(", ")}
 `;
 
-  const apiKey = "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"; // Replace with your key
+  const apiKey = ""; // Replace with your key
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
