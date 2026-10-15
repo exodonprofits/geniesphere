@@ -20,6 +20,12 @@ It starts on a change to that workflow on main and can also be run manually:
 Actions > Bluehost FTPS connection test > Run workflow.
 Review the connection job's output for PASS lines or the missing-secret names.
 
-The connected GitHub integration returned 403 Resource not accessible by
-integration when attempting to create the workflow. No remote workflow was
-created by that attempt, and no real connection test has run yet.
+On failure the job prints the underlying reason. If the certificate check
+fails, a second diagnostic step (no login) prints the subject, issuer, expiry
+and subjectAltName names of the server certificate. Set BLUEHOST_HOST to one
+of those names. Never disable certificate verification to get a pass.
+
+Status (2026-10-14): the workflow is on main and has run, failing with
+SSLCertVerificationError. The runner reaches port 21 and starts TLS, but the
+certificate does not validate for qyg.lxt.mybluehost.me (likely a name
+mismatch with the server hostname). Login has not been tested yet.
