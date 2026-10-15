@@ -39,3 +39,9 @@
 **Decision:** `bluehost-deploy.yml` runs only on manual dispatch from main, defaults to a dry run, never deletes server files that are not being replaced, skips unchanged files via a remote sha256 manifest, and archives any pre-existing server file before replacing it. n8n workflow exports are excluded from the package.
 
 **Reason:** The live web root already contains files not managed by this repo, and the 0.1 refactor is in progress, so publishing should be a deliberate act with a reviewable plan and an undo path. A deleting sync could wipe unmanaged content. n8n exports expose webhook URLs and are not used by any page.
+
+## ADR-009 — app-config.js serves both legacy GSConfig and the canonical client
+
+**Decision:** `shared/js/app-config.js` keeps the live `window.GSConfig` loader (fetches `/shared/config.json`) and also sets `window.GenieSphereConfig` synchronously with the public Supabase URL and anon key, which `shared/js/gs-client.js` reads. `scripts/package_site.py` refuses to package if those values differ from `shared/config.json`.
+
+**Reason:** The live site's pages (signup, credit card, nutrition and others) call `GSConfig`; the repo's placeholder `app-config.js` defined only an empty `GenieSphereConfig`, so deploying it would have broken both the legacy pages and the canonical client. The anon key is public by design (RLS protects data). Remove the `GSConfig` loader once no active page uses it.

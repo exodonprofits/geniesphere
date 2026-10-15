@@ -1,6 +1,7 @@
 """Package tracked public website files; never include server configuration."""
 from pathlib import Path
 import json
+import re
 import subprocess
 import tarfile
 
@@ -44,6 +45,16 @@ for required in ("index.html", "shared/assets/logo/geniesphere_logo.png",
                  "shared/assets/logo/geniesphere_logo_name.png"):
     if required not in selected:
         raise SystemExit(f"Required tracked file missing: {required}")
+
+# app-config.js repeats the public Supabase values for the synchronous canonical
+# client; refuse to ship if it has drifted from /shared/config.json.
+config = json.loads((root / "shared/config.json").read_text(encoding="utf-8"))
+app_config = (root / "shared/js/app-config.js").read_text(encoding="utf-8")
+for key in ("supabaseUrl", "supabaseAnonKey"):
+    match = re.search(key + r':\s*window\.\w+\s*\|\|\s*"([^"]*)"', app_config)
+    if not match or match.group(1) != config.get(key):
+        raise SystemExit(f"shared/js/app-config.js {key} does not match shared/config.json")
+
 output = root / "dist"
 output.mkdir(exist_ok=True)
 with tarfile.open(output / "website.tar.gz", "w:gz") as bundle:
