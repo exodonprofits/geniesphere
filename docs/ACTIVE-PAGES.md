@@ -6,7 +6,7 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 | Capability | Canonical path | Status |
 |---|---|---|
-| App entry | `/index.html` | starter |
+| App entry | `/index.html` | live marketing homepage (pulled from Bluehost 2026-10-15; links to `/onboarding/login.html` and `/dashboard/*`; `/about.html` exists only on the server) |
 | Login | `/core/auth/login.html` | starter |
 | Dashboard | `/core/dashboard/index.html` | starter |
 | Settings | `/core/settings/index.html` | starter |
