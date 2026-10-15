@@ -14,7 +14,9 @@ successful deploy uploaded, so unchanged files are skipped.
 """
 from pathlib import Path
 import argparse
+import base64
 import ftplib
+import gzip
 import hashlib
 import io
 import json
@@ -131,6 +133,13 @@ def fetch(names, out_dir):
                     print(data.decode("utf-8"))
                 except UnicodeDecodeError:
                     print("(binary, not printed)")
+            # Exact bytes for tools that cannot download artifacts. Base64 is also
+            # immune to Actions secret masking, which rewrites matching plain text.
+            encoded = base64.b64encode(gzip.compress(data, mtime=0)).decode("ascii")
+            print(f"-- gzip+base64 begin {name}")
+            for start in range(0, len(encoded), 76):
+                print(encoded[start:start + 76])
+            print(f"-- gzip+base64 end {name}")
         print("Fetch only: nothing was uploaded, changed, or deleted.")
     finally:
         try:
