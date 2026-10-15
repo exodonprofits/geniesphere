@@ -46,3 +46,23 @@ cycling policies at them. Same access rules, no recursion.
 6. `modules/grocery/index.html`: one list per household, add / check off /
    remove items.
 7. Update `docs/ACTIVE-PAGES.md`; deploy via dry run → upload.
+
+## Progress (2026-10-15)
+
+| Step | State |
+| --- | --- |
+| 1. RLS recursion fix (0003) | applied and verified as member, non-member and anon |
+| 2. Core household context | `core/household/household.js` |
+| 3. Core login | `core/auth/login.html` |
+| 4. Core dashboard | `core/dashboard/index.html` |
+| 5. Grocery schema (0004) | applied; member CRUD works, outsider insert blocked (42501), outsider sees/updates 0 rows |
+| 6. Grocery page | `modules/grocery/index.html` |
+| 7. Registry / deploy | registry updated; deploy pending a dry run |
+
+Browser test: `tests/e2e/slice1.test.js` (all steps pass against an
+in-memory Supabase stand-in). Real sign-in still needs a manual check on the
+live site after deploy.
+
+Supabase connector note: `DROP POLICY` and unscoped `UPDATE` hang in the
+connector (likely a confirmation prompt it cannot show). Use `ALTER POLICY`
+and scoped statements.

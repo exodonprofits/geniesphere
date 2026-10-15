@@ -7,18 +7,20 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 | Capability | Canonical path | Status |
 |---|---|---|
 | App entry | `/index.html` | live marketing homepage (pulled from Bluehost 2026-10-15; links to `/onboarding/login.html` and `/dashboard/*`; `/about.html` exists only on the server) |
-| Login | `/core/auth/login.html` | starter |
-| Dashboard | `/core/dashboard/index.html` | starter |
+| Login | `/core/auth/login.html` | slice 1: email/password via `gs-auth`; honours same-site `?next=` |
+| Dashboard | `/core/dashboard/index.html` | slice 1: session required; household name + switcher; open `household_tasks` |
 | Settings | `/core/settings/index.html` | starter |
 | Tasks | `/core/tasks/index.html` | starter |
 | Notifications | `/core/notifications/index.html` | starter |
+
+| Household context (service) | `/core/household/household.js` | slice 1: current household from `user_household_context`, else first membership by name |
 
 ## Modules
 
 | Module | Canonical path | Status |
 |---|---|---|
 | Nutrition | `/modules/nutrition/index.html` | starter |
-| Grocery | `/modules/grocery/index.html` | starter |
+| Grocery | `/modules/grocery/index.html` | slice 1: shared household list (`shopping_lists` / `shopping_items`) |
 | Home | `/modules/home/index.html` | starter |
 
 ## Legacy migration rule

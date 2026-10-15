@@ -1,1 +1,204 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Grocery Genie</title><link rel="stylesheet" href="/shared/css/app.css"></head><body><main class="gs-shell"><section class="gs-card"><h1>Grocery Genie</h1><p class="gs-muted">Starter shell. Migrate the approved existing implementation into this canonical module.</p><p><a href="/core/dashboard/index.html">Back to Dashboard</a></p></section></main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Grocery Genie · GenieSphere</title>
+  <link rel="stylesheet" href="/shared/css/app.css" />
+</head>
+<body>
+  <main class="gs-shell gs-stack" style="max-width:720px">
+    <div class="gs-spread">
+      <a href="/core/dashboard/index.html">← Dashboard</a>
+      <span id="household-name" class="gs-muted"></span>
+    </div>
+    <h1 style="margin:0">Grocery Genie</h1>
+
+    <section class="gs-card gs-stack">
+      <form id="add-form" class="gs-row" autocomplete="off">
+        <input id="item-name" class="gs-input gs-grow" placeholder="Add an item (e.g. Milk)" maxlength="200" aria-label="Item" />
+        <input id="item-qty" class="gs-input" placeholder="Qty" maxlength="60" style="width:110px" aria-label="Quantity" />
+        <button class="gs-btn gs-btn-primary" type="submit">Add</button>
+      </form>
+      <p id="status" class="gs-status" role="status"></p>
+      <ul id="items" class="gs-list"></ul>
+      <div class="gs-spread">
+        <span id="summary" class="gs-muted"></span>
+        <button id="clear-checked" class="gs-link-btn" type="button" hidden>Clear checked items</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="/shared/vendor/supabase.min.js"></script>
+  <script src="/shared/js/app-config.js"></script>
+  <script src="/shared/js/gs-client.js"></script>
+  <script src="/shared/js/gs-auth.js"></script>
+  <script src="/core/household/household.js"></script>
+  <script>
+    (function () {
+      var GS = window.GenieSphere;
+      var state = { householdId: null, listId: null, items: [] };
+      var status = document.getElementById('status');
+
+      function db() { return GS.getSupabase(); }
+
+      function show(message, isError) {
+        status.textContent = message || '';
+        status.classList.toggle('gs-error', !!isError);
+      }
+
+      async function activeListId(householdId) {
+        var found = await db().from('shopping_lists')
+          .select('id').eq('household_id', householdId).is('archived_at', null)
+          .order('created_at', { ascending: true }).limit(1);
+        if (found.error) throw found.error;
+        if (found.data.length) return found.data[0].id;
+        var created = await db().from('shopping_lists')
+          .insert({ household_id: householdId, title: 'Shopping list' }).select('id').single();
+        if (created.error) throw created.error;
+        return created.data.id;
+      }
+
+      async function loadItems() {
+        var result = await db().from('shopping_items')
+          .select('id, name, quantity, checked')
+          .eq('shopping_list_id', state.listId)
+          .order('checked', { ascending: true })
+          .order('created_at', { ascending: true });
+        if (result.error) throw result.error;
+        state.items = result.data || [];
+        render();
+      }
+
+      function render() {
+        var list = document.getElementById('items');
+        list.textContent = '';
+        if (!state.items.length) {
+          var empty = document.createElement('li');
+          empty.className = 'gs-muted';
+          empty.textContent = 'The list is empty.';
+          list.appendChild(empty);
+        }
+        state.items.forEach(function (item) {
+          var li = document.createElement('li');
+
+          var box = document.createElement('input');
+          box.type = 'checkbox';
+          box.checked = item.checked;
+          box.setAttribute('aria-label', 'Got ' + item.name);
+          box.addEventListener('change', function () { toggle(item, box.checked); });
+
+          var label = document.createElement('span');
+          label.className = 'gs-grow' + (item.checked ? ' gs-done' : '');
+          label.textContent = item.name;
+
+          li.appendChild(box);
+          li.appendChild(label);
+
+          if (item.quantity) {
+            var qty = document.createElement('span');
+            qty.className = 'gs-muted';
+            qty.textContent = item.quantity;
+            li.appendChild(qty);
+          }
+
+          var remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'gs-link-btn';
+          remove.textContent = 'Remove';
+          remove.setAttribute('aria-label', 'Remove ' + item.name);
+          remove.addEventListener('click', function () { removeItem(item); });
+          li.appendChild(remove);
+
+          list.appendChild(li);
+        });
+
+        var checked = state.items.filter(function (i) { return i.checked; }).length;
+        document.getElementById('summary').textContent = state.items.length
+          ? (state.items.length - checked) + ' to get · ' + checked + ' checked'
+          : '';
+        document.getElementById('clear-checked').hidden = checked === 0;
+      }
+
+      async function addItem(name, quantity) {
+        var result = await db().from('shopping_items').insert({
+          shopping_list_id: state.listId,
+          household_id: state.householdId,
+          name: name,
+          quantity: quantity || null
+        });
+        if (result.error) throw result.error;
+        await loadItems();
+      }
+
+      async function toggle(item, checked) {
+        try {
+          var result = await db().from('shopping_items')
+            .update({ checked: checked, checked_at: checked ? new Date().toISOString() : null })
+            .eq('id', item.id);
+          if (result.error) throw result.error;
+          await loadItems();
+        } catch (err) { show(err.message, true); }
+      }
+
+      async function removeItem(item) {
+        try {
+          var result = await db().from('shopping_items').delete().eq('id', item.id);
+          if (result.error) throw result.error;
+          await loadItems();
+        } catch (err) { show(err.message, true); }
+      }
+
+      document.getElementById('add-form').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        var nameInput = document.getElementById('item-name');
+        var qtyInput = document.getElementById('item-qty');
+        var name = nameInput.value.trim();
+        if (!name) { nameInput.focus(); return; }
+        try {
+          show('');
+          await addItem(name, qtyInput.value.trim());
+          nameInput.value = '';
+          qtyInput.value = '';
+          nameInput.focus();
+        } catch (err) { show(err.message, true); }
+      });
+
+      document.getElementById('clear-checked').addEventListener('click', async function () {
+        try {
+          var result = await db().from('shopping_items').delete()
+            .eq('shopping_list_id', state.listId).eq('checked', true);
+          if (result.error) throw result.error;
+          await loadItems();
+        } catch (err) { show(err.message, true); }
+      });
+
+      // Pick up changes other household members made while this tab was hidden.
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible' && state.listId) {
+          loadItems().catch(function (err) { show(err.message, true); });
+        }
+      });
+
+      (async function init() {
+        try {
+          var session = await GS.auth.requireSession();
+          if (!session) return;
+          var ctx = await GS.household.current();
+          if (!ctx) {
+            show('You need to be part of a household to use Grocery Genie.', true);
+            document.getElementById('add-form').hidden = true;
+            return;
+          }
+          state.householdId = ctx.householdId;
+          document.getElementById('household-name').textContent = ctx.name;
+          state.listId = await activeListId(ctx.householdId);
+          await loadItems();
+        } catch (err) {
+          show(err.message || 'Could not load the list.', true);
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>
