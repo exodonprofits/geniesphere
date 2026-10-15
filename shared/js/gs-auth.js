@@ -13,7 +13,8 @@
     async requireSession(options = {}) {
       const session = await this.session();
       if (!session && options.redirect !== false) {
-        window.location.href = options.loginPath || '/core/auth/login.html';
+        const next = window.location.pathname + window.location.search;
+        window.location.href = (options.loginPath || '/core/auth/login.html') + '?next=' + encodeURIComponent(next);
       }
       return session;
     },

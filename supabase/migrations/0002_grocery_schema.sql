@@ -1,3 +1,8 @@
+-- SUPERSEDED (2026-10-15 audit): do not apply as written. None of these tables
+-- exist in production; the household-scoped Grocery schema will be rewritten
+-- with RLS on top of the existing households model after 0003 is applied.
+-- See docs/SLICE-1-GROCERY-PLAN.md.
+
 -- Grocery Genie starter entities. Reconcile with existing tables before use.
 
 create table if not exists public.store_preferences (

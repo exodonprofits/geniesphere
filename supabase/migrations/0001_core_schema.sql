@@ -1,3 +1,9 @@
+-- SUPERSEDED (2026-10-15 audit): do not apply. Production already has
+-- public.households (owner_id, not created_by), public.household_members
+-- (no id column; composite household_id+user_id), public.household_tasks and
+-- public.household_notifications, all with RLS. Core 0.1 builds on those.
+-- See docs/SLICE-1-GROCERY-PLAN.md.
+
 -- GenieSphere 0.1 starter schema.
 -- Review against the existing production database before applying.
 

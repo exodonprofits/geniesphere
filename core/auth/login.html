@@ -1,1 +1,72 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GenieSphere</title><link rel="stylesheet" href="/shared/css/app.css"></head><body><main class="gs-shell"><section class="gs-card"><h1>auth login</h1><p class="gs-muted">Starter placeholder. Migrate the approved canonical implementation here.</p></section></main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sign in · GenieSphere</title>
+  <link rel="stylesheet" href="/shared/css/app.css" />
+</head>
+<body>
+  <main class="gs-shell">
+    <section class="gs-card gs-narrow gs-stack">
+      <a href="/index.html" aria-label="GenieSphere home"><img class="gs-brand-wordmark" src="/shared/assets/logo/geniesphere_logo_name.png" alt="GenieSphere" /></a>
+      <h1>Sign in</h1>
+      <form id="login-form" class="gs-stack" novalidate>
+        <label class="gs-stack" style="display:block">Email
+          <input id="email" class="gs-input" type="email" autocomplete="email" required style="width:100%" />
+        </label>
+        <label class="gs-stack" style="display:block">Password
+          <input id="password" class="gs-input" type="password" autocomplete="current-password" required style="width:100%" />
+        </label>
+        <button id="submit" class="gs-btn gs-btn-primary" type="submit" style="width:100%">Sign in</button>
+        <p id="status" class="gs-status" role="status"></p>
+      </form>
+      <p class="gs-muted"><a href="/onboarding/reset_password.html">Forgot password?</a></p>
+    </section>
+  </main>
+
+  <script src="/shared/vendor/supabase.min.js"></script>
+  <script src="/shared/js/app-config.js"></script>
+  <script src="/shared/js/gs-client.js"></script>
+  <script src="/shared/js/gs-auth.js"></script>
+  <script>
+    (function () {
+      // Only same-site paths are allowed as a post-login destination.
+      function nextPath() {
+        var next = new URLSearchParams(window.location.search).get('next') || '';
+        return /^\/(?!\/)/.test(next) ? next : '/core/dashboard/index.html';
+      }
+
+      var form = document.getElementById('login-form');
+      var status = document.getElementById('status');
+      var submit = document.getElementById('submit');
+
+      function show(message, isError) {
+        status.textContent = message;
+        status.classList.toggle('gs-error', !!isError);
+      }
+
+      window.GenieSphere.auth.session().then(function (session) {
+        if (session) window.location.replace(nextPath());
+      }).catch(function (err) { show(err.message, true); });
+
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        var email = document.getElementById('email').value.trim();
+        var password = document.getElementById('password').value;
+        if (!email || !password) { show('Enter your email and password.', true); return; }
+        submit.disabled = true;
+        show('Signing in…');
+        try {
+          var result = await window.GenieSphere.getSupabase().auth.signInWithPassword({ email: email, password: password });
+          if (result.error) throw result.error;
+          window.location.replace(nextPath());
+        } catch (err) {
+          show(err.message || 'Sign-in failed.', true);
+          submit.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

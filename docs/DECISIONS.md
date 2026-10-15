@@ -46,4 +46,10 @@
 
 **Reason:** The live site's pages (signup, credit card, nutrition and others) call `GSConfig`; the repo's placeholder `app-config.js` defined only an empty `GenieSphereConfig`, so deploying it would have broken both the legacy pages and the canonical client. The anon key is public by design (RLS protects data). Remove the `GSConfig` loader once no active page uses it.
 
-**Addendum:** `shared/js/gs-client.js` likewise keeps the live `window.GSClient.getAsync()/getSync()` API (about 40 legacy pages and `auth-header.js` / `hub-badges.js` use it) on top of `window.GenieSphere.getSupabase()`. Both return one client, created synchronously with the live auth options (persistSession, autoRefreshToken, detectSessionInUrl). `shared/js/sb-client.js` is still a second legacy initializer, unchanged from live; consolidating it is a follow-up.
+**Addendum:** `shared/js/gs-client.js` likewise keeps the live `window.GSClient.getAsync()/getSync()` API (about 40 legacy pages and `auth-header.js` / `hub-badges.js` use it) on top of `window.GenieSphere.getSupabase()`. Both return one client, created synchronously with the live auth options (persistSession, autoRefreshToken, detectSessionInUrl). `shared/js/sb-client.js` is still a second legacy initializer, unchanged from live. No page loads it together with `gs-client.js`, so no page runs two clients. It is used by the live login flow (`onboarding/login.html`, `auth/auth-callback.html`) and a few legacy pages; it is deliberately left in place and retired when the 0.1 login (`/core/auth/login.html`) replaces `onboarding/login.html`, rather than rewiring the live login now.
+
+## ADR-010 — Slice 1 builds on the existing household tables
+
+**Decision:** Core 0.1 uses production's `households`, `household_members`, `household_tasks` and `user_household_context` rather than the starter `0001` schema. The current household is the user's saved choice in `user_household_context`, else their first membership by name. Grocery data lives in new household-scoped `shopping_lists` / `shopping_items` (RLS via `is_household_member`); any household member may read and edit them. Legacy `grocery_items` (user-scoped, empty) is left alone.
+
+**Reason:** The starter schema conflicted with live tables that already hold data and RLS. Building on them avoids a migration of real households and keeps legacy pages working.
