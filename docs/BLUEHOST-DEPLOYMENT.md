@@ -1,9 +1,12 @@
-# Bluehost FTPS connection test
+# Bluehost deployment (FTPS)
 
-The workflow currently performs a read-only explicit FTPS test on port 21.
-It verifies the TLS certificate, authenticates, encrypts the data channel, and
-lists the FTP account root. No files are uploaded, created, overwritten or deleted.
-Automatic website publishing is paused during this connection-only test.
+Two workflows share the secrets and trust model below:
+
+- `bluehost.yml` (Bluehost FTPS connection test): read-only. Verifies the TLS
+  certificate, authenticates, encrypts the data channel, and lists the FTP
+  account root. Uploads, creates, overwrites and deletes nothing.
+- `bluehost-deploy.yml` (Bluehost deploy): publishes the site. See "Deploying"
+  below.
 
 Repository Actions secrets required:
 - BLUEHOST_HOST: qyg.lxt.mybluehost.me (Bluehost > FTP Client Details). It must
@@ -16,10 +19,8 @@ SSH keys, known_hosts, and document-root variables are not used by this test.
 The FTP account is scoped to /home2/qyglxtmy/public_html; FTPS sees that as /.
 The test verifies access, but does not independently verify domain routing.
 
-Upload .github/workflows/bluehost.yml to main through your GitHub account.
-Only this workflow is needed for the test; it does not check out website code.
-It starts on a change to that workflow on main and can also be run manually:
-Actions > Bluehost FTPS connection test > Run workflow.
+The connection test starts on a change to bluehost.yml on main and can also be
+run manually: Actions > Bluehost FTPS connection test > Run workflow.
 Review the connection job's output for PASS lines or the missing-secret names.
 
 Before connecting, the job prints a shape check of BLUEHOST_HOST (length,
@@ -42,7 +43,35 @@ login) prints the subject, issuer, expiry and subjectAltName names of the
 certificate served at BLUEHOST_EXPECTED_IP. Never disable certificate
 verification to get a pass.
 
-Status (2026-10-15): the 530 login failures were caused by BLUEHOST_HOST
-pointing at another Bluehost server (50.87.248.234). With BLUEHOST_HOST set back
-to qyg.lxt.mybluehost.me and the trust model above, login has not been tested
-yet.
+## Deploying
+
+Run Actions > Bluehost deploy > Run workflow on main and pick a mode:
+
+- `dry-run` (default): packages the site, logs in, and prints the plan (new,
+  updated, unchanged, and any existing server files that would be replaced).
+  Nothing is written.
+- `upload`: publishes. Uploads are refused from branches other than main.
+
+What gets published is decided by `scripts/package_site.py`: tracked files under
+the public app folders with web file extensions, excluding archive/backup
+folders, `shared/vendor/` (except `supabase.min.js`), dotfiles, and n8n workflow
+exports (they expose webhook URLs and no page loads them). The file list is kept
+as the `bluehost-manifest-<run>` artifact.
+
+`scripts/deploy_bluehost.py` behaviour (ADR-008):
+
+- Add/overwrite only. Server files that are not in the package are never
+  deleted, including files removed from the repo. Remove those by hand.
+- Each file is uploaded under a temporary `.gs-upload` name and renamed over the
+  live file, so visitors never load a half-written file.
+- `.gs-deploy-manifest.json` at the site root records the sha256 of every file
+  deployed, so unchanged files are skipped. It is publicly readable and lists
+  only already-public file paths. Deleting it makes the next deploy compare
+  against the server again.
+- Existing server files that were not put there by a deploy are downloaded
+  before being replaced and kept as the `bluehost-replaced-files-<run>`
+  artifact for 90 days.
+
+Status (2026-10-15): the connection test passes (run 15). The FTP root holds 34
+existing entries, including an index.html that the first upload will replace.
+Run a dry run before the first upload.

@@ -1,9 +1,23 @@
 """Package tracked public website files; never include server configuration."""
 from pathlib import Path
+import json
 import subprocess
 import tarfile
 
 root = Path(__file__).resolve().parents[1]
+
+
+def is_n8n_export(path):
+    """n8n workflow exports expose webhook URLs and automation internals; no page loads them."""
+    if path.suffix.lower() != ".json":
+        return False
+    try:
+        data = json.loads((root / path).read_text(encoding="utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return False
+    return isinstance(data, dict) and "nodes" in data and "connections" in data
+
+
 allowed_roots = {"auth", "business", "core", "dashboard", "finance", "household",
                  "investment", "leisure", "modules", "onboarding", "shared"}
 extensions = {".html", ".css", ".js", ".json", ".png", ".jpg", ".jpeg", ".gif",
@@ -20,6 +34,8 @@ for name in filter(None, tracked):
     if name.startswith("shared/vendor/") and name != "shared/vendor/supabase.min.js":
         continue
     if path.suffix.lower() not in extensions or any(p.startswith(".") for p in path.parts):
+        continue
+    if is_n8n_export(path):
         continue
     if (root / path).is_symlink():
         raise SystemExit(f"Refusing symlink: {name}")
