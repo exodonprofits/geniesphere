@@ -171,6 +171,8 @@ def main():
         print(f"Remote manifest: {len(previous)} files from the last deploy.")
 
         new, overwrite, unchanged = [], [], 0
+        foreign = {}   # name -> current server bytes, for files a deploy did not put there
+        adopted = {}   # server files already byte-identical to the package
         for name, digest in sorted(local.items()):
             if previous.get(name) == digest:
                 unchanged += 1
@@ -179,15 +181,24 @@ def main():
             elif remote_size(ftp, name) is None:
                 new.append(name)
             else:
-                overwrite.append(name)  # exists on the server but not from a deploy
-        foreign = [name for name in overwrite if name not in previous]
+                # Not from a deploy: compare content so identical files are left alone.
+                buffer = io.BytesIO()
+                ftp.retrbinary("RETR " + name, buffer.write)
+                if hashlib.sha256(buffer.getvalue()).hexdigest() == digest:
+                    adopted[name] = digest
+                    unchanged += 1
+                else:
+                    foreign[name] = buffer.getvalue()
+                    overwrite.append(name)
 
         print(f"Plan: {len(new)} new, {len(overwrite)} overwrite, {unchanged} unchanged, 0 deletions.")
+        if adopted:
+            print(f"{len(adopted)} existing server file(s) already match the package and are left as is.")
         if foreign:
-            print(f"{len(foreign)} existing server file(s) not from a previous deploy will be replaced"
+            print(f"{len(foreign)} existing server file(s) not from a previous deploy differ and will be replaced"
                   + ("" if args.dry_run else " (backed up first)") + ":")
-            for name in foreign:
-                print("  " + name)
+            for name, data in foreign.items():
+                print(f"  {name} (server {len(data)} bytes, package {(root / name).stat().st_size} bytes)")
         if args.dry_run:
             for name in new:
                 print("  new: " + name)
@@ -198,17 +209,17 @@ def main():
             return
 
         backup_root = Path(args.backup_dir)
-        for name in foreign:
+        for name, data in foreign.items():
             target = backup_root / name
             target.parent.mkdir(parents=True, exist_ok=True)
-            with open(target, "wb") as handle:
-                ftp.retrbinary("RETR " + name, handle.write)
+            target.write_bytes(data)
         if foreign:
             print(f"Backed up {len(foreign)} file(s) to {backup_root}.")
 
         known_dirs = set()
         # Files dropped from the package stay on the server, so keep their entries.
         uploaded = dict(previous)
+        uploaded.update(adopted)
         for index, name in enumerate(new + overwrite, 1):
             ensure_dirs(ftp, name, known_dirs)
             with open(root / name, "rb") as handle:

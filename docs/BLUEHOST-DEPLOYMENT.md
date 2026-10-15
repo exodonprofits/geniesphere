@@ -71,10 +71,17 @@ as the `bluehost-manifest-<run>` artifact.
   deployed, so unchanged files are skipped. It is publicly readable and lists
   only already-public file paths. Deleting it makes the next deploy compare
   against the server again.
-- Existing server files that were not put there by a deploy are downloaded
-  before being replaced and kept as the `bluehost-replaced-files-<run>`
-  artifact for 90 days.
+- Existing server files that were not put there by a deploy are downloaded and
+  hashed. Byte-identical ones are left as is and recorded in the manifest; the
+  dry run lists only the ones that differ (with server and package sizes).
+  Those are kept as the `bluehost-replaced-files-<run>` artifact for 90 days
+  before being replaced.
+- Packaging fails if `shared/js/app-config.js` and `shared/config.json` disagree
+  on the Supabase URL or anon key (ADR-009).
 
-Status (2026-10-15): the connection test passes (run 15). The FTP root holds 34
-existing entries, including an index.html that the first upload will replace.
-Run a dry run before the first upload.
+Status (2026-10-15): the connection test passes. The first dry run (deploy run
+1) planned 545 new files and 103 replacements of files already on the server.
+A fetch (deploy run 2) showed the live `app-config.js` is the `GSConfig` loader
+that legacy pages depend on, while the repo held an empty placeholder;
+`app-config.js` now serves both (ADR-009). Re-run a dry run before the first
+upload.
