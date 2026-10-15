@@ -107,10 +107,44 @@ def put(ftp, name, handle):
         ftp.rename(temporary, name)
 
 
+def fetch(names, out_dir):
+    """Read-only: download server files. Only files already served from the web root."""
+    for name in names:
+        if name.startswith("/") or ".." in name.split("/") or not name.strip():
+            sys.exit(f"Refusing unsafe path: {name!r}")
+    ftp = connect(os.environ)
+    try:
+        for name in names:
+            buffer = io.BytesIO()
+            try:
+                ftp.retrbinary("RETR " + name, buffer.write)
+            except ftplib.error_perm as exc:
+                print(f"== {name}: not fetched ({exc})")
+                continue
+            data = buffer.getvalue()
+            target = out_dir / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+            print(f"== {name}: {len(data)} bytes, sha256 {hashlib.sha256(data).hexdigest()}")
+            if len(data) <= 64 * 1024:
+                try:
+                    print(data.decode("utf-8"))
+                except UnicodeDecodeError:
+                    print("(binary, not printed)")
+        print("Fetch only: nothing was uploaded, changed, or deleted.")
+    finally:
+        try:
+            ftp.quit()
+        except (OSError, EOFError, ftplib.Error):
+            ftp.close()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--backup-dir", default=str(root / "dist" / "backup"))
+    parser.add_argument("--fetch", nargs="+", metavar="PATH",
+                        help="read-only: download these server files and print small text ones")
     args = parser.parse_args()
 
     required = ("BLUEHOST_HOST", "BLUEHOST_USER", "BLUEHOST_FTP_PASSWORD",
@@ -118,6 +152,10 @@ def main():
     missing = [key for key in required if not os.environ.get(key)]
     if missing:
         sys.exit("Missing settings: " + ", ".join(missing))
+
+    if args.fetch:
+        fetch(args.fetch, root / "dist" / "fetched")
+        return
 
     manifest_path = root / "dist" / "manifest.txt"
     names = [line for line in manifest_path.read_text(encoding="utf-8").splitlines() if line]
