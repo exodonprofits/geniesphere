@@ -3,10 +3,14 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "dry-run reports the plan only; upload publishes to the live site"
+        description: "dry-run reports the plan only; upload publishes to the live site; fetch downloads the paths below (read-only)"
         type: choice
-        options: [dry-run, upload]
+        options: [dry-run, upload, fetch]
         default: dry-run
+      paths:
+        description: "fetch mode only: space-separated server paths"
+        type: string
+        default: "shared/js/app-config.js shared/js/gs-config.js shared/config.json"
 permissions:
   contents: read
 concurrency:
@@ -38,12 +42,23 @@ jobs:
           BLUEHOST_USER: ${{ secrets.BLUEHOST_USER }}
           BLUEHOST_FTP_PASSWORD: ${{ secrets.BLUEHOST_FTP_PASSWORD }}
           MODE: ${{ inputs.mode }}
+          FETCH_PATHS: ${{ inputs.paths }}
         run: |
           if [ "$MODE" = "upload" ]; then
             python scripts/deploy_bluehost.py
+          elif [ "$MODE" = "fetch" ]; then
+            read -r -a fetch_paths <<< "$FETCH_PATHS"
+            python scripts/deploy_bluehost.py --fetch "${fetch_paths[@]}"
           else
             python scripts/deploy_bluehost.py --dry-run
           fi
+      - name: Keep fetched server files
+        if: ${{ always() && inputs.mode == 'fetch' && hashFiles('dist/fetched/**') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bluehost-fetched-${{ github.run_number }}
+          path: dist/fetched/
+          retention-days: 7
       - name: Keep backup of replaced server files
         if: ${{ always() && inputs.mode == 'upload' && hashFiles('dist/backup/**') != '' }}
         uses: actions/upload-artifact@v4

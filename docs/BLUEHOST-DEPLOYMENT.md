@@ -51,6 +51,9 @@ Run Actions > Bluehost deploy > Run workflow on main and pick a mode:
   updated, unchanged, and any existing server files that would be replaced).
   Nothing is written.
 - `upload`: publishes. Uploads are refused from branches other than main.
+- `fetch`: read-only. Downloads the server paths given in `paths`, prints small
+  text files to the log, and keeps them as the `bluehost-fetched-<run>`
+  artifact (7 days). Use it to inspect live files before replacing them.
 
 What gets published is decided by `scripts/package_site.py`: tracked files under
 the public app folders with web file extensions, excluding archive/backup
