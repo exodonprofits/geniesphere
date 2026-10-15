@@ -20,12 +20,15 @@ jobs:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USER: ${{ secrets.BLUEHOST_USER }}
           BLUEHOST_FTP_PASSWORD: ${{ secrets.BLUEHOST_FTP_PASSWORD }}
+          # Server IP from Bluehost > FTP Client Details. Public, not a secret.
+          BLUEHOST_EXPECTED_IP: 50.6.156.176
         shell: bash
         run: |
           python3 - <<'PY'
           import ftplib
           import os
           import re
+          import socket
           import ssl
           import sys
           required = ("BLUEHOST_HOST", "BLUEHOST_USER", "BLUEHOST_FTP_PASSWORD")
@@ -48,6 +51,28 @@ jobs:
           print(f"  ends with .mybluehost.me: {bare.endswith('.mybluehost.me')}")
           cert_match = re.fullmatch(r"[a-z0-9-]+\.bluehost\.com", host.lower()) is not None
           print(f"  matches *.bluehost.com certificate: {cert_match}")
+          # Any *.bluehost.com name passes the shared certificate, so also confirm
+          # the host resolves to this account's server before sending the password.
+          expected_ip = os.environ["BLUEHOST_EXPECTED_IP"]
+          print("DNS check:")
+          try:
+              resolved = sorted({info[4][0] for info in socket.getaddrinfo(host, 21, proto=socket.IPPROTO_TCP)})
+          except socket.gaierror as exc:
+              resolved = []
+              print("  BLUEHOST_HOST does not resolve: " + str(exc))
+          print("  BLUEHOST_HOST resolves to: " + (", ".join(resolved) or "nothing"))
+          print("  expected server IP: " + expected_ip)
+          try:
+              ptr = socket.gethostbyaddr(expected_ip)[0]
+              print("  reverse DNS of expected IP: " + ptr)
+              print("  reverse DNS name matches *.bluehost.com certificate: "
+                    + str(re.fullmatch(r"[a-z0-9-]+\.bluehost\.com", ptr.lower()) is not None))
+          except OSError as exc:
+              print("  reverse DNS of expected IP: none (" + type(exc).__name__ + ")")
+          if expected_ip not in resolved:
+              sys.exit("BLUEHOST_HOST does not point at " + expected_ip
+                       + "; stopping before login so the password is not sent to another server.")
+          print("PASS: BLUEHOST_HOST resolves to the expected server")
           try:
               with ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=30) as ftp:
                   ftp.connect(os.environ["BLUEHOST_HOST"], 21)

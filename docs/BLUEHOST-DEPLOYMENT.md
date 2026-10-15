@@ -26,12 +26,21 @@ Before connecting, the job prints a shape check of BLUEHOST_HOST (length,
 whitespace, scheme/path/port characters, part count, and whether it matches
 *.bluehost.com) without revealing the value.
 
+It then resolves BLUEHOST_HOST and stops before login unless it points at the
+server IP from Bluehost > FTP Client Details (50.6.156.176, set as
+BLUEHOST_EXPECTED_IP in the workflow). Every Bluehost server shares the
+*.bluehost.com certificate, so the certificate alone does not prove the host is
+this account's server. The job also prints the reverse-DNS name of that IP,
+which is normally the hostname to use. Update BLUEHOST_EXPECTED_IP if Bluehost
+moves the account to another server.
+
 On failure the job prints the underlying reason. If the certificate check
 fails, a second diagnostic step (no login) prints the subject, issuer, expiry
 and subjectAltName names of the server certificate. Set BLUEHOST_HOST to one
 of those names. Never disable certificate verification to get a pass.
 
-Status (2026-10-15): runs fail with "Hostname mismatch". The server presents a
-Sectigo certificate for *.bluehost.com / bluehost.com (valid to 2027-01-06).
-BLUEHOST_HOST must be a single label in front of .bluehost.com. Login has not
-been tested yet.
+Status (2026-10-15): the certificate check now passes (the server presents a
+Sectigo *.bluehost.com certificate valid to 2027-01-06), but login fails with
+"530 Login authentication failed". Either BLUEHOST_HOST points at a different
+Bluehost server, or the username/password is wrong. The DNS check separates
+those two cases.
