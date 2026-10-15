@@ -1,0 +1,55 @@
+name: Domain check
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: "Domain to check"
+        type: string
+        default: geniesphere.com
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      DOMAIN: ${{ inputs.domain }}
+      # Bluehost server for the FTP account (docs/BLUEHOST-DEPLOYMENT.md). Public, not a secret.
+      BLUEHOST_IP: 50.6.156.176
+    steps:
+      - name: Read-only DNS, HTTP and TLS checks
+        shell: bash
+        run: |
+          set -u
+          [[ "$DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || { echo "Invalid domain"; exit 1; }
+          section() { printf '\n===== %s\n' "$1"; }
+
+          for host in "$DOMAIN" "www.$DOMAIN"; do
+            section "DNS $host"
+            for type in A AAAA CNAME; do
+              printf '%-6s %s\n' "$type" "$(dig +short "$host" "$type" | tr '\n' ' ')"
+            done
+          done
+          section "DNS NS $DOMAIN"
+          dig +short NS "$DOMAIN"
+
+          for url in "http://$DOMAIN/" "https://$DOMAIN/" "http://www.$DOMAIN/" "https://www.$DOMAIN/"; do
+            section "GET $url (headers)"
+            curl -sS -m 15 -o /dev/null -D - "$url" 2>&1 | head -20 || true
+          done
+
+          section "Body of http://$DOMAIN/ (first 40 lines)"
+          curl -sS -m 15 "http://$DOMAIN/" 2>&1 | head -40 || true
+
+          section "TLS certificate served for $DOMAIN"
+          timeout 15 openssl s_client -connect "$DOMAIN:443" -servername "$DOMAIN" </dev/null 2>&1 \
+            | openssl x509 -noout -subject -issuer -enddate -ext subjectAltName 2>&1 || echo "no certificate (port 443 closed or TLS failed)"
+
+          section "Bluehost server $BLUEHOST_IP asked for $DOMAIN directly"
+          for scheme in http https; do
+            echo "-- $scheme"
+            curl -sS -m 15 -k -o /dev/null -D - --resolve "$DOMAIN:$([ $scheme = http ] && echo 80 || echo 443):$BLUEHOST_IP" "$scheme://$DOMAIN/" 2>&1 | head -12 || true
+          done
+          echo "-- https certificate from $BLUEHOST_IP for $DOMAIN"
+          timeout 15 openssl s_client -connect "$BLUEHOST_IP:443" -servername "$DOMAIN" </dev/null 2>&1 \
+            | openssl x509 -noout -subject -enddate -ext subjectAltName 2>&1 || echo "no certificate"
