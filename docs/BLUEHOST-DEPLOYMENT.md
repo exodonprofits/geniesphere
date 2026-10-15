@@ -6,7 +6,9 @@ lists the FTP account root. No files are uploaded, created, overwritten or delet
 Automatic website publishing is paused during this connection-only test.
 
 Repository Actions secrets required:
-- BLUEHOST_HOST: qyg.lxt.mybluehost.me
+- BLUEHOST_HOST: the server hostname, e.g. boxNNNN.bluehost.com (cPanel > FTP
+  Accounts > Configure FTP Client). The FTP certificate is *.bluehost.com, so
+  qyg.lxt.mybluehost.me and ftp.geniesphere.com fail verification.
 - BLUEHOST_USER: deploybhgeniesphere@geniesphere.com
 - BLUEHOST_FTP_PASSWORD: this FTP account's password
 
@@ -20,12 +22,16 @@ It starts on a change to that workflow on main and can also be run manually:
 Actions > Bluehost FTPS connection test > Run workflow.
 Review the connection job's output for PASS lines or the missing-secret names.
 
+Before connecting, the job prints a shape check of BLUEHOST_HOST (length,
+whitespace, scheme/path/port characters, part count, and whether it matches
+*.bluehost.com) without revealing the value.
+
 On failure the job prints the underlying reason. If the certificate check
 fails, a second diagnostic step (no login) prints the subject, issuer, expiry
 and subjectAltName names of the server certificate. Set BLUEHOST_HOST to one
 of those names. Never disable certificate verification to get a pass.
 
-Status (2026-10-14): the workflow is on main and has run, failing with
-SSLCertVerificationError. The runner reaches port 21 and starts TLS, but the
-certificate does not validate for qyg.lxt.mybluehost.me (likely a name
-mismatch with the server hostname). Login has not been tested yet.
+Status (2026-10-15): runs fail with "Hostname mismatch". The server presents a
+Sectigo certificate for *.bluehost.com / bluehost.com (valid to 2027-01-06).
+BLUEHOST_HOST must be a single label in front of .bluehost.com. Login has not
+been tested yet.
