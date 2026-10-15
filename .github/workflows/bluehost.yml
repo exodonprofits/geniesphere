@@ -25,12 +25,29 @@ jobs:
           python3 - <<'PY'
           import ftplib
           import os
+          import re
           import ssl
           import sys
           required = ("BLUEHOST_HOST", "BLUEHOST_USER", "BLUEHOST_FTP_PASSWORD")
           missing = [key for key in required if not os.environ.get(key)]
           if missing:
               sys.exit("Missing GitHub repository secrets: " + ", ".join(missing))
+          # Describe BLUEHOST_HOST without printing it (Actions masks the value anyway).
+          host = os.environ["BLUEHOST_HOST"]
+          bare = host.strip().lower().rstrip(".")
+          labels = bare.split(".")
+          print("BLUEHOST_HOST shape check (value not shown):")
+          print(f"  length: {len(host)}")
+          print(f"  leading/trailing whitespace: {host != host.strip()}")
+          print(f"  contains whitespace inside: {any(c.isspace() for c in host.strip())}")
+          print(f"  contains '://': {'://' in host}")
+          print(f"  contains '/': {'/' in host}")
+          print(f"  contains ':': {':' in host}")
+          print(f"  dot-separated parts: {len(labels)}")
+          print(f"  ends with .bluehost.com: {bare.endswith('.bluehost.com')}")
+          print(f"  ends with .mybluehost.me: {bare.endswith('.mybluehost.me')}")
+          cert_match = re.fullmatch(r"[a-z0-9-]+\.bluehost\.com", host.lower()) is not None
+          print(f"  matches *.bluehost.com certificate: {cert_match}")
           try:
               with ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=30) as ftp:
                   ftp.connect(os.environ["BLUEHOST_HOST"], 21)
