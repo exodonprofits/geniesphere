@@ -14,20 +14,22 @@ jobs:
   connection:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      # Server IP from Bluehost > FTP Client Details. Public, not a secret.
+      BLUEHOST_EXPECTED_IP: 50.6.156.176
+      # Name the server certificate is checked against (it is *.bluehost.com / bluehost.com).
+      BLUEHOST_CERT_NAME: bluehost.com
     steps:
       - name: Verify FTPS login and destination (read only)
         env:
           BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
           BLUEHOST_USER: ${{ secrets.BLUEHOST_USER }}
           BLUEHOST_FTP_PASSWORD: ${{ secrets.BLUEHOST_FTP_PASSWORD }}
-          # Server IP from Bluehost > FTP Client Details. Public, not a secret.
-          BLUEHOST_EXPECTED_IP: 50.6.156.176
         shell: bash
         run: |
           python3 - <<'PY'
           import ftplib
           import os
-          import re
           import socket
           import ssl
           import sys
@@ -38,7 +40,6 @@ jobs:
           # Describe BLUEHOST_HOST without printing it (Actions masks the value anyway).
           host = os.environ["BLUEHOST_HOST"]
           bare = host.strip().lower().rstrip(".")
-          labels = bare.split(".")
           print("BLUEHOST_HOST shape check (value not shown):")
           print(f"  length: {len(host)}")
           print(f"  leading/trailing whitespace: {host != host.strip()}")
@@ -46,14 +47,15 @@ jobs:
           print(f"  contains '://': {'://' in host}")
           print(f"  contains '/': {'/' in host}")
           print(f"  contains ':': {':' in host}")
-          print(f"  dot-separated parts: {len(labels)}")
+          print(f"  dot-separated parts: {len(bare.split('.'))}")
           print(f"  ends with .bluehost.com: {bare.endswith('.bluehost.com')}")
           print(f"  ends with .mybluehost.me: {bare.endswith('.mybluehost.me')}")
-          cert_match = re.fullmatch(r"[a-z0-9-]+\.bluehost\.com", host.lower()) is not None
-          print(f"  matches *.bluehost.com certificate: {cert_match}")
-          # Any *.bluehost.com name passes the shared certificate, so also confirm
-          # the host resolves to this account's server before sending the password.
+          # Every Bluehost server presents the same *.bluehost.com certificate and this
+          # server has no matching hostname, so trust is split in two: the connection is
+          # pinned to the account's server IP, and the certificate chain is verified
+          # against the fixed name below instead of the connection host.
           expected_ip = os.environ["BLUEHOST_EXPECTED_IP"]
+          cert_name = os.environ["BLUEHOST_CERT_NAME"]
           print("DNS check:")
           try:
               resolved = sorted({info[4][0] for info in socket.getaddrinfo(host, 21, proto=socket.IPPROTO_TCP)})
@@ -62,22 +64,18 @@ jobs:
               print("  BLUEHOST_HOST does not resolve: " + str(exc))
           print("  BLUEHOST_HOST resolves to: " + (", ".join(resolved) or "nothing"))
           print("  expected server IP: " + expected_ip)
-          try:
-              ptr = socket.gethostbyaddr(expected_ip)[0]
-              print("  reverse DNS of expected IP: " + ptr)
-              print("  reverse DNS name matches *.bluehost.com certificate: "
-                    + str(re.fullmatch(r"[a-z0-9-]+\.bluehost\.com", ptr.lower()) is not None))
-          except OSError as exc:
-              print("  reverse DNS of expected IP: none (" + type(exc).__name__ + ")")
           if expected_ip not in resolved:
               sys.exit("BLUEHOST_HOST does not point at " + expected_ip
                        + "; stopping before login so the password is not sent to another server.")
           print("PASS: BLUEHOST_HOST resolves to the expected server")
           try:
               with ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=30) as ftp:
-                  ftp.connect(os.environ["BLUEHOST_HOST"], 21)
+                  ftp.connect(expected_ip, 21)
+                  # ftplib uses self.host as the TLS server_hostname for the control and
+                  # data channels; passive data connections use the peer IP, not this.
+                  ftp.host = cert_name
                   ftp.auth()
-                  print("PASS: explicit FTPS connection and server certificate verification")
+                  print(f"PASS: FTPS to {expected_ip}, certificate chain verified for {cert_name}")
                   ftp.login(os.environ["BLUEHOST_USER"], os.environ["BLUEHOST_FTP_PASSWORD"])
                   print("PASS: account authentication")
                   ftp.prot_p()
@@ -93,26 +91,20 @@ jobs:
           except ssl.SSLCertVerificationError as exc:
               print("FTPS test failed: SSLCertVerificationError")
               print("Reason: " + str(exc.verify_message))
-              print("The certificate step below lists the names the server certificate covers.")
-              print("Set BLUEHOST_HOST to one of those names; do not disable verification.")
+              print("The certificate step below shows what the server presents.")
+              print("If Bluehost changed certificates, update BLUEHOST_CERT_NAME; do not disable verification.")
               sys.exit(1)
           except Exception as exc:
               print("FTPS test failed: " + type(exc).__name__)
               print("Detail: " + str(exc))
-              print("Check hostname/certificate, account password, and FTP access in Bluehost.")
+              print("Check the account password, username, and FTP access in Bluehost.")
               sys.exit(1)
           PY
       - name: Show server certificate names (diagnostic, no login)
         if: failure()
-        env:
-          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
         shell: bash
         run: |
-          if [ -z "$BLUEHOST_HOST" ]; then
-            echo "BLUEHOST_HOST is not set; skipping certificate inspection."
-            exit 0
-          fi
-          cert="$(timeout 20 openssl s_client -starttls ftp -connect "$BLUEHOST_HOST:21" -servername "$BLUEHOST_HOST" </dev/null 2>/dev/null)" || true
+          cert="$(timeout 20 openssl s_client -starttls ftp -connect "$BLUEHOST_EXPECTED_IP:21" -servername "$BLUEHOST_CERT_NAME" </dev/null 2>/dev/null)" || true
           if ! printf '%s\n' "$cert" | grep -q 'BEGIN CERTIFICATE'; then
             echo "Could not retrieve the server certificate."
             exit 0
