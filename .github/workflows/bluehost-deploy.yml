@@ -1,0 +1,60 @@
+name: Bluehost deploy
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run reports the plan only; upload publishes to the live site"
+        type: choice
+        options: [dry-run, upload]
+        default: dry-run
+permissions:
+  contents: read
+concurrency:
+  group: bluehost-deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Same trust model as bluehost.yml (docs/DECISIONS.md ADR-007).
+      BLUEHOST_EXPECTED_IP: 50.6.156.176
+      BLUEHOST_CERT_NAME: bluehost.com
+    steps:
+      - name: Refuse uploads from branches other than main
+        if: ${{ inputs.mode == 'upload' && github.ref != 'refs/heads/main' }}
+        run: |
+          echo "Uploads run only from main."
+          exit 1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Package site
+        run: python scripts/package_site.py
+      - name: Deploy over FTPS (${{ inputs.mode }})
+        env:
+          BLUEHOST_HOST: ${{ secrets.BLUEHOST_HOST }}
+          BLUEHOST_USER: ${{ secrets.BLUEHOST_USER }}
+          BLUEHOST_FTP_PASSWORD: ${{ secrets.BLUEHOST_FTP_PASSWORD }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          if [ "$MODE" = "upload" ]; then
+            python scripts/deploy_bluehost.py
+          else
+            python scripts/deploy_bluehost.py --dry-run
+          fi
+      - name: Keep backup of replaced server files
+        if: ${{ always() && inputs.mode == 'upload' && hashFiles('dist/backup/**') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bluehost-replaced-files-${{ github.run_number }}
+          path: dist/backup/
+          retention-days: 90
+      - name: Keep package manifest
+        if: ${{ always() && hashFiles('dist/manifest.txt') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bluehost-manifest-${{ github.run_number }}
+          path: dist/manifest.txt
+          retention-days: 30
