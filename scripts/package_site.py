@@ -1,4 +1,4 @@
-"""Package tracked public website files; never include server configuration."""
+"""Package tracked public website files; the root .htaccess is the only server configuration shipped."""
 from pathlib import Path
 import json
 import re
@@ -28,6 +28,9 @@ selected = []
 for name in filter(None, tracked):
     path = Path(name)
     parts = {part.lower() for part in path.parts}
+    if name == ".htaccess":
+        selected.append(name)  # web-root config (DirectoryIndex); see ADR-011
+        continue
     if name != "index.html" and path.parts[0] not in allowed_roots:
         continue
     if parts & {"archive", "back up", "backup", "old-html", "old version", "node_modules"}:
