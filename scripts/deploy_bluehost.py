@@ -10,7 +10,8 @@ Modes:
   (default)  back up remote files about to be overwritten, then upload
 
 A remote manifest of sha256 hashes (MANIFEST_NAME) records what the last
-successful deploy uploaded, so unchanged files are skipped.
+successful deploy uploaded, so unchanged files are skipped; each file's
+presence and size on the server are still checked.
 """
 from pathlib import Path
 import argparse
@@ -182,13 +183,18 @@ def main():
         new, overwrite, unchanged = [], [], 0
         foreign = {}   # name -> current server bytes, for files a deploy did not put there
         adopted = {}   # server files already byte-identical to the package
+        missing = 0
         for name, digest in sorted(local.items()):
-            if previous.get(name) == digest:
-                unchanged += 1
-            elif name in previous:
-                overwrite.append(name)  # deployed by us before, content changed
-            elif remote_size(ftp, name) is None:
+            # The manifest can outlive the files (e.g. the host wiped the web root),
+            # so confirm each file still exists before trusting it.
+            size = remote_size(ftp, name)
+            if size is None:
                 new.append(name)
+                missing += name in previous
+            elif previous.get(name) == digest and size == (root / name).stat().st_size:
+                unchanged += 1
+            elif name in previous and previous[name] != digest:
+                overwrite.append(name)  # deployed by us before, content changed
             else:
                 # Not from a deploy: compare content so identical files are left alone.
                 buffer = io.BytesIO()
@@ -201,6 +207,8 @@ def main():
                     overwrite.append(name)
 
         print(f"Plan: {len(new)} new, {len(overwrite)} overwrite, {unchanged} unchanged, 0 deletions.")
+        if missing:
+            print(f"{missing} file(s) listed in the remote manifest are missing on the server and will be re-uploaded.")
         if adopted:
             print(f"{len(adopted)} existing server file(s) already match the package and are left as is.")
         if foreign:
