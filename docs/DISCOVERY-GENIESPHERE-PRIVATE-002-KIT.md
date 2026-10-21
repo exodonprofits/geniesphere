@@ -31,7 +31,7 @@ This kit turns §17 of the research result into things you can use tomorrow:
 
 We are testing one hypothesis (001 §1):
 
-> Busy multi-business / multi-property owners will pay Exodon a setup fee plus a recurring retainer for a private, maintained "household + business attention briefing", built on GenieSphere and fed by the Genies they already use. No concierge team, no bank aggregation, no advice.
+> **Wealthy** (HNW: roughly $1M–$30M investable assets), busy multi-business / multi-property owners will pay Exodon a setup fee plus a recurring retainer for a private, maintained "household + business attention briefing", built on GenieSphere and fed by the Genies they already use. No concierge team, no bank aggregation, no advice.
 
 The five questions, in order:
 
@@ -47,7 +47,20 @@ The five questions, in order:
 
 ### 2.1 Qualifying screen
 
-Run this before booking, in a text or 2-minute call. Qualify only if **at least 3 of the 6** apply:
+Run this before booking, in a text or 2-minute call. A prospect qualifies only if they pass **both** gates.
+
+**Gate 1: wealth (required).** This plan targets wealthy households. At least one must be true:
+
+- Roughly **$1M+ in investable assets**, not counting the primary home. This is the standard HNW definition.
+- Roughly **$3M+ net worth**, including businesses and real estate.
+- Already pays for **wealth-level services**: a private bank, a wealth manager or multi-family office, a household manager or estate staff, or family cyber protection.
+
+Don't ask for numbers directly. Infer from what you already know, or from a referral partner's introduction ("clients like this"). Write down only the band (`1–5M`, `5–30M`, `30M+`), never account details.
+
+- **Below $1M:** not this pilot. They may be a good core-GenieSphere user later.
+- **$30M+ with a family office:** out of scope (Segment D, 001 §4). Decline politely.
+
+**Gate 2: complexity (required).** Wealth alone isn't enough; the pain is coordination. At least **3 of these 6** must apply:
 
 | # | Criterion |
 |---|---|
@@ -58,16 +71,18 @@ Run this before booking, in a text or 2-minute call. Qualify only if **at least 
 | 5 | Works with **3+ advisers**: CPA, attorney, insurance broker, wealth manager |
 | 6 | Has **missed a renewal, payment, filing or deadline in the last 12 months** that cost money or stress |
 
-Record their segment: **B** (multi-business owner) or **C** (multi-property family). Family offices (Segment D) are out of scope. Politely skip them.
+Record their segment: **B** (wealthy multi-business owner) or **C** (HNW multi-property family), plus the wealth band.
 
 ### 2.2 Sources
 
+Every source must pass the wealth gate. Prioritise channels that already serve wealthy clients.
+
 | Source | Target count | Notes |
 |---|---|---|
-| Founder's personal and business network | 5–6 | Fastest. Watch for "being nice to a friend" bias; push for past behaviour |
-| Exodon Profits clients | 3–4 | Already trust you; ideal for the pilot |
-| Salon Genie / EasyNailSpa salon owners with multiple locations or properties | 2–3 | Segment B |
-| Referral partners (CPA, estate attorney, insurance broker) | 2–3 partners | Each may introduce 1–3 clients. Use the §5 partner script |
+| Referral partners serving HNW clients: wealth managers, private bankers, CPAs, estate attorneys, insurance brokers (high-value home, auto, umbrella) | 3–4 partners, 1–3 intros each | **Primary channel.** HNW clients mostly arrive by referral (001 §15). Use the §5 partner script |
+| Founder's personal and business network: owners with multiple businesses or properties who meet Gate 1 | 3–5 | Fastest. Watch for "being nice to a friend" bias; push for past behaviour |
+| Exodon Profits clients who meet Gate 1 | 2–3 | Already trust you; ideal for the pilot |
+| Multi-location business owners (salon groups, franchisees, real-estate investors) who meet Gate 1 | 2–3 | Only if they pass Gate 1. Most single-location owners will not |
 
 **Goal: 12–15 qualified interviews.** Stop early if the kill criteria in §8 are clearly met.
 
@@ -140,7 +155,7 @@ If yes, send the one-page pilot offer (§4) the same day.
 
 ### GenieSphere Private Pilot — by Exodon Profits
 
-**For:** owners juggling multiple businesses, properties and family obligations.
+**For:** high-net-worth owners and families juggling multiple businesses, properties and family obligations.
 
 **What you get, over 8 weeks:**
 
@@ -193,7 +208,7 @@ Pick one price per prospect and record it in the log. Varying it across prospect
 
 20 minutes.
 
-1. "Which of your clients have the messiest picture: multiple entities, properties, vehicles, advisers?"
+1. "Which of your **high-net-worth** clients have the messiest picture: multiple entities, properties, vehicles, advisers?"
 2. "When something gets missed, a renewal, an estimated tax payment, a registration, how do you usually find out, and who cleans it up?"
 3. "Do clients ask you to help with that coordination today? Do you bill for it or eat it?"
 4. "Would you refer a client to a service that keeps their obligations organized and sends them a weekly briefing? What would make you comfortable doing that?"
@@ -230,13 +245,13 @@ Keep these **outside the repo** (private spreadsheet), because they will contain
 ### 7.1 Prospect list
 
 ```text
-id, source, segment(B/C), screen_score(0-6), contacted_on, status(booked/declined/no-reply), interview_on, notes
+id, source, segment(B/C), wealth_band(1-5M/5-30M), complexity_score(0-6), contacted_on, status(booked/declined/no-reply), interview_on, notes
 ```
 
 ### 7.2 Interview log
 
 ```text
-id, interview_on, segment, businesses, properties, vehicles, paid_helpers, advisers,
+id, interview_on, segment, wealth_band, businesses, properties, vehicles, paid_helpers, advisers,
 pain(1-5), frequency(1-5), coordination_spend_month, past_incident(y/n), incident_cost,
 abandoned_tool, trust_requirement, never_store_named, concept_reaction(1-5),
 pilot_ask(not_asked/declined/wants_offer/deposit), price_setup, price_month, referrals, key_quote
@@ -305,6 +320,7 @@ It must contain:
 - the 5 strongest verbatim quotes, anonymized
 - pre-sale results and the price points tested
 - pilot time and value data
+- results split by wealth band
 - the trust requirements heard
 - the gate results from §8
 - one decision: GO / MODIFY / HOLD / REJECT
