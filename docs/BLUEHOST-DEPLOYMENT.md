@@ -85,3 +85,7 @@ A fetch (deploy run 2) showed the live `app-config.js` is the `GSConfig` loader
 that legacy pages depend on, while the repo held an empty placeholder;
 `app-config.js` now serves both (ADR-009). Re-run a dry run before the first
 upload.
+
+## Web root `.htaccess`
+
+The repo root `.htaccess` is deployed like any other file (ADR-011). It makes Apache serve `index.html` before a leftover WordPress `index.php`. Edit it in git, not on the server: server edits are overwritten on the next upload. The first upload that replaces the server copy backs it up in the `bluehost-replaced-files-N` artifact. If a bad `.htaccess` returns 500 on every page, revert the commit and upload again.

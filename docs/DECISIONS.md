@@ -53,3 +53,9 @@
 **Decision:** Core 0.1 uses production's `households`, `household_members`, `household_tasks` and `user_household_context` rather than the starter `0001` schema. The current household is the user's saved choice in `user_household_context`, else their first membership by name. Grocery data lives in new household-scoped `shopping_lists` / `shopping_items` (RLS via `is_household_member`); any household member may read and edit them. Legacy `grocery_items` (user-scoped, empty) is left alone.
 
 **Reason:** The starter schema conflicted with live tables that already hold data and RLS. Building on them avoids a migration of real households and keeps legacy pages working.
+
+## ADR-011 — The web root .htaccess is managed in git
+
+**Decision:** The repo root `.htaccess` is the only server configuration file `scripts/package_site.py` ships. It sets `DirectoryIndex index.html index.php` and keeps cPanel's PHP handler block; it drops the WordPress rewrite rules. The deploy workflow's backup and fetch artifacts include hidden files, so the replaced server `.htaccess` is kept for 90 days.
+
+**Reason:** On 2026-10-15 Bluehost installed WordPress into the web root (`index.php` plus a WordPress/Newfold `.htaccess`). Apache then served WordPress at `/` instead of our `index.html`, and the additive deploy cannot delete `index.php`. Owning `.htaccess` restores the homepage without deleting server files. If Bluehost's htaccess manager rewrites the file, remove the WordPress install from the site rather than fighting it.
