@@ -39,6 +39,23 @@ Do not expand scope merely because legacy code contains additional features.
 
 Module-specific business logic does not belong in Core.
 
+## Target customer
+
+GenieSphere is built for upper-middle-class and wealthy households. The
+qualifier is complexity, not income: several properties, businesses,
+vehicles, vendors/staff or advisers. Strongest segment: busy owners of
+multiple businesses and properties (research `docs/RESEARCH-VALIDATION-GENIESPHERE-PRIVATE-001-RESULT.md`, segment B).
+
+What this means for every change:
+
+- Quality bar is premium: polished, fast, no console errors, phone-first.
+- Privacy and security are part of the product, not a later phase. No feature
+  may store what the research's "never store" list forbids (bank logins, full
+  SSN/card numbers, seed phrases, alarm codes, medical records, biometrics).
+- Design for delegation: owner, spouse/adult, assistant/house manager, adviser.
+- Do not build: human concierge, bank/brokerage aggregation, investment or
+  legal advice, bill pay. The premium "Private" offer stays VALIDATE FIRST.
+
 ## Current approved modules
 
 - Nutrition

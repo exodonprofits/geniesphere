@@ -48,19 +48,19 @@
     <h2 class="gs-section-label">Your Genies</h2>
     <section class="gs-grid">
       <a class="gs-module" href="/modules/grocery/index.html">
-        <span class="gs-module-top"><span class="gs-tile teal" data-gs-icon="cart"></span><span id="grocery-pill" class="gs-pill">…</span></span>
+        <span class="gs-module-top"><span class="gs-tile accent" data-gs-icon="cart"></span><span id="grocery-pill" class="gs-pill">…</span></span>
         <h3 class="gs-module-name">Grocery Genie</h3>
         <p class="gs-module-desc">One shared shopping list for the whole household. Add, check off, clear.</p>
         <span class="gs-module-cta">Open list →</span>
       </a>
       <a class="gs-module" href="/modules/nutrition/index.html">
-        <span class="gs-module-top"><span class="gs-tile teal" data-gs-icon="leaf"></span><span class="gs-pill">Not set up</span></span>
+        <span class="gs-module-top"><span class="gs-tile accent" data-gs-icon="leaf"></span><span class="gs-pill">Not set up</span></span>
         <h3 class="gs-module-name">Nutrition Genie</h3>
         <p class="gs-module-desc">Weekly meal plans for your family, turned into a grocery list in one step.</p>
         <span class="gs-module-cta">Open Nutrition →</span>
       </a>
       <a class="gs-module" href="/modules/home/index.html">
-        <span class="gs-module-top"><span class="gs-tile teal" data-gs-icon="wrench"></span><span class="gs-pill">Not set up</span></span>
+        <span class="gs-module-top"><span class="gs-tile accent" data-gs-icon="wrench"></span><span class="gs-pill">Not set up</span></span>
         <h3 class="gs-module-name">Home Genie</h3>
         <p class="gs-module-desc">Maintenance that turns into tasks, plus inventory and warranty dates.</p>
         <span class="gs-module-cta">Open Home →</span>
@@ -99,9 +99,13 @@
         return node;
       }
 
-      function greeting() {
+      // "Good <em>morning</em>": the time of day gets the brand gradient.
+      function renderGreeting() {
         var h = new Date().getHours();
-        return h < 12 ? 'Good morning' : (h < 18 ? 'Good afternoon' : 'Good evening');
+        var part = h < 12 ? 'morning' : (h < 18 ? 'afternoon' : 'evening');
+        var title = document.getElementById('greeting');
+        title.textContent = 'Good ';
+        title.appendChild(el('em', null, part));
       }
 
       function shortDate(iso) {
@@ -183,7 +187,7 @@
         var detail = 'Next: ' + next.title + (next.due_at ? ' · due ' + shortDate(next.due_at) : '');
         if (overdue) return { tone: 'urgent', pill: overdue + ' overdue', title: tasks.length + ' open task' + (tasks.length > 1 ? 's' : ''), detail: detail, attention: true };
         if (soon) return { tone: 'warn', pill: soon + ' due soon', title: tasks.length + ' open task' + (tasks.length > 1 ? 's' : ''), detail: detail, attention: true };
-        return { tone: 'teal', pill: 'On track', title: tasks.length + ' open task' + (tasks.length > 1 ? 's' : ''), detail: detail };
+        return { tone: 'accent', pill: 'On track', title: tasks.length + ' open task' + (tasks.length > 1 ? 's' : ''), detail: detail };
       }
 
       function renderToday(ctx, tasks, toBuy, members) {
@@ -194,7 +198,7 @@
 
         var t = taskSummary(tasks);
         var g = toBuy
-          ? { tone: 'teal', pill: toBuy + ' to buy', title: 'Grocery list has ' + toBuy + ' item' + (toBuy > 1 ? 's' : ''), detail: 'Shared with everyone in ' + ctx.name + '.' }
+          ? { tone: 'accent', pill: toBuy + ' to buy', title: 'Grocery list has ' + toBuy + ' item' + (toBuy > 1 ? 's' : ''), detail: 'Shared with everyone in ' + ctx.name + '.' }
           : { tone: 'ok', pill: 'Clear', title: 'Grocery list is clear', detail: 'Add what you need before the next trip.' };
 
         rows.appendChild(todayRow({ icon: 'list', tone: t.tone, pill: t.pill, title: t.title, detail: t.detail, action: 'View tasks →', href: '#open-tasks' }));
@@ -204,7 +208,7 @@
 
         quick.appendChild(quickChip({ icon: 'house', title: ctx.name, sub: members + ' member' + (members === 1 ? '' : 's'), pill: null }));
         quick.appendChild(quickChip({ icon: 'list', title: 'Tasks', sub: tasks.length ? tasks.length + ' open' : 'Nothing open', pill: t.attention ? t.pill : 'Clear', tone: t.attention ? t.tone : 'ok', href: '#open-tasks' }));
-        quick.appendChild(quickChip({ icon: 'cart', title: 'Groceries', sub: toBuy ? toBuy + ' to buy' : 'List is clear', pill: toBuy ? String(toBuy) : 'Clear', tone: toBuy ? 'teal' : 'ok', href: '/modules/grocery/index.html' }));
+        quick.appendChild(quickChip({ icon: 'cart', title: 'Groceries', sub: toBuy ? toBuy + ' to buy' : 'List is clear', pill: toBuy ? String(toBuy) : 'Clear', tone: toBuy ? 'accent' : 'ok', href: '/modules/grocery/index.html' }));
         quick.appendChild(quickChip({ icon: 'leaf', title: 'Meals', sub: 'Nutrition Genie', pill: 'Not set up', href: '/modules/nutrition/index.html' }));
 
         var needs = t.attention ? 1 : 0;
@@ -215,7 +219,7 @@
           ? 'Start with your tasks: ' + t.pill + '.'
           : 'All caught up. Enjoy your day.';
         var grocery = document.getElementById('grocery-pill');
-        grocery.className = 'gs-pill ' + (toBuy ? 'teal' : 'ok');
+        grocery.className = 'gs-pill ' + (toBuy ? 'accent' : 'ok');
         grocery.textContent = toBuy ? toBuy + ' to buy' : 'Clear';
       }
 
@@ -229,7 +233,7 @@
         rows.forEach(function (task) {
           var li = el('li');
           var state = dueState(task.due_at);
-          var tile = el('span', 'gs-tile ' + ({ overdue: 'urgent', soon: 'warn' }[state] || 'teal'));
+          var tile = el('span', 'gs-tile ' + ({ overdue: 'urgent', soon: 'warn' }[state] || 'accent'));
           tile.appendChild(GS.shell.icon('check'));
           li.appendChild(tile);
           li.appendChild(el('span', 'gs-grow', task.title));
@@ -272,7 +276,7 @@
         try {
           var session = await GS.auth.requireSession();
           if (!session) return;
-          document.getElementById('greeting').textContent = greeting();
+          renderGreeting();
           document.getElementById('today-date').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
           var ctx = await GS.household.current();
