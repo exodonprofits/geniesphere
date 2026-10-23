@@ -6,22 +6,23 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 | Capability | Canonical path | Status |
 |---|---|---|
-| App entry | `/index.html` | live marketing homepage (pulled from Bluehost 2026-10-15; links to `/onboarding/login.html` and `/dashboard/*`; `/about.html` exists only on the server) |
-| Login | `/core/auth/login.html` | slice 1: email/password via `gs-auth`; honours same-site `?next=` |
-| Dashboard | `/core/dashboard/index.html` | slice 1: session required; household name + switcher; open `household_tasks` |
-| Settings | `/core/settings/index.html` | starter |
-| Tasks | `/core/tasks/index.html` | starter |
-| Notifications | `/core/notifications/index.html` | starter |
+| App entry | `/index.html` | live marketing homepage. Log in → `/core/auth/login.html`; Household card → `/core/dashboard/index.html`; Create an account → `/onboarding/signup.html`; demo → `/dashboard/overview.html?mode=demo`. Business, Investment, Leisure and Finance cards are not linked ("Coming later"). `/about.html` exists only on the server |
+| Login | `/core/auth/login.html` | slice 1: email/password via `gs-auth`; `?next=` kept only if it resolves to this origin. No app shell |
+| Dashboard | `/core/dashboard/index.html` | slice 1: session required; household name + switcher; open `household_tasks`; app shell |
+| Settings | `/core/settings/index.html` | placeholder; session required; app shell |
+| Tasks | `/core/tasks/index.html` | placeholder; session required; app shell |
+| Notifications | `/core/notifications/index.html` | placeholder; session required; app shell |
 
+| App shell (component) | `/shared/components/gs-shell.js` | top bar, account menu, phone bottom bar; mounts on `<body data-gs-shell="key">`; styles in `/shared/css/app.css` |
 | Household context (service) | `/core/household/household.js` | slice 1: current household from `user_household_context`, else first membership by name |
 
 ## Modules
 
 | Module | Canonical path | Status |
 |---|---|---|
-| Nutrition | `/modules/nutrition/index.html` | starter |
-| Grocery | `/modules/grocery/index.html` | slice 1: shared household list (`shopping_lists` / `shopping_items`) |
-| Home | `/modules/home/index.html` | starter |
+| Nutrition | `/modules/nutrition/index.html` | placeholder; session required; app shell |
+| Grocery | `/modules/grocery/index.html` | slice 1: shared household list (`shopping_lists` / `shopping_items`); app shell |
+| Home | `/modules/home/index.html` | placeholder; session required; app shell |
 
 ## Legacy migration rule
 

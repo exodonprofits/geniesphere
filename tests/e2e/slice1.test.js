@@ -94,20 +94,61 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   step('reload reuses the existing list');
 
   // 7. Signed-in user on login page is forwarded; open redirect blocked
-  await page.goto(BASE + '/core/auth/login.html?next=//evil.example.com/x');
-  await page.waitForURL(BASE + '/core/dashboard/index.html');
+  for (const bad of ['//evil.example.com/x', '/\\evil.example.com/x', '/%09/evil.example.com/x']) {
+    await page.goto(BASE + '/core/auth/login.html?next=' + bad);
+    await page.waitForURL(BASE + '/core/dashboard/index.html');
+  }
   await page.goto(BASE + '/core/auth/login.html?next=/modules/grocery/index.html');
   await page.waitForURL(BASE + '/modules/grocery/index.html');
-  step('login forwards signed-in users; //evil next ignored, same-site next honoured');
+  step('login forwards signed-in users; //, /\\ and tab-prefixed next ignored, same-site next honoured');
 
-  // 8. Sign out
+  // 8. App shell on every Core and module page
+  const shellPages = [
+    ['/core/dashboard/index.html', 'Dashboard'], ['/modules/grocery/index.html', 'Grocery'],
+    ['/modules/nutrition/index.html', 'Nutrition'], ['/modules/home/index.html', 'Home'],
+    ['/core/tasks/index.html', 'Tasks'], ['/core/notifications/index.html', null],
+    ['/core/settings/index.html', null]
+  ];
+  for (const [url, activeLabel] of shellPages) {
+    await page.goto(BASE + url);
+    await page.waitForSelector('.gs-topbar .gs-account-btn');
+    assert.strictEqual(page.url(), BASE + url, 'shell page redirected: ' + url);
+    const active = await page.$$eval('.gs-topnav [aria-current="page"]', els => els.map(e => e.textContent));
+    assert.deepStrictEqual(active, activeLabel ? [activeLabel] : [], 'active nav on ' + url);
+  }
+  step('shell mounts on all 7 Core/module pages with the right active item');
+
   await page.goto(BASE + '/core/dashboard/index.html');
-  await page.waitForSelector('#sign-out');
-  await page.click('#sign-out');
+  await page.waitForFunction(() => document.querySelector('.gs-avatar').textContent === 'J');
+  assert.strictEqual(await page.isVisible('#gs-account-menu'), false);
+  await page.click('.gs-account-btn');
+  assert.strictEqual(await page.getAttribute('.gs-account-btn', 'aria-expanded'), 'true');
+  assert.strictEqual(await page.textContent('.gs-account-who'), 'jimmy@example.com');
+  await page.keyboard.press('Escape');
+  assert.strictEqual(await page.isVisible('#gs-account-menu'), false);
+  step('account menu shows the signed-in email, opens and closes with Escape');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.strictEqual(await page.isVisible('.gs-bottomnav'), true);
+  assert.strictEqual(await page.isVisible('.gs-topnav'), false);
+  assert.strictEqual(await page.$$eval('.gs-bottomnav a', els => els.length), 5);
+  await page.screenshot({ path: path.join(OUT, 'shell-mobile.png') });
+  await page.setViewportSize({ width: 1100, height: 800 });
+  await page.screenshot({ path: path.join(OUT, 'shell-desktop.png') });
+  step('phone width swaps the top nav for a 5-item bottom bar');
+
+  // 9. Sign out from the shell
+  await page.click('.gs-account-btn');
+  await page.click('#gs-account-menu button:has-text("Sign out")');
   await page.waitForURL(/\/core\/auth\/login\.html/);
   await page.goto(BASE + '/modules/grocery/index.html');
   await page.waitForURL(/\/core\/auth\/login\.html\?next=%2Fmodules%2Fgrocery%2Findex\.html/);
   step('sign out → login; grocery requires a session');
+  for (const url of ['/core/tasks/index.html', '/modules/home/index.html']) {
+    await page.goto(BASE + url);
+    await page.waitForURL(/\/core\/auth\/login\.html\?next=/);
+  }
+  step('placeholder pages also require a session');
 
   assert.deepStrictEqual(errors, [], 'console errors: ' + errors.join(' | '));
   step('no console errors');

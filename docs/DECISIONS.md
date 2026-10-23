@@ -59,3 +59,9 @@
 **Decision:** The repo root `.htaccess` is the only server configuration file `scripts/package_site.py` ships. It sets `DirectoryIndex index.html index.php` and keeps cPanel's PHP handler block; it drops the WordPress rewrite rules. The deploy workflow's backup and fetch artifacts include hidden files, so the replaced server `.htaccess` is kept for 90 days.
 
 **Reason:** On 2026-10-15 Bluehost installed WordPress into the web root (`index.php` plus a WordPress/Newfold `.htaccess`). Apache then served WordPress at `/` instead of our `index.html`, and the additive deploy cannot delete `index.php`. Owning `.htaccess` restores the homepage without deleting server files. If Bluehost's htaccess manager rewrites the file, remove the WordPress install from the site rather than fighting it.
+
+## ADR-012 — One app shell for Core and the 0.1 modules
+
+**Decision:** `shared/components/gs-shell.js` builds the top bar (brand, nav, account menu) and the phone bottom bar with `createElement`, and mounts on any page whose `<body>` has `data-gs-shell="<active key>"`. The nav list lives only in that file: Dashboard, Grocery, Nutrition, Home, Tasks; Notifications and Settings are in the account menu. It reads the session through `GenieSphere.auth` and signs out through it; it does not guard pages, which still call `requireSession()`. It is used on the 7 Core and module pages, not on the login page or legacy pages. The design follows the legacy `dashboard/overview.html` topbar + mobile-nav, with the homepage's brand colours.
+
+**Reason:** No shared nav existed; legacy pages copy one of several nav markups into each file (138 pages use one, 44 another). A single injected component keeps the 0.1 pages consistent and makes adding a module a one-line change. A module registry (`module_installations`) can replace the static list once modules can be turned off per household.
