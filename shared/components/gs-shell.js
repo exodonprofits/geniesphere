@@ -30,7 +30,11 @@
     cart: 'M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2M9.5 20h.01M16.5 20h.01',
     leaf: 'M5 19C5 11 11 5 20 5c0 9-6 15-14 15M5 19l7-7',
     house: 'M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6',
-    list: 'M10 6h10M10 12h10M10 18h10M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2'
+    list: 'M10 6h10M10 12h10M10 18h10M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2',
+    wrench: 'M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z',
+    calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
+    sparkle: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z',
+    check: 'M4 12l5 5L20 6'
   };
 
   var SVG_NS = 'http://www.w3.org/2000/svg';
@@ -56,13 +60,13 @@
     return svg;
   }
 
-  function navLink(item, active, withIcon) {
+  function navLink(item, active) {
     var link = el('a', { href: item.href, class: 'gs-nav-link' });
     if (item.key === active) {
       link.classList.add('is-active');
       link.setAttribute('aria-current', 'page');
     }
-    if (withIcon) link.appendChild(icon(item.icon));
+    link.appendChild(icon(item.icon));
     link.appendChild(el('span', { text: item.label }));
     return link;
   }
@@ -75,7 +79,9 @@
       'aria-label': 'Account menu'
     });
     var initial = el('span', { class: 'gs-avatar', 'aria-hidden': 'true', text: '·' });
+    var label = el('span', { class: 'gs-account-label', text: 'Account' });
     button.appendChild(initial);
+    button.appendChild(label);
 
     var menu = el('div', { id: 'gs-account-menu', class: 'gs-account-menu', hidden: '' });
     var who = el('p', { class: 'gs-account-who', text: 'Checking your session…' });
@@ -123,10 +129,12 @@
             class: 'gs-menu-item', text: 'Log in'
           });
           menu.insertBefore(login, who.nextSibling);
+          label.textContent = 'Log in';
           return;
         }
         who.textContent = email;
         initial.textContent = email.charAt(0).toUpperCase();
+        label.textContent = email.split('@')[0];
         button.setAttribute('aria-label', 'Account menu for ' + email);
         signOut.hidden = false;
       })
@@ -146,25 +154,34 @@
       el('img', { src: '/shared/assets/logo/geniesphere_logo_name.png', alt: 'GenieSphere', width: '146', height: '36' })
     ]);
     var topNav = el('nav', { class: 'gs-topnav', 'aria-label': 'Main' });
-    NAV.forEach(function (item) { topNav.appendChild(navLink(item, active, false)); });
+    NAV.forEach(function (item) { topNav.appendChild(navLink(item, active)); });
 
     var header = el('header', { class: 'gs-topbar' }, [
       el('div', { class: 'gs-topbar-inner' }, [brand, topNav, accountMenu(active)])
     ]);
 
     var bottomNav = el('nav', { class: 'gs-bottomnav', 'aria-label': 'Main' });
-    NAV.forEach(function (item) { bottomNav.appendChild(navLink(item, active, true)); });
+    NAV.forEach(function (item) { bottomNav.appendChild(navLink(item, active)); });
 
     document.body.insertBefore(header, document.body.firstChild);
     document.body.appendChild(bottomNav);
     document.body.classList.add('gs-has-shell');
   }
 
-  window.GenieSphere.shell = { mount: mount, nav: NAV };
+  window.GenieSphere.shell = { mount: mount, nav: NAV, icon: icon, fillIcons: fillIcons };
+
+  // Fill <span data-gs-icon="cart"></span> placeholders with the shared icons.
+  function fillIcons(root) {
+    (root || document).querySelectorAll('[data-gs-icon]').forEach(function (node) {
+      var name = node.getAttribute('data-gs-icon');
+      if (ICONS[name] && !node.firstChild) node.appendChild(icon(name));
+    });
+  }
 
   function autoMount() {
     var active = document.body.getAttribute('data-gs-shell');
     if (active !== null) mount(active);
+    fillIcons();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoMount);
   else autoMount();
