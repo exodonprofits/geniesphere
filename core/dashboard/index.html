@@ -21,6 +21,21 @@
     </header>
     <p id="status" class="gs-status" role="status"></p>
 
+    <section class="gs-brief" aria-labelledby="brief-heading">
+      <div class="gs-brief-main">
+        <p id="brief-kicker" class="gs-brief-kicker"><span data-gs-icon="sparkle"></span>Your briefing</p>
+        <h2 id="brief-heading" class="gs-brief-title">Preparing your day…</h2>
+        <div id="brief-lines" class="gs-brief-lines"></div>
+        <div id="brief-actions" class="gs-row gs-brief-actions"></div>
+        <p class="gs-brief-note">Prepared from your household’s tasks and lists · <span id="brief-time">just now</span></p>
+      </div>
+      <div class="gs-brief-metrics" aria-label="At a glance">
+        <div class="gs-brief-metric"><span class="gs-brief-metric-label">Need you</span><span id="m-attention" class="gs-brief-metric-value">–</span></div>
+        <div class="gs-brief-metric"><span class="gs-brief-metric-label">Open tasks</span><span id="m-tasks" class="gs-brief-metric-value">–</span></div>
+        <div class="gs-brief-metric"><span class="gs-brief-metric-label">To buy</span><span id="m-buy" class="gs-brief-metric-value">–</span></div>
+      </div>
+    </section>
+
     <section class="gs-panel" aria-labelledby="today-heading">
       <div class="gs-panel-head">
         <div class="gs-panel-head-left">
@@ -211,16 +226,85 @@
         quick.appendChild(quickChip({ icon: 'cart', title: 'Groceries', sub: toBuy ? toBuy + ' to buy' : 'List is clear', pill: toBuy ? String(toBuy) : 'Clear', tone: toBuy ? 'accent' : 'ok', href: '/modules/grocery/index.html' }));
         quick.appendChild(quickChip({ icon: 'leaf', title: 'Meals', sub: 'Nutrition Genie', pill: 'Not set up', href: '/modules/nutrition/index.html' }));
 
-        var needs = t.attention ? 1 : 0;
+        var needs = attentionCount(tasks, toBuy);
         var badge = document.getElementById('today-badge');
-        badge.className = 'gs-pill gs-pill-lg ' + (needs ? t.tone : 'ok');
-        badge.textContent = needs ? needs + ' needs attention' : 'All clear today';
-        document.getElementById('today-foot').textContent = needs
+        badge.className = 'gs-pill gs-pill-lg ' + (needs ? (t.attention ? t.tone : 'accent') : 'ok');
+        badge.textContent = needs ? needs + (needs === 1 ? ' needs' : ' need') + ' you' : 'All clear today';
+        document.getElementById('today-foot').textContent = t.attention
           ? 'Start with your tasks: ' + t.pill + '.'
-          : 'All caught up. Enjoy your day.';
+          : (toBuy ? 'Tasks are clear. The grocery list is waiting.' : 'All caught up. Enjoy your day.');
         var grocery = document.getElementById('grocery-pill');
         grocery.className = 'gs-pill ' + (toBuy ? 'accent' : 'ok');
         grocery.textContent = toBuy ? toBuy + ' to buy' : 'Clear';
+      }
+
+      // One definition of "needs you", shared by the briefing and Today at Home:
+      // each overdue or due-soon task, plus the grocery list if it has items.
+      function attentionCount(tasks, toBuyCount) {
+        var due = tasks.filter(function (t) { var s = dueState(t.due_at); return s === 'overdue' || s === 'soon'; }).length;
+        return due + (toBuyCount ? 1 : 0);
+      }
+
+      var NUMBER_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+
+      // Rule-based briefing from household data. Each line is one plain sentence.
+      function renderBriefing(tasks, toBuy) {
+        var h = new Date().getHours();
+        var kicker = document.getElementById('brief-kicker');
+        kicker.lastChild.textContent = (h < 12 ? 'Morning' : (h < 18 ? 'Afternoon' : 'Evening')) + ' briefing';
+
+        var overdue = tasks.filter(function (t) { return dueState(t.due_at) === 'overdue'; });
+        var soon = tasks.filter(function (t) { return dueState(t.due_at) === 'soon'; });
+        var lines = [];
+        overdue.forEach(function (t) {
+          lines.push({ tone: 'urgent', text: '“' + t.title + '” is overdue. It was due ' + shortDate(t.due_at) + '.' });
+        });
+        soon.forEach(function (t) {
+          lines.push({ tone: 'warn', text: '“' + t.title + '” is due ' + new Date(t.due_at).toLocaleDateString(undefined, { weekday: 'long' }) + '.' });
+        });
+        if (toBuy.length) {
+          var names = toBuy.slice(0, 2).map(function (i) { return i.name; });
+          var more = toBuy.length - names.length;
+          lines.push({ tone: 'accent', text: toBuy.length + ' item' + (toBuy.length > 1 ? 's are' : ' is') + ' on the grocery list: ' +
+            names.join(', ') + (more > 0 ? ' and ' + more + ' more' : '') + '.' });
+        }
+        lines.push({ tone: '', text: 'No meals are planned for this week yet.' });
+
+        var attention = attentionCount(tasks, toBuy.length);
+        document.getElementById('brief-heading').textContent = attention === 0
+          ? 'You’re all caught up.'
+          : (NUMBER_WORDS[attention] || attention) + (attention === 1 ? ' thing needs' : ' things need') + ' you today.';
+
+        var box = document.getElementById('brief-lines');
+        box.textContent = '';
+        lines.forEach(function (line) {
+          var p = el('p', 'gs-brief-line');
+          p.appendChild(el('span', 'gs-brief-dot ' + line.tone));
+          p.appendChild(el('span', null, line.text));
+          box.appendChild(p);
+        });
+
+        var actions = document.getElementById('brief-actions');
+        actions.textContent = '';
+        function action(label, href, primary) {
+          var a = el('a', 'gs-btn' + (primary ? ' gs-btn-primary' : ''), label);
+          a.href = href;
+          actions.appendChild(a);
+        }
+        if (overdue.length || soon.length) {
+          action('Review tasks', '#open-tasks', true);
+          if (toBuy.length) action('Open grocery list', '/modules/grocery/index.html', false);
+        } else if (toBuy.length) {
+          action('Open grocery list', '/modules/grocery/index.html', true);
+          action('Plan meals', '/modules/nutrition/index.html', false);
+        } else {
+          action('Plan this week’s meals', '/modules/nutrition/index.html', true);
+        }
+
+        document.getElementById('m-attention').textContent = attention;
+        document.getElementById('m-tasks').textContent = tasks.length;
+        document.getElementById('m-buy').textContent = toBuy.length;
+        document.getElementById('brief-time').textContent = 'updated ' + new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
       }
 
       function renderTasks(rows) {
@@ -258,11 +342,12 @@
         return result.data || [];
       }
 
-      async function countToBuy(householdId) {
+      async function loadToBuy(householdId) {
         var result = await db().from('shopping_items')
-          .select('id').eq('household_id', householdId).eq('checked', false);
+          .select('id, name').eq('household_id', householdId).eq('checked', false)
+          .order('created_at', { ascending: true });
         if (result.error) throw result.error;
-        return (result.data || []).length;
+        return result.data || [];
       }
 
       async function countMembers(householdId) {
@@ -289,8 +374,9 @@
           }
           document.getElementById('household-name').textContent = ctx.name;
           renderSwitcher(ctx);
-          var loaded = await Promise.all([loadTasks(ctx.householdId), countToBuy(ctx.householdId), countMembers(ctx.householdId)]);
-          renderToday(ctx, loaded[0], loaded[1], loaded[2]);
+          var loaded = await Promise.all([loadTasks(ctx.householdId), loadToBuy(ctx.householdId), countMembers(ctx.householdId)]);
+          renderBriefing(loaded[0], loaded[1]);
+          renderToday(ctx, loaded[0], loaded[1].length, loaded[2]);
           renderTasks(loaded[0]);
         } catch (err) {
           show(err.message || 'Could not load the dashboard.', true);
