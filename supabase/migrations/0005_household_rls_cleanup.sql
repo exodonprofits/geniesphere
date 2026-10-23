@@ -1,5 +1,7 @@
 -- Household RLS cleanup (follows 0003, which fixed the recursion).
--- Not yet applied: waiting on the SQL-editor dry run.
+-- Applied to production 2026-10-23 via the SQL editor, after a dry run.
+-- Verified: 9 policies remain; owner reads 2 households / 2 members / 1 task,
+-- other users and anon read 0; anon can no longer call the helpers.
 --
 -- Target: live "Exodon Profits" project. Independent of 0001/0002, which
 -- must NOT be applied there (households/household_members already exist

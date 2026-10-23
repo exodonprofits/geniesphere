@@ -1,5 +1,6 @@
 -- Block self-promotion through gs_user_preferences.role.
--- Not yet applied: waiting on the SQL-editor dry run.
+-- Applied to production 2026-10-23 via the SQL editor, after a dry run.
+-- Verified as a staff user: own role change refused, other edits allowed.
 --
 -- Target: live "Exodon Profits" project (shared with Salon Genie, Arowana).
 --
@@ -29,7 +30,9 @@ begin;
 create or replace function public.gs_user_preferences_guard_role()
 returns trigger
 language plpgsql
-set search_path = ''
+-- Not '': the admin check below reads gs_user_preferences under RLS, whose
+-- admin policies call is_admin(), which refers to user_preferences unqualified.
+set search_path = public
 as $$
 begin
   if coalesce(auth.role(), '') = 'service_role'
