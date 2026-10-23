@@ -1,5 +1,6 @@
 -- Block self-promotion through gs_user_preferences.role.
--- Not yet applied: waiting on the SQL-editor dry run.
+-- Applied to production 2026-10-23 via the SQL editor, after a dry run.
+-- Verified as a staff user: own role change refused, other edits allowed.
 --
 -- Target: live "Exodon Profits" project (shared with Salon Genie, Arowana).
 --
