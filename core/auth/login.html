@@ -33,8 +33,18 @@
     (function () {
       // Only same-site paths are allowed as a post-login destination.
       function nextPath() {
+        var fallback = '/core/dashboard/index.html';
         var next = new URLSearchParams(window.location.search).get('next') || '';
-        return /^\/(?!\/)/.test(next) ? next : '/core/dashboard/index.html';
+        if (next.charAt(0) !== '/') return fallback;
+        // Resolve the way the browser will (it strips tabs/newlines and treats
+        // a backslash as "/"), then keep it only if it stays on this site.
+        try {
+          var url = new URL(next, window.location.origin);
+          if (url.origin !== window.location.origin) return fallback;
+          return url.pathname + url.search + url.hash;
+        } catch (err) {
+          return fallback;
+        }
       }
 
       var form = document.getElementById('login-form');
