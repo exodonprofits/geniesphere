@@ -3,31 +3,73 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GenieSphere Dashboard</title>
+  <title>Dashboard · GenieSphere</title>
+  <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
   <link rel="stylesheet" href="/shared/css/app.css" />
 </head>
 <body data-gs-shell="dashboard">
-  <main class="gs-shell gs-stack">
-    <div class="gs-spread">
+  <main class="gs-shell">
+    <header class="gs-page-header">
       <div>
-        <h1 id="greeting" style="margin:0">Welcome</h1>
-        <p id="household-name" class="gs-muted" style="margin:4px 0 0"></p>
+        <p class="gs-eyebrow"><span data-gs-icon="sparkle"></span><span id="today-date">Today</span></p>
+        <h1 id="greeting" class="gs-title">Welcome</h1>
+        <p id="household-name" class="gs-subtitle">Loading your household…</p>
       </div>
-      <label id="switcher-wrap" class="gs-row" hidden>Household
+      <label id="switcher-wrap" class="gs-label" hidden>Household
         <select id="switcher" class="gs-input"></select>
       </label>
-    </div>
+    </header>
     <p id="status" class="gs-status" role="status"></p>
 
-    <section class="gs-grid">
-      <article class="gs-card"><h2>Grocery Genie</h2><p class="gs-muted">Shared shopping list for your household.</p><a href="/modules/grocery/index.html">Open</a></article>
-      <article class="gs-card"><h2>Nutrition Genie</h2><p class="gs-muted">Meal planning and family food preferences.</p><a href="/modules/nutrition/index.html">Open</a></article>
-      <article class="gs-card"><h2>Home Genie</h2><p class="gs-muted">Maintenance, inventory, warranties, reminders.</p><a href="/modules/home/index.html">Open</a></article>
+    <section class="gs-panel" aria-labelledby="today-heading">
+      <div class="gs-panel-head">
+        <div class="gs-panel-head-left">
+          <span class="gs-panel-icon" data-gs-icon="house"></span>
+          <div>
+            <h2 id="today-heading" class="gs-panel-title">Today at Home</h2>
+            <p id="today-sub" class="gs-panel-sub">What needs attention in your household</p>
+          </div>
+        </div>
+        <span id="today-badge" class="gs-pill gs-pill-lg">Checking…</span>
+      </div>
+      <div class="gs-split">
+        <div id="today-rows"></div>
+        <aside class="gs-split-side" aria-label="Quick status">
+          <p class="gs-side-label">Quick status</p>
+          <div id="quick-status" class="gs-stack"></div>
+        </aside>
+      </div>
+      <div class="gs-panel-foot">
+        <span id="today-foot">Checking your household…</span>
+        <a href="#open-tasks" class="gs-item-action">Open tasks →</a>
+      </div>
     </section>
 
-    <section class="gs-card gs-stack">
-      <h2 style="margin:0">Open household tasks</h2>
-      <ul id="tasks" class="gs-list"></ul>
+    <h2 class="gs-section-label">Your Genies</h2>
+    <section class="gs-grid">
+      <a class="gs-module" href="/modules/grocery/index.html">
+        <span class="gs-module-top"><span class="gs-tile teal" data-gs-icon="cart"></span><span id="grocery-pill" class="gs-pill">…</span></span>
+        <h3 class="gs-module-name">Grocery Genie</h3>
+        <p class="gs-module-desc">One shared shopping list for the whole household. Add, check off, clear.</p>
+        <span class="gs-module-cta">Open list →</span>
+      </a>
+      <a class="gs-module" href="/modules/nutrition/index.html">
+        <span class="gs-module-top"><span class="gs-tile teal" data-gs-icon="leaf"></span><span class="gs-pill">Not set up</span></span>
+        <h3 class="gs-module-name">Nutrition Genie</h3>
+        <p class="gs-module-desc">Weekly meal plans for your family, turned into a grocery list in one step.</p>
+        <span class="gs-module-cta">Open Nutrition →</span>
+      </a>
+      <a class="gs-module" href="/modules/home/index.html">
+        <span class="gs-module-top"><span class="gs-tile teal" data-gs-icon="wrench"></span><span class="gs-pill">Not set up</span></span>
+        <h3 class="gs-module-name">Home Genie</h3>
+        <p class="gs-module-desc">Maintenance that turns into tasks, plus inventory and warranty dates.</p>
+        <span class="gs-module-cta">Open Home →</span>
+      </a>
+    </section>
+
+    <h2 id="open-tasks" class="gs-section-label">Open household tasks</h2>
+    <section class="gs-panel">
+      <ul id="tasks" class="gs-list gs-panel-body"></ul>
     </section>
   </main>
 
@@ -41,15 +83,37 @@
     (function () {
       var GS = window.GenieSphere;
       var status = document.getElementById('status');
+      var DAY = 24 * 60 * 60 * 1000;
+
+      function db() { return GS.getSupabase(); }
 
       function show(message, isError) {
         status.textContent = message || '';
         status.classList.toggle('gs-error', !!isError);
       }
 
+      function el(tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text != null) node.textContent = text;
+        return node;
+      }
+
       function greeting() {
         var h = new Date().getHours();
         return h < 12 ? 'Good morning' : (h < 18 ? 'Good afternoon' : 'Good evening');
+      }
+
+      function shortDate(iso) {
+        return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      }
+
+      // overdue | soon (within 3 days) | later | none
+      function dueState(iso) {
+        if (!iso) return 'none';
+        var ms = new Date(iso).getTime() - Date.now();
+        if (ms < 0) return 'overdue';
+        return ms <= 3 * DAY ? 'soon' : 'later';
       }
 
       function renderSwitcher(ctx) {
@@ -73,34 +137,112 @@
         wrap.hidden = false;
       }
 
+      // One "Today at Home" row: icon tile, title + pill, detail, action link.
+      function todayRow(row) {
+        var link = el('a', 'gs-item-row');
+        link.href = row.href;
+        var tile = el('span', 'gs-tile ' + (row.tone || ''));
+        tile.appendChild(GS.shell.icon(row.icon));
+        var body = el('span');
+        var title = el('span', 'gs-item-title', row.title);
+        if (row.pill) {
+          var pill = el('span', 'gs-pill ' + (row.tone || ''), row.pill);
+          pill.style.marginLeft = '8px';
+          title.appendChild(pill);
+        }
+        body.appendChild(title);
+        body.appendChild(el('span', 'gs-item-detail', row.detail));
+        body.lastChild.style.display = 'block';
+        link.appendChild(tile);
+        link.appendChild(body);
+        link.appendChild(el('span', 'gs-item-action', row.action));
+        return link;
+      }
+
+      function quickChip(chip) {
+        var node = el(chip.href ? 'a' : 'div', 'gs-stat-chip');
+        if (chip.href) node.href = chip.href;
+        node.appendChild(GS.shell.icon(chip.icon));
+        var text = el('span', 'gs-grow');
+        text.appendChild(el('span', 'gs-stat-chip-title', chip.title));
+        var sub = el('span', 'gs-stat-chip-sub', chip.sub);
+        sub.style.display = 'block';
+        text.appendChild(sub);
+        node.appendChild(text);
+        if (chip.pill) node.appendChild(el('span', 'gs-pill ' + (chip.tone || ''), chip.pill));
+        return node;
+      }
+
+      function taskSummary(tasks) {
+        var overdue = tasks.filter(function (t) { return dueState(t.due_at) === 'overdue'; }).length;
+        var soon = tasks.filter(function (t) { return dueState(t.due_at) === 'soon'; }).length;
+        var next = tasks[0];
+        if (!tasks.length) {
+          return { tone: 'ok', pill: 'Clear', title: 'No open tasks', detail: 'Nothing waiting on the household.' };
+        }
+        var detail = 'Next: ' + next.title + (next.due_at ? ' · due ' + shortDate(next.due_at) : '');
+        if (overdue) return { tone: 'urgent', pill: overdue + ' overdue', title: tasks.length + ' open task' + (tasks.length > 1 ? 's' : ''), detail: detail, attention: true };
+        if (soon) return { tone: 'warn', pill: soon + ' due soon', title: tasks.length + ' open task' + (tasks.length > 1 ? 's' : ''), detail: detail, attention: true };
+        return { tone: 'teal', pill: 'On track', title: tasks.length + ' open task' + (tasks.length > 1 ? 's' : ''), detail: detail };
+      }
+
+      function renderToday(ctx, tasks, toBuy, members) {
+        var rows = document.getElementById('today-rows');
+        var quick = document.getElementById('quick-status');
+        rows.textContent = '';
+        quick.textContent = '';
+
+        var t = taskSummary(tasks);
+        var g = toBuy
+          ? { tone: 'teal', pill: toBuy + ' to buy', title: 'Grocery list has ' + toBuy + ' item' + (toBuy > 1 ? 's' : ''), detail: 'Shared with everyone in ' + ctx.name + '.' }
+          : { tone: 'ok', pill: 'Clear', title: 'Grocery list is clear', detail: 'Add what you need before the next trip.' };
+
+        rows.appendChild(todayRow({ icon: 'list', tone: t.tone, pill: t.pill, title: t.title, detail: t.detail, action: 'View tasks →', href: '#open-tasks' }));
+        rows.appendChild(todayRow({ icon: 'cart', tone: g.tone, pill: g.pill, title: g.title, detail: g.detail, action: 'Open list →', href: '/modules/grocery/index.html' }));
+        rows.appendChild(todayRow({ icon: 'leaf', tone: '', pill: 'Not set up', title: 'No meal plan yet', detail: 'Plan this week’s meals with Nutrition Genie.', action: 'Plan meals →', href: '/modules/nutrition/index.html' }));
+        rows.appendChild(todayRow({ icon: 'wrench', tone: '', pill: 'Not set up', title: 'No home maintenance yet', detail: 'Track HVAC filters, gutters, smoke alarms.', action: 'Set up →', href: '/modules/home/index.html' }));
+
+        quick.appendChild(quickChip({ icon: 'house', title: ctx.name, sub: members + ' member' + (members === 1 ? '' : 's'), pill: null }));
+        quick.appendChild(quickChip({ icon: 'list', title: 'Tasks', sub: tasks.length ? tasks.length + ' open' : 'Nothing open', pill: t.attention ? t.pill : 'Clear', tone: t.attention ? t.tone : 'ok', href: '#open-tasks' }));
+        quick.appendChild(quickChip({ icon: 'cart', title: 'Groceries', sub: toBuy ? toBuy + ' to buy' : 'List is clear', pill: toBuy ? String(toBuy) : 'Clear', tone: toBuy ? 'teal' : 'ok', href: '/modules/grocery/index.html' }));
+        quick.appendChild(quickChip({ icon: 'leaf', title: 'Meals', sub: 'Nutrition Genie', pill: 'Not set up', href: '/modules/nutrition/index.html' }));
+
+        var needs = t.attention ? 1 : 0;
+        var badge = document.getElementById('today-badge');
+        badge.className = 'gs-pill gs-pill-lg ' + (needs ? t.tone : 'ok');
+        badge.textContent = needs ? needs + ' needs attention' : 'All clear today';
+        document.getElementById('today-foot').textContent = needs
+          ? 'Start with your tasks: ' + t.pill + '.'
+          : 'All caught up. Enjoy your day.';
+        var grocery = document.getElementById('grocery-pill');
+        grocery.className = 'gs-pill ' + (toBuy ? 'teal' : 'ok');
+        grocery.textContent = toBuy ? toBuy + ' to buy' : 'Clear';
+      }
+
       function renderTasks(rows) {
         var list = document.getElementById('tasks');
         list.textContent = '';
         if (!rows.length) {
-          var empty = document.createElement('li');
-          empty.className = 'gs-muted';
-          empty.textContent = 'No open tasks.';
-          list.appendChild(empty);
+          list.appendChild(el('li', 'gs-empty', 'No open tasks. Home Genie will add maintenance tasks here once it is set up.'));
           return;
         }
         rows.forEach(function (task) {
-          var li = document.createElement('li');
-          var title = document.createElement('span');
-          title.className = 'gs-grow';
-          title.textContent = task.title;
-          li.appendChild(title);
+          var li = el('li');
+          var state = dueState(task.due_at);
+          var tile = el('span', 'gs-tile ' + ({ overdue: 'urgent', soon: 'warn' }[state] || 'teal'));
+          tile.appendChild(GS.shell.icon('check'));
+          li.appendChild(tile);
+          li.appendChild(el('span', 'gs-grow', task.title));
           if (task.due_at) {
-            var due = document.createElement('span');
-            due.className = 'gs-muted';
-            due.textContent = 'Due ' + new Date(task.due_at).toLocaleDateString();
-            li.appendChild(due);
+            var tone = { overdue: 'urgent', soon: 'warn' }[state] || '';
+            li.appendChild(el('span', 'gs-pill ' + tone, (state === 'overdue' ? 'Overdue · ' : 'Due ') + shortDate(task.due_at)));
           }
           list.appendChild(li);
         });
       }
 
       async function loadTasks(householdId) {
-        var result = await GS.getSupabase()
+        var result = await db()
           .from('household_tasks')
           .select('id, title, due_at, status')
           .eq('household_id', householdId)
@@ -112,21 +254,40 @@
         return result.data || [];
       }
 
+      async function countToBuy(householdId) {
+        var result = await db().from('shopping_items')
+          .select('id').eq('household_id', householdId).eq('checked', false);
+        if (result.error) throw result.error;
+        return (result.data || []).length;
+      }
+
+      async function countMembers(householdId) {
+        var result = await db().from('household_members')
+          .select('user_id').eq('household_id', householdId);
+        if (result.error) throw result.error;
+        return (result.data || []).length;
+      }
+
       (async function init() {
         try {
           var session = await GS.auth.requireSession();
           if (!session) return;
           document.getElementById('greeting').textContent = greeting();
+          document.getElementById('today-date').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
           var ctx = await GS.household.current();
           if (!ctx) {
             document.getElementById('household-name').textContent = 'You are not part of a household yet.';
+            document.getElementById('today-badge').textContent = 'No household';
+            document.getElementById('today-foot').textContent = 'Ask the household owner to add you.';
             renderTasks([]);
             return;
           }
           document.getElementById('household-name').textContent = ctx.name;
           renderSwitcher(ctx);
-          renderTasks(await loadTasks(ctx.householdId));
+          var loaded = await Promise.all([loadTasks(ctx.householdId), countToBuy(ctx.householdId), countMembers(ctx.householdId)]);
+          renderToday(ctx, loaded[0], loaded[1], loaded[2]);
+          renderTasks(loaded[0]);
         } catch (err) {
           show(err.message || 'Could not load the dashboard.', true);
         }

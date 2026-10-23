@@ -12,6 +12,8 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   page.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   await page.route('**/shared/vendor/supabase.min.js', r => r.fulfill({ path: FAKE, contentType: 'application/javascript' }));
+  // Keep the run offline and deterministic: the Inter webfont is cosmetic.
+  await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.fulfill({ body: '', contentType: 'text/css' }));
   const step = (s) => console.log('✓ ' + s);
 
   // 1. Signed out → dashboard redirects to login with next
@@ -37,7 +39,7 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   assert.match(await page.textContent('#greeting'), /^Good (morning|afternoon|evening)$/);
   assert.strictEqual(await page.isVisible('#switcher-wrap'), true);
   await page.waitForSelector('#tasks li');
-  assert.strictEqual(await page.textContent('#tasks'), 'No open tasks.');
+  assert.match(await page.textContent('#tasks'), /^No open tasks\./);
   assert.strictEqual(await page.evaluate(() => window.__createClientCalls), 1);
   const [url, key] = await page.evaluate(() => window.__createClientArgs);
   assert.strictEqual(url, 'https://pbojacnagutipfhcxltj.supabase.co');
@@ -57,7 +59,7 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   step('household switch saved to user_household_context; done tasks hidden');
 
   // 5. Grocery
-  await page.click('text=Open >> nth=0');
+  await page.click('a.gs-module[href="/modules/grocery/index.html"]');
   await page.waitForURL(BASE + '/modules/grocery/index.html');
   await page.waitForFunction(() => document.querySelector('#household-name').textContent === 'Nguyen Home');
   await page.waitForSelector('#items li');
