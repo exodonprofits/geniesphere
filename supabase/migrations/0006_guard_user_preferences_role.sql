@@ -29,7 +29,9 @@ begin;
 create or replace function public.gs_user_preferences_guard_role()
 returns trigger
 language plpgsql
-set search_path = ''
+-- Not '': the admin check below reads gs_user_preferences under RLS, whose
+-- admin policies call is_admin(), which refers to user_preferences unqualified.
+set search_path = public
 as $$
 begin
   if coalesce(auth.role(), '') = 'service_role'
