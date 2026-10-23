@@ -14,13 +14,15 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 | Notifications | `/core/notifications/index.html` | placeholder; session required; app shell |
 
 | App shell (component) | `/shared/components/gs-shell.js` | top bar, account menu, phone bottom bar; mounts on `<body data-gs-shell="key">`; styles in `/shared/css/app.css` |
+| AI gateway (service) | `/core/ai/ai-gateway.js` → Edge Function `gs-ai-gateway` | `GenieSphere.ai.request({task, householdId, input})`; tasks: `meal_plan.generate` (10/household/day) |
+| Grocery interface (module API) | `/modules/grocery/grocery-api.js` | `GenieSphere.grocery.activeListId`, `addItems` (skips items already on the list) |
 | Household context (service) | `/core/household/household.js` | slice 1: current household from `user_household_context`, else first membership by name |
 
 ## Modules
 
 | Module | Canonical path | Status |
 |---|---|---|
-| Nutrition | `/modules/nutrition/index.html` | placeholder; session required; app shell |
+| Nutrition | `/modules/nutrition/index.html` | 0.1: household preferences (`household_nutrition_prefs`), 7-day plan via `gs-ai-gateway` saved per household and week (`household_meal_plans`), allergen flags, adds groceries through `modules/grocery/grocery-api.js`; app shell |
 | Grocery | `/modules/grocery/index.html` | slice 1: shared household list (`shopping_lists` / `shopping_items`); app shell |
 | Home | `/modules/home/index.html` | placeholder; session required; app shell |
 

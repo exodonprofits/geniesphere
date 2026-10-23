@@ -2,7 +2,10 @@
 (function () {
   var KEY = 'fake-sb-db';
   function load() {
-    try { var s = JSON.parse(localStorage.getItem(KEY)); if (s) return s; } catch (e) {}
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY));
+      if (s) { ['household_meal_plans', 'household_nutrition_prefs', 'gs_ai_usage'].forEach(function (t) { s[t] = s[t] || []; }); return s; }
+    } catch (e) {}
     return {
       session: null,
       users: [{ id: 'u1', email: 'jimmy@example.com', password: 'pw' }],
@@ -13,7 +16,8 @@
         { id: 't1', household_id: 'h1', title: 'Change HVAC filter', status: 'todo', completed_at: null, due_at: '2026-10-20T00:00:00Z' },
         { id: 't2', household_id: 'h1', title: 'Old done task', status: 'done', completed_at: '2026-10-01T00:00:00Z', due_at: null }
       ],
-      shopping_lists: [], shopping_items: [], seq: 0
+      shopping_lists: [], shopping_items: [],
+      household_meal_plans: [], household_nutrition_prefs: [], gs_ai_usage: [], seq: 0
     };
   }
   function save(db) { localStorage.setItem(KEY, JSON.stringify(db)); }
@@ -25,6 +29,7 @@
   }
   Query.prototype.select = function (cols) { if (this.op === 'select') this.cols = cols || '*'; else this.ret = true; return this; };
   Query.prototype.eq = function (c, v) { this.filters.push(function (r) { return r[c] === v; }); return this; };
+  Query.prototype.gte = function (c, v) { this.filters.push(function (r) { return r[c] >= v; }); return this; };
   Query.prototype.is = function (c, v) { this.filters.push(function (r) { return (r[c] === undefined ? null : r[c]) === v; }); return this; };
   Query.prototype.not = function (c, op, v) { var vals = v.replace(/[()]/g, '').split(','); this.filters.push(function (r) { return vals.indexOf(r[c]) === -1; }); return this; };
   Query.prototype.order = function (c, o) { this.orders.push([c, !o || o.ascending !== false]); return this; };
@@ -34,7 +39,7 @@
   Query.prototype.insert = function (p) { this.op = 'insert'; this.payload = p; return this; };
   Query.prototype.update = function (p) { this.op = 'update'; this.payload = p; return this; };
   Query.prototype.delete = function () { this.op = 'delete'; return this; };
-  Query.prototype.upsert = function (p) { this.op = 'upsert'; this.payload = p; return this; };
+  Query.prototype.upsert = function (p, o) { this.op = 'upsert'; this.payload = p; this.conflict = (o && o.onConflict ? o.onConflict : 'user_id').split(','); return this; };
   Query.prototype.then = function (res, rej) { return Promise.resolve().then(this.run.bind(this)).then(res, rej); };
   Query.prototype.run = function () {
     var db = this.db, rows = db[this.t], self = this, uid = db.session && db.session.user.id;
@@ -51,7 +56,7 @@
         if (row.household_id !== undefined && mine.indexOf(row.household_id) === -1) return { data: null, error: { message: 'new row violates row-level security policy' } };
         if (this.t === 'shopping_items' && !db.shopping_lists.some(function (l) { return l.id === row.shopping_list_id && l.household_id === row.household_id; }))
           return { data: null, error: { message: 'violates foreign key constraint' } };
-        if (this.op === 'upsert') { var ex = rows.find(function (r) { return r.user_id === row.user_id; }); if (ex) { Object.assign(ex, row); out.push(ex); continue; } }
+        if (this.op === 'upsert') { var keys = this.conflict; var ex = rows.find(function (r) { return keys.every(function (k) { return r[k] === row[k]; }); }); if (ex) { Object.assign(ex, row); out.push(ex); continue; } }
         if (!row.id && this.t !== 'user_household_context') row.id = this.t + '-' + (++db.seq);
         if (this.t === 'shopping_items') { if (row.checked === undefined) row.checked = false; }
         row.created_at = new Date(Date.now() + db.seq).toISOString();
@@ -88,7 +93,43 @@
           },
           signOut: async function () { var db = load(); db.session = null; save(db); return { error: null }; }
         },
-        from: function (t) { return new Query(t, load()); }
+        from: function (t) { return new Query(t, load()); },
+        functions: {
+          invoke: async function (name, opts) {
+            var db = load(), body = (opts && opts.body) || {};
+            if (!db.session) return { data: null, error: { message: 'Sign in to use this.' } };
+            if (name !== 'gs-ai-gateway' || body.task !== 'meal_plan.generate') return { data: null, error: { message: 'Unknown task.' } };
+            var uid = db.session.user.id;
+            if (!db.household_members.some(function (m) { return m.household_id === body.household_id && m.user_id === uid; }))
+              return { data: null, error: { message: 'You are not a member of this household.' } };
+            var today = new Date().toISOString().slice(0, 10);
+            var used = db.gs_ai_usage.filter(function (u) { return u.household_id === body.household_id && u.created_at.slice(0, 10) === today; }).length;
+            if (used >= 10) return { data: null, error: { message: "Your household has used today's 10 meal plans." } };
+            db.gs_ai_usage.push({ id: 'u' + (++db.seq), household_id: body.household_id, user_id: uid, task: body.task, created_at: new Date().toISOString() });
+            save(db);
+            var names = ['Lemongrass chicken rice bowl', 'Pho ga', 'Salmon with greens', 'Tofu stir-fry', 'Shrimp spring rolls', 'Beef and broccoli', 'Vegetable curry'];
+            var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(function (label, i) {
+              return { day: i + 1, label: label, meals: ['breakfast', 'lunch', 'dinner'].map(function (t, j) {
+                return { mealType: t, title: (j === 2 ? names[i] : (t === 'breakfast' ? 'Greek yogurt & berries' : 'Chicken salad wrap')),
+                  prepTimeMinutes: 10, cookTimeMinutes: 15 + j * 5,
+                  ingredients: [{ name: 'Chicken breast', amount: '300 g' }, { name: 'Jasmine rice', amount: '1 cup' }],
+                  steps: ['Prep the ingredients.', 'Cook and serve.'],
+                  nutrition: { calories: 450 + j * 50, protein_g: 30, carbs_g: 40, fat_g: 15 } };
+              }) };
+            });
+            var grocery = [
+              { item: 'Chicken breast', quantity: '2 lb', category: 'Protein' }, { item: 'Jasmine rice', quantity: '5 lb', category: 'Pantry' },
+              { item: 'Milk', quantity: '1 gal', category: 'Dairy' }, { item: 'Bok choy', quantity: '4 heads', category: 'Produce' },
+              { item: 'Lemongrass', quantity: '3 stalks', category: 'Produce' }
+            ];
+            // Mirror the gateway's allergen flagging for the one allergen the sample can contain.
+            if ((body.input.allergies || []).indexOf('shellfish') !== -1) {
+              days.forEach(function (d) { d.meals.forEach(function (m) { if (/shrimp/i.test(m.title)) m.allergenWarning = ['shrimp']; }); });
+            }
+            return { data: { ok: true, task: body.task, model: 'fake', prefs: body.input, result: { days: days, grocery: grocery,
+              macro: { calories: 1650, protein: 110, carbs: 160, fat: 55 } }, usage: { today: used + 1, limit: 10 } }, error: null };
+          }
+        }
       };
     }
   };

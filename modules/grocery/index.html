@@ -45,6 +45,7 @@
   <script src="/shared/js/gs-auth.js"></script>
   <script src="/shared/components/gs-shell.js"></script>
   <script src="/core/household/household.js"></script>
+  <script src="/modules/grocery/grocery-api.js"></script>
   <script>
     (function () {
       var GS = window.GenieSphere;
@@ -58,17 +59,6 @@
         status.classList.toggle('gs-error', !!isError);
       }
 
-      async function activeListId(householdId) {
-        var found = await db().from('shopping_lists')
-          .select('id').eq('household_id', householdId).is('archived_at', null)
-          .order('created_at', { ascending: true }).limit(1);
-        if (found.error) throw found.error;
-        if (found.data.length) return found.data[0].id;
-        var created = await db().from('shopping_lists')
-          .insert({ household_id: householdId, title: 'Shopping list' }).select('id').single();
-        if (created.error) throw created.error;
-        return created.data.id;
-      }
 
       async function loadItems() {
         var result = await db().from('shopping_items')
@@ -203,7 +193,7 @@
           }
           state.householdId = ctx.householdId;
           document.getElementById('household-name').textContent = ctx.name;
-          state.listId = await activeListId(ctx.householdId);
+          state.listId = await GS.grocery.activeListId(ctx.householdId);
           await loadItems();
         } catch (err) {
           show(err.message || 'Could not load the list.', true);

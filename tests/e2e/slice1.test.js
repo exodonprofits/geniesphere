@@ -95,6 +95,51 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   assert.strictEqual((await page.evaluate(() => JSON.parse(localStorage.getItem('fake-sb-db')).shopping_lists.length)), 1);
   step('reload reuses the existing list');
 
+  // 6b. Nutrition: preferences -> plan through the AI gateway -> saved -> grocery
+  await page.goto(BASE + '/modules/nutrition/index.html');
+  await page.waitForSelector('#prefs-panel:not([hidden])');
+  await page.waitForFunction(() => /10 of 10 plans left today/.test(document.querySelector('#usage').textContent));
+  assert.strictEqual(await page.isVisible('#edit-prefs'), false, '"Change preferences" hidden while editing');
+  await page.fill('#p-people', '4');
+  await page.check('#p-cuisine input[value="Vietnamese"]');
+  await page.check('#p-allergies input[value="shellfish"]');
+  await page.click('#generate');
+  await page.waitForSelector('#plan-view:not([hidden])');
+  assert.strictEqual((await page.$$('#day-tabs .gs-day-tab')).length, 7);
+  assert.strictEqual((await page.$$('#meals .gs-meal')).length, 3);
+  assert.strictEqual(await page.textContent('#grocery-title'), '5 items for the week');
+  await page.click('#day-tabs [aria-label="Friday"]');
+  await page.waitForFunction(() => /Shrimp/.test(document.querySelector('#meals').textContent));
+  assert.match(await page.textContent('#meals .gs-meal-warning'), /may contain shrimp/);
+  let fdb = await page.evaluate(() => JSON.parse(localStorage.getItem('fake-sb-db')));
+  assert.strictEqual(fdb.household_meal_plans.length, 1);
+  const hh = fdb.household_meal_plans[0].household_id;
+  assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(fdb.household_meal_plans[0].week_start));
+  assert.strictEqual(new Date(fdb.household_meal_plans[0].week_start + 'T00:00:00').getDay(), 1, 'week_start is a Monday');
+  assert.deepStrictEqual(fdb.household_nutrition_prefs.map(p => [p.household_id, p.prefs.people, p.prefs.cuisine, p.prefs.allergies]),
+    [[hh, 4, ['Vietnamese'], ['shellfish']]]);
+  assert.strictEqual(fdb.gs_ai_usage.length, 1);
+  await page.waitForFunction(() => /9 of 10 plans left today/.test(document.querySelector('#usage').textContent));
+  step('nutrition: prefs saved per household, 7-day plan via gateway, one usage row, allergen flagged on the meal');
+
+  await page.click('#add-grocery');
+  await page.waitForFunction(() => /^Added \d+ items? to the grocery list/.test(document.querySelector('#grocery-status').textContent));
+  const firstAdd = await page.textContent('#grocery-status');
+  await page.click('#add-grocery');
+  await page.waitForFunction(t => document.querySelector('#grocery-status').textContent !== t, firstAdd);
+  assert.match(await page.textContent('#grocery-status'), /^Added 0 items to the grocery list\. 5 were already on it\./);
+  fdb = await page.evaluate(() => JSON.parse(localStorage.getItem('fake-sb-db')));
+  const names = fdb.shopping_items.filter(i => i.household_id === hh && !i.checked).map(i => i.name.toLowerCase());
+  assert.strictEqual(names.length, new Set(names).size, 'no duplicate grocery items');
+  step('nutrition -> grocery: ' + firstAdd.replace(/ Open the list.*/, '') + ' second add skips all 5');
+
+  await page.reload();
+  await page.waitForSelector('#plan-view:not([hidden])');
+  await page.goto(BASE + '/core/dashboard/index.html');
+  await page.waitForFunction(() => /Tonight: /.test(document.querySelector('#brief-lines').textContent));
+  assert.strictEqual(await page.textContent('#nutrition-pill'), 'Planned');
+  step('plan persists on reload; dashboard briefing shows tonight’s dinner');
+
   // 7. Signed-in user on login page is forwarded; open redirect blocked
   for (const bad of ['//evil.example.com/x', '/\\evil.example.com/x', '/%09/evil.example.com/x']) {
     await page.goto(BASE + '/core/auth/login.html?next=' + bad);
