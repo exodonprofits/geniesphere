@@ -1,5 +1,8 @@
 -- Household invitations by one-time link, and member names/emails for the
--- Settings member list. Not yet applied: waiting on the SQL-editor dry run.
+-- Settings member list. Applied 2026-11-08 via the SQL editor after a dry run:
+--   owner_email=<owner> owner_invites=1 owner_token_hash=blocked(42501)
+--   owner_insert/update/lookup=blocked(42501) new_household_owner_email=<owner>
+--   | stranger_invites=0 | anon_invites=blocked(42501) | lookup=owner lookup_unknown=NULL
 --
 -- Target: GenieSphere project (nxgtefbqizvihwikqnaw, ADR-015).
 --
