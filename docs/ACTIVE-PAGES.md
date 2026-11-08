@@ -22,7 +22,7 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 | Module | Canonical path | Status |
 |---|---|---|
-| Nutrition | `/modules/nutrition/index.html` | 0.1: household preferences (`household_nutrition_prefs`), 7-day plan via `gs-ai-gateway` saved per household and week (`household_meal_plans`), allergen flags, adds groceries through `modules/grocery/grocery-api.js`; app shell |
+| Nutrition | `/modules/nutrition/index.html` | 0.1: household preferences (`household_nutrition_prefs`), 7-day plan via `gs-ai-gateway` saved per household and week (`household_meal_plans`); This week / Next week switch, opening on next week from Friday, allergen flags, adds groceries through `modules/grocery/grocery-api.js`; app shell |
 | Grocery | `/modules/grocery/index.html` | slice 1: shared household list (`shopping_lists` / `shopping_items`); app shell |
 | Home | `/modules/home/index.html` | placeholder; session required; app shell |
 

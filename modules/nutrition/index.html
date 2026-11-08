@@ -14,6 +14,10 @@
         <p class="gs-eyebrow"><span data-gs-icon="leaf"></span>Nutrition Genie</p>
         <h1 class="gs-title">Meals for the <em>week</em></h1>
         <p id="week-label" class="gs-subtitle">Loading your household…</p>
+        <div id="week-switch" class="gs-seg" role="group" aria-label="Which week to plan" hidden>
+          <button type="button" class="gs-seg-btn" data-week="this" aria-pressed="false">This week</button>
+          <button type="button" class="gs-seg-btn" data-week="next" aria-pressed="false">Next week</button>
+        </div>
       </div>
       <button id="edit-prefs" class="gs-btn" type="button" hidden>Change preferences</button>
     </header>
@@ -82,7 +86,7 @@
       </form>
       <div class="gs-panel-foot">
         <span>Meal goals only. Please don’t enter medical details.</span>
-        <button id="generate" class="gs-btn gs-btn-primary" type="button">Create this week’s plan</button>
+        <button id="generate" class="gs-btn gs-btn-primary" type="button">Create the plan</button>
       </div>
     </section>
 
@@ -92,7 +96,7 @@
         <span class="gs-spinner" aria-hidden="true"></span>
         <div>
           <h2 id="working-title" class="gs-panel-title">Planning your week…</h2>
-          <p class="gs-panel-sub" style="display:block">This usually takes under a minute. You can stay on this page.</p>
+          <p class="gs-panel-sub" style="display:block">This takes a minute or two. Keep this page open.</p>
         </div>
       </div>
     </section>
@@ -106,7 +110,7 @@
         <div class="gs-stat"><p class="gs-stat-label">Fat</p><p id="mc-fat" class="gs-stat-value">–</p><p class="gs-stat-note">grams per day</p></div>
       </div>
 
-      <h2 class="gs-section-label">This week</h2>
+      <h2 id="plan-week" class="gs-section-label">This week</h2>
       <div id="day-tabs" class="gs-day-tabs" role="tablist" aria-label="Days"></div>
       <div id="meals" class="gs-grid gs-meal-grid"></div>
       <p class="gs-plan-note">Plans are checked for the allergies you selected, but always read labels. Nutrition figures are estimates, not medical advice.</p>
@@ -129,7 +133,7 @@
         </div>
         <div class="gs-panel-foot">
           <span id="plan-meta">Planned with Nutrition Genie</span>
-          <button id="regenerate" class="gs-link-btn" type="button">Plan this week again</button>
+          <button id="regenerate" class="gs-link-btn" type="button">Plan again</button>
         </div>
       </section>
     </section>
@@ -148,7 +152,7 @@
       var GS = window.GenieSphere;
       var TASK = 'meal_plan.generate';
       var MEAL_LABELS = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack', meal: 'Meal' };
-      var state = { ctx: null, weekStart: null, plan: null, activeDay: 0 };
+      var state = { ctx: null, thisWeek: null, nextWeek: null, weekStart: null, plan: null, activeDay: 0, busy: false };
 
       function db() { return GS.getSupabase(); }
       function $(id) { return document.getElementById(id); }
@@ -165,19 +169,32 @@
         $('status').classList.toggle('gs-error', !!isError);
       }
 
-      // Monday of the current week, as YYYY-MM-DD in local time.
-      function mondayOf(date) {
+      // Monday of the week containing date (plus `weeks`), as YYYY-MM-DD in local time.
+      function mondayOf(date, weeks) {
         var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 7 * (weeks || 0));
         var mm = String(d.getMonth() + 1).padStart(2, '0');
         var dd = String(d.getDate()).padStart(2, '0');
         return d.getFullYear() + '-' + mm + '-' + dd;
       }
 
-      function weekLabel(iso) {
+      function dateOf(iso, plusDays) {
         var parts = iso.split('-');
-        var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-        return 'Week of ' + d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]) + (plusDays || 0));
+      }
+
+      function weekLabel(iso) {
+        return 'Week of ' + dateOf(iso).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+      }
+
+      function shortDate(iso) {
+        return dateOf(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      }
+
+      // From Friday on, most of the current week is gone: plan the next one.
+      function defaultWeek(now) {
+        var day = now.getDay();
+        return day === 5 || day === 6 || day === 0 ? 'next' : 'this';
       }
 
       function setView(view) {
@@ -258,7 +275,7 @@
         var tabs = $('day-tabs');
         tabs.textContent = '';
         days.forEach(function (day, i) {
-          var tab = el('button', 'gs-day-tab', day.label.slice(0, 3));
+          var tab = el('button', 'gs-day-tab', day.label.slice(0, 3) + ' ' + dateOf(state.weekStart, i).getDate());
           tab.type = 'button';
           tab.setAttribute('role', 'tab');
           tab.setAttribute('aria-selected', String(i === state.activeDay));
@@ -330,7 +347,7 @@
       function renderPlan(row) {
         state.plan = row;
         var days = (row.plan && row.plan.days) || [];
-        var today = (new Date().getDay() + 6) % 7;
+        var today = state.weekStart === state.thisWeek ? (new Date().getDay() + 6) % 7 : 0;
         state.activeDay = Math.min(today, Math.max(0, days.length - 1));
         renderMacro(row.macro);
         renderTabs(days);
@@ -345,6 +362,8 @@
       async function generate() {
         var prefs = readPrefs();
         $('generate').disabled = true;
+        state.busy = true;
+        renderWeekSwitch();
         var mealsPerDay = { '3_meals': 3, '3_meals_snack': 4, dinners_only: 1 }[prefs.mealSet] || 3;
         $('working-title').textContent = 'Planning ' + (7 * mealsPerDay) + ' meals for ' + prefs.people + (prefs.people === 1 ? ' person…' : ' people…');
         setView('working');
@@ -367,6 +386,9 @@
           setView('prefs');
           show(err.message || 'Could not create the plan. Try again.', true);
         } finally {
+          $('generate').disabled = false;
+          state.busy = false;
+          renderWeekSwitch();
           refreshUsage().catch(function () {});
         }
       }
@@ -402,6 +424,42 @@
       buildChips('p-cuisine');
       buildChips('p-allergies');
 
+      function renderWeekSwitch() {
+        var box = $('week-switch');
+        box.hidden = !state.ctx;
+        box.querySelectorAll('.gs-seg-btn').forEach(function (b) {
+          var iso = b.getAttribute('data-week') === 'next' ? state.nextWeek : state.thisWeek;
+          b.textContent = (b.getAttribute('data-week') === 'next' ? 'Next week' : 'This week') + ' · ' + shortDate(iso);
+          b.setAttribute('aria-pressed', String(iso === state.weekStart));
+          b.disabled = state.busy;
+        });
+      }
+
+      // Show the chosen week: its saved plan, or the preferences form to create one.
+      async function openWeek(iso) {
+        state.weekStart = iso;
+        state.plan = null;
+        renderWeekSwitch();
+        $('week-label').textContent = weekLabel(iso) + ' · ' + state.ctx.name;
+        $('plan-week').textContent = weekLabel(iso);
+        $('generate').textContent = 'Plan the week of ' + shortDate(iso);
+        show('');
+        var found = await db().from('household_meal_plans').select('*')
+          .eq('household_id', state.ctx.householdId).eq('week_start', iso).maybeSingle();
+        if (state.weekStart !== iso) return;   // switched again while loading
+        if (found.error) throw found.error;
+        if (found.data) renderPlan(found.data);
+        else setView('prefs');
+      }
+
+      $('week-switch').addEventListener('click', function (e) {
+        var b = e.target.closest('.gs-seg-btn');
+        if (!b || state.busy) return;
+        var iso = b.getAttribute('data-week') === 'next' ? state.nextWeek : state.thisWeek;
+        if (iso === state.weekStart) return;
+        openWeek(iso).catch(function (err) { show(err.message || 'Could not load that week.', true); });
+      });
+
       (async function init() {
         try {
           var session = await GS.auth.requireSession();
@@ -409,19 +467,15 @@
           var ctx = await GS.household.current();
           if (!ctx) { $('week-label').textContent = 'You are not part of a household yet.'; return; }
           state.ctx = ctx;
-          state.weekStart = mondayOf(new Date());
-          $('week-label').textContent = weekLabel(state.weekStart) + ' · ' + ctx.name;
+          var now = new Date();
+          state.thisWeek = mondayOf(now, 0);
+          state.nextWeek = mondayOf(now, 1);
 
-          var loaded = await Promise.all([
-            db().from('household_nutrition_prefs').select('prefs').eq('household_id', ctx.householdId).maybeSingle(),
-            db().from('household_meal_plans').select('*').eq('household_id', ctx.householdId).eq('week_start', state.weekStart).maybeSingle()
-          ]);
-          if (loaded[0].error) throw loaded[0].error;
-          if (loaded[1].error) throw loaded[1].error;
-          fillPrefs(loaded[0].data && loaded[0].data.prefs);
+          var prefs = await db().from('household_nutrition_prefs').select('prefs').eq('household_id', ctx.householdId).maybeSingle();
+          if (prefs.error) throw prefs.error;
+          fillPrefs(prefs.data && prefs.data.prefs);
           await refreshUsage();
-          if (loaded[1].data) renderPlan(loaded[1].data);
-          else setView('prefs');
+          await openWeek(defaultWeek(now) === 'next' ? state.nextWeek : state.thisWeek);
         } catch (err) {
           show(err.message || 'Could not load Nutrition Genie.', true);
         }
