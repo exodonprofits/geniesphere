@@ -15,6 +15,8 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   // Keep the run offline and deterministic: the Inter webfont is cosmetic.
   await page.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.fulfill({ body: '', contentType: 'text/css' }));
   const step = (s) => console.log('✓ ' + s);
+  // Fixed local time (a Wednesday) so the Nutrition week logic is deterministic.
+  await page.clock.setFixedTime(new Date(2026, 10, 11, 12, 0, 0));
 
   // 1. Signed out → dashboard redirects to login with next
   await page.goto(BASE + '/core/dashboard/index.html');
@@ -99,6 +101,8 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   await page.goto(BASE + '/modules/nutrition/index.html');
   await page.waitForSelector('#prefs-panel:not([hidden])');
   await page.waitForFunction(() => /10 of 10 plans left today/.test(document.querySelector('#usage').textContent));
+  assert.strictEqual(await page.getAttribute('#week-switch [data-week="this"]', 'aria-pressed'), 'true', 'midweek defaults to this week');
+  assert.match(await page.textContent('#generate'), /Plan the week of Nov 9/);
   assert.strictEqual(await page.isVisible('#edit-prefs'), false, '"Change preferences" hidden while editing');
   await page.fill('#p-people', '4');
   await page.check('#p-cuisine input[value="Vietnamese"]');
@@ -106,6 +110,7 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   await page.click('#generate');
   await page.waitForSelector('#plan-view:not([hidden])');
   assert.strictEqual((await page.$$('#day-tabs .gs-day-tab')).length, 7);
+  assert.strictEqual(await page.textContent('#day-tabs [aria-selected="true"]'), 'Wed 11', 'opens on today');
   assert.strictEqual((await page.$$('#meals .gs-meal')).length, 3);
   assert.strictEqual(await page.textContent('#grocery-title'), '5 items for the week');
   await page.click('#day-tabs [aria-label="Friday"]');
@@ -135,6 +140,24 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
 
   await page.reload();
   await page.waitForSelector('#plan-view:not([hidden])');
+
+  // Sunday: the page opens on next week (no plan yet); "This week" still shows the saved plan.
+  await page.clock.setFixedTime(new Date(2026, 10, 15, 18, 0, 0));
+  await page.reload();
+  await page.waitForSelector('#prefs-panel:not([hidden])');
+  assert.strictEqual(await page.getAttribute('#week-switch [data-week="next"]', 'aria-pressed'), 'true', 'Sunday defaults to next week');
+  assert.match(await page.textContent('#week-switch [data-week="next"]'), /Nov 16/);
+  assert.match(await page.textContent('#generate'), /Plan the week of Nov 16/);
+  assert.strictEqual(await page.inputValue('#p-people'), '4', 'saved preferences prefilled');
+  await page.click('#week-switch [data-week="this"]');
+  await page.waitForSelector('#plan-view:not([hidden])');
+  assert.strictEqual(await page.textContent('#day-tabs [aria-selected="true"]'), 'Sun 15');
+  assert.strictEqual(await page.textContent('#plan-week'), 'Week of November 9');
+  await page.click('#week-switch [data-week="next"]');
+  await page.waitForSelector('#prefs-panel:not([hidden])');
+  step('week switch: midweek plans this week, Sunday opens next week; saved week reachable with "This week"');
+  await page.clock.setFixedTime(new Date(2026, 10, 11, 12, 0, 0));
+
   await page.goto(BASE + '/core/dashboard/index.html');
   await page.waitForFunction(() => /Tonight: /.test(document.querySelector('#brief-lines').textContent));
   assert.strictEqual(await page.textContent('#nutrition-pill'), 'Planned');

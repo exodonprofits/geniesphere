@@ -10,6 +10,8 @@
 //   3. Reserve a call against the household's daily limit before spending
 //      money (public.gs_ai_usage_reserve, atomic).
 //   4. Call the model, then check and trim the output to the expected shape.
+//      A plan with repeated dinners/lunches or portions far from the calorie
+//      target gets one corrective attempt when time allows (same reservation).
 //
 // Tasks:
 //   meal_plan.generate  7-day household meal plan + grocery list
@@ -45,6 +47,21 @@ const MEAL_SETS: Record<string, string[]> = {
 };
 const CATEGORIES = ["Produce", "Protein", "Dairy", "Pantry", "Frozen", "Bakery", "Snacks", "Drinks", "Household", "Other"];
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+// Daily calories per adult the plan should add up to, by goal. Estimates for
+// planning portions, not dietary advice; shown to the household as averages.
+const CALORIE_TARGETS: Record<string, number> = {
+  "balanced": 2000, "high-protein": 2200, "diabetic-friendly": 1800, "heart-healthy": 1900,
+  "weight-loss": 1600, "vegetarian": 2000, "vegan": 2000, "kid-friendly": 1800,
+};
+// Share of the day's calories per meal type.
+const MEAL_SHARE: Record<string, Record<string, number>> = {
+  "3_meals": { breakfast: 0.25, lunch: 0.35, dinner: 0.40 },
+  "3_meals_snack": { breakfast: 0.25, lunch: 0.30, dinner: 0.35, snack: 0.10 },
+  "dinners_only": { dinner: 0.40 },
+};
+// Upstream is slow (~60-80 s for a week); only retry a weak plan if the first
+// call left time for a second one inside the Edge Function's wall-clock limit.
+const RETRY_IF_FIRST_CALL_UNDER_MS = 60_000;
 
 function str(v: unknown, max: number): string {
   return typeof v === "string" ? v.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max) : "";
@@ -96,6 +113,10 @@ function mealPlanPrompt(p: MealPrefs) {
       }],
     }],
   };
+  const target = CALORIE_TARGETS[p.goal] || 2000;
+  const share = MEAL_SHARE[p.mealSet];
+  const perMeal = meals.map((m) => `${m} about ${Math.round(target * share[m] / 10) * 10} kcal`).join(", ");
+  const dayTotal = Math.round(target * meals.reduce((a, m) => a + share[m], 0) / 10) * 10;
   const system = "You are a meal-planning assistant for a household. You only produce meal plans in the JSON format requested. You never give medical advice.";
   const user = `Create a 7-day meal plan for ${p.people} ${p.people === 1 ? "person" : "people"}.
 
@@ -115,7 +136,9 @@ ${JSON.stringify(schema)}
 
 Rules:
 - Exactly 7 days, labelled Monday to Sunday, each with exactly these meals: ${meals.join(", ")}.
-- Keep each meal to at most 10 ingredients and at most 5 short steps.
+- Variety: all 7 dinners must be different dishes, and all 7 lunches must be different dishes. A breakfast or snack may appear at most twice in the week. Never repeat a title on consecutive days.
+- Portions: nutrition is per person for one serving. Aim for ${perMeal}, so the planned meals add up to about ${dayTotal} kcal per person per day (based on about ${target} kcal for a whole adult day).
+- Keep each meal to at most 8 ingredients and at most 4 short steps of one sentence each.
 - macroSummary is the average per person per day across all meals.
 - groceryList combines every ingredient for the week once, with a total quantity, and one category from: ${CATEGORIES.join(", ")}.
 - Reuse ingredients across the week to keep the grocery list short and the cost down.
@@ -190,9 +213,42 @@ function cleanPlan(raw: any, p: MealPrefs) {
       const hits = allergenHits(g.item, p.allergies);
       return hits.length ? { ...g, allergenWarning: hits } : g;
     });
+  // Macros are averaged from the meals themselves, so the summary always
+  // matches the plan; the model's own macroSummary is only a fallback.
+  const totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  for (const d of days) for (const m of d.meals) {
+    totals.calories += m.nutrition.calories; totals.protein += m.nutrition.protein_g;
+    totals.carbs += m.nutrition.carbs_g; totals.fat += m.nutrition.fat_g;
+  }
   const ms = raw?.macroSummary || {};
-  const macro = { calories: num(ms.calories, 6000), protein: num(ms.protein, 600), carbs: num(ms.carbs, 1000), fat: num(ms.fat, 600) };
+  const n = days.length || 1;
+  const macro = totals.calories
+    ? { calories: num(totals.calories / n, 6000), protein: num(totals.protein / n, 600), carbs: num(totals.carbs / n, 1000), fat: num(totals.fat / n, 600) }
+    : { calories: num(ms.calories, 6000), protein: num(ms.protein, 600), carbs: num(ms.carbs, 1000), fat: num(ms.fat, 600) };
   return { days, grocery, macro };
+}
+
+// Problems worth one more attempt: repeated dinners/lunches or portions far
+// from the calorie target. Returns a list of plain-language issues.
+function planIssues(plan: { days: any[]; macro: { calories: number } }, p: MealPrefs): string[] {
+  const issues: string[] = [];
+  const key = (t: string) => t.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+  for (const type of ["dinner", "lunch"]) {
+    const titles = plan.days.flatMap((d) => d.meals.filter((m: any) => m.mealType === type).map((m: any) => key(m.title)));
+    if (titles.length >= 7 && new Set(titles).size < 6) issues.push(`${type} dishes repeat (${new Set(titles).size} different out of ${titles.length})`);
+  }
+  const counts: Record<string, number> = {};
+  for (const d of plan.days) for (const m of d.meals) counts[key(m.title)] = (counts[key(m.title)] || 0) + 1;
+  if (Object.values(counts).some((c) => c > 2)) issues.push("a meal appears more than twice");
+  const target = (CALORIE_TARGETS[p.goal] || 2000) * mealSetShare(p.mealSet);
+  if (plan.macro.calories && (plan.macro.calories < target * 0.75 || plan.macro.calories > target * 1.3)) {
+    issues.push(`about ${plan.macro.calories} kcal per person per day instead of about ${Math.round(target)}`);
+  }
+  return issues;
+}
+
+function mealSetShare(mealSet: string): number {
+  return Object.values(MEAL_SHARE[mealSet] || {}).reduce((a, b) => a + b, 0) || 1;
 }
 
 // ── Handler ──────────────────────────────────────────────────────
@@ -237,30 +293,53 @@ Deno.serve(async (req) => {
 
   const prefs = cleanPrefs(body.input || {});
   const prompt = mealPlanPrompt(prefs);
-  let raw: any;
   let tokens = 0;
-  try {
+
+  async function callModel(messages: { role: string; content: string }[]): Promise<{ raw: any; text: string }> {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
       body: JSON.stringify({
         model: MODEL,
-        temperature: 0.6,
+        temperature: 0.7,
         max_tokens: 12000,
         response_format: { type: "json_object" },
-        messages: [{ role: "system", content: prompt.system }, { role: "user", content: prompt.user }],
+        messages,
       }),
     });
-    if (!res.ok) {
-      console.error("[gs-ai-gateway] openai", res.status, (await res.text()).slice(0, 300));
-      return json({ error: "The meal planner is busy. Try again in a minute." }, 502);
-    }
+    if (!res.ok) throw new Error(`openai ${res.status} ${(await res.text()).slice(0, 300)}`);
     const data = await res.json();
-    tokens = data.usage?.total_tokens || 0;
-    raw = JSON.parse(data.choices?.[0]?.message?.content || "{}");
+    tokens += data.usage?.total_tokens || 0;
+    const text = data.choices?.[0]?.message?.content || "{}";
+    return { raw: JSON.parse(text), text };
+  }
+
+  const messages = [{ role: "system", content: prompt.system }, { role: "user", content: prompt.user }];
+  let plan: ReturnType<typeof cleanPlan>;
+  let attempts = 1;
+  try {
+    const started = Date.now();
+    const first = await callModel(messages);
+    plan = cleanPlan(first.raw, prefs);
+    const issues = planIssues(plan, prefs);
+    // One corrective attempt, on the same usage reservation, if time allows.
+    if (issues.length && Date.now() - started < RETRY_IF_FIRST_CALL_UNDER_MS) {
+      try {
+        attempts = 2;
+        const second = await callModel([...messages,
+          { role: "assistant", content: first.text },
+          { role: "user", content: `Revise the whole plan and return the full JSON again. Fix: ${issues.join("; ")}. Keep every other rule.` }]);
+        const revised = cleanPlan(second.raw, prefs);
+        const complete = revised.days.length === 7 && !revised.days.some((d: any) => !d.meals.length);
+        if (complete && planIssues(revised, prefs).length <= issues.length) plan = revised;
+      } catch (e) {
+        console.error("[gs-ai-gateway] retry failed, keeping first plan:", e);
+      }
+    }
   } catch (e) {
     console.error("[gs-ai-gateway] call failed:", e);
-    return json({ error: "The meal planner could not finish. Try again." }, 502);
+    const busy = String(e).startsWith("Error: openai");
+    return json({ error: busy ? "The meal planner is busy. Try again in a minute." : "The meal planner could not finish. Try again." }, 502);
   }
 
   // Record tokens on the reservation row; never fail the request over this.
@@ -273,9 +352,10 @@ Deno.serve(async (req) => {
     console.error("[gs-ai-gateway] token log failed:", e);
   }
 
-  const plan = cleanPlan(raw, prefs);
   if (plan.days.length < 7 || plan.days.some((d: any) => !d.meals.length)) {
     return json({ error: "The plan came back incomplete. Try again." }, 502);
   }
+  const remaining = planIssues(plan, prefs);
+  if (remaining.length) console.warn("[gs-ai-gateway] plan kept with issues:", remaining.join("; "), "attempts:", attempts);
   return json({ ok: true, task, model: MODEL, prefs, result: plan, usage: { today: used, limit } });
 });
