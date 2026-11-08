@@ -10,8 +10,9 @@
 //   3. Reserve a call against the household's daily limit before spending
 //      money (public.gs_ai_usage_reserve, atomic).
 //   4. Call the model, then check and trim the output to the expected shape.
-//      A plan with repeated dinners/lunches or portions far from the calorie
-//      target gets one corrective attempt when time allows (same reservation).
+//   5. Review the plan (repeated dishes, one protein at too many dinners,
+//      calorie figures copied from the targets) and repair just those meals
+//      with one short follow-up call on the same reservation, if time allows.
 //
 // Tasks:
 //   meal_plan.generate  7-day household meal plan + grocery list
@@ -59,9 +60,20 @@ const MEAL_SHARE: Record<string, Record<string, number>> = {
   "3_meals_snack": { breakfast: 0.25, lunch: 0.30, dinner: 0.35, snack: 0.10 },
   "dinners_only": { dinner: 0.40 },
 };
-// Upstream is slow (~60-80 s for a week); only retry a weak plan if the first
-// call left time for a second one inside the Edge Function's wall-clock limit.
-const RETRY_IF_FIRST_CALL_UNDER_MS = 60_000;
+// A full week takes the model ~80 s to write. The repair call is small (only
+// the meals to fix, plus figures), and must finish inside the Edge Function's
+// 150 s request limit, so it runs only if it can start by REPAIR_START_BY_MS.
+const REPAIR_START_BY_MS = 105_000;
+const REQUEST_BUDGET_MS = 140_000;
+// Main protein of a dish, found from its title first, then its ingredients.
+const PROTEINS: [string, string[]][] = [
+  ["chicken", ["chicken"]], ["beef", ["beef", "steak", "brisket"]], ["pork", ["pork", "bacon", "ham", "sausage"]],
+  ["turkey", ["turkey"]], ["lamb", ["lamb"]],
+  ["fish", ["salmon", "tuna", "cod", "fish", "tilapia", "halibut", "trout", "snapper", "mackerel", "sardine"]],
+  ["seafood", ["shrimp", "prawn", "scallop", "crab", "lobster", "mussel", "clam", "squid"]],
+  ["tofu", ["tofu", "tempeh", "seitan"]], ["beans", ["bean", "lentil", "chickpea"]], ["eggs", ["egg"]],
+];
+const MAX_DINNERS_PER_PROTEIN = 3;
 
 function str(v: unknown, max: number): string {
   return typeof v === "string" ? v.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max) : "";
@@ -137,7 +149,9 @@ ${JSON.stringify(schema)}
 Rules:
 - Exactly 7 days, labelled Monday to Sunday, each with exactly these meals: ${meals.join(", ")}.
 - Variety: all 7 dinners must be different dishes, and all 7 lunches must be different dishes. A breakfast or snack may appear at most twice in the week. Never repeat a title on consecutive days.
-- Portions: nutrition is per person for one serving. Aim for ${perMeal}, so the planned meals add up to about ${dayTotal} kcal per person per day (based on about ${target} kcal for a whole adult day).
+- Vary the main protein of the dinners (for example chicken, beef, pork, fish, seafood, tofu, beans, eggs, within the allergies and goal): no single main protein in more than ${MAX_DINNERS_PER_PROTEIN} dinners.
+- Portions: nutrition is per person for one serving. Size portions so the meals average ${perMeal}, and the planned meals add up to about ${dayTotal} kcal per person per day (based on about ${target} kcal for a whole adult day).
+- Nutrition figures are your own estimate for each specific dish and portion, so they differ from dish to dish (within about 25% of the meal's average). Never copy the averages above as a dish's figures.
 - Keep each meal to at most 8 ingredients and at most 4 short steps of one sentence each.
 - macroSummary is the average per person per day across all meals.
 - groceryList combines every ingredient for the week once, with a total quantity, and one category from: ${CATEGORIES.join(", ")}.
@@ -228,27 +242,121 @@ function cleanPlan(raw: any, p: MealPrefs) {
   return { days, grocery, macro };
 }
 
-// Problems worth one more attempt: repeated dinners/lunches or portions far
-// from the calorie target. Returns a list of plain-language issues.
-function planIssues(plan: { days: any[]; macro: { calories: number } }, p: MealPrefs): string[] {
-  const issues: string[] = [];
-  const key = (t: string) => t.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
-  for (const type of ["dinner", "lunch"]) {
-    const titles = plan.days.flatMap((d) => d.meals.filter((m: any) => m.mealType === type).map((m: any) => key(m.title)));
-    if (titles.length >= 7 && new Set(titles).size < 6) issues.push(`${type} dishes repeat (${new Set(titles).size} different out of ${titles.length})`);
-  }
-  const counts: Record<string, number> = {};
-  for (const d of plan.days) for (const m of d.meals) counts[key(m.title)] = (counts[key(m.title)] || 0) + 1;
-  if (Object.values(counts).some((c) => c > 2)) issues.push("a meal appears more than twice");
-  const target = (CALORIE_TARGETS[p.goal] || 2000) * mealSetShare(p.mealSet);
-  if (plan.macro.calories && (plan.macro.calories < target * 0.75 || plan.macro.calories > target * 1.3)) {
-    issues.push(`about ${plan.macro.calories} kcal per person per day instead of about ${Math.round(target)}`);
-  }
-  return issues;
+function titleKey(t: string): string {
+  return t.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function mainProtein(meal: any): string | null {
+  const find = (text: string) => {
+    const t = text.toLowerCase();
+    for (const [name, words] of PROTEINS) if (words.some((w) => new RegExp("\\b" + w).test(t))) return name;
+    return null;
+  };
+  return find(meal.title) || meal.ingredients.map((g: any) => find(g.name)).find(Boolean) || null;
 }
 
 function mealSetShare(mealSet: string): number {
   return Object.values(MEAL_SHARE[mealSet] || {}).reduce((a, b) => a + b, 0) || 1;
+}
+
+interface Review {
+  issues: string[];                                      // plain language, for logs
+  replace: { day: number; mealType: string; why: string }[];  // day is 1-7
+  reestimate: boolean;                                   // figures look copied
+}
+
+// Finds what is worth one repair call: meals flagged for an allergen, repeated dishes (any repeat of a lunch
+// or dinner, a third of a breakfast or snack), dinners beyond the limit for one
+// protein, and meal types whose calories are all the same number.
+function reviewPlan(plan: { days: any[]; macro: { calories: number } }, p: MealPrefs): Review {
+  const review: Review = { issues: [], replace: [], reestimate: false };
+  const marked = new Set<string>();
+  const mark = (day: number, mealType: string, why: string) => {
+    const k = day + ":" + mealType;
+    if (marked.has(k)) return;
+    marked.add(k);
+    review.replace.push({ day, mealType, why });
+  };
+
+  // Meals that may contain a selected allergen are replaced first; if the
+  // repair can't run they stay flagged on the page (allergenWarning).
+  plan.days.forEach((d, i) => d.meals.forEach((m: any) => {
+    if (m.allergenWarning) mark(i + 1, m.mealType, `may contain ${m.allergenWarning.join(", ")}, which the household leaves out`);
+  }));
+
+  const seen: Record<string, number> = {};
+  plan.days.forEach((d, i) => d.meals.forEach((m: any) => {
+    const k = titleKey(m.title);
+    seen[k] = (seen[k] || 0) + 1;
+    const allowed = m.mealType === "lunch" || m.mealType === "dinner" ? 1 : 2;
+    if (seen[k] > allowed) mark(i + 1, m.mealType, `repeats "${m.title}"`);
+  }));
+
+  const proteinCount: Record<string, number> = {};
+  plan.days.forEach((d, i) => d.meals.filter((m: any) => m.mealType === "dinner").forEach((m: any) => {
+    const protein = mainProtein(m);
+    if (!protein) return;
+    proteinCount[protein] = (proteinCount[protein] || 0) + 1;
+    if (proteinCount[protein] > MAX_DINNERS_PER_PROTEIN) mark(i + 1, "dinner", `${protein} is already the main protein of ${MAX_DINNERS_PER_PROTEIN} dinners`);
+  }));
+  if (review.replace.length) review.issues.push(`${review.replace.length} meal(s) to replace: ` + review.replace.map((r) => `day ${r.day} ${r.mealType} (${r.why})`).join(", "));
+
+  const byType: Record<string, Set<number>> = {};
+  let count = 0;
+  for (const d of plan.days) for (const m of d.meals) {
+    (byType[m.mealType] = byType[m.mealType] || new Set()).add(m.nutrition.calories);
+    count++;
+  }
+  const copied = Object.entries(byType).filter(([, set]) => set.size === 1).map(([type]) => type);
+  if (count >= 7 && copied.length) {
+    review.reestimate = true;
+    review.issues.push(`identical calories for every ${copied.join(", ")}`);
+  }
+
+  const target = (CALORIE_TARGETS[p.goal] || 2000) * mealSetShare(p.mealSet);
+  if (plan.macro.calories && (plan.macro.calories < target * 0.75 || plan.macro.calories > target * 1.3)) {
+    review.issues.push(`about ${plan.macro.calories} kcal per person per day instead of about ${Math.round(target)}`);
+  }
+  return review;
+}
+
+// The follow-up prompt: replace only the listed meals and/or re-estimate figures.
+function repairPrompt(plan: { days: any[] }, p: MealPrefs, review: Review): string {
+  const menu = plan.days.map((d, i) => `${WEEKDAYS[i]} (day ${i + 1}): ` +
+    d.meals.map((m: any) => `${m.mealType}: ${m.title} [${m.ingredients.map((g: any) => g.name).join(", ")}]`).join("; ")).join("\n");
+  const parts = [`This is the household's 7-day plan:\n${menu}\n`];
+  if (review.replace.length) {
+    parts.push(`Replace exactly these meals with new dishes:\n` +
+      review.replace.map((r) => `- day ${r.day} ${r.mealType}: ${r.why}`).join("\n") +
+      `\nEach new dish must differ from every dish in the plan, keep the dinners to at most ${MAX_DINNERS_PER_PROTEIN} per main protein, and follow the same constraints: goal ${p.goal}; ` +
+      `allergies to leave out: ${p.allergies.length ? p.allergies.join(", ") : "none"}; avoid: ${p.avoid.length ? p.avoid.join(", ") : "none"}; ` +
+      `cuisines: ${p.cuisine.length ? p.cuisine.join(", ") : "any"}; at most ${p.timePerMeal} minutes; at most 8 ingredients and 4 short steps.`);
+  }
+  if (review.reestimate) {
+    parts.push(`The nutrition figures look copied from targets. Give your own per-serving estimate for EVERY meal of the final plan (with the replacements), specific to each dish, in "nutrition".`);
+  }
+  parts.push(`Return ONLY JSON: {"replacements":[{"day":1,"mealType":"dinner","title":"string","prepTimeMinutes":10,"cookTimeMinutes":15,"ingredients":[{"name":"string","amount":"string"}],"steps":["string"],"nutrition":{"calories":0,"protein_g":0,"carbs_g":0,"fat_g":0}}],` +
+    `"groceryAdditions":[{"item":"string","quantity":"string","category":"${CATEGORIES.join("|")}"}],` +
+    `"nutrition":[{"day":1,"mealType":"breakfast","calories":0,"protein_g":0,"carbs_g":0,"fat_g":0}]}. ` +
+    `groceryAdditions lists only ingredients of the new dishes that are not already in the plan. Use empty arrays for anything not asked for.`);
+  return parts.join("\n");
+}
+
+// Applies the repair answer to a copy of the plan and re-checks it.
+function applyRepair(plan: ReturnType<typeof cleanPlan>, raw: any, p: MealPrefs) {
+  const days = plan.days.map((d: any) => ({ ...d, meals: d.meals.map((m: any) => ({ ...m })) }));
+  for (const r of Array.isArray(raw?.replacements) ? raw.replacements : []) {
+    const day = days[Number(r?.day) - 1];
+    const idx = day ? day.meals.findIndex((m: any) => m.mealType === String(r?.mealType).toLowerCase()) : -1;
+    if (idx >= 0) day.meals[idx] = { ...r, mealType: day.meals[idx].mealType };
+  }
+  for (const n of Array.isArray(raw?.nutrition) ? raw.nutrition : []) {
+    const day = days[Number(n?.day) - 1];
+    const meal = day && day.meals.find((m: any) => m.mealType === String(n?.mealType).toLowerCase());
+    if (meal) meal.nutrition = { calories: n.calories, protein_g: n.protein_g, carbs_g: n.carbs_g, fat_g: n.fat_g };
+  }
+  const grocery = [...plan.grocery, ...(Array.isArray(raw?.groceryAdditions) ? raw.groceryAdditions : [])];
+  return cleanPlan({ days, groceryList: grocery }, p);
 }
 
 // ── Handler ──────────────────────────────────────────────────────
@@ -295,14 +403,15 @@ Deno.serve(async (req) => {
   const prompt = mealPlanPrompt(prefs);
   let tokens = 0;
 
-  async function callModel(messages: { role: string; content: string }[]): Promise<{ raw: any; text: string }> {
+  async function callModel(messages: { role: string; content: string }[], maxTokens = 12000, timeoutMs?: number): Promise<{ raw: any; text: string }> {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+      signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.7,
-        max_tokens: 12000,
+        max_tokens: maxTokens,
         response_format: { type: "json_object" },
         messages,
       }),
@@ -316,24 +425,30 @@ Deno.serve(async (req) => {
 
   const messages = [{ role: "system", content: prompt.system }, { role: "user", content: prompt.user }];
   let plan: ReturnType<typeof cleanPlan>;
-  let attempts = 1;
+  let repaired = "no";
+  const started = Date.now();
   try {
-    const started = Date.now();
     const first = await callModel(messages);
     plan = cleanPlan(first.raw, prefs);
-    const issues = planIssues(plan, prefs);
-    // One corrective attempt, on the same usage reservation, if time allows.
-    if (issues.length && Date.now() - started < RETRY_IF_FIRST_CALL_UNDER_MS) {
+    const review = reviewPlan(plan, prefs);
+    const elapsed = Date.now() - started;
+    // One short repair call on the same reservation: only the flagged meals
+    // and/or fresh figures, never the whole week again.
+    if ((review.replace.length || review.reestimate) && elapsed < REPAIR_START_BY_MS) {
       try {
-        attempts = 2;
-        const second = await callModel([...messages,
-          { role: "assistant", content: first.text },
-          { role: "user", content: `Revise the whole plan and return the full JSON again. Fix: ${issues.join("; ")}. Keep every other rule.` }]);
-        const revised = cleanPlan(second.raw, prefs);
-        const complete = revised.days.length === 7 && !revised.days.some((d: any) => !d.meals.length);
-        if (complete && planIssues(revised, prefs).length <= issues.length) plan = revised;
+        const fix = await callModel([
+          { role: "system", content: prompt.system },
+          { role: "user", content: repairPrompt(plan, prefs, review) },
+        ], 4000, Math.min(40_000, REQUEST_BUDGET_MS - elapsed));
+        const candidate = applyRepair(plan, fix.raw, prefs);
+        const complete = candidate.days.length === 7 && !candidate.days.some((d: any) => !d.meals.length);
+        const after = reviewPlan(candidate, prefs);
+        if (complete && after.replace.length <= review.replace.length && (!after.reestimate || review.reestimate)) {
+          plan = candidate;
+          repaired = after.issues.length ? "partly" : "yes";
+        }
       } catch (e) {
-        console.error("[gs-ai-gateway] retry failed, keeping first plan:", e);
+        console.error("[gs-ai-gateway] repair failed, keeping first plan:", e);
       }
     }
   } catch (e) {
@@ -355,7 +470,7 @@ Deno.serve(async (req) => {
   if (plan.days.length < 7 || plan.days.some((d: any) => !d.meals.length)) {
     return json({ error: "The plan came back incomplete. Try again." }, 502);
   }
-  const remaining = planIssues(plan, prefs);
-  if (remaining.length) console.warn("[gs-ai-gateway] plan kept with issues:", remaining.join("; "), "attempts:", attempts);
+  const remaining = reviewPlan(plan, prefs).issues;
+  console.log("[gs-ai-gateway] meal plan", JSON.stringify({ ms: Date.now() - started, tokens, repaired, issues: remaining }));
   return json({ ok: true, task, model: MODEL, prefs, result: plan, usage: { today: used, limit } });
 });
