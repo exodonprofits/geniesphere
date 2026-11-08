@@ -4,21 +4,20 @@
   function load() {
     try {
       var s = JSON.parse(localStorage.getItem(KEY));
-      if (s) { ['household_meal_plans', 'household_nutrition_prefs', 'gs_ai_usage', 'household_invites'].forEach(function (t) { s[t] = s[t] || []; }); return s; }
+      if (s) { ['household_meal_plans', 'household_nutrition_prefs', 'gs_ai_usage'].forEach(function (t) { s[t] = s[t] || []; }); return s; }
     } catch (e) {}
     return {
       session: null,
       users: [{ id: 'u1', email: 'jimmy@example.com', password: 'pw' }],
       households: [{ id: 'h1', owner_id: 'u1', name: 'Nguyen Home' }, { id: 'h2', owner_id: 'u1', name: 'Lake House' }],
-      household_members: [{ household_id: 'h1', user_id: 'u1', role: 'owner', email: 'jimmy@example.com', display_name: 'Jimmy', created_at: '2026-10-01T00:00:00Z' },
-        { household_id: 'h2', user_id: 'u1', role: 'owner', email: 'jimmy@example.com', display_name: 'Jimmy', created_at: '2026-10-01T00:00:00Z' }],
+      household_members: [{ household_id: 'h1', user_id: 'u1', role: 'owner' }, { household_id: 'h2', user_id: 'u1', role: 'owner' }],
       user_household_context: [],
       household_tasks: [
         { id: 't1', household_id: 'h1', title: 'Change HVAC filter', status: 'todo', completed_at: null, due_at: '2026-10-20T00:00:00Z' },
         { id: 't2', household_id: 'h1', title: 'Old done task', status: 'done', completed_at: '2026-10-01T00:00:00Z', due_at: null }
       ],
       shopping_lists: [], shopping_items: [],
-      household_meal_plans: [], household_nutrition_prefs: [], gs_ai_usage: [], household_invites: [], seq: 0
+      household_meal_plans: [], household_nutrition_prefs: [], gs_ai_usage: [], seq: 0
     };
   }
   function save(db) { localStorage.setItem(KEY, JSON.stringify(db)); }
@@ -48,11 +47,7 @@
     if (!uid) return { data: null, error: { message: 'not signed in' } };
     // Approximate RLS: household-scoped tables visible only to members.
     var mine = db.household_members.filter(function (m) { return m.user_id === uid; }).map(function (m) { return m.household_id; });
-    var owned = db.household_members.filter(function (m) { return m.user_id === uid && m.role === 'owner'; }).map(function (m) { return m.household_id; });
-    function visible(r) {
-      if (self.t === 'household_invites') return owned.indexOf(r.household_id) !== -1;
-      return r.household_id === undefined || mine.indexOf(r.household_id) !== -1 || r.user_id === uid;
-    }
+    function visible(r) { return r.household_id === undefined || mine.indexOf(r.household_id) !== -1 || r.user_id === uid; }
     function match(r) { return visible(r) && self.filters.every(function (f) { return f(r); }); }
     if (this.op === 'insert' || this.op === 'upsert') {
       var list = Array.isArray(this.payload) ? this.payload : [this.payload], out = [];
@@ -84,66 +79,6 @@
     return { data: data, error: null };
   };
 
-  // Mirrors supabase/functions/gs-household-invite (tokens kept in clear here).
-  function fakeInvite(db, body) {
-    var uid = db.session && db.session.user.id;
-    function fail(message) { return { data: null, error: { message: message, context: { json: async function () { return { error: message }; } } } }; }
-    function ok(data) { save(db); return { data: Object.assign({ ok: true }, data), error: null }; }
-    function find(token) { return db.household_invites.find(function (i) { return i._token === token; }); }
-    function statusOf(inv) {
-      if (!inv) return null;
-      if (inv.revoked_at) return 'revoked';
-      if (inv.accepted_at) return 'accepted';
-      return new Date(inv.expires_at) < new Date() ? 'expired' : 'open';
-    }
-    if (body.action === 'create') {
-      if (!uid) return fail('Sign in to use this.');
-      if (!db.household_members.some(function (m) { return m.household_id === body.household_id && m.user_id === uid && m.role === 'owner'; }))
-        return fail('Only the household owner can invite people.');
-      if (db.household_members.some(function (m) { return m.household_id === body.household_id && m.email === body.email; }))
-        return fail(body.email + ' is already a member of this household.');
-      var token = 'tok' + (++db.seq) + 'x' + Math.random().toString(36).slice(2);
-      var inv = { id: 'inv' + db.seq, household_id: body.household_id, email: body.email, display_name: body.display_name || null,
-        created_by: uid, created_at: new Date().toISOString(), expires_at: new Date(Date.now() + 7 * 864e5).toISOString(),
-        accepted_at: null, revoked_at: null, _token: token };
-      db.household_invites.push(inv);
-      return ok({ token: token, invite_id: inv.id, expires_at: inv.expires_at });
-    }
-    if (body.action === 'revoke') {
-      var r = db.household_invites.find(function (i) { return i.id === body.invite_id; });
-      if (!r || !db.household_members.some(function (m) { return m.household_id === r.household_id && m.user_id === uid && m.role === 'owner'; }))
-        return fail('Invitation not found.');
-      r.revoked_at = new Date().toISOString();
-      return ok({});
-    }
-    var invite = find(body.token);
-    if (!invite) return fail('This invitation link is not valid.');
-    var household = db.households.find(function (h) { return h.id === invite.household_id; });
-    var inviter = db.household_members.find(function (m) { return m.user_id === invite.created_by; });
-    var account = db.users.find(function (u) { return u.email === invite.email; });
-    if (body.action === 'preview') {
-      return ok({ household_name: household.name, inviter_name: (inviter && inviter.display_name) || 'The household owner',
-        email: invite.email, display_name: invite.display_name, status: statusOf(invite), has_account: !!account });
-    }
-    if (body.action === 'accept') {
-      if (statusOf(invite) !== 'open') return fail('This invitation can no longer be used.');
-      var userId;
-      if (account) {
-        if (!uid || uid !== account.id) return fail('Sign in as ' + invite.email + ' to join.');
-        userId = account.id;
-      } else {
-        if (!body.password || body.password.length < 10) return fail('Use a password of at least 10 characters.');
-        userId = 'u' + (++db.seq);
-        db.users.push({ id: userId, email: invite.email, password: body.password });
-      }
-      db.household_members.push({ household_id: invite.household_id, user_id: userId, role: 'member', email: invite.email,
-        display_name: body.display_name || invite.display_name || null, created_at: new Date().toISOString() });
-      invite.accepted_at = new Date().toISOString();
-      return ok({ household_id: invite.household_id });
-    }
-    return fail('Unknown action.');
-  }
-
   window.supabase = {
     createClient: function (url, key) {
       window.__createClientCalls = (window.__createClientCalls || 0) + 1;
@@ -162,7 +97,6 @@
         functions: {
           invoke: async function (name, opts) {
             var db = load(), body = (opts && opts.body) || {};
-            if (name === 'gs-household-invite') return fakeInvite(db, body);
             if (!db.session) return { data: null, error: { message: 'Sign in to use this.' } };
             if (name !== 'gs-ai-gateway' || body.task !== 'meal_plan.generate') return { data: null, error: { message: 'Unknown task.' } };
             var uid = db.session.user.id;
