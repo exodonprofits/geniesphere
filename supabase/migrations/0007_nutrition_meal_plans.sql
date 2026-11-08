@@ -2,7 +2,12 @@
 -- Applied 2026-11-08 via the SQL editor to the GenieSphere project
 -- (nxgtefbqizvihwikqnaw, ADR-015), not to the shared Salon Genie project.
 -- The pre-apply dry run could not exercise the owner path (the project had no
--- users yet); RLS is re-checked as a real member once the first account exists.
+-- users yet). Re-checked 2026-11-08 as the first real member, all rolled back:
+-- owner_member=1 owner_plans=1 owner_households=1 dup_week=blocked(23505)
+-- user_usage_insert=blocked(42501) user_reserve=blocked(42501) | stranger_plans=0
+-- stranger_prefs=0 stranger_households=0 stranger_insert=blocked(42501)
+-- stranger_join=blocked(42501) | anon_plans=blocked(42501)
+-- anon_households=blocked(42501) | reserve1=1 reserve2=2 reserve3=-1
 --
 -- Household-scoped like 0004: access via public.is_household_member
 -- (SECURITY DEFINER). Any household member can read and edit the household's
