@@ -21,6 +21,10 @@
         if (body && body.error) return body.error;
       }
     } catch (ignored) { /* fall through */ }
+    // FunctionsFetchError: the connection dropped before an answer arrived.
+    if (error && error.name === 'FunctionsFetchError') {
+      return 'The connection dropped before the answer arrived. Check your signal and try again.';
+    }
     return (error && error.message) || 'The AI request failed. Try again.';
   }
 
