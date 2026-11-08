@@ -6,8 +6,8 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 | Capability | Canonical path | Status |
 |---|---|---|
-| App entry | `/index.html` | live marketing homepage. Log in → `/core/auth/login.html`; Household card → `/core/dashboard/index.html`; Create an account → `/onboarding/signup.html`; demo → `/dashboard/overview.html?mode=demo`. Business, Investment, Leisure and Finance cards are not linked ("Coming later"). `/about.html` exists only on the server |
-| Login | `/core/auth/login.html` | slice 1: email/password via `gs-auth`; `?next=` kept only if it resolves to this origin. No app shell |
+| App entry | `/index.html` | live marketing homepage. Log in → `/core/auth/login.html`; Household card → `/core/dashboard/index.html`; "Sign in" hero buttons → `/core/auth/login.html` (invitation-only, ADR-015; no sign-up link); demo → `/dashboard/overview.html?mode=demo`. Business, Investment, Leisure and Finance cards are not linked ("Coming later"). `/about.html` exists only on the server |
+| Login | `/core/auth/login.html` | slice 1: email/password via `gs-auth` against the GenieSphere project (ADR-015); `?next=` kept only if it resolves to this origin; invitation-only, no sign-up link. No app shell |
 | Dashboard | `/core/dashboard/index.html` | slice 1: session required; household name + switcher; open `household_tasks`; app shell |
 | Settings | `/core/settings/index.html` | placeholder; session required; app shell |
 | Tasks | `/core/tasks/index.html` | placeholder; session required; app shell |

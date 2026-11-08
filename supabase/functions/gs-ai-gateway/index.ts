@@ -15,7 +15,8 @@
 //   meal_plan.generate  7-day household meal plan + grocery list
 //                       (prompt ported from the n8n "Meal Planner" workflow)
 //
-// Secrets: OPENAI_API_KEY (already set for the project);
+// Project: GenieSphere (nxgtefbqizvihwikqnaw), see docs/DECISIONS.md ADR-015.
+// Secrets: OPENAI_API_KEY (set in the project's Edge Function secrets);
 //          SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (auto-provided).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";

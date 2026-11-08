@@ -42,7 +42,7 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   assert.match(await page.textContent('#tasks'), /^No open tasks\./);
   assert.strictEqual(await page.evaluate(() => window.__createClientCalls), 1);
   const [url, key] = await page.evaluate(() => window.__createClientArgs);
-  assert.strictEqual(url, 'https://pbojacnagutipfhcxltj.supabase.co');
+  assert.strictEqual(url, 'https://nxgtefbqizvihwikqnaw.supabase.co');
   assert.ok(key.startsWith('eyJ'));
   step('login returns to dashboard; default household = first by name; one client from app-config values');
 

@@ -1,5 +1,8 @@
 -- Nutrition Genie 0.1: household meal plans, saved preferences, and AI usage.
--- Not yet applied: waiting on the SQL-editor dry run.
+-- Applied 2026-11-08 via the SQL editor to the GenieSphere project
+-- (nxgtefbqizvihwikqnaw, ADR-015), not to the shared Salon Genie project.
+-- The pre-apply dry run could not exercise the owner path (the project had no
+-- users yet); RLS is re-checked as a real member once the first account exists.
 --
 -- Household-scoped like 0004: access via public.is_household_member
 -- (SECURITY DEFINER). Any household member can read and edit the household's
