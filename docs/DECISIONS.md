@@ -94,3 +94,9 @@
 
 **Reason:** ADR-013 requires data isolation from the other Genies before onboarding households outside the founder's. The shared project held ~300 tables across Salon, Rental and Arowana, and the other products are moving to their own projects too. Users and households are not copied from the old project: 0.1 had only the founder's test household, and copying `auth.users` between projects is not worth the risk. Migrations 0005/0006 targeted the old project; 0006 (`gs_user_preferences`) does not apply to the new one.
 
+## ADR-016 — Household invitations by one-time link
+
+**Decision:** Owners add people from Settings. The `gs-household-invite` Edge Function creates a random 256-bit token, stores only its SHA-256 in `household_invites` (bound to one email, 7-day expiry, at most 10 open per household, a new link for the same email revokes the old one) and returns the token once; the owner sends the link (`/core/auth/invite.html#t=…`) by text or the phone's share sheet. The token travels in the URL fragment, so it never reaches the web server or a Referer header. Opening the link, the invitee sets a password (an account is created for the invited email, already confirmed) or, if that email already has an account, signs in; the function claims the invite atomically before creating anything, then adds a `member` membership. All writes go through the function; browsers can read invitations (owners only, without `token_hash`) and member names/emails (members only). Every member has the same access; the only owner-only actions are inviting and revoking.
+
+**Reason:** Accounts are invitation-only (ADR-015) and the project's built-in email only delivers to the team's own addresses, so an emailed invite would not reach a spouse or house manager. A link the owner sends needs no email provider and keeps the owner in control. Roles beyond owner/member wait until a module actually restricts something (showing roles that change nothing would mislead).
+
