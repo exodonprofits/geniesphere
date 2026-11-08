@@ -10,8 +10,8 @@
 //   3. Reserve a call against the household's daily limit before spending
 //      money (public.gs_ai_usage_reserve, atomic).
 //   4. Call the model, then check and trim the output to the expected shape.
-//   5. Review the plan (repeated dishes, one protein at too many dinners,
-//      calorie figures copied from the targets) and repair just those meals
+//   5. Review the plan (allergen hits, repeated dishes, one protein at too many
+//      dinners, calorie figures copied from the targets) and repair just those meals
 //      with one short follow-up call on the same reservation, if time allows.
 //
 // Tasks:
