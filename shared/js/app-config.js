@@ -4,16 +4,18 @@
 // Note: Supabase anon keys are meant to be public, but centralizing them
 // makes rotation + environment switching easier.
 //
-// Two consumers share this file:
-// - Legacy pages call window.GSConfig, which fetches /shared/config.json.
-// - The canonical client (shared/js/gs-client.js) reads window.GenieSphereConfig
-//   synchronously, so the same public values are set below.
-// scripts/package_site.py refuses to package if these values and
-// /shared/config.json disagree. Never place secret/service-role keys here.
+// Two consumers share this file, on purpose pointing at different projects
+// (docs/DECISIONS.md ADR-015):
+// - The canonical 0.1 client (shared/js/gs-client.js) reads
+//   window.GenieSphereConfig below: the GenieSphere project (nxgtefbqizvihwikqnaw).
+// - Legacy pages call window.GSConfig, which fetches /shared/config.json: the
+//   shared Salon Genie project (pbojacnagutipfhcxltj). Do not point legacy
+//   pages at the GenieSphere project; their tables are not there.
+// Never place secret/service-role keys here.
 
 window.GenieSphereConfig = window.GenieSphereConfig || {
-  supabaseUrl: window.GS_SUPABASE_URL || "https://pbojacnagutipfhcxltj.supabase.co",
-  supabaseAnonKey: window.GS_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2phY25hZ3V0aXBmaGN4bHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDkwODAsImV4cCI6MjA2MzU4NTA4MH0.ZLCcAzTYljoZycpBGwMtthP5VyAJ4schuIvt4HibGc0",
+  supabaseUrl: window.GS_SUPABASE_URL || "https://nxgtefbqizvihwikqnaw.supabase.co",
+  supabaseAnonKey: window.GS_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z3RlZmJxaXp2aWh3aWtxbmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5NzM5NjIsImV4cCI6MjEwOTU0OTk2Mn0.mHDoeUzaWn0tFF_wbNw9rAZhPDtAB6VAU07hfkXgApk",
   appName: "GenieSphere",
   environment: "production"
 };

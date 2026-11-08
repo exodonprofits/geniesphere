@@ -49,14 +49,21 @@ for required in ("index.html", "shared/assets/logo/geniesphere_logo.png",
     if required not in selected:
         raise SystemExit(f"Required tracked file missing: {required}")
 
-# app-config.js repeats the public Supabase values for the synchronous canonical
-# client; refuse to ship if it has drifted from /shared/config.json.
+# app-config.js (canonical client) and /shared/config.json (legacy pages) point
+# at different Supabase projects on purpose (docs/DECISIONS.md ADR-015). Refuse
+# to ship if either loses its URL/key, or if the canonical client is pointed
+# back at the legacy project.
+CANONICAL_REF = "nxgtefbqizvihwikqnaw"
 config = json.loads((root / "shared/config.json").read_text(encoding="utf-8"))
+if not config.get("supabaseUrl") or not config.get("supabaseAnonKey"):
+    raise SystemExit("shared/config.json is missing supabaseUrl/supabaseAnonKey")
 app_config = (root / "shared/js/app-config.js").read_text(encoding="utf-8")
 for key in ("supabaseUrl", "supabaseAnonKey"):
     match = re.search(key + r':\s*window\.\w+\s*\|\|\s*"([^"]*)"', app_config)
-    if not match or match.group(1) != config.get(key):
-        raise SystemExit(f"shared/js/app-config.js {key} does not match shared/config.json")
+    if not match or not match.group(1):
+        raise SystemExit(f"shared/js/app-config.js {key} is missing")
+    if key == "supabaseUrl" and match.group(1) != f"https://{CANONICAL_REF}.supabase.co":
+        raise SystemExit("shared/js/app-config.js must point at the GenieSphere project")
 
 output = root / "dist"
 output.mkdir(exist_ok=True)

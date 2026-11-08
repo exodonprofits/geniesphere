@@ -6,21 +6,23 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 | Capability | Canonical path | Status |
 |---|---|---|
-| App entry | `/index.html` | live marketing homepage. Log in → `/core/auth/login.html`; Household card → `/core/dashboard/index.html`; Create an account → `/onboarding/signup.html`; demo → `/dashboard/overview.html?mode=demo`. Business, Investment, Leisure and Finance cards are not linked ("Coming later"). `/about.html` exists only on the server |
-| Login | `/core/auth/login.html` | slice 1: email/password via `gs-auth`; `?next=` kept only if it resolves to this origin. No app shell |
+| App entry | `/index.html` | live marketing homepage. Log in → `/core/auth/login.html`; Household card → `/core/dashboard/index.html`; "Sign in" hero buttons → `/core/auth/login.html` (invitation-only, ADR-015; no sign-up link); demo → `/dashboard/overview.html?mode=demo`. Business, Investment, Leisure and Finance cards are not linked ("Coming later"). `/about.html` exists only on the server |
+| Login | `/core/auth/login.html` | slice 1: email/password via `gs-auth` against the GenieSphere project (ADR-015); `?next=` kept only if it resolves to this origin; invitation-only, no sign-up link. No app shell |
 | Dashboard | `/core/dashboard/index.html` | slice 1: session required; household name + switcher; open `household_tasks`; app shell |
 | Settings | `/core/settings/index.html` | placeholder; session required; app shell |
 | Tasks | `/core/tasks/index.html` | placeholder; session required; app shell |
 | Notifications | `/core/notifications/index.html` | placeholder; session required; app shell |
 
 | App shell (component) | `/shared/components/gs-shell.js` | top bar, account menu, phone bottom bar; mounts on `<body data-gs-shell="key">`; styles in `/shared/css/app.css` |
+| AI gateway (service) | `/core/ai/ai-gateway.js` → Edge Function `gs-ai-gateway` | `GenieSphere.ai.request({task, householdId, input})`; tasks: `meal_plan.generate` (10/household/day) |
+| Grocery interface (module API) | `/modules/grocery/grocery-api.js` | `GenieSphere.grocery.activeListId`, `addItems` (skips items already on the list) |
 | Household context (service) | `/core/household/household.js` | slice 1: current household from `user_household_context`, else first membership by name |
 
 ## Modules
 
 | Module | Canonical path | Status |
 |---|---|---|
-| Nutrition | `/modules/nutrition/index.html` | placeholder; session required; app shell |
+| Nutrition | `/modules/nutrition/index.html` | 0.1: household preferences (`household_nutrition_prefs`), 7-day plan via `gs-ai-gateway` saved per household and week (`household_meal_plans`), allergen flags, adds groceries through `modules/grocery/grocery-api.js`; app shell |
 | Grocery | `/modules/grocery/index.html` | slice 1: shared household list (`shopping_lists` / `shopping_items`); app shell |
 | Home | `/modules/home/index.html` | placeholder; session required; app shell |
 

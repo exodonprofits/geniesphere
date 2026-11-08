@@ -69,7 +69,7 @@
         <span class="gs-module-cta">Open list →</span>
       </a>
       <a class="gs-module" href="/modules/nutrition/index.html">
-        <span class="gs-module-top"><span class="gs-tile accent" data-gs-icon="leaf"></span><span class="gs-pill">Not set up</span></span>
+        <span class="gs-module-top"><span class="gs-tile accent" data-gs-icon="leaf"></span><span id="nutrition-pill" class="gs-pill">Not set up</span></span>
         <h3 class="gs-module-name">Nutrition Genie</h3>
         <p class="gs-module-desc">Weekly meal plans for your family, turned into a grocery list in one step.</p>
         <span class="gs-module-cta">Open Nutrition →</span>
@@ -133,6 +133,21 @@
         var ms = new Date(iso).getTime() - Date.now();
         if (ms < 0) return 'overdue';
         return ms <= 3 * DAY ? 'soon' : 'later';
+      }
+
+      function mondayOf(date) {
+        var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      }
+
+      // Tonight's dinner from this week's plan (or the day's last meal).
+      function tonight(planRow) {
+        var days = planRow && planRow.plan && planRow.plan.days;
+        if (!days || !days.length) return null;
+        var day = days[(new Date().getDay() + 6) % 7] || days[0];
+        var meals = day.meals || [];
+        return meals.filter(function (m) { return m.mealType === 'dinner'; })[0] || meals[meals.length - 1] || null;
       }
 
       function renderSwitcher(ctx) {
@@ -205,7 +220,7 @@
         return { tone: 'accent', pill: 'On track', title: tasks.length + ' open task' + (tasks.length > 1 ? 's' : ''), detail: detail };
       }
 
-      function renderToday(ctx, tasks, toBuy, members) {
+      function renderToday(ctx, tasks, toBuy, members, mealPlan) {
         var rows = document.getElementById('today-rows');
         var quick = document.getElementById('quick-status');
         rows.textContent = '';
@@ -218,13 +233,21 @@
 
         rows.appendChild(todayRow({ icon: 'list', tone: t.tone, pill: t.pill, title: t.title, detail: t.detail, action: 'View tasks →', href: '#open-tasks' }));
         rows.appendChild(todayRow({ icon: 'cart', tone: g.tone, pill: g.pill, title: g.title, detail: g.detail, action: 'Open list →', href: '/modules/grocery/index.html' }));
-        rows.appendChild(todayRow({ icon: 'leaf', tone: '', pill: 'Not set up', title: 'No meal plan yet', detail: 'Plan this week’s meals with Nutrition Genie.', action: 'Plan meals →', href: '/modules/nutrition/index.html' }));
+        var dinner = tonight(mealPlan);
+        rows.appendChild(todayRow(dinner
+          ? { icon: 'leaf', tone: 'ok', pill: 'Planned', title: 'Tonight: ' + dinner.title, detail: 'This week’s meals are planned.', action: 'See the week →', href: '/modules/nutrition/index.html' }
+          : { icon: 'leaf', tone: '', pill: 'Not set up', title: 'No meal plan yet', detail: 'Plan this week’s meals with Nutrition Genie.', action: 'Plan meals →', href: '/modules/nutrition/index.html' }));
         rows.appendChild(todayRow({ icon: 'wrench', tone: '', pill: 'Not set up', title: 'No home maintenance yet', detail: 'Track HVAC filters, gutters, smoke alarms.', action: 'Set up →', href: '/modules/home/index.html' }));
 
         quick.appendChild(quickChip({ icon: 'house', title: ctx.name, sub: members + ' member' + (members === 1 ? '' : 's'), pill: null }));
         quick.appendChild(quickChip({ icon: 'list', title: 'Tasks', sub: tasks.length ? tasks.length + ' open' : 'Nothing open', pill: t.attention ? t.pill : 'Clear', tone: t.attention ? t.tone : 'ok', href: '#open-tasks' }));
         quick.appendChild(quickChip({ icon: 'cart', title: 'Groceries', sub: toBuy ? toBuy + ' to buy' : 'List is clear', pill: toBuy ? String(toBuy) : 'Clear', tone: toBuy ? 'accent' : 'ok', href: '/modules/grocery/index.html' }));
-        quick.appendChild(quickChip({ icon: 'leaf', title: 'Meals', sub: 'Nutrition Genie', pill: 'Not set up', href: '/modules/nutrition/index.html' }));
+        quick.appendChild(quickChip(dinner
+          ? { icon: 'leaf', title: 'Meals', sub: 'Tonight: ' + dinner.title, pill: 'Planned', tone: 'ok', href: '/modules/nutrition/index.html' }
+          : { icon: 'leaf', title: 'Meals', sub: 'Nutrition Genie', pill: 'Not set up', href: '/modules/nutrition/index.html' }));
+        var np = document.getElementById('nutrition-pill');
+        np.className = 'gs-pill ' + (dinner ? 'ok' : '');
+        np.textContent = dinner ? 'Planned' : 'Not set up';
 
         var needs = attentionCount(tasks, toBuy);
         var badge = document.getElementById('today-badge');
@@ -248,7 +271,7 @@
       var NUMBER_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
 
       // Rule-based briefing from household data. Each line is one plain sentence.
-      function renderBriefing(tasks, toBuy) {
+      function renderBriefing(tasks, toBuy, mealPlan) {
         var h = new Date().getHours();
         var kicker = document.getElementById('brief-kicker');
         kicker.lastChild.textContent = (h < 12 ? 'Morning' : (h < 18 ? 'Afternoon' : 'Evening')) + ' briefing';
@@ -268,7 +291,10 @@
           lines.push({ tone: 'accent', text: toBuy.length + ' item' + (toBuy.length > 1 ? 's are' : ' is') + ' on the grocery list: ' +
             names.join(', ') + (more > 0 ? ' and ' + more + ' more' : '') + '.' });
         }
-        lines.push({ tone: '', text: 'No meals are planned for this week yet.' });
+        var dinner = tonight(mealPlan);
+        lines.push(dinner
+          ? { tone: 'accent', text: 'Tonight: ' + dinner.title + '.' }
+          : { tone: '', text: 'No meals are planned for this week yet.' });
 
         var attention = attentionCount(tasks, toBuy.length);
         document.getElementById('brief-heading').textContent = attention === 0
@@ -296,9 +322,9 @@
           if (toBuy.length) action('Open grocery list', '/modules/grocery/index.html', false);
         } else if (toBuy.length) {
           action('Open grocery list', '/modules/grocery/index.html', true);
-          action('Plan meals', '/modules/nutrition/index.html', false);
+          action(dinner ? 'See this week’s meals' : 'Plan meals', '/modules/nutrition/index.html', false);
         } else {
-          action('Plan this week’s meals', '/modules/nutrition/index.html', true);
+          action(dinner ? 'See this week’s meals' : 'Plan this week’s meals', '/modules/nutrition/index.html', true);
         }
 
         document.getElementById('m-attention').textContent = attention;
@@ -350,6 +376,13 @@
         return result.data || [];
       }
 
+      async function loadMealPlan(householdId) {
+        var result = await db().from('household_meal_plans')
+          .select('week_start, plan').eq('household_id', householdId).eq('week_start', mondayOf(new Date())).maybeSingle();
+        // Nutrition is optional on the dashboard: if it can't load, show "Not set up".
+        return result.error ? null : result.data;
+      }
+
       async function countMembers(householdId) {
         var result = await db().from('household_members')
           .select('user_id').eq('household_id', householdId);
@@ -374,9 +407,9 @@
           }
           document.getElementById('household-name').textContent = ctx.name;
           renderSwitcher(ctx);
-          var loaded = await Promise.all([loadTasks(ctx.householdId), loadToBuy(ctx.householdId), countMembers(ctx.householdId)]);
-          renderBriefing(loaded[0], loaded[1]);
-          renderToday(ctx, loaded[0], loaded[1].length, loaded[2]);
+          var loaded = await Promise.all([loadTasks(ctx.householdId), loadToBuy(ctx.householdId), countMembers(ctx.householdId), loadMealPlan(ctx.householdId)]);
+          renderBriefing(loaded[0], loaded[1], loaded[3]);
+          renderToday(ctx, loaded[0], loaded[1].length, loaded[2], loaded[3]);
           renderTasks(loaded[0]);
         } catch (err) {
           show(err.message || 'Could not load the dashboard.', true);
