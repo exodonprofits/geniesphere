@@ -13,6 +13,8 @@
 //   5. Review the plan (allergen hits, repeated dishes, one protein at too many
 //      dinners, calorie figures copied from the targets) and repair just those meals
 //      with one short follow-up call on the same reservation, if time allows.
+//   6. Stream the answer: a space every few seconds, then the JSON, so proxies
+//      do not drop a request that takes longer than ~100 s (seen on phones).
 //
 // Tasks:
 //   meal_plan.generate  7-day household meal plan + grocery list
@@ -313,11 +315,19 @@ function reviewPlan(plan: { days: any[]; macro: { calories: number } }, p: MealP
     review.issues.push(`identical calories for every ${copied.join(", ")}`);
   }
 
-  const target = (CALORIE_TARGETS[p.goal] || 2000) * mealSetShare(p.mealSet);
-  if (plan.macro.calories && (plan.macro.calories < target * 0.75 || plan.macro.calories > target * 1.3)) {
-    review.issues.push(`about ${plan.macro.calories} kcal per person per day instead of about ${Math.round(target)}`);
+  if (caloriesOff(plan, p)) {
+    review.issues.push(`about ${plan.macro.calories} kcal per person per day instead of about ${Math.round(dayTarget(p))}`);
   }
   return review;
+}
+
+function dayTarget(p: MealPrefs): number {
+  return (CALORIE_TARGETS[p.goal] || 2000) * mealSetShare(p.mealSet);
+}
+
+function caloriesOff(plan: { macro: { calories: number } }, p: MealPrefs): boolean {
+  const t = dayTarget(p);
+  return !!plan.macro.calories && (plan.macro.calories < t * 0.75 || plan.macro.calories > t * 1.3);
 }
 
 // The follow-up prompt: replace only the listed meals and/or re-estimate figures.
@@ -333,11 +343,16 @@ function repairPrompt(plan: { days: any[] }, p: MealPrefs, review: Review): stri
       `cuisines: ${p.cuisine.length ? p.cuisine.join(", ") : "any"}; at most ${p.timePerMeal} minutes; at most 8 ingredients and 4 short steps.`);
   }
   if (review.reestimate) {
-    parts.push(`The nutrition figures look copied from targets. Give your own per-serving estimate for EVERY meal of the final plan (with the replacements), specific to each dish, in "nutrition".`);
+    const target = CALORIE_TARGETS[p.goal] || 2000;
+    const share = MEAL_SHARE[p.mealSet];
+    const perMeal = MEAL_SETS[p.mealSet].map((m) => `${m} about ${Math.round(target * share[m] / 10) * 10} kcal`).join(", ");
+    parts.push(`The nutrition figures look copied from the targets. For EVERY meal of the final plan (with the replacements), in "nutrition": ` +
+      `size the portion so the dish fits its meal average (${perMeal}) by adjusting the ingredient amounts (per person), ` +
+      `list the dish's ingredients with those amounts, and give your honest per-serving estimate for that adjusted dish.`);
   }
   parts.push(`Return ONLY JSON: {"replacements":[{"day":1,"mealType":"dinner","title":"string","prepTimeMinutes":10,"cookTimeMinutes":15,"ingredients":[{"name":"string","amount":"string"}],"steps":["string"],"nutrition":{"calories":0,"protein_g":0,"carbs_g":0,"fat_g":0}}],` +
     `"groceryAdditions":[{"item":"string","quantity":"string","category":"${CATEGORIES.join("|")}"}],` +
-    `"nutrition":[{"day":1,"mealType":"breakfast","calories":0,"protein_g":0,"carbs_g":0,"fat_g":0}]}. ` +
+    `"nutrition":[{"day":1,"mealType":"breakfast","ingredients":[{"name":"string","amount":"string"}],"calories":0,"protein_g":0,"carbs_g":0,"fat_g":0}]}. ` +
     `groceryAdditions lists only ingredients of the new dishes that are not already in the plan. Use empty arrays for anything not asked for.`);
   return parts.join("\n");
 }
@@ -353,7 +368,9 @@ function applyRepair(plan: ReturnType<typeof cleanPlan>, raw: any, p: MealPrefs)
   for (const n of Array.isArray(raw?.nutrition) ? raw.nutrition : []) {
     const day = days[Number(n?.day) - 1];
     const meal = day && day.meals.find((m: any) => m.mealType === String(n?.mealType).toLowerCase());
-    if (meal) meal.nutrition = { calories: n.calories, protein_g: n.protein_g, carbs_g: n.carbs_g, fat_g: n.fat_g };
+    if (!meal) continue;
+    meal.nutrition = { calories: n.calories, protein_g: n.protein_g, carbs_g: n.carbs_g, fat_g: n.fat_g };
+    if (Array.isArray(n.ingredients) && n.ingredients.length) meal.ingredients = n.ingredients;
   }
   const grocery = [...plan.grocery, ...(Array.isArray(raw?.groceryAdditions) ? raw.groceryAdditions : [])];
   return cleanPlan({ days, groceryList: grocery }, p);
@@ -399,78 +416,99 @@ Deno.serve(async (req) => {
     return json({ error: `Your household has used today's ${limit} meal plans. More are available tomorrow (UTC).`, limit }, 429);
   }
 
-  const prefs = cleanPrefs(body.input || {});
-  const prompt = mealPlanPrompt(prefs);
-  let tokens = 0;
+  // From here the work takes 80-120 s. Stream: a space every 5 s keeps proxies
+  // from dropping the request, then the JSON (leading spaces are valid JSON).
+  // Errors after this point are sent as { ok: false, error } with status 200.
+  async function work(): Promise<Record<string, unknown>> {
+    const prefs = cleanPrefs(body.input || {});
+    const prompt = mealPlanPrompt(prefs);
+    let tokens = 0;
 
-  async function callModel(messages: { role: string; content: string }[], maxTokens = 12000, timeoutMs?: number): Promise<{ raw: any; text: string }> {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-      signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
-      body: JSON.stringify({
-        model: MODEL,
-        temperature: 0.7,
-        max_tokens: maxTokens,
-        response_format: { type: "json_object" },
-        messages,
-      }),
-    });
-    if (!res.ok) throw new Error(`openai ${res.status} ${(await res.text()).slice(0, 300)}`);
-    const data = await res.json();
-    tokens += data.usage?.total_tokens || 0;
-    const text = data.choices?.[0]?.message?.content || "{}";
-    return { raw: JSON.parse(text), text };
-  }
-
-  const messages = [{ role: "system", content: prompt.system }, { role: "user", content: prompt.user }];
-  let plan: ReturnType<typeof cleanPlan>;
-  let repaired = "no";
-  const started = Date.now();
-  try {
-    const first = await callModel(messages);
-    plan = cleanPlan(first.raw, prefs);
-    const review = reviewPlan(plan, prefs);
-    const elapsed = Date.now() - started;
-    // One short repair call on the same reservation: only the flagged meals
-    // and/or fresh figures, never the whole week again.
-    if ((review.replace.length || review.reestimate) && elapsed < REPAIR_START_BY_MS) {
-      try {
-        const fix = await callModel([
-          { role: "system", content: prompt.system },
-          { role: "user", content: repairPrompt(plan, prefs, review) },
-        ], 4000, Math.min(40_000, REQUEST_BUDGET_MS - elapsed));
-        const candidate = applyRepair(plan, fix.raw, prefs);
-        const complete = candidate.days.length === 7 && !candidate.days.some((d: any) => !d.meals.length);
-        const after = reviewPlan(candidate, prefs);
-        if (complete && after.replace.length <= review.replace.length && (!after.reestimate || review.reestimate)) {
-          plan = candidate;
-          repaired = after.issues.length ? "partly" : "yes";
-        }
-      } catch (e) {
-        console.error("[gs-ai-gateway] repair failed, keeping first plan:", e);
-      }
+    async function callModel(messages: { role: string; content: string }[], maxTokens = 12000, timeoutMs?: number): Promise<{ raw: any; text: string }> {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+        signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
+        body: JSON.stringify({
+          model: MODEL,
+          temperature: 0.7,
+          max_tokens: maxTokens,
+          response_format: { type: "json_object" },
+          messages,
+        }),
+      });
+      if (!res.ok) throw new Error(`openai ${res.status} ${(await res.text()).slice(0, 300)}`);
+      const data = await res.json();
+      tokens += data.usage?.total_tokens || 0;
+      const text = data.choices?.[0]?.message?.content || "{}";
+      return { raw: JSON.parse(text), text };
     }
-  } catch (e) {
-    console.error("[gs-ai-gateway] call failed:", e);
-    const busy = String(e).startsWith("Error: openai");
-    return json({ error: busy ? "The meal planner is busy. Try again in a minute." : "The meal planner could not finish. Try again." }, 502);
+
+    const messages = [{ role: "system", content: prompt.system }, { role: "user", content: prompt.user }];
+    let plan: ReturnType<typeof cleanPlan>;
+    let repaired = "no";
+    const started = Date.now();
+    try {
+      const first = await callModel(messages);
+      plan = cleanPlan(first.raw, prefs);
+      const review = reviewPlan(plan, prefs);
+      const elapsed = Date.now() - started;
+      // One short repair call on the same reservation: only the flagged meals
+      // and/or fresh figures, never the whole week again.
+      if ((review.replace.length || review.reestimate) && elapsed < REPAIR_START_BY_MS) {
+        try {
+          const fix = await callModel([
+            { role: "system", content: prompt.system },
+            { role: "user", content: repairPrompt(plan, prefs, review) },
+          ], 4000, Math.min(40_000, REQUEST_BUDGET_MS - elapsed));
+          const candidate = applyRepair(plan, fix.raw, prefs);
+          const complete = candidate.days.length === 7 && !candidate.days.some((d: any) => !d.meals.length);
+          const after = reviewPlan(candidate, prefs);
+          const worseCalories = caloriesOff(candidate, prefs) && !caloriesOff(plan, prefs);
+          if (complete && !worseCalories && after.replace.length <= review.replace.length && (!after.reestimate || review.reestimate)) {
+            plan = candidate;
+            repaired = after.issues.length ? "partly" : "yes";
+          }
+        } catch (e) {
+          console.error("[gs-ai-gateway] repair failed, keeping first plan:", e);
+        }
+      }
+    } catch (e) {
+      console.error("[gs-ai-gateway] call failed:", e);
+      const busy = String(e).startsWith("Error: openai");
+      return { ok: false, error: busy ? "The meal planner is busy. Try again in a minute." : "The meal planner could not finish. Try again." };
+    }
+
+    // Record tokens on the reservation row; never fail the request over this.
+    try {
+      const { data: row } = await admin.from("gs_ai_usage").select("id")
+        .eq("household_id", householdId).eq("task", task).eq("user_id", userId)
+        .is("tokens", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (row) await admin.from("gs_ai_usage").update({ tokens }).eq("id", row.id);
+    } catch (e) {
+      console.error("[gs-ai-gateway] token log failed:", e);
+    }
+
+    if (plan.days.length < 7 || plan.days.some((d: any) => !d.meals.length)) {
+      return { ok: false, error: "The plan came back incomplete. Try again." };
+    }
+    const remaining = reviewPlan(plan, prefs).issues;
+    console.log("[gs-ai-gateway] meal plan", JSON.stringify({ ms: Date.now() - started, tokens, repaired, issues: remaining }));
+    return { ok: true, task, model: MODEL, prefs, result: plan, usage: { today: used, limit } };
   }
 
-  // Record tokens on the reservation row; never fail the request over this.
-  try {
-    const { data: row } = await admin.from("gs_ai_usage").select("id")
-      .eq("household_id", householdId).eq("task", task).eq("user_id", userId)
-      .is("tokens", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
-    if (row) await admin.from("gs_ai_usage").update({ tokens }).eq("id", row.id);
-  } catch (e) {
-    console.error("[gs-ai-gateway] token log failed:", e);
-  }
-
-  if (plan.days.length < 7 || plan.days.some((d: any) => !d.meals.length)) {
-    return json({ error: "The plan came back incomplete. Try again." }, 502);
-  }
-  const remaining = reviewPlan(plan, prefs).issues;
-  console.log("[gs-ai-gateway] meal plan", JSON.stringify({ ms: Date.now() - started, tokens, repaired, issues: remaining }));
-  return json({ ok: true, task, model: MODEL, prefs, result: plan, usage: { today: used, limit } });
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      const beat = setInterval(() => controller.enqueue(encoder.encode(" ")), 5000);
+      work()
+        .catch((e) => {
+          console.error("[gs-ai-gateway] failed:", e);
+          return { ok: false, error: "The meal planner could not finish. Try again." };
+        })
+        .then((out) => controller.enqueue(encoder.encode(JSON.stringify(out))))
+        .finally(() => { clearInterval(beat); controller.close(); });
+    },
+  });
+  return new Response(stream, { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...CORS } });
 });
