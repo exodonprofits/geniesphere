@@ -163,6 +163,54 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   assert.strictEqual(await page.textContent('#nutrition-pill'), 'Planned');
   step('plan persists on reload; dashboard briefing shows tonight’s dinner');
 
+  // 6c. Invite flow: owner creates a link, invitee joins, link is single-use.
+  await page.goto(BASE + '/core/settings/index.html');
+  await page.waitForSelector('#members li');
+  assert.strictEqual(await page.isVisible('#invite-panel'), true, 'owner sees the invite form');
+  assert.strictEqual(await page.textContent('#member-count'), '1 member');
+  await page.fill('#i-email', 'not-an-email');
+  await page.click('#invite-btn');
+  await page.waitForFunction(() => /valid|Enter their email/.test(document.querySelector('#status').textContent));
+  await page.fill('#i-name', 'Lan');
+  await page.fill('#i-email', 'Lan@Example.com');
+  await page.click('#invite-btn');
+  await page.waitForSelector('#invite-result:not([hidden])');
+  const inviteLink = await page.inputValue('#invite-link');
+  assert.match(inviteLink, /\/core\/auth\/invite\.html#t=/, 'token travels in the fragment');
+  assert.match(await page.textContent('#pending'), /lan@example\.com/);
+  await page.evaluate(() => { const d = window.__fakeDb.load(); d.session = null; window.__fakeDb.save(d); });
+  await page.goto(inviteLink);
+  await page.waitForSelector('#join:not([hidden])');
+  assert.match(await page.textContent('#join-title'), /^Join /);
+  assert.strictEqual(await page.inputValue('#email'), 'lan@example.com');
+  assert.strictEqual(await page.inputValue('#name'), 'Lan');
+  await page.fill('#password', 'short');
+  await page.fill('#password2', 'short');
+  await page.click('#join-btn');
+  await page.waitForFunction(() => /at least 10/.test(document.querySelector('#join-status').textContent));
+  await page.fill('#password', 'blue house 42');
+  await page.fill('#password2', 'blue house 4');
+  await page.click('#join-btn');
+  await page.waitForFunction(() => /don’t match/.test(document.querySelector('#join-status').textContent));
+  await page.fill('#password2', 'blue house 42');
+  await page.click('#join-btn');
+  await page.waitForURL(BASE + '/core/dashboard/index.html');
+  await page.goto(BASE + '/core/settings/index.html');
+  await page.waitForFunction(() => document.querySelectorAll('#members li').length === 2);
+  assert.strictEqual(await page.isVisible('#invite-panel'), false, 'members do not see the invite form');
+  assert.strictEqual(await page.isVisible('#member-note'), true);
+  await page.evaluate(() => { const d = window.__fakeDb.load(); d.session = null; window.__fakeDb.save(d); });
+  await page.goto(BASE + '/core/auth/login.html');
+  await page.goto(inviteLink);
+  await page.waitForSelector('#invalid:not([hidden])');
+  assert.match(await page.textContent('#invalid-reason'), /already been used/);
+  await page.goto(BASE + '/core/auth/invite.html');
+  await page.waitForSelector('#invalid:not([hidden])');
+  assert.match(await page.textContent('#invalid-reason'), /incomplete/);
+  // Back to the owner for the remaining steps.
+  await page.evaluate(() => { const d = window.__fakeDb.load(); d.session = { user: { id: 'u1', email: 'jimmy@example.com' } }; window.__fakeDb.save(d); });
+  step('invite: owner creates a one-time link, invitee sets a password and joins as member; link cannot be reused');
+
   // 7. Signed-in user on login page is forwarded; open redirect blocked
   for (const bad of ['//evil.example.com/x', '/\\evil.example.com/x', '/%09/evil.example.com/x']) {
     await page.goto(BASE + '/core/auth/login.html?next=' + bad);
