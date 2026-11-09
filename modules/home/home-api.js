@@ -16,7 +16,7 @@
  *   await GenieSphere.home.remove(itemId)
  *   GenieSphere.home.status(item, now)               -> { tone, label, days }
  *
- * Asset: { id, kind 'place'|'vehicle', name, description, usage 'personal'|'business'|'rental', owner_label }
+ * Asset: { id, kind 'place'|'vehicle', name, description, usage 'personal'|'business', owner_label }
  * Item:  { id, asset_id, template_key, title, every_days, next_due, last_done, is_renewal, lead_days }
  *
  * Tasks are not created here: the database (0009, 0011) adds a household task
@@ -46,10 +46,6 @@
     { key: 'dishwasher_filter', title: 'Clean dishwasher filter', every: 30, hint: 'Twist out, rinse, put back' },
     { key: 'outdoor_faucets', title: 'Winterize outdoor faucets', every: 365, hint: 'Before the first freeze' }
   ];
-  var RENTAL_EXTRAS = [
-    { key: 'rental_walkthrough', title: 'Walk-through inspection', every: 365, hint: 'With notice to the tenant; photos for the file', common: true },
-    { key: 'landlord_insurance', title: 'Landlord insurance renewal', every: 365, hint: 'Check the policy covers the current lease', common: true, renewal: true, lead: 30 }
-  ];
   var VEHICLE_CATALOG = [
     { key: 'oil_change', title: 'Oil change', every: 180, hint: 'Or at the mileage on the sticker, whichever comes first', common: true },
     { key: 'tire_rotation', title: 'Rotate tires', every: 180, hint: 'Often done with the oil change', common: true },
@@ -63,7 +59,8 @@
     { key: 'emissions', title: 'Emissions test', every: 730, hint: 'Illinois: every 2 years for most cars 4+ years old; due before the sticker', renewal: true, lead: 45 }
   ];
   var FREQUENCIES = [[30, 'Every month'], [90, 'Every 3 months'], [182, 'Every 6 months'], [180, 'Every 6 months'], [365, 'Every year'], [730, 'Every 2 years']];
-  var USES = [['personal', 'Personal'], ['business', 'Business'], ['rental', 'Rental']];
+  // Rental properties are managed in Rental Genie, not here (ADR-021).
+  var USES = [['personal', 'Personal'], ['business', 'Business']];
 
   function iso(d) {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -96,10 +93,10 @@
     },
     catalogFor: function (asset) {
       if (asset.kind === 'vehicle') return VEHICLE_CATALOG;
-      return asset.usage === 'rental' ? PLACE_CATALOG.concat(RENTAL_EXTRAS) : PLACE_CATALOG;
+      return PLACE_CATALOG;
     },
     findTemplate: function (key) {
-      return PLACE_CATALOG.concat(RENTAL_EXTRAS, VEHICLE_CATALOG).find(function (c) { return c.key === key; }) || null;
+      return PLACE_CATALOG.concat(VEHICLE_CATALOG).find(function (c) { return c.key === key; }) || null;
     },
     // Renewals: the end of one of the next 12 months (stickers and policies run to month end).
     expiryOptions: function () {
@@ -124,7 +121,7 @@
       var row = {
         household_id: householdId, kind: a.kind === 'vehicle' ? 'vehicle' : 'place',
         name: String(a.name || '').trim().slice(0, 60), description: (a.description || '').trim().slice(0, 80) || null,
-        usage: ['personal', 'business', 'rental'].indexOf(a.usage) !== -1 ? a.usage : 'personal',
+        usage: a.usage === 'business' ? 'business' : 'personal',
         owner_label: a.usage !== 'personal' ? ((a.ownerLabel || '').trim().slice(0, 80) || null) : null
       };
       if (!row.name) throw new Error('Give it a name, e.g. “Lake house” or “F-150”.');

@@ -4,7 +4,8 @@
 -- Target: GenieSphere project (nxgtefbqizvihwikqnaw, ADR-015). ADR-020.
 --
 --   * household_assets: the household's homes/properties and vehicles, each
---     personal, business or rental, with an optional "owned by" label.
+--     personal or business, with an optional "owned by" label. Rental
+--     properties belong to Rental Genie, not here (ADR-021).
 --   * home_maintenance_items.asset_id: which one an item belongs to. Existing
 --     items move to a "Main house" created for their household.
 --   * Renewals (registration, insurance, emissions): is_renewal, and a longer
@@ -22,7 +23,7 @@ create table if not exists public.household_assets (
   kind text not null check (kind in ('place', 'vehicle')),
   name text not null check (length(btrim(name)) between 1 and 60),
   description text check (description is null or length(description) <= 80),
-  usage text not null default 'personal' check (usage in ('personal', 'business', 'rental')),
+  usage text not null default 'personal' check (usage in ('personal', 'business')),
   owner_label text check (owner_label is null or length(owner_label) <= 80),
   active boolean not null default true,
   created_by uuid default auth.uid() references auth.users(id) on delete set null,
