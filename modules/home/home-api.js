@@ -4,7 +4,7 @@
  *   GenieSphere.home.CATALOG                       common upkeep, with default frequency
  *   GenieSphere.home.FREQUENCIES                   [[days, label]]
  *   await GenieSphere.home.list(householdId)       -> [item] sorted by next_due
- *   await GenieSphere.home.add(householdId, [{ key?, title, everyDays, lastDone? }])
+ *   await GenieSphere.home.add(householdId, [{ key?, title, everyDays, lastDone? | daysAgo? }])
  *   await GenieSphere.home.update(itemId, { everyDays })
  *   await GenieSphere.home.markDone(item)          // done today, next one rescheduled
  *   await GenieSphere.home.remove(itemId)
@@ -47,9 +47,21 @@
   }
   function today() { return iso(new Date()); }
 
+  // Setup asks roughly when each job was last done (days ago, mid-range).
+  // null = not sure. "Over a year ago" makes anything up to yearly due now.
+  var LAST_DONE = [
+    [null, 'Last done: not sure'],
+    [15, 'Within the last month'],
+    [60, '1–3 months ago'],
+    [135, '3–6 months ago'],
+    [270, '6–12 months ago'],
+    [400, 'Over a year ago']
+  ];
+
   window.GenieSphere.home = {
     CATALOG: CATALOG,
     FREQUENCIES: FREQUENCIES,
+    LAST_DONE: LAST_DONE,
     frequencyLabel: function (days) {
       var f = FREQUENCIES.find(function (x) { return x[0] === days; });
       return f ? f[1] : 'Every ' + days + ' days';
@@ -58,14 +70,17 @@
       return check(await db().from('home_maintenance_items').select(COLS)
         .eq('household_id', householdId).eq('active', true).order('next_due', { ascending: true }));
     },
-    // New items: next due = last done + frequency; with no last-done date the
+    // New items: next due = last done + frequency (an exact lastDone, or an
+    // approximate daysAgo, which is not stored as a date); with neither, the
     // first ones are spread out (1, 2, 3... weeks) so they don't all land at once.
     async add(householdId, items) {
       var t = today();
       var spread = 0;
       var rows = items.map(function (it) {
         var every = Number(it.everyDays) || 365;
-        var next = it.lastDone ? addDays(it.lastDone, every) : addDays(t, 7 * (++spread));
+        var next = it.lastDone ? addDays(it.lastDone, every)
+          : it.daysAgo != null ? addDays(t, every - Number(it.daysAgo))
+          : addDays(t, 7 * (++spread));
         if (next < t) next = t;
         return { household_id: householdId, template_key: it.key || null, title: String(it.title).trim().slice(0, 120),
           every_days: every, last_done: it.lastDone || null, next_due: next };
