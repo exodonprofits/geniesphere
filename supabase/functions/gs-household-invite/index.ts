@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       inviteeName: displayName, email, link: `${siteUrl}/core/auth/invite.html#t=${token}`, expiresAt: inv.expires_at, siteUrl,
     });
     const sent = await sendEmail(email, mail);
-    console.log("[gs-household-invite] created", JSON.stringify({ invite: inv.id, emailed: sent.sent, reason: sent.reason || null }));
+    console.log("[gs-household-invite] created", JSON.stringify({ invite: inv.id, emailed: sent.sent, reason: sent.reason || null, via: sent.via || null }));
     return json({ ok: true, token, invite_id: inv.id, expires_at: inv.expires_at, emailed: sent.sent });
   }
 
