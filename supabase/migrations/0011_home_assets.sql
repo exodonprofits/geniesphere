@@ -40,7 +40,7 @@ create policy "household_assets member access" on public.household_assets
   for all to authenticated
   using (public.is_household_member(household_id))
   with check (public.is_household_member(household_id));
-revoke all on public.household_assets from anon;
+revoke all on public.household_assets from anon, authenticated;
 -- No delete: removing is "active = false", so open tasks are cleaned up.
 grant select, insert, update on public.household_assets to authenticated;
 
