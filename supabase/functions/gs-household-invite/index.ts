@@ -3,7 +3,9 @@
 // Household invitations by one-time link (docs/DECISIONS.md ADR-016). Called
 // only through core/household/invites.js. Actions:
 //
-//   create  {household_id, email, display_name}  owner only -> {token, invite_id, expires_at}
+//   create  {household_id, email, display_name}  owner only -> {token, invite_id, expires_at, emailed}
+//           (also emails the link to the invitee; a new create for the same
+//           email is how "Resend" works)
 //   revoke  {invite_id}                           owner only
 //   preview {token}                               anyone holding the link
 //   accept  {token, password?, display_name?}     anyone holding the link
@@ -14,9 +16,11 @@
 // if the email already has an account, the caller must be signed in as it.
 //
 // Project: GenieSphere (nxgtefbqizvihwikqnaw). Secrets: SUPABASE_URL,
-// SUPABASE_SERVICE_ROLE_KEY (auto-provided). No email is sent.
+// SUPABASE_SERVICE_ROLE_KEY (auto-provided); SMTP_* for email (_shared/email.ts).
+// If email can't be sent, emailed=false and the owner sends the link.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { inviteEmail, sendEmail, siteUrlFrom } from "../_shared/email.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -105,7 +109,19 @@ Deno.serve(async (req) => {
       household_id: householdId, email, display_name: displayName, token_hash: await sha256(token), created_by: caller.id,
     }).select("id, expires_at").single();
     if (error) { console.error("[gs-household-invite] create:", error.message); return fail("Could not create the invitation. Try again.", 500); }
-    return json({ ok: true, token, invite_id: inv.id, expires_at: inv.expires_at });
+
+    const siteUrl = siteUrlFrom(req);
+    const [{ data: household }, { data: inviter }] = await Promise.all([
+      admin.from("households").select("name").eq("id", householdId).maybeSingle(),
+      admin.from("household_members").select("display_name").eq("household_id", householdId).eq("user_id", caller.id).maybeSingle(),
+    ]);
+    const mail = inviteEmail({
+      inviterName: inviter?.display_name || "Your household owner", householdName: household?.name || "your household",
+      inviteeName: displayName, email, link: `${siteUrl}/core/auth/invite.html#t=${token}`, expiresAt: inv.expires_at, siteUrl,
+    });
+    const sent = await sendEmail(email, mail);
+    console.log("[gs-household-invite] created", JSON.stringify({ invite: inv.id, emailed: sent.sent, reason: sent.reason || null }));
+    return json({ ok: true, token, invite_id: inv.id, expires_at: inv.expires_at, emailed: sent.sent });
   }
 
   // ── revoke ──

@@ -1,10 +1,11 @@
 /**
  * Household invitations (Core). Owners invite people by a one-time link that
- * they send themselves (text, WhatsApp); no email is sent. All writes go
- * through the gs-household-invite Edge Function, which holds the service key.
+ * the gs-household-invite Edge Function emails to them (from invites@); if
+ * email is not available the owner sends the link themselves. All writes go
+ * through the function, which holds the service key.
  *
  *   await GenieSphere.invites.create(householdId, { email, displayName })
- *     -> { link, expiresAt }            // link is shown once; only its hash is stored
+ *     -> { link, expiresAt, emailed }   // link is shown once; only its hash is stored
  *   await GenieSphere.invites.revoke(inviteId)
  *   await GenieSphere.invites.preview(token)
  *     -> { householdName, inviterName, email, displayName, status, hasAccount }
@@ -43,7 +44,7 @@
   window.GenieSphere.invites = {
     async create(householdId, invitee) {
       var out = await call({ action: 'create', household_id: householdId, email: invitee.email, display_name: invitee.displayName });
-      return { link: linkFor(out.token), expiresAt: out.expires_at, inviteId: out.invite_id };
+      return { link: linkFor(out.token), expiresAt: out.expires_at, inviteId: out.invite_id, emailed: !!out.emailed };
     },
     async revoke(inviteId) { await call({ action: 'revoke', invite_id: inviteId }); },
     async preview(token) {

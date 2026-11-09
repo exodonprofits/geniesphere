@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Choose a new password · GenieSphere</title>
+  <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261109" />
+</head>
+<body class="gs-auth-page">
+  <main class="gs-auth">
+    <section class="gs-auth-brand" aria-hidden="true">
+      <a href="/index.html" class="gs-auth-logo" tabindex="-1"><img src="/shared/assets/logo/geniesphere_logo_name.png" alt="" /></a>
+      <div class="gs-auth-pitch">
+        <p class="gs-auth-kicker">Account</p>
+        <p class="gs-auth-headline">Back into your household <em>in a minute.</em></p>
+      </div>
+      <p class="gs-auth-foot">Private by design: only members of your household can see its data.</p>
+    </section>
+
+    <section class="gs-auth-form-wrap">
+      <div class="gs-auth-card">
+        <a href="/index.html" class="gs-auth-logo-mobile" aria-label="GenieSphere home"><img src="/shared/assets/logo/geniesphere_logo_name.png" alt="GenieSphere" /></a>
+
+        <div id="loading">
+          <h1 class="gs-auth-title">One moment…</h1>
+          <p class="gs-auth-sub">Checking your reset link.</p>
+        </div>
+
+        <div id="invalid" hidden>
+          <h1 class="gs-auth-title">This link can’t be used</h1>
+          <p class="gs-auth-sub">Reset links work once and expire after 1 hour. Ask for a new one.</p>
+          <a href="/core/auth/forgot.html" class="gs-btn gs-btn-primary gs-btn-block">Send a new link</a>
+        </div>
+
+        <div id="choose" hidden>
+          <h1 class="gs-auth-title">Choose a new password</h1>
+          <p class="gs-auth-sub">For <strong id="who"></strong></p>
+          <form id="reset-form" class="gs-stack" novalidate>
+            <input type="email" id="username" autocomplete="username" hidden />
+            <label class="gs-label" for="password">New password
+              <input id="password" class="gs-input" type="password" autocomplete="new-password" minlength="10" required />
+            </label>
+            <label class="gs-label" for="password2">Confirm new password
+              <input id="password2" class="gs-input" type="password" autocomplete="new-password" minlength="10" required />
+            </label>
+            <p class="gs-hint">At least 10 characters. A short phrase is easiest to remember.</p>
+            <button id="submit" class="gs-btn gs-btn-primary gs-btn-block" type="submit">Save and sign in</button>
+            <p id="status" class="gs-status" role="status"></p>
+          </form>
+        </div>
+
+        <p class="gs-auth-alt"><a href="/core/auth/login.html" class="gs-auth-link">Back to sign in</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/shared/vendor/supabase.min.js"></script>
+  <script src="/shared/js/app-config.js"></script>
+  <script src="/shared/js/gs-client.js"></script>
+  <script src="/shared/js/gs-auth.js"></script>
+  <script src="/core/auth/account.js"></script>
+  <script>
+    (function () {
+      var GS = window.GenieSphere;
+      function $(id) { return document.getElementById(id); }
+      function view(id) { ['loading', 'invalid', 'choose'].forEach(function (v) { $(v).hidden = v !== id; }); }
+      function status(message, isError) {
+        $('status').textContent = message || '';
+        $('status').classList.toggle('gs-error', !!isError);
+      }
+
+      $('reset-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var password = $('password').value;
+        if (password.length < 10) { status('Use at least 10 characters.', true); $('password').focus(); return; }
+        if (password !== $('password2').value) { status('The two passwords don’t match.', true); $('password2').focus(); return; }
+        $('submit').disabled = true;
+        status('Saving…');
+        try {
+          await GS.account.setNewPassword(password);
+          window.location.replace('/core/dashboard/index.html');
+        } catch (err) {
+          status(err.message || 'Could not save the new password. Try again.', true);
+          $('submit').disabled = false;
+        }
+      });
+
+      (async function init() {
+        // The emailed link signs the user in through the URL (#access_token…,
+        // type=recovery); the client picks it up. An expired or used link
+        // arrives as #error=… instead.
+        var hash = window.location.hash || '';
+        if (/error=/.test(hash)) { view('invalid'); return; }
+        var session = await GS.auth.session();
+        if (!session) { view('invalid'); return; }
+        $('who').textContent = session.user.email;
+        $('username').value = session.user.email;
+        if (hash) history.replaceState(null, '', window.location.pathname);
+        view('choose');
+        $('password').focus();
+      })().catch(function () { view('invalid'); });
+    })();
+  </script>
+</body>
+</html>

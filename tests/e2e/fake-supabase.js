@@ -102,12 +102,13 @@
         return fail('Only the household owner can invite people.');
       if (db.household_members.some(function (m) { return m.household_id === body.household_id && m.email === body.email; }))
         return fail(body.email + ' is already a member of this household.');
+      db.household_invites.forEach(function (i) { if (i.household_id === body.household_id && i.email === body.email && !i.accepted_at && !i.revoked_at) i.revoked_at = new Date().toISOString(); });
       var token = 'tok' + (++db.seq) + 'x' + Math.random().toString(36).slice(2);
       var inv = { id: 'inv' + db.seq, household_id: body.household_id, email: body.email, display_name: body.display_name || null,
         created_by: uid, created_at: new Date().toISOString(), expires_at: new Date(Date.now() + 7 * 864e5).toISOString(),
         accepted_at: null, revoked_at: null, _token: token };
       db.household_invites.push(inv);
-      return ok({ token: token, invite_id: inv.id, expires_at: inv.expires_at });
+      return ok({ token: token, invite_id: inv.id, expires_at: inv.expires_at, emailed: !db.emailOff });
     }
     if (body.action === 'revoke') {
       var r = db.household_invites.find(function (i) { return i.id === body.invite_id; });
@@ -156,13 +157,19 @@
             if (!u) return { data: null, error: { message: 'Invalid login credentials' } };
             db.session = { user: { id: u.id, email: u.email } }; save(db); return { data: { session: db.session }, error: null };
           },
-          signOut: async function () { var db = load(); db.session = null; save(db); return { error: null }; }
+          signOut: async function () { var db = load(); db.session = null; save(db); return { error: null }; },
+          updateUser: async function (attrs) {
+            var db = load(); if (!db.session) return { data: null, error: { message: 'Auth session missing!' } };
+            var u = db.users.find(function (x) { return x.id === db.session.user.id; });
+            if (attrs.password) u.password = attrs.password; save(db); return { data: { user: db.session.user }, error: null };
+          }
         },
         from: function (t) { return new Query(t, load()); },
         functions: {
           invoke: async function (name, opts) {
             var db = load(), body = (opts && opts.body) || {};
             if (name === 'gs-household-invite') return fakeInvite(db, body);
+            if (name === 'gs-password-reset') { db.resetRequests = (db.resetRequests || []).concat([body.email]); save(db); return { data: { ok: true }, error: null }; }
             if (!db.session) return { data: null, error: { message: 'Sign in to use this.' } };
             if (name !== 'gs-ai-gateway' || body.task !== 'meal_plan.generate') return { data: null, error: { message: 'Unknown task.' } };
             var uid = db.session.user.id;

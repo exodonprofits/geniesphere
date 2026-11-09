@@ -100,3 +100,9 @@
 
 **Reason:** Accounts are invitation-only (ADR-015) and the project's built-in email only delivers to the team's own addresses, so an emailed invite would not reach a spouse or house manager. A link the owner sends needs no email provider and keeps the owner in control. Roles beyond owner/member wait until a module actually restricts something (showing roles that change nothing would mislead).
 
+## ADR-017 — Transactional email from invites@geniesphere.com
+
+**Decision:** Invitations and password resets are emailed by the Edge Functions themselves, through SMTP on the Bluehost mailbox `invites@geniesphere.com` (port 465; Supabase blocks 25/587), with replies going to `info@geniesphere.com`. Templates and sending live in `supabase/functions/_shared/email.ts`; credentials are Edge Function secrets, never in the repo or browser. A dedicated send-only mailbox keeps `info@`'s password out of the server. If sending fails, invitations fall back to showing the link to the owner. Password reset uses Supabase's recovery link (`auth.admin.generateLink`) in our own email, answers the same whether or not an account exists, and sends at most one email per account per 5 minutes.
+
+**Reason:** Supabase's built-in email only reaches the project team, so invites never reached the invitee and "Forgot password?" pointed at the old project. Using the domain's existing Bluehost mail needs no new vendor. If deliverability from shared hosting proves poor, the same module can switch to a provider (e.g. Resend) by changing the SMTP secrets.
+
