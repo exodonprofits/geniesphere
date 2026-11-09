@@ -1,7 +1,8 @@
 // supabase/functions/_shared/email.ts
 //
-// GenieSphere transactional email: templates and SMTP sending. Used by
-// gs-household-invite (invitations, password resets).
+// GenieSphere transactional email: templates and sending. Used by
+// gs-household-invite (invitations), gs-password-reset and gs-notify
+// (assigned to you, weekly summary).
 //
 // Sending (Edge Function secrets), first one configured wins:
 //   1. Resend API (same provider as Rental Genie): RESEND_API_KEY, and
@@ -117,6 +118,71 @@ ${fallbackLink(o.link)}`;
     "The link works once and expires in 1 hour. If you didn't ask for this, ignore this email: your password stays the same.",
   ].join("\n");
   return { subject, text, html: frame({ preheader: "Choose a new password. The link expires in 1 hour.", siteUrl: o.siteUrl, body, footer }) };
+}
+
+function infoBox(html: string): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;background:${BRAND.soft};border-radius:14px;">
+<tr><td style="padding:14px 18px;font-size:14px;line-height:21px;color:${BRAND.text};">${html}</td></tr></table>`;
+}
+
+// Someone assigned the recipient a task (gs-notify).
+export function assignedEmail(o: {
+  title: string; due?: string | null; householdName: string; link: string; prefsLink: string; email: string; siteUrl: string;
+}): Email {
+  const subject = o.title;
+  const body = `
+<p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${BRAND.accent};">${esc(o.householdName)}</p>
+<h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:34px;font-weight:normal;color:${BRAND.ink};">${esc(o.title)}</h1>
+${o.due ? `<p style="margin:0;font-size:16px;line-height:25px;">${esc(o.due)}.</p>` : `<p style="margin:0;font-size:16px;line-height:25px;">No due date.</p>`}
+${button("Open tasks", o.link)}
+${infoBox("Tick it off on the Tasks page when it’s done. Everyone in the household sees it.")}`;
+  const footer = `Sent to ${esc(o.email)} because you’re a member of ${esc(o.householdName)} on GenieSphere. <a href="${esc(o.prefsLink)}" style="color:${BRAND.muted};">Turn off these emails</a>.<br><br>GenieSphere · geniesphere.com`;
+  const text = [o.title, o.due ? o.due + "." : "No due date.", "", `Open tasks: ${o.link}`, "", `Turn off these emails: ${o.prefsLink}`].join("\n");
+  return { subject, text, html: frame({ preheader: o.due ? o.due + "." : "A new task for you.", siteUrl: o.siteUrl, body, footer }) };
+}
+
+export interface DigestTask { title: string; due: string; who?: string | null; source?: string | null }
+
+// Weekly summary (gs-notify): overdue and due in the next 7 days.
+export function digestEmail(o: {
+  name?: string | null; householdName: string; overdue: DigestTask[]; week: DigestTask[];
+  link: string; prefsLink: string; email: string; siteUrl: string;
+}): Email {
+  const n = o.overdue.length + o.week.length;
+  const subject = n
+    ? `${o.householdName} this week: ${o.overdue.length ? o.overdue.length + " overdue, " : ""}${o.week.length} due`
+    : `${o.householdName} this week: nothing due`;
+  function rows(tasks: DigestTask[], tone: string) {
+    return tasks.map((t) => `<tr><td style="padding:12px 0;border-top:1px solid ${BRAND.border};">
+<p style="margin:0;font-size:15px;line-height:22px;font-weight:700;color:${BRAND.ink};">${esc(t.title)}</p>
+<p style="margin:2px 0 0;font-size:13px;line-height:19px;color:${tone};">${esc(t.due)}${t.who ? ` · ${esc(t.who)}` : ""}${t.source ? ` · ${esc(t.source)}` : ""}</p>
+</td></tr>`).join("");
+  }
+  function section(label: string, tasks: DigestTask[], tone: string) {
+    if (!tasks.length) return "";
+    return `<p style="margin:22px 0 4px;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${tone};">${esc(label)} · ${tasks.length}</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows(tasks, tone)}</table>`;
+  }
+  const hello = o.name ? `Hi ${o.name},` : "Hello,";
+  const intro = n
+    ? `Here’s what’s on for ${o.householdName} in the coming week: your tasks and the ones nobody has taken yet.`
+    : `Nothing is overdue or due in the coming week for you at ${o.householdName}. Enjoy the quiet.`;
+  const body = `
+<p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${BRAND.accent};">Weekly summary</p>
+<h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:36px;font-weight:normal;color:${BRAND.ink};">Your week ahead</h1>
+<p style="margin:0 0 6px;font-size:16px;line-height:25px;">${esc(hello)}</p>
+<p style="margin:0;font-size:16px;line-height:25px;">${esc(intro)}</p>
+${section("Overdue", o.overdue, "#B42318")}
+${section("Due this week", o.week, BRAND.accent)}
+${button("Open tasks", o.link)}`;
+  const footer = `Sent every Sunday evening to ${esc(o.email)}, a member of ${esc(o.householdName)} on GenieSphere. <a href="${esc(o.prefsLink)}" style="color:${BRAND.muted};">Turn off the weekly summary</a>.<br><br>GenieSphere · geniesphere.com`;
+  const line = (t: DigestTask) => `- ${t.title} (${t.due}${t.who ? ", " + t.who : ""})`;
+  const text = [hello, "", intro, "",
+    ...(o.overdue.length ? ["OVERDUE", ...o.overdue.map(line), ""] : []),
+    ...(o.week.length ? ["DUE THIS WEEK", ...o.week.map(line), ""] : []),
+    `Open tasks: ${o.link}`, "", `Turn off the weekly summary: ${o.prefsLink}`].join("\n");
+  const pre = n ? `${o.overdue.length ? o.overdue.length + " overdue · " : ""}${o.week.length} due this week` : "Nothing due this week.";
+  return { subject, text, html: frame({ preheader: pre, siteUrl: o.siteUrl, body, footer }) };
 }
 
 // Sends one email. Never throws: returns { sent: false, reason } so callers

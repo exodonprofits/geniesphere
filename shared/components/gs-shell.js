@@ -6,8 +6,9 @@
  * and mark the page:
  *   <body data-gs-shell="grocery">   (the key of the active nav item)
  *
- * The shell only displays navigation and who is signed in. Pages still guard
- * themselves with GenieSphere.auth.requireSession(). Styles: /shared/css/app.css.
+ * The shell only displays navigation, who is signed in and how many unread
+ * notifications they have. Pages still guard themselves with
+ * GenieSphere.auth.requireSession(). Styles: /shared/css/app.css.
  */
 (function () {
   window.GenieSphere = window.GenieSphere || {};
@@ -34,7 +35,8 @@
     wrench: 'M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z',
     calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
     sparkle: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z',
-    check: 'M4 12l5 5L20 6'
+    check: 'M4 12l5 5L20 6',
+    bell: 'M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0'
   };
 
   var SVG_NS = 'http://www.w3.org/2000/svg';
@@ -80,17 +82,38 @@
     });
     var initial = el('span', { class: 'gs-avatar', 'aria-hidden': 'true', text: '·' });
     var label = el('span', { class: 'gs-account-label', text: 'Account' });
+    var badge = el('span', { class: 'gs-badge', hidden: '' });
     button.appendChild(initial);
+    button.appendChild(badge);
     button.appendChild(label);
 
     var menu = el('div', { id: 'gs-account-menu', class: 'gs-account-menu', hidden: '' });
     var who = el('p', { class: 'gs-account-who', text: 'Checking your session…' });
     menu.appendChild(who);
+    var menuCount = el('span', { class: 'gs-menu-count', hidden: '' });
     ACCOUNT_LINKS.forEach(function (item) {
       var link = el('a', { href: item.href, class: 'gs-menu-item', text: item.label });
       if (item.key === active) link.setAttribute('aria-current', 'page');
+      if (item.key === 'notifications') link.appendChild(menuCount);
       menu.appendChild(link);
     });
+
+    // Unread notifications: a count on the avatar and in the menu. Optional;
+    // any failure just leaves them hidden.
+    function refreshBadge(userId) {
+      var client = window.GenieSphere.getSupabase && window.GenieSphere.getSupabase();
+      if (!client || !userId) return Promise.resolve();
+      return client.from('household_notifications').select('id', { count: 'exact', head: true })
+        .eq('user_id', userId).is('read_at', null)
+        .then(function (res) {
+          var n = res && !res.error ? res.count || 0 : 0;
+          badge.hidden = !n; menuCount.hidden = !n;
+          badge.textContent = n > 9 ? '9+' : String(n);
+          menuCount.textContent = String(n);
+          button.setAttribute('aria-label', button.getAttribute('aria-label').replace(/ \(\d+ unread\)$/, '') + (n ? ' (' + n + ' unread)' : ''));
+        })
+        .catch(function () { /* badge stays hidden */ });
+    }
     var signOut = el('button', { type: 'button', class: 'gs-menu-item', text: 'Sign out', hidden: '' });
     menu.appendChild(signOut);
 
@@ -137,6 +160,8 @@
         label.textContent = email.split('@')[0];
         button.setAttribute('aria-label', 'Account menu for ' + email);
         signOut.hidden = false;
+        window.GenieSphere.shell.refreshBadge = function () { return refreshBadge(session.user.id); };
+        return refreshBadge(session.user.id);
       })
       .catch(function () {
         who.textContent = 'Could not check your session.';

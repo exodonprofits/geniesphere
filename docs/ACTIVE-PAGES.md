@@ -14,16 +14,17 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 | Settings | `/core/settings/index.html` | household members (name, email, role); owner: invite by one-time link, pending invitations with revoke; session required; app shell |
 | Join household | `/core/auth/invite.html#t=…` | opened from an invitation link; new account (password ≥10) or sign-in if the email already has one; no app shell |
 | Tasks | `/core/tasks/index.html` | add (title, due date, who), assign, complete/undo, delete own tasks; grouped Overdue / This week / Later / No date; module tasks show their source ("Home Genie") and can't be deleted here; done in the last 14 days; session required; app shell |
-| Notifications | `/core/notifications/index.html` | placeholder; session required; app shell |
+| Notifications | `/core/notifications/index.html` | inbox (assigned to you, weekly summary; mark read / all read); email toggles per member and household (weekly summary, assigned to you); "Send me this week’s summary" (1 per 10 min); session required; app shell. Unread count on the avatar and in the account menu (`gs-shell.js`) |
 
 | App shell (component) | `/shared/components/gs-shell.js` | top bar, account menu, phone bottom bar; mounts on `<body data-gs-shell="key">`; styles in `/shared/css/app.css` |
 | AI gateway (service) | `/core/ai/ai-gateway.js` → Edge Function `gs-ai-gateway` | `GenieSphere.ai.request({task, householdId, input})`; tasks: `meal_plan.generate` (10/household/day) |
 | Grocery interface (module API) | `/modules/grocery/grocery-api.js` | `GenieSphere.grocery.activeListId`, `addItems` (skips items already on the list) |
 | Household context (service) | `/core/household/household.js` | current household from `user_household_context`, else first membership by name; `members(householdId)` |
+| Notifications (service) | `/core/notifications/notifications.js` → Edge Function `gs-notify` | `GenieSphere.notifications.list/unreadCount/markRead/markAllRead/prefs/savePrefs/sendTestDigest`; tables `household_notifications` (read + `read_at` only), `notification_prefs` (0010). `gs-notify` also runs from pg_cron every 5 min: assigned-to-you emails, Sunday 5 PM summary |
 | Tasks (service) | `/core/tasks/tasks.js` | `GenieSphere.tasks.listOpen/listDone/add/complete/reopen/assign/remove/bucket` on `household_tasks` (`source_module`, `source_ref`, 0009) |
 | Home interface (module API) | `/modules/home/home-api.js` | `GenieSphere.home.CATALOG/list/add/update/markDone/remove/status`; table `home_maintenance_items` (0009) |
 | Account (service) | `/core/auth/account.js` → Edge Function `gs-password-reset` | `GenieSphere.account.requestPasswordReset/setNewPassword` |
-| Email (Edge Function module) | `supabase/functions/_shared/email.ts` | invitation and reset templates; SMTP via the Bluehost mailbox in secrets `SMTP_HOST/PORT/USER/PASS` |
+| Email (Edge Function module) | `supabase/functions/_shared/email.ts` | invitation, reset, assigned-to-you and weekly-summary templates; Resend (`RESEND_API_KEY`, `FROM_EMAIL`), Bluehost SMTP as fallback |
 | Invitations (service) | `/core/household/invites.js` → Edge Function `gs-household-invite` | `GenieSphere.invites.create/revoke/preview/accept`; tables `household_invites`, `household_members.display_name/email` (0008) |
 
 ## Modules
@@ -36,7 +37,7 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 ## Cache busting
 
-Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261109e`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
+Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261109f`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
 
 ## Legacy migration rule
 
