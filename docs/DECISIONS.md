@@ -108,3 +108,9 @@
 
 **Addendum (2026-11-09):** the first live send through Bluehost SMTP was refused (`535 Incorrect authentication data`). `_shared/email.ts` now prefers the Resend API when `RESEND_API_KEY` and `FROM_EMAIL` are set, the provider Rental Genie already uses (better deliverability than shared-hosting mail, no mailbox password on the server); Bluehost SMTP stays as the fallback. Logs record which path sent (`via`).
 
+## ADR-018 — Home Genie schedules maintenance through Core tasks
+
+**Decision:** Home Genie 0.1 is a recurring maintenance schedule (`home_maintenance_items`: title, every N days, next due, last done; migration 0009), started from a checklist of 12 common jobs. It does not keep its own to-do list: the database function `home_sync_tasks` adds one Core `household_tasks` row (`source_module 'home'`, `source_ref 'home:<item id>'`, unique while open) for each item due within 7 days (Chicago date), closes it if the item is done early on the Home page, and deletes it if the item is removed. Triggers run it on every item change; a daily pg_cron job (11:05 UTC) catches items that come due as time passes. Completing a home task anywhere (Tasks page, later the dashboard) records the item done that day and schedules the next one; Undo puts the item back on the task's due date. The Tasks page becomes a real Core page (add, assign, complete/undo, groups by due date), used by every module through `core/tasks/tasks.js`.
+
+**Reason:** CLAUDE.md puts tasks in Core and forbids duplicating task logic in modules; a household with a house manager needs one list of what's due, whoever or whatever created it. Doing the sync in the database keeps tasks right even when nobody opens the Home page and avoids two pages racing to create the same task. Home inventory, vendors, warranties and documents wait until the schedule is in use.
+

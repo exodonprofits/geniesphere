@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Dashboard · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261109b" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261109c" />
 </head>
 <body data-gs-shell="dashboard">
   <main class="gs-shell">
@@ -56,7 +56,7 @@
       </div>
       <div class="gs-panel-foot">
         <span id="today-foot">Checking your household…</span>
-        <a href="#open-tasks" class="gs-item-action">Open tasks →</a>
+        <a href="/core/tasks/index.html" class="gs-item-action">Open tasks →</a>
       </div>
     </section>
 
@@ -75,7 +75,7 @@
         <span class="gs-module-cta">Open Nutrition →</span>
       </a>
       <a class="gs-module" href="/modules/home/index.html">
-        <span class="gs-module-top"><span class="gs-tile accent" data-gs-icon="wrench"></span><span class="gs-pill">Not set up</span></span>
+        <span class="gs-module-top"><span class="gs-tile accent" data-gs-icon="wrench"></span><span id="home-pill" class="gs-pill">Not set up</span></span>
         <h3 class="gs-module-name">Home Genie</h3>
         <p class="gs-module-desc">Maintenance that turns into tasks, plus inventory and warranty dates.</p>
         <span class="gs-module-cta">Open Home →</span>
@@ -127,12 +127,14 @@
         return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       }
 
-      // overdue | soon (within 3 days) | later | none
+      // overdue | soon (today .. 3 days) | later | none, by calendar day, so a
+      // task due today is "due today", not overdue.
       function dueState(iso) {
         if (!iso) return 'none';
-        var ms = new Date(iso).getTime() - Date.now();
-        if (ms < 0) return 'overdue';
-        return ms <= 3 * DAY ? 'soon' : 'later';
+        var d = new Date(iso), now = new Date();
+        var days = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / DAY);
+        if (days < 0) return 'overdue';
+        return days <= 3 ? 'soon' : 'later';
       }
 
       function mondayOf(date) {
@@ -220,7 +222,7 @@
         return { tone: 'accent', pill: 'On track', title: tasks.length + ' open task' + (tasks.length > 1 ? 's' : ''), detail: detail };
       }
 
-      function renderToday(ctx, tasks, toBuy, members, mealPlan) {
+      function renderToday(ctx, tasks, toBuy, members, mealPlan, homeItems) {
         var rows = document.getElementById('today-rows');
         var quick = document.getElementById('quick-status');
         rows.textContent = '';
@@ -231,16 +233,22 @@
           ? { tone: 'accent', pill: toBuy + ' to buy', title: 'Grocery list has ' + toBuy + ' item' + (toBuy > 1 ? 's' : ''), detail: 'Shared with everyone in ' + ctx.name + '.' }
           : { tone: 'ok', pill: 'Clear', title: 'Grocery list is clear', detail: 'Add what you need before the next trip.' };
 
-        rows.appendChild(todayRow({ icon: 'list', tone: t.tone, pill: t.pill, title: t.title, detail: t.detail, action: 'View tasks →', href: '#open-tasks' }));
+        rows.appendChild(todayRow({ icon: 'list', tone: t.tone, pill: t.pill, title: t.title, detail: t.detail, action: 'View tasks →', href: '/core/tasks/index.html' }));
         rows.appendChild(todayRow({ icon: 'cart', tone: g.tone, pill: g.pill, title: g.title, detail: g.detail, action: 'Open list →', href: '/modules/grocery/index.html' }));
         var dinner = tonight(mealPlan);
         rows.appendChild(todayRow(dinner
           ? { icon: 'leaf', tone: 'ok', pill: 'Planned', title: 'Tonight: ' + dinner.title, detail: 'This week’s meals are planned.', action: 'See the week →', href: '/modules/nutrition/index.html' }
           : { icon: 'leaf', tone: '', pill: 'Not set up', title: 'No meal plan yet', detail: 'Plan this week’s meals with Nutrition Genie.', action: 'Plan meals →', href: '/modules/nutrition/index.html' }));
-        rows.appendChild(todayRow({ icon: 'wrench', tone: '', pill: 'Not set up', title: 'No home maintenance yet', detail: 'Track HVAC filters, gutters, smoke alarms.', action: 'Set up →', href: '/modules/home/index.html' }));
+        var home = homeSummary(homeItems || []);
+        rows.appendChild(todayRow(home
+          ? { icon: 'wrench', tone: home.tone, pill: home.pill, title: home.title, detail: home.detail, action: 'Open Home →', href: '/modules/home/index.html' }
+          : { icon: 'wrench', tone: '', pill: 'Not set up', title: 'No home maintenance yet', detail: 'Track HVAC filters, gutters, smoke alarms.', action: 'Set up →', href: '/modules/home/index.html' }));
+        var hp = document.getElementById('home-pill');
+        hp.className = 'gs-pill ' + (home ? home.tone : '');
+        hp.textContent = home ? home.pill : 'Not set up';
 
         quick.appendChild(quickChip({ icon: 'house', title: ctx.name, sub: members + ' member' + (members === 1 ? '' : 's'), pill: null }));
-        quick.appendChild(quickChip({ icon: 'list', title: 'Tasks', sub: tasks.length ? tasks.length + ' open' : 'Nothing open', pill: t.attention ? t.pill : 'Clear', tone: t.attention ? t.tone : 'ok', href: '#open-tasks' }));
+        quick.appendChild(quickChip({ icon: 'list', title: 'Tasks', sub: tasks.length ? tasks.length + ' open' : 'Nothing open', pill: t.attention ? t.pill : 'Clear', tone: t.attention ? t.tone : 'ok', href: '/core/tasks/index.html' }));
         quick.appendChild(quickChip({ icon: 'cart', title: 'Groceries', sub: toBuy ? toBuy + ' to buy' : 'List is clear', pill: toBuy ? String(toBuy) : 'Clear', tone: toBuy ? 'accent' : 'ok', href: '/modules/grocery/index.html' }));
         quick.appendChild(quickChip(dinner
           ? { icon: 'leaf', title: 'Meals', sub: 'Tonight: ' + dinner.title, pill: 'Planned', tone: 'ok', href: '/modules/nutrition/index.html' }
@@ -283,7 +291,9 @@
           lines.push({ tone: 'urgent', text: '“' + t.title + '” is overdue. It was due ' + shortDate(t.due_at) + '.' });
         });
         soon.forEach(function (t) {
-          lines.push({ tone: 'warn', text: '“' + t.title + '” is due ' + new Date(t.due_at).toLocaleDateString(undefined, { weekday: 'long' }) + '.' });
+          var d = new Date(t.due_at), n = new Date();
+          var isToday = d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+          lines.push({ tone: 'warn', text: '“' + t.title + '” is due ' + (isToday ? 'today' : d.toLocaleDateString(undefined, { weekday: 'long' })) + '.' });
         });
         if (toBuy.length) {
           var names = toBuy.slice(0, 2).map(function (i) { return i.name; });
@@ -318,7 +328,7 @@
           actions.appendChild(a);
         }
         if (overdue.length || soon.length) {
-          action('Review tasks', '#open-tasks', true);
+          action('Review tasks', '/core/tasks/index.html', true);
           if (toBuy.length) action('Open grocery list', '/modules/grocery/index.html', false);
         } else if (toBuy.length) {
           action('Open grocery list', '/modules/grocery/index.html', true);
@@ -337,10 +347,10 @@
         var list = document.getElementById('tasks');
         list.textContent = '';
         if (!rows.length) {
-          list.appendChild(el('li', 'gs-empty', 'No open tasks. Home Genie will add maintenance tasks here once it is set up.'));
+          list.appendChild(el('li', 'gs-empty', 'No open tasks. Home Genie adds maintenance here a week before it’s due.'));
           return;
         }
-        rows.forEach(function (task) {
+        rows.slice(0, 5).forEach(function (task) {
           var li = el('li');
           var state = dueState(task.due_at);
           var tile = el('span', 'gs-tile ' + ({ overdue: 'urgent', soon: 'warn' }[state] || 'accent'));
@@ -353,6 +363,38 @@
           }
           list.appendChild(li);
         });
+        if (rows.length > 5) {
+          var more = el('li', 'gs-empty');
+          var a = el('a', 'gs-item-action', 'See all ' + rows.length + ' tasks →');
+          a.href = '/core/tasks/index.html';
+          more.appendChild(a);
+          list.appendChild(more);
+        }
+      }
+
+      // Home Genie schedule, for the Today row and the module card. Optional:
+      // if it can't load, the dashboard shows "Not set up".
+      async function loadHome(householdId) {
+        var result = await db().from('home_maintenance_items')
+          .select('title, next_due').eq('household_id', householdId).eq('active', true)
+          .order('next_due', { ascending: true }).limit(100);
+        return result.error ? [] : (result.data || []);
+      }
+
+      function homeSummary(items) {
+        if (!items.length) return null;
+        var now = new Date();
+        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        function daysTo(d) { var p = d.split('-'); return Math.round((new Date(+p[0], +p[1] - 1, +p[2]) - today) / DAY); }
+        var soon = items.filter(function (i) { return daysTo(i.next_due) <= 7; }).length;
+        var next = items[0];
+        var p = next.next_due.split('-');
+        var when = new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        return {
+          tone: soon ? 'warn' : 'ok', pill: soon ? soon + ' due this week' : 'On track',
+          title: 'Home upkeep: ' + items.length + ' tracked',
+          detail: 'Next: ' + next.title + ' · ' + (daysTo(next.next_due) < 0 ? 'overdue since ' : 'due ') + when
+        };
       }
 
       async function loadTasks(householdId) {
@@ -363,7 +405,7 @@
           .is('completed_at', null)
           .not('status', 'in', '(done,completed,cancelled)')
           .order('due_at', { ascending: true, nullsFirst: false })
-          .limit(5);
+          .limit(100);
         if (result.error) throw result.error;
         return result.data || [];
       }
@@ -407,9 +449,9 @@
           }
           document.getElementById('household-name').textContent = ctx.name;
           renderSwitcher(ctx);
-          var loaded = await Promise.all([loadTasks(ctx.householdId), loadToBuy(ctx.householdId), countMembers(ctx.householdId), loadMealPlan(ctx.householdId)]);
+          var loaded = await Promise.all([loadTasks(ctx.householdId), loadToBuy(ctx.householdId), countMembers(ctx.householdId), loadMealPlan(ctx.householdId), loadHome(ctx.householdId)]);
           renderBriefing(loaded[0], loaded[1], loaded[3]);
-          renderToday(ctx, loaded[0], loaded[1].length, loaded[2], loaded[3]);
+          renderToday(ctx, loaded[0], loaded[1].length, loaded[2], loaded[3], loaded[4]);
           renderTasks(loaded[0]);
         } catch (err) {
           show(err.message || 'Could not load the dashboard.', true);

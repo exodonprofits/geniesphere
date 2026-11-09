@@ -5,36 +5,68 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Tasks · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261109b" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261109c" />
 </head>
 <body data-gs-shell="tasks">
-  <main class="gs-shell" style="max-width:820px">
+  <main class="gs-shell" style="max-width:860px">
     <header class="gs-page-header">
       <div>
-        <p class="gs-eyebrow"><span data-gs-icon="list"></span>Core</p>
-        <h1 class="gs-title">Tasks</h1>
-        <p class="gs-subtitle">Shared household tasks</p>
+        <p class="gs-eyebrow"><span data-gs-icon="list"></span>Tasks</p>
+        <h1 class="gs-title">Household <em>tasks</em></h1>
+        <p id="household-label" class="gs-subtitle">Loading…</p>
       </div>
     </header>
+    <p id="status" class="gs-status" role="status"></p>
+
+    <section class="gs-panel">
+      <div class="gs-panel-head">
+        <div class="gs-panel-head-left">
+          <span class="gs-panel-icon" data-gs-icon="sparkle"></span>
+          <div>
+            <h2 class="gs-panel-title">Add a task</h2>
+            <p class="gs-panel-sub">Everyone in the household sees it. Assign it to someone, or leave it for anyone.</p>
+          </div>
+        </div>
+      </div>
+      <form id="add-form" class="gs-panel-body gs-task-form" novalidate>
+        <label class="gs-label gs-task-form-title">What needs doing
+          <input id="t-title" class="gs-input" type="text" maxlength="200" placeholder="e.g. Book window cleaning" autocomplete="off" />
+        </label>
+        <label class="gs-label">Due
+          <input id="t-due" class="gs-input" type="date" />
+        </label>
+        <label class="gs-label">Who
+          <select id="t-who" class="gs-input"><option value="">Anyone</option></select>
+        </label>
+        <button id="add-btn" class="gs-btn gs-btn-primary gs-task-form-btn" type="submit">Add task</button>
+      </form>
+    </section>
 
     <section class="gs-panel">
       <div class="gs-panel-head">
         <div class="gs-panel-head-left">
           <span class="gs-panel-icon" data-gs-icon="list"></span>
           <div>
-            <h2 class="gs-panel-title">Coming in GenieSphere 0.1</h2>
-            <p class="gs-panel-sub">Your most urgent open tasks are on the dashboard today.</p>
+            <h2 class="gs-panel-title">To do</h2>
+            <p class="gs-panel-sub">Home Genie adds maintenance here a week before it’s due.</p>
           </div>
         </div>
-        <span class="gs-pill gs-pill-lg">Not set up</span>
+        <span id="open-count" class="gs-pill gs-pill-lg">…</span>
       </div>
-      <div class="gs-panel-body">
-        <p style="margin:0;font-size:15px;line-height:1.6">One task list for the whole household. Home Genie maintenance and Nutrition reminders will add tasks here.</p>
+      <div id="open" class="gs-panel-body gs-task-groups"></div>
+    </section>
+
+    <section id="done-panel" class="gs-panel" hidden>
+      <div class="gs-panel-head">
+        <div class="gs-panel-head-left">
+          <span class="gs-panel-icon" data-gs-icon="check"></span>
+          <div>
+            <h2 class="gs-panel-title">Done in the last 2 weeks</h2>
+            <p class="gs-panel-sub">Ticked by mistake? Undo puts it back on the list.</p>
+          </div>
+        </div>
       </div>
-      <div class="gs-panel-foot">
-        <span>Nothing to do here yet.</span>
-        <a href="/core/dashboard/index.html#open-tasks" class="gs-item-action">See open tasks →</a>
-      </div>
+      <ul id="done" class="gs-list gs-panel-body gs-task-list"></ul>
     </section>
   </main>
 
@@ -43,10 +75,172 @@
   <script src="/shared/js/gs-client.js"></script>
   <script src="/shared/js/gs-auth.js"></script>
   <script src="/shared/components/gs-shell.js"></script>
+  <script src="/core/household/household.js"></script>
+  <script src="/core/tasks/tasks.js"></script>
   <script>
-    window.GenieSphere.auth.requireSession().catch(function () {
-      window.location.href = '/core/auth/login.html';
-    });
+    (function () {
+      var GS = window.GenieSphere;
+      var state = { ctx: null, me: null, members: [] };
+      var SOURCES = { home: 'Home Genie', nutrition: 'Nutrition', grocery: 'Grocery' };
+      var GROUPS = [['overdue', 'Overdue'], ['week', 'This week'], ['later', 'Later'], ['nodate', 'No date']];
+      function $(id) { return document.getElementById(id); }
+      function el(tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text != null) node.textContent = text;
+        return node;
+      }
+      function show(message, isError) {
+        $('status').textContent = message || '';
+        $('status').classList.toggle('gs-error', !!isError);
+      }
+      function dueLabel(iso) {
+        var d = new Date(iso);
+        var today = new Date(); today.setHours(0, 0, 0, 0);
+        var day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        var diff = Math.round((day - today) / 864e5);
+        if (diff === 0) return 'Due today';
+        if (diff === 1) return 'Due tomorrow';
+        if (diff === -1) return 'Due yesterday';
+        if (diff < 0) return 'Due ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' (' + (-diff) + ' days ago)';
+        return 'Due ' + d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+      }
+      function memberName(id) {
+        var m = state.members.find(function (x) { return x.userId === id; });
+        if (!m) return null;
+        return id === state.me.id ? 'You' : m.name;
+      }
+
+      function whoSelect(task) {
+        var select = el('select', 'gs-input gs-task-who');
+        select.setAttribute('aria-label', 'Assign ' + task.title);
+        select.appendChild(new Option('Anyone', ''));
+        state.members.forEach(function (m) {
+          select.appendChild(new Option(m.userId === state.me.id ? 'Me' : m.name, m.userId));
+        });
+        select.value = task.assigned_to || '';
+        select.addEventListener('change', async function () {
+          select.disabled = true;
+          try { await GS.tasks.assign(task.id, select.value || null); task.assigned_to = select.value || null; }
+          catch (err) { show(err.message, true); select.value = task.assigned_to || ''; }
+          finally { select.disabled = false; }
+        });
+        return select;
+      }
+
+      function taskRow(task, done) {
+        var li = el('li', 'gs-task' + (done ? ' gs-task-done' : ''));
+        var box = el('input');
+        box.type = 'checkbox';
+        box.checked = !!done;
+        box.setAttribute('aria-label', (done ? 'Undo ' : 'Done: ') + task.title);
+        box.addEventListener('change', async function () {
+          box.disabled = true;
+          try {
+            if (done) await GS.tasks.reopen(task.id); else await GS.tasks.complete(task.id);
+            show(done ? 'Back on the list: ' + task.title : 'Done: ' + task.title + (task.source_module === 'home' ? '. Home Genie scheduled the next one.' : ''));
+            await load();
+          } catch (err) { show(err.message, true); box.disabled = false; box.checked = !!done; }
+        });
+        li.appendChild(box);
+
+        var main = el('div', 'gs-task-main');
+        main.appendChild(el('p', 'gs-task-title', task.title));
+        var meta = el('p', 'gs-task-meta');
+        var bits = [];
+        if (done) bits.push('Done ' + new Date(task.completed_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+        else if (task.due_at) bits.push(dueLabel(task.due_at));
+        var who = memberName(task.assigned_to);
+        if (done && who) bits.push(who);
+        meta.textContent = bits.join(' · ');
+        if (task.source_module && SOURCES[task.source_module]) {
+          meta.appendChild(el('span', 'gs-pill accent gs-task-source', SOURCES[task.source_module]));
+        }
+        main.appendChild(meta);
+        li.appendChild(main);
+
+        if (!done) {
+          li.appendChild(whoSelect(task));
+          if (task.source_module) {
+            li.appendChild(el('span', 'gs-icon-btn gs-icon-btn-spacer'));
+          }
+          if (!task.source_module) {
+            var del = el('button', 'gs-icon-btn', '×');
+            del.type = 'button';
+            del.setAttribute('aria-label', 'Delete ' + task.title);
+            del.addEventListener('click', async function () {
+              del.disabled = true;
+              try { await GS.tasks.remove(task.id); show('Deleted: ' + task.title); await load(); }
+              catch (err) { show(err.message, true); del.disabled = false; }
+            });
+            li.appendChild(del);
+          }
+        }
+        return li;
+      }
+
+      async function load() {
+        var both = await Promise.all([GS.tasks.listOpen(state.ctx.householdId), GS.tasks.listDone(state.ctx.householdId, 14)]);
+        var open = both[0], done = both[1];
+        var box = $('open');
+        box.textContent = '';
+        if (!open.length) {
+          box.appendChild(el('p', 'gs-empty', 'Nothing to do right now. Home Genie adds maintenance here when it’s coming up.'));
+        }
+        var now = new Date();
+        GROUPS.forEach(function (g) {
+          var rows = open.filter(function (t) { return GS.tasks.bucket(t, now) === g[0]; });
+          if (!rows.length) return;
+          var group = el('div', 'gs-task-group gs-task-group-' + g[0]);
+          group.appendChild(el('p', 'gs-side-label', g[1] + ' · ' + rows.length));
+          var ul = el('ul', 'gs-list gs-task-list');
+          rows.forEach(function (t) { ul.appendChild(taskRow(t, false)); });
+          group.appendChild(ul);
+          box.appendChild(group);
+        });
+        $('open-count').textContent = open.length + ' open';
+        var overdue = open.filter(function (t) { return GS.tasks.bucket(t, now) === 'overdue'; }).length;
+        $('open-count').className = 'gs-pill gs-pill-lg' + (overdue ? ' urgent' : open.length ? ' accent' : ' ok');
+
+        $('done-panel').hidden = !done.length;
+        var dl = $('done');
+        dl.textContent = '';
+        done.forEach(function (t) { dl.appendChild(taskRow(t, true)); });
+      }
+
+      $('add-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var title = $('t-title').value.trim();
+        if (!title) { show('Give the task a name.', true); $('t-title').focus(); return; }
+        $('add-btn').disabled = true;
+        try {
+          await GS.tasks.add(state.ctx.householdId, { title: title, dueDate: $('t-due').value || null, assignedTo: $('t-who').value || null });
+          $('t-title').value = ''; $('t-due').value = ''; $('t-who').value = '';
+          show('Added: ' + title);
+          await load();
+        } catch (err) { show(err.message, true); }
+        finally { $('add-btn').disabled = false; $('t-title').focus(); }
+      });
+
+      (async function init() {
+        try {
+          var session = await GS.auth.requireSession();
+          if (!session) return;
+          state.me = session.user;
+          var ctx = await GS.household.current();
+          if (!ctx) { $('household-label').textContent = 'You are not part of a household yet.'; return; }
+          state.ctx = ctx;
+          $('household-label').textContent = ctx.name;
+          state.members = await GS.household.members(ctx.householdId);
+          state.members.forEach(function (m) {
+            $('t-who').appendChild(new Option(m.userId === state.me.id ? 'Me' : m.name, m.userId));
+          });
+          await load();
+        } catch (err) {
+          show(err.message || 'Could not load tasks.', true);
+        }
+      })();
+    })();
   </script>
 </body>
 </html>
