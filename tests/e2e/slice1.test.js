@@ -308,6 +308,43 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   assert.notStrictEqual(await page.textContent('#home-pill'), 'Not set up');
   step('dashboard shows live Home upkeep');
 
+  // 8c. Notifications: assigning someone else notifies them, not you; inbox, badge, prefs, test summary.
+  await page.evaluate(() => {
+    const d = window.__fakeDb.load();
+    const hid = d.household_members.find(m => m.user_id === 'u1').household_id;
+    d.household_members.push({ household_id: hid, user_id: 'u7', role: 'member', email: 'jenny@example.com', display_name: 'Jenny', created_at: '2026-11-01T00:00:00Z' });
+    d.household_notifications.push({ id: 'n-seed', household_id: hid, user_id: 'u1', source_module: 'tasks', kind: 'task_assigned',
+      title: 'Jenny assigned you: Call the plumber', body: 'Due Wed, Nov 12', link: '/core/tasks/index.html', ref: 'assign:x', read_at: null, created_at: new Date().toISOString() });
+    window.__fakeDb.save(d);
+  });
+  await page.goto(BASE + '/core/tasks/index.html');
+  await page.waitForSelector('#open .gs-task');
+  await page.waitForFunction(() => { const b = document.querySelector('.gs-badge'); return b && !b.hidden && b.textContent === '1'; });
+  const firstWho = await page.$('#open .gs-task select.gs-task-who');
+  await firstWho.selectOption('u7');
+  await page.waitForFunction(() => window.__fakeDb.load().household_notifications.some(n => n.user_id === 'u7' && n.kind === 'task_assigned'));
+  assert.strictEqual(await page.evaluate(() => window.__fakeDb.load().household_notifications.filter(n => n.user_id === 'u1').length), 1, 'assigning someone else does not notify you');
+  step('assigning a task notifies the assignee; avatar shows 1 unread');
+
+  await page.click('.gs-account-btn');
+  await page.click('#gs-account-menu a:has-text("Notifications")');
+  await page.waitForURL(BASE + '/core/notifications/index.html');
+  await page.waitForSelector('#inbox .gs-note-unread');
+  assert.strictEqual(await page.$$eval('#inbox .gs-note', els => els.length), 1, 'only my notifications are listed');
+  await page.click('#read-all');
+  await page.waitForSelector('#inbox .gs-note:not(.gs-note-unread)');
+  await page.waitForFunction(() => document.querySelector('.gs-badge').hidden);
+  await page.waitForSelector('#p-weekly:not([disabled])');
+  await page.click('label.gs-pref:has(#p-weekly)');
+  await page.waitForFunction(() => /Weekly summary off/.test(document.querySelector('#status').textContent));
+  await page.reload();
+  await page.waitForSelector('#p-weekly:not([disabled])');
+  assert.strictEqual(await page.isChecked('#p-weekly'), false, 'weekly summary preference saved');
+  assert.strictEqual(await page.isChecked('#p-assigned'), true);
+  await page.click('#test-btn');
+  await page.waitForFunction(() => /Sent to jimmy@example\.com/.test(document.querySelector('#test-note').textContent));
+  step('Notifications: inbox, mark all read clears the badge, email prefs persist, test summary sends');
+
   // 9. Sign out from the shell
   await page.click('.gs-account-btn');
   await page.click('#gs-account-menu button:has-text("Sign out")');

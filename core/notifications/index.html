@@ -5,48 +5,193 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Notifications · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261109e" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261109f" />
 </head>
 <body data-gs-shell="notifications">
   <main class="gs-shell" style="max-width:820px">
     <header class="gs-page-header">
       <div>
-        <p class="gs-eyebrow"><span data-gs-icon="calendar"></span>Core</p>
+        <p class="gs-eyebrow"><span data-gs-icon="bell"></span>Core</p>
         <h1 class="gs-title">Notifications</h1>
-        <p class="gs-subtitle">What needs your attention</p>
+        <p id="household-label" class="gs-subtitle">Loading…</p>
       </div>
     </header>
+    <p id="status" class="gs-status" role="status"></p>
 
     <section class="gs-panel">
       <div class="gs-panel-head">
         <div class="gs-panel-head-left">
-          <span class="gs-panel-icon" data-gs-icon="calendar"></span>
+          <span class="gs-panel-icon" data-gs-icon="bell"></span>
           <div>
-            <h2 class="gs-panel-title">Coming in GenieSphere 0.1</h2>
-            <p class="gs-panel-sub">Nothing sends notifications yet.</p>
+            <h2 class="gs-panel-title">Inbox</h2>
+            <p class="gs-panel-sub">Tasks assigned to you and your Sunday summary.</p>
           </div>
         </div>
-        <span class="gs-pill gs-pill-lg">Not set up</span>
+        <button id="read-all" class="gs-btn gs-btn-sm" type="button" hidden>Mark all read</button>
       </div>
-      <div class="gs-panel-body">
-        <p style="margin:0;font-size:15px;line-height:1.6">Reminders and alerts from every Genie, in one place.</p>
+      <ul id="inbox" class="gs-list gs-panel-body gs-note-list"></ul>
+    </section>
+
+    <section id="email" class="gs-panel">
+      <div class="gs-panel-head">
+        <div class="gs-panel-head-left">
+          <span class="gs-panel-icon" data-gs-icon="sparkle"></span>
+          <div>
+            <h2 class="gs-panel-title">Email me</h2>
+            <p class="gs-panel-sub">Just you, for this household. Everyone chooses their own.</p>
+          </div>
+        </div>
+      </div>
+      <div class="gs-panel-body gs-pref-list">
+        <label class="gs-pref">
+          <span class="gs-pref-text">
+            <span class="gs-pref-title">Weekly summary</span>
+            <span class="gs-pref-sub">Sunday around 5 PM: what’s overdue and due in the coming week, yours and unassigned. Nothing due, no email.</span>
+          </span>
+          <input id="p-weekly" class="gs-switch" type="checkbox" role="switch" checked disabled />
+        </label>
+        <label class="gs-pref">
+          <span class="gs-pref-text">
+            <span class="gs-pref-title">When someone assigns me a task</span>
+            <span class="gs-pref-sub">Within a few minutes. Not when you assign one to yourself.</span>
+          </span>
+          <input id="p-assigned" class="gs-switch" type="checkbox" role="switch" checked disabled />
+        </label>
       </div>
       <div class="gs-panel-foot">
-        <span>Nothing to do here yet.</span>
-        <a href="/core/dashboard/index.html" class="gs-item-action">Back to dashboard →</a>
+        <span id="test-note">See what the summary looks like, sent to your email now.</span>
+        <button id="test-btn" class="gs-btn" type="button" disabled>Send me this week’s summary</button>
       </div>
     </section>
   </main>
 
   <script src="/shared/vendor/supabase.min.js"></script>
-  <script src="/shared/js/app-config.js?v=20261109e"></script>
-  <script src="/shared/js/gs-client.js?v=20261109e"></script>
-  <script src="/shared/js/gs-auth.js?v=20261109e"></script>
-  <script src="/shared/components/gs-shell.js?v=20261109e"></script>
+  <script src="/shared/js/app-config.js?v=20261109f"></script>
+  <script src="/shared/js/gs-client.js?v=20261109f"></script>
+  <script src="/shared/js/gs-auth.js?v=20261109f"></script>
+  <script src="/shared/components/gs-shell.js?v=20261109f"></script>
+  <script src="/core/household/household.js?v=20261109f"></script>
+  <script src="/core/notifications/notifications.js?v=20261109f"></script>
   <script>
-    window.GenieSphere.auth.requireSession().catch(function () {
-      window.location.href = '/core/auth/login.html';
-    });
+    (function () {
+      var GS = window.GenieSphere;
+      var N = GS.notifications;
+      var state = { ctx: null, email: '' };
+      var ICON_FOR = { task_assigned: 'list', digest: 'calendar' };
+      function $(id) { return document.getElementById(id); }
+      function el(tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text != null) node.textContent = text;
+        return node;
+      }
+      function show(message, isError) {
+        $('status').textContent = message || '';
+        $('status').classList.toggle('gs-error', !!isError);
+      }
+      function ago(iso) {
+        var mins = Math.round((Date.now() - new Date(iso).getTime()) / 6e4);
+        if (mins < 1) return 'Just now';
+        if (mins < 60) return mins + ' min ago';
+        var hours = Math.round(mins / 60);
+        if (hours < 24) return hours + (hours === 1 ? ' hour ago' : ' hours ago');
+        var days = Math.round(hours / 24);
+        if (days < 7) return days === 1 ? 'Yesterday' : days + ' days ago';
+        return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      }
+
+      function noteRow(n) {
+        var li = el('li', 'gs-note' + (n.read_at ? '' : ' gs-note-unread'));
+        var a = el('a', 'gs-note-link');
+        a.href = n.link || '#';
+        var tile = el('span', 'gs-tile accent');
+        tile.appendChild(GS.shell.icon(ICON_FOR[n.kind] || 'bell'));
+        a.appendChild(tile);
+        var main = el('span', 'gs-note-main');
+        main.appendChild(el('span', 'gs-note-title', n.title));
+        if (n.body) main.appendChild(el('span', 'gs-note-body', n.body));
+        main.appendChild(el('span', 'gs-note-meta', ago(n.created_at)));
+        a.appendChild(main);
+        if (!n.read_at) {
+          var dot = el('span', 'gs-note-dot');
+          dot.setAttribute('aria-label', 'Unread');
+          a.appendChild(dot);
+        }
+        a.addEventListener('click', function (e) {
+          if (n.read_at) return;
+          e.preventDefault();
+          N.markRead(n.id).catch(function () { /* still follow the link */ }).then(function () {
+            if (n.link) window.location.href = n.link; else load();
+          });
+        });
+        li.appendChild(a);
+        return li;
+      }
+
+      async function load() {
+        var notes = await N.list(50);
+        var list = $('inbox');
+        list.textContent = '';
+        if (!notes.length) {
+          list.appendChild(el('li', 'gs-empty', 'Nothing yet. When someone assigns you a task, or your Sunday summary is ready, it shows up here.'));
+        }
+        notes.forEach(function (n) { list.appendChild(noteRow(n)); });
+        var unread = notes.filter(function (n) { return !n.read_at; }).length;
+        $('read-all').hidden = !unread;
+      }
+
+      $('read-all').addEventListener('click', async function () {
+        $('read-all').disabled = true;
+        try { await N.markAllRead(); await load(); if (GS.shell.refreshBadge) GS.shell.refreshBadge(); }
+        catch (err) { show(err.message, true); }
+        finally { $('read-all').disabled = false; }
+      });
+
+      async function savePrefs(box) {
+        box.disabled = true;
+        try {
+          await N.savePrefs(state.ctx.householdId, { weeklyDigest: $('p-weekly').checked, assignedEmail: $('p-assigned').checked });
+          show(box.id === 'p-weekly'
+            ? (box.checked ? 'Weekly summary on.' : 'Weekly summary off. It still appears in your inbox.')
+            : (box.checked ? 'You’ll get an email when someone assigns you a task.' : 'No emails for assigned tasks. They still appear in your inbox.'));
+        } catch (err) { box.checked = !box.checked; show(err.message, true); }
+        finally { box.disabled = false; }
+      }
+      $('p-weekly').addEventListener('change', function () { savePrefs($('p-weekly')); });
+      $('p-assigned').addEventListener('change', function () { savePrefs($('p-assigned')); });
+
+      $('test-btn').addEventListener('click', async function () {
+        $('test-btn').disabled = true;
+        $('test-note').textContent = 'Sending…';
+        try {
+          var r = await N.sendTestDigest(state.ctx.householdId);
+          $('test-note').textContent = 'Sent to ' + r.email + (r.tasks ? ' with ' + r.tasks + (r.tasks === 1 ? ' task.' : ' tasks.') : '. Nothing is due this week.') + ' Check spam if it isn’t there in a minute.';
+        } catch (err) {
+          $('test-note').textContent = err.message;
+        } finally {
+          setTimeout(function () { $('test-btn').disabled = false; }, 3000);
+        }
+      });
+
+      (async function init() {
+        try {
+          var session = await GS.auth.requireSession();
+          if (!session) return;
+          state.email = session.user.email;
+          var ctx = await GS.household.current();
+          if (!ctx) { $('household-label').textContent = 'You are not part of a household yet.'; return; }
+          state.ctx = ctx;
+          $('household-label').textContent = ctx.name;
+          var loaded = await Promise.all([N.prefs(ctx.householdId), load()]);
+          $('p-weekly').checked = loaded[0].weeklyDigest;
+          $('p-assigned').checked = loaded[0].assignedEmail;
+          $('p-weekly').disabled = false; $('p-assigned').disabled = false; $('test-btn').disabled = false;
+          $('test-note').textContent = 'See what the summary looks like, sent to ' + state.email + ' now.';
+        } catch (err) {
+          show(err.message || 'Could not load notifications.', true);
+        }
+      })();
+    })();
   </script>
 </body>
 </html>

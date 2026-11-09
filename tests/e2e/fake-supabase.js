@@ -4,7 +4,7 @@
   function load() {
     try {
       var s = JSON.parse(localStorage.getItem(KEY));
-      if (s) { ['household_meal_plans', 'household_nutrition_prefs', 'gs_ai_usage', 'household_invites', 'home_maintenance_items'].forEach(function (t) { s[t] = s[t] || []; }); return s; }
+      if (s) { ['household_meal_plans', 'household_nutrition_prefs', 'gs_ai_usage', 'household_invites', 'home_maintenance_items', 'household_notifications', 'notification_prefs'].forEach(function (t) { s[t] = s[t] || []; }); return s; }
     } catch (e) {}
     return {
       session: null,
@@ -18,7 +18,7 @@
         { id: 't2', household_id: 'h1', title: 'Old done task', status: 'done', completed_at: '2026-10-01T00:00:00Z', due_at: null }
       ],
       shopping_lists: [], shopping_items: [],
-      household_meal_plans: [], household_nutrition_prefs: [], gs_ai_usage: [], household_invites: [], home_maintenance_items: [], seq: 0
+      household_meal_plans: [], household_nutrition_prefs: [], gs_ai_usage: [], household_invites: [], home_maintenance_items: [], household_notifications: [], notification_prefs: [], seq: 0
     };
   }
   function save(db) { localStorage.setItem(KEY, JSON.stringify(db)); }
@@ -50,13 +50,25 @@
     var day = isoDay(new Date(task.completed_at));
     it.last_done = day; it.next_due = plusDays(day, it.every_days);
   }
+  // Mirrors 0010's notify_task_assigned trigger.
+  function notifyAssigned(db, task, before, uid) {
+    if (!task.assigned_to || task.completed_at || task.assigned_to === uid || before === task.assigned_to) return;
+    var who = db.household_members.find(function (m) { return m.household_id === task.household_id && m.user_id === uid; });
+    var ref = 'assign:' + task.id;
+    var title = ((who && who.display_name) || 'Someone') + ' assigned you: ' + task.title;
+    var body = task.due_at ? 'Due ' + new Date(task.due_at.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }) : null;
+    var ex = db.household_notifications.find(function (n) { return n.user_id === task.assigned_to && n.ref === ref; });
+    if (ex) { ex.title = title; ex.body = body; ex.read_at = null; ex.created_at = new Date().toISOString(); return; }
+    db.household_notifications.push({ id: 'note-' + (++db.seq), household_id: task.household_id, user_id: task.assigned_to, source_module: task.source_module || 'tasks',
+      kind: 'task_assigned', title: title, body: body, link: '/core/tasks/index.html', ref: ref, read_at: null, created_at: new Date().toISOString() });
+  }
   window.__fakeDb = { load: load, save: save };
 
   function Query(table, db) {
     this.t = table; this.db = db; this.filters = []; this.orders = []; this.lim = null;
     this.op = 'select'; this.payload = null; this.cols = '*'; this._one = null; this.ret = false;
   }
-  Query.prototype.select = function (cols) { if (this.op === 'select') this.cols = cols || '*'; else this.ret = true; return this; };
+  Query.prototype.select = function (cols, opts) { if (this.op === 'select') { this.cols = cols || '*'; this.head = !!(opts && opts.head); } else this.ret = true; return this; };
   Query.prototype.eq = function (c, v) { this.filters.push(function (r) { return r[c] === v; }); return this; };
   Query.prototype.gte = function (c, v) { this.filters.push(function (r) { return r[c] >= v; }); return this; };
   Query.prototype.is = function (c, v) { this.filters.push(function (r) { return (r[c] === undefined ? null : r[c]) === v; }); return this; };
@@ -79,6 +91,7 @@
     var owned = db.household_members.filter(function (m) { return m.user_id === uid && m.role === 'owner'; }).map(function (m) { return m.household_id; });
     function visible(r) {
       if (self.t === 'household_invites') return owned.indexOf(r.household_id) !== -1;
+      if (self.t === 'household_notifications' || self.t === 'notification_prefs') return r.user_id === uid && mine.indexOf(r.household_id) !== -1;
       return r.household_id === undefined || mine.indexOf(r.household_id) !== -1 || r.user_id === uid;
     }
     function match(r) { return visible(r) && self.filters.every(function (f) { return f(r); }); }
@@ -95,13 +108,18 @@
         if (this.t === 'home_maintenance_items' && row.active === undefined) row.active = true;
         row.created_at = new Date(Date.now() + db.seq).toISOString();
         rows.push(row); out.push(row);
+        if (this.t === 'household_tasks') notifyAssigned(db, row, null, uid);
       }
       if (this.t === 'home_maintenance_items') homeSync(db);
       save(db);
       return { data: this._one ? out[0] : (this.ret ? out : null), error: null };
     }
     if (this.op === 'update') {
-      rows.filter(match).forEach(function (r) { Object.assign(r, self.payload); if (self.t === 'household_tasks') homeTaskDone(db, r); });
+      rows.filter(match).forEach(function (r) {
+        var before = r.assigned_to;
+        Object.assign(r, self.payload);
+        if (self.t === 'household_tasks') { homeTaskDone(db, r); notifyAssigned(db, r, before, uid); }
+      });
       if (this.t === 'home_maintenance_items' || this.t === 'household_tasks') homeSync(db);
       save(db); return { data: null, error: null };
     }
@@ -112,6 +130,7 @@
     this.orders.slice().reverse().forEach(function (o) {
       data.sort(function (a, b) { var x = a[o[0]], y = b[o[0]]; if (x === y) return 0; if (x === null || x === undefined) return 1; if (y === null || y === undefined) return -1; return (x < y ? -1 : 1) * (o[1] ? 1 : -1); });
     });
+    if (this.head) return { data: null, count: data.length, error: null };
     if (this.lim !== null) data = data.slice(0, this.lim);
     if (this._one === 'maybe') return { data: data[0] || null, error: null };
     if (this._one === 'one') return data.length === 1 ? { data: data[0], error: null } : { data: null, error: { message: 'expected one row' } };
@@ -205,6 +224,15 @@
             if (name === 'gs-household-invite') return fakeInvite(db, body);
             if (name === 'gs-password-reset') { db.resetRequests = (db.resetRequests || []).concat([body.email]); save(db); return { data: { ok: true }, error: null }; }
             if (!db.session) return { data: null, error: { message: 'Sign in to use this.' } };
+            if (name === 'gs-notify') {
+              var me = db.session.user;
+              if (body.action !== 'test_digest' || !db.household_members.some(function (m) { return m.household_id === body.householdId && m.user_id === me.id; }))
+                return { data: null, error: { message: 'Unknown request.' } };
+              var horizon = plusDays(isoDay(new Date()), 7);
+              var n = db.household_tasks.filter(function (t) { return t.household_id === body.householdId && !t.completed_at && t.due_at && t.due_at.slice(0, 10) <= horizon && (!t.assigned_to || t.assigned_to === me.id); }).length;
+              db.testDigests = (db.testDigests || 0) + 1; save(db);
+              return { data: { ok: true, email: me.email, tasks: n }, error: null };
+            }
             if (name !== 'gs-ai-gateway' || body.task !== 'meal_plan.generate') return { data: null, error: { message: 'Unknown task.' } };
             var uid = db.session.user.id;
             if (!db.household_members.some(function (m) { return m.household_id === body.household_id && m.user_id === uid; }))
