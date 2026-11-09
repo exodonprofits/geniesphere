@@ -4,7 +4,7 @@
   function load() {
     try {
       var s = JSON.parse(localStorage.getItem(KEY));
-      if (s) { ['household_meal_plans', 'household_nutrition_prefs', 'gs_ai_usage', 'household_invites', 'home_maintenance_items', 'household_notifications', 'notification_prefs'].forEach(function (t) { s[t] = s[t] || []; }); return s; }
+      if (s) { ['household_meal_plans', 'household_nutrition_prefs', 'gs_ai_usage', 'household_invites', 'home_maintenance_items', 'household_notifications', 'notification_prefs', 'household_assets'].forEach(function (t) { s[t] = s[t] || []; }); return s; }
     } catch (e) {}
     return {
       session: null,
@@ -18,27 +18,34 @@
         { id: 't2', household_id: 'h1', title: 'Old done task', status: 'done', completed_at: '2026-10-01T00:00:00Z', due_at: null }
       ],
       shopping_lists: [], shopping_items: [],
-      household_meal_plans: [], household_nutrition_prefs: [], gs_ai_usage: [], household_invites: [], home_maintenance_items: [], household_notifications: [], notification_prefs: [], seq: 0
+      household_meal_plans: [], household_nutrition_prefs: [], gs_ai_usage: [], household_invites: [], home_maintenance_items: [], household_notifications: [], notification_prefs: [], household_assets: [], seq: 0
     };
   }
   function save(db) { localStorage.setItem(KEY, JSON.stringify(db)); }
 
-  // Mirrors 0009's database triggers: a home item due within 7 days gets one
-  // open household task; finishing that task reschedules the item.
+  // Mirrors 0009/0011's database triggers: an item due within its lead time
+  // (7 days; renewals ~30) gets one open household task titled
+  // "Item · Asset"; finishing that task reschedules the item; removing an
+  // asset stops its items.
   function isoDay(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function plusDays(day, n) { var p = day.split('-'); return isoDay(new Date(+p[0], +p[1] - 1, +p[2] + n)); }
   function homeSync(db) {
     var today = isoDay(new Date());
+    (db.household_assets || []).forEach(function (a) {
+      if (a.active === false) db.home_maintenance_items.forEach(function (it) { if (it.asset_id === a.id) it.active = false; });
+    });
     db.home_maintenance_items.forEach(function (it) {
       var ref = 'home:' + it.id;
+      var lead = it.lead_days || 7;
+      var asset = (db.household_assets || []).find(function (a) { return a.id === it.asset_id; });
       var open = db.household_tasks.find(function (t) { return t.source_ref === ref && !t.completed_at; });
-      if (it.active !== false && it.next_due <= plusDays(today, 7) && !open) {
-        db.household_tasks.push({ id: 'task-' + (++db.seq), household_id: it.household_id, title: it.title, notes: null,
+      if (it.active !== false && it.next_due <= plusDays(today, lead) && !open) {
+        db.household_tasks.push({ id: 'task-' + (++db.seq), household_id: it.household_id, title: it.title + (asset ? ' · ' + asset.name : ''), notes: null,
           due_at: it.next_due + 'T12:00:00Z', assigned_to: null, source_module: 'home', source_ref: ref, status: 'todo',
           completed_at: null, created_at: new Date().toISOString() });
       } else if (open && it.active === false) {
         db.household_tasks = db.household_tasks.filter(function (t) { return t !== open; });
-      } else if (open && it.next_due > plusDays(today, 7)) {
+      } else if (open && it.next_due > plusDays(today, lead)) {
         open.status = 'done'; open.completed_at = new Date().toISOString();
       }
     });
@@ -48,7 +55,9 @@
     var it = db.home_maintenance_items.find(function (i) { return 'home:' + i.id === task.source_ref; });
     if (!it) return;
     var day = isoDay(new Date(task.completed_at));
-    it.last_done = day; it.next_due = plusDays(day, it.every_days);
+    var next = it.is_renewal ? plusDays(it.next_due, it.every_days) : plusDays(day, it.every_days);
+    while (it.is_renewal && next <= day) next = plusDays(next, it.every_days);
+    it.last_done = day; it.next_due = next;
   }
   // Mirrors 0010's notify_task_assigned trigger.
   function notifyAssigned(db, task, before, uid) {
@@ -105,7 +114,7 @@
         if (this.op === 'upsert') { var keys = this.conflict; var ex = rows.find(function (r) { return keys.every(function (k) { return r[k] === row[k]; }); }); if (ex) { Object.assign(ex, row); out.push(ex); continue; } }
         if (!row.id && this.t !== 'user_household_context') row.id = this.t + '-' + (++db.seq);
         if (this.t === 'shopping_items') { if (row.checked === undefined) row.checked = false; }
-        if (this.t === 'home_maintenance_items' && row.active === undefined) row.active = true;
+        if ((this.t === 'home_maintenance_items' || this.t === 'household_assets') && row.active === undefined) row.active = true;
         row.created_at = new Date(Date.now() + db.seq).toISOString();
         rows.push(row); out.push(row);
         if (this.t === 'household_tasks') notifyAssigned(db, row, null, uid);
@@ -120,7 +129,7 @@
         Object.assign(r, self.payload);
         if (self.t === 'household_tasks') { homeTaskDone(db, r); notifyAssigned(db, r, before, uid); }
       });
-      if (this.t === 'home_maintenance_items' || this.t === 'household_tasks') homeSync(db);
+      if (this.t === 'home_maintenance_items' || this.t === 'household_tasks' || this.t === 'household_assets') homeSync(db);
       save(db); return { data: null, error: null };
     }
     if (this.op === 'delete') { db[this.t] = rows.filter(function (r) { return !match(r); }); save(db); return { data: null, error: null }; }

@@ -5,97 +5,101 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Home upkeep · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261109g" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261109h" />
 </head>
 <body data-gs-shell="home">
   <main class="gs-shell" style="max-width:860px">
     <header class="gs-page-header">
       <div>
         <p class="gs-eyebrow"><span data-gs-icon="wrench"></span>Home Genie</p>
-        <h1 class="gs-title">Home <em>upkeep</em></h1>
+        <h1 class="gs-title">Homes &amp; <em>vehicles</em></h1>
         <p id="household-label" class="gs-subtitle">Loading…</p>
+        <div id="filter" class="gs-seg" role="group" aria-label="Show" hidden></div>
       </div>
     </header>
     <p id="status" class="gs-status" role="status"></p>
 
-    <!-- First visit: choose what the home needs -->
+    <!-- One card per place or vehicle -->
+    <div id="assets"></div>
+
+    <!-- Choose upkeep for a new place or vehicle -->
     <section id="setup-panel" class="gs-panel" hidden>
       <div class="gs-panel-head">
         <div class="gs-panel-head-left">
-          <span class="gs-panel-icon" data-gs-icon="wrench"></span>
+          <span id="setup-icon" class="gs-panel-icon" data-gs-icon="house"></span>
           <div>
-            <h2 class="gs-panel-title">What does your home need?</h2>
-            <p class="gs-panel-sub">Pick the upkeep that applies. A task appears on the household list a week before each one is due.</p>
+            <h2 id="setup-title" class="gs-panel-title">What does it need?</h2>
+            <p id="setup-sub" class="gs-panel-sub">Pick the upkeep that applies. A task appears on the household list before each one is due.</p>
           </div>
         </div>
       </div>
       <ul id="setup-list" class="gs-list gs-panel-body gs-upkeep-list"></ul>
       <div class="gs-panel-foot">
-        <span>Not sure when something was last done? Leave it on “Not sure”: those are spread over the coming weeks.</span>
+        <span>Not sure when something was last done, or when it expires? Leave it on “not sure”: those are spread over the coming weeks.</span>
         <button id="start-btn" class="gs-btn gs-btn-primary" type="button">Start schedule</button>
       </div>
     </section>
 
-    <!-- Schedule -->
-    <section id="schedule-panel" class="gs-panel" hidden>
-      <div class="gs-panel-head">
-        <div class="gs-panel-head-left">
-          <span class="gs-panel-icon" data-gs-icon="calendar"></span>
-          <div>
-            <h2 class="gs-panel-title">Maintenance schedule</h2>
-            <p class="gs-panel-sub">“Done today” records it and schedules the next one. Ticking the task on the Tasks page does the same.</p>
-          </div>
-        </div>
-        <span id="schedule-count" class="gs-pill gs-pill-lg">…</span>
-      </div>
-      <ul id="schedule" class="gs-list gs-panel-body gs-upkeep-list"></ul>
-    </section>
-
-    <!-- Add more -->
-    <section id="add-panel" class="gs-panel" hidden>
+    <!-- Add a place or vehicle -->
+    <section id="asset-panel" class="gs-panel">
       <div class="gs-panel-head">
         <div class="gs-panel-head-left">
           <span class="gs-panel-icon" data-gs-icon="sparkle"></span>
           <div>
-            <h2 class="gs-panel-title">Add upkeep</h2>
-            <p class="gs-panel-sub">Choose a common one or name your own, e.g. “Service the pool heater”.</p>
+            <h2 id="asset-panel-title" class="gs-panel-title">Add a home or vehicle</h2>
+            <p class="gs-panel-sub">Each one gets its own checklist. Mark business and rental ones so they can be handed off or filtered.</p>
           </div>
         </div>
       </div>
-      <form id="add-form" class="gs-panel-body gs-task-form" novalidate>
-        <label class="gs-label gs-task-form-title">What
-          <input id="a-title" class="gs-input" type="text" maxlength="120" list="a-suggestions" placeholder="e.g. Clean dryer vent" autocomplete="off" />
-          <datalist id="a-suggestions"></datalist>
+      <form id="asset-form" class="gs-panel-body gs-asset-form" novalidate>
+        <div id="kind" class="gs-seg gs-seg-inline" role="group" aria-label="What is it">
+          <button type="button" class="gs-seg-btn" data-kind="place" aria-pressed="true">Home or property</button>
+          <button type="button" class="gs-seg-btn" data-kind="vehicle" aria-pressed="false">Vehicle</button>
+        </div>
+        <label class="gs-label">Name
+          <input id="as-name" class="gs-input" type="text" maxlength="60" placeholder="e.g. Main house" autocomplete="off" />
         </label>
-        <label class="gs-label">How often
-          <select id="a-every" class="gs-input"></select>
+        <label class="gs-label">Details <span class="gs-label-hint">(optional)</span>
+          <input id="as-desc" class="gs-input" type="text" maxlength="80" placeholder="e.g. South Elgin" autocomplete="off" />
         </label>
-        <label class="gs-label">Last done
-          <input id="a-last" class="gs-input" type="date" />
+        <label class="gs-label">Use
+          <select id="as-usage" class="gs-input"></select>
         </label>
-        <button id="add-btn" class="gs-btn gs-btn-primary gs-task-form-btn" type="submit">Add</button>
+        <label id="as-owner-wrap" class="gs-label" hidden>Owned by <span class="gs-label-hint">(optional)</span>
+          <input id="as-owner" class="gs-input" type="text" maxlength="80" placeholder="e.g. Victoria Nails" autocomplete="off" />
+        </label>
+        <button id="as-btn" class="gs-btn gs-btn-primary gs-asset-form-btn" type="submit">Next: choose upkeep</button>
       </form>
     </section>
   </main>
 
   <script src="/shared/vendor/supabase.min.js"></script>
-  <script src="/shared/js/app-config.js?v=20261109g"></script>
-  <script src="/shared/js/gs-client.js?v=20261109g"></script>
-  <script src="/shared/js/gs-auth.js?v=20261109g"></script>
-  <script src="/shared/components/gs-shell.js?v=20261109g"></script>
-  <script src="/core/household/household.js?v=20261109g"></script>
-  <script src="/modules/home/home-api.js?v=20261109g"></script>
+  <script src="/shared/js/app-config.js?v=20261109h"></script>
+  <script src="/shared/js/gs-client.js?v=20261109h"></script>
+  <script src="/shared/js/gs-auth.js?v=20261109h"></script>
+  <script src="/shared/components/gs-shell.js?v=20261109h"></script>
+  <script src="/core/household/household.js?v=20261109h"></script>
+  <script src="/modules/home/home-api.js?v=20261109h"></script>
   <script>
     (function () {
       var GS = window.GenieSphere;
       var H = GS.home;
-      var state = { ctx: null, items: [] };
+      var state = { ctx: null, assets: [], items: [], filter: 'all', open: {}, setupFor: null, kind: 'place', adding: {} };
+      var PLACEHOLDERS = {
+        place: ['e.g. Main house', 'e.g. South Elgin'],
+        vehicle: ['e.g. F-150', 'e.g. 2022 Ford F-150']
+      };
       function $(id) { return document.getElementById(id); }
       function el(tag, className, text) {
         var node = document.createElement(tag);
         if (className) node.className = className;
         if (text != null) node.textContent = text;
         return node;
+      }
+      function icon(name, cls) {
+        var span = el('span', cls);
+        span.appendChild(GS.shell.icon(name));
+        return span;
       }
       function show(message, isError) {
         $('status').textContent = message || '';
@@ -105,7 +109,7 @@
         var s = el('select', 'gs-input gs-upkeep-every');
         s.setAttribute('aria-label', label);
         H.FREQUENCIES.forEach(function (f) { s.appendChild(new Option(f[1], String(f[0]))); });
-        if (!H.FREQUENCIES.some(function (f) { return f[0] === value; })) s.appendChild(new Option('Every ' + value + ' days', String(value)));
+        if (!H.FREQUENCIES.some(function (f) { return f[0] === value; })) s.appendChild(new Option(H.frequencyLabel(value), String(value)));
         s.value = String(value);
         return s;
       }
@@ -113,12 +117,210 @@
         var p = d.split('-');
         return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
       }
+      function kindIcon(asset) { return asset.kind === 'vehicle' ? 'car' : 'house'; }
 
-      // ── Setup ──
-      function renderSetup() {
+      // ── Filter: All / Personal / Business / Rental (only when there's a mix) ──
+      function renderFilter() {
+        var box = $('filter');
+        box.textContent = '';
+        var used = H.USES.filter(function (u) { return state.assets.some(function (a) { return a.usage === u[0]; }); });
+        box.hidden = used.length < 2;
+        if (box.hidden) { state.filter = 'all'; return; }
+        [['all', 'All']].concat(used).forEach(function (u) {
+          var n = u[0] === 'all' ? state.assets.length : state.assets.filter(function (a) { return a.usage === u[0]; }).length;
+          var b = el('button', 'gs-seg-btn', u[1] + ' · ' + n);
+          b.type = 'button';
+          b.setAttribute('aria-pressed', String(state.filter === u[0]));
+          b.addEventListener('click', function () { state.filter = u[0]; renderFilter(); renderAssets(); });
+          box.appendChild(b);
+        });
+      }
+
+      // ── One card per place or vehicle ──
+      function itemRow(item) {
+        var st = H.status(item, new Date());
+        var li = el('li', 'gs-upkeep');
+        var main = el('div', 'gs-upkeep-main');
+        main.appendChild(el('p', 'gs-task-title', item.title));
+        main.appendChild(el('p', 'gs-task-meta', (item.is_renewal ? 'Renews ' + H.frequencyLabel(item.every_days).toLowerCase() : H.frequencyLabel(item.every_days)) +
+          (item.last_done ? ' · last done ' + shortDate(item.last_done) : '')));
+        li.appendChild(main);
+        li.appendChild(el('span', 'gs-pill ' + st.tone, st.label));
+
+        var actions = el('div', 'gs-upkeep-actions');
+        var done = el('button', 'gs-btn gs-btn-sm', item.is_renewal ? 'Renewed' : 'Done today');
+        done.type = 'button';
+        done.addEventListener('click', async function () {
+          done.disabled = true;
+          var next = H.nextAfterDone(item);
+          try {
+            await H.markDone(item);
+            show(item.title + (item.is_renewal ? ': renewed. Next expiry ' : ': done. Next one ') + shortDate(next) + '.');
+            await load();
+          } catch (err) { show(err.message, true); done.disabled = false; }
+        });
+        actions.appendChild(done);
+        var every = frequencySelect(item.every_days, 'How often: ' + item.title);
+        every.addEventListener('change', async function () {
+          every.disabled = true;
+          var days = Number(every.value);
+          try {
+            var next = item.is_renewal ? item.next_due : H.addDays(item.last_done || H.today(), days);
+            if (next < H.today()) next = H.today();
+            await H.update(item.id, { everyDays: days, nextDue: next });
+            show(item.title + ': now ' + H.frequencyLabel(days).toLowerCase() + '.');
+            await load();
+          } catch (err) { show(err.message, true); every.disabled = false; }
+        });
+        actions.appendChild(every);
+        var remove = el('button', 'gs-icon-btn', '×');
+        remove.type = 'button';
+        remove.setAttribute('aria-label', 'Stop tracking ' + item.title);
+        remove.addEventListener('click', async function () {
+          remove.disabled = true;
+          try { await H.remove(item.id); show('Stopped tracking: ' + item.title); await load(); }
+          catch (err) { show(err.message, true); remove.disabled = false; }
+        });
+        actions.appendChild(remove);
+        li.appendChild(actions);
+        return li;
+      }
+
+      function addUpkeepForm(asset, tracked) {
+        var form = el('form', 'gs-panel-body gs-task-form gs-upkeep-add');
+        form.noValidate = true;
+        var lt = el('label', 'gs-label gs-task-form-title', 'What');
+        var title = el('input', 'gs-input');
+        title.type = 'text'; title.maxLength = 120; title.autocomplete = 'off';
+        title.placeholder = asset.kind === 'vehicle' ? 'e.g. Replace tires' : 'e.g. Service the pool heater';
+        var dl = el('datalist');
+        dl.id = 'sugg-' + asset.id;
+        title.setAttribute('list', dl.id);
+        H.catalogFor(asset).filter(function (c) { return tracked.indexOf(c.key) === -1; })
+          .forEach(function (c) { dl.appendChild(new Option(c.title)); });
+        lt.appendChild(title); lt.appendChild(dl);
+        var lf = el('label', 'gs-label', 'How often');
+        var every = el('select', 'gs-input');
+        H.FREQUENCIES.forEach(function (f) { every.appendChild(new Option(f[1], String(f[0]))); });
+        every.value = '365';
+        lf.appendChild(every);
+        var ll = el('label', 'gs-label', 'Last done');
+        var last = el('select', 'gs-input');
+        H.LAST_DONE.forEach(function (o) { last.appendChild(new Option(o[1].replace('Last done: ', ''), o[0] == null ? '' : String(o[0]))); });
+        ll.appendChild(last);
+        var btn = el('button', 'gs-btn gs-btn-primary gs-task-form-btn', 'Add');
+        btn.type = 'submit';
+        title.addEventListener('change', function () {
+          var c = H.catalogFor(asset).find(function (x) { return x.title === title.value; });
+          if (c) every.value = String(c.every === 182 ? 180 : c.every);
+        });
+        form.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          var name = title.value.trim();
+          if (!name) { show('Name the upkeep first.', true); title.focus(); return; }
+          var c = H.catalogFor(asset).find(function (x) { return x.title === name; });
+          btn.disabled = true;
+          try {
+            await H.add(state.ctx.householdId, asset.id, [{ key: c ? c.key : null, title: name, everyDays: Number(every.value),
+              daysAgo: last.value === '' ? null : Number(last.value), renewal: c && c.renewal, leadDays: c && c.lead }]);
+            show('Added: ' + name + ' · ' + asset.name);
+            state.adding[asset.id] = false;
+            await load();
+          } catch (err) { show(err.message, true); btn.disabled = false; }
+        });
+        form.appendChild(lt); form.appendChild(lf); form.appendChild(ll); form.appendChild(btn);
+        return form;
+      }
+
+      function assetCard(asset) {
+        var items = state.items.filter(function (i) { return i.asset_id === asset.id; });
+        var now = new Date();
+        var due = items.filter(function (i) { return H.status(i, now).days <= (i.lead_days || 7); }).length;
+        var card = el('section', 'gs-panel gs-asset');
+        card.id = 'asset-' + asset.id;
+
+        var head = el('div', 'gs-panel-head');
+        var left = el('div', 'gs-panel-head-left');
+        left.appendChild(icon(kindIcon(asset), 'gs-panel-icon'));
+        var titles = el('div');
+        titles.appendChild(el('h2', 'gs-panel-title', asset.name));
+        var sub = el('p', 'gs-panel-sub gs-asset-sub');
+        if (asset.description) sub.appendChild(el('span', null, asset.description));
+        sub.appendChild(el('span', 'gs-pill gs-asset-use gs-use-' + asset.usage, H.usageLabel(asset)));
+        titles.appendChild(sub);
+        left.appendChild(titles);
+        head.appendChild(left);
+        head.appendChild(el('span', 'gs-pill gs-pill-lg ' + (due ? 'warn' : items.length ? 'ok' : ''),
+          due ? due + ' due soon' : items.length ? 'On track' : 'No upkeep yet'));
+        card.appendChild(head);
+
+        if (!items.length) {
+          var empty = el('div', 'gs-panel-body gs-asset-empty');
+          empty.appendChild(el('p', 'gs-empty', 'Nothing tracked for ' + asset.name + ' yet.'));
+          var pick = el('button', 'gs-btn gs-btn-primary gs-btn-sm', 'Choose upkeep');
+          pick.type = 'button';
+          pick.addEventListener('click', function () { openSetup(asset); });
+          empty.appendChild(pick);
+          card.appendChild(empty);
+        } else {
+          var list = el('ul', 'gs-list gs-panel-body gs-upkeep-list');
+          var openAll = !!state.open[asset.id];
+          var shown = openAll ? items : items.slice(0, 3);
+          shown.forEach(function (i) { list.appendChild(itemRow(i)); });
+          card.appendChild(list);
+          if (state.adding[asset.id]) card.appendChild(addUpkeepForm(asset, items.map(function (i) { return i.template_key; })));
+        }
+
+        var foot = el('div', 'gs-panel-foot gs-asset-foot');
+        if (items.length > 3) {
+          var more = el('button', 'gs-link-btn', state.open[asset.id] ? 'Show fewer' : 'Show all ' + items.length);
+          more.type = 'button';
+          more.addEventListener('click', function () { state.open[asset.id] = !state.open[asset.id]; renderAssets(); });
+          foot.appendChild(more);
+        } else foot.appendChild(el('span'));
+        var tools = el('span', 'gs-asset-tools');
+        if (items.length) {
+          var add = el('button', 'gs-link-btn', state.adding[asset.id] ? 'Cancel' : '+ Add upkeep');
+          add.type = 'button';
+          add.addEventListener('click', function () { state.adding[asset.id] = !state.adding[asset.id]; state.open[asset.id] = true; renderAssets(); });
+          tools.appendChild(add);
+        }
+        var rm = el('button', 'gs-link-btn gs-link-quiet', 'Remove');
+        rm.type = 'button';
+        rm.setAttribute('aria-label', 'Stop tracking ' + asset.name);
+        rm.addEventListener('click', async function () {
+          if (!window.confirm('Stop tracking ' + asset.name + ' and its upkeep? Its open tasks are removed too.')) return;
+          rm.disabled = true;
+          try { await H.removeAsset(asset.id); show('Stopped tracking ' + asset.name + '.'); await load(); }
+          catch (err) { show(err.message, true); rm.disabled = false; }
+        });
+        tools.appendChild(rm);
+        foot.appendChild(tools);
+        card.appendChild(foot);
+        return card;
+      }
+
+      function renderAssets() {
+        var box = $('assets');
+        box.textContent = '';
+        state.assets.filter(function (a) { return state.filter === 'all' || a.usage === state.filter; })
+          .forEach(function (a) { box.appendChild(assetCard(a)); });
+        $('asset-panel-title').textContent = state.assets.length ? 'Add another home or vehicle' : 'Add a home or vehicle';
+      }
+
+      // ── Setup: choose upkeep for one place or vehicle ──
+      function openSetup(asset) {
+        state.setupFor = asset;
         var list = $('setup-list');
         list.textContent = '';
-        H.CATALOG.forEach(function (c) {
+        $('setup-title').textContent = 'What does ' + asset.name + ' need?';
+        $('setup-sub').textContent = asset.kind === 'vehicle'
+          ? 'Pick the upkeep that applies. Tasks appear a week before each job, and about a month before a renewal expires.'
+          : 'Pick the upkeep that applies. A task appears on the household list a week before each one is due.';
+        var ic = $('setup-icon');
+        ic.textContent = '';
+        ic.appendChild(GS.shell.icon(kindIcon(asset)));
+        H.catalogFor(asset).forEach(function (c) {
           var li = el('li', 'gs-upkeep gs-upkeep-setup');
           var box = el('input');
           box.type = 'checkbox';
@@ -134,16 +336,18 @@
           every.dataset.role = 'every';
           li.appendChild(every);
           var last = el('select', 'gs-input gs-upkeep-last');
-          H.LAST_DONE.forEach(function (o) { last.appendChild(new Option(o[1], o[0] == null ? '' : String(o[0]))); });
-          last.dataset.role = 'last';
-          last.setAttribute('aria-label', 'Last done: ' + c.title);
+          (c.renewal ? H.expiryOptions() : H.LAST_DONE).forEach(function (o) { last.appendChild(new Option(o[1], o[0] == null ? '' : String(o[0]))); });
+          last.dataset.role = c.renewal ? 'expires' : 'last';
+          last.setAttribute('aria-label', (c.renewal ? 'Expires: ' : 'Last done: ') + c.title);
           li.appendChild(last);
-          var sync = function () { li.classList.toggle('gs-upkeep-off', !box.checked); updateStart(); };
-          box.addEventListener('change', sync);
+          box.addEventListener('change', function () { li.classList.toggle('gs-upkeep-off', !box.checked); updateStart(); });
           li.classList.toggle('gs-upkeep-off', !box.checked);
           list.appendChild(li);
         });
+        $('setup-panel').hidden = false;
+        $('asset-panel').hidden = true;
         updateStart();
+        $('setup-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
       function updateStart() {
         var n = $('setup-list').querySelectorAll('input[type=checkbox]:checked').length;
@@ -151,121 +355,69 @@
         $('start-btn').disabled = !n;
       }
       $('start-btn').addEventListener('click', async function () {
+        var asset = state.setupFor;
         var picks = [];
         $('setup-list').querySelectorAll('li').forEach(function (li) {
           var box = li.querySelector('input[type=checkbox]');
           if (!box.checked) return;
-          var c = H.CATALOG.find(function (x) { return x.key === box.dataset.key; });
-          picks.push({ key: c.key, title: c.title, everyDays: Number(li.querySelector('[data-role=every]').value),
-            daysAgo: li.querySelector('[data-role=last]').value === '' ? null : Number(li.querySelector('[data-role=last]').value) });
+          var c = H.findTemplate(box.dataset.key);
+          var sel = li.querySelector('[data-role=last], [data-role=expires]');
+          var pick = { key: c.key, title: c.title, everyDays: Number(li.querySelector('[data-role=every]').value), renewal: !!c.renewal, leadDays: c.lead };
+          if (sel.dataset.role === 'expires') pick.nextDue = sel.value || null;
+          else pick.daysAgo = sel.value === '' ? null : Number(sel.value);
+          picks.push(pick);
         });
         $('start-btn').disabled = true;
-        show('Setting up your schedule…');
+        show('Setting up ' + asset.name + '…');
         try {
-          await H.add(state.ctx.householdId, picks);
-          show('Schedule started. Tasks will appear a week before each item is due.');
+          await H.add(state.ctx.householdId, asset.id, picks);
+          show(asset.name + ' is set up. Tasks appear on the household list before each one is due.');
+          state.setupFor = null;
+          $('setup-panel').hidden = true;
+          $('asset-panel').hidden = false;
           await load();
+          var card = document.getElementById('asset-' + asset.id);
+          if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (err) { show(err.message, true); updateStart(); }
       });
 
-      // ── Schedule ──
-      function renderSchedule() {
-        var list = $('schedule');
-        list.textContent = '';
-        var now = new Date();
-        var dueSoon = 0;
-        state.items.forEach(function (item) {
-          var st = H.status(item, now);
-          if (st.days <= 7) dueSoon++;
-          var li = el('li', 'gs-upkeep');
-          var main = el('div', 'gs-upkeep-main');
-          main.appendChild(el('p', 'gs-task-title', item.title));
-          main.appendChild(el('p', 'gs-task-meta', H.frequencyLabel(item.every_days) +
-            (item.last_done ? ' · last done ' + shortDate(item.last_done) : '')));
-          li.appendChild(main);
-          li.appendChild(el('span', 'gs-pill ' + st.tone, st.label));
-
-          var actions = el('div', 'gs-upkeep-actions');
-          var done = el('button', 'gs-btn gs-btn-sm', 'Done today');
-          done.type = 'button';
-          done.addEventListener('click', async function () {
-            done.disabled = true;
-            try {
-              await H.markDone(item);
-              show(item.title + ': done. Next one ' + shortDate(H.addDays(H.today(), item.every_days)) + '.');
-              await load();
-            } catch (err) { show(err.message, true); done.disabled = false; }
-          });
-          actions.appendChild(done);
-          var every = frequencySelect(item.every_days, 'How often: ' + item.title);
-          every.addEventListener('change', async function () {
-            every.disabled = true;
-            var days = Number(every.value);
-            try {
-              var base = item.last_done || H.today();
-              var next = H.addDays(base, days);
-              if (next < H.today()) next = H.today();
-              await H.update(item.id, { everyDays: days, nextDue: next });
-              show(item.title + ': now ' + H.frequencyLabel(days).toLowerCase() + '.');
-              await load();
-            } catch (err) { show(err.message, true); every.disabled = false; }
-          });
-          actions.appendChild(every);
-          var remove = el('button', 'gs-icon-btn', '×');
-          remove.type = 'button';
-          remove.setAttribute('aria-label', 'Stop tracking ' + item.title);
-          remove.addEventListener('click', async function () {
-            remove.disabled = true;
-            try { await H.remove(item.id); show('Stopped tracking: ' + item.title); await load(); }
-            catch (err) { show(err.message, true); remove.disabled = false; }
-          });
-          actions.appendChild(remove);
-          li.appendChild(actions);
-          list.appendChild(li);
-        });
-        $('schedule-count').textContent = dueSoon ? dueSoon + ' due this week' : state.items.length + ' tracked';
-        $('schedule-count').className = 'gs-pill gs-pill-lg' + (dueSoon ? ' warn' : ' ok');
-
-        // Suggestions: catalog items not tracked yet.
-        var tracked = state.items.map(function (i) { return i.template_key; });
-        var dl = $('a-suggestions');
-        dl.textContent = '';
-        H.CATALOG.filter(function (c) { return tracked.indexOf(c.key) === -1; })
-          .forEach(function (c) { dl.appendChild(new Option(c.title)); });
+      // ── Add a place or vehicle ──
+      function setKind(kind) {
+        state.kind = kind;
+        $('kind').querySelectorAll('.gs-seg-btn').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.kind === kind)); });
+        $('as-name').placeholder = PLACEHOLDERS[kind][0];
+        $('as-desc').placeholder = PLACEHOLDERS[kind][1];
       }
-
-      $('a-title').addEventListener('change', function () {
-        var c = H.CATALOG.find(function (x) { return x.title === $('a-title').value; });
-        if (c) $('a-every').value = String(c.every);
+      $('kind').addEventListener('click', function (e) {
+        var b = e.target.closest('.gs-seg-btn');
+        if (b) setKind(b.dataset.kind);
       });
-      $('add-form').addEventListener('submit', async function (e) {
+      $('as-usage').addEventListener('change', function () { $('as-owner-wrap').hidden = $('as-usage').value === 'personal'; });
+      $('asset-form').addEventListener('submit', async function (e) {
         e.preventDefault();
-        var title = $('a-title').value.trim();
-        if (!title) { show('Name the upkeep first.', true); $('a-title').focus(); return; }
-        var c = H.CATALOG.find(function (x) { return x.title === title; });
-        $('add-btn').disabled = true;
+        $('as-btn').disabled = true;
         try {
-          await H.add(state.ctx.householdId, [{ key: c ? c.key : null, title: title, everyDays: Number($('a-every').value), lastDone: $('a-last').value || null }]);
-          $('a-title').value = ''; $('a-last').value = '';
-          show('Added: ' + title);
+          var asset = await H.addAsset(state.ctx.householdId, { kind: state.kind, name: $('as-name').value, description: $('as-desc').value,
+            usage: $('as-usage').value, ownerLabel: $('as-owner').value });
+          $('as-name').value = ''; $('as-desc').value = ''; $('as-owner').value = '';
+          $('as-usage').value = 'personal'; $('as-owner-wrap').hidden = true;
           await load();
+          openSetup(asset);
         } catch (err) { show(err.message, true); }
-        finally { $('add-btn').disabled = false; }
+        finally { $('as-btn').disabled = false; }
       });
 
       async function load() {
-        state.items = await H.list(state.ctx.householdId);
-        var empty = !state.items.length;
-        $('setup-panel').hidden = !empty;
-        $('schedule-panel').hidden = empty;
-        $('add-panel').hidden = empty;
-        if (empty) renderSetup(); else renderSchedule();
+        var both = await Promise.all([H.listAssets(state.ctx.householdId), H.list(state.ctx.householdId)]);
+        state.assets = both[0];
+        state.items = both[1];
+        renderFilter();
+        renderAssets();
       }
 
       (async function init() {
-        H.FREQUENCIES.forEach(function (f) { $('a-every').appendChild(new Option(f[1], String(f[0]))); });
-        $('a-every').value = '365';
-        $('a-last').max = H.today();
+        H.USES.forEach(function (u) { $('as-usage').appendChild(new Option(u[1], u[0])); });
+        setKind('place');
         try {
           var session = await GS.auth.requireSession();
           if (!session) return;

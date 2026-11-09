@@ -283,13 +283,36 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
 
   // 8b. Home Genie -> Core tasks -> dashboard
   await page.goto(BASE + '/modules/home/index.html');
+  await page.waitForSelector('#asset-form');
+  await page.fill('#as-name', 'Main house');
+  await page.click('#as-btn');
   await page.waitForSelector('#setup-panel:not([hidden])');
   const setupRows = await page.$$('#setup-list li');
   await (await setupRows[0].$('[data-role=last]')).selectOption('400');
   await page.click('#start-btn');
-  await page.waitForSelector('#schedule-panel:not([hidden])');
-  assert.ok(await page.$$eval('#schedule-panel li', els => els.length) >= 1, 'schedule has items');
-  step('Home setup creates a maintenance schedule');
+  await page.waitForFunction(() => /Main house is set up/.test(document.querySelector('#status').textContent));
+  assert.ok(await page.$$eval('.gs-asset li.gs-upkeep', els => els.length) >= 1, 'house has items');
+
+  await page.click('#kind [data-kind=vehicle]');
+  await page.fill('#as-name', 'F-150');
+  await page.fill('#as-desc', '2021 Ford F-150');
+  await page.selectOption('#as-usage', 'business');
+  await page.fill('#as-owner', 'Victoria Nails');
+  await page.click('#as-btn');
+  await page.waitForSelector('#setup-panel:not([hidden]) [data-role=expires]');
+  const regRow = await page.$('#setup-list li:has-text("Registration")');
+  const expiry = await regRow.$eval('[data-role=expires]', s => s.options[1].value);
+  await (await regRow.$('[data-role=expires]')).selectOption(expiry);
+  await page.click('#start-btn');
+  await page.waitForFunction(() => /F-150 is set up/.test(document.querySelector('#status').textContent));
+  assert.ok(/Business · Victoria Nails/.test(await page.textContent('.gs-asset:has-text("F-150") .gs-asset-sub')), 'business label');
+  await page.waitForSelector('#filter:not([hidden])');
+  await page.click('#filter button:has-text("Business")');
+  assert.strictEqual(await page.$$eval('.gs-asset', els => els.length), 1, 'filter shows business only');
+  const homeTasks = await page.evaluate(() => window.__fakeDb.load().household_tasks.filter(t => t.source_module === "home").map(t => t.title));
+  assert.ok(homeTasks.some(t => / · Main house$/.test(t)), "house task names the house: " + homeTasks.join(", "));
+  assert.ok(homeTasks.some(t => t === "Registration / plate sticker · F-150"), "registration expiring this month gets a task: " + homeTasks.join(", "));
+  step('Home: a house and a business vehicle, renewal by expiry month, tasks name the asset, filter by use');
 
   await page.goto(BASE + '/core/tasks/index.html');
   await page.waitForSelector('#open .gs-task');
@@ -304,9 +327,9 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   step('Tasks page: manual add, Home task completes and reschedules');
 
   await page.goto(BASE + '/core/dashboard/index.html');
-  await page.waitForFunction(() => /Home upkeep/.test(document.body.textContent));
+  await page.waitForFunction(() => /Upkeep: 1 home · 1 vehicle/.test(document.body.textContent));
   assert.notStrictEqual(await page.textContent('#home-pill'), 'Not set up');
-  step('dashboard shows live Home upkeep');
+  step('dashboard shows live upkeep for homes and vehicles');
 
   // 8c. Notifications: assigning someone else notifies them, not you; inbox, badge, prefs, test summary.
   await page.evaluate(() => {

@@ -120,3 +120,9 @@
 
 **Reason:** Tasks only help if the right person hears about them without opening the app, and delegation (spouse, house manager) depends on "assigned to you" reaching the assignee. Creating notifications in the database means every page and module that assigns a task notifies the same way, and nobody can create or forge a notification from the browser. Email goes through the same `_shared/email.ts` and Resend setup as invitations. Push notifications, SMS and per-module alerts wait until email is proven.
 
+## ADR-020 — Home Genie covers homes and vehicles
+
+**Decision:** Vehicles join Home Genie instead of becoming a separate module. `household_assets` (migration 0011) lists the household's homes/properties and vehicles; each is personal, business or rental, with an optional "owned by" label (e.g. a business or LLC), and maintenance items belong to one. Each kind has its own checklist; vehicles add date-based renewals (registration, insurance, emissions), set up by expiry month, shown from 30–45 days ahead (`lead_days`) and moved on from the expiry date when renewed. Task titles name the asset ("Oil change · F-150"). Existing items moved to a "Main house". Time-based only: mileage intervals, VINs, keys and codes, and insurance or finance details are not stored.
+
+**Reason:** The research's strongest segment owns several properties and vehicles, some through a business or as rentals. Cars need the same thing homes do (recurring upkeep that turns into tasks and the weekly summary), so one scheduler serves both, and CLAUDE.md keeps a Vehicle module out of active development. Marking business and rental assets lets an owner filter and hand them off without mixing them into personal upkeep; accounting and expense tracking stay out of scope.
+
