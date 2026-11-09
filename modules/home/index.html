@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Home upkeep · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261109c" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261109d" />
 </head>
 <body data-gs-shell="home">
   <main class="gs-shell" style="max-width:860px">
@@ -31,7 +31,7 @@
       </div>
       <ul id="setup-list" class="gs-list gs-panel-body gs-upkeep-list"></ul>
       <div class="gs-panel-foot">
-        <span>Don’t know when it was last done? Leave the date empty: the first ones are spread over the coming weeks.</span>
+        <span>Not sure when something was last done? Leave it on “Not sure”: those are spread over the coming weeks.</span>
         <button id="start-btn" class="gs-btn gs-btn-primary" type="button">Start schedule</button>
       </div>
     </section>
@@ -133,12 +133,10 @@
           var every = frequencySelect(c.every, 'How often: ' + c.title);
           every.dataset.role = 'every';
           li.appendChild(every);
-          var last = el('input', 'gs-input gs-upkeep-last');
-          last.type = 'date';
-          last.max = H.today();
+          var last = el('select', 'gs-input gs-upkeep-last');
+          H.LAST_DONE.forEach(function (o) { last.appendChild(new Option(o[1], o[0] == null ? '' : String(o[0]))); });
           last.dataset.role = 'last';
           last.setAttribute('aria-label', 'Last done: ' + c.title);
-          last.title = 'Last done (optional)';
           li.appendChild(last);
           var sync = function () { li.classList.toggle('gs-upkeep-off', !box.checked); updateStart(); };
           box.addEventListener('change', sync);
@@ -159,7 +157,7 @@
           if (!box.checked) return;
           var c = H.CATALOG.find(function (x) { return x.key === box.dataset.key; });
           picks.push({ key: c.key, title: c.title, everyDays: Number(li.querySelector('[data-role=every]').value),
-            lastDone: li.querySelector('[data-role=last]').value || null });
+            daysAgo: li.querySelector('[data-role=last]').value === '' ? null : Number(li.querySelector('[data-role=last]').value) });
         });
         $('start-btn').disabled = true;
         show('Setting up your schedule…');
@@ -183,7 +181,7 @@
           var main = el('div', 'gs-upkeep-main');
           main.appendChild(el('p', 'gs-task-title', item.title));
           main.appendChild(el('p', 'gs-task-meta', H.frequencyLabel(item.every_days) +
-            (item.last_done ? ' · last done ' + shortDate(item.last_done) : ' · not done yet')));
+            (item.last_done ? ' · last done ' + shortDate(item.last_done) : '')));
           li.appendChild(main);
           li.appendChild(el('span', 'gs-pill ' + st.tone, st.label));
 
