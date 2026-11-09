@@ -284,6 +284,7 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   // 8b. Home Genie -> Core tasks -> dashboard
   await page.goto(BASE + '/modules/home/index.html');
   await page.waitForSelector('#asset-form');
+  assert.ok(await page.$eval('#as-usage-wrap', e => e.hidden), 'homes have no Personal/Business choice');
   await page.fill('#as-name', 'Main house');
   await page.click('#as-btn');
   await page.waitForSelector('#setup-panel:not([hidden])');

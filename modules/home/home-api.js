@@ -121,8 +121,8 @@
       var row = {
         household_id: householdId, kind: a.kind === 'vehicle' ? 'vehicle' : 'place',
         name: String(a.name || '').trim().slice(0, 60), description: (a.description || '').trim().slice(0, 80) || null,
-        usage: a.usage === 'business' ? 'business' : 'personal',
-        owner_label: a.usage !== 'personal' ? ((a.ownerLabel || '').trim().slice(0, 80) || null) : null
+        usage: a.kind === 'vehicle' && a.usage === 'business' ? 'business' : 'personal',
+        owner_label: a.kind === 'vehicle' && a.usage === 'business' ? ((a.ownerLabel || '').trim().slice(0, 80) || null) : null
       };
       if (!row.name) throw new Error('Give it a name, e.g. “Lake house” or “F-150”.');
       var out = check(await db().from('household_assets').insert(row).select(ASSET_COLS));

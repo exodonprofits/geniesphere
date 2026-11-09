@@ -33,7 +33,7 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 |---|---|---|
 | Nutrition | `/modules/nutrition/index.html` | 0.1: household preferences (`household_nutrition_prefs`), 7-day plan via `gs-ai-gateway` saved per household and week (`household_meal_plans`); This week / Next week switch, opening on next week from Friday, allergen flags, adds groceries through `modules/grocery/grocery-api.js`; app shell |
 | Grocery | `/modules/grocery/index.html` | slice 1: shared household list (`shopping_lists` / `shopping_items`); app shell |
-| Home | `/modules/home/index.html` | 0.1: homes and vehicles (`household_assets`, 0011), each personal or business with an optional owner; filter by use; per asset a checklist (homes: 12 common jobs; vehicles: service and renewals: registration, insurance, emissions by expiry month), schedule with Done today / Renewed, frequency, remove, add your own; due items become household tasks named "Item · Asset" a week ahead (renewals 30–45 days) (0009, 0011, ADR-018, ADR-020, ADR-021); app shell |
+| Home | `/modules/home/index.html` | 0.1: homes the family lives in and its vehicles (`household_assets`, 0011), vehicles personal or business with an optional owner; filter by use; per asset a checklist (homes: 12 common jobs; vehicles: service and renewals: registration, insurance, emissions by expiry month), schedule with Done today / Renewed, frequency, remove, add your own; due items become household tasks named "Item · Asset" a week ahead (renewals 30–45 days) (0009, 0011, ADR-018, ADR-020, ADR-021); app shell |
 
 ## Cache busting
 

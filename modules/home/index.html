@@ -47,13 +47,13 @@
           <span class="gs-panel-icon" data-gs-icon="sparkle"></span>
           <div>
             <h2 id="asset-panel-title" class="gs-panel-title">Add a home or vehicle</h2>
-            <p class="gs-panel-sub">Each one gets its own checklist. Mark business ones so they can be handed off or filtered. Rental properties live in Rental Genie.</p>
+            <p class="gs-panel-sub">Homes you live in, and the family’s vehicles. Mark business vehicles so they can be handed off or filtered. Rentals live in Rental Genie.</p>
           </div>
         </div>
       </div>
       <form id="asset-form" class="gs-panel-body gs-asset-form" novalidate>
         <div id="kind" class="gs-seg gs-seg-inline" role="group" aria-label="What is it">
-          <button type="button" class="gs-seg-btn" data-kind="place" aria-pressed="true">Home or property</button>
+          <button type="button" class="gs-seg-btn" data-kind="place" aria-pressed="true">Home</button>
           <button type="button" class="gs-seg-btn" data-kind="vehicle" aria-pressed="false">Vehicle</button>
         </div>
         <label class="gs-label">Name
@@ -62,7 +62,7 @@
         <label class="gs-label">Details <span class="gs-label-hint">(optional)</span>
           <input id="as-desc" class="gs-input" type="text" maxlength="80" placeholder="e.g. South Elgin" autocomplete="off" />
         </label>
-        <label class="gs-label">Use
+        <label id="as-usage-wrap" class="gs-label" hidden>Use
           <select id="as-usage" class="gs-input"></select>
         </label>
         <label id="as-owner-wrap" class="gs-label" hidden>Owned by <span class="gs-label-hint">(optional)</span>
@@ -86,7 +86,7 @@
       var H = GS.home;
       var state = { ctx: null, assets: [], items: [], filter: 'all', open: {}, setupFor: null, kind: 'place', adding: {} };
       var PLACEHOLDERS = {
-        place: ['e.g. Main house', 'e.g. South Elgin'],
+        place: ['e.g. Main house, Lake house', 'e.g. South Elgin'],
         vehicle: ['e.g. F-150', 'e.g. 2022 Ford F-150']
       };
       function $(id) { return document.getElementById(id); }
@@ -387,6 +387,10 @@
         $('kind').querySelectorAll('.gs-seg-btn').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.kind === kind)); });
         $('as-name').placeholder = PLACEHOLDERS[kind][0];
         $('as-desc').placeholder = PLACEHOLDERS[kind][1];
+        // Homes are always personal; only vehicles can be business-owned (ADR-021).
+        $('as-usage-wrap').hidden = kind !== 'vehicle';
+        if (kind !== 'vehicle') $('as-usage').value = 'personal';
+        $('as-owner-wrap').hidden = kind !== 'vehicle' || $('as-usage').value === 'personal';
       }
       $('kind').addEventListener('click', function (e) {
         var b = e.target.closest('.gs-seg-btn');
