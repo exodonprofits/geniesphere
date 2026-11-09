@@ -4,7 +4,7 @@
   function load() {
     try {
       var s = JSON.parse(localStorage.getItem(KEY));
-      if (s) { ['household_meal_plans', 'household_nutrition_prefs', 'gs_ai_usage', 'household_invites'].forEach(function (t) { s[t] = s[t] || []; }); return s; }
+      if (s) { ['household_meal_plans', 'household_nutrition_prefs', 'gs_ai_usage', 'household_invites', 'home_maintenance_items'].forEach(function (t) { s[t] = s[t] || []; }); return s; }
     } catch (e) {}
     return {
       session: null,
@@ -18,10 +18,38 @@
         { id: 't2', household_id: 'h1', title: 'Old done task', status: 'done', completed_at: '2026-10-01T00:00:00Z', due_at: null }
       ],
       shopping_lists: [], shopping_items: [],
-      household_meal_plans: [], household_nutrition_prefs: [], gs_ai_usage: [], household_invites: [], seq: 0
+      household_meal_plans: [], household_nutrition_prefs: [], gs_ai_usage: [], household_invites: [], home_maintenance_items: [], seq: 0
     };
   }
   function save(db) { localStorage.setItem(KEY, JSON.stringify(db)); }
+
+  // Mirrors 0009's database triggers: a home item due within 7 days gets one
+  // open household task; finishing that task reschedules the item.
+  function isoDay(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function plusDays(day, n) { var p = day.split('-'); return isoDay(new Date(+p[0], +p[1] - 1, +p[2] + n)); }
+  function homeSync(db) {
+    var today = isoDay(new Date());
+    db.home_maintenance_items.forEach(function (it) {
+      var ref = 'home:' + it.id;
+      var open = db.household_tasks.find(function (t) { return t.source_ref === ref && !t.completed_at; });
+      if (it.active !== false && it.next_due <= plusDays(today, 7) && !open) {
+        db.household_tasks.push({ id: 'task-' + (++db.seq), household_id: it.household_id, title: it.title, notes: null,
+          due_at: it.next_due + 'T12:00:00Z', assigned_to: null, source_module: 'home', source_ref: ref, status: 'todo',
+          completed_at: null, created_at: new Date().toISOString() });
+      } else if (open && it.active === false) {
+        db.household_tasks = db.household_tasks.filter(function (t) { return t !== open; });
+      } else if (open && it.next_due > plusDays(today, 7)) {
+        open.status = 'done'; open.completed_at = new Date().toISOString();
+      }
+    });
+  }
+  function homeTaskDone(db, task) {
+    if (!task.source_ref || task.source_ref.indexOf('home:') !== 0 || !task.completed_at) return;
+    var it = db.home_maintenance_items.find(function (i) { return 'home:' + i.id === task.source_ref; });
+    if (!it) return;
+    var day = isoDay(new Date(task.completed_at));
+    it.last_done = day; it.next_due = plusDays(day, it.every_days);
+  }
   window.__fakeDb = { load: load, save: save };
 
   function Query(table, db) {
@@ -64,13 +92,19 @@
         if (this.op === 'upsert') { var keys = this.conflict; var ex = rows.find(function (r) { return keys.every(function (k) { return r[k] === row[k]; }); }); if (ex) { Object.assign(ex, row); out.push(ex); continue; } }
         if (!row.id && this.t !== 'user_household_context') row.id = this.t + '-' + (++db.seq);
         if (this.t === 'shopping_items') { if (row.checked === undefined) row.checked = false; }
+        if (this.t === 'home_maintenance_items' && row.active === undefined) row.active = true;
         row.created_at = new Date(Date.now() + db.seq).toISOString();
         rows.push(row); out.push(row);
       }
+      if (this.t === 'home_maintenance_items') homeSync(db);
       save(db);
       return { data: this._one ? out[0] : (this.ret ? out : null), error: null };
     }
-    if (this.op === 'update') { rows.filter(match).forEach(function (r) { Object.assign(r, self.payload); }); save(db); return { data: null, error: null }; }
+    if (this.op === 'update') {
+      rows.filter(match).forEach(function (r) { Object.assign(r, self.payload); if (self.t === 'household_tasks') homeTaskDone(db, r); });
+      if (this.t === 'home_maintenance_items' || this.t === 'household_tasks') homeSync(db);
+      save(db); return { data: null, error: null };
+    }
     if (this.op === 'delete') { db[this.t] = rows.filter(function (r) { return !match(r); }); save(db); return { data: null, error: null }; }
     var data = rows.filter(match).map(function (r) { return Object.assign({}, r); });
     if (this.t === 'household_members' && /households/.test(this.cols))

@@ -63,6 +63,20 @@
                 { onConflict: 'user_id' });
       if (error) throw error;
       cached = null;
+    },
+
+    // People in a household, for member lists and "assign to" pickers.
+    // -> [{ userId, name, email, role }]; name falls back to the email.
+    async members(householdId) {
+      const { data, error } = await window.GenieSphere.getSupabase()
+        .from('household_members')
+        .select('user_id, role, display_name, email, created_at')
+        .eq('household_id', householdId)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(function (m) {
+        return { userId: m.user_id, name: m.display_name || m.email || 'Member', email: m.email, role: m.role, createdAt: m.created_at };
+      });
     }
   };
 })();

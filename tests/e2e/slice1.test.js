@@ -281,6 +281,34 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   await page.screenshot({ path: path.join(OUT, 'shell-desktop.png') });
   step('phone width swaps the top nav for a 5-item bottom bar');
 
+  // 8b. Home Genie -> Core tasks -> dashboard
+  await page.goto(BASE + '/modules/home/index.html');
+  await page.waitForSelector('#setup-panel:not([hidden])');
+  const setupRows = await page.$$('#setup-list li');
+  const daysAgo = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+  await (await setupRows[0].$('[data-role=last]')).fill(daysAgo(95));
+  await page.click('#start-btn');
+  await page.waitForSelector('#schedule-panel:not([hidden])');
+  assert.ok(await page.$$eval('#schedule-panel li', els => els.length) >= 1, 'schedule has items');
+  step('Home setup creates a maintenance schedule');
+
+  await page.goto(BASE + '/core/tasks/index.html');
+  await page.waitForSelector('#open .gs-task');
+  assert.ok(await page.$('#open .gs-task .gs-task-source'), 'home task shows its source pill');
+  await page.fill('#t-title', 'Book window cleaning');
+  await page.click('#add-btn');
+  await page.waitForFunction(() => /Added: Book/.test(document.querySelector('#status').textContent));
+  const homeBox = await page.$('#open .gs-task:has(.gs-task-source) input[type=checkbox]');
+  await homeBox.click();
+  await page.waitForFunction(() => /Home Genie scheduled the next one/.test(document.querySelector('#status').textContent));
+  await page.waitForSelector('#done-panel:not([hidden]) #done .gs-task');
+  step('Tasks page: manual add, Home task completes and reschedules');
+
+  await page.goto(BASE + '/core/dashboard/index.html');
+  await page.waitForFunction(() => /Home upkeep/.test(document.body.textContent));
+  assert.notStrictEqual(await page.textContent('#home-pill'), 'Not set up');
+  step('dashboard shows live Home upkeep');
+
   // 9. Sign out from the shell
   await page.click('.gs-account-btn');
   await page.click('#gs-account-menu button:has-text("Sign out")');
@@ -292,7 +320,7 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
     await page.goto(BASE + url);
     await page.waitForURL(/\/core\/auth\/login\.html\?next=/);
   }
-  step('placeholder pages also require a session');
+  step('Tasks and Home require a session');
 
   assert.deepStrictEqual(errors, [], 'console errors: ' + errors.join(' | '));
   step('no console errors');
