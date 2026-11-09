@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     if (sent.sent) {
       await admin.auth.admin.updateUserById(userId as string, { app_metadata: { ...meta, reset_sent_at: new Date().toISOString() } });
     }
-    console.log("[gs-password-reset] requested", JSON.stringify({ emailed: sent.sent, reason: sent.reason || null }));
+    console.log("[gs-password-reset] requested", JSON.stringify({ emailed: sent.sent, reason: sent.reason || null, via: sent.via || null }));
   } catch (e) {
     console.error("[gs-password-reset] failed:", String(e).slice(0, 300));
   }

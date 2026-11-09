@@ -106,3 +106,5 @@
 
 **Reason:** Supabase's built-in email only reaches the project team, so invites never reached the invitee and "Forgot password?" pointed at the old project. Using the domain's existing Bluehost mail needs no new vendor. If deliverability from shared hosting proves poor, the same module can switch to a provider (e.g. Resend) by changing the SMTP secrets.
 
+**Addendum (2026-11-09):** the first live send through Bluehost SMTP was refused (`535 Incorrect authentication data`). `_shared/email.ts` now prefers the Resend API when `RESEND_API_KEY` and `FROM_EMAIL` are set, the provider Rental Genie already uses (better deliverability than shared-hosting mail, no mailbox password on the server); Bluehost SMTP stays as the fallback. Logs record which path sent (`via`).
+

@@ -3,12 +3,15 @@
 // GenieSphere transactional email: templates and SMTP sending. Used by
 // gs-household-invite (invitations, password resets).
 //
-// Sending uses the Bluehost mailbox given in the Edge Function secrets:
-//   SMTP_HOST, SMTP_PORT (465, implicit TLS), SMTP_USER, SMTP_PASS
-// Optional: SMTP_FROM_NAME (default "GenieSphere"), SMTP_REPLY_TO (default
-// info@geniesphere.com). Supabase Edge Functions cannot connect out on ports
-// 25 or 587, so 465 is required. When the secrets are missing, sendEmail
-// returns { sent: false } and callers fall back to showing the link.
+// Sending (Edge Function secrets), first one configured wins:
+//   1. Resend API (same provider as Rental Genie): RESEND_API_KEY, and
+//      FROM_EMAIL e.g. "GenieSphere <invites@geniesphere.com>" on a domain
+//      verified in Resend.
+//   2. Bluehost SMTP: SMTP_HOST, SMTP_PORT (465, implicit TLS; Edge Functions
+//      can't use 25 or 587), SMTP_USER, SMTP_PASS; SMTP_FROM_NAME optional.
+// Replies go to SMTP_REPLY_TO / REPLY_TO (default info@geniesphere.com). With
+// neither configured, sendEmail returns { sent: false } and callers fall back
+// to showing the link.
 //
 // Templates are table-based with inline styles so Gmail, Apple Mail and
 // Outlook render them the same. Every value is HTML-escaped.
@@ -118,21 +121,40 @@ ${fallbackLink(o.link)}`;
 
 // Sends one email. Never throws: returns { sent: false, reason } so callers
 // can fall back (e.g. show the invitation link to copy).
-export async function sendEmail(to: string, mail: Email): Promise<{ sent: boolean; reason?: string }> {
+export async function sendEmail(to: string, mail: Email): Promise<{ sent: boolean; reason?: string; via?: string }> {
+  const replyTo = Deno.env.get("REPLY_TO") || Deno.env.get("SMTP_REPLY_TO") || "info@geniesphere.com";
+  const resendKey = Deno.env.get("RESEND_API_KEY");
+  if (resendKey) {
+    const from = Deno.env.get("FROM_EMAIL") || "GenieSphere <invites@geniesphere.com>";
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from, to: [to], reply_to: replyTo, subject: mail.subject, html: mail.html, text: mail.text }),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (res.ok) return { sent: true, via: "resend" };
+      console.error("[email] resend failed:", res.status, (await res.text()).slice(0, 300));
+      return { sent: false, reason: "send_failed", via: "resend" };
+    } catch (e) {
+      console.error("[email] resend failed:", String(e).slice(0, 300));
+      return { sent: false, reason: "send_failed", via: "resend" };
+    }
+  }
+
   const host = Deno.env.get("SMTP_HOST");
   const user = Deno.env.get("SMTP_USER");
   const pass = Deno.env.get("SMTP_PASS");
   const port = Number(Deno.env.get("SMTP_PORT") || "465");
   if (!host || !user || !pass) return { sent: false, reason: "not_configured" };
   const fromName = Deno.env.get("SMTP_FROM_NAME") || "GenieSphere";
-  const replyTo = Deno.env.get("SMTP_REPLY_TO") || "info@geniesphere.com";
   const client = new SMTPClient({ connection: { hostname: host, port, tls: true, auth: { username: user, password: pass } } });
   try {
     await client.send({ from: `${fromName} <${user}>`, to, replyTo, subject: mail.subject, content: mail.text, html: mail.html });
-    return { sent: true };
+    return { sent: true, via: "smtp" };
   } catch (e) {
-    console.error("[email] send failed:", String(e).slice(0, 300));
-    return { sent: false, reason: "send_failed" };
+    console.error("[email] smtp failed:", String(e).slice(0, 300));
+    return { sent: false, reason: "send_failed", via: "smtp" };
   } finally {
     try { await client.close(); } catch { /* already closed */ }
   }
