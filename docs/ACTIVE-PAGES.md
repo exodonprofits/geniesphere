@@ -34,6 +34,10 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 | Grocery | `/modules/grocery/index.html` | slice 1: shared household list (`shopping_lists` / `shopping_items`); app shell |
 | Home | `/modules/home/index.html` | 0.1: setup checklist of 12 common jobs (how often, last done), schedule with status, Done today, change frequency, remove, add your own; due items become household tasks a week ahead (0009, ADR-018); app shell |
 
+## Cache busting
+
+Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261109e`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
+
 ## Legacy migration rule
 
 When a page from the existing GenieSphere ZIP is selected as canonical:
