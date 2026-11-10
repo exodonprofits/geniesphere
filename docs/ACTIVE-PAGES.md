@@ -14,10 +14,11 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 | Settings | `/core/settings/index.html` | household members (name, email, role); owner: invite by one-time link, pending invitations with revoke; session required; app shell |
 | Join household | `/core/auth/invite.html#t=…` | opened from an invitation link; new account (password ≥10) or sign-in if the email already has one; no app shell |
 | Tasks | `/core/tasks/index.html` | add (title, due date, who), assign, complete/undo, delete own tasks; grouped Overdue / This week / Later / No date; module tasks show their source ("Home Genie") and can't be deleted here; done in the last 14 days; session required; app shell |
-| Genie | `/core/genie/index.html` | household assistant, phase 1 "brain, not hands" (ADR-022): "This week" briefing from open tasks (no AI); Ask Genie chat via `genie.chat`; proposal cards (new task, assign, grocery items) save only on Approve, with Undo for tasks; text/email drafts are copied or opened in Messages/Mail, never sent; "What Genie can do / Never" panel; session required; app shell (nav item 2) |
+| Genie | `/core/genie/index.html` | household assistant, phase 1 "brain, not hands" (ADR-022): "This week" briefing from open tasks (no AI); Ask Genie chat via `genie.chat` (shared `genie-chat.js`, same conversation as the floating sheet); proposal cards (new task, assign, grocery items) save only on Approve, with Undo for tasks; text/email drafts are copied or opened in Messages/Mail, never sent; "What Genie can do / Never" panel; session required; app shell (top-nav item 2; on phones reached from the floating button) |
 | Notifications | `/core/notifications/index.html` | inbox (assigned to you, weekly summary; mark read / all read); email toggles per member and household (weekly summary, assigned to you); "Send me this week’s summary" (1 per 10 min); session required; app shell. Unread count on the avatar and in the account menu (`gs-shell.js`) |
 
-| App shell (component) | `/shared/components/gs-shell.js` | top bar, account menu, phone bottom bar; mounts on `<body data-gs-shell="key">`; styles in `/shared/css/app.css` |
+| App shell (component) | `/shared/components/gs-shell.js` | top bar, account menu, phone bottom bar (5 tabs, no Genie tab); floating Genie button on every shell page except Genie, which loads Genie's scripts on first tap (ADR-023); mounts on `<body data-gs-shell="key">`; styles in `/shared/css/app.css` |
+| Genie chat (component) | `/core/genie/genie-chat.js` | `GenieSphere.genieChat.mount/openSheet/closeSheet`; one conversation UI for the Genie page and the floating sheet; history in `sessionStorage` for the browser tab; fires `gs:data-changed` (`tasks`/`grocery`) after Approve/Undo, and Dashboard, Tasks, Grocery and Genie refresh |
 | AI gateway (service) | `/core/ai/ai-gateway.js` → Edge Function `gs-ai-gateway` | `GenieSphere.ai.request({task, householdId, input})`; tasks: `meal_plan.generate` (10/household/day), `genie.chat` (30/household/day) |
 | Grocery interface (module API) | `/modules/grocery/grocery-api.js` | `GenieSphere.grocery.activeListId`, `addItems` (skips items already on the list) |
 | Household context (service) | `/core/household/household.js` | current household from `user_household_context`, else first membership by name; `members(householdId)` |
@@ -39,7 +40,7 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 ## Cache busting
 
-Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261110b`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
+Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261110c`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
 
 ## Legacy migration rule
 

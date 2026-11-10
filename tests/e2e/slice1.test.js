@@ -275,19 +275,22 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   await page.setViewportSize({ width: 390, height: 844 });
   assert.strictEqual(await page.isVisible('.gs-bottomnav'), true);
   assert.strictEqual(await page.isVisible('.gs-topnav'), false);
-  assert.strictEqual(await page.$$eval('.gs-bottomnav a', els => els.length), 6);
+  assert.strictEqual(await page.$$eval('.gs-bottomnav a', els => els.length), 5, 'Genie tab replaced by the floating button');
+  assert.strictEqual(await page.isVisible('.gs-genie-fab'), true);
   assert.strictEqual(await page.$$eval('.gs-bottomnav a', els => new Set(els.map(e => Math.round(e.getBoundingClientRect().top))).size), 1, 'bottom nav on one row');
   await page.screenshot({ path: path.join(OUT, 'shell-mobile.png') });
   await page.setViewportSize({ width: 1100, height: 800 });
   await page.screenshot({ path: path.join(OUT, 'shell-desktop.png') });
-  step('phone width swaps the top nav for a 6-item bottom bar on one row');
+  step('phone width swaps the top nav for a 5-item bottom bar on one row, plus the Genie button');
 
   // Genie: a proposal changes nothing until approved; approving adds the task.
   await page.goto(BASE + '/core/genie/index.html');
   await page.waitForSelector('#brief li');
   await page.evaluate(() => { window.GenieSphere.ai.request = async () => ({ ok: true, usage: { today: 1, limit: 30 }, result: { reply: 'Here you go.', proposals: [{ type: 'task.add', title: 'Genie test task', dueDate: null, assignee: 'Nobody' }] } }); });
-  await page.fill('#ask-input', 'add a test task');
-  await page.press('#ask-input', 'Enter');
+  assert.strictEqual(await page.$('.gs-genie-fab'), null, 'no floating button on the Genie page');
+  await page.waitForSelector('#genie-chat .gs-genie-send:not([disabled])');
+  await page.fill('#genie-chat .gs-genie-input', 'add a test task');
+  await page.press('#genie-chat .gs-genie-input', 'Enter');
   await page.waitForSelector('.gs-genie-card-task-add');
   assert.strictEqual(await page.evaluate(() => window.__fakeDb.load().household_tasks.some(t => t.title === 'Genie test task')), false, 'nothing saved before Approve');
   await page.click('.gs-genie-card-task-add button:has-text("Approve")');
@@ -296,6 +299,22 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   await page.click('.gs-genie-card-done button:has-text("Undo")');
   await page.waitForFunction(() => !window.__fakeDb.load().household_tasks.some(t => t.title === 'Genie test task'));
   step('Genie: proposals save only on Approve, and Undo removes them');
+
+  // Floating Genie: opens over any page, approving refreshes the page underneath.
+  await page.goto(BASE + '/modules/grocery/index.html');
+  await page.waitForSelector('#items');
+  assert.strictEqual(await page.evaluate(() => !!window.GenieSphere.genie), false, 'Genie scripts load only on tap');
+  await page.click('.gs-genie-fab');
+  await page.waitForSelector('.gs-genie-sheet:not([hidden]) .gs-genie-send:not([disabled])');
+  assert.ok(await page.textContent('.gs-genie-sheet-body').then(t => t.includes('add a test task')), 'conversation follows across pages');
+  await page.evaluate(() => { window.GenieSphere.ai.request = async () => ({ ok: true, usage: { today: 2, limit: 30 }, result: { reply: 'Added.', proposals: [{ type: 'grocery.add', items: [{ name: 'Floating figs' }] }] } }); });
+  await page.fill('.gs-genie-sheet .gs-genie-input', 'add figs');
+  await page.press('.gs-genie-sheet .gs-genie-input', 'Enter');
+  await page.click('.gs-genie-sheet .gs-genie-card-grocery-add button:has-text("Approve")');
+  await page.waitForFunction(() => /Floating figs/.test(document.querySelector('#items').textContent));
+  await page.keyboard.press('Escape');
+  assert.strictEqual(await page.isVisible('.gs-genie-sheet'), false, 'Escape closes the sheet');
+  step('floating Genie: loads on tap, keeps the conversation, approval refreshes the grocery list');
 
   // 8b. Home Genie -> Core tasks -> dashboard
   await page.goto(BASE + '/modules/home/index.html');
