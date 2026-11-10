@@ -163,6 +163,33 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   assert.strictEqual(await page.textContent('#nutrition-pill'), 'Planned');
   step('plan persists on reload; dashboard briefing shows tonight’s dinner');
 
+  // Snap a meal: the photo is shrunk to a JPEG, sent once, and the estimate is editable.
+  await page.goto(BASE + '/modules/nutrition/index.html');
+  await page.waitForSelector('#snap:not([hidden]) .gs-snap-actions');
+  await page.evaluate(() => {
+    window.__sent = null;
+    window.GenieSphere.ai.request = async (o) => {
+      window.__sent = { task: o.task, len: o.input.image.length, head: o.input.image.slice(0, 23) };
+      return { ok: true, usage: { today: 1, limit: 20 }, result: { isFood: true, dish: 'Shrimp pad thai', confidence: 'medium', note: 'Oil changes it most.', allergens: ['shellfish'],
+        items: [{ name: 'Rice noodles', portion: '1.5 cups', kcalLow: 400, kcalHigh: 500, proteinG: 10, carbsG: 80, fatG: 12 },
+                { name: 'Shrimp', portion: 'about 4 oz', kcalLow: 100, kcalHigh: 140, proteinG: 24, carbsG: 1, fatG: 2 }] } };
+    };
+  });
+  await page.setInputFiles('#snap .gs-snap-actions label:nth-child(2) input', path.join(__dirname, '../../shared/assets/logo/geniesphere_logo.png'));
+  await page.waitForSelector('.gs-snap-total');
+  const sent = await page.evaluate(() => window.__sent);
+  assert.strictEqual(sent.task, 'nutrition.photo_estimate');
+  assert.strictEqual(sent.head, 'data:image/jpeg;base64,', 'photo is re-encoded as JPEG');
+  assert.ok(sent.len < 400000, 'photo is shrunk before upload: ' + sent.len);
+  assert.strictEqual(await page.textContent('.gs-snap-total'), '500–640 kcal');
+  assert.ok((await page.textContent('.gs-snap-allergen')).includes('May contain shellfish'));
+  await page.click('.gs-snap-item >> nth=1 >> button[aria-label="More Shrimp"]');
+  assert.strictEqual(await page.textContent('.gs-snap-total'), '525–675 kcal', '1¼× shrimp');
+  await page.click('.gs-snap-item >> nth=1 >> .gs-snap-drop');
+  assert.strictEqual(await page.textContent('.gs-snap-total'), '400–500 kcal', 'removed item not counted');
+  assert.strictEqual(await page.evaluate(() => !!window.__fakeDb.load().meal_photos), false, 'nothing stored');
+  step('snap a meal: JPEG under 400 KB sent once, range total, allergen flag, portions adjust the total');
+
   // 6c. Invite flow: owner creates a link, invitee joins, link is single-use.
   await page.goto(BASE + '/core/settings/index.html');
   await page.waitForSelector('#members li');

@@ -55,7 +55,8 @@
     bell: 'M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
     car: 'M5 17h14M5 17v-4l2-5h10l2 5v4M5 17v2h2.5v-2M19 17v2h-2.5v-2M5 13h14M8 15h.01M16 15h.01',
     shield: 'M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6zM9 12l2 2 4-4',
-    mail: 'M4 6h16v12H4zM4 7l8 6 8-6'
+    mail: 'M4 6h16v12H4zM4 7l8 6 8-6',
+    camera: 'M4 8h3.5l2-3h5l2 3H20v11H4zM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z'
   };
 
   var SVG_NS = 'http://www.w3.org/2000/svg';
