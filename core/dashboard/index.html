@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Dashboard · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261109f" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261109h" />
 </head>
 <body data-gs-shell="dashboard">
   <main class="gs-shell">
@@ -89,11 +89,11 @@
   </main>
 
   <script src="/shared/vendor/supabase.min.js"></script>
-  <script src="/shared/js/app-config.js?v=20261109f"></script>
-  <script src="/shared/js/gs-client.js?v=20261109f"></script>
-  <script src="/shared/js/gs-auth.js?v=20261109f"></script>
-  <script src="/shared/components/gs-shell.js?v=20261109f"></script>
-  <script src="/core/household/household.js?v=20261109f"></script>
+  <script src="/shared/js/app-config.js?v=20261109h"></script>
+  <script src="/shared/js/gs-client.js?v=20261109h"></script>
+  <script src="/shared/js/gs-auth.js?v=20261109h"></script>
+  <script src="/shared/components/gs-shell.js?v=20261109h"></script>
+  <script src="/core/household/household.js?v=20261109h"></script>
   <script>
     (function () {
       var GS = window.GenieSphere;
@@ -375,10 +375,14 @@
       // Home Genie schedule, for the Today row and the module card. Optional:
       // if it can't load, the dashboard shows "Not set up".
       async function loadHome(householdId) {
-        var result = await db().from('home_maintenance_items')
-          .select('title, next_due').eq('household_id', householdId).eq('active', true)
-          .order('next_due', { ascending: true }).limit(100);
-        return result.error ? [] : (result.data || []);
+        var both = await Promise.all([
+          db().from('home_maintenance_items').select('title, next_due, lead_days, asset_id')
+            .eq('household_id', householdId).eq('active', true).order('next_due', { ascending: true }).limit(200),
+          db().from('household_assets').select('id, name, kind').eq('household_id', householdId).eq('active', true)
+        ]);
+        var items = both[0].error ? [] : (both[0].data || []);
+        items.assets = both[1].error ? [] : (both[1].data || []);
+        return items;
       }
 
       function homeSummary(items) {
@@ -386,14 +390,20 @@
         var now = new Date();
         var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         function daysTo(d) { var p = d.split('-'); return Math.round((new Date(+p[0], +p[1] - 1, +p[2]) - today) / DAY); }
-        var soon = items.filter(function (i) { return daysTo(i.next_due) <= 7; }).length;
+        var soon = items.filter(function (i) { return daysTo(i.next_due) <= (i.lead_days || 7); }).length;
         var next = items[0];
+        var assets = items.assets || [];
+        var asset = assets.find(function (a) { return a.id === next.asset_id; });
+        var homes = assets.filter(function (a) { return a.kind === 'place'; }).length, cars = assets.length - homes;
+        var what = assets.length
+          ? [homes ? homes + (homes === 1 ? ' home' : ' homes') : '', cars ? cars + (cars === 1 ? ' vehicle' : ' vehicles') : ''].filter(Boolean).join(' · ')
+          : items.length + ' tracked';
         var p = next.next_due.split('-');
         var when = new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         return {
-          tone: soon ? 'warn' : 'ok', pill: soon ? soon + ' due this week' : 'On track',
-          title: 'Home upkeep: ' + items.length + ' tracked',
-          detail: 'Next: ' + next.title + ' · ' + (daysTo(next.next_due) < 0 ? 'overdue since ' : 'due ') + when
+          tone: soon ? 'warn' : 'ok', pill: soon ? soon + ' due soon' : 'On track',
+          title: 'Upkeep: ' + what,
+          detail: 'Next: ' + next.title + (asset ? ' · ' + asset.name : '') + ' · ' + (daysTo(next.next_due) < 0 ? 'overdue since ' : 'due ') + when
         };
       }
 
