@@ -227,10 +227,9 @@ export async function sendEmail(to: string, mail: Email): Promise<{ sent: boolea
 }
 
 // The site's address for links in emails: the caller's page origin if it is
-// one of ours, else the canonical address. Switches to https by itself once
-// the site serves it.
+// one of ours, else the canonical https address.
 const SITE_ORIGINS = ["https://geniesphere.com", "https://www.geniesphere.com", "http://geniesphere.com", "http://www.geniesphere.com"];
 export function siteUrlFrom(req: Request): string {
   const origin = req.headers.get("Origin") || "";
-  return SITE_ORIGINS.includes(origin) ? origin : "http://geniesphere.com";
+  return SITE_ORIGINS.includes(origin) ? origin : "https://geniesphere.com";
 }

@@ -1,6 +1,22 @@
 # GenieSphere web root. Managed in git (repo root .htaccess) and published by
 # bluehost-deploy.yml; edits made on the server are overwritten on the next upload.
 
+# Always HTTPS. Logins and household data must never travel in the clear.
+# The ACME path stays reachable over http so AutoSSL can renew the certificate.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Tell browsers to use HTTPS only (ignored on http responses). Short max-age (1 day) while the certificate
+# is new; raise to 31536000 once AutoSSL has renewed it at least once.
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=86400"
+</IfModule>
+
 # Serve the static homepage, not a leftover WordPress index.php.
 DirectoryIndex index.html index.php
 
