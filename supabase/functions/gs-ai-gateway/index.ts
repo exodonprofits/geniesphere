@@ -21,6 +21,9 @@
 //                       (prompt ported from the n8n "Meal Planner" workflow)
 //   genie.chat          Genie assistant: answer + proposals the person
 //                       approves in the browser (ADR-022). Quick, not streamed.
+//   nutrition.photo_estimate  calories and macros from one meal photo, as
+//                       ranges, with household allergen flags (ADR-025). The
+//                       photo is never stored or logged.
 //
 // Project: GenieSphere (nxgtefbqizvihwikqnaw), see docs/DECISIONS.md ADR-015.
 // Secrets: OPENAI_API_KEY (set in the project's Edge Function secrets);
@@ -34,7 +37,7 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const DAILY_LIMITS: Record<string, number> = { "meal_plan.generate": 10, "genie.chat": 30 };
+const DAILY_LIMITS: Record<string, number> = { "meal_plan.generate": 10, "genie.chat": 30, "nutrition.photo_estimate": 20 };
 const MODEL = "gpt-4o-mini";
 
 function json(body: unknown, status = 200) {
@@ -588,6 +591,86 @@ async function genieChat(admin: any, openaiKey: string, householdId: string, inp
   return { ok: true, result: { reply: answer.reply, proposals: answer.proposals }, tokens };
 }
 
+// ── Meal photo estimate (nutrition.photo_estimate, ADR-025) ─────
+// The photo is used for this one call: never stored, never logged.
+const PHOTO_MAX_CHARS = 1_500_000;   // ~1.1 MB JPEG as a data URL; the browser sends ~150 KB
+const PHOTO_MAX_ITEMS = 12;
+
+function photoPrompt(): string {
+  return `You estimate the food in one photo for a household nutrition app.
+Return JSON only:
+{"isFood": boolean, "dish": string, "items": [{"name": string, "portion": string, "kcalLow": number, "kcalHigh": number, "proteinG": number, "carbsG": number, "fatG": number}], "allergens": [string], "confidence": "low" | "medium" | "high", "note": string}
+Rules:
+- One item per distinct food you can see (at most ${PHOTO_MAX_ITEMS}). Judge portions from the plate, bowl and utensils; write them in household terms ("about 6 oz", "1 cup", "2 slices").
+- kcalLow and kcalHigh: a realistic range for that portion, including the cooking oil, butter and sauce it likely has. Protein, carbs and fat in grams for the middle of the range.
+- Not food, or you cannot tell what it is: isFood false and items [].
+- allergens: only names from this list, and only when the food very likely contains it: ${ALLERGIES.join(", ")}. Never say a dish is free of an allergen.
+- dish: a short name for the whole meal (max 6 words).
+- note: one short sentence on what most changes the estimate (portion, hidden oil, sauce). No medical, diet or weight advice.
+- confidence: how sure you are about the foods and portions together.`;
+}
+
+function cleanPhotoAnswer(raw: any, householdAllergies: string[]) {
+  const items = (Array.isArray(raw?.items) ? raw.items : []).slice(0, PHOTO_MAX_ITEMS).map((it: any) => {
+    let lo = num(it?.kcalLow, 3000), hi = num(it?.kcalHigh, 3000);
+    if (hi < lo) [lo, hi] = [hi, lo];
+    if (!hi) hi = lo;
+    return {
+      name: str(it?.name, 60), portion: str(it?.portion, 40), kcalLow: lo, kcalHigh: hi,
+      proteinG: num(it?.proteinG, 300), carbsG: num(it?.carbsG, 500), fatG: num(it?.fatG, 300),
+    };
+  }).filter((it: any) => it.name && it.kcalHigh > 0);
+  const isFood = raw?.isFood !== false && items.length > 0;
+  // Household allergies: what the model reported, plus a word check on the item names.
+  const reported = pick(raw?.allergens, ALLERGIES, ALLERGIES.length);
+  const names = items.map((it: any) => it.name).join(" · ") + " · " + str(raw?.dish, 80);
+  const flagged = householdAllergies.filter((a) => reported.includes(a) || allergenHits(names, [a]).length > 0);
+  return {
+    isFood,
+    dish: isFood ? str(raw?.dish, 60) : "",
+    items: isFood ? items : [],
+    allergens: isFood ? flagged : [],
+    confidence: ["low", "medium", "high"].includes(raw?.confidence) ? raw.confidence : "low",
+    note: isFood ? str(raw?.note, 200) : "",
+  };
+}
+
+async function photoEstimate(admin: any, openaiKey: string, householdId: string, input: Record<string, unknown>) {
+  const image = typeof input.image === "string" ? input.image : "";
+  if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(image) || image.length > PHOTO_MAX_CHARS) {
+    return { ok: false, error: "That photo could not be read. Try another one." };
+  }
+  const { data: prefRow } = await admin.from("household_nutrition_prefs").select("prefs").eq("household_id", householdId).maybeSingle();
+  const allergies = pick(prefRow?.prefs?.allergies, ALLERGIES, ALLERGIES.length);
+  const started = Date.now();
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+    signal: AbortSignal.timeout(45_000),
+    body: JSON.stringify({
+      model: MODEL,
+      temperature: 0.2,
+      max_tokens: 900,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: photoPrompt() },
+        { role: "user", content: [
+          { type: "text", text: "Estimate this meal." },
+          { type: "image_url", image_url: { url: image, detail: "low" } },
+        ] },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`openai ${res.status} ${(await res.text()).slice(0, 300)}`);
+  const data = await res.json();
+  let raw: any = {};
+  try { raw = JSON.parse(data.choices?.[0]?.message?.content || "{}"); } catch { raw = {}; }
+  const result = cleanPhotoAnswer(raw, allergies);
+  const tokens = data.usage?.total_tokens || 0;
+  console.log("[gs-ai-gateway] photo", JSON.stringify({ ms: Date.now() - started, tokens, food: result.isFood, items: result.items.length, allergens: result.allergens.length }));
+  return { ok: true, result, tokens };
+}
+
 // ── Handler ──────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -625,7 +708,7 @@ Deno.serve(async (req) => {
     return json({ error: "Could not check today's usage. Try again." }, 503);
   }
   if (used === -1) {
-    const what = task === "genie.chat" ? "Genie questions" : "meal plans";
+    const what = task === "genie.chat" ? "Genie questions" : task === "nutrition.photo_estimate" ? "meal photos" : "meal plans";
     return json({ error: `Your household has used today's ${limit} ${what}. More are available tomorrow (UTC).`, limit }, 429);
   }
 
@@ -638,6 +721,19 @@ Deno.serve(async (req) => {
       if (row) await admin.from("gs_ai_usage").update({ tokens }).eq("id", row.id);
     } catch (e) {
       console.error("[gs-ai-gateway] token log failed:", e);
+    }
+  }
+
+  if (task === "nutrition.photo_estimate") {
+    try {
+      const out = await photoEstimate(admin, openaiKey, householdId, body.input || {});
+      if (out.tokens) await logTokens(out.tokens);
+      if (!out.ok) return json({ ok: false, error: out.error });
+      return json({ ok: true, task, model: MODEL, result: out.result, usage: { today: used, limit } });
+    } catch (e) {
+      console.error("[gs-ai-gateway] photo failed:", String(e).slice(0, 300));
+      const busy = String(e).startsWith("Error: openai") || String(e).includes("TimeoutError");
+      return json({ ok: false, error: busy ? "The photo checker is busy. Try again in a minute." : "Couldn’t read that photo. Try again." });
     }
   }
 

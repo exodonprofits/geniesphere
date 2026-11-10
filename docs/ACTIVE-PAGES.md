@@ -19,7 +19,8 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 | App shell (component) | `/shared/components/gs-shell.js` | top bar, account menu, phone bottom bar (5 tabs, no Genie tab); floating Genie button on every shell page except Genie, which loads Genie's scripts on first tap (ADR-023); mounts on `<body data-gs-shell="key">`; styles in `/shared/css/app.css` |
 | Genie chat (component) | `/core/genie/genie-chat.js` | `GenieSphere.genieChat.mount/openSheet/closeSheet`; one conversation UI for the Genie page and the floating sheet; history in `sessionStorage` for the browser tab; fires `gs:data-changed` (`tasks`/`grocery`) after Approve/Undo, and Dashboard, Tasks, Grocery and Genie refresh |
-| AI gateway (service) | `/core/ai/ai-gateway.js` → Edge Function `gs-ai-gateway` | `GenieSphere.ai.request({task, householdId, input})`; tasks: `meal_plan.generate` (10/household/day), `genie.chat` (30/household/day) |
+| AI gateway (service) | `/core/ai/ai-gateway.js` → Edge Function `gs-ai-gateway` | `GenieSphere.ai.request({task, householdId, input})`; tasks: `meal_plan.generate` (10/household/day), `genie.chat` (30/household/day), `nutrition.photo_estimate` (20/household/day, photo never stored) |
+| Meal photo (module component) | `/modules/nutrition/meal-photo.js` | `GenieSphere.mealPhoto.mount/shrink/estimate`; "Snap a meal" card on the Nutrition page: photo → JPEG ≤768 px → `nutrition.photo_estimate`; calorie ranges, macros, household allergen flags, per-item portion scaling; nothing stored (ADR-025) |
 | Grocery interface (module API) | `/modules/grocery/grocery-api.js` | `GenieSphere.grocery.activeListId`, `addItems` (skips items already on the list) |
 | Household context (service) | `/core/household/household.js` | current household from `user_household_context`, else first membership by name; `members(householdId)` |
 | Notifications (service) | `/core/notifications/notifications.js` → Edge Function `gs-notify` | `GenieSphere.notifications.list/unreadCount/markRead/markAllRead/prefs/savePrefs/sendTestDigest`; tables `household_notifications` (read + `read_at` only), `notification_prefs` (0010). `gs-notify` also runs from pg_cron every 5 min: assigned-to-you emails, Sunday 5 PM summary |
@@ -34,13 +35,13 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 | Module | Canonical path | Status |
 |---|---|---|
-| Nutrition | `/modules/nutrition/index.html` | 0.1: household preferences (`household_nutrition_prefs`), 7-day plan via `gs-ai-gateway` saved per household and week (`household_meal_plans`); This week / Next week switch, opening on next week from Friday, allergen flags, adds groceries through `modules/grocery/grocery-api.js`; app shell |
+| Nutrition | `/modules/nutrition/index.html` | 0.1: household preferences (`household_nutrition_prefs`), 7-day plan via `gs-ai-gateway` saved per household and week (`household_meal_plans`); This week / Next week switch, opening on next week from Friday, allergen flags, adds groceries through `modules/grocery/grocery-api.js`; "Snap a meal" photo calorie estimate (ADR-025); app shell |
 | Grocery | `/modules/grocery/index.html` | slice 1: shared household list (`shopping_lists` / `shopping_items`); app shell |
 | Home | `/modules/home/index.html` | 0.1: homes the family lives in and its vehicles (`household_assets`, 0011), vehicles personal or business with an optional owner; filter by use; per asset a checklist (homes: 12 common jobs; vehicles: service and renewals: registration, insurance, emissions by expiry month), schedule with Done today / Renewed, frequency, remove, add your own; due items become household tasks named "Item · Asset" a week ahead (renewals 30–45 days) (0009, 0011, ADR-018, ADR-020, ADR-021); app shell |
 
 ## Cache busting
 
-Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261110d`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
+Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261110e`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
 
 ## Legacy migration rule
 
