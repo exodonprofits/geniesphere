@@ -9,9 +9,24 @@
  * The shell only displays navigation, who is signed in and how many unread
  * notifications they have. Pages still guard themselves with
  * GenieSphere.auth.requireSession(). Styles: /shared/css/app.css.
+ *
+ * Every page except Genie's own also gets the floating Genie button
+ * (ADR-023). Genie's scripts load only on the first tap.
  */
 (function () {
   window.GenieSphere = window.GenieSphere || {};
+
+  // Same cache tag as this file, so lazy-loaded scripts stay in step with it.
+  var SELF = document.currentScript;
+  var VERSION = SELF && SELF.src.indexOf('?v=') > -1 ? SELF.src.split('?v=')[1] : '';
+  // What the Genie sheet needs, in load order: [global it defines, file].
+  var GENIE_SCRIPTS = [
+    ['ai', '/core/ai/ai-gateway.js'],
+    ['tasks', '/core/tasks/tasks.js'],
+    ['grocery', '/modules/grocery/grocery-api.js'],
+    ['genie', '/core/genie/genie.js'],
+    ['genieChat', '/core/genie/genie-chat.js']
+  ];
 
   var NAV = [
     { key: 'dashboard', label: 'Dashboard', href: '/core/dashboard/index.html', icon: 'grid' },
@@ -189,12 +204,48 @@
       el('div', { class: 'gs-topbar-inner' }, [brand, topNav, accountMenu(active)])
     ]);
 
+    // On phones the floating Genie button replaces the Genie tab.
     var bottomNav = el('nav', { class: 'gs-bottomnav', 'aria-label': 'Main' });
-    NAV.forEach(function (item) { bottomNav.appendChild(navLink(item, active)); });
+    NAV.forEach(function (item) { if (item.key !== 'genie') bottomNav.appendChild(navLink(item, active)); });
 
     document.body.insertBefore(header, document.body.firstChild);
     document.body.appendChild(bottomNav);
     document.body.classList.add('gs-has-shell');
+    if (active !== 'genie') genieButton();
+  }
+
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = src + (VERSION ? '?v=' + VERSION : '');
+      s.onload = resolve;
+      s.onerror = function () { reject(new Error('Genie could not load. Check your connection and try again.')); };
+      document.head.appendChild(s);
+    });
+  }
+
+  var genieLoading = null;
+  function loadGenie() {
+    if (!genieLoading) {
+      genieLoading = GENIE_SCRIPTS.reduce(function (chain, dep) {
+        return chain.then(function () { return window.GenieSphere[dep[0]] ? null : loadScript(dep[1]); });
+      }, Promise.resolve());
+      genieLoading.catch(function () { genieLoading = null; });
+    }
+    return genieLoading;
+  }
+
+  function genieButton() {
+    var button = el('button', { type: 'button', class: 'gs-genie-fab', 'aria-label': 'Ask Genie', 'aria-haspopup': 'dialog' }, [icon('sparkle')]);
+    button.addEventListener('click', function () {
+      button.setAttribute('aria-busy', 'true');
+      loadGenie()
+        .then(function () { window.GenieSphere.genieChat.openSheet(); })
+        .catch(function (err) { window.alert(err.message); })
+        .then(function () { button.removeAttribute('aria-busy'); });
+    });
+    document.body.appendChild(button);
+    document.body.classList.add('gs-has-genie-fab');
   }
 
   window.GenieSphere.shell = { mount: mount, nav: NAV, icon: icon, fillIcons: fillIcons };

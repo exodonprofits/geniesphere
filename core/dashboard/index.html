@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Dashboard · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261110b" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261110c" />
 </head>
 <body data-gs-shell="dashboard">
   <main class="gs-shell">
@@ -89,11 +89,11 @@
   </main>
 
   <script src="/shared/vendor/supabase.min.js"></script>
-  <script src="/shared/js/app-config.js?v=20261110b"></script>
-  <script src="/shared/js/gs-client.js?v=20261110b"></script>
-  <script src="/shared/js/gs-auth.js?v=20261110b"></script>
-  <script src="/shared/components/gs-shell.js?v=20261110b"></script>
-  <script src="/core/household/household.js?v=20261110b"></script>
+  <script src="/shared/js/app-config.js?v=20261110c"></script>
+  <script src="/shared/js/gs-client.js?v=20261110c"></script>
+  <script src="/shared/js/gs-auth.js?v=20261110c"></script>
+  <script src="/shared/components/gs-shell.js?v=20261110c"></script>
+  <script src="/core/household/household.js?v=20261110c"></script>
   <script>
     (function () {
       var GS = window.GenieSphere;
@@ -442,6 +442,13 @@
         return (result.data || []).length;
       }
 
+      async function refresh(ctx) {
+        var loaded = await Promise.all([loadTasks(ctx.householdId), loadToBuy(ctx.householdId), countMembers(ctx.householdId), loadMealPlan(ctx.householdId), loadHome(ctx.householdId)]);
+        renderBriefing(loaded[0], loaded[1], loaded[3]);
+        renderToday(ctx, loaded[0], loaded[1].length, loaded[2], loaded[3], loaded[4]);
+        renderTasks(loaded[0]);
+      }
+
       (async function init() {
         try {
           var session = await GS.auth.requireSession();
@@ -459,10 +466,11 @@
           }
           document.getElementById('household-name').textContent = ctx.name;
           renderSwitcher(ctx);
-          var loaded = await Promise.all([loadTasks(ctx.householdId), loadToBuy(ctx.householdId), countMembers(ctx.householdId), loadMealPlan(ctx.householdId), loadHome(ctx.householdId)]);
-          renderBriefing(loaded[0], loaded[1], loaded[3]);
-          renderToday(ctx, loaded[0], loaded[1].length, loaded[2], loaded[3], loaded[4]);
-          renderTasks(loaded[0]);
+          await refresh(ctx);
+          // Genie changed tasks or groceries from the floating chat.
+          window.addEventListener('gs:data-changed', function () {
+            refresh(ctx).catch(function (err) { show(err.message || 'Could not refresh the dashboard.', true); });
+          });
         } catch (err) {
           show(err.message || 'Could not load the dashboard.', true);
         }

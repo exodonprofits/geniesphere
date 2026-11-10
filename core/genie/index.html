@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Genie · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261110b" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261110c" />
 </head>
 <body data-gs-shell="genie">
   <main class="gs-shell">
@@ -45,16 +45,7 @@
           </div>
         </div>
       </div>
-      <div class="gs-panel-body">
-        <div id="chat" class="gs-genie-chat" aria-live="polite"></div>
-        <div id="suggest" class="gs-genie-suggest"></div>
-        <form id="ask-form" class="gs-genie-ask" novalidate>
-          <label class="gs-sr-only" for="ask-input">Ask Genie</label>
-          <textarea id="ask-input" class="gs-input gs-genie-input" rows="1" maxlength="1000" placeholder="Ask Genie anything…"></textarea>
-          <button id="ask-btn" class="gs-btn gs-btn-primary gs-genie-send" type="submit" aria-label="Send">Ask</button>
-        </form>
-        <p id="usage" class="gs-hint"></p>
-      </div>
+      <div id="genie-chat" class="gs-panel-body"></div>
     </section>
 
     <section class="gs-panel">
@@ -75,30 +66,21 @@
   </main>
 
   <script src="/shared/vendor/supabase.min.js"></script>
-  <script src="/shared/js/app-config.js?v=20261110b"></script>
-  <script src="/shared/js/gs-client.js?v=20261110b"></script>
-  <script src="/shared/js/gs-auth.js?v=20261110b"></script>
-  <script src="/core/household/household.js?v=20261110b"></script>
-  <script src="/core/notifications/notifications.js?v=20261110b"></script>
-  <script src="/shared/components/gs-shell.js?v=20261110b"></script>
-  <script src="/core/ai/ai-gateway.js?v=20261110b"></script>
-  <script src="/core/tasks/tasks.js?v=20261110b"></script>
-  <script src="/modules/grocery/grocery-api.js?v=20261110b"></script>
-  <script src="/core/genie/genie.js?v=20261110b"></script>
+  <script src="/shared/js/app-config.js?v=20261110c"></script>
+  <script src="/shared/js/gs-client.js?v=20261110c"></script>
+  <script src="/shared/js/gs-auth.js?v=20261110c"></script>
+  <script src="/core/household/household.js?v=20261110c"></script>
+  <script src="/core/notifications/notifications.js?v=20261110c"></script>
+  <script src="/shared/components/gs-shell.js?v=20261110c"></script>
+  <script src="/core/ai/ai-gateway.js?v=20261110c"></script>
+  <script src="/core/tasks/tasks.js?v=20261110c"></script>
+  <script src="/modules/grocery/grocery-api.js?v=20261110c"></script>
+  <script src="/core/genie/genie.js?v=20261110c"></script>
+  <script src="/core/genie/genie-chat.js?v=20261110c"></script>
   <script>
     (function () {
       var GS = window.GenieSphere, G = GS.genie;
-      var state = { ctx: null, members: [], tasks: [], history: [], busy: false };
-      var SUGGESTIONS = [
-        'What’s due this week?',
-        'Plan Saturday’s chores for the family',
-        'Draft a text to book the furnace service',
-        'Add milk, eggs and bananas to groceries'
-      ];
-      var KIND = {
-        'task.add': ['list', 'New task'], 'task.assign': ['list', 'Assign'],
-        'grocery.add': ['cart', 'Grocery list'], 'draft': ['mail', 'Draft']
-      };
+      var state = { ctx: null, members: [], tasks: [] };
 
       function $(id) { return document.getElementById(id); }
       function el(tag, cls, text) {
@@ -107,16 +89,10 @@
         if (text != null) n.textContent = text;
         return n;
       }
-      function icon(name) { var s = el('span', 'gs-genie-ico'); s.setAttribute('data-gs-icon', name); return s; }
       function status(msg, isError) { $('status').textContent = msg || ''; $('status').classList.toggle('gs-error', !!isError); }
       function nameOf(userId) {
         var m = state.members.find(function (x) { return x.userId === userId; });
         return m ? G.memberName(m) : 'Anyone';
-      }
-      function dueText(iso) {
-        if (!iso) return 'No date';
-        var p = iso.split('-');
-        return 'Due ' + new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
       }
 
       // ── This week (no AI) ──
@@ -142,127 +118,14 @@
         if (n > 6) list.appendChild(el('li', 'gs-genie-brief-empty', '+ ' + (n - 6) + ' more on the Tasks page'));
       }
 
-      // ── Conversation ──
-      function bubble(role, text) {
-        var wrap = el('div', 'gs-genie-msg gs-genie-' + role);
-        if (role === 'genie') wrap.appendChild(icon('sparkle'));
-        var body = el('div', 'gs-genie-bubble');
-        String(text || '').split(/\n{2,}/).forEach(function (para) { body.appendChild(el('p', null, para)); });
-        wrap.appendChild(body);
-        $('chat').appendChild(wrap);
-        GS.shell.fillIcons(wrap);
-        wrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        return body;
-      }
-
-      function proposalCard(p) {
-        var kind = KIND[p.type] || ['sparkle', 'Suggestion'];
-        var card = el('div', 'gs-genie-card gs-genie-card-' + p.type.replace('.', '-'));
-        var head = el('div', 'gs-genie-card-head');
-        head.appendChild(icon(kind[0]));
-        head.appendChild(el('span', 'gs-genie-card-kind', p.type === 'draft' ? (p.channel === 'email' ? 'Draft email' : 'Draft text') : kind[1]));
-        card.appendChild(head);
-
-        if (p.type === 'task.add') {
-          card.appendChild(el('p', 'gs-genie-card-title', p.title));
-          card.appendChild(el('p', 'gs-genie-card-meta', dueText(p.dueDate) + ' · ' + (p.assignee || 'Anyone')));
-        } else if (p.type === 'task.assign') {
-          card.appendChild(el('p', 'gs-genie-card-title', p.title));
-          card.appendChild(el('p', 'gs-genie-card-meta', 'Give it to ' + p.assignee));
-        } else if (p.type === 'grocery.add') {
-          var ul = el('ul', 'gs-genie-card-items');
-          (p.items || []).forEach(function (it) { ul.appendChild(el('li', null, it.name + (it.quantity ? ' · ' + it.quantity : ''))); });
-          card.appendChild(ul);
-        } else if (p.type === 'draft') {
-          if (p.to) card.appendChild(el('p', 'gs-genie-card-meta', 'To: ' + p.to));
-          if (p.subject) card.appendChild(el('p', 'gs-genie-card-title', p.subject));
-          card.appendChild(el('p', 'gs-genie-draft', p.body));
-        }
-
-        var foot = el('div', 'gs-genie-card-foot');
-        var note = el('span', 'gs-genie-card-note');
-        if (p.type === 'draft') {
-          var copy = el('button', 'gs-btn gs-btn-primary gs-btn-sm', 'Copy');
-          copy.type = 'button';
-          copy.addEventListener('click', async function () {
-            try { await navigator.clipboard.writeText((p.subject ? p.subject + '\n\n' : '') + p.body); note.textContent = 'Copied. Paste it wherever you send it.'; }
-            catch (e) { note.textContent = 'Select the text above to copy it.'; }
-          });
-          var open = el('a', 'gs-btn gs-btn-sm', p.channel === 'email' ? 'Open in Mail' : 'Open in Messages');
-          open.href = p.channel === 'email'
-            ? 'mailto:?subject=' + encodeURIComponent(p.subject || '') + '&body=' + encodeURIComponent(p.body)
-            : 'sms:?&body=' + encodeURIComponent(p.body);
-          foot.appendChild(copy); foot.appendChild(open);
-        } else {
-          var ok = el('button', 'gs-btn gs-btn-primary gs-btn-sm', 'Approve');
-          var no = el('button', 'gs-btn gs-btn-sm', 'Dismiss');
-          ok.type = no.type = 'button';
-          ok.addEventListener('click', async function () {
-            ok.disabled = no.disabled = true; note.textContent = 'Saving…';
-            try {
-              var res = await G.apply(state.ctx.householdId, p, state.members);
-              card.classList.add('gs-genie-card-done');
-              foot.textContent = '';
-              foot.appendChild(el('span', 'gs-genie-card-ok', '✓ ' + res.text));
-              if (res.undo) {
-                var undo = el('button', 'gs-btn gs-btn-sm', 'Undo');
-                undo.type = 'button';
-                undo.addEventListener('click', async function () {
-                  undo.disabled = true;
-                  try { await res.undo(); foot.textContent = ''; foot.appendChild(el('span', 'gs-genie-card-note', 'Undone.')); await loadTasks(); }
-                  catch (e) { undo.disabled = false; status(e.message || 'Could not undo.', true); }
-                });
-                foot.appendChild(undo);
-              }
-              await loadTasks();
-            } catch (e) {
-              ok.disabled = no.disabled = false; note.textContent = e.message || 'Could not save. Try again.';
-            }
-          });
-          no.addEventListener('click', function () { card.classList.add('gs-genie-card-dismissed'); foot.textContent = ''; foot.appendChild(el('span', 'gs-genie-card-note', 'Dismissed.')); });
-          foot.appendChild(ok); foot.appendChild(no);
-        }
-        foot.appendChild(note);
-        card.appendChild(foot);
-        return card;
-      }
-
-      async function ask(text) {
-        text = String(text || '').trim();
-        if (!text || state.busy) return;
-        state.busy = true; $('ask-btn').disabled = true; $('suggest').hidden = true;
-        bubble('me', text);
-        state.history.push({ role: 'user', content: text });
-        $('ask-input').value = ''; autosize();
-        var thinking = bubble('genie', 'Thinking…');
-        thinking.parentNode.classList.add('gs-genie-thinking');
-        try {
-          var out = await G.ask(state.ctx.householdId, state.history);
-          thinking.parentNode.remove();
-          var body = bubble('genie', out.reply || 'Here’s what I’d suggest.');
-          out.proposals.forEach(function (p) { body.appendChild(proposalCard(p)); });
-          GS.shell.fillIcons(body);
-          state.history.push({ role: 'assistant', content: out.reply });
-          if (out.usage) $('usage').textContent = out.usage.today + ' of ' + out.usage.limit + ' questions used today.';
-        } catch (e) {
-          thinking.parentNode.remove();
-          bubble('genie', e.message || 'Genie couldn’t answer just now. Try again in a moment.').parentNode.classList.add('gs-genie-error');
-        } finally {
-          state.busy = false; $('ask-btn').disabled = false;
-        }
-      }
-
-      function autosize() { var t = $('ask-input'); t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 160) + 'px'; }
-
       async function loadTasks() {
         state.tasks = await GS.tasks.listOpen(state.ctx.householdId);
         renderBrief();
       }
 
-      $('ask-form').addEventListener('submit', function (e) { e.preventDefault(); ask($('ask-input').value); });
-      $('ask-input').addEventListener('input', autosize);
-      $('ask-input').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask($('ask-input').value); }
+      // An approved Genie suggestion changed the tasks: refresh "This week".
+      window.addEventListener('gs:data-changed', function (e) {
+        if (state.ctx && e.detail && e.detail.kind === 'tasks') loadTasks().catch(function (err) { status(err.message, true); });
       });
 
       (async function init() {
@@ -270,21 +133,15 @@
           var li = el('li'); li.appendChild(el('strong', null, a[0])); li.appendChild(document.createTextNode(' ' + a[1]));
           $('can').appendChild(li);
         });
-        SUGGESTIONS.forEach(function (s) {
-          var b = el('button', 'gs-genie-chip', s); b.type = 'button';
-          b.addEventListener('click', function () { ask(s); });
-          $('suggest').appendChild(b);
-        });
         try {
           var session = await GS.auth.requireSession();
           if (!session) return;
+          GS.genieChat.mount({ body: $('genie-chat'), page: 'genie' });
           var ctx = await GS.household.current();
           if (!ctx) { $('household-label').textContent = 'You are not part of a household yet.'; return; }
           state.ctx = ctx;
           $('household-label').textContent = ctx.name || 'Your household';
           state.members = await GS.household.members(ctx.householdId);
-          var me = state.members.find(function (m) { return m.userId === session.user.id; });
-          bubble('genie', 'Hi' + (me ? ' ' + G.memberName(me) : '') + '. I know your tasks, homes, vehicles, grocery list and meal plans. Ask me anything about the household, or ask me to plan something. I’ll suggest, and you approve.');
           await loadTasks();
         } catch (e) {
           status(e.message || 'Could not load Genie.', true);
