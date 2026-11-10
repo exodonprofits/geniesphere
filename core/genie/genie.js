@@ -36,6 +36,7 @@
     var s = String(task.due_at).slice(0, 10).split('-');
     return new Date(+s[0], +s[1] - 1, +s[2]);
   }
+  function localDay(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function short(d) { return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); }
 
   function memberName(m) { return String(m.name || m.email || 'Someone').split('@')[0]; }
@@ -78,7 +79,7 @@
     async ask(householdId, messages) {
       var out = await window.GenieSphere.ai.request({
         task: 'genie.chat', householdId: householdId,
-        input: { messages: (messages || []).slice(-12) }
+        input: { messages: (messages || []).slice(-12), today: localDay(new Date()) }
       });
       var r = out.result || {};
       return { reply: String(r.reply || ''), proposals: Array.isArray(r.proposals) ? r.proposals : [], usage: out.usage || null };
