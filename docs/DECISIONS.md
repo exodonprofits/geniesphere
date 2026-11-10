@@ -145,3 +145,9 @@
 
 **Reason:** Genie is most useful where the work is (add groceries from the list, assign from Tasks) without leaving the page. One component avoids two chat implementations drifting apart, and lazy loading keeps every other page as light as before. `sessionStorage` gives continuity across pages without adding stored personal data. ADR-022's rules (approve before any change, drafts never sent, the 30/day limit) are unchanged.
 
+
+## ADR-024 — HTTPS only
+
+**Decision:** The site is served only over HTTPS (Bluehost AutoSSL). `.htaccess` sends every http request to the same https URL with a 301, except `/.well-known/acme-challenge/`, which AutoSSL needs over http to renew the certificate. It also sends `Strict-Transport-Security: max-age=86400` (1 day) to start; raise it to `31536000` once AutoSSL has renewed the certificate at least once. Do not add `preload`. Email links default to `https://geniesphere.com` (`_shared/email.ts`, `gs-notify`). The functions deployed before this change still default to http; the redirect covers those links until the next deploy of `gs-notify`, `gs-password-reset` and `gs-household-invite`. Supabase Auth's Site URL and Redirect URLs must list the https addresses, or password-reset links are refused.
+
+**Reason:** Logins and household data must never travel in plain text, and the target households will use public Wi-Fi.

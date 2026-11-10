@@ -17,7 +17,7 @@
 //
 // Project: GenieSphere (nxgtefbqizvihwikqnaw). Secrets: SUPABASE_URL,
 // SUPABASE_SERVICE_ROLE_KEY (auto-provided); RESEND_API_KEY, FROM_EMAIL (see
-// _shared/email.ts); SITE_URL optional (default http://geniesphere.com).
+// _shared/email.ts); SITE_URL optional (default https://geniesphere.com).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { assignedEmail, digestEmail, sendEmail, siteUrlFrom, type DigestTask } from "../_shared/email.ts";
@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
   if (cronSecret) {
     const { data: ok } = await admin.rpc("gs_notify_cron_ok", { p_secret: cronSecret });
     if (!ok) return json({ ok: false, error: "Forbidden" }, 403);
-    const siteUrl = Deno.env.get("SITE_URL") || "http://geniesphere.com";
+    const siteUrl = Deno.env.get("SITE_URL") || "https://geniesphere.com";
     const pending = await sendPending(admin, siteUrl);
     const digests = now.weekday === "Sun" && now.hour >= 17 ? await sendDigests(admin, siteUrl, now.day) : null;
     if (pending.sent || pending.failed || pending.skipped || digests) {
