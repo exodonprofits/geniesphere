@@ -15,6 +15,7 @@
 
   var NAV = [
     { key: 'dashboard', label: 'Dashboard', href: '/core/dashboard/index.html', icon: 'grid' },
+    { key: 'genie', label: 'Genie', href: '/core/genie/index.html', icon: 'sparkle' },
     { key: 'grocery', label: 'Grocery', href: '/modules/grocery/index.html', icon: 'cart' },
     { key: 'nutrition', label: 'Nutrition', href: '/modules/nutrition/index.html', icon: 'leaf' },
     { key: 'home', label: 'Home', href: '/modules/home/index.html', icon: 'house' },
@@ -37,7 +38,9 @@
     sparkle: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z',
     check: 'M4 12l5 5L20 6',
     bell: 'M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
-    car: 'M5 17h14M5 17v-4l2-5h10l2 5v4M5 17v2h2.5v-2M19 17v2h-2.5v-2M5 13h14M8 15h.01M16 15h.01'
+    car: 'M5 17h14M5 17v-4l2-5h10l2 5v4M5 17v2h2.5v-2M19 17v2h-2.5v-2M5 13h14M8 15h.01M16 15h.01',
+    shield: 'M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6zM9 12l2 2 4-4',
+    mail: 'M4 6h16v12H4zM4 7l8 6 8-6'
   };
 
   var SVG_NS = 'http://www.w3.org/2000/svg';

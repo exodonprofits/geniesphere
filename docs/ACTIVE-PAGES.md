@@ -14,13 +14,15 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 | Settings | `/core/settings/index.html` | household members (name, email, role); owner: invite by one-time link, pending invitations with revoke; session required; app shell |
 | Join household | `/core/auth/invite.html#t=…` | opened from an invitation link; new account (password ≥10) or sign-in if the email already has one; no app shell |
 | Tasks | `/core/tasks/index.html` | add (title, due date, who), assign, complete/undo, delete own tasks; grouped Overdue / This week / Later / No date; module tasks show their source ("Home Genie") and can't be deleted here; done in the last 14 days; session required; app shell |
+| Genie | `/core/genie/index.html` | household assistant, phase 1 "brain, not hands" (ADR-022): "This week" briefing from open tasks (no AI); Ask Genie chat via `genie.chat`; proposal cards (new task, assign, grocery items) save only on Approve, with Undo for tasks; text/email drafts are copied or opened in Messages/Mail, never sent; "What Genie can do / Never" panel; session required; app shell (nav item 2) |
 | Notifications | `/core/notifications/index.html` | inbox (assigned to you, weekly summary; mark read / all read); email toggles per member and household (weekly summary, assigned to you); "Send me this week’s summary" (1 per 10 min); session required; app shell. Unread count on the avatar and in the account menu (`gs-shell.js`) |
 
 | App shell (component) | `/shared/components/gs-shell.js` | top bar, account menu, phone bottom bar; mounts on `<body data-gs-shell="key">`; styles in `/shared/css/app.css` |
-| AI gateway (service) | `/core/ai/ai-gateway.js` → Edge Function `gs-ai-gateway` | `GenieSphere.ai.request({task, householdId, input})`; tasks: `meal_plan.generate` (10/household/day) |
+| AI gateway (service) | `/core/ai/ai-gateway.js` → Edge Function `gs-ai-gateway` | `GenieSphere.ai.request({task, householdId, input})`; tasks: `meal_plan.generate` (10/household/day), `genie.chat` (30/household/day) |
 | Grocery interface (module API) | `/modules/grocery/grocery-api.js` | `GenieSphere.grocery.activeListId`, `addItems` (skips items already on the list) |
 | Household context (service) | `/core/household/household.js` | current household from `user_household_context`, else first membership by name; `members(householdId)` |
 | Notifications (service) | `/core/notifications/notifications.js` → Edge Function `gs-notify` | `GenieSphere.notifications.list/unreadCount/markRead/markAllRead/prefs/savePrefs/sendTestDigest`; tables `household_notifications` (read + `read_at` only), `notification_prefs` (0010). `gs-notify` also runs from pg_cron every 5 min: assigned-to-you emails, Sunday 5 PM summary |
+| Genie (service) | `/core/genie/genie.js` | `GenieSphere.genie.briefing/ask/apply/ACTIONS/memberName`; `apply` uses `GS.tasks` and `GS.grocery` with the signed-in person's permissions |
 | Tasks (service) | `/core/tasks/tasks.js` | `GenieSphere.tasks.listOpen/listDone/add/complete/reopen/assign/remove/bucket` on `household_tasks` (`source_module`, `source_ref`, 0009) |
 | Home interface (module API) | `/modules/home/home-api.js` | `GenieSphere.home.catalogFor/listAssets/addAsset/removeAsset/list/add/update/markDone/remove/status`; tables `household_assets`, `home_maintenance_items` (0009, 0011) |
 | Account (service) | `/core/auth/account.js` → Edge Function `gs-password-reset` | `GenieSphere.account.requestPasswordReset/setNewPassword` |
@@ -37,7 +39,7 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 ## Cache busting
 
-Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261109h`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
+Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261110a`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
 
 ## Legacy migration rule
 
