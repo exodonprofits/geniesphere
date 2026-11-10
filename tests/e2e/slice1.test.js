@@ -250,7 +250,7 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   const shellPages = [
     ['/core/dashboard/index.html', 'Dashboard'], ['/modules/grocery/index.html', 'Grocery'],
     ['/modules/nutrition/index.html', 'Nutrition'], ['/modules/home/index.html', 'Home'],
-    ['/core/tasks/index.html', 'Tasks'], ['/core/notifications/index.html', null],
+    ['/core/tasks/index.html', 'Tasks'], ['/core/genie/index.html', 'Genie'], ['/core/notifications/index.html', null],
     ['/core/settings/index.html', null]
   ];
   for (const [url, activeLabel] of shellPages) {
@@ -260,7 +260,7 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
     const active = await page.$$eval('.gs-topnav [aria-current="page"]', els => els.map(e => e.textContent));
     assert.deepStrictEqual(active, activeLabel ? [activeLabel] : [], 'active nav on ' + url);
   }
-  step('shell mounts on all 7 Core/module pages with the right active item');
+  step('shell mounts on all 8 Core/module pages with the right active item');
 
   await page.goto(BASE + '/core/dashboard/index.html');
   await page.waitForFunction(() => document.querySelector('.gs-avatar').textContent === 'J');
@@ -275,11 +275,27 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   await page.setViewportSize({ width: 390, height: 844 });
   assert.strictEqual(await page.isVisible('.gs-bottomnav'), true);
   assert.strictEqual(await page.isVisible('.gs-topnav'), false);
-  assert.strictEqual(await page.$$eval('.gs-bottomnav a', els => els.length), 5);
+  assert.strictEqual(await page.$$eval('.gs-bottomnav a', els => els.length), 6);
+  assert.strictEqual(await page.$$eval('.gs-bottomnav a', els => new Set(els.map(e => Math.round(e.getBoundingClientRect().top))).size), 1, 'bottom nav on one row');
   await page.screenshot({ path: path.join(OUT, 'shell-mobile.png') });
   await page.setViewportSize({ width: 1100, height: 800 });
   await page.screenshot({ path: path.join(OUT, 'shell-desktop.png') });
-  step('phone width swaps the top nav for a 5-item bottom bar');
+  step('phone width swaps the top nav for a 6-item bottom bar on one row');
+
+  // Genie: a proposal changes nothing until approved; approving adds the task.
+  await page.goto(BASE + '/core/genie/index.html');
+  await page.waitForSelector('#brief li');
+  await page.evaluate(() => { window.GenieSphere.ai.request = async () => ({ ok: true, usage: { today: 1, limit: 30 }, result: { reply: 'Here you go.', proposals: [{ type: 'task.add', title: 'Genie test task', dueDate: null, assignee: 'Nobody' }] } }); });
+  await page.fill('#ask-input', 'add a test task');
+  await page.press('#ask-input', 'Enter');
+  await page.waitForSelector('.gs-genie-card-task-add');
+  assert.strictEqual(await page.evaluate(() => window.__fakeDb.load().household_tasks.some(t => t.title === 'Genie test task')), false, 'nothing saved before Approve');
+  await page.click('.gs-genie-card-task-add button:has-text("Approve")');
+  await page.waitForSelector('.gs-genie-card-done');
+  assert.strictEqual(await page.evaluate(() => window.__fakeDb.load().household_tasks.filter(t => t.title === 'Genie test task').length), 1, 'approved task saved');
+  await page.click('.gs-genie-card-done button:has-text("Undo")');
+  await page.waitForFunction(() => !window.__fakeDb.load().household_tasks.some(t => t.title === 'Genie test task'));
+  step('Genie: proposals save only on Approve, and Undo removes them');
 
   // 8b. Home Genie -> Core tasks -> dashboard
   await page.goto(BASE + '/modules/home/index.html');
