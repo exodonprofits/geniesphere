@@ -148,7 +148,7 @@
 
 ## ADR-024 — HTTPS only
 
-**Decision:** The site is served only over HTTPS (Bluehost AutoSSL). `.htaccess` sends every http request to the same https URL with a 301, except `/.well-known/acme-challenge/`, which AutoSSL needs over http to renew the certificate. It also sends `Strict-Transport-Security: max-age=86400` (1 day) to start; raise it to `31536000` once AutoSSL has renewed the certificate at least once. Do not add `preload`. Email links default to `https://geniesphere.com` (`_shared/email.ts`, `gs-notify`). The functions deployed before this change still default to http; the redirect covers those links until the next deploy of `gs-notify`, `gs-password-reset` and `gs-household-invite`. Supabase Auth's Site URL and Redirect URLs must list the https addresses, or password-reset links are refused.
+**Decision:** The site is served only over HTTPS (Bluehost AutoSSL). `.htaccess` sends every http request to the same https URL with a 301, except `/.well-known/`, which AutoSSL needs over http to issue and renew the certificate (ACME challenge and Sectigo DCV). It also sends `Strict-Transport-Security: max-age=86400` (1 day) to start; raise it to `31536000` once AutoSSL has renewed the certificate at least once. Do not add `preload`. Email links default to `https://geniesphere.com` (`_shared/email.ts`, `gs-notify`). The functions deployed before this change still default to http; the redirect covers those links until the next deploy of `gs-notify`, `gs-password-reset` and `gs-household-invite`. Supabase Auth's Site URL and Redirect URLs must list the https addresses, or password-reset links are refused.
 
 **Reason:** Logins and household data must never travel in plain text, and the target households will use public Wi-Fi.
 
