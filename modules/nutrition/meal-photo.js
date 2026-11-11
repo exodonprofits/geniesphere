@@ -7,8 +7,9 @@
  *
  * The photo is shrunk in the browser, sent once through the AI gateway
  * (task "nutrition.photo_estimate") and never stored, here or on the server.
- * Results are ranges; each item's portion can be scaled or removed and the
- * totals follow. Allergens are flagged only as "may contain", never "safe".
+ * "Scan a plate" opens a full-screen live camera with a guide frame (https
+ * only; otherwise the phone's camera app). Results are ranges; each item's
+ * portion can be scaled or removed and the totals follow. Allergens are flagged only as "may contain", never "safe".
  *
  * Requires gs-client.js, core/ai/ai-gateway.js and gs-shell.js (icons).
  */
@@ -44,13 +45,7 @@
     if (!file || !/^image\//.test(file.type || 'image/')) throw new Error('Choose a photo of the meal.');
     var loaded = await loadImage(file);
     try {
-      var w = loaded.img.naturalWidth, h = loaded.img.naturalHeight;
-      var scale = Math.min(1, MAX_SIDE / Math.max(w, h));
-      var canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(w * scale));
-      canvas.height = Math.max(1, Math.round(h * scale));
-      canvas.getContext('2d').drawImage(loaded.img, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL('image/jpeg', 0.82);
+      return toJpeg(loaded.img, 0, 0, loaded.img.naturalWidth, loaded.img.naturalHeight);
     } finally {
       URL.revokeObjectURL(loaded.url);
     }
@@ -61,6 +56,151 @@
     return { result: out.result || {}, usage: out.usage || null };
   }
 
+  // Draws (part of) an image or video frame onto a canvas, max MAX_SIDE px.
+  function toJpeg(source, sx, sy, sw, sh) {
+    var scale = Math.min(1, MAX_SIDE / Math.max(sw, sh));
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(sw * scale));
+    canvas.height = Math.max(1, Math.round(sh * scale));
+    canvas.getContext('2d').drawImage(source, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.82);
+  }
+
+  function canScan() {
+    return !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  }
+
+  function fileButton(label, cls, capture, onFile) {
+    var lab = el('label', cls);
+    var input = el('input', 'gs-sr-only');
+    input.type = 'file'; input.accept = 'image/*';
+    if (capture) input.setAttribute('capture', 'environment');
+    lab.appendChild(input);
+    lab.appendChild(document.createTextNode(label));
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      input.value = '';
+      if (f) onFile(f);
+    });
+    return lab;
+  }
+
+  // ── Full-screen plate scanner: live camera, guide frame, scan line ──
+  // The camera runs only while the scanner is open and stops the moment a
+  // frame is taken. Only the square inside the guide frame is sent.
+  function openScanner(opts) {
+    var stream = null, closed = false, lastFocus = document.activeElement;
+    var root = el('div', 'gs-scan');
+    root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Scan a plate');
+    var video = el('video', 'gs-scan-video');
+    video.setAttribute('playsinline', ''); video.setAttribute('muted', ''); video.muted = true; video.autoplay = true;
+    var still = el('img', 'gs-scan-still'); still.alt = ''; still.hidden = true;
+    var shade = el('div', 'gs-scan-shade');
+    var frame = el('div', 'gs-scan-frame');
+    ['tl', 'tr', 'bl', 'br'].forEach(function (c) { frame.appendChild(el('span', 'gs-scan-corner gs-scan-' + c)); });
+    var line = el('div', 'gs-scan-line'); frame.appendChild(line);
+    var top = el('div', 'gs-scan-top');
+    var close = el('button', 'gs-scan-close', '×'); close.type = 'button'; close.setAttribute('aria-label', 'Close scanner');
+    top.appendChild(el('span', 'gs-scan-title', 'Scan a plate'));
+    top.appendChild(close);
+    var hint = el('p', 'gs-scan-hint', 'Starting the camera…');
+    var bar = el('div', 'gs-scan-bar');
+    var choose = fileButton('Library', 'gs-scan-side', false, function (f) { stop(); finish(); opts.onFile(f); });
+    var shutter = el('button', 'gs-scan-shutter'); shutter.type = 'button'; shutter.setAttribute('aria-label', 'Scan this plate'); shutter.disabled = true;
+    shutter.appendChild(el('span'));
+    bar.appendChild(choose); bar.appendChild(shutter); bar.appendChild(el('span', 'gs-scan-side'));
+    var err = el('div', 'gs-scan-error'); err.hidden = true;
+    [video, still, shade, frame, top, hint, bar, err].forEach(function (n) { root.appendChild(n); });
+    document.body.appendChild(root);
+    document.documentElement.classList.add('gs-scan-open');
+
+    function stop() {
+      if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+      video.srcObject = null;
+    }
+    function finish() {
+      if (closed) return;
+      closed = true; stop();
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('visibilitychange', onHide);
+      root.remove();
+      document.documentElement.classList.remove('gs-scan-open');
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    function onKey(e) { if (e.key === 'Escape') finish(); }
+    function onHide() { if (document.visibilityState === 'hidden' && !root.classList.contains('is-scanning')) finish(); }
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('visibilitychange', onHide);
+    close.addEventListener('click', finish);
+
+    function fail(message) {
+      stop();
+      root.classList.remove('is-scanning');
+      root.classList.add('is-error');
+      err.hidden = false; err.textContent = '';
+      err.appendChild(el('p', null, message));
+      var row = el('div', 'gs-scan-error-actions');
+      if (!still.hidden) {
+        var again = el('button', 'gs-btn gs-btn-primary', 'Scan again'); again.type = 'button';
+        again.addEventListener('click', function () { finish(); openScanner(opts); });
+        row.appendChild(again);
+      } else {
+        row.appendChild(fileButton('Use camera app', 'gs-btn gs-btn-primary', true, function (f) { finish(); opts.onFile(f); }));
+      }
+      row.appendChild(fileButton('Choose photo', 'gs-btn', false, function (f) { finish(); opts.onFile(f); }));
+      err.appendChild(row);
+    }
+
+    // Maps the on-screen guide square onto the video's own pixels (object-fit: cover).
+    function cropRect() {
+      var vw = video.videoWidth, vh = video.videoHeight;
+      var vr = video.getBoundingClientRect(), fr = frame.getBoundingClientRect();
+      var scale = Math.max(vr.width / vw, vr.height / vh);
+      var dx = (vr.width - vw * scale) / 2, dy = (vr.height - vh * scale) / 2;
+      var sx = (fr.left - vr.left - dx) / scale, sy = (fr.top - vr.top - dy) / scale, ss = fr.width / scale;
+      sx = Math.max(0, sx); sy = Math.max(0, sy); ss = Math.min(ss, vw - sx, vh - sy);
+      return { sx: sx, sy: sy, ss: ss };
+    }
+
+    shutter.addEventListener('click', async function () {
+      if (!stream || !video.videoWidth) return;
+      var c = cropRect();
+      var dataUrl = toJpeg(video, c.sx, c.sy, c.ss, c.ss);
+      stop();
+      still.src = dataUrl; still.hidden = false;
+      root.classList.add('is-scanning');
+      shutter.disabled = true;
+      hint.textContent = 'Scanning your plate…';
+      try {
+        var out = await opts.analyze(dataUrl);
+        if (closed) return;
+        finish();
+        opts.onResult(dataUrl, out);
+      } catch (e) {
+        if (!closed) fail(e.message || 'Couldn’t read that photo. Try again.');
+      }
+    });
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false })
+      .then(function (s) {
+        if (closed) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+        stream = s; video.srcObject = s;
+        return video.play().catch(function () { /* autoplay with muted+playsinline */ });
+      })
+      .then(function () {
+        if (closed || !stream) return;
+        hint.textContent = 'Fit the whole plate inside the frame';
+        shutter.disabled = false;
+        shutter.focus();
+      })
+      .catch(function (e) {
+        if (closed) return;
+        fail(e && e.name === 'NotAllowedError'
+          ? 'Camera access is off for this site. You can allow it in Settings, or use the camera app instead.'
+          : 'The camera isn’t available right now. Use the camera app or choose a photo instead.');
+      });
+  }
+
   function mount(section, householdId) {
     section.textContent = '';
     var head = el('div', 'gs-panel-head');
@@ -68,27 +208,23 @@
     left.appendChild(icon('camera'));
     var titles = el('div');
     titles.appendChild(el('h2', 'gs-panel-title', 'Snap a meal'));
-    titles.appendChild(el('p', 'gs-panel-sub', 'Take a photo of a plate to estimate its calories. The photo isn’t saved.'));
+    titles.appendChild(el('p', 'gs-panel-sub', 'Scan a plate to estimate its calories. The photo isn’t saved.'));
     left.appendChild(titles);
     head.appendChild(left);
 
     var actions = el('div', 'gs-snap-actions');
-    function picker(label, primary, capture) {
-      var lab = el('label', 'gs-btn' + (primary ? ' gs-btn-primary' : ''));
-      var input = el('input', 'gs-sr-only');
-      input.type = 'file'; input.accept = 'image/*';
-      if (capture) input.setAttribute('capture', 'environment');
-      lab.appendChild(input);
-      lab.appendChild(document.createTextNode(label));
-      input.addEventListener('change', function () {
-        var f = input.files && input.files[0];
-        input.value = '';
-        if (f) run(f);
+    var takeBtn;
+    if (canScan()) {
+      takeBtn = el('button', 'gs-btn gs-btn-primary gs-snap-scan', 'Scan a plate');
+      takeBtn.type = 'button';
+      takeBtn.addEventListener('click', function () {
+        if (busy) return;
+        openScanner({ analyze: function (d) { return estimate(householdId, d); }, onResult: showResult, onFile: run });
       });
-      return lab;
+    } else {
+      takeBtn = fileButton('Take photo', 'gs-btn gs-btn-primary', true, run);
     }
-    var takeBtn = picker('Take photo', true, true);
-    var chooseBtn = picker('Choose photo', false, false);
+    var chooseBtn = fileButton('Choose photo', 'gs-btn', false, run);
     actions.appendChild(takeBtn); actions.appendChild(chooseBtn);
     head.appendChild(actions);
 
@@ -101,23 +237,40 @@
 
     function setBusy(on) {
       busy = on;
-      [takeBtn, chooseBtn].forEach(function (b) { b.classList.toggle('is-disabled', on); b.querySelector('input').disabled = on; });
+      [takeBtn, chooseBtn].forEach(function (b) {
+        b.classList.toggle('is-disabled', on);
+        var i = b.querySelector('input'); if (i) i.disabled = on; else b.disabled = on;
+      });
     }
 
+    function startCard(src) {
+      body.hidden = false; body.textContent = '';
+      var wrap = el('div', 'gs-snap-result');
+      var img = el('img', 'gs-snap-photo'); img.src = src; img.alt = 'Your meal photo';
+      wrap.appendChild(img);
+      body.appendChild(wrap);
+      return wrap;
+    }
+
+    // Result from the scanner: the scanning already happened full screen.
+    function showResult(dataUrl, out) {
+      if (preview) { URL.revokeObjectURL(preview); preview = null; }
+      var wrap = startCard(dataUrl);
+      render(wrap, out.result, out.usage);
+      body.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+
+    // A photo file (library, camera app, or no live camera): shrink, then scan in the card.
     async function run(file) {
       if (busy) return;
       setBusy(true);
-      body.hidden = false; body.textContent = '';
       if (preview) URL.revokeObjectURL(preview);
       preview = URL.createObjectURL(file);
-      var wrap = el('div', 'gs-snap-result');
-      var img = el('img', 'gs-snap-photo'); img.src = preview; img.alt = 'Your meal photo';
-      wrap.appendChild(img);
+      var wrap = startCard(preview);
       var wait = el('div', 'gs-snap-wait');
       wait.appendChild(el('span', 'gs-spinner'));
-      wait.appendChild(el('span', null, 'Looking at your meal…'));
+      wait.appendChild(el('span', null, 'Scanning your plate…'));
       wrap.appendChild(wait);
-      body.appendChild(wrap);
       body.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       try {
         var dataUrl = await shrink(file);
