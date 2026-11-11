@@ -13,6 +13,12 @@
 //   pages at the GenieSphere project; their tables are not there.
 // Never place secret/service-role keys here.
 
+// HTTPS only (ADR-024). The server redirects too; this covers a page that a
+// browser or proxy still serves over http, before anything is typed into it.
+if (location.protocol === "http:" && /(^|\.)geniesphere\.com$/i.test(location.hostname)) {
+  location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+}
+
 window.GenieSphereConfig = window.GenieSphereConfig || {
   supabaseUrl: window.GS_SUPABASE_URL || "https://nxgtefbqizvihwikqnaw.supabase.co",
   supabaseAnonKey: window.GS_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z3RlZmJxaXp2aWh3aWtxbmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5NzM5NjIsImV4cCI6MjEwOTU0OTk2Mn0.mHDoeUzaWn0tFF_wbNw9rAZhPDtAB6VAU07hfkXgApk",

@@ -6,7 +6,7 @@ const FAKE = path.join(__dirname, 'fake-supabase.js');
 const OUT = process.env.E2E_OUT || require('os').tmpdir();
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined });
+  const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined, args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
   const page = await browser.newPage({ viewport: { width: 1100, height: 800 } });
   const errors = [];
   page.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text())) errors.push(m.text()); });
@@ -189,6 +189,21 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   assert.strictEqual(await page.textContent('.gs-snap-total'), '400–500 kcal', 'removed item not counted');
   assert.strictEqual(await page.evaluate(() => !!window.__fakeDb.load().meal_photos), false, 'nothing stored');
   step('snap a meal: JPEG under 400 KB sent once, range total, allergen flag, portions adjust the total');
+
+  // Plate scanner: live camera, shutter crops the guide square, camera stops, result lands in the card.
+  await page.context().grantPermissions(['camera'], { origin: BASE });
+  await page.click('.gs-snap-scan');
+  await page.waitForSelector('.gs-scan-shutter:not([disabled])');
+  assert.strictEqual(await page.evaluate(() => !!document.querySelector('.gs-scan-video').srcObject), true, 'camera live');
+  await page.click('.gs-scan-shutter');
+  await page.waitForSelector('.gs-snap-total');
+  assert.strictEqual(await page.$('.gs-scan'), null, 'scanner closed after the result');
+  assert.strictEqual((await page.evaluate(() => window.__sent)).head, 'data:image/jpeg;base64,');
+  await page.click('.gs-snap-scan');
+  await page.waitForSelector('.gs-scan-shutter:not([disabled])');
+  await page.keyboard.press('Escape');
+  assert.strictEqual(await page.$('.gs-scan'), null, 'Escape closes the scanner');
+  step('plate scanner: live camera, shutter scans the framed plate, closes into the result; Escape closes');
 
   // 6c. Invite flow: owner creates a link, invitee joins, link is single-use.
   await page.goto(BASE + '/core/settings/index.html');
