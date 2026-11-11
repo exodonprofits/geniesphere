@@ -13,10 +13,10 @@
 //   pages at the GenieSphere project; their tables are not there.
 // Never place secret/service-role keys here.
 
-// HTTPS only (ADR-024). The server redirects too; this covers a page that a
+// HTTPS on geniesphere.com only, never www (ADR-024). The server redirects too; this covers a page that a
 // browser or proxy still serves over http, before anything is typed into it.
-if (location.protocol === "http:" && /(^|\.)geniesphere\.com$/i.test(location.hostname)) {
-  location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+if ((location.protocol === "http:" || /^www\./i.test(location.hostname)) && /(^|\.)geniesphere\.com$/i.test(location.hostname)) {
+  location.replace("https://geniesphere.com" + location.pathname + location.search + location.hash);
 }
 
 window.GenieSphereConfig = window.GenieSphereConfig || {
