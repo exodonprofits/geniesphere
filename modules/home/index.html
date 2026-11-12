@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Home upkeep · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261111d" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261112a" />
 </head>
 <body data-gs-shell="home">
   <main class="gs-shell">
@@ -41,6 +41,8 @@
     </section>
 
     <!-- Add a place or vehicle -->
+    <p id="assistant-note" class="gs-plan-note" hidden>You can mark upkeep done. An adult in the household adds homes and vehicles and changes schedules.</p>
+
     <section id="asset-panel" class="gs-panel">
       <div class="gs-panel-head">
         <div class="gs-panel-head-left">
@@ -74,17 +76,17 @@
   </main>
 
   <script src="/shared/vendor/supabase.min.js"></script>
-  <script src="/shared/js/app-config.js?v=20261111d"></script>
-  <script src="/shared/js/gs-client.js?v=20261111d"></script>
-  <script src="/shared/js/gs-auth.js?v=20261111d"></script>
-  <script src="/shared/components/gs-shell.js?v=20261111d"></script>
-  <script src="/core/household/household.js?v=20261111d"></script>
-  <script src="/modules/home/home-api.js?v=20261111d"></script>
+  <script src="/shared/js/app-config.js?v=20261112a"></script>
+  <script src="/shared/js/gs-client.js?v=20261112a"></script>
+  <script src="/shared/js/gs-auth.js?v=20261112a"></script>
+  <script src="/shared/components/gs-shell.js?v=20261112a"></script>
+  <script src="/core/household/household.js?v=20261112a"></script>
+  <script src="/modules/home/home-api.js?v=20261112a"></script>
   <script>
     (function () {
       var GS = window.GenieSphere;
       var H = GS.home;
-      var state = { ctx: null, assets: [], items: [], filter: 'all', open: {}, setupFor: null, kind: 'place', adding: {} };
+      var state = { ctx: null, canEdit: false, assets: [], items: [], filter: 'all', open: {}, setupFor: null, kind: 'place', adding: {} };
       var PLACEHOLDERS = {
         place: ['e.g. Main house, Lake house', 'e.g. South Elgin'],
         vehicle: ['e.g. F-150', 'e.g. 2022 Ford F-150']
@@ -160,6 +162,8 @@
           } catch (err) { show(err.message, true); done.disabled = false; }
         });
         actions.appendChild(done);
+        // Assistants mark upkeep done; schedules are for adults (ADR-026).
+        if (!state.canEdit) { li.appendChild(actions); return li; }
         var every = frequencySelect(item.every_days, 'How often: ' + item.title);
         every.addEventListener('change', async function () {
           every.disabled = true;
@@ -257,10 +261,12 @@
         if (!items.length) {
           var empty = el('div', 'gs-panel-body gs-asset-empty');
           empty.appendChild(el('p', 'gs-empty', 'Nothing tracked for ' + asset.name + ' yet.'));
-          var pick = el('button', 'gs-btn gs-btn-primary gs-btn-sm', 'Choose upkeep');
-          pick.type = 'button';
-          pick.addEventListener('click', function () { openSetup(asset); });
-          empty.appendChild(pick);
+          if (state.canEdit) {
+            var pick = el('button', 'gs-btn gs-btn-primary gs-btn-sm', 'Choose upkeep');
+            pick.type = 'button';
+            pick.addEventListener('click', function () { openSetup(asset); });
+            empty.appendChild(pick);
+          }
           card.appendChild(empty);
         } else {
           var list = el('ul', 'gs-list gs-panel-body gs-upkeep-list');
@@ -279,6 +285,7 @@
           foot.appendChild(more);
         } else foot.appendChild(el('span'));
         var tools = el('span', 'gs-asset-tools');
+        if (!state.canEdit) { foot.appendChild(tools); card.appendChild(foot); return card; }
         if (items.length) {
           var add = el('button', 'gs-link-btn', state.adding[asset.id] ? 'Cancel' : '+ Add upkeep');
           add.type = 'button';
@@ -428,7 +435,11 @@
           var ctx = await GS.household.current();
           if (!ctx) { $('household-label').textContent = 'You are not part of a household yet.'; return; }
           state.ctx = ctx;
+          state.canEdit = GS.household.canEdit(ctx);
           $('household-label').textContent = ctx.name;
+          // Assistants see homes and vehicles and mark upkeep done; adults add and change them.
+          $('asset-panel').hidden = !state.canEdit;
+          $('assistant-note').hidden = state.canEdit;
           await load();
         } catch (err) {
           show(err.message || 'Could not load Home Genie.', true);

@@ -124,15 +124,20 @@
       return { data: this._one ? out[0] : (this.ret ? out : null), error: null };
     }
     if (this.op === 'update') {
-      rows.filter(match).forEach(function (r) {
+      var changed = rows.filter(match);
+      changed.forEach(function (r) {
         var before = r.assigned_to;
         Object.assign(r, self.payload);
         if (self.t === 'household_tasks') { homeTaskDone(db, r); notifyAssigned(db, r, before, uid); }
       });
       if (this.t === 'home_maintenance_items' || this.t === 'household_tasks' || this.t === 'household_assets') homeSync(db);
-      save(db); return { data: null, error: null };
+      save(db); return { data: this.ret ? changed.map(function (r) { return Object.assign({}, r); }) : null, error: null };
     }
-    if (this.op === 'delete') { db[this.t] = rows.filter(function (r) { return !match(r); }); save(db); return { data: null, error: null }; }
+    if (this.op === 'delete') {
+      var gone = rows.filter(match);
+      db[this.t] = rows.filter(function (r) { return !match(r); }); save(db);
+      return { data: this.ret ? gone : null, error: null };
+    }
     var data = rows.filter(match).map(function (r) { return Object.assign({}, r); });
     if (this.t === 'household_members' && /households/.test(this.cols))
       data.forEach(function (r) { r.households = db.households.find(function (h) { return h.id === r.household_id; }) || null; });
@@ -166,7 +171,7 @@
         return fail(body.email + ' is already a member of this household.');
       db.household_invites.forEach(function (i) { if (i.household_id === body.household_id && i.email === body.email && !i.accepted_at && !i.revoked_at) i.revoked_at = new Date().toISOString(); });
       var token = 'tok' + (++db.seq) + 'x' + Math.random().toString(36).slice(2);
-      var inv = { id: 'inv' + db.seq, household_id: body.household_id, email: body.email, display_name: body.display_name || null,
+      var inv = { id: 'inv' + db.seq, household_id: body.household_id, email: body.email, display_name: body.display_name || null, role: body.role === 'assistant' ? 'assistant' : 'adult',
         created_by: uid, created_at: new Date().toISOString(), expires_at: new Date(Date.now() + 7 * 864e5).toISOString(),
         accepted_at: null, revoked_at: null, _token: token };
       db.household_invites.push(inv);
@@ -199,7 +204,7 @@
         userId = 'u' + (++db.seq);
         db.users.push({ id: userId, email: invite.email, password: body.password });
       }
-      db.household_members.push({ household_id: invite.household_id, user_id: userId, role: 'member', email: invite.email,
+      db.household_members.push({ household_id: invite.household_id, user_id: userId, role: invite.role || 'adult', email: invite.email,
         display_name: body.display_name || invite.display_name || null, created_at: new Date().toISOString() });
       invite.accepted_at = new Date().toISOString();
       return ok({ household_id: invite.household_id });
@@ -244,8 +249,9 @@
             }
             if (name !== 'gs-ai-gateway' || body.task !== 'meal_plan.generate') return { data: null, error: { message: 'Unknown task.' } };
             var uid = db.session.user.id;
-            if (!db.household_members.some(function (m) { return m.household_id === body.household_id && m.user_id === uid; }))
-              return { data: null, error: { message: 'You are not a member of this household.' } };
+            var gm = db.household_members.find(function (m) { return m.household_id === body.household_id && m.user_id === uid; });
+            if (!gm) return { data: null, error: { message: 'You are not a member of this household.' } };
+            if (['owner', 'adult', 'member'].indexOf(gm.role) < 0) return { data: null, error: { message: 'Only an adult in the household can plan meals.' } };
             var today = new Date().toISOString().slice(0, 10);
             var used = db.gs_ai_usage.filter(function (u) { return u.household_id === body.household_id && u.created_at.slice(0, 10) === today; }).length;
             if (used >= 10) return { data: null, error: { message: "Your household has used today's 10 meal plans." } };

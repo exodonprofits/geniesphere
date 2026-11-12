@@ -11,7 +11,7 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 | Forgot password | `/core/auth/forgot.html` | emails a reset link via Edge Function `gs-password-reset` (same answer whether or not the email has an account; 1 email per 5 min); no app shell |
 | New password | `/core/auth/reset.html` | opened from the reset email (signed in by the link); sets a password of ≥10 characters, then dashboard; old links to `/reset_password.html` redirect here (`.htaccess`); no app shell |
 | Dashboard | `/core/dashboard/index.html` | session required; household name + switcher; briefing; first 5 open tasks (due state by calendar day) with "See all" → Tasks; Home upkeep row and card from `home_maintenance_items`; app shell |
-| Settings | `/core/settings/index.html` | household members (name, email, role); owner: invite by one-time link, pending invitations with revoke; session required; app shell |
+| Settings | `/core/settings/index.html` | household members (name, email, role); owner: invite by one-time link as adult or assistant, change a member's role, remove a member, pending invitations with revoke (ADR-026); session required; app shell |
 | Join household | `/core/auth/invite.html#t=…` | opened from an invitation link; new account (password ≥10) or sign-in if the email already has one; no app shell |
 | Tasks | `/core/tasks/index.html` | add (title, due date, who), assign, complete/undo, delete own tasks; grouped Overdue / This week / Later / No date; module tasks show their source ("Home Genie") and can't be deleted here; done in the last 14 days; session required; app shell |
 | Genie | `/core/genie/index.html` | household assistant, phase 1 "brain, not hands" (ADR-022): "This week" briefing from open tasks (no AI); Ask Genie chat via `genie.chat` (shared `genie-chat.js`, same conversation as the floating sheet); proposal cards (new task, assign, grocery items) save only on Approve, with Undo for tasks; text/email drafts are copied or opened in Messages/Mail, never sent; "What Genie can do / Never" panel; session required; app shell (top-nav item 2; on phones reached from the floating button) |
@@ -22,7 +22,7 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 | AI gateway (service) | `/core/ai/ai-gateway.js` → Edge Function `gs-ai-gateway` | `GenieSphere.ai.request({task, householdId, input})`; tasks: `meal_plan.generate` (10/household/day), `genie.chat` (30/household/day), `nutrition.photo_estimate` (20/household/day, photo never stored) |
 | Meal photo (module component) | `/modules/nutrition/meal-photo.js` | `GenieSphere.mealPhoto.mount/shrink/estimate`; "Snap a meal" card on the Nutrition page: full-screen plate scanner (live camera, guide frame, crop to the frame) or a photo file → JPEG ≤768 px → `nutrition.photo_estimate`; calorie ranges, macros, household allergen flags, per-item portion scaling; nothing stored (ADR-025) |
 | Grocery interface (module API) | `/modules/grocery/grocery-api.js` | `GenieSphere.grocery.activeListId`, `addItems` (skips items already on the list) |
-| Household context (service) | `/core/household/household.js` | current household from `user_household_context`, else first membership by name; `members(householdId)` |
+| Household context (service) | `/core/household/household.js` | current household from `user_household_context`, else first membership by name; `members(householdId)`; roles `ROLE_LABELS`, `canEdit(ctx)` (owner/adult), `isOwner(ctx)` (ADR-026, UI only; the database enforces) |
 | Notifications (service) | `/core/notifications/notifications.js` → Edge Function `gs-notify` | `GenieSphere.notifications.list/unreadCount/markRead/markAllRead/prefs/savePrefs/sendTestDigest`; tables `household_notifications` (read + `read_at` only), `notification_prefs` (0010). `gs-notify` also runs from pg_cron every 5 min: assigned-to-you emails, Sunday 5 PM summary |
 | Genie (service) | `/core/genie/genie.js` | `GenieSphere.genie.briefing/ask/apply/ACTIONS/memberName`; `apply` uses `GS.tasks` and `GS.grocery` with the signed-in person's permissions |
 | Tasks (service) | `/core/tasks/tasks.js` | `GenieSphere.tasks.listOpen/listDone/add/complete/reopen/assign/remove/bucket` on `household_tasks` (`source_module`, `source_ref`, 0009) |
@@ -41,7 +41,7 @@ This file is the source of truth for production/canonical pages during the 0.1 r
 
 ## Cache busting
 
-Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261111d`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
+Canonical pages load `app.css` and every local script (`/core`, `/modules`, `/shared/js`, `/shared/components`) with one `?v=YYYYMMDDx` tag (currently `20261112a`). Change it on all pages whenever a CSS or JS file changes: browsers that cached a file before `.htaccess` sent `no-cache` keep using the old copy otherwise (seen live: `GS.household.members is not a function`).
 
 ## Legacy migration rule
 

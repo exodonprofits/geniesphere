@@ -18,7 +18,7 @@
  */
 (function () {
   window.GenieSphere = window.GenieSphere || {};
-  var COLS = 'id, title, notes, due_at, assigned_to, source_module, source_ref, status, completed_at, created_at';
+  var COLS = 'id, title, notes, due_at, assigned_to, source_module, source_ref, status, completed_at, created_at, created_by';
   function db() { return window.GenieSphere.getSupabase(); }
   function check(res) { if (res.error) throw res.error; return res.data; }
 

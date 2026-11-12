@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Nutrition Genie · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261111d" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261112a" />
 </head>
 <body data-gs-shell="nutrition">
   <main class="gs-shell">
@@ -27,6 +27,8 @@
     <section id="snap" class="gs-panel gs-snap" hidden></section>
 
     <!-- 1. Preferences -->
+    <p id="no-plan-note" class="gs-plan-note" hidden>No meal plan for this week yet. An adult in the household can plan it.</p>
+
     <section id="prefs-panel" class="gs-panel" hidden>
       <div class="gs-panel-head">
         <div class="gs-panel-head-left">
@@ -143,14 +145,14 @@
   </main>
 
   <script src="/shared/vendor/supabase.min.js"></script>
-  <script src="/shared/js/app-config.js?v=20261111d"></script>
-  <script src="/shared/js/gs-client.js?v=20261111d"></script>
-  <script src="/shared/js/gs-auth.js?v=20261111d"></script>
-  <script src="/shared/components/gs-shell.js?v=20261111d"></script>
-  <script src="/core/household/household.js?v=20261111d"></script>
-  <script src="/core/ai/ai-gateway.js?v=20261111d"></script>
-  <script src="/modules/grocery/grocery-api.js?v=20261111d"></script>
-  <script src="/modules/nutrition/meal-photo.js?v=20261111d"></script>
+  <script src="/shared/js/app-config.js?v=20261112a"></script>
+  <script src="/shared/js/gs-client.js?v=20261112a"></script>
+  <script src="/shared/js/gs-auth.js?v=20261112a"></script>
+  <script src="/shared/components/gs-shell.js?v=20261112a"></script>
+  <script src="/core/household/household.js?v=20261112a"></script>
+  <script src="/core/ai/ai-gateway.js?v=20261112a"></script>
+  <script src="/modules/grocery/grocery-api.js?v=20261112a"></script>
+  <script src="/modules/nutrition/meal-photo.js?v=20261112a"></script>
   <script>
     (function () {
       var GS = window.GenieSphere;
@@ -201,11 +203,15 @@
         return day === 5 || day === 6 || day === 0 ? 'next' : 'this';
       }
 
+      // Assistants read the plan; adults set preferences and plan (ADR-026).
       function setView(view) {
-        $('prefs-panel').hidden = view !== 'prefs';
+        var edit = GS.household.canEdit(state.ctx);
+        $('prefs-panel').hidden = view !== 'prefs' || !edit;
+        $('no-plan-note').hidden = view !== 'prefs' || edit;
         $('working').hidden = view !== 'working';
         $('plan-view').hidden = view !== 'plan';
-        $('edit-prefs').hidden = view !== 'plan';
+        $('edit-prefs').hidden = view !== 'plan' || !edit;
+        $('regenerate').hidden = !edit;
       }
 
       // ── Preferences form ──

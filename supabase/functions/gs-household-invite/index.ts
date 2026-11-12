@@ -3,7 +3,8 @@
 // Household invitations by one-time link (docs/DECISIONS.md ADR-016). Called
 // only through core/household/invites.js. Actions:
 //
-//   create  {household_id, email, display_name}  owner only -> {token, invite_id, expires_at, emailed}
+//   create  {household_id, email, display_name, role}  owner only -> {token, invite_id, expires_at, emailed}
+//           role: 'adult' (default) or 'assistant' (ADR-026)
 //           (also emails the link to the invitee; a new create for the same
 //           email is how "Resend" works)
 //   revoke  {invite_id}                           owner only
@@ -88,6 +89,7 @@ Deno.serve(async (req) => {
     const householdId = String(body.household_id || "");
     const email = clean(body.email, 254).toLowerCase();
     const displayName = clean(body.display_name, 80) || null;
+    const role = body.role === "assistant" ? "assistant" : "adult";
     if (!UUID_RE.test(householdId)) return fail("household_id required.");
     if (!EMAIL_RE.test(email)) return fail("Enter a valid email address.");
     if (!(await isOwner(householdId, caller.id))) return fail("Only the household owner can invite people.", 403);
@@ -106,7 +108,7 @@ Deno.serve(async (req) => {
 
     const token = newToken();
     const { data: inv, error } = await admin.from("household_invites").insert({
-      household_id: householdId, email, display_name: displayName, token_hash: await sha256(token), created_by: caller.id,
+      household_id: householdId, email, display_name: displayName, role, token_hash: await sha256(token), created_by: caller.id,
     }).select("id, expires_at").single();
     if (error) { console.error("[gs-household-invite] create:", error.message); return fail("Could not create the invitation. Try again.", 500); }
 
@@ -140,7 +142,7 @@ Deno.serve(async (req) => {
   const token = clean(body.token, 100);
   if (!/^[A-Za-z0-9_-]{40,}$/.test(token)) return fail("This invitation link is not valid.", 404);
   const { data: invite } = await admin.from("household_invites")
-    .select("id, household_id, email, display_name, created_by, expires_at, accepted_at, revoked_at")
+    .select("id, household_id, email, display_name, role, created_by, expires_at, accepted_at, revoked_at")
     .eq("token_hash", await sha256(token)).maybeSingle();
   if (!invite) return fail("This invitation link is not valid.", 404);
   const { data: existing } = await admin.rpc("gs_user_id_by_email", { p_email: invite.email });
@@ -191,7 +193,7 @@ Deno.serve(async (req) => {
   }
 
   const { error: memberErr } = await admin.from("household_members").upsert({
-    household_id: invite.household_id, user_id: userId!, role: "member", email: invite.email, display_name: displayName,
+    household_id: invite.household_id, user_id: userId!, role: invite.role === "assistant" ? "assistant" : "adult", email: invite.email, display_name: displayName,
   }, { onConflict: "household_id,user_id", ignoreDuplicates: true });
   if (memberErr) {
     console.error("[gs-household-invite] membership:", memberErr.message);

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Settings · GenieSphere</title>
   <link rel="icon" type="image/png" href="/shared/assets/logo/geniesphere_logo.png" />
-  <link rel="stylesheet" href="/shared/css/app.css?v=20261111d" />
+  <link rel="stylesheet" href="/shared/css/app.css?v=20261112a" />
 </head>
 <body data-gs-shell="settings">
   <main class="gs-shell">
@@ -25,7 +25,7 @@
           <span class="gs-panel-icon" data-gs-icon="house"></span>
           <div>
             <h2 class="gs-panel-title">Members</h2>
-            <p class="gs-panel-sub">Everyone here can see and edit the household’s lists, meal plans and tasks.</p>
+            <p class="gs-panel-sub">Adults can change everything except who’s in the household. Assistants handle tasks, groceries and upkeep.</p>
           </div>
         </div>
         <span id="member-count" class="gs-pill gs-pill-lg">…</span>
@@ -51,6 +51,13 @@
         <label class="gs-label">Their email <span class="gs-label-hint">(their sign-in)</span>
           <input id="i-email" class="gs-input" type="email" maxlength="254" autocomplete="off" placeholder="name@example.com" required />
         </label>
+        <label class="gs-label">Role
+          <select id="i-role" class="gs-input">
+            <option value="adult">Adult (spouse, partner)</option>
+            <option value="assistant">Assistant (house manager)</option>
+          </select>
+        </label>
+        <p id="i-role-hint" class="gs-hint gs-span-all">Adults can change homes, vehicles, upkeep and meal plans. Only you manage people.</p>
       </form>
       <div class="gs-panel-foot">
         <span>They choose their own password when they open it.</span>
@@ -88,12 +95,12 @@
   </main>
 
   <script src="/shared/vendor/supabase.min.js"></script>
-  <script src="/shared/js/app-config.js?v=20261111d"></script>
-  <script src="/shared/js/gs-client.js?v=20261111d"></script>
-  <script src="/shared/js/gs-auth.js?v=20261111d"></script>
-  <script src="/shared/components/gs-shell.js?v=20261111d"></script>
-  <script src="/core/household/household.js?v=20261111d"></script>
-  <script src="/core/household/invites.js?v=20261111d"></script>
+  <script src="/shared/js/app-config.js?v=20261112a"></script>
+  <script src="/shared/js/gs-client.js?v=20261112a"></script>
+  <script src="/shared/js/gs-auth.js?v=20261112a"></script>
+  <script src="/shared/components/gs-shell.js?v=20261112a"></script>
+  <script src="/core/household/household.js?v=20261112a"></script>
+  <script src="/core/household/invites.js?v=20261112a"></script>
   <script>
     (function () {
       var GS = window.GenieSphere;
@@ -114,6 +121,12 @@
         return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       }
       function initial(text) { return (String(text || '?').trim().charAt(0) || '?').toUpperCase(); }
+
+      var ROLE_HINT = {
+        adult: 'Adults can change homes, vehicles, upkeep and meal plans. Only you manage people.',
+        assistant: 'Assistants see tasks, groceries, homes and meal plans; they can add and finish tasks, shop and mark upkeep done, but can’t change homes, schedules or meal plans.'
+      };
+      function roleLabel(role) { return GS.household.ROLE_LABELS[role] || 'Adult'; }
 
       function personRow(name, detail, pillText, pillTone) {
         var li = el('li', 'gs-person');
@@ -138,15 +151,62 @@
           var name = m.display_name || (isMe ? 'You' : (m.email || 'Member'));
           var detail = [m.email || (isMe ? state.me.email : ''), m.role === 'owner' ? '' : 'Joined ' + shortDate(m.created_at)]
             .filter(Boolean).join(' · ');
-          var row = personRow(name + (isMe && m.display_name ? ' (you)' : ''), detail, m.role === 'owner' ? 'Owner' : 'Member', m.role === 'owner' ? 'accent' : null);
+          var ownerView = GS.household.isOwner(state.ctx) && m.role !== 'owner';
+          var row = personRow(name + (isMe && m.display_name ? ' (you)' : ''), detail, ownerView ? null : roleLabel(m.role), m.role === 'owner' ? 'accent' : null);
+          if (ownerView) row.appendChild(memberActions(m, name));
           list.appendChild(row);
         });
         $('member-count').textContent = res.data.length + (res.data.length === 1 ? ' member' : ' members');
       }
 
+      // Owner only: switch a member between adult and assistant, or remove them.
+      function memberActions(m, name) {
+        var actions = el('div', 'gs-person-actions gs-member-actions');
+        var pick = el('select', 'gs-input gs-role-select');
+        pick.setAttribute('aria-label', 'Role for ' + name);
+        [['adult', 'Adult'], ['assistant', 'Assistant']].forEach(function (o) {
+          var opt = el('option', null, o[1]); opt.value = o[0];
+          if ((m.role === 'member' ? 'adult' : m.role) === o[0]) opt.selected = true;
+          pick.appendChild(opt);
+        });
+        pick.addEventListener('change', async function () {
+          pick.disabled = true;
+          show('');
+          var res = await db().from('household_members').update({ role: pick.value })
+            .eq('household_id', state.ctx.householdId).eq('user_id', m.user_id).select('role');
+          pick.disabled = false;
+          if (res.error || !res.data || !res.data.length) {
+            show((res.error && res.error.message) || 'Could not change the role.', true);
+            pick.value = m.role === 'member' ? 'adult' : m.role;
+            return;
+          }
+          m.role = pick.value;
+          show(name + ' is now ' + (pick.value === 'assistant' ? 'an assistant' : 'an adult') + '.');
+        });
+        actions.appendChild(pick);
+        var remove = el('button', 'gs-link-btn gs-danger-link', 'Remove');
+        remove.type = 'button';
+        remove.setAttribute('aria-label', 'Remove ' + name + ' from the household');
+        remove.addEventListener('click', async function () {
+          if (!window.confirm('Remove ' + name + ' from ' + state.ctx.name + '? They lose access right away.')) return;
+          remove.disabled = true;
+          var res = await db().from('household_members').delete()
+            .eq('household_id', state.ctx.householdId).eq('user_id', m.user_id).select('user_id');
+          if (res.error || !res.data || !res.data.length) {
+            remove.disabled = false;
+            show((res.error && res.error.message) || 'Could not remove them.', true);
+            return;
+          }
+          show(name + ' was removed. They no longer have access.');
+          await loadMembers();
+        });
+        actions.appendChild(remove);
+        return actions;
+      }
+
       async function loadPending() {
         var res = await db().from('household_invites')
-          .select('id, email, display_name, expires_at, created_at')
+          .select('id, email, display_name, role, expires_at, created_at')
           .eq('household_id', state.ctx.householdId).is('accepted_at', null).is('revoked_at', null)
           .order('created_at', { ascending: false });
         if (res.error) throw res.error;
@@ -156,7 +216,7 @@
         var list = $('pending');
         list.textContent = '';
         rows.forEach(function (inv) {
-          var row = personRow(inv.display_name || inv.email, inv.email + ' · Link expires ' + shortDate(inv.expires_at), null);
+          var row = personRow(inv.display_name || inv.email, inv.email + ' · ' + roleLabel(inv.role) + ' · Link expires ' + shortDate(inv.expires_at), null);
           var actions = el('div', 'gs-person-actions');
           var resend = el('button', 'gs-link-btn', 'Resend');
           resend.type = 'button';
@@ -165,7 +225,7 @@
             resend.disabled = true;
             show('');
             try {
-              var out = await GS.invites.create(state.ctx.householdId, { email: inv.email, displayName: inv.display_name || '' });
+              var out = await GS.invites.create(state.ctx.householdId, { email: inv.email, displayName: inv.display_name || '', role: inv.role });
               showResult(out, inv.display_name || inv.email, inv.email);
               await loadPending();
             } catch (err) { show(err.message, true); resend.disabled = false; }
@@ -216,7 +276,7 @@
         button.disabled = true;
         show('');
         try {
-          var out = await GS.invites.create(state.ctx.householdId, { email: email, displayName: name });
+          var out = await GS.invites.create(state.ctx.householdId, { email: email, displayName: name, role: $('i-role').value });
           showResult(out, name || email, email);
           $('i-email').value = '';
           $('i-name').value = '';
@@ -229,6 +289,7 @@
       }
 
       $('invite-btn').addEventListener('click', createInvite);
+      $('i-role').addEventListener('change', function () { $('i-role-hint').textContent = ROLE_HINT[$('i-role').value]; });
       $('show-link').addEventListener('click', function () {
         $('invite-link-row').hidden = false;
         $('show-link').hidden = true;

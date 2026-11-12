@@ -4,7 +4,7 @@
  * email is not available the owner sends the link themselves. All writes go
  * through the function, which holds the service key.
  *
- *   await GenieSphere.invites.create(householdId, { email, displayName })
+ *   await GenieSphere.invites.create(householdId, { email, displayName, role })   // role 'adult' | 'assistant'
  *     -> { link, expiresAt, emailed }   // link is shown once; only its hash is stored
  *   await GenieSphere.invites.revoke(inviteId)
  *   await GenieSphere.invites.preview(token)
@@ -43,7 +43,7 @@
 
   window.GenieSphere.invites = {
     async create(householdId, invitee) {
-      var out = await call({ action: 'create', household_id: householdId, email: invitee.email, display_name: invitee.displayName });
+      var out = await call({ action: 'create', household_id: householdId, email: invitee.email, display_name: invitee.displayName, role: invitee.role === 'assistant' ? 'assistant' : 'adult' });
       return { link: linkFor(out.token), expiresAt: out.expires_at, inviteId: out.invite_id, emailed: !!out.emailed };
     },
     async revoke(inviteId) { await call({ action: 'revoke', invite_id: inviteId }); },
