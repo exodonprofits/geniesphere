@@ -6,6 +6,13 @@
  *   { householdId, name, role, households: [{ id, name, role }] }
  * or null when the user belongs to no household.
  * The choice is stored per user in public.user_household_context.
+ *
+ * Roles (ADR-026; the database enforces them, these only shape the UI):
+ *   owner      everything, and the only one who manages people
+ *   adult      everything except people, roles and invites
+ *   assistant  tasks, groceries, mark upkeep done; reads homes and meal plans
+ *   GenieSphere.household.canEdit(ctx)   owner or adult
+ *   GenieSphere.household.ROLE_LABELS
  */
 (function () {
   window.GenieSphere = window.GenieSphere || {};
@@ -37,6 +44,10 @@
   }
 
   window.GenieSphere.household = {
+    ROLE_LABELS: { owner: 'Owner', adult: 'Adult', member: 'Adult', assistant: 'Assistant' },
+    canEdit: function (ctx) { return !!ctx && (ctx.role === 'owner' || ctx.role === 'adult' || ctx.role === 'member'); },
+    isOwner: function (ctx) { return !!ctx && ctx.role === 'owner'; },
+
     async current() {
       if (cached) return cached;
       const session = await window.GenieSphere.auth.requireSession();

@@ -4,7 +4,8 @@
 // core/ai/ai-gateway.js with the user's session; provider keys stay here.
 //
 // For every request:
-//   1. Verify the session and that the caller is a member of household_id.
+//   1. Verify the session and that the caller is a member of household_id
+//      (meal_plan.generate: owner or adult, ADR-026).
 //   2. Accept only allowlisted tasks. Prompts are built here from validated
 //      fields, so the browser cannot send its own prompt.
 //   3. Reserve a call against the household's daily limit before spending
@@ -695,9 +696,14 @@ Deno.serve(async (req) => {
   if (!Object.hasOwn(DAILY_LIMITS, task)) return json({ error: "Unknown task." }, 400);
   if (!/^[0-9a-f-]{36}$/i.test(householdId)) return json({ error: "household_id required." }, 400);
 
-  const { data: member } = await admin.from("household_members").select("user_id")
+  const { data: member } = await admin.from("household_members").select("user_id, role")
     .eq("household_id", householdId).eq("user_id", userId).maybeSingle();
   if (!member) return json({ error: "You are not a member of this household." }, 403);
+  // Meal plans are changed by owners and adults only (ADR-026); checked before
+  // the daily limit so an assistant's try doesn't use one up.
+  if (task === "meal_plan.generate" && !["owner", "adult", "member"].includes(member.role)) {
+    return json({ error: "Only an adult in the household can plan meals." }, 403);
+  }
 
   const limit = DAILY_LIMITS[task];
   const { data: used, error: resErr } = await admin.rpc("gs_ai_usage_reserve", {

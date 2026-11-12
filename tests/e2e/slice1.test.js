@@ -446,6 +446,41 @@ const OUT = process.env.E2E_OUT || require('os').tmpdir();
   await page.waitForFunction(() => /Sent to jimmy@example\.com/.test(document.querySelector('#test-note').textContent));
   step('Notifications: inbox, mark all read clears the badge, email prefs persist, test summary sends');
 
+  // Roles (ADR-026): an assistant sees and marks done, but can't change homes, schedules or meal plans.
+  await page.evaluate(() => { const d = window.__fakeDb.load(); d.household_members.find(m => m.user_id === 'u1' && m.household_id === 'h1').role = 'assistant'; window.__fakeDb.save(d); });
+  await page.goto(BASE + '/modules/home/index.html');
+  await page.waitForSelector('.gs-upkeep');
+  assert.strictEqual(await page.isVisible('#asset-panel'), false, 'assistant: no add home/vehicle form');
+  assert.strictEqual(await page.isVisible('#assistant-note'), true);
+  assert.strictEqual(await page.$$eval('.gs-asset-tools .gs-link-btn', els => els.length), 0, 'assistant: no remove/add upkeep');
+  assert.strictEqual(await page.$$eval('.gs-upkeep-actions select, .gs-upkeep-actions .gs-icon-btn', els => els.length), 0, 'assistant: no schedule changes');
+  assert.ok(await page.$$eval('.gs-upkeep-actions .gs-btn', els => els.length) > 0, 'assistant: can mark done');
+  await page.goto(BASE + '/modules/nutrition/index.html');
+  await page.waitForSelector('#snap:not([hidden])');
+  await page.waitForTimeout(300);
+  assert.strictEqual(await page.isVisible('#edit-prefs'), false, 'assistant: no preferences');
+  assert.strictEqual(await page.isVisible('#prefs-panel'), false);
+  await page.goto(BASE + '/core/settings/index.html');
+  await page.waitForSelector('#members li');
+  assert.strictEqual(await page.isVisible('#invite-panel'), false, 'assistant: no invites');
+  assert.strictEqual(await page.$$eval('.gs-role-select', els => els.length), 0, 'assistant: no role changes');
+  await page.evaluate(() => { const d = window.__fakeDb.load(); d.household_members.find(m => m.user_id === 'u1' && m.household_id === 'h1').role = 'owner'; window.__fakeDb.save(d); });
+  step('assistant role: Home, Nutrition and Settings hide what an assistant cannot change');
+
+  await page.goto(BASE + '/core/settings/index.html');
+  await page.waitForSelector('#invite-panel:not([hidden])');
+  await page.waitForSelector('.gs-role-select');
+  await page.selectOption('.gs-role-select >> nth=0', 'assistant');
+  await page.waitForFunction(() => /is now an assistant/.test(document.querySelector('#status').textContent));
+  assert.ok(await page.evaluate(() => window.__fakeDb.load().household_members.some(m => m.household_id === 'h1' && m.role === 'assistant')), 'owner changed a role');
+  await page.selectOption('#i-role', 'assistant');
+  await page.fill('#i-email', 'helper@example.com');
+  await page.click('#invite-btn');
+  await page.waitForSelector('#invite-result:not([hidden])');
+  assert.strictEqual(await page.evaluate(() => window.__fakeDb.load().household_invites.find(i => i.email === 'helper@example.com').role), 'assistant', 'invite carries the role');
+  step('owner: change a member to assistant; invite as assistant');
+
+
   // 9. Sign out from the shell
   await page.click('.gs-account-btn');
   await page.click('#gs-account-menu button:has-text("Sign out")');

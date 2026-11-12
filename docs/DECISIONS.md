@@ -158,3 +158,15 @@
 
 **Reason:** Useful for "roughly how much was that" without building a diet tracker, which would store health-adjacent data per person (including children's). Ranges and the 20–40% note keep expectations honest. Photos of plates show the inside of the home, so they are not kept. A private per-person log needs its own ADR.
 
+## ADR-026 — Household roles: owner, adult, assistant
+
+**Decision:** A household has one **owner**, any number of **adults** (spouse, partner) and **assistants** (house manager, staff). Migration 0012 enforces it in the database; the pages only hide controls.
+- Everyone reads the household's tasks, grocery list, homes and vehicles, upkeep and meal plans. Notifications stay per person.
+- Assistants can add, complete and assign tasks (delete only their own), use the grocery list, mark upkeep done, use Genie and meal photos (same daily limits), and approve Genie suggestions within those rights. A guard trigger lets a non-adult change only `last_done`/`next_due` on upkeep.
+- Adults can also add, change and remove homes, vehicles and upkeep schedules, set nutrition preferences and plan meals (`meal_plan.generate` is refused for assistants in the gateway), and delete any task.
+- Only the owner invites (as adult or assistant), changes roles between adult and assistant, and removes people. A guard trigger stops anyone from making or changing an owner from the browser.
+- Removing a member ends access on their next request; there is nothing to log out.
+- Existing `member` rows became `adult`. Invites carry the role (`adult` by default). A `child` role is not built.
+
+**Reason:** The target households delegate to staff. A house manager needs to run the day (tasks, shopping, upkeep) without being able to remove a home, rewrite schedules or change who has access. Enforcing it in RLS means a page bug can't widen access. It is also the base for per-person access to connected businesses later.
+
